@@ -209,7 +209,7 @@ inline Element render_thinking_line(const std::string& line, bool highlight,
     if (is_key_insight) {
         el = el | color(loom::ui::design::theme::current_theme().palette->primary);
     } else {
-        el = el | color(loom::ui::design::theme::current_theme().palette->text_muted);
+        el = el | color(loom::ui::design::theme::current_theme().palette->muted);
     }
     return el;
 }
@@ -331,7 +331,7 @@ inline std::size_t count_lines(const std::string& s) {
             break;
         case ThinkingState::Complete:
             parts.push_back(text((std::string(loom::ui::design::figures::kDiamondOpen) + " ")) | dim);
-            parts.push_back(text("Reasoning") | color(loom::ui::design::theme::current_theme().palette->text_muted));
+            parts.push_back(text("Reasoning") | color(loom::ui::design::theme::current_theme().palette->muted));
             break;
     }
 
@@ -372,7 +372,7 @@ inline std::size_t count_lines(const std::string& s) {
         }
         return hbox({
             text("  ▸ ") | color(loom::ui::design::theme::current_theme().palette->muted),
-            text(summary) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted),
+            text(summary) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
         });
     }
 
@@ -620,7 +620,7 @@ inline constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4";  // ∴
         }
     }
     Element summary = hbox(std::move(line_parts))
-        | color(loom::ui::design::theme::current_theme().palette->text_muted) | xflex;
+        | color(loom::ui::design::theme::current_theme().palette->muted) | xflex;
     Elements parts{std::move(summary)};
     if (can_toggle) {
         parts.push_back(text(" "));
@@ -643,7 +643,7 @@ inline constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4";  // ∴
     Element label = hbox({
         text(std::string(kThinkingLabel)),
         text(" Thinking…"),
-    }) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted);
+    }) | dim | color(loom::ui::design::theme::current_theme().palette->muted);
 
     // Body: indented 2, dim.  Rendered as Markdown (code fences, lists,
     // headings, etc.) with dim styling to match the thinking block's

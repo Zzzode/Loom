@@ -197,7 +197,7 @@ namespace detail {
         {std::string(loom::ui::design::figures::kDiamond), "From Marketplace",
             "Browse available marketplaces and pick a plugin", pal.info},
         {std::string(loom::ui::design::figures::kTriangleRightSmall), "From local file or directory",
-            "Install from a downloaded .zip or a local folder", pal.text_accent},
+            "Install from a downloaded .zip or a local folder", pal.primary},
         {std::string(loom::ui::design::figures::kArrowRight), "From URL",
             "Install directly from a manifest or zip URL", pal.info},
         {std::string(loom::ui::design::figures::kForkGlyph), "From Git repository",
@@ -297,7 +297,7 @@ namespace detail {
         hbox({
             text("[" + r.install_scope + "] ")
                 | bold | color(r.install_scope == "user" ? pal.info
-                    : (r.install_scope == "project" ? pal.text_accent : pal.text_muted)),
+                    : (r.install_scope == "project" ? pal.primary : pal.muted)),
             text(r.size_str.empty() ? "—" : r.size_str) | dim,
         }) | align_right,
     }));

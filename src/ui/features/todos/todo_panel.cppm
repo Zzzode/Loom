@@ -15,6 +15,7 @@ module;
 #include <cstdint>
 
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/string.hpp>
 
 export module loom.ui.features.todos.todo_panel;
 
@@ -44,13 +45,13 @@ namespace detail {
 namespace thm = loom::ui::design::theme;
 
 /// Palette-only status token: in_progress => success, pending => muted,
-/// completed => subtle (dimmed further by the strikethrough decorator).
+/// completed => muted, with strikethrough on the label.
 [[nodiscard]] inline const ftxui::Color& status_color(TodoDisplayItem::Status s) {
     const auto& pal = *thm::current_theme().palette;
     switch (s) {
         case TodoDisplayItem::Status::InProgress: return pal.success;
         case TodoDisplayItem::Status::Pending:    return pal.muted;
-        case TodoDisplayItem::Status::Completed:  return pal.subtle;
+        case TodoDisplayItem::Status::Completed:  return pal.muted;
     }
     return pal.muted;
 }
@@ -88,16 +89,18 @@ namespace thm = loom::ui::design::theme;
     const auto last = out.find_last_not_of(' ');
     out = out.substr(first, last - first + 1);
 
-    if (max_cols <= 1 || out.size() <= max_cols) return out;
-    // Byte-truncate, then back off any UTF-8 continuation bytes (10xxxxxx) so
-    // we never emit half a multibyte sequence before the ellipsis.
-    std::size_t cut = max_cols - 1;
-    while (cut > 0 && (static_cast<unsigned char>(out[cut]) & 0xC0) == 0x80) {
-        --cut;
+    if (max_cols == 0) return {};
+    if (string_width(out) <= static_cast<int>(max_cols)) return out;
+    std::string clipped;
+    int used = 0;
+    for (const auto& glyph : Utf8ToGlyphs(out)) {
+        if (glyph.empty()) continue;
+        const int width = string_width(glyph);
+        if (used + width > static_cast<int>(max_cols) - 1) break;
+        clipped += glyph;
+        used += width;
     }
-    out.resize(cut);
-    out += "…";
-    return out;
+    return clipped + "…";
 }
 
 }  // namespace detail
@@ -105,45 +108,62 @@ namespace thm = loom::ui::design::theme;
 /// One todo row:
 ///   ● content        (in_progress — success color)
 ///   ○ content        (pending — muted)
-///   ✓ content        (completed — subtle + strikethrough)
+///   ✓ content        (completed — muted + strikethrough)
 /// Pure render of state-owned data.
 [[nodiscard]] inline Element RenderTodoRow(const TodoDisplayItem& item, int avail_cols) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const auto& glyph_color = detail::status_color(item.status);
     const bool done = item.status == TodoDisplayItem::Status::Completed;
 
-    // Reserve 4 cols for "● " / "✓ " glyph + spacing; clamp to a sane floor.
-    const int content_cols = std::max(8, avail_cols - 4);
+    const int columns = std::max(0, avail_cols);
+    const std::string prefix = columns == 0 ? ""
+        : std::string(detail::status_glyph(item.status)) + (columns > 1 ? " " : "");
+    const int prefix_cols = string_width(prefix);
+    const int content_cols = std::max(0, columns - prefix_cols);
     Element content = text(detail::one_line(item.content, static_cast<std::size_t>(content_cols)))
-                    | color(done ? pal.subtle : pal.text);
-    if (done) content = content | strikethrough | dim;
-
+                    | color(done ? pal.muted : pal.text)
+                    | size(WIDTH, EQUAL, content_cols);
+    if (done) content = content | strikethrough;
     return hbox({
-        text(std::string(detail::status_glyph(item.status)) + " ") | color(glyph_color),
+        text(prefix) | color(glyph_color) | size(WIDTH, EQUAL, prefix_cols),
         std::move(content),
-        filler(),
-    });
+    }) | size(WIDTH, EQUAL, columns);
 }
 
 /// Pinned chrome panel: a progress header + one row per todo item. Returns an
 /// empty element when there are no items (so callers can skip it), matching
 /// RenderLiveTeammateStrip's contract.
 [[nodiscard]] inline Element RenderTodoPanel(
-    const std::vector<TodoDisplayItem>& items, int term_cols = 120) {
-    if (items.empty()) return text("");
-
+    const std::vector<TodoDisplayItem>& items, int term_cols = 120,
+    int max_rows = -1) {
+    if (items.empty() || max_rows == 0) return vbox({});
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const auto done = std::ranges::count_if(items, [](const auto& it) {
         return it.status == TodoDisplayItem::Status::Completed;
     });
-
+    const int detail_rows = max_rows < 0 ? static_cast<int>(items.size())
+        : std::min(static_cast<int>(items.size()), std::max(0, max_rows - 1));
+    std::string header = max_rows < 0
+        ? std::format("Tasks ({}/{} done)", done, items.size())
+        : std::format("Tasks {}/{} done (+{} hidden)", done, items.size(),
+                      items.size() - static_cast<std::size_t>(detail_rows));
     Elements rows;
-    rows.reserve(items.size() + 1);
-    rows.push_back(
-        text(std::format("Tasks ({}/{} done)", done, items.size()))
-        | dim | color(pal.muted));
-    for (const auto& item : items) {
-        rows.push_back(RenderTodoRow(item, term_cols));
+    rows.push_back(text(detail::one_line(header, static_cast<std::size_t>(std::max(0, term_cols))))
+                   | color(pal.muted) | size(WIDTH, EQUAL, std::max(0, term_cols)));
+    if (max_rows < 0) {
+        for (const auto& item : items) rows.push_back(RenderTodoRow(item, term_cols));
+    } else {
+        // Render active work first without changing the state-owned item order.
+        int remaining = detail_rows;
+        for (bool active : {true, false}) {
+            for (const auto& item : items) {
+                if (remaining == 0) break;
+                if ((item.status == TodoDisplayItem::Status::InProgress) == active) {
+                    rows.push_back(RenderTodoRow(item, term_cols));
+                    --remaining;
+                }
+            }
+        }
     }
     return vbox(std::move(rows));
 }

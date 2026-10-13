@@ -170,7 +170,7 @@ using QuickOpenItem = dsys::QuickOpenItem;
 
             auto row = hbox(std::move(row_els));
             if (is_selected) {
-                row = row | bgcolor(pal.surface_selected) | color(pal.text);
+                row = row | bgcolor(pal.message_actions_background) | color(pal.text);
             }
             list_els.push_back(row);
 

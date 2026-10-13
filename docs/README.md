@@ -41,6 +41,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 |---|---|
 | [`design/dialog-system.md`](design/dialog-system.md) | Dialog framework architecture: queue, priority arbitration, two modes, migration. |
 | [`design/why-no-di.md`](design/why-no-di.md) | ADR #1: why this tree does not use a runtime DI container. |
+| [`design/design-language.md`](design/design-language.md) | Terminal hierarchy, readable tokens, activity height, brand/status identities and motion boundaries. |
 
 ### Decision registers (`decisions/`)
 
@@ -64,6 +65,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0010-in-app-selection-copy.md`](rfcs/0010-in-app-selection-copy.md) | **Implemented.** Default in-app selection automatically copies with accurate inline feedback; OSC ownership is refined by RFC 0011. |
 | [`rfcs/0011-common-osc-protocol.md`](rfcs/0011-common-osc-protocol.md) | **Implemented.** Centralize Loom-owned OSC encoding and separate protocol, terminal output, platform capabilities and UI. |
 | [`rfcs/0012-loom-prompt-and-chrome.md`](rfcs/0012-loom-prompt-and-chrome.md) | **Implemented.** Cell-aware prompt wrapping, responsive built-in statusline and Loom-only welcome artwork. |
+| [`rfcs/0013-readable-bounded-brand-ui.md`](rfcs/0013-readable-bounded-brand-ui.md) | **Implemented.** Readable secondary text, bounded task/team chrome, duplicate/unused token deletion and Loom brand coordination. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

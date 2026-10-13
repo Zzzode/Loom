@@ -385,11 +385,11 @@ struct WizardFooterProps {
     if (p.instructions) {
         Elements hints;
         hints.push_back(text(" "));
-        hints.push_back(text("←/B:back") | dim | color(pal.text_muted));
+        hints.push_back(text("←/B:back") | dim | color(pal.muted));
         hints.push_back(text("  "));
-        hints.push_back(text("→/N/Enter:next") | dim | color(pal.text_muted));
+        hints.push_back(text("→/N/Enter:next") | dim | color(pal.muted));
         hints.push_back(text("  "));
-        hints.push_back(text("Esc:cancel") | dim | color(pal.text_muted));
+        hints.push_back(text("Esc:cancel") | dim | color(pal.muted));
         hints.push_back(text("  "));
         hints.push_back(text(*p.instructions) | dim);
         result.push_back(hbox(std::move(hints)));

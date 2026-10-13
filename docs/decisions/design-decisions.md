@@ -3752,3 +3752,24 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   Delete obsolete vendor artwork and unused brand tokens; palette accent names
   refer to Loom. Preserve theme accessibility, layout thresholds, metadata,
   notices and feed order. No alternate mascot selector is introduced.
+
+## Readability, activity height and palette ownership (RFC 0013)
+
+- Informational secondary text uses `muted`; decorative separators retain
+  `subtle`/`border_subtle`. Explicit bubble, hover and selected RGB surfaces
+  are tested at 4.5:1. Transparent task/team rows are tested against the
+  palette canvas reference, without claiming the terminal's unknown canvas.
+- The REPL screen owns a finite shared todo/teammate row budget. Pure feature
+  renderers own summaries and detail projection; they never mutate task or
+  agent state. Measure fixed FTXUI requirements in the current frame before
+  allocating rows, and honor the existing fullscreen bottom limit. Preserve
+  caret and footer by reducing the held prompt viewport before activity.
+- Palette aliases are removed only after all-seven-theme equivalence and
+  src/tests/benchmarks consumer audit. Keep meaningful semantic differences,
+  `border_subtle`, the first 25 Role ordinals, theme lookup strings and eight
+  AgentColor names. Delete the unused broken Color::Print arithmetic closure
+  rather than introducing another RGB abstraction.
+- Normal brand/mode accents follow terracotta and amber; status and agent
+  identity palettes remain explicit exceptions with glyph/name cues. No
+  StatusLine default, message format, persistence, protocol or motion-policy
+  change belongs to this work.

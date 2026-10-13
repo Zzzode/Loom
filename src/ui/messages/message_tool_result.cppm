@@ -628,7 +628,7 @@ constexpr int kMaxRenderedLines = 10;
 
     Elements inner;
     inner.push_back(
-        text("User rejected Loom's plan:") | color(loom::ui::design::theme::current_theme().palette->text_muted));
+        text("User rejected Loom's plan:") | color(loom::ui::design::theme::current_theme().palette->muted));
     inner.push_back(std::move(plan_box));
 
     return wrap_message_response(vbox(std::move(inner)));

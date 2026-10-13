@@ -354,7 +354,7 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     }
     if (is_file_edit_tool(call.tool_name) && call.file_path) {
         buttons.push_back(text(" "));
-        buttons.push_back(pill("o Open", pal.text_link));
+        buttons.push_back(pill("o Open", pal.suggestion));
     }
 
     if (buttons.empty()) return text("");

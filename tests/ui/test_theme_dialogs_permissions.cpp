@@ -165,7 +165,7 @@ TEST(DialogPermissionTheme, WizardRolesAndPluginLetterAccentsResolveCurrentTheme
         EXPECT_EQ(wizard::to_ftxui_color(wizard::WizardColor::warning), pal.warning);
         auto icon = RenderScreen(plugin::detail::LetterIcon("theme-probe"), 10, 1);
         const auto color = plugin::detail::name_color("theme-probe");
-        EXPECT_EQ(color, pal.icon_accent);
+        EXPECT_EQ(color, pal.primary);
         ExpectGlyphColor(icon, "T", color);
     }
 }

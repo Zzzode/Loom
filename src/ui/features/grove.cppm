@@ -20,14 +20,12 @@ import std;
 
 import loom.ui.foundation.design_figures;
 
-import loom.ui.foundation.component_primitives;
 import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
 
 export namespace loom::ui::components::grove {
 
 using namespace ftxui;
-using namespace loom::ui::design::primitives;
 using namespace loom::ui::design::tokens;
 using namespace loom::ui::design::theme;
 

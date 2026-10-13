@@ -171,7 +171,7 @@ struct CostThresholdState {
     auto inner = vbox({
         text(title) | bold | color(pal.warning),
         separator(),
-        vbox(std::move(body_rows)) | color(pal.text_muted),
+        vbox(std::move(body_rows)) | color(pal.muted),
         separator(),
         std::move(option_row),
         separator(),

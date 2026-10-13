@@ -127,7 +127,7 @@ struct Aggregates {
     parts.push_back(text(", ") | dim);
     parts.push_back(
         text(std::format("{} lines", format_thousands(agg.total_lines)))
-        | color(loom::ui::design::theme::current_theme().palette->text_muted));
+        | color(loom::ui::design::theme::current_theme().palette->muted));
     if (agg.total_matches > 0) {
         parts.push_back(text(", ") | dim);
         parts.push_back(

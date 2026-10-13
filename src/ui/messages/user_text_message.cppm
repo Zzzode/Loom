@@ -216,7 +216,7 @@ class UserTextMessageComponent : public ComponentBase {
             hbox({
                 filler(),
                 vbox(std::move(bubble_body))
-                    | (hovered_ ? bgcolor(loom::ui::design::theme::current_theme().palette->surface_selected) : nothing)
+                    | (hovered_ ? bgcolor(loom::ui::design::theme::current_theme().palette->message_actions_background) : nothing)
                     | flex_shrink,
             }),
         });
@@ -334,7 +334,7 @@ class UserTextMessageComponent : public ComponentBase {
 // manager.  Use `namespace figs = loom::ui::design::figures;` below.
 
 /// Faithful render of a user prompt message.  Full-width, left-aligned, with
-/// a `❯` (subtle) prefix followed by the prompt text.  is_selected swaps the
+/// a `❯` (muted) prefix followed by the prompt text.  is_selected swaps the
 /// prefix + bg color to the messageActionsBackground / suggestion tokens.
 ///
 /// `add_margin` controls the blank separator line above the message.  It is
@@ -354,10 +354,10 @@ class UserTextMessageComponent : public ComponentBase {
     const Color kText = pal.text;
     const Color kUserBg = pal.user_message_background;
     const Color kUserBgSel = pal.message_actions_background;
-    const Color kSubtle = pal.subtle;
+    const Color kMuted = pal.muted;
     const Color kSuggestion = pal.suggestion;
 
-    const Color prefix_color  = is_selected ? kSuggestion : kSubtle;
+    const Color prefix_color  = is_selected ? kSuggestion : kMuted;
     const Color bg            = is_selected ? kUserBgSel : kUserBg;
     const Decorator body_style =
         data.is_transcript_mode ? (dim | color(kText)) : color(kText);
@@ -389,7 +389,7 @@ class UserTextMessageComponent : public ComponentBase {
 
 /// Faithful render of a slash-command user message:
 ///   A row with optional top margin, a userMessageBackground chip background,
-///   a subtle `❯` pointer prefix, and the `/command args` text.
+///   a readable muted `❯` pointer prefix, and the `/command args` text.
 ///
 /// `add_margin` controls the blank separator line above the message.
 /// Threaded for faithfulness; always true in normal REPL use for the same
@@ -402,12 +402,12 @@ class UserTextMessageComponent : public ComponentBase {
     // The command chip always keeps the user-message background regardless
     // of selection.
     const Color kUserBg = pal.user_message_background;
-    const Color kSubtle = pal.subtle;
-    // The pointer always uses the subtle token.
+    const Color kMuted = pal.muted;
+    // The pointer always uses the readable muted token.
     // Selection only affects the BLACK_CIRCLE color of the assistant row,
     // never the user command chip tint — unlike UserPromptMessage which
     // swaps both the prefix and the background.
-    const Color prefix_color = kSubtle;
+    const Color prefix_color = kMuted;
 
     std::string body = data.command_name
         ? ("/" + *data.command_name)

@@ -564,7 +564,7 @@ get_diff_syntax_theme(const std::string& theme_name) {
     }
 
     if (selected) {
-        result = result | bgcolor(loom::ui::design::theme::current_theme().palette->surface_selected);
+        result = result | bgcolor(loom::ui::design::theme::current_theme().palette->message_actions_background);
     }
 
     return result;

@@ -97,7 +97,7 @@ TEST(ScreenVisualTheme, CachedMarkdownTokensAreRenderedWithCurrentTheme) {
         th::set_theme(variant);
         const auto& pal = *th::current_theme().palette;
         ExpectWordColor(Render(loom::ui::render_markdown("`code` ![image](https://example.test) $math$")), "code", pal.permission);
-        ExpectWordColor(Render(loom::ui::render_markdown("`code` ![image](https://example.test) $math$")), "image", pal.text_link);
+        ExpectWordColor(Render(loom::ui::render_markdown("`code` ![image](https://example.test) $math$")), "image", pal.suggestion);
         ExpectWordColor(Render(loom::ui::render_markdown("```cpp\nreturn 1;\n```")), "return", pal.primary);
     }
 }

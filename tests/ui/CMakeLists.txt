@@ -41,6 +41,11 @@ add_executable(test_ui_features test_ui_features.cpp ${LOOM_TEST_SUPPORT_DIR}/te
 target_link_libraries(test_ui_features ${_ui_test_libs})
 gtest_discover_tests(test_ui_features DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
+add_executable(test_design_system test_design_readability.cpp test_chrome_budget.cpp test_design_contracts.cpp
+    ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
+target_link_libraries(test_design_system ${_ui_test_libs})
+gtest_discover_tests(test_design_system DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
 add_executable(test_ui_dialogs test_ui_dialogs.cpp ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_ui_dialogs ${_ui_test_libs})
 gtest_discover_tests(test_ui_dialogs DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

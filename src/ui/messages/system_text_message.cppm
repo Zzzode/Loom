@@ -125,14 +125,14 @@ class SystemTextMessageComponent : public ComponentBase {
         });
 
         // Summary (always visible)
-        auto summary = text(data_.summary) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted);
+        auto summary = text(data_.summary) | dim | color(loom::ui::design::theme::current_theme().palette->muted);
 
         // Detail (only when expanded + present)
         Elements detail_box;
         if (expanded_ && has_detail) {
             for (auto& line : SplitLines(data_.detail)) {
                 detail_box.push_back(text(std::move(line))
-                                         | dim | color(loom::ui::design::theme::current_theme().palette->text_muted));
+                                         | dim | color(loom::ui::design::theme::current_theme().palette->muted));
             }
         }
 
@@ -155,7 +155,7 @@ class SystemTextMessageComponent : public ComponentBase {
         // Grey "pill" background to differentiate from user/assistant
         return vbox(std::move(rows))
              | bgcolor(loom::ui::design::theme::current_theme().palette->muted)
-             | color(loom::ui::design::theme::current_theme().palette->text_muted)
+             | color(loom::ui::design::theme::current_theme().palette->muted)
              | borderEmpty
              | padding(1);
     }

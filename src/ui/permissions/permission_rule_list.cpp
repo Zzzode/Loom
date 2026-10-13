@@ -69,7 +69,7 @@ namespace loom::ui::permissions::rule_list::detail {
         case PermissionAction::Ask:     return pal.warning;
         case PermissionAction::AskOnce: return pal.warning;
     }
-    return pal.text_muted;
+    return pal.muted;
 }
 
 void RefreshFiltered(RuleListState& st) {
@@ -241,7 +241,7 @@ Element RulesHeader() {
     Element source = [&]() {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         std::string_view s = r.source.empty() ? "—" : std::string_view{r.source};
-        Color c = loom::ui::design::theme::current_theme().palette->text_muted;
+        Color c = loom::ui::design::theme::current_theme().palette->muted;
         if (s == "Bundled") c = pal.success;
         else if (s == "User") c = pal.warning;
         else if (s == "CustomPath") c = pal.danger;
@@ -527,7 +527,7 @@ Element RulesHeader() {
     Elements desc_body;
     for (auto& l : desc_lines) {
         if (l.empty()) l = " " ;
-        desc_body.push_back(text("   " + l) | color(pal.text_muted));
+        desc_body.push_back(text("   " + l) | color(pal.muted));
     }
     auto desc_block =
         hbox({text("desc: ") | dim,
@@ -1140,7 +1140,7 @@ namespace loom::ui::permissions::rule_list {
                 Element path_el = pc::PathLabel(
                     w.path.string(), 60) | xflex_grow;
                 Element def_el = w.is_default
-                    ? text(" DEFAULT ") | dim | color(pal.text_muted)
+                    ? text(" DEFAULT ") | dim | color(pal.muted)
                                        | size(WIDTH, EQUAL, 10)
                     : text("") | size(WIDTH, EQUAL, 10);
 
@@ -1277,7 +1277,7 @@ namespace loom::ui::permissions::rule_list {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             const bool sel = (*policy_idx == static_cast<int>(i));
             Color c = (i == 0) ? loom::ui::design::theme::current_theme().palette->success
-                    : (i == 1) ? pal.danger   : pal.text_muted;
+                    : (i == 1) ? pal.danger   : pal.muted;
             rb.push_back(
                 text(std::format(" {} ", kPolicies[i]))
                 | (sel ? (color(c) | inverted | bold) : dim)
@@ -1494,7 +1494,7 @@ namespace loom::ui::permissions::rule_list {
                 | color(dec_color) | dim,
             text(std::format("   desc:   \"{}\"",
                              desc->empty() ? std::string{""} : *desc))
-                | color(pal.text_muted) | dim,
+                | color(pal.muted) | dim,
             text("}") | dim,
         }) | bgcolor(pal.perm_rule_bg) | borderLight;
 
@@ -1565,7 +1565,7 @@ namespace loom::ui::permissions::rule_list {
                 text(desc->empty()
                          ? std::string{"(optional human-readable note)"}
                          : *desc)
-                    | color(pal.text_muted),
+                    | color(pal.muted),
             }),
 
             separator() | dim,
@@ -2499,7 +2499,7 @@ namespace loom::ui::permissions::rule_list::ui_tabs_detail {
                                                   bool is_default) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (is_default) {
-        return text(" DEFAULT ") | color(pal.text_muted)
+        return text(" DEFAULT ") | color(pal.muted)
                | bgcolor(pal.perm_rule_bg_alt) | dim;
     }
     switch (p) {
@@ -2510,7 +2510,7 @@ namespace loom::ui::permissions::rule_list::ui_tabs_detail {
             return text(" DENY ") | color(pal.danger)
                    | bgcolor(pal.danger_tint_bg) | bold;
         case peng::WorkspaceEntry::Policy::Default:
-            return text(" DEFAULT ") | color(pal.text_muted)
+            return text(" DEFAULT ") | color(pal.muted)
                    | bgcolor(pal.perm_rule_bg_alt) | dim;
     }
     return text("");

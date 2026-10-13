@@ -114,7 +114,7 @@ inline const char* kind_icon(AttachmentKind k) {
 
 inline Color kind_color(AttachmentKind k) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    return k == AttachmentKind::Memory ? pal.remember : pal.icon_default;
+    return k == AttachmentKind::Memory ? pal.remember : pal.text;
 }
 
 /// Generate ASCII ▓-art rows of W x H that vary deterministically based on id.
@@ -196,7 +196,7 @@ inline std::vector<std::string> generate_default_thumbnail(
         right_side += std::format("{} lines", *a.line_count);
     }
     if (!right_side.empty()) {
-        meta.push_back(text("  " + right_side) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted));
+        meta.push_back(text("  " + right_side) | dim | color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     if (!a.mime_or_ext.empty() || !a.caption.empty()) {

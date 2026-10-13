@@ -307,17 +307,22 @@ using namespace ftxui;
 ///
 /// @param is_overlay  When true, apply fullscreen overlay styling.
 /// @param term_rows   Terminal height in rows (for adaptive maxVisibleItems).
+/// @param max_visible_items  Optional caller budget; -1 retains the default,
+///                           zero renders no popup. Selection stays state-owned.
 [[nodiscard]] Element RenderPromptSuggestions(const ReplScreenState& s,
                                                      int term_cols,
                                                      bool is_overlay,
-                                                     int term_rows) {
-    if (s.autocomplete_suggestions.empty()) return Element{};
+                                                     int term_rows,
+                                                     int max_visible_items) {
+    if (s.autocomplete_suggestions.empty() || max_visible_items == 0) return Element{};
 
     // maxVisibleItems differs between overlay (fixed 5) and inline
     // (adaptive to terminal height).
     constexpr int kOverlayMaxItems = 5;
     const int kInlineMaxItems = std::min(6, std::max(1, term_rows - 3));
-    const int kMaxVisibleItems = is_overlay ? kOverlayMaxItems : kInlineMaxItems;
+    const int default_max = is_overlay ? kOverlayMaxItems : kInlineMaxItems;
+    const int kMaxVisibleItems = max_visible_items < 0 ? default_max
+        : std::min(default_max, max_visible_items);
 
     const int total = static_cast<int>(s.autocomplete_suggestions.size());
     const int selected = std::clamp(

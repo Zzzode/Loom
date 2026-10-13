@@ -145,8 +145,8 @@ namespace detail {
     auto name_color = p.enabled ? pal.text : pal.muted;
     auto scope_color = [&pal](std::string_view s) -> Color {
         if (s == "user")    return pal.info;
-        if (s == "project") return pal.text_accent;
-        if (s == "local")   return pal.text_muted;
+        if (s == "project") return pal.primary;
+        if (s == "local")   return pal.muted;
         if (s == "managed") return pal.primary;
         return pal.muted;
     }(p.scope);

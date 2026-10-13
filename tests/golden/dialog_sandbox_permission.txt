@@ -2,7 +2,7 @@
 │Network access requested from:                                                                    │
 │[1m[38;2;177;185;249m[49m*.github.com                                                                                      [22m[39m[49m│
 │                                                                                                  │
-│[38;2;78;186;101m[49m [y] Allow once [38;2;177;185;249m[49m [a] Always allow [38;2;255;107;128m[49m [n] Deny [38;2;153;153;153m[49m [Esc] Cancel[39m[49m                                         │
+│[38;2;78;186;101m[49m [y] Allow once [38;2;177;185;249m[49m [a] Always allow [38;2;255;107;128m[49m [n] Deny [38;2;184;184;184m[49m [Esc] Cancel[39m[49m                                         │
 │                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │

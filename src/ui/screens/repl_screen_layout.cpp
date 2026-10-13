@@ -8,6 +8,7 @@
 module;
 
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
 
 module loom.ui.screens.repl_screen;
 
@@ -19,6 +20,7 @@ import loom.ui.chrome.ink_utils;
 import loom.platform.terminal_helpers;
 import loom.ui.chrome.fullscreen_layout;
 import loom.ui.foundation.logo;
+import loom.ui.foundation.theme_provider;
 import loom.ui.features.teams.live_teammates;
 import loom.ui.features.todos.todo_panel;
 import loom.ui.prompt.prompt_input_footer;
@@ -370,34 +372,8 @@ using namespace ftxui;
         if (IsToolAnimating(s.task_view_store)) {
             L.push_back(hbox({spinner_chrome, filler()}) | flex_shrink);
         }
-        // Todo list panel: the AI-managed task list (populated via the
-        // todo_write tool), pinned just above the prompt input. Pure render
-        // of state-owned data — same pattern as the live teammate strip.
-        if (!s.todo_store.items.empty()) {
-            L.push_back(hbox({
-                todos::RenderTodoPanel(s.todo_store.items, term_cols),
-                filler(),
-            }) | flex_shrink);
-        }
-        // Live teammate strip (AgentLine list):
-        // one status + output-tail row per teammate, pinned just above the
-        // prompt input. Pure render of state-owned data.
-        if (!s.task_view_store.live_teammates.empty()) {
-            L.push_back(hbox({
-                teams::live::RenderLiveTeammateStrip(s.task_view_store.live_teammates, term_cols),
-                filler(),
-            }) | flex_shrink);
-        }
-        if (!s.autocomplete_suggestions.empty()) {
-            // In fullscreen mode, suggestions are portaled to FullscreenLayout
-            // as a floating overlay (position:absolute bottom:100% opaque:true).
-            // In FTXUI we apply overlay styling (background + top border) when
-            // is_fullscreen, and pass term_rows for adaptive maxVisibleItems.
-            L.push_back(RenderPromptSuggestions(s, term_cols,
-                /*is_overlay=*/is_fullscreen,
-                /*term_rows=*/term_rows));
-        }
-        L.push_back(RenderPromptInput(s, term_cols, std::clamp((term_rows - 6) / 3, 1, 12)));
+        // Activity is inserted here after fixed chrome has been measured.
+        const auto activity_position = L.size();
         // PromptInputFooter: LeftSide carries mode/tasks/teams via
         // ModeIndicatorOptions; StatusLine is its own nested struct.
         pif::LeftSideOptions left_opts;
@@ -492,7 +468,97 @@ using namespace ftxui;
         // NOTE: No brand pill is rendered in the footer.
         // Branding is rendered by CondensedLogo only
         // in the top header.
-        L.push_back(pif::RenderPromptInputFooter(footer_opts));
+        auto footer = pif::RenderPromptInputFooter(footer_opts);
+        auto measure = [](const Element& element) {
+            element->ComputeRequirement();
+            return element->requirement().min_y;
+        };
+        int fixed_rows = measure(footer);
+        for (const auto& element : L) fixed_rows += measure(element);
+        const int header_rows = slots.header ? measure(slots.header) : 0;
+        // Reserve the maximum one row used by the scroll spacer/sticky
+        // header. A clicked prompt may use none, but overlays can restore it.
+        const int scroll_chrome_rows = 1;
+        const int bottom_limit = std::max(4, term_rows / 2);
+        // Suggestions share the pinned slot with the editor. Reserve its
+        // minimum one-row viewport before choosing the popup window size;
+        // otherwise five overlay rows can clip the caret/footer at 24 rows.
+        bool have_popup = false;
+        if (!s.autocomplete_suggestions.empty()) {
+            const auto minimum_prompt = RenderPromptInput(s, term_cols, 1);
+            const int popup_overhead = is_fullscreen ? 2 : 0;
+            const int item_capacity = std::max(0,
+                bottom_limit - fixed_rows - measure(minimum_prompt) - popup_overhead);
+            auto popup = RenderPromptSuggestions(s, term_cols,
+                /*is_overlay=*/is_fullscreen, /*term_rows=*/term_rows,
+                /*max_visible_items=*/item_capacity);
+            if (popup) {
+                fixed_rows += measure(popup);
+                L.push_back(std::move(popup));
+                have_popup = true;
+            }
+        }
+        int prompt_rows = std::clamp((term_rows - 6) / 3, 1, 12);
+        auto prompt = RenderPromptInput(s, term_cols, prompt_rows);
+        int prompt_height = measure(prompt);
+        const bool multiline = prompt_height > 3;
+        const int transcript_floor = std::min(multiline || have_popup ? 8 : 12, term_rows / 2);
+        const int fixed_limit = std::min(bottom_limit,
+            std::max(0, term_rows - header_rows - scroll_chrome_rows - transcript_floor));
+        // Reduce the held editor's viewport before activity allocation; input
+        // bytes and caret/selection ownership remain with the same component.
+        while (prompt_rows > 1 && fixed_rows + prompt_height > fixed_limit) {
+            --prompt_rows;
+            prompt = RenderPromptInput(s, term_cols, prompt_rows);
+            prompt_height = measure(prompt);
+        }
+        fixed_rows += prompt_height;
+        const int activity_budget = std::max(0, std::min({
+            std::clamp(term_rows / 6, 1, 5),
+            bottom_limit - fixed_rows,
+            term_rows - header_rows - scroll_chrome_rows - transcript_floor - fixed_rows}));
+        const int todo_need = s.todo_store.items.empty() ? 0
+            : static_cast<int>(s.todo_store.items.size()) + 1;
+        const int team_need = static_cast<int>(s.task_view_store.live_teammates.size());
+        Elements activity;
+        if (activity_budget == 1 && todo_need > 0 && team_need > 0) {
+            const auto done = std::ranges::count_if(s.todo_store.items, [](const auto& item) {
+                return item.status == todos::TodoDisplayItem::Status::Completed;
+            });
+            const auto summary = term_cols < 70
+                ? std::format("Tasks {}/{} +{} · Teams {} +{}", done,
+                    s.todo_store.items.size(), s.todo_store.items.size(), team_need, team_need)
+                : std::format("Tasks {}/{} done (+{} hidden) · Teams {} (+{} hidden)",
+                    done, s.todo_store.items.size(), s.todo_store.items.size(), team_need, team_need);
+            activity.push_back(text(teams::live::one_line_tail(summary,
+                static_cast<std::size_t>(term_cols)))
+                | color(loom::ui::design::theme::current_theme().palette->muted)
+                | size(WIDTH, EQUAL, term_cols));
+        } else if (activity_budget > 0) {
+            int todo_rows = todo_need > 0 ? activity_budget : 0;
+            int team_rows = team_need > 0 ? activity_budget : 0;
+            if (todo_need > 0 && team_need > 0) {
+                todo_rows = (activity_budget + 1) / 2;
+                team_rows = activity_budget - todo_rows;
+                if (todo_need < todo_rows) {
+                    team_rows += todo_rows - todo_need;
+                    todo_rows = todo_need;
+                }
+                if (team_need < team_rows) {
+                    todo_rows = std::min(todo_need, todo_rows + team_rows - team_need);
+                    team_rows = team_need;
+                }
+            }
+            if (todo_rows > 0)
+                activity.push_back(todos::RenderTodoPanel(s.todo_store.items, term_cols, todo_rows));
+            if (team_rows > 0)
+                activity.push_back(teams::live::RenderLiveTeammateStrip(
+                    s.task_view_store.live_teammates, term_cols, team_rows));
+        }
+        L.insert(L.begin() + static_cast<std::ptrdiff_t>(activity_position),
+                 activity.begin(), activity.end());
+        L.push_back(std::move(prompt));
+        L.push_back(std::move(footer));
 
         slots.bottom = vbox(std::move(L)) | flex_shrink;
     }

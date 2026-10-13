@@ -386,7 +386,7 @@ Element TextInputImpl::RenderSuggestionsDropdown() const {
         ftxui::text("Suggestions") | bold | color(pal.info),
         ftxui::text(std::format(" ({} total)", (int)suggestions_.size())) | dim,
     }));
-    rows.push_back(separator() | color(pal.border_default));
+    rows.push_back(separator() | color(pal.prompt_border));
 
     for (int i = start_idx; i < end_idx; ++i) {
         const auto& s = suggestions_[i];
@@ -440,7 +440,7 @@ Element TextInputImpl::RenderSuggestionsDropdown() const {
 
     return vbox(std::move(rows))
          | border
-         | color(pal.border_default);
+         | color(pal.prompt_border);
 }
 
 Element TextInputImpl::RenderSearchMode() const {

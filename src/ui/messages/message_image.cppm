@@ -166,17 +166,17 @@ inline void resolve_from_store(ImageMessageData& data) {
         // Clickable Link when supported
         std::string file_url = "file://" + data.source;
         label_el = hbox({
-            text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->icon_default),
-            text(label) | bold | color(loom::ui::design::theme::current_theme().palette->text_link) | hyperlink(file_url),
+            text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->text),
+            text(label) | bold | color(loom::ui::design::theme::current_theme().palette->suggestion) | hyperlink(file_url),
             meta_suffix.empty() ? text("")
-                : text("  " + meta_suffix) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted),
+                : text("  " + meta_suffix) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
         });
     } else {
         label_el = hbox({
-            text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->icon_default),
-            text(label) | bold | color(loom::ui::design::theme::current_theme().palette->icon_default),
+            text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->text),
+            text(label) | bold | color(loom::ui::design::theme::current_theme().palette->text),
             meta_suffix.empty() ? text("")
-                : text("  " + meta_suffix) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted),
+                : text("  " + meta_suffix) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
         });
     }
 
@@ -208,7 +208,7 @@ inline void resolve_from_store(ImageMessageData& data) {
                 hbox({
                     text("  ") | dim,
                     text(std::string(source_icon(data.source_type)) + " ") | dim,
-                    text(display_source) | color(loom::ui::design::theme::current_theme().palette->text_link) |
+                    text(display_source) | color(loom::ui::design::theme::current_theme().palette->suggestion) |
                         (supports_hyperlinks() ? hyperlink(file_url) : nothing),
                 })
             );
@@ -260,7 +260,7 @@ class ImageMessageComponent : public ComponentBase {
                 filler(),
                 vbox({
                     std::move(body)
-                        | (hovered_ ? bgcolor(loom::ui::design::theme::current_theme().palette->surface_selected) : nothing)
+                        | (hovered_ ? bgcolor(loom::ui::design::theme::current_theme().palette->message_actions_background) : nothing)
                         | borderLight | color(loom::ui::design::theme::current_theme().palette->brief_label_you),
                 }) | flex_shrink,
             }),

@@ -47,7 +47,7 @@ struct ShutdownMessageData {
     // Reason-specific message
     std::string icon;
     std::string message;
-    Color msg_color = loom::ui::design::theme::current_theme().palette->text_muted;
+    Color msg_color = loom::ui::design::theme::current_theme().palette->muted;
 
     switch (data.reason) {
         case ShutdownReason::UserExit:

@@ -19,7 +19,7 @@ export namespace loom::ui::messages {
 // inverted key caps describe keyboard commands without implying click support.
 [[nodiscard]] inline ftxui::Element message_action(
     std::string_view label,
-    ftxui::Color fg = loom::ui::design::theme::current_theme().palette->text_link) {
+    ftxui::Color fg = loom::ui::design::theme::current_theme().palette->suggestion) {
     using namespace ftxui;
     return text("[" + std::string(label) + "]") | underlined | bold
         | color(fg);

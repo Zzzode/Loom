@@ -194,7 +194,7 @@ namespace detail {
 /// Plugin identity uses the icon accent; warning/error colors describe status only.
 [[nodiscard]] inline Color name_color(std::string_view name) {
     (void)name;
-    return loom::ui::design::theme::current_theme().palette->icon_accent;
+    return loom::ui::design::theme::current_theme().palette->primary;
 }
 
 /// Coloured letter-icon (first char, uppercase).
@@ -228,7 +228,7 @@ namespace detail {
             text("Esc to go back") | dim,
         }),
         separator(),
-        paragraph(std::string{ui::k_plugin_help_text}) | color(pal.text_muted),
+        paragraph(std::string{ui::k_plugin_help_text}) | color(pal.muted),
     }) | borderLight;
 }
 
@@ -243,7 +243,7 @@ namespace detail {
 
     Elements parts{
         text(selected ? "› " : "  ") | color(head_color),
-        text(row.label) | bold | color(selected ? pal.text : pal.text_muted),
+        text(row.label) | bold | color(selected ? pal.text : pal.muted),
         filler(),
     };
     if (row.scope) {
@@ -254,7 +254,7 @@ namespace detail {
 
     Elements sub{line};
     if (!row.message.empty()) {
-        sub.push_back(paragraph("   " + row.message) | dim | color(pal.text_muted));
+        sub.push_back(paragraph("   " + row.message) | dim | color(pal.muted));
     }
     if (row.guidance) {
         sub.push_back(hbox({
@@ -325,7 +325,7 @@ namespace detail {
     for (const auto& m : messages) {
         msgs.push_back(hbox({
             text("    • ") | dim,
-            paragraph(m) | (ok ? color(pal.text_muted) : color(pal.danger) | dim),
+            paragraph(m) | (ok ? color(pal.muted) : color(pal.danger) | dim),
         }));
     }
     body.push_back(vbox(std::move(msgs)) | borderEmpty);

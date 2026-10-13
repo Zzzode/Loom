@@ -11,22 +11,21 @@ namespace loom::ui::design::tokens::palette {
 
 const Palette& dark() noexcept {
     static const Palette p = {
-    .primary             = LOOM_ACCENT,
-    .primary_shimmer     = LOOM_ACCENT_SHIMMER,
+    .primary             = ftxui::Color::RGB(224, 137, 105),
+    .primary_shimmer     = ftxui::Color::RGB(235, 159, 127),
     .info                = ftxui::Color::RGB(177, 185, 249),
     .success             = ftxui::Color::RGB( 78, 186, 101),
     .warning             = ftxui::Color::RGB(255, 193,   7),
     .danger              = ftxui::Color::RGB(255, 107, 128),
-    .muted               = ftxui::Color::RGB(153, 153, 153),
+    .muted               = ftxui::Color::RGB(184, 184, 184),
     //   subtle                   = rgb(80, 80, 80)
     //   suggestion               = rgb(177, 185, 249)  (lavender, NOT sky blue)
-    //   text                     = rgb(255, 255, 255)  (pure white)
     // NOTE (clr-dark-palette-11-p1): `info` carries the info/permission
     // accent — corrected sky-blue rgb(110,151,255) → lavender
     // rgb(177,185,249) (== permission/suggestion) so dialog/info accents match.
     .subtle              = ftxui::Color::RGB( 80,  80,  80),
     .suggestion          = ftxui::Color::RGB(177, 185, 249),
-    .text                = ftxui::Color::RGB(255, 255, 255),
+    .text                = ftxui::Color::RGB(224, 218, 210),
     // accent chips.  (Distinct from `background`, which stays app-chrome dark.)
     .inverse_text        = ftxui::Color::RGB(  0,   0,   0),
     // The background stays app-chrome dark rgb(32,33,36) rather than a
@@ -36,25 +35,24 @@ const Palette& dark() noexcept {
     .chrome              = ftxui::Color::RGB( 55,  57,  61),
     .rate_limit_fill     = ftxui::Color::RGB(177, 185, 249),
     .rate_limit_empty    = ftxui::Color::RGB( 80,  83, 112),
-    .brief_label         = LOOM_ACCENT,
+    .brief_label         = ftxui::Color::RGB(224, 137, 105),
     //   userMessageBackground      = rgb(55, 55, 55)      (dark slate bubble)
     //   messageActionsBackground   = rgb(44, 50, 62)      (cool-gray selection)
     //   userMessageBackgroundHover = rgb(70, 70, 70)      (slightly lighter slate)
     .user_message_background        = ftxui::Color::RGB( 55,  55,  55),
     .user_message_background_hover  = ftxui::Color::RGB( 70,  70,  70),
     .message_actions_background     = ftxui::Color::RGB( 44,  50,  62),
-    // themes).  Corrected from the Chart.js default palette to the
-    // warm→cool 7-stop gradient (clr-rainbow-28-p1).
+    // Seven warm highlight stops; names and indexing remain compatible.
     .rainbow = {{
-        ftxui::Color::RGB(235,  95,  87),   // rainbow_red
-        ftxui::Color::RGB(245, 139,  87),   // rainbow_orange
-        ftxui::Color::RGB(250, 195,  95),   // rainbow_yellow
-        ftxui::Color::RGB(145, 200, 130),   // rainbow_green
-        ftxui::Color::RGB(130, 170, 220),   // rainbow_blue
-        ftxui::Color::RGB(155, 130, 200),   // rainbow_indigo
-        ftxui::Color::RGB(200, 130, 180),   // rainbow_violet
+        ftxui::Color::RGB(210, 137, 112),
+        ftxui::Color::RGB(216, 154, 119),
+        ftxui::Color::RGB(222, 171, 125),
+        ftxui::Color::RGB(225, 187, 137),
+        ftxui::Color::RGB(214, 175, 145),
+        ftxui::Color::RGB(201, 154, 132),
+        ftxui::Color::RGB(193, 142, 121),
     }},
-    .rainbow_shimmer     = ftxui::Color::RGB(230, 230, 250),
+    .rainbow_shimmer     = ftxui::Color::RGB(241, 208, 172),
     // GitHub-bright greens/reds to the original's saturated dark shades (clr-dark-11):
     //   diffAdded=rgb(34,92,43)  diffRemoved=rgb(122,41,54)
     //   diffAddedWord=rgb(56,166,96)  diffRemovedWord=rgb(179,89,107)
@@ -64,86 +62,57 @@ const Palette& dark() noexcept {
     .diff_removed_word   = ftxui::Color::RGB(179,  89, 107),
     .merged              = ftxui::Color::RGB(175, 135, 255),
     // Prompt chrome:
-    //   dark bash_border            = rgb(253, 93, 177)   bright pink
     //   dark prompt_border          = rgb(136,136, 136)  ansi:whiteBright
-    .bash_border         = ftxui::Color::RGB(253,  93, 177),
+    .bash_border         = ftxui::Color::RGB(224, 137, 105),
     .prompt_border       = ftxui::Color::RGB(136, 136, 136),
     .permission          = ftxui::Color::RGB(177, 185, 249),
     .auto_accept         = ftxui::Color::RGB(175, 135, 255),
-    .loom_body          = LOOM_ACCENT,
+    .loom_body          = ftxui::Color::RGB(215, 119,  87),
     // ── Shimmer tokens ──
     .permission_shimmer     = ftxui::Color::RGB(207, 215, 255),
     .inactive_shimmer       = ftxui::Color::RGB(193, 193, 193),
     .warning_shimmer        = ftxui::Color::RGB(255, 223,  57),
     .prompt_border_shimmer  = ftxui::Color::RGB(166, 166, 166),
-    .fast_mode_shimmer      = ftxui::Color::RGB(255, 165,  70),
+    .fast_mode_shimmer      = ftxui::Color::RGB(229, 181,  96),
     .loom_blue_shimmer    = ftxui::Color::RGB(177, 195, 255),
     .rainbow_shimmer_stops = {{
-        ftxui::Color::RGB(250, 155, 147),
-        ftxui::Color::RGB(255, 185, 137),
-        ftxui::Color::RGB(255, 225, 155),
-        ftxui::Color::RGB(185, 230, 180),
-        ftxui::Color::RGB(180, 205, 240),
-        ftxui::Color::RGB(195, 180, 230),
-        ftxui::Color::RGB(230, 180, 210),
+        ftxui::Color::RGB(230, 167, 140),
+        ftxui::Color::RGB(235, 182, 150),
+        ftxui::Color::RGB(240, 196, 158),
+        ftxui::Color::RGB(241, 208, 172),
+        ftxui::Color::RGB(232, 198, 173),
+        ftxui::Color::RGB(220, 180, 158),
+        ftxui::Color::RGB(212, 168, 146),
     }},
     // ── Loom blue system spinner ──
     .loom_blue           = ftxui::Color::RGB(147, 165, 255),
     // ── Mode colors ──
-    .plan_mode             = ftxui::Color::RGB( 72, 150, 140),
+    .plan_mode             = ftxui::Color::RGB(224, 137, 105),
     .ide                   = ftxui::Color::RGB( 71, 130, 200),
     .remember              = ftxui::Color::RGB(177, 185, 249),
-    .fast_mode             = ftxui::Color::RGB(255, 120,  20),
+    .fast_mode             = ftxui::Color::RGB(217, 154,  56),
     // ── Diff dimmed ──
     .diff_added_dimmed     = ftxui::Color::RGB( 71,  88,  74),
     .diff_removed_dimmed   = ftxui::Color::RGB(105,  72,  77),
-    // ── Subagent colors (*_FOR_SUBAGENTS_ONLY, dark theme 473-480) ──
-    .subagent_red          = ftxui::Color::RGB(220,  38,  38),
-    .subagent_blue         = ftxui::Color::RGB( 37,  99, 235),
-    .subagent_green        = ftxui::Color::RGB( 22, 163,  74),
-    .subagent_yellow       = ftxui::Color::RGB(202, 138,   4),
-    .subagent_purple       = ftxui::Color::RGB(147,  51, 234),
-    .subagent_orange       = ftxui::Color::RGB(234,  88,  12),
-    .subagent_pink         = ftxui::Color::RGB(219,  39, 119),
-    .subagent_cyan         = ftxui::Color::RGB(  8, 145, 178),
+    // ── Readable agent identities; names and glyphs remain the primary labels ──
+    .subagent_red          = ftxui::Color::RGB(233, 149, 139),
+    .subagent_blue         = ftxui::Color::RGB(155, 183, 210),
+    .subagent_green        = ftxui::Color::RGB(152, 187, 155),
+    .subagent_yellow       = ftxui::Color::RGB(218, 187, 125),
+    .subagent_purple       = ftxui::Color::RGB(184, 167, 205),
+    .subagent_orange       = ftxui::Color::RGB(232, 170, 129),
+    .subagent_pink         = ftxui::Color::RGB(214, 158, 182),
+    .subagent_cyan         = ftxui::Color::RGB(147, 193, 190),
     // ── Misc ──
     .professional_blue     = ftxui::Color::RGB(106, 155, 204),
     .chrome_yellow         = ftxui::Color::RGB(251, 188,   4),
     .selection_bg          = ftxui::Color::RGB( 38,  79, 120),
     .bash_message_background = ftxui::Color::RGB( 65,  60,  65),
     .memory_background     = ftxui::Color::RGB( 55,  65,  70),
-    .brief_label_you       = ftxui::Color::RGB(122, 180, 232),
-    .brief_label_loom    = LOOM_ACCENT,
-    // ── Individual rainbow fields ──
-    .rainbow_red           = ftxui::Color::RGB(235,  95,  87),
-    .rainbow_orange        = ftxui::Color::RGB(245, 139,  87),
-    .rainbow_yellow        = ftxui::Color::RGB(250, 195,  95),
-    .rainbow_green         = ftxui::Color::RGB(145, 200, 130),
-    .rainbow_blue          = ftxui::Color::RGB(130, 170, 220),
-    .rainbow_indigo        = ftxui::Color::RGB(155, 130, 200),
-    .rainbow_violet        = ftxui::Color::RGB(200, 130, 180),
-    .rainbow_red_shimmer   = ftxui::Color::RGB(250, 155, 147),
-    .rainbow_orange_shimmer= ftxui::Color::RGB(255, 185, 137),
-    .rainbow_yellow_shimmer= ftxui::Color::RGB(255, 225, 155),
-    .rainbow_green_shimmer = ftxui::Color::RGB(185, 230, 180),
-    .rainbow_blue_shimmer  = ftxui::Color::RGB(180, 205, 240),
-    .rainbow_indigo_shimmer= ftxui::Color::RGB(195, 180, 230),
-    .rainbow_violet_shimmer= ftxui::Color::RGB(230, 180, 210),
-    // ── Semantic derived tokens (dark theme) ──
-    .text_muted            = ftxui::Color::RGB(153, 153, 153),  // = muted
-    .text_link             = ftxui::Color::RGB(177, 185, 249),  // = suggestion
-    .text_accent           = LOOM_ACCENT,                            // = primary
+    .brief_label_you       = ftxui::Color::RGB(217, 154,  56),
+    .brief_label_loom    = ftxui::Color::RGB(224, 137, 105),
+    // ── Divider border ──
     .border_subtle         = ftxui::Color::RGB( 55,  57,  61),  // = chrome
-    .border_default        = ftxui::Color::RGB(136, 136, 136),  // = prompt_border
-    .border_accent         = ftxui::Color::RGB(177, 185, 249),  // = permission
-    .border_error          = ftxui::Color::RGB(255, 107, 128),  // = danger
-    .surface_hover         = ftxui::Color::RGB( 70,  70,  70),  // = user_message_background_hover
-    .surface_selected      = ftxui::Color::RGB( 44,  50,  62),  // = message_actions_background
-    .surface_bash          = ftxui::Color::RGB( 65,  60,  65),  // = bash_message_background
-    .surface_memory        = ftxui::Color::RGB( 55,  65,  70),  // = memory_background
-    .icon_default          = ftxui::Color::RGB(255, 255, 255),  // = text (white on dark)
-    .icon_muted            = ftxui::Color::RGB(153, 153, 153),  // = muted
-    .icon_accent           = LOOM_ACCENT,                            // = primary
     .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
     .spinner_gold          = ftxui::Color::RGB(217, 154,  56),
     // ── Message list role tokens ──
@@ -152,11 +121,11 @@ const Palette& dark() noexcept {
     .role_bg_system          = ftxui::Color::RGB( 30,  30,  36),
     .role_bg_tool            = ftxui::Color::RGB( 24,  40,  40),
     .role_bg_thinking        = ftxui::Color::RGB( 34,  30,  48),
-    .role_pill_user          = ftxui::Color::RGB( 59, 130, 246),
-    .role_pill_assistant     = ftxui::Color::RGB(168,  85, 247),
-    .role_pill_system        = ftxui::Color::RGB(234, 179,   8),
-    .role_pill_tool          = ftxui::Color::RGB( 20, 184, 166),
-    .role_pill_thinking      = ftxui::Color::RGB(139,  92, 246),
+    .role_pill_user          = ftxui::Color::RGB(217, 154,  56),
+    .role_pill_assistant     = ftxui::Color::RGB(224, 137, 105),
+    .role_pill_system        = ftxui::Color::RGB(217, 154,  56),
+    .role_pill_tool          = ftxui::Color::RGB(217, 154,  56),
+    .role_pill_thinking      = ftxui::Color::RGB(224, 137, 105),
     .message_error_accent    = ftxui::Color::RGB(239,  68,  68),
     .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
     .message_list_selected_bg   = ftxui::Color::RGB( 30,  64, 175),
@@ -174,7 +143,7 @@ const Palette& dark() noexcept {
     .info_tint_bg             = ftxui::Color::RGB( 30,  40,  60),
     .accent_green             = ftxui::Color::RGB( 80, 200, 120),
     .accent_purple            = ftxui::Color::RGB(120,  80, 120),
-    .accent_pink              = ftxui::Color::RGB(255,   0, 135),
+    .accent_pink              = ftxui::Color::RGB(224, 137, 105),
     .stats_green_1            = ftxui::Color::RGB( 60, 100,  60),
     .stats_green_2            = ftxui::Color::RGB( 80, 140,  80),
     .stats_green_3            = ftxui::Color::RGB(100, 180, 100),
@@ -195,17 +164,17 @@ const Palette& dark() noexcept {
 
 const Palette& light() noexcept {
     static const Palette p = {
-    .primary             = LOOM_ACCENT,
-    .primary_shimmer     = ftxui::Color::RGB(245, 149, 117),
+    .primary             = ftxui::Color::RGB(160,  70,  42),
+    .primary_shimmer     = ftxui::Color::RGB(168,  80,  51),
     // (clr-light-palette-17-p1).  `info` carries the permission/suggestion
     // accent = rgb(87,105,247) medium blue.
     .info                = ftxui::Color::RGB( 87, 105, 247),
     .success             = ftxui::Color::RGB( 44, 122,  57),
-    .warning             = ftxui::Color::RGB(150, 108,  30),
+    .warning             = ftxui::Color::RGB(153,  92,   0),
     .danger              = ftxui::Color::RGB(171,  43,  63),
     .muted               = ftxui::Color::RGB(102, 102, 102),
     .subtle              = ftxui::Color::RGB(175, 175, 175),
-    .suggestion          = ftxui::Color::RGB( 87, 105, 247),
+    .suggestion          = ftxui::Color::RGB( 77,  93, 220),
     .text                = ftxui::Color::RGB(  0,   0,   0),
     .inverse_text        = ftxui::Color::RGB(255, 255, 255),
     // as dark; keep CPP's real light app-chrome rather than paint the UI cyan.
@@ -213,7 +182,7 @@ const Palette& light() noexcept {
     .chrome              = ftxui::Color::RGB(220, 220, 220),
     .rate_limit_fill     = ftxui::Color::RGB( 87, 105, 247),
     .rate_limit_empty    = ftxui::Color::RGB( 39,  47, 111),
-    .brief_label         = LOOM_ACCENT,
+    .brief_label         = ftxui::Color::RGB(160,  70,  42),
     // Light-mode equivalents of the message chrome tokens:
     //   userMessageBackground      = rgb(240, 240, 240)  near-white bubble
     //   messageActionsBackground   = rgb(232, 236, 244)  cool gray
@@ -221,8 +190,16 @@ const Palette& light() noexcept {
     .user_message_background        = ftxui::Color::RGB(240, 240, 240),
     .user_message_background_hover  = ftxui::Color::RGB(252, 252, 252),
     .message_actions_background     = ftxui::Color::RGB(232, 236, 244),
-    .rainbow              = dark().rainbow,
-    .rainbow_shimmer     = ftxui::Color::RGB(120,  80, 200),
+    .rainbow              = {{
+        ftxui::Color::RGB(156,  70,  43),
+        ftxui::Color::RGB(151,  80,  42),
+        ftxui::Color::RGB(146,  90,  37),
+        ftxui::Color::RGB(137,  95,  30),
+        ftxui::Color::RGB(145,  85,  56),
+        ftxui::Color::RGB(150,  74,  49),
+        ftxui::Color::RGB(157,  65,  43),
+    }},
+    .rainbow_shimmer     = ftxui::Color::RGB(165,  78,  51),
     //   diffAdded=rgb(105,219,124)  diffRemoved=rgb(255,168,180)
     //   diffAddedWord=rgb(47,157,68)  diffRemovedWord=rgb(209,69,75)
     .diff_added          = ftxui::Color::RGB(105, 219, 124),
@@ -231,91 +208,70 @@ const Palette& light() noexcept {
     .diff_removed_word   = ftxui::Color::RGB(209,  69,  75),
     .merged              = ftxui::Color::RGB(135,   0, 255),
     // Prompt chrome:
-    //   light bash_border            = rgb(255,  0, 135)   same saturated pink
     //   light prompt_border        = rgb(153,153, 153)   ansi:whiteBright
-    .bash_border         = ftxui::Color::RGB(255,   0, 135),
+    .bash_border         = ftxui::Color::RGB(160,  70,  42),
     .prompt_border       = ftxui::Color::RGB(153, 153, 153),
     .permission          = ftxui::Color::RGB( 87, 105, 247),
     .auto_accept         = ftxui::Color::RGB(135,   0, 255),
-    .loom_body          = LOOM_ACCENT,
+    .loom_body          = ftxui::Color::RGB(215, 119,  87),
     // ── Shimmer tokens ──
     .permission_shimmer     = ftxui::Color::RGB(137, 155, 255),
     .inactive_shimmer       = ftxui::Color::RGB(142, 142, 142),
     .warning_shimmer        = ftxui::Color::RGB(200, 158,  80),
     .prompt_border_shimmer  = ftxui::Color::RGB(183, 183, 183),
-    .fast_mode_shimmer      = ftxui::Color::RGB(255, 150,  50),
+    .fast_mode_shimmer      = ftxui::Color::RGB(153,  95,  37),
     .loom_blue_shimmer    = ftxui::Color::RGB(117, 135, 255),
-    .rainbow_shimmer_stops  = dark().rainbow_shimmer_stops,         // identical across all themes
+    .rainbow_shimmer_stops  = {{
+        ftxui::Color::RGB(165,  78,  51),
+        ftxui::Color::RGB(158,  87,  49),
+        ftxui::Color::RGB(151,  94,  44),
+        ftxui::Color::RGB(142,  99,  39),
+        ftxui::Color::RGB(153,  90,  67),
+        ftxui::Color::RGB(159,  82,  59),
+        ftxui::Color::RGB(165,  72,  52),
+    }},
     // ── Loom blue system spinner ──
     .loom_blue           = ftxui::Color::RGB( 87, 105, 247),
     // ── Mode colors ──
-    .plan_mode             = ftxui::Color::RGB(  0, 102, 102),
+    .plan_mode             = ftxui::Color::RGB(160,  70,  42),
     .ide                   = ftxui::Color::RGB( 71, 130, 200),
     .remember              = ftxui::Color::RGB(  0,   0, 255),
-    .fast_mode             = ftxui::Color::RGB(255, 106,   0),
+    .fast_mode             = ftxui::Color::RGB(146,  88,  28),
     // ── Diff dimmed ──
     .diff_added_dimmed     = ftxui::Color::RGB(199, 225, 203),
     .diff_removed_dimmed   = ftxui::Color::RGB(253, 210, 216),
-    // ── Subagent colors (light theme 148-155 — same Tailwind 600 values) ──
-    .subagent_red          = ftxui::Color::RGB(220,  38,  38),
-    .subagent_blue         = ftxui::Color::RGB( 37,  99, 235),
-    .subagent_green        = ftxui::Color::RGB( 22, 163,  74),
-    .subagent_yellow       = ftxui::Color::RGB(202, 138,   4),
-    .subagent_purple       = ftxui::Color::RGB(147,  51, 234),
-    .subagent_orange       = ftxui::Color::RGB(234,  88,  12),
-    .subagent_pink         = ftxui::Color::RGB(219,  39, 119),
-    .subagent_cyan         = ftxui::Color::RGB(  8, 145, 178),
+    // ── Readable agent identities; names and glyphs remain the primary labels ──
+    .subagent_red          = ftxui::Color::RGB(155,  55,  50),
+    .subagent_blue         = ftxui::Color::RGB( 54,  91, 145),
+    .subagent_green        = ftxui::Color::RGB( 50, 109,  68),
+    .subagent_yellow       = ftxui::Color::RGB(126,  94,  24),
+    .subagent_purple       = ftxui::Color::RGB(105,  72, 135),
+    .subagent_orange       = ftxui::Color::RGB(155,  77,  34),
+    .subagent_pink         = ftxui::Color::RGB(141,  60,  93),
+    .subagent_cyan         = ftxui::Color::RGB( 37, 106, 108),
     // ── Misc ──
     .professional_blue     = ftxui::Color::RGB(106, 155, 204),
     .chrome_yellow         = ftxui::Color::RGB(251, 188,   4),
     .selection_bg          = ftxui::Color::RGB(180, 213, 255),
     .bash_message_background = ftxui::Color::RGB(250, 245, 250),
     .memory_background     = ftxui::Color::RGB(230, 245, 250),
-    .brief_label_you       = ftxui::Color::RGB( 37,  99, 235),
-    .brief_label_loom    = LOOM_ACCENT,
-    // ── Individual rainbow fields ──
-    .rainbow_red           = ftxui::Color::RGB(235,  95,  87),
-    .rainbow_orange        = ftxui::Color::RGB(245, 139,  87),
-    .rainbow_yellow        = ftxui::Color::RGB(250, 195,  95),
-    .rainbow_green         = ftxui::Color::RGB(145, 200, 130),
-    .rainbow_blue          = ftxui::Color::RGB(130, 170, 220),
-    .rainbow_indigo        = ftxui::Color::RGB(155, 130, 200),
-    .rainbow_violet        = ftxui::Color::RGB(200, 130, 180),
-    .rainbow_red_shimmer   = ftxui::Color::RGB(250, 155, 147),
-    .rainbow_orange_shimmer= ftxui::Color::RGB(255, 185, 137),
-    .rainbow_yellow_shimmer= ftxui::Color::RGB(255, 225, 155),
-    .rainbow_green_shimmer = ftxui::Color::RGB(185, 230, 180),
-    .rainbow_blue_shimmer  = ftxui::Color::RGB(180, 205, 240),
-    .rainbow_indigo_shimmer= ftxui::Color::RGB(195, 180, 230),
-    .rainbow_violet_shimmer= ftxui::Color::RGB(230, 180, 210),
-    // ── Semantic derived tokens (light theme) ──
-    .text_muted            = ftxui::Color::RGB(102, 102, 102),  // = muted
-    .text_link             = ftxui::Color::RGB( 87, 105, 247),  // = suggestion
-    .text_accent           = LOOM_ACCENT,                            // = primary
+    .brief_label_you       = ftxui::Color::RGB(146,  88,  28),
+    .brief_label_loom    = ftxui::Color::RGB(160,  70,  42),
+    // ── Divider border ──
     .border_subtle         = ftxui::Color::RGB(175, 175, 175),  // = subtle
-    .border_default        = ftxui::Color::RGB(153, 153, 153),  // = prompt_border
-    .border_accent         = ftxui::Color::RGB( 87, 105, 247),  // = permission
-    .border_error          = ftxui::Color::RGB(171,  43,  63),  // = danger
-    .surface_hover         = ftxui::Color::RGB(252, 252, 252),  // = user_message_background_hover
-    .surface_selected      = ftxui::Color::RGB(232, 236, 244),  // = message_actions_background
-    .surface_bash          = ftxui::Color::RGB(250, 245, 250),  // = bash_message_background
-    .surface_memory        = ftxui::Color::RGB(230, 245, 250),  // = memory_background
-    .icon_default          = ftxui::Color::RGB(  0,   0,   0),  // = text (black on light)
-    .icon_muted            = ftxui::Color::RGB(102, 102, 102),  // = muted
-    .icon_accent           = LOOM_ACCENT,                            // = primary
     .status_bar_background = ftxui::Color::RGB(240, 240, 240),
-    .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
+    .spinner_gold          = ftxui::Color::RGB(146,  88,  28),
     // ── Message list role tokens ──
     .role_bg_user            = ftxui::Color::RGB(219, 234, 254),
     .role_bg_assistant       = ftxui::Color::RGB(237, 233, 254),
     .role_bg_system          = ftxui::Color::RGB(243, 244, 246),
     .role_bg_tool            = ftxui::Color::RGB(204, 251, 241),
     .role_bg_thinking        = ftxui::Color::RGB(237, 233, 254),
-    .role_pill_user          = ftxui::Color::RGB( 37,  99, 235),
-    .role_pill_assistant     = ftxui::Color::RGB(147,  51, 234),
-    .role_pill_system        = ftxui::Color::RGB(202, 138,   4),
-    .role_pill_tool          = ftxui::Color::RGB( 13, 148, 136),
-    .role_pill_thinking      = ftxui::Color::RGB(124,  58, 237),
+    .role_pill_user          = ftxui::Color::RGB(146,  88,  28),
+    .role_pill_assistant     = ftxui::Color::RGB(160,  70,  42),
+    .role_pill_system        = ftxui::Color::RGB(146,  88,  28),
+    .role_pill_tool          = ftxui::Color::RGB(146,  88,  28),
+    .role_pill_thinking      = ftxui::Color::RGB(160,  70,  42),
     .message_error_accent    = ftxui::Color::RGB(220,  38,  38),
     .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
     .message_list_selected_bg   = ftxui::Color::RGB(191, 219, 254),
@@ -333,7 +289,7 @@ const Palette& light() noexcept {
     .info_tint_bg             = ftxui::Color::RGB(225, 235, 250),
     .accent_green             = ftxui::Color::RGB( 80, 200, 120),
     .accent_purple            = ftxui::Color::RGB(120,  80, 120),
-    .accent_pink              = ftxui::Color::RGB(255,   0, 135),
+    .accent_pink              = ftxui::Color::RGB(160,  70,  42),
     .stats_green_1            = ftxui::Color::RGB( 60, 100,  60),
     .stats_green_2            = ftxui::Color::RGB( 80, 140,  80),
     .stats_green_3            = ftxui::Color::RGB(100, 180, 100),
@@ -355,16 +311,16 @@ const Palette& light() noexcept {
 const Palette& dark_daltonized() noexcept {
     static const Palette p = {
     .primary             = ftxui::Color::RGB(255, 153,  51),
-    .primary_shimmer     = ftxui::Color::RGB(255, 183, 101),  // loomShimmer
+    .primary_shimmer     = ftxui::Color::RGB(255, 183, 101),
     // info/suggestion/permission all = rgb(153,204,255) light blue.
     .info                = ftxui::Color::RGB(153, 204, 255),
     .success             = ftxui::Color::RGB( 51, 153, 255),  // blue, not green
     .warning             = ftxui::Color::RGB(255, 204,   0),  // yellow-orange
     .danger              = ftxui::Color::RGB(255, 102, 102),  // error
-    .muted               = ftxui::Color::RGB(153, 153, 153),  // inactive
+    .muted               = ftxui::Color::RGB(184, 184, 184),
     .subtle              = ftxui::Color::RGB( 80,  80,  80),
     .suggestion          = ftxui::Color::RGB(153, 204, 255),
-    .text                = ftxui::Color::RGB(255, 255, 255),
+    .text                = ftxui::Color::RGB(224, 218, 210),
     .inverse_text        = ftxui::Color::RGB(  0,   0,   0),
     .background          = dark().background,
     .chrome              = dark().chrome,
@@ -376,9 +332,9 @@ const Palette& dark_daltonized() noexcept {
     .user_message_background        = dark().user_message_background,
     .user_message_background_hover  = dark().user_message_background_hover,
     .message_actions_background     = dark().message_actions_background,
-    // daltonized — alias the corrected dark gradient (clr-rainbow-28-p1).
+    // Reuse the dark warm highlight stops without changing keyword indexing.
     .rainbow = dark().rainbow,
-    .rainbow_shimmer     = dark().rainbow_shimmer,
+    .rainbow_shimmer     = ftxui::Color::RGB(241, 208, 172),
     //   diffAdded=rgb(0,68,102)  diffRemoved=rgb(102,0,0)
     //   diffAddedWord=rgb(0,119,179)  diffRemovedWord=rgb(179,0,0)
     .diff_added          = ftxui::Color::RGB(  0,  68, 102),
@@ -386,79 +342,50 @@ const Palette& dark_daltonized() noexcept {
     .diff_added_word     = ftxui::Color::RGB(  0, 119, 179),
     .diff_removed_word   = ftxui::Color::RGB(179,   0,   0),
     .merged              = ftxui::Color::RGB(175, 135, 255),  // == autoAccept
-    // Prompt chrome — dark daltonized: bash_border
-    //   = rgb(51,153,255) bright blue (not pink — CVD-safe). prompt_border = dark gray.
-    .bash_border         = ftxui::Color::RGB( 51, 153, 255),
+    // Dark CVD prompt uses the readable warm primary; the frame stays neutral.
+    .bash_border         = ftxui::Color::RGB(255, 153,  51),
     .prompt_border       = ftxui::Color::RGB(136, 136, 136),
     .permission          = ftxui::Color::RGB(153, 204, 255),
     .auto_accept         = ftxui::Color::RGB(175, 135, 255),
-    // orange (unlike `primary`/`loom` which shifts to rgb(255,153,51) for CVD).
-    .loom_body          = LOOM_ACCENT,
+    // Artwork retains canonical terracotta while UI primary adapts for contrast.
+    .loom_body          = ftxui::Color::RGB(215, 119,  87),
     // ── Shimmer tokens ──
     .permission_shimmer     = ftxui::Color::RGB(183, 224, 255),
     .inactive_shimmer       = ftxui::Color::RGB(193, 193, 193),
     .warning_shimmer        = ftxui::Color::RGB(255, 234,  50),
     .prompt_border_shimmer  = ftxui::Color::RGB(166, 166, 166),
-    .fast_mode_shimmer      = ftxui::Color::RGB(255, 165,  70),
+    .fast_mode_shimmer      = ftxui::Color::RGB(229, 181,  96),
     .loom_blue_shimmer    = ftxui::Color::RGB(183, 224, 255),
-    .rainbow_shimmer_stops  = dark().rainbow_shimmer_stops,         // identical across all themes
+    .rainbow_shimmer_stops  = dark().rainbow_shimmer_stops,
     // ── Loom blue system spinner ──
     .loom_blue           = ftxui::Color::RGB(153, 204, 255),
     // ── Mode colors ──
-    .plan_mode             = ftxui::Color::RGB(102, 153, 153),
+    .plan_mode             = ftxui::Color::RGB(255, 153,  51),
     .ide                   = ftxui::Color::RGB( 71, 130, 200),
     .remember              = ftxui::Color::RGB(153, 204, 255),
-    .fast_mode             = ftxui::Color::RGB(255, 120,  20),
+    .fast_mode             = ftxui::Color::RGB(217, 154,  56),
     // ── Diff dimmed ──
     .diff_added_dimmed     = ftxui::Color::RGB( 62,  81,  91),
     .diff_removed_dimmed   = ftxui::Color::RGB( 62,  44,  44),
-    // ── Subagent colors (darkDaltonizedTheme 554-561 — bright CVD-safe) ──
-    .subagent_red          = ftxui::Color::RGB(255, 102, 102),  // bright red
-    .subagent_blue         = ftxui::Color::RGB(102, 178, 255),  // bright blue
-    .subagent_green        = ftxui::Color::RGB(102, 255, 102),  // bright green
-    .subagent_yellow       = ftxui::Color::RGB(255, 255, 102),  // bright yellow
-    .subagent_purple       = ftxui::Color::RGB(178, 102, 255),  // bright purple
-    .subagent_orange       = ftxui::Color::RGB(255, 178, 102),  // bright orange
-    .subagent_pink         = ftxui::Color::RGB(255, 153, 204),  // bright pink
-    .subagent_cyan         = ftxui::Color::RGB(102, 204, 204),  // bright cyan
+    // ── Readable agent identities; names and glyphs remain the primary labels ──
+    .subagent_red          = ftxui::Color::RGB(239, 157, 134),
+    .subagent_blue         = ftxui::Color::RGB(147, 185, 229),
+    .subagent_green        = ftxui::Color::RGB(168, 198, 148),
+    .subagent_yellow       = ftxui::Color::RGB(226, 205, 135),
+    .subagent_purple       = ftxui::Color::RGB(185, 167, 215),
+    .subagent_orange       = ftxui::Color::RGB(240, 187, 133),
+    .subagent_pink         = ftxui::Color::RGB(221, 168, 197),
+    .subagent_cyan         = ftxui::Color::RGB(145, 199, 201),
     // ── Misc ──
     .professional_blue     = ftxui::Color::RGB(106, 155, 204),
     .chrome_yellow         = ftxui::Color::RGB(251, 188,   4),
     .selection_bg          = ftxui::Color::RGB( 38,  79, 120),
     .bash_message_background = ftxui::Color::RGB( 65,  60,  65),
     .memory_background     = ftxui::Color::RGB( 55,  65,  70),
-    .brief_label_you       = ftxui::Color::RGB(122, 180, 232),
+    .brief_label_you       = ftxui::Color::RGB(217, 154,  56),
     .brief_label_loom    = ftxui::Color::RGB(255, 153,  51),
-    // ── Individual rainbow fields ──
-    .rainbow_red           = ftxui::Color::RGB(235,  95,  87),
-    .rainbow_orange        = ftxui::Color::RGB(245, 139,  87),
-    .rainbow_yellow        = ftxui::Color::RGB(250, 195,  95),
-    .rainbow_green         = ftxui::Color::RGB(145, 200, 130),
-    .rainbow_blue          = ftxui::Color::RGB(130, 170, 220),
-    .rainbow_indigo        = ftxui::Color::RGB(155, 130, 200),
-    .rainbow_violet        = ftxui::Color::RGB(200, 130, 180),
-    .rainbow_red_shimmer   = ftxui::Color::RGB(250, 155, 147),
-    .rainbow_orange_shimmer= ftxui::Color::RGB(255, 185, 137),
-    .rainbow_yellow_shimmer= ftxui::Color::RGB(255, 225, 155),
-    .rainbow_green_shimmer = ftxui::Color::RGB(185, 230, 180),
-    .rainbow_blue_shimmer  = ftxui::Color::RGB(180, 205, 240),
-    .rainbow_indigo_shimmer= ftxui::Color::RGB(195, 180, 230),
-    .rainbow_violet_shimmer= ftxui::Color::RGB(230, 180, 210),
-    // ── Semantic derived tokens (dark daltonized) ──
-    .text_muted            = ftxui::Color::RGB(153, 153, 153),  // = muted
-    .text_link             = ftxui::Color::RGB(153, 204, 255),  // = suggestion
-    .text_accent           = ftxui::Color::RGB(255, 153,  51),  // = primary
+    // ── Divider border ──
     .border_subtle         = ftxui::Color::RGB( 55,  57,  61),  // = chrome
-    .border_default        = ftxui::Color::RGB(136, 136, 136),  // = prompt_border
-    .border_accent         = ftxui::Color::RGB(153, 204, 255),  // = permission
-    .border_error          = ftxui::Color::RGB(255, 102, 102),  // = danger
-    .surface_hover         = ftxui::Color::RGB( 70,  70,  70),  // = user_message_background_hover
-    .surface_selected      = ftxui::Color::RGB( 44,  50,  62),  // = message_actions_background
-    .surface_bash          = ftxui::Color::RGB( 65,  60,  65),  // = bash_message_background
-    .surface_memory        = ftxui::Color::RGB( 55,  65,  70),  // = memory_background
-    .icon_default          = ftxui::Color::RGB(255, 255, 255),  // = text (white on dark)
-    .icon_muted            = ftxui::Color::RGB(153, 153, 153),  // = muted
-    .icon_accent           = ftxui::Color::RGB(255, 153,  51),  // = primary (loom daltonized)
     .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
     .spinner_gold          = ftxui::Color::RGB(217, 154,  56),
     // ── Message list role tokens ──
@@ -467,11 +394,11 @@ const Palette& dark_daltonized() noexcept {
     .role_bg_system          = ftxui::Color::RGB( 30,  30,  36),
     .role_bg_tool            = ftxui::Color::RGB( 24,  40,  40),
     .role_bg_thinking        = ftxui::Color::RGB( 34,  30,  48),
-    .role_pill_user          = ftxui::Color::RGB( 59, 130, 246),
-    .role_pill_assistant     = ftxui::Color::RGB(168,  85, 247),
-    .role_pill_system        = ftxui::Color::RGB(234, 179,   8),
-    .role_pill_tool          = ftxui::Color::RGB( 20, 184, 166),
-    .role_pill_thinking      = ftxui::Color::RGB(139,  92, 246),
+    .role_pill_user          = ftxui::Color::RGB(217, 154,  56),
+    .role_pill_assistant     = ftxui::Color::RGB(255, 153,  51),
+    .role_pill_system        = ftxui::Color::RGB(217, 154,  56),
+    .role_pill_tool          = ftxui::Color::RGB(217, 154,  56),
+    .role_pill_thinking      = ftxui::Color::RGB(255, 153,  51),
     .message_error_accent    = ftxui::Color::RGB(255, 159,  67),
     .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
     .message_list_selected_bg   = ftxui::Color::RGB( 30,  64, 175),
@@ -489,7 +416,7 @@ const Palette& dark_daltonized() noexcept {
     .info_tint_bg             = ftxui::Color::RGB( 30,  40,  60),
     .accent_green             = ftxui::Color::RGB( 80, 200, 120),
     .accent_purple            = ftxui::Color::RGB(120,  80, 120),
-    .accent_pink              = ftxui::Color::RGB(255,   0, 135),
+    .accent_pink              = ftxui::Color::RGB(255, 153,  51),
     .stats_green_1            = ftxui::Color::RGB( 60, 100,  60),
     .stats_green_2            = ftxui::Color::RGB( 80, 140,  80),
     .stats_green_3            = ftxui::Color::RGB(100, 180, 100),
@@ -510,27 +437,27 @@ const Palette& dark_daltonized() noexcept {
 
 const Palette& light_daltonized() noexcept {
     static const Palette p = {
-    .primary             = ftxui::Color::RGB(255, 153,  51),  // loom (deuteranopia)
-    .primary_shimmer     = ftxui::Color::RGB(255, 183, 101),  // loomShimmer
+    .primary             = ftxui::Color::RGB(153,  92,   0),
+    .primary_shimmer     = ftxui::Color::RGB(151, 101,  35),
     .info                = ftxui::Color::RGB( 51, 102, 255),  // permission/suggestion
     .success             = ftxui::Color::RGB(  0, 102, 153),  // blue, not green
-    .warning             = ftxui::Color::RGB(255, 153,   0),  // orange
+    .warning             = ftxui::Color::RGB(153,  92,   0),
     .danger              = ftxui::Color::RGB(204,   0,   0),  // pure red (error)
     .muted               = ftxui::Color::RGB(102, 102, 102),  // inactive
     .subtle              = ftxui::Color::RGB(175, 175, 175),
-    .suggestion          = ftxui::Color::RGB( 51, 102, 255),
+    .suggestion          = ftxui::Color::RGB( 47,  94, 235),
     .text                = ftxui::Color::RGB(  0,   0,   0),
     .inverse_text        = ftxui::Color::RGB(255, 255, 255),
     .background          = light().background,
     .chrome              = light().chrome,
     .rate_limit_fill     = ftxui::Color::RGB( 51, 102, 255),
     .rate_limit_empty    = ftxui::Color::RGB( 23,  46, 114),
-    .brief_label         = ftxui::Color::RGB(255, 153,  51),
+    .brief_label         = ftxui::Color::RGB(153,  92,   0),
     .user_message_background        = light().user_message_background,
     .user_message_background_hover  = light().user_message_background_hover,
     .message_actions_background     = light().message_actions_background,
-    .rainbow             = dark().rainbow,   // identical across all themes
-    .rainbow_shimmer     = light().rainbow_shimmer,
+    .rainbow             = light().rainbow,
+    .rainbow_shimmer     = ftxui::Color::RGB(165,  78,  51),
     // Light-daltonized diffs: light blue / light red (deuteranopia-safe).
     //   diffAdded=rgb(153,204,255)  diffRemoved=rgb(255,204,204)
     //   diffAddedWord=rgb(51,102,204)  diffRemovedWord=rgb(153,51,51)
@@ -539,92 +466,63 @@ const Palette& light_daltonized() noexcept {
     .diff_added_word     = ftxui::Color::RGB( 51, 102, 204),
     .diff_removed_word   = ftxui::Color::RGB(153,  51,  51),
     .merged              = ftxui::Color::RGB(135,   0, 255),  // == autoAccept
-    // Prompt chrome — light daltonized: bash_border
-    //   rgb(0,102,204) medium blue. prompt_border = light mid-gray.
-    .bash_border         = ftxui::Color::RGB(  0, 102, 204),
+    // Light CVD prompt uses darker amber; the frame stays neutral.
+    .bash_border         = ftxui::Color::RGB(153,  92,   0),
     .prompt_border       = ftxui::Color::RGB(153, 153, 153),
     .permission          = ftxui::Color::RGB( 51, 102, 255),
     .auto_accept         = ftxui::Color::RGB(135,   0, 255),
-    // orange (unlike `primary`/`loom` which shifts to rgb(255,153,51) for CVD).
-    .loom_body          = LOOM_ACCENT,
+    // Artwork retains canonical terracotta while UI primary adapts for contrast.
+    .loom_body          = ftxui::Color::RGB(215, 119,  87),
     // ── Shimmer tokens ──
     .permission_shimmer     = ftxui::Color::RGB(101, 152, 255),
     .inactive_shimmer       = ftxui::Color::RGB(142, 142, 142),
     .warning_shimmer        = ftxui::Color::RGB(255, 183,  50),
     .prompt_border_shimmer  = ftxui::Color::RGB(183, 183, 183),
-    .fast_mode_shimmer      = ftxui::Color::RGB(255, 150,  50),
+    .fast_mode_shimmer      = ftxui::Color::RGB(153,  95,  37),
     .loom_blue_shimmer    = ftxui::Color::RGB(101, 152, 255),
-    .rainbow_shimmer_stops  = dark().rainbow_shimmer_stops,         // identical across all themes
+    .rainbow_shimmer_stops  = light().rainbow_shimmer_stops,
     // ── Loom blue system spinner ──
     .loom_blue           = ftxui::Color::RGB( 51, 102, 255),
     // ── Mode colors ──
-    .plan_mode             = ftxui::Color::RGB( 51, 102, 102),
+    .plan_mode             = ftxui::Color::RGB(153,  92,   0),
     .ide                   = ftxui::Color::RGB( 71, 130, 200),
     .remember              = ftxui::Color::RGB( 51, 102, 255),
-    .fast_mode             = ftxui::Color::RGB(255, 106,   0),
+    .fast_mode             = ftxui::Color::RGB(146,  88,  28),
     // ── Diff dimmed ──
     .diff_added_dimmed     = ftxui::Color::RGB(209, 231, 253),
     .diff_removed_dimmed   = ftxui::Color::RGB(255, 233, 233),
-    // ── Subagent colors (lightDaltonizedTheme 392-399 — pure CVD-safe) ──
-    .subagent_red          = ftxui::Color::RGB(204,   0,   0),  // pure red
-    .subagent_blue         = ftxui::Color::RGB(  0, 102, 204),  // pure blue
-    .subagent_green        = ftxui::Color::RGB(  0, 204,   0),  // pure green
-    .subagent_yellow       = ftxui::Color::RGB(255, 204,   0),  // golden yellow
-    .subagent_purple       = ftxui::Color::RGB(128,   0, 128),  // true purple
-    .subagent_orange       = ftxui::Color::RGB(255, 128,   0),  // true orange
-    .subagent_pink         = ftxui::Color::RGB(255, 102, 178),  // adjusted pink
-    .subagent_cyan         = ftxui::Color::RGB(  0, 178, 178),  // adjusted cyan
+    // ── Readable agent identities; names and glyphs remain the primary labels ──
+    .subagent_red          = ftxui::Color::RGB(160,  62,  38),
+    .subagent_blue         = ftxui::Color::RGB( 38,  90, 159),
+    .subagent_green        = ftxui::Color::RGB( 80, 107,  43),
+    .subagent_yellow       = ftxui::Color::RGB(127,  98,  21),
+    .subagent_purple       = ftxui::Color::RGB(104,  71, 142),
+    .subagent_orange       = ftxui::Color::RGB(144,  77,  25),
+    .subagent_pink         = ftxui::Color::RGB(145,  60, 110),
+    .subagent_cyan         = ftxui::Color::RGB( 27, 104, 116),
     // ── Misc ──
     .professional_blue     = ftxui::Color::RGB(106, 155, 204),
     .chrome_yellow         = ftxui::Color::RGB(251, 188,   4),
     .selection_bg          = ftxui::Color::RGB(180, 213, 255),
     .bash_message_background = ftxui::Color::RGB(250, 245, 250),
     .memory_background     = ftxui::Color::RGB(230, 245, 250),
-    .brief_label_you       = ftxui::Color::RGB( 37,  99, 235),
-    .brief_label_loom    = ftxui::Color::RGB(255, 153,  51),
-    // ── Individual rainbow fields ──
-    .rainbow_red           = ftxui::Color::RGB(235,  95,  87),
-    .rainbow_orange        = ftxui::Color::RGB(245, 139,  87),
-    .rainbow_yellow        = ftxui::Color::RGB(250, 195,  95),
-    .rainbow_green         = ftxui::Color::RGB(145, 200, 130),
-    .rainbow_blue          = ftxui::Color::RGB(130, 170, 220),
-    .rainbow_indigo        = ftxui::Color::RGB(155, 130, 200),
-    .rainbow_violet        = ftxui::Color::RGB(200, 130, 180),
-    .rainbow_red_shimmer   = ftxui::Color::RGB(250, 155, 147),
-    .rainbow_orange_shimmer= ftxui::Color::RGB(255, 185, 137),
-    .rainbow_yellow_shimmer= ftxui::Color::RGB(255, 225, 155),
-    .rainbow_green_shimmer = ftxui::Color::RGB(185, 230, 180),
-    .rainbow_blue_shimmer  = ftxui::Color::RGB(180, 205, 240),
-    .rainbow_indigo_shimmer= ftxui::Color::RGB(195, 180, 230),
-    .rainbow_violet_shimmer= ftxui::Color::RGB(230, 180, 210),
-    // ── Semantic derived tokens (light daltonized) ──
-    .text_muted            = ftxui::Color::RGB(102, 102, 102),  // = muted
-    .text_link             = ftxui::Color::RGB( 51, 102, 255),  // = suggestion
-    .text_accent           = ftxui::Color::RGB(255, 153,  51),  // = primary
+    .brief_label_you       = ftxui::Color::RGB(146,  88,  28),
+    .brief_label_loom    = ftxui::Color::RGB(153,  92,   0),
+    // ── Divider border ──
     .border_subtle         = ftxui::Color::RGB(175, 175, 175),  // = subtle
-    .border_default        = ftxui::Color::RGB(153, 153, 153),  // = prompt_border
-    .border_accent         = ftxui::Color::RGB( 51, 102, 255),  // = permission
-    .border_error          = ftxui::Color::RGB(204,   0,   0),  // = danger
-    .surface_hover         = light().surface_hover,               // = user_message_background_hover
-    .surface_selected      = light().surface_selected,            // = message_actions_background
-    .surface_bash          = ftxui::Color::RGB(250, 245, 250),  // = bash_message_background
-    .surface_memory        = ftxui::Color::RGB(230, 245, 250),  // = memory_background
-    .icon_default          = ftxui::Color::RGB(  0,   0,   0),  // = text (black on light)
-    .icon_muted            = ftxui::Color::RGB(102, 102, 102),  // = muted
-    .icon_accent           = ftxui::Color::RGB(255, 153,  51),  // = primary (loom daltonized)
     .status_bar_background = ftxui::Color::RGB(240, 240, 240),
-    .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
+    .spinner_gold          = ftxui::Color::RGB(146,  88,  28),
     // ── Message list role tokens ──
     .role_bg_user            = ftxui::Color::RGB(219, 234, 254),
     .role_bg_assistant       = ftxui::Color::RGB(237, 233, 254),
     .role_bg_system          = ftxui::Color::RGB(243, 244, 246),
     .role_bg_tool            = ftxui::Color::RGB(204, 251, 241),
     .role_bg_thinking        = ftxui::Color::RGB(237, 233, 254),
-    .role_pill_user          = ftxui::Color::RGB( 37,  99, 235),
-    .role_pill_assistant     = ftxui::Color::RGB(147,  51, 234),
-    .role_pill_system        = ftxui::Color::RGB(202, 138,   4),
-    .role_pill_tool          = ftxui::Color::RGB( 13, 148, 136),
-    .role_pill_thinking      = ftxui::Color::RGB(124,  58, 237),
+    .role_pill_user          = ftxui::Color::RGB(146,  88,  28),
+    .role_pill_assistant     = ftxui::Color::RGB(153,  92,   0),
+    .role_pill_system        = ftxui::Color::RGB(146,  88,  28),
+    .role_pill_tool          = ftxui::Color::RGB(146,  88,  28),
+    .role_pill_thinking      = ftxui::Color::RGB(153,  92,   0),
     .message_error_accent    = ftxui::Color::RGB(234,  88,  12),
     .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
     .message_list_selected_bg   = ftxui::Color::RGB(191, 219, 254),
@@ -642,7 +540,7 @@ const Palette& light_daltonized() noexcept {
     .info_tint_bg             = ftxui::Color::RGB(225, 235, 250),
     .accent_green             = ftxui::Color::RGB( 80, 200, 120),
     .accent_purple            = ftxui::Color::RGB(120,  80, 120),
-    .accent_pink              = ftxui::Color::RGB(255,   0, 135),
+    .accent_pink              = ftxui::Color::RGB(153,  92,   0),
     .stats_green_1            = ftxui::Color::RGB( 60, 100,  60),
     .stats_green_2            = ftxui::Color::RGB( 80, 140,  80),
     .stats_green_3            = ftxui::Color::RGB(100, 180, 100),
@@ -663,13 +561,13 @@ const Palette& light_daltonized() noexcept {
 
 const Palette& light_ansi() noexcept {
     static const Palette p = {
-    .primary             = ftxui::Color{ftxui::Color::Palette16::RedLight},
-    .primary_shimmer     = ftxui::Color{ftxui::Color::Palette16::YellowLight},
+    .primary             = ftxui::Color{ftxui::Color::Palette16::Red},
+    .primary_shimmer     = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .info                = ftxui::Color{ftxui::Color::Palette16::Blue},
     .success             = ftxui::Color{ftxui::Color::Palette16::Green},
     .warning             = ftxui::Color{ftxui::Color::Palette16::Yellow},
     .danger              = ftxui::Color{ftxui::Color::Palette16::Red},
-    .muted               = ftxui::Color{ftxui::Color::Palette16::GrayDark},
+    .muted               = ftxui::Color{ftxui::Color::Palette16::Black},
     .subtle              = ftxui::Color{ftxui::Color::Palette16::GrayDark},
     .suggestion          = ftxui::Color{ftxui::Color::Palette16::Blue},
     .text                = ftxui::Color{ftxui::Color::Palette16::Black},
@@ -678,7 +576,7 @@ const Palette& light_ansi() noexcept {
     .chrome              = ftxui::Color{ftxui::Color::Palette16::GrayLight},
     .rate_limit_fill     = ftxui::Color{ftxui::Color::Palette16::Yellow},
     .rate_limit_empty    = ftxui::Color{ftxui::Color::Palette16::Black},
-    .brief_label         = ftxui::Color{ftxui::Color::Palette16::RedLight},
+    .brief_label         = ftxui::Color{ftxui::Color::Palette16::Red},
     .user_message_background        = ftxui::Color{ftxui::Color::Palette16::GrayLight},
     .user_message_background_hover  = ftxui::Color{ftxui::Color::Palette16::White},
     .message_actions_background     = ftxui::Color{ftxui::Color::Palette16::GrayLight},
@@ -686,18 +584,18 @@ const Palette& light_ansi() noexcept {
         ftxui::Color{ftxui::Color::Palette16::Red},
         ftxui::Color{ftxui::Color::Palette16::RedLight},
         ftxui::Color{ftxui::Color::Palette16::Yellow},
-        ftxui::Color{ftxui::Color::Palette16::Green},
-        ftxui::Color{ftxui::Color::Palette16::Cyan},
-        ftxui::Color{ftxui::Color::Palette16::Blue},
-        ftxui::Color{ftxui::Color::Palette16::Magenta},
+        ftxui::Color{ftxui::Color::Palette16::YellowLight},
+        ftxui::Color{ftxui::Color::Palette16::Yellow},
+        ftxui::Color{ftxui::Color::Palette16::RedLight},
+        ftxui::Color{ftxui::Color::Palette16::Red},
     }},
-    .rainbow_shimmer     = ftxui::Color{ftxui::Color::Palette16::White},
+    .rainbow_shimmer     = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .diff_added          = ftxui::Color{ftxui::Color::Palette16::Green},
     .diff_removed        = ftxui::Color{ftxui::Color::Palette16::Red},
     .diff_added_word     = ftxui::Color{ftxui::Color::Palette16::GreenLight},
     .diff_removed_word   = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .merged              = ftxui::Color{ftxui::Color::Palette16::Magenta},
-    .bash_border         = ftxui::Color{ftxui::Color::Palette16::Magenta},
+    .bash_border         = ftxui::Color{ftxui::Color::Palette16::Red},
     .prompt_border       = ftxui::Color{ftxui::Color::Palette16::GrayLight},
     .permission          = ftxui::Color{ftxui::Color::Palette16::Blue},
     .auto_accept         = ftxui::Color{ftxui::Color::Palette16::Magenta},
@@ -707,25 +605,25 @@ const Palette& light_ansi() noexcept {
     .inactive_shimmer       = ftxui::Color{ftxui::Color::Palette16::GrayLight},
     .warning_shimmer        = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     .prompt_border_shimmer  = ftxui::Color{ftxui::Color::Palette16::White},
-    .fast_mode_shimmer      = ftxui::Color{ftxui::Color::Palette16::RedLight},
+    .fast_mode_shimmer      = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     .loom_blue_shimmer    = ftxui::Color{ftxui::Color::Palette16::BlueLight},
     .rainbow_shimmer_stops = {{
         ftxui::Color{ftxui::Color::Palette16::RedLight},
         ftxui::Color{ftxui::Color::Palette16::Yellow},
         ftxui::Color{ftxui::Color::Palette16::YellowLight},
-        ftxui::Color{ftxui::Color::Palette16::GreenLight},
-        ftxui::Color{ftxui::Color::Palette16::CyanLight},
-        ftxui::Color{ftxui::Color::Palette16::BlueLight},
-        ftxui::Color{ftxui::Color::Palette16::MagentaLight},
+        ftxui::Color{ftxui::Color::Palette16::YellowLight},
+        ftxui::Color{ftxui::Color::Palette16::YellowLight},
+        ftxui::Color{ftxui::Color::Palette16::Yellow},
+        ftxui::Color{ftxui::Color::Palette16::RedLight},
     }},
     .loom_blue           = ftxui::Color{ftxui::Color::Palette16::Blue},
-    .plan_mode             = ftxui::Color{ftxui::Color::Palette16::Cyan},
+    .plan_mode             = ftxui::Color{ftxui::Color::Palette16::Red},
     .ide                   = ftxui::Color{ftxui::Color::Palette16::BlueLight},
     .remember              = ftxui::Color{ftxui::Color::Palette16::Blue},
-    .fast_mode             = ftxui::Color{ftxui::Color::Palette16::Red},
+    .fast_mode             = ftxui::Color{ftxui::Color::Palette16::Yellow},
     .diff_added_dimmed     = ftxui::Color{ftxui::Color::Palette16::Green},
     .diff_removed_dimmed   = ftxui::Color{ftxui::Color::Palette16::Red},
-    // ── Subagent colors ──
+    // ── Readable agent identities; names and glyphs remain the primary labels ──
     .subagent_red          = ftxui::Color{ftxui::Color::Palette16::Red},
     .subagent_blue         = ftxui::Color{ftxui::Color::Palette16::Blue},
     .subagent_green        = ftxui::Color{ftxui::Color::Palette16::Green},
@@ -740,51 +638,23 @@ const Palette& light_ansi() noexcept {
     .selection_bg          = ftxui::Color{ftxui::Color::Palette16::Cyan},
     .bash_message_background = ftxui::Color{ftxui::Color::Palette16::White},
     .memory_background     = ftxui::Color{ftxui::Color::Palette16::GrayLight},
-    .brief_label_you       = ftxui::Color{ftxui::Color::Palette16::Blue},
-    .brief_label_loom    = ftxui::Color{ftxui::Color::Palette16::RedLight},
-    // ── Individual rainbow fields ──
-    .rainbow_red           = ftxui::Color{ftxui::Color::Palette16::Red},
-    .rainbow_orange        = ftxui::Color{ftxui::Color::Palette16::RedLight},
-    .rainbow_yellow        = ftxui::Color{ftxui::Color::Palette16::Yellow},
-    .rainbow_green         = ftxui::Color{ftxui::Color::Palette16::Green},
-    .rainbow_blue          = ftxui::Color{ftxui::Color::Palette16::Cyan},
-    .rainbow_indigo        = ftxui::Color{ftxui::Color::Palette16::Blue},
-    .rainbow_violet        = ftxui::Color{ftxui::Color::Palette16::Magenta},
-    .rainbow_red_shimmer   = ftxui::Color{ftxui::Color::Palette16::RedLight},
-    .rainbow_orange_shimmer= ftxui::Color{ftxui::Color::Palette16::Yellow},
-    .rainbow_yellow_shimmer= ftxui::Color{ftxui::Color::Palette16::YellowLight},
-    .rainbow_green_shimmer = ftxui::Color{ftxui::Color::Palette16::GreenLight},
-    .rainbow_blue_shimmer  = ftxui::Color{ftxui::Color::Palette16::CyanLight},
-    .rainbow_indigo_shimmer= ftxui::Color{ftxui::Color::Palette16::BlueLight},
-    .rainbow_violet_shimmer= ftxui::Color{ftxui::Color::Palette16::MagentaLight},
-    // ── Semantic derived tokens (light ANSI) ──
-    .text_muted            = ftxui::Color{ftxui::Color::Palette16::GrayDark},     // = muted
-    .text_link             = ftxui::Color{ftxui::Color::Palette16::Blue},         // = suggestion
-    .text_accent           = ftxui::Color{ftxui::Color::Palette16::RedLight},    // = primary
+    .brief_label_you       = ftxui::Color{ftxui::Color::Palette16::Yellow},
+    .brief_label_loom    = ftxui::Color{ftxui::Color::Palette16::Red},
+    // ── Divider border ──
     .border_subtle         = ftxui::Color{ftxui::Color::Palette16::GrayDark},     // = subtle
-    .border_default        = ftxui::Color{ftxui::Color::Palette16::GrayLight},        // = prompt_border
-    .border_accent         = ftxui::Color{ftxui::Color::Palette16::Blue},         // = permission
-    .border_error          = ftxui::Color{ftxui::Color::Palette16::Red},          // = danger
-    .surface_hover         = ftxui::Color{ftxui::Color::Palette16::White},    // = user_message_background_hover
-    .surface_selected      = ftxui::Color{ftxui::Color::Palette16::GrayLight},        // = message_actions_background
-    .surface_bash          = ftxui::Color{ftxui::Color::Palette16::White},    // = bash_message_background
-    .surface_memory        = ftxui::Color{ftxui::Color::Palette16::GrayLight},        // = memory_background
-    .icon_default          = ftxui::Color{ftxui::Color::Palette16::Black},        // = text (black on light)
-    .icon_muted            = ftxui::Color{ftxui::Color::Palette16::GrayDark},     // = muted
-    .icon_accent           = ftxui::Color{ftxui::Color::Palette16::RedLight},    // = primary
     .status_bar_background = ftxui::Color::RGB(240, 240, 240),
-    .spinner_gold          = ftxui::Color::RGB(153, 153, 153),
+    .spinner_gold          = ftxui::Color{ftxui::Color::Palette16::Yellow},
     // ── Message list role tokens ──
     .role_bg_user            = ftxui::Color::RGB(219, 234, 254),
     .role_bg_assistant       = ftxui::Color::RGB(237, 233, 254),
     .role_bg_system          = ftxui::Color::RGB(243, 244, 246),
     .role_bg_tool            = ftxui::Color::RGB(204, 251, 241),
     .role_bg_thinking        = ftxui::Color::RGB(237, 233, 254),
-    .role_pill_user          = ftxui::Color::RGB( 37,  99, 235),
-    .role_pill_assistant     = ftxui::Color::RGB(147,  51, 234),
-    .role_pill_system        = ftxui::Color::RGB(202, 138,   4),
-    .role_pill_tool          = ftxui::Color::RGB( 13, 148, 136),
-    .role_pill_thinking      = ftxui::Color::RGB(124,  58, 237),
+    .role_pill_user          = ftxui::Color{ftxui::Color::Palette16::Yellow},
+    .role_pill_assistant     = ftxui::Color{ftxui::Color::Palette16::Red},
+    .role_pill_system        = ftxui::Color{ftxui::Color::Palette16::Yellow},
+    .role_pill_tool          = ftxui::Color{ftxui::Color::Palette16::Yellow},
+    .role_pill_thinking      = ftxui::Color{ftxui::Color::Palette16::Red},
     .message_error_accent    = ftxui::Color::RGB(220,  38,  38),
     .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
     .message_list_selected_bg   = ftxui::Color::RGB(191, 219, 254),
@@ -802,7 +672,7 @@ const Palette& light_ansi() noexcept {
     .info_tint_bg             = ftxui::Color::GrayDark,
     .accent_green             = ftxui::Color::White,
     .accent_purple            = ftxui::Color::White,
-    .accent_pink              = ftxui::Color::White,
+    .accent_pink              = ftxui::Color{ftxui::Color::Palette16::Red},
     .stats_green_1            = ftxui::Color::GrayDark,
     .stats_green_2            = ftxui::Color::GrayDark,
     .stats_green_3            = ftxui::Color::GrayLight,
@@ -829,7 +699,7 @@ const Palette& dark_ansi() noexcept {
     .success             = ftxui::Color{ftxui::Color::Palette16::GreenLight},
     .warning             = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     .danger              = ftxui::Color{ftxui::Color::Palette16::RedLight},
-    .muted               = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .muted               = ftxui::Color{ftxui::Color::Palette16::White},
     .subtle              = ftxui::Color{ftxui::Color::Palette16::GrayLight},
     .suggestion          = ftxui::Color{ftxui::Color::Palette16::BlueLight},
     .text                = ftxui::Color{ftxui::Color::Palette16::White},
@@ -840,24 +710,24 @@ const Palette& dark_ansi() noexcept {
     .rate_limit_empty    = ftxui::Color{ftxui::Color::Palette16::GrayLight},
     .brief_label         = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .user_message_background        = ftxui::Color{ftxui::Color::Palette16::GrayDark},
-    .user_message_background_hover  = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .user_message_background_hover  = ftxui::Color{ftxui::Color::Palette16::GrayDark},
     .message_actions_background     = ftxui::Color{ftxui::Color::Palette16::GrayDark},
     .rainbow = {{
         ftxui::Color{ftxui::Color::Palette16::Red},
         ftxui::Color{ftxui::Color::Palette16::RedLight},
         ftxui::Color{ftxui::Color::Palette16::Yellow},
-        ftxui::Color{ftxui::Color::Palette16::Green},
-        ftxui::Color{ftxui::Color::Palette16::Cyan},
-        ftxui::Color{ftxui::Color::Palette16::Blue},
-        ftxui::Color{ftxui::Color::Palette16::Magenta},
+        ftxui::Color{ftxui::Color::Palette16::YellowLight},
+        ftxui::Color{ftxui::Color::Palette16::Yellow},
+        ftxui::Color{ftxui::Color::Palette16::RedLight},
+        ftxui::Color{ftxui::Color::Palette16::Red},
     }},
-    .rainbow_shimmer     = ftxui::Color{ftxui::Color::Palette16::White},
+    .rainbow_shimmer     = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     .diff_added          = ftxui::Color{ftxui::Color::Palette16::Green},
     .diff_removed        = ftxui::Color{ftxui::Color::Palette16::Red},
     .diff_added_word     = ftxui::Color{ftxui::Color::Palette16::GreenLight},
     .diff_removed_word   = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .merged              = ftxui::Color{ftxui::Color::Palette16::MagentaLight},
-    .bash_border         = ftxui::Color{ftxui::Color::Palette16::MagentaLight},
+    .bash_border         = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .prompt_border       = ftxui::Color{ftxui::Color::Palette16::GrayLight},
     .permission          = ftxui::Color{ftxui::Color::Palette16::BlueLight},
     .auto_accept         = ftxui::Color{ftxui::Color::Palette16::MagentaLight},
@@ -867,25 +737,25 @@ const Palette& dark_ansi() noexcept {
     .inactive_shimmer       = ftxui::Color{ftxui::Color::Palette16::White},
     .warning_shimmer        = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     .prompt_border_shimmer  = ftxui::Color{ftxui::Color::Palette16::White},
-    .fast_mode_shimmer      = ftxui::Color{ftxui::Color::Palette16::RedLight},
+    .fast_mode_shimmer      = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     .loom_blue_shimmer    = ftxui::Color{ftxui::Color::Palette16::BlueLight},
     .rainbow_shimmer_stops = {{
         ftxui::Color{ftxui::Color::Palette16::RedLight},
         ftxui::Color{ftxui::Color::Palette16::Yellow},
         ftxui::Color{ftxui::Color::Palette16::YellowLight},
-        ftxui::Color{ftxui::Color::Palette16::GreenLight},
-        ftxui::Color{ftxui::Color::Palette16::CyanLight},
-        ftxui::Color{ftxui::Color::Palette16::BlueLight},
-        ftxui::Color{ftxui::Color::Palette16::MagentaLight},
+        ftxui::Color{ftxui::Color::Palette16::YellowLight},
+        ftxui::Color{ftxui::Color::Palette16::YellowLight},
+        ftxui::Color{ftxui::Color::Palette16::Yellow},
+        ftxui::Color{ftxui::Color::Palette16::RedLight},
     }},
     .loom_blue           = ftxui::Color{ftxui::Color::Palette16::BlueLight},
-    .plan_mode             = ftxui::Color{ftxui::Color::Palette16::CyanLight},
+    .plan_mode             = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .ide                   = ftxui::Color{ftxui::Color::Palette16::Blue},
     .remember              = ftxui::Color{ftxui::Color::Palette16::BlueLight},
-    .fast_mode             = ftxui::Color{ftxui::Color::Palette16::RedLight},
+    .fast_mode             = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     .diff_added_dimmed     = ftxui::Color{ftxui::Color::Palette16::Green},
     .diff_removed_dimmed   = ftxui::Color{ftxui::Color::Palette16::Red},
-    // ── Subagent colors ──
+    // ── Readable agent identities; names and glyphs remain the primary labels ──
     .subagent_red          = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .subagent_blue         = ftxui::Color{ftxui::Color::Palette16::BlueLight},
     .subagent_green        = ftxui::Color{ftxui::Color::Palette16::GreenLight},
@@ -900,51 +770,23 @@ const Palette& dark_ansi() noexcept {
     .selection_bg          = ftxui::Color{ftxui::Color::Palette16::Blue},
     .bash_message_background = ftxui::Color{ftxui::Color::Palette16::Black},
     .memory_background     = ftxui::Color{ftxui::Color::Palette16::GrayDark},
-    .brief_label_you       = ftxui::Color{ftxui::Color::Palette16::BlueLight},
+    .brief_label_you       = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     .brief_label_loom    = ftxui::Color{ftxui::Color::Palette16::RedLight},
-    // ── Individual rainbow fields ──
-    .rainbow_red           = ftxui::Color{ftxui::Color::Palette16::Red},
-    .rainbow_orange        = ftxui::Color{ftxui::Color::Palette16::RedLight},
-    .rainbow_yellow        = ftxui::Color{ftxui::Color::Palette16::Yellow},
-    .rainbow_green         = ftxui::Color{ftxui::Color::Palette16::Green},
-    .rainbow_blue          = ftxui::Color{ftxui::Color::Palette16::Cyan},
-    .rainbow_indigo        = ftxui::Color{ftxui::Color::Palette16::Blue},
-    .rainbow_violet        = ftxui::Color{ftxui::Color::Palette16::Magenta},
-    .rainbow_red_shimmer   = ftxui::Color{ftxui::Color::Palette16::RedLight},
-    .rainbow_orange_shimmer= ftxui::Color{ftxui::Color::Palette16::Yellow},
-    .rainbow_yellow_shimmer= ftxui::Color{ftxui::Color::Palette16::YellowLight},
-    .rainbow_green_shimmer = ftxui::Color{ftxui::Color::Palette16::GreenLight},
-    .rainbow_blue_shimmer  = ftxui::Color{ftxui::Color::Palette16::CyanLight},
-    .rainbow_indigo_shimmer= ftxui::Color{ftxui::Color::Palette16::BlueLight},
-    .rainbow_violet_shimmer= ftxui::Color{ftxui::Color::Palette16::MagentaLight},
-    // ── Semantic derived tokens (dark ANSI) ──
-    .text_muted            = ftxui::Color{ftxui::Color::Palette16::GrayLight},         // = muted
-    .text_link             = ftxui::Color{ftxui::Color::Palette16::BlueLight},    // = suggestion
-    .text_accent           = ftxui::Color{ftxui::Color::Palette16::RedLight},    // = primary
+    // ── Divider border ──
     .border_subtle         = ftxui::Color{ftxui::Color::Palette16::GrayLight},         // = subtle
-    .border_default        = ftxui::Color{ftxui::Color::Palette16::GrayLight},         // = prompt_border
-    .border_accent         = ftxui::Color{ftxui::Color::Palette16::BlueLight},    // = permission
-    .border_error          = ftxui::Color{ftxui::Color::Palette16::RedLight},    // = danger
-    .surface_hover         = ftxui::Color{ftxui::Color::Palette16::GrayLight},       // = user_message_background_hover
-    .surface_selected      = ftxui::Color{ftxui::Color::Palette16::GrayDark},    // = message_actions_background
-    .surface_bash          = ftxui::Color{ftxui::Color::Palette16::Black},      // = bash_message_background
-    .surface_memory        = ftxui::Color{ftxui::Color::Palette16::GrayDark},     // = memory_background
-    .icon_default          = ftxui::Color{ftxui::Color::Palette16::White},     // = text (white on dark)
-    .icon_muted            = ftxui::Color{ftxui::Color::Palette16::GrayLight},         // = muted
-    .icon_accent           = ftxui::Color{ftxui::Color::Palette16::RedLight},    // = primary
     .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
-    .spinner_gold          = ftxui::Color::RGB(217, 154,  56),
+    .spinner_gold          = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     // ── Message list role tokens ──
     .role_bg_user            = ftxui::Color::RGB( 30,  41,  59),
     .role_bg_assistant       = ftxui::Color::RGB( 30,  41,  59),
     .role_bg_system          = ftxui::Color::RGB( 30,  30,  36),
     .role_bg_tool            = ftxui::Color::RGB( 24,  40,  40),
     .role_bg_thinking        = ftxui::Color::RGB( 34,  30,  48),
-    .role_pill_user          = ftxui::Color::RGB( 59, 130, 246),
-    .role_pill_assistant     = ftxui::Color::RGB(168,  85, 247),
-    .role_pill_system        = ftxui::Color::RGB(234, 179,   8),
-    .role_pill_tool          = ftxui::Color::RGB( 20, 184, 166),
-    .role_pill_thinking      = ftxui::Color::RGB(139,  92, 246),
+    .role_pill_user          = ftxui::Color{ftxui::Color::Palette16::YellowLight},
+    .role_pill_assistant     = ftxui::Color{ftxui::Color::Palette16::RedLight},
+    .role_pill_system        = ftxui::Color{ftxui::Color::Palette16::YellowLight},
+    .role_pill_tool          = ftxui::Color{ftxui::Color::Palette16::YellowLight},
+    .role_pill_thinking      = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .message_error_accent    = ftxui::Color::RGB(239,  68,  68),
     .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
     .message_list_selected_bg   = ftxui::Color::RGB( 30,  64, 175),
@@ -962,7 +804,7 @@ const Palette& dark_ansi() noexcept {
     .info_tint_bg             = ftxui::Color{ftxui::Color::Palette16::Blue},
     .accent_green             = ftxui::Color{ftxui::Color::Palette16::GreenLight},
     .accent_purple            = ftxui::Color{ftxui::Color::Palette16::Magenta},
-    .accent_pink              = ftxui::Color{ftxui::Color::Palette16::MagentaLight},
+    .accent_pink              = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .stats_green_1            = ftxui::Color{ftxui::Color::Palette16::Green},
     .stats_green_2            = ftxui::Color{ftxui::Color::Palette16::Green},
     .stats_green_3            = ftxui::Color{ftxui::Color::Palette16::GreenLight},
@@ -989,7 +831,7 @@ const Palette& monochrome() noexcept {
     .success             = ftxui::Color::White,
     .warning             = ftxui::Color::White,
     .danger              = ftxui::Color::White,
-    .muted               = ftxui::Color::GrayDark,
+    .muted               = ftxui::Color::White,
     .subtle              = ftxui::Color::GrayDark,
     .suggestion          = ftxui::Color::GrayLight,
     .text                = ftxui::Color::White,
@@ -1000,7 +842,7 @@ const Palette& monochrome() noexcept {
     .rate_limit_empty    = ftxui::Color::GrayDark,
     .brief_label         = ftxui::Color::White,
     .user_message_background        = ftxui::Color::GrayDark,
-    .user_message_background_hover  = ftxui::Color::GrayLight,
+    .user_message_background_hover  = ftxui::Color::GrayDark,
     .message_actions_background     = ftxui::Color::GrayDark,
     .rainbow = {{ ftxui::Color::White, ftxui::Color::White, ftxui::Color::White,
                   ftxui::Color::White, ftxui::Color::White, ftxui::Color::White,
@@ -1040,7 +882,7 @@ const Palette& monochrome() noexcept {
     // ── Diff dimmed (monochrome: GrayDark) ──
     .diff_added_dimmed     = ftxui::Color::GrayDark,
     .diff_removed_dimmed   = ftxui::Color::GrayDark,
-    // ── Subagent colors (monochrome: all White, distinguished by label only) ──
+    // ── Readable agent identities; names and glyphs remain the primary labels ──
     .subagent_red          = ftxui::Color::White,
     .subagent_blue         = ftxui::Color::White,
     .subagent_green        = ftxui::Color::White,
@@ -1057,49 +899,21 @@ const Palette& monochrome() noexcept {
     .memory_background     = ftxui::Color::GrayDark,
     .brief_label_you       = ftxui::Color::White,
     .brief_label_loom    = ftxui::Color::White,
-    // ── Individual rainbow fields (monochrome: all White) ──
-    .rainbow_red           = ftxui::Color::White,
-    .rainbow_orange        = ftxui::Color::White,
-    .rainbow_yellow        = ftxui::Color::White,
-    .rainbow_green         = ftxui::Color::White,
-    .rainbow_blue          = ftxui::Color::White,
-    .rainbow_indigo        = ftxui::Color::White,
-    .rainbow_violet        = ftxui::Color::White,
-    .rainbow_red_shimmer   = ftxui::Color::GrayLight,
-    .rainbow_orange_shimmer= ftxui::Color::GrayLight,
-    .rainbow_yellow_shimmer= ftxui::Color::GrayLight,
-    .rainbow_green_shimmer = ftxui::Color::GrayLight,
-    .rainbow_blue_shimmer  = ftxui::Color::GrayLight,
-    .rainbow_indigo_shimmer= ftxui::Color::GrayLight,
-    .rainbow_violet_shimmer= ftxui::Color::GrayLight,
-    // ── Semantic derived tokens (monochrome) ──
-    .text_muted            = ftxui::Color::GrayDark,
-    .text_link             = ftxui::Color::GrayLight,
-    .text_accent           = ftxui::Color::White,
+    // ── Divider border ──
     .border_subtle         = ftxui::Color::GrayDark,
-    .border_default        = ftxui::Color::GrayDark,
-    .border_accent         = ftxui::Color::White,
-    .border_error          = ftxui::Color::White,
-    .surface_hover         = ftxui::Color::GrayLight,
-    .surface_selected      = ftxui::Color::GrayDark,
-    .surface_bash          = ftxui::Color::GrayDark,
-    .surface_memory        = ftxui::Color::GrayDark,
-    .icon_default          = ftxui::Color::White,
-    .icon_muted            = ftxui::Color::GrayDark,
-    .icon_accent           = ftxui::Color::White,
     .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
-    .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
+    .spinner_gold          = ftxui::Color::White,
     // ── Message list role tokens ──
     .role_bg_user            = ftxui::Color::RGB( 50,  50,  50),
     .role_bg_assistant       = ftxui::Color::RGB( 50,  50,  50),
     .role_bg_system          = ftxui::Color::RGB( 40,  40,  40),
     .role_bg_tool            = ftxui::Color::RGB( 45,  45,  45),
     .role_bg_thinking        = ftxui::Color::RGB( 55,  55,  55),
-    .role_pill_user          = ftxui::Color::RGB(200, 200, 200),
-    .role_pill_assistant     = ftxui::Color::RGB(200, 200, 200),
-    .role_pill_system        = ftxui::Color::RGB(180, 180, 180),
-    .role_pill_tool          = ftxui::Color::RGB(180, 180, 180),
-    .role_pill_thinking      = ftxui::Color::RGB(200, 200, 200),
+    .role_pill_user          = ftxui::Color::White,
+    .role_pill_assistant     = ftxui::Color::White,
+    .role_pill_system        = ftxui::Color::White,
+    .role_pill_tool          = ftxui::Color::White,
+    .role_pill_thinking      = ftxui::Color::White,
     .message_error_accent    = ftxui::Color::RGB(220, 220, 220),
     .message_redacted_accent = ftxui::Color::RGB(140, 140, 140),
     .message_list_selected_bg   = ftxui::Color::RGB( 70,  70,  70),
@@ -1117,7 +931,7 @@ const Palette& monochrome() noexcept {
     .info_tint_bg             = ftxui::Color{ftxui::Color::Palette16::Blue},
     .accent_green             = ftxui::Color{ftxui::Color::Palette16::Green},
     .accent_purple            = ftxui::Color{ftxui::Color::Palette16::Magenta},
-    .accent_pink              = ftxui::Color{ftxui::Color::Palette16::Magenta},
+    .accent_pink              = ftxui::Color::White,
     .stats_green_1            = ftxui::Color{ftxui::Color::Palette16::Green},
     .stats_green_2            = ftxui::Color{ftxui::Color::Palette16::Green},
     .stats_green_3            = ftxui::Color{ftxui::Color::Palette16::GreenLight},

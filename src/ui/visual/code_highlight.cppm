@@ -944,7 +944,7 @@ struct ColoredSegment {
     } else if (line.is_diff_removed) {
         result = result | bgcolor(theme.removed_bg);
     } else if (is_highlighted) {
-        result = result | bgcolor(loom::ui::design::theme::current_theme().palette->surface_selected);
+        result = result | bgcolor(loom::ui::design::theme::current_theme().palette->message_actions_background);
     }
 
     return result;

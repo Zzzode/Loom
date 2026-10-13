@@ -36,7 +36,6 @@ import loom.ui.foundation.design_figures;
 
 import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_tokens;
-import loom.ui.foundation.component_primitives;
 import loom.ui.permissions.components;
 
 export namespace loom::ui::dialogs::frame {
@@ -44,7 +43,6 @@ export namespace loom::ui::dialogs::frame {
 using namespace ftxui;
 using Theme = loom::ui::design::theme::Theme;
 using Role = loom::ui::design::tokens::Role;
-namespace primitives = loom::ui::design::primitives;
 namespace pc = loom::ui::permissions::components;
 
 // ============================================================

@@ -1,0 +1,470 @@
+#include <cstdlib>
+
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/screen.hpp>
+#include <ftxui/screen/string.hpp>
+#include <gtest/gtest.h>
+
+#include "test_ui_helpers.h"
+
+import std;
+import loom.ui.features.todos.todo_panel;
+import loom.ui.features.teams.live_teammates;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.task_view_store;
+import loom.ui.foundation.theme_provider;
+import loom.serdes.json;
+
+namespace {
+namespace todo = loom::ui::todos;
+namespace team = loom::ui::teams::live;
+namespace repl = loom::ui::repl_screen;
+using namespace ftxui;
+
+struct EnvironmentGuard {
+    std::string name;
+    std::optional<std::string> previous;
+    EnvironmentGuard(std::string key, std::string value) : name(std::move(key)) {
+        if (const auto* existing = std::getenv(name.c_str())) previous = existing;
+        setenv(name.c_str(), value.c_str(), 1);
+    }
+    ~EnvironmentGuard() {
+        if (previous) setenv(name.c_str(), previous->c_str(), 1);
+        else unsetenv(name.c_str());
+    }
+};
+int height(const Element& element) {
+    element->ComputeRequirement();
+    return element->requirement().min_y;
+}
+std::string visible(const Screen& screen) {
+    return strip_ansi(screen.ToString());
+}
+Screen paint(Element element, int columns, int rows) {
+    auto screen = Screen::Create(Dimension::Fixed(columns), Dimension::Fixed(rows));
+    Render(screen, std::move(element));
+    return screen;
+}
+// Opt-in evidence export uses the same native pixels asserted by these tests.
+// Normal test runs create no capture files.
+void capture_repl(const Screen& screen, const repl::ReplScreenState& state) {
+    const auto* capture_dir = std::getenv("LOOM_UI_CAPTURE_DIR");
+    if (!capture_dir || *capture_dir == '\0') return;
+    const auto* info = testing::UnitTest::GetInstance()->current_test_info();
+    std::string name = std::string(info->test_suite_name()) + "." + info->name();
+    for (char& ch : name) {
+        if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+              || (ch >= '0' && ch <= '9') || ch == '_' || ch == '-' || ch == '.'))
+            ch = '_';
+    }
+    name += "-" + std::string(loom::ui::design::theme::variant_name(
+        loom::ui::design::theme::current_theme().variant));
+    name += std::format("-{}x{}", screen.dimx(), screen.dimy());
+    const std::filesystem::path directory(capture_dir);
+    std::error_code error;
+    std::filesystem::create_directories(directory, error);
+    ASSERT_FALSE(error) << error.message();
+    auto write = [&](std::string_view extension, std::string_view content) {
+        std::ofstream output(directory / (name + std::string(extension)),
+                             std::ios::binary | std::ios::trunc);
+        output.write(content.data(), static_cast<std::streamsize>(content.size()));
+        EXPECT_TRUE(output.good()) << "Cannot export " << name << extension;
+    };
+    write(".txt", visible(screen));
+    write(".ansi", screen.ToString());
+    loom::utils::json::JsonMutDoc document;
+    auto root = document.object();
+    document.set_root(root);
+    root.set("test", std::string_view(name));
+    root.set("width", screen.dimx());
+    root.set("height", screen.dimy());
+    const auto cursor = screen.cursor();
+    auto caret = document.object();
+    caret.set("x", cursor.x);
+    caret.set("y", cursor.y);
+    root.add("cursor", caret);
+    const auto& box = state.messages_store.scrollable_box;
+    auto viewport = document.object();
+    viewport.set("x_min", box.x_min);
+    viewport.set("x_max", box.x_max);
+    viewport.set("y_min", box.y_min);
+    viewport.set("y_max", box.y_max);
+    viewport.set("rows", std::max(0, box.y_max - box.y_min + 1));
+    root.add("viewport", viewport);
+    auto pixels = document.array();
+    for (int y = 0; y < screen.dimy(); ++y) {
+        for (int x = 0; x < screen.dimx(); ++x) {
+            const auto& pixel = screen.PixelAt(x, y);
+            auto item = document.object();
+            item.set("x", x);
+            item.set("y", y);
+            item.set("char", std::string_view(pixel.character));
+            item.set("fgPrint", std::string_view(pixel.foreground_color.Print(false)));
+            item.set("bgPrint", std::string_view(pixel.background_color.Print(false)));
+            item.set("dim", static_cast<bool>(pixel.dim));
+            item.set("bold", static_cast<bool>(pixel.bold));
+            item.set("inverted", static_cast<bool>(pixel.inverted));
+            item.set("strike", static_cast<bool>(pixel.strikethrough));
+            pixels.append(item);
+        }
+    }
+    root.add("pixels", pixels);
+    write(".json", document.to_pretty_string());
+}
+Screen paint_repl(repl::ReplScreenState& state, int columns, int rows) {
+    EnvironmentGuard cols("COLUMNS", std::to_string(columns));
+    EnvironmentGuard lines("LINES", std::to_string(rows));
+    EnvironmentGuard fullscreen("LOOM_NO_FLICKER", "1");
+    // The second frame consumes the real viewport measured in the first.
+    auto first = paint(repl::RenderReplScreen(state), columns, rows);
+    (void)first;
+    auto final = paint(repl::RenderReplScreen(state), columns, rows);
+    capture_repl(final, state);
+    return final;
+}
+void populate(repl::ReplScreenState& state, int tasks = 10, int teammates = 20) {
+    state.cwd = "/tmp/budget";
+    state.status_line_enabled = true;
+    state.status_line_command = ":";
+    state.status_line_text = "FOOTER-MARK";
+    for (int i = 0; i < tasks; ++i) {
+        todo::TodoDisplayItem item;
+        item.content = "task-" + std::to_string(i);
+        item.status = i == 5 || i == 8 ? todo::TodoDisplayItem::Status::InProgress
+                                      : todo::TodoDisplayItem::Status::Pending;
+        state.todo_store.items.push_back(std::move(item));
+    }
+    for (int i = 0; i < teammates; ++i) {
+        team::LiveTeammate item;
+        item.agent_id = "agent-" + std::to_string(i);
+        item.name = "worker-" + std::to_string(i);
+        item.status = "running";
+        item.color = "cyan";
+        item.last_output_tail = "TAIL-" + std::to_string(i);
+        state.task_view_store.live_teammates.push_back(std::move(item));
+    }
+    state.task_view_store.teammate_count = teammates;
+}
+void expect_caret(const Screen& screen) {
+    const auto caret = screen.cursor();
+    ASSERT_GE(caret.x, 0);
+    ASSERT_LT(caret.x, screen.dimx());
+    ASSERT_GE(caret.y, 0);
+    ASSERT_LT(caret.y, screen.dimy());
+    EXPECT_TRUE(screen.PixelAt(caret.x, caret.y).inverted);
+}
+int transcript_height(const repl::ReplScreenState& state) {
+    const auto& box = state.messages_store.scrollable_box;
+    return std::max(0, box.y_max - box.y_min + 1);
+}
+}  // namespace
+
+TEST(ChromeBudget, TodoBudgetsZeroThroughFiveIncludeCountsAndStableActivePriority) {
+    repl::ReplScreenState state;
+    populate(state);
+    state.todo_store.items.back().status = todo::TodoDisplayItem::Status::Completed;
+    const auto before = state.todo_store.items;
+    for (int rows = 0; rows <= 5; ++rows) {
+        auto element = todo::RenderTodoPanel(state.todo_store.items, 80, rows);
+        EXPECT_EQ(height(element), rows);
+        const auto text = visible(paint(element, 80, 5));
+        if (rows == 0) {
+            EXPECT_EQ(text.find("Tasks"), std::string::npos);
+            continue;
+        }
+        EXPECT_NE(text.find(std::format("Tasks 1/10 done (+{} hidden)", 11 - rows)), std::string::npos);
+        if (rows >= 2) EXPECT_NE(text.find("task-5"), std::string::npos);
+        if (rows >= 3) EXPECT_LT(text.find("task-5"), text.find("task-8"));
+        if (rows >= 4) EXPECT_LT(text.find("task-8"), text.find("task-0"));
+    }
+    for (std::size_t i = 0; i < before.size(); ++i) {
+        EXPECT_EQ(state.todo_store.items[i].content, before[i].content);
+        EXPECT_EQ(state.todo_store.items[i].status, before[i].status);
+    }
+}
+TEST(ChromeBudget, TeamBudgetsZeroThroughFiveCountOmittedWithoutReordering) {
+    repl::ReplScreenState state;
+    populate(state);
+    for (int rows = 0; rows <= 5; ++rows) {
+        auto element = team::RenderLiveTeammateStrip(state.task_view_store.live_teammates, 80, rows);
+        EXPECT_EQ(height(element), rows);
+        const auto text = visible(paint(element, 80, 5));
+        if (rows == 0) EXPECT_EQ(text.find("Teams"), std::string::npos);
+        else EXPECT_NE(text.find(std::format("Teams 20 (+{} hidden)", 21 - rows)), std::string::npos);
+        if (rows >= 3) EXPECT_LT(text.find("@worker-0"), text.find("@worker-1"));
+    }
+    EXPECT_EQ(state.task_view_store.live_teammates.front().agent_id, "agent-0");
+    EXPECT_EQ(state.task_view_store.live_teammates.back().agent_id, "agent-19");
+}
+TEST(ChromeBudget, StandaloneDefaultsAndSmallCompleteTeamsRemainUnbounded) {
+    repl::ReplScreenState state;
+    populate(state, 10, 2);
+    EXPECT_EQ(height(todo::RenderTodoPanel(state.todo_store.items)), 11);
+    EXPECT_EQ(height(team::RenderLiveTeammateStrip(state.task_view_store.live_teammates)), 2);
+    auto element = team::RenderLiveTeammateStrip(state.task_view_store.live_teammates, 80, 3);
+    EXPECT_EQ(height(element), 2);
+    EXPECT_EQ(visible(paint(element, 80, 2)).find("Teams"), std::string::npos);
+    EXPECT_EQ(height(todo::RenderTodoPanel({}, 80, 4)), 0);
+    EXPECT_EQ(height(team::RenderLiveTeammateStrip({}, 80, 4)), 0);
+}
+TEST(ChromeBudget, UnicodeTruncationUsesCellsAndZeroCapacityIsEmpty) {
+    EXPECT_EQ(todo::detail::one_line("中文😀 tail", 0), "");
+    EXPECT_EQ(team::one_line_tail("中文😀 tail", 0), "");
+    for (int columns = 1; columns <= 16; ++columns) {
+        auto task = todo::detail::one_line("中文😀 e\xcc\x81 text", static_cast<std::size_t>(columns));
+        auto tail = team::one_line_tail("中文😀 e\xcc\x81 text", static_cast<std::size_t>(columns));
+        EXPECT_LE(string_width(task), columns);
+        EXPECT_LE(string_width(tail), columns);
+        EXPECT_EQ(task, tail);
+    }
+}
+TEST(ChromeBudget, NarrowRowsPreserveGlyphNameStatusAndTailOrder) {
+    todo::TodoDisplayItem item;
+    item.content = "中文😀 task";
+    team::LiveTeammate peer;
+    peer.name = "中文😀 very-long-name";
+    peer.status = "running";
+    peer.last_output_tail = "尾部😀 output";
+    for (int columns = 1; columns <= 30; ++columns) {
+        auto task = todo::RenderTodoRow(item, columns);
+        auto row = team::RenderLiveTeammateRow(peer, columns);
+        EXPECT_EQ(height(task), 1);
+        EXPECT_EQ(height(row), 1);
+        EXPECT_EQ(row->requirement().min_x, columns);
+        const auto text = visible(paint(row, columns, 1));
+        EXPECT_NE(text.find("●"), std::string::npos);
+        if (columns >= 18) {
+            EXPECT_LT(text.find("@"), text.find("ru"));
+            EXPECT_LT(text.find("ru"), text.find("尾"));
+        }
+    }
+    EXPECT_EQ(visible(paint(todo::RenderTodoRow(item, 1), 1, 1)), "○");
+    EXPECT_EQ(visible(paint(team::RenderLiveTeammateRow(peer, 1), 1, 1)), "●");
+}
+TEST(ChromeBudget, CompletedTextAndLiveTailUseReadableUndimmedForegrounds) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    todo::TodoDisplayItem task;
+    task.content = "completed";
+    task.status = todo::TodoDisplayItem::Status::Completed;
+    auto screen = paint(todo::RenderTodoRow(task, 30), 30, 1);
+    EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, pal.muted);
+    EXPECT_EQ(screen.PixelAt(2, 0).foreground_color, pal.muted);
+    EXPECT_FALSE(screen.PixelAt(2, 0).dim);
+    team::LiveTeammate peer;
+    peer.name = "a";
+    peer.status = "idle";
+    peer.last_output_tail = "TAIL";
+    auto row = paint(team::RenderLiveTeammateRow(peer, 30), 30, 1);
+    for (int column = 0; column < 30; ++column) {
+        if (row.PixelAt(column, 0).character == "T") {
+            EXPECT_EQ(row.PixelAt(column, 0).foreground_color, pal.muted);
+            EXPECT_FALSE(row.PixelAt(column, 0).dim);
+        }
+    }
+}
+TEST(ChromeBudget, DenseEightyByTwentyFourPreservesTwelveTranscriptRowsAndCounts) {
+    repl::ReplScreenState state;
+    populate(state);
+    auto screen = paint_repl(state, 80, 24);
+    EXPECT_GE(transcript_height(state), 12);
+    const auto text = visible(screen);
+    EXPECT_NE(text.find("Tasks 0/10 done (+9 hidden)"), std::string::npos);
+    EXPECT_NE(text.find("Teams 20 (+19 hidden)"), std::string::npos);
+    EXPECT_NE(text.find("task-5"), std::string::npos);
+    EXPECT_NE(text.find("@worker-0"), std::string::npos);
+    EXPECT_NE(text.find("FOOTER-MARK"), std::string::npos);
+    expect_caret(screen);
+    EXPECT_EQ(state.todo_store.items.size(), 10u);
+    EXPECT_EQ(state.task_view_store.live_teammates.size(), 20u);
+}
+TEST(ChromeBudget, NarrowLongAsciiAndUnicodePreserveEightRowsCaretAndFooter) {
+    for (bool unicode : {false, true}) {
+        repl::ReplScreenState state;
+        populate(state);
+        for (int i = 0; i < 80; ++i) state.input_text += unicode ? "中文😀" : "abcdefgh";
+        const auto before = state.input_text;
+        auto screen = paint_repl(state, 40, 24);
+        EXPECT_GE(transcript_height(state), 8);
+        EXPECT_NE(visible(screen).find("FOOTER-MARK"), std::string::npos);
+        expect_caret(screen);
+        EXPECT_EQ(state.input_text, before);
+    }
+}
+TEST(ChromeBudget, ResizeRetainsHeldInputBytesCaretAndViewport) {
+    repl::ReplScreenState state;
+    populate(state);
+    state.input_text = std::string(500, 'x') + "中文😀";
+    auto wide = paint_repl(state, 80, 24);
+    expect_caret(wide);
+    const auto held = state.prompt_render_input;
+    const auto bytes = state.input_text;
+    auto narrow = paint_repl(state, 40, 24);
+    expect_caret(narrow);
+    EXPECT_GE(transcript_height(state), 8);
+    auto resized = paint_repl(state, 80, 30);
+    expect_caret(resized);
+    EXPECT_EQ(state.prompt_render_input, held);
+    EXPECT_EQ(state.input_text, bytes);
+}
+TEST(ChromeBudget, EmptyActivityConsumesNoRowsAndTinyFixedChromeTakesPriority) {
+    repl::ReplScreenState empty;
+    populate(empty, 0, 0);
+    auto baseline = paint_repl(empty, 80, 24);
+    EXPECT_EQ(visible(baseline).find("Tasks"), std::string::npos);
+    const int empty_height = transcript_height(empty);
+    repl::ReplScreenState dense;
+    populate(dense);
+    auto populated = paint_repl(dense, 80, 24);
+    (void)populated;
+    EXPECT_EQ(empty_height - transcript_height(dense), 4);
+    dense.input_text = std::string(400, 'x');
+    auto small = paint_repl(dense, 40, 12);
+    EXPECT_EQ(visible(small).find("Tasks"), std::string::npos);
+    EXPECT_EQ(visible(small).find("Teams"), std::string::npos);
+    expect_caret(small);
+}
+TEST(ChromeBudget, UnusedTodoAndTeamCapacityTransfersToOtherGroup) {
+    repl::ReplScreenState few_tasks;
+    populate(few_tasks, 1, 20);
+    auto screen = paint_repl(few_tasks, 80, 30);
+    const auto text = visible(screen);
+    EXPECT_NE(text.find("Tasks 0/1 done (+0 hidden)"), std::string::npos);
+    EXPECT_NE(text.find("Teams 20 (+18 hidden)"), std::string::npos);
+    EXPECT_NE(text.find("@worker-1"), std::string::npos);
+    repl::ReplScreenState few_teams;
+    populate(few_teams, 10, 1);
+    const auto transferred = visible(paint_repl(few_teams, 80, 30));
+    EXPECT_NE(transferred.find("Tasks 0/10 done (+7 hidden)"), std::string::npos);
+    EXPECT_NE(transferred.find("task-0"), std::string::npos);
+    EXPECT_NE(transferred.find("@worker-0"), std::string::npos);
+    EXPECT_EQ(transferred.find("Teams"), std::string::npos);
+}
+
+TEST(ChromeBudget, OneSharedRowKeepsBothCountsInNarrowTerminal) {
+    repl::ReplScreenState state;
+    populate(state);
+    // Six input rows plus the fixed rules/footer/margin leave one row
+    // under the existing twelve-row fullscreen bottom cap.
+    state.input_text = std::string(200, 'x');
+    auto screen = paint_repl(state, 40, 24);
+    const auto text = visible(screen);
+    EXPECT_NE(text.find("Tasks 0/10 +10 · Teams 20 +20"), std::string::npos);
+    EXPECT_EQ(text.find("@worker-0"), std::string::npos);
+    EXPECT_EQ(text.find("task-5"), std::string::npos);
+    EXPECT_GE(transcript_height(state), 8);
+    expect_caret(screen);
+}
+
+TEST(ChromeBudget, ActiveSpinnerPreservesTranscriptCaretAndFooterAcrossFrames) {
+    repl::ReplScreenState state;
+    populate(state);
+    state.task_view_store.spinner_mode = repl::SpinnerMode::Thinking;
+    state.task_view_store.spinner_verb = "Working";
+    auto normal = paint_repl(state, 80, 24);
+    EXPECT_GE(transcript_height(state), 12);
+    EXPECT_NE(visible(normal).find("FOOTER-MARK"), std::string::npos);
+    EXPECT_NE(visible(normal).find("Tasks"), std::string::npos);
+    EXPECT_NE(visible(normal).find("Teams"), std::string::npos);
+    expect_caret(normal);
+    state.input_text = std::string(500, 'x') + "中文😀";
+    const auto bytes = state.input_text;
+    auto narrow = paint_repl(state, 40, 24);
+    EXPECT_GE(transcript_height(state), 8);
+    EXPECT_NE(visible(narrow).find("FOOTER-MARK"), std::string::npos);
+    expect_caret(narrow);
+    EXPECT_EQ(state.input_text, bytes);
+}
+
+TEST(ChromeBudget, AutocompleteHeightLeavesCaretFooterAndTranscriptVisible) {
+    repl::ReplScreenState state;
+    populate(state);
+    state.autocomplete_suggestions = {
+        {.display_text = "/help", .description = "Help", .insert_text = "/help "},
+        {.display_text = "/history", .description = "History", .insert_text = "/history "},
+        {.display_text = "/model", .description = "Model", .insert_text = "/model "},
+        {.display_text = "/status", .description = "Status", .insert_text = "/status "},
+        {.display_text = "/config", .description = "Selected-last", .insert_text = "/config "},
+    };
+    state.autocomplete_index = 4;
+    state.task_view_store.spinner_mode = repl::SpinnerMode::Thinking;
+    state.task_view_store.spinner_verb = "Working";
+    // The default standalone builder keeps five rows plus overlay framing;
+    // a finite caller budget changes only the visible projection.
+    EXPECT_EQ(height(repl::RenderPromptSuggestions(state, 80, true, 24)), 7);
+    auto one = repl::RenderPromptSuggestions(state, 80, true, 24, 1);
+    EXPECT_EQ(height(one), 3);
+    EXPECT_NE(visible(paint(one, 80, 3)).find("/config"), std::string::npos);
+    EXPECT_FALSE(repl::RenderPromptSuggestions(state, 80, true, 24, 0));
+    auto wide = paint_repl(state, 80, 24);
+    EXPECT_GE(transcript_height(state), 8);
+    EXPECT_EQ(visible(wide).find("Tasks"), std::string::npos);
+    EXPECT_NE(visible(wide).find("/config"), std::string::npos);
+    EXPECT_NE(visible(wide).find("FOOTER-MARK"), std::string::npos);
+    expect_caret(wide);
+    state.input_text = std::string(300, 'x') + "中文😀";
+    const auto bytes = state.input_text;
+    auto narrow = paint_repl(state, 40, 24);
+    EXPECT_GE(transcript_height(state), 8);
+    EXPECT_EQ(visible(narrow).find("Tasks"), std::string::npos);
+    EXPECT_NE(visible(narrow).find("/config"), std::string::npos);
+    EXPECT_NE(visible(narrow).find("FOOTER-MARK"), std::string::npos);
+    expect_caret(narrow);
+    EXPECT_EQ(state.input_text, bytes);
+    EXPECT_EQ(state.autocomplete_index, 4);
+    ASSERT_EQ(state.autocomplete_suggestions.size(), 5u);
+    EXPECT_EQ(state.autocomplete_suggestions.front().insert_text, "/help ");
+    EXPECT_EQ(state.autocomplete_suggestions.back().insert_text, "/config ");
+    // At short heights fixed controls take priority; hiding the popup must
+    // leave the complete suggestion list and selection intact.
+    auto tiny = paint_repl(state, 40, 12);
+    EXPECT_EQ(visible(tiny).find("/config"), std::string::npos);
+    EXPECT_EQ(visible(tiny).find("Tasks"), std::string::npos);
+    expect_caret(tiny);
+    EXPECT_EQ(state.autocomplete_index, 4);
+    EXPECT_EQ(state.autocomplete_suggestions.size(), 5u);
+    EXPECT_EQ(state.input_text, bytes);
+}
+
+TEST(ChromeBudget, AllThemeVariantsRenderDenseBashWithSpinnerAndRestoreTheme) {
+    namespace theme = loom::ui::design::theme;
+    const auto original = theme::current_theme();
+    {
+        struct RestoreTheme {
+            theme::Theme value;
+            ~RestoreTheme() { theme::set_theme(value); }
+        } restore{original};
+        for (const auto variant : std::array{
+            theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+            theme::ThemeVariant::Monochrome, theme::ThemeVariant::LightAnsi,
+            theme::ThemeVariant::DarkAnsi}) {
+            SCOPED_TRACE(theme::variant_name(variant));
+            theme::set_theme(variant);
+            repl::ReplScreenState state;
+            populate(state);
+            state.prompt_store.input_mode = repl::InputMode::Bash;
+            state.input_text = "!echo Loom";
+            state.task_view_store.spinner_mode = repl::SpinnerMode::Thinking;
+            state.task_view_store.spinner_verb = "Working";
+            auto screen = paint_repl(state, 80, 30);
+            const auto text = visible(screen);
+            EXPECT_NE(text.find("echo Loom"), std::string::npos);
+            EXPECT_NE(text.find("Tasks 0/10 done (+8 hidden)"), std::string::npos);
+            EXPECT_NE(text.find("Teams 20 (+19 hidden)"), std::string::npos);
+            EXPECT_NE(text.find("@worker-0"), std::string::npos);
+            EXPECT_NE(text.find("for bash mode"), std::string::npos);
+            EXPECT_GE(transcript_height(state), 12);
+            expect_caret(screen);
+            EXPECT_EQ(state.input_text, "!echo Loom");
+            EXPECT_EQ(state.todo_store.items.size(), 10u);
+            EXPECT_EQ(state.task_view_store.live_teammates.size(), 20u);
+            EXPECT_EQ(theme::current_theme().variant, variant);
+            EXPECT_EQ(theme::current_theme().palette, theme::palette_for_variant(variant));
+        }
+    }
+    EXPECT_EQ(theme::current_theme().variant, original.variant);
+    EXPECT_EQ(theme::current_theme().palette, original.palette);
+    EXPECT_EQ(theme::current_theme().a11y.reduced_motion, original.a11y.reduced_motion);
+}

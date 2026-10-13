@@ -135,7 +135,7 @@ namespace detail {
         case PermissionAction::Ask:     return pal.warning;
         case PermissionAction::AskOnce: return pal.warning;
     }
-    return pal.text_muted;
+    return pal.muted;
 }
 
 /// Convert PathScope -> PermissionAction for rules.

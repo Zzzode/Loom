@@ -122,7 +122,7 @@ enum class ActionKind : std::uint8_t {
         case ActionKind::MCP:         return pal.primary;
         case ActionKind::Environment: return pal.permission;
         case ActionKind::Plan:        return pal.plan_mode;
-        case ActionKind::Other:       return pal.text_muted;
+        case ActionKind::Other:       return pal.muted;
     }
     return pal.text;
 }
@@ -501,7 +501,7 @@ struct CheckboxState {
     }
     if (paths.size() > static_cast<std::size_t>(max_shown)) {
         auto remaining = paths.size() - static_cast<std::size_t>(max_shown);
-        els.push_back(text(std::format("… and {} more", remaining)) | dim | color(pal.text_muted));
+        els.push_back(text(std::format("… and {} more", remaining)) | dim | color(pal.muted));
     }
     return els;
 }

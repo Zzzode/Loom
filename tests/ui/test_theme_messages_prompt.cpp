@@ -191,7 +191,7 @@ TEST(MessagePromptTheme, AttachmentAndImageChromeKeepsReadableTypeLabels) {
         const auto rendered = strip_ansi(card.ToString());
         EXPECT_NE(rendered.find("PDF"), std::string::npos);
         EXPECT_EQ(rendered.find('\xF0'), std::string::npos);
-        ExpectWordColor(card, "manual.pdf", theme::current_theme().palette->icon_default);
+        ExpectWordColor(card, "manual.pdf", theme::current_theme().palette->text);
         EXPECT_STREQ(msg::image::source_icon(msg::image::ImageSource::Clipboard), "clipboard");
         EXPECT_STREQ(msg::image::source_icon(msg::image::ImageSource::URL), "url");
     }
@@ -263,10 +263,10 @@ TEST(MessagePromptTheme, ActualUserAndImageHoverKeepsReadableThemeSurface) {
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
         auto user_screen = RenderElement(user->Render());
-        ExpectWordColor(user_screen, "HoverBody", pal.text, pal.surface_selected);
+        ExpectWordColor(user_screen, "HoverBody", pal.text, pal.message_actions_background);
         EXPECT_NE(strip_ansi(user_screen.ToString()).find(user_data.content), std::string::npos);
         auto image_screen = RenderElement(image->Render());
-        ExpectWordColor(image_screen, "capture.png", pal.text_link, pal.surface_selected);
+        ExpectWordColor(image_screen, "capture.png", pal.suggestion, pal.message_actions_background);
     }
     EXPECT_TRUE(user->OnEvent(click));
     EXPECT_TRUE(image->OnEvent(click));

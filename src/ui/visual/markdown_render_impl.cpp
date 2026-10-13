@@ -502,7 +502,7 @@ std::vector<std::string> split_for_wrapping(std::string_view text,
                 auto words = split_for_wrapping(tok.text, at_paragraph_start);
                 for (auto& word : words) {
                     Element el = ftxui::text(word) | hyperlink(tok.url) |
-                                 color(loom::ui::design::theme::current_theme().palette->text_link);
+                                 color(loom::ui::design::theme::current_theme().palette->suggestion);
                     if (opts.dim_color) el = el | dim;
                     elements.push_back(std::move(el));
                 }

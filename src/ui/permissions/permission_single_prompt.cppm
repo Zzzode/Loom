@@ -316,7 +316,7 @@ namespace detail {
     }
     Elements all = header;
     all.insert(all.end(), list.begin(), list.end());
-    return vbox(all) | color(pal.text_muted);
+    return vbox(all) | color(pal.muted);
 }
 
 /// Render matched-rule explanation footnote.
@@ -459,7 +459,7 @@ struct PromptState {
             case RiskLevel::High:     return pal.danger;
             case RiskLevel::Critical: return pal.danger;
         }
-        return pal.text_muted;
+        return pal.muted;
     }();
 
     return window(

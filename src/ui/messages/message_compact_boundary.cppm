@@ -55,7 +55,7 @@ struct CompactBoundaryData {
     if (data.summary && !data.summary->empty()) {
         return vbox({
             header,
-            text("  " + *data.summary) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted),
+            text("  " + *data.summary) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
         });
     }
     

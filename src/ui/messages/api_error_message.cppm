@@ -149,7 +149,7 @@ struct ErrorPalette {
         if (e.http_status)
             parts.push_back(text(std::format(" · HTTP {}", *e.http_status)) | color(p.title));
         if (!e.provider.empty())
-            parts.push_back(text(" · " + e.provider) | color(loom::ui::design::theme::current_theme().palette->text_muted));
+            parts.push_back(text(" · " + e.provider) | color(loom::ui::design::theme::current_theme().palette->muted));
         if (!e.error_code.empty())
             parts.push_back(text(" · " + e.error_code) | color(p.accent));
         parts.push_back(filler());
@@ -211,14 +211,14 @@ struct ErrorPalette {
         std::string countdown_text = std::format(
             " Retrying in {} {}… (attempt {}/{})",
             secs_int, unit, *e.current_attempt, *e.max_attempts);
-        rows.push_back(text(countdown_text) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted));
+        rows.push_back(text(countdown_text) | dim | color(loom::ui::design::theme::current_theme().palette->muted));
     }
     if (opts.show_trace_ids) {
         Elements ids;
         auto add_id = [&](const char* label, const std::string& val) {
             if (val.empty()) return;
             ids.push_back(text(std::format(" {}: ", label)) | dim);
-            ids.push_back(text(val) | color(loom::ui::design::theme::current_theme().palette->text_link) | bold);
+            ids.push_back(text(val) | color(loom::ui::design::theme::current_theme().palette->suggestion) | bold);
         };
         add_id("trace-id",   e.trace_id);
         add_id("request-id", e.request_id);
@@ -249,7 +249,7 @@ struct ErrorPalette {
             bts.push_back(text("  "));
         }
         if (opts.dismissible && opts.on_dismiss) {
-            bts.push_back(pill_button("q", "Dismiss", loom::ui::design::theme::current_theme().palette->text_muted));
+            bts.push_back(pill_button("q", "Dismiss", loom::ui::design::theme::current_theme().palette->muted));
         }
         if (e.message.size() > e.max_chars_collapsed) {
             bts.push_back(filler());

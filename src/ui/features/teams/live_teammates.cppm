@@ -19,6 +19,7 @@ module;
 #include <cstdint>
 
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/string.hpp>
 
 export module loom.ui.features.teams.live_teammates;
 
@@ -97,16 +98,18 @@ namespace thm = loom::ui::design::theme;
     const auto last = out.find_last_not_of(' ');
     out = out.substr(first, last - first + 1);
 
-    if (max_cols <= 1 || out.size() <= max_cols) return out;
-    // Byte-truncate, then back off any UTF-8 continuation bytes (10xxxxxx) so
-    // we never emit half a multibyte sequence before the ellipsis.
-    std::size_t cut = max_cols - 1;
-    while (cut > 0 && (static_cast<unsigned char>(out[cut]) & 0xC0) == 0x80) {
-        --cut;
+    if (max_cols == 0) return {};
+    if (string_width(out) <= static_cast<int>(max_cols)) return out;
+    std::string clipped;
+    int used = 0;
+    for (const auto& glyph : Utf8ToGlyphs(out)) {
+        if (glyph.empty()) continue;
+        const int width = string_width(glyph);
+        if (used + width > static_cast<int>(max_cols) - 1) break;
+        clipped += glyph;
+        used += width;
     }
-    out.resize(cut);
-    out += "…";
-    return out;
+    return clipped + "…";
 }
 
 /// One CoordinatorAgentStatus AgentLine row:
@@ -115,29 +118,59 @@ namespace thm = loom::ui::design::theme;
 [[nodiscard]] inline Element RenderLiveTeammateRow(
     const LiveTeammate& t, int avail_cols) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    const int tail_cols =
-        std::max(8, avail_cols - static_cast<int>(t.name.size()) - 10);
-    return hbox({
-        text("● ") | color(status_color(t.status)),
-        text("@" + t.name) | bold | color(identity_color(t)),
-        text(" " + t.status) | color(status_color(t.status)) | dim,
-        text("  " + one_line_tail(t.last_output_tail,
-                                  static_cast<std::size_t>(tail_cols)))
-            | color(pal.subtle),
-        filler(),
-    });
+    const int columns = std::max(0, avail_cols);
+    Elements segments;
+    int remaining = columns;
+    auto append = [&](std::string_view value, int capacity, Color foreground, bool strong = false) {
+        const auto clipped = one_line_tail(value, static_cast<std::size_t>(std::max(0, capacity)));
+        const int width = string_width(clipped);
+        Element segment = text(clipped) | color(foreground) | size(WIDTH, EQUAL, width);
+        if (strong) segment = segment | bold;
+        segments.push_back(std::move(segment));
+        remaining -= width;
+    };
+    if (remaining > 0) append("●", 1, status_color(t.status));
+    if (remaining > 0) {
+        segments.push_back(text(" ") | size(WIDTH, EQUAL, 1));
+        --remaining;
+    }
+    // Reserve space for status and tail before allowing a long name to grow.
+    const int status_reserve = std::min(remaining / 3, string_width(" " + t.status));
+    const int tail_reserve = t.last_output_tail.empty() ? 0 : std::min(remaining / 3, 12);
+    append("@" + t.name, std::max(0, remaining - status_reserve - tail_reserve), identity_color(t), true);
+    if (remaining > 0) {
+        // Explicit spaces live in their own segment so trimming text cannot
+        // concatenate name/status or status/tail.
+        segments.push_back(text(" ") | size(WIDTH, EQUAL, 1));
+        --remaining;
+        append(t.status, std::max(0, remaining - tail_reserve), status_color(t.status));
+    }
+    if (remaining > 0 && !t.last_output_tail.empty()) {
+        segments.push_back(text(" ") | size(WIDTH, EQUAL, 1));
+        --remaining;
+        append(t.last_output_tail, remaining, pal.muted);
+    }
+    return hbox(std::move(segments)) | size(WIDTH, EQUAL, columns);
 }
 
 /// Pinned chrome strip: one status + output-tail row per teammate. Returns an
 /// empty element when there are no teammates (so callers can skip it).
 [[nodiscard]] inline Element RenderLiveTeammateStrip(
-    const std::vector<LiveTeammate>& ts, int term_cols = 120) {
-    if (ts.empty()) return text("");
+    const std::vector<LiveTeammate>& ts, int term_cols = 120, int max_rows = -1) {
+    if (ts.empty() || max_rows == 0) return vbox({});
     Elements rows;
-    rows.reserve(ts.size());
-    for (const auto& t : ts) {
-        rows.push_back(RenderLiveTeammateRow(t, term_cols));
+    const bool overflow = max_rows >= 0 && static_cast<int>(ts.size()) > max_rows;
+    const int details = max_rows < 0 ? static_cast<int>(ts.size())
+        : std::min(static_cast<int>(ts.size()), max_rows - (overflow ? 1 : 0));
+    if (overflow) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
+        rows.push_back(text(one_line_tail(std::format("Teams {} (+{} hidden)", ts.size(),
+            ts.size() - static_cast<std::size_t>(details)),
+            static_cast<std::size_t>(std::max(0, term_cols)))) | color(pal.muted)
+            | size(WIDTH, EQUAL, std::max(0, term_cols)));
     }
+    for (int i = 0; i < details; ++i)
+        rows.push_back(RenderLiveTeammateRow(ts[static_cast<std::size_t>(i)], term_cols));
     return vbox(std::move(rows));
 }
 

@@ -71,7 +71,7 @@ ftxui::Element TagTabs(const TagTabsOptions& options) {
         
         auto label = text(display_text);
         if (i == options.active_tab) {
-            label = label | bold | color(pal.text) | bgcolor(pal.surface_selected);
+            label = label | bold | color(pal.text) | bgcolor(pal.message_actions_background);
         } else {
             label = label | dim;
         }
@@ -110,7 +110,7 @@ ftxui::Component TagTabsComponent(const TagTabsOptions& options) {
             auto label = text(display_text);
             
             if (static_cast<int>(i) == *state) {
-                label = label | bold | color(pal.text) | bgcolor(pal.surface_selected);
+                label = label | bold | color(pal.text) | bgcolor(pal.message_actions_background);
             }
             
             tab_elements.push_back(hbox({text(" "), label, text(" ")}) | borderEmpty);

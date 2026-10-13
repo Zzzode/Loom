@@ -285,7 +285,8 @@ void move_prompt_cursor_right(const std::shared_ptr<ReplScreenState>& state);
 [[nodiscard]] Element RenderPromptSuggestions(const ReplScreenState& s,
                                               int term_cols,
                                               bool is_overlay = false,
-                                              int term_rows = 24);
+                                              int term_rows = 24,
+                                              int max_visible_items = -1);
 
 // Accept the currently-selected autocomplete suggestion into the buffer.
 [[nodiscard]] std::optional<std::string> accept_selected_prompt_suggestion(

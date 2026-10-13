@@ -225,7 +225,7 @@ struct SettingsDialogOptions {
     if (description && !description->empty()) {
         result.push_back(hbox({
             text("   ") | dim,
-            text(*description) | dim | color(pal.text_muted),
+            text(*description) | dim | color(pal.muted),
         }));
     }
     return vbox(result);
@@ -373,7 +373,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     if (!subtitle.empty()) {
         els.push_back(hbox({
             text(" "),
-            text(subtitle) | dim | color(pal.text_muted),
+            text(subtitle) | dim | color(pal.muted),
         }));
     }
     els.push_back(separator());

@@ -2,15 +2,11 @@
 /// @brief Lightweight theme provider with a global default and explicit
 /// per-call theme values.
 ///
-/// We intentionally do NOT carry the full 89-field theme struct across the
-/// FFI; the Provider here exposes the compact Palette + accessibility flags
-/// that the design primitives actually consume.  Full field access remains
-/// available via the legacy ui/design/themed_text.cppm module.
+/// Exposes canonical palettes, accessibility flags and named color lookup.
 module;
 
 
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/component/component_base.hpp>
+#include <ftxui/screen/color.hpp>
 
 export module loom.ui.foundation.theme_provider;
 
@@ -361,68 +357,4 @@ inline void set_theme(Theme t) noexcept {
     return p.text;
 }
 
-// ─── Apply a theme role to a raw ftxui::Component (catch-event-style wrapper)
-// PHASE_5 NOTE: FTXUI does not have a context-provider pattern; instead,
-// callers can use with_theme_role(comp, role) to wrap a component renderer
-// so that every repaint pulls a fresh color from current_theme().
-[[nodiscard]] inline ftxui::Component with_theme_role(ftxui::Component inner,
-                                                      Role role) {
-    // No direct way to "apply a theme" to an arbitrary component; instead we
-    // return the inner unchanged and document that the component must itself
-    // call current_theme() during Render().  A stricter version could inject
-    // an OnAnimation step, but that would require holding the component on
-    // the heap via make_ref, which FTXUI discourages.
-    (void)role;
-    return inner;
-}
-
-// ─── surface_box: wrap an element in a chrome-styled border + bg ─────────────
-/// Produces a "surface" container: border color from theme.chrome,
-/// background from tint(theme.background, 0.02), and the rounded border
-/// style used in the majority of the REPL surfaces.
-[[nodiscard]] inline ftxui::Element surface_box(ftxui::Element inner,
-                                                const Theme& theme,
-                                                tokens::Radius r = tokens::Radius::Rounded,
-                                                Role border_role = Role::Chrome) {
-    auto bc = theme.color_for(border_role);
-    switch (r) {
-        case tokens::Radius::None:
-            return inner | ftxui::bgcolor(theme.palette->background);
-        case tokens::Radius::Light:
-            return inner | ftxui::borderLight | ftxui::color(bc)
-                   | ftxui::bgcolor(theme.palette->background);
-        case tokens::Radius::Rounded:
-            return inner | ftxui::borderRounded | ftxui::color(bc)
-                   | ftxui::bgcolor(theme.palette->background);
-        case tokens::Radius::Double:
-            return inner | ftxui::borderDouble | ftxui::color(bc)
-                   | ftxui::bgcolor(theme.palette->background);
-        case tokens::Radius::Heavy:
-            return inner | ftxui::borderHeavy | ftxui::color(bc)
-                   | ftxui::bgcolor(theme.palette->background);
-    }
-    return inner;
-}
-
 } // namespace loom::ui::design::theme
-
-// ─── Demo stub (compile-time only under LOOM_DESIGN_SYSTEM_DEMO) ───────────────
-#ifdef LOOM_DESIGN_SYSTEM_DEMO
-export namespace loom::ui::design::theme::demo {
-inline std::string demo_theme_names() {
-    std::string out;
-    auto add = [&](ThemeVariant v) {
-        if (!out.empty()) out += ", ";
-        out += variant_name(v);
-    };
-    add(ThemeVariant::Dark);
-    add(ThemeVariant::Light);
-    add(ThemeVariant::DarkDaltonized);
-    add(ThemeVariant::LightDaltonized);
-    add(ThemeVariant::Monochrome);
-    add(ThemeVariant::LightAnsi);
-    add(ThemeVariant::DarkAnsi);
-    return out;
-}
-}
-#endif

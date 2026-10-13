@@ -236,9 +236,9 @@ struct LocalCommandOptions {
     left.push_back(text(" ") | dim);
     if (total > d.collapse_threshold) {
         if (d.collapsed) {
-            left.push_back(text("[f] unfold ") | color(loom::ui::design::theme::current_theme().palette->text_link) | dim);
+            left.push_back(text("[f] unfold ") | color(loom::ui::design::theme::current_theme().palette->suggestion) | dim);
         } else {
-            left.push_back(text("[f] fold ") | color(loom::ui::design::theme::current_theme().palette->text_link) | dim);
+            left.push_back(text("[f] fold ") | color(loom::ui::design::theme::current_theme().palette->suggestion) | dim);
         }
     }
     left.push_back(text("[c] copy all ") | dim);
@@ -267,7 +267,7 @@ struct LocalCommandOptions {
     if (!d.working_dir.empty()) {
         parts.push_back(hbox({
             text("in ") | dim | color(loom::ui::design::theme::current_theme().palette->muted),
-            text(d.working_dir) | dim | color(loom::ui::design::theme::current_theme().palette->text_link),
+            text(d.working_dir) | dim | color(loom::ui::design::theme::current_theme().palette->suggestion),
         }));
     }
     parts.push_back(RenderCommandHeader(d));

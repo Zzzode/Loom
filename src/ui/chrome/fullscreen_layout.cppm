@@ -244,7 +244,7 @@ struct FullscreenLayoutSlots {
 ///
 ///   • Fixed-height 1 row (truncate-end for long prompts)
 ///   • Background = userMessageBackground, hover = userMessageBackgroundHover
-///   • Text = subtle color, prefix = figures.pointer (▶)
+///   • Text = readable muted color, prefix = figures.pointer (▶)
 ///   • onClick() invokes the passed callback (which scrolls + enters
 ///     'clicked' sentinel state)
 ///   • onMouseEnter/Leave toggles hover styling
@@ -265,7 +265,7 @@ class StickyPromptHeaderComponent : public ComponentBase {
         const Color bg = hovered_
             ? loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackgroundHover)
             : loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackground);
-        const Color fg = loom::ui::design::tokens::token_by_role(pal, Role::Subtle);
+        const Color fg = loom::ui::design::tokens::token_by_role(pal, Role::Muted);
         // The `figures.pointer` prefix (▶ U+25B6).
         // NOTE: figures_ns::kPointer is constexpr string_view; std::string
         // ctor requires explicit materialization.
@@ -357,7 +357,7 @@ class StickyPromptHeaderComponent : public ComponentBase {
         pal, Role::UserMessageBackground);
     const Color bg_hover = loom::ui::design::tokens::token_by_role(
         pal, Role::UserMessageBackgroundHover);
-    const Color fg = loom::ui::design::tokens::token_by_role(pal, Role::Subtle);
+    const Color fg = loom::ui::design::tokens::token_by_role(pal, Role::Muted);
 
     // This Element is rendered inside a stateless tree, so an embedded FTXUI
     // Component would not receive events.  Reflect the bounds and let the

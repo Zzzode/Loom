@@ -43,7 +43,7 @@ TEST(MessageInteractions, ClickActionsAndKeyHintsRemainDistinctAcrossThemes) {
         EXPECT_TRUE(screen.PixelAt(1, 0).underlined);
         EXPECT_TRUE(screen.PixelAt(1, 0).bold);
         EXPECT_FALSE(screen.PixelAt(1, 0).dim);
-        EXPECT_EQ(screen.PixelAt(1, 0).foreground_color, theme::current_theme().palette->text_link);
+        EXPECT_EQ(screen.PixelAt(1, 0).foreground_color, theme::current_theme().palette->suggestion);
         EXPECT_TRUE(screen.PixelAt(13, 0).inverted);
         EXPECT_FALSE(screen.PixelAt(13, 0).underlined);
         EXPECT_FALSE(screen.PixelAt(13, 0).dim);

@@ -171,6 +171,8 @@ inline bool HandleToolPermissionEvent(
     if (!p.ui_state) p.ui_state = std::make_shared<sp::PromptState>();
     auto st = std::static_pointer_cast<sp::PromptState>(p.ui_state);
 
+    if (sp::HandleDetailScroll(*st, event)) return true;
+
     // ── Direct shortcuts ─────────────────────────────────────────────
     if (event == Event::Character('y') || event == Event::Character('Y')) {
         // 'y' with always_allow checkbox pre-checked → AlwaysAllow wins.

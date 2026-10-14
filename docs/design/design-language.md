@@ -38,6 +38,12 @@ panels do not claim decision focus. Outer Settings, Agents and Trust views own
 both presentation and input: a hidden tool request must not receive their
 decision keys. Other visible modal owners suppress underlying work emphasis.
 
+Single-request permission footers keep complete scope labels and key/action
+pairs together and wrap between controls. Compact actions and a fixed footer
+preserve decision access in short terminals. PageUp/PageDown scroll only the
+request body, so long details remain reachable without moving decision focus
+or triggering an authorization. The panel clears underlying transcript cells.
+
 An old tool error or denial remains inline; it does not turn a corrected tool's
 approval or a later running query into global failure. Automatic retry remains
 work while the query runs. Recovery shortcuts retain their existing request

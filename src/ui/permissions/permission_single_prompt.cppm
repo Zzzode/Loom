@@ -8,13 +8,12 @@
 ///   Body   : one-line description ("BashTool wants to execute `rm -rf *.log`")
 ///          : optional destructive-warning banner (yellow)
 ///          : optional affected paths (with danger highlighting + depth tag)
-///   Footer : 4-button row
-///            [x] Deny (red)   + [ ] Always deny this tool  (checkbox)
-///            [✓] Allow once   + [ ] Always allow this scope (checkbox)
-///            [?] Sandbox mode toggle (grey, right-aligned)
+///   Footer : compact decisions and sandbox toggle, followed by full scope
+///            checkboxes and atomic key/action hints that wrap at narrow widths.
 ///
 /// Keyboard shortcuts: y=Allow, n=Deny, a=Always allow, d=Always deny,
-///                     s=Toggle sandbox, Esc=Deny, Enter=Allow once
+///                     s=Toggle sandbox, Esc=Abort, Enter=focused decision,
+///                     PageUp/PageDown=scroll request details
 ///
 /// Engine logic is 100% delegated to loom.security.permissions_engine.
 /// This file only formats the UI and routes user input.
@@ -23,6 +22,7 @@ module;
 #include <cstdint>
 
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
@@ -344,10 +344,24 @@ struct PromptState {
     bool always_allow_checkbox = false;
     bool sandbox_toggle = false;
     int  focused_button = 0;   // 0=Allow once  1=Deny  2=Always allow  3=Always deny
+    int detail_line = 0;
+    Element detail_content;  // Last laid-out document; its requirement is not stencil-clipped.
+    Box detail_viewport_box;
     // One-shot guard: contract fires EXACTLY ONE terminal callback per prompt.
     // Priority 1) on_abort (if present), 2) else on_decide(...). NEVER both.
     bool callback_fired = false;
 };
+
+/// Scroll only the request details; decision focus and callbacks stay unchanged.
+inline bool HandleDetailScroll(PromptState& state, const Event& event) {
+    if (event != Event::PageUp && event != Event::PageDown) return false;
+    const int last = state.detail_content ? std::max(0, state.detail_content->requirement().min_y - 1) : 0;
+    const int step = std::max(1, state.detail_viewport_box.y_max - state.detail_viewport_box.y_min);
+    state.detail_line = std::clamp(state.detail_line, 0, last);
+    state.detail_line = event == Event::PageDown
+        ? std::min(last, state.detail_line + step) : std::max(0, state.detail_line - step);
+    return true;
+}
 
 /// Render the complete single-prompt dialog body.
 [[nodiscard]] inline Element RenderSinglePrompt(std::shared_ptr<PromptState> st) {
@@ -363,93 +377,54 @@ struct PromptState {
                           : std::nullopt);
     auto rule_el   = detail::RenderRuleExplanation(p.rule_match_explanation);
 
-    // ---- Footer: button row ----
-    // Buttons: [x] Deny + chk  |  [✓] Allow once + chk  |  Sandbox toggle
-    auto deny_btn = [&] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        auto focused = st->focused_button == 1;
-        auto el = hbox({
-            text("× ") | bold | color(pal.danger),
-            text("Deny"),
-        });
-        if (focused) el = el | inverted | bold;
-        return hbox({ text(" "), el, text(" ") })
-               | borderStyled(pal.danger) | color(pal.danger);
-    }();
-    auto always_deny_cb = pc::CheckboxBox(st->always_deny_checkbox);
-
-    auto allow_btn = [&] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        auto focused = st->focused_button == 0;
-        auto el = hbox({
-            text("✓ ") | bold | color(pal.success),
-            text("Allow once"),
-        });
-        if (focused) el = el | inverted | bold;
-        return hbox({ text(" "), el, text(" ") })
-               | borderStyled(pal.success) | color(pal.success);
-    }();
-    auto always_allow_cb = pc::CheckboxBox(st->always_allow_checkbox);
-
-    auto sandbox_btn = [&] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        auto on = st->sandbox_toggle;
-        return hbox({
-            text("Sandbox "),
-            on ? text("[ON]")  | color(pal.info) | bold
-               : text("[OFF]"),
-        }) | borderStyled(pal.muted);
-    }();
-
+    // Keep each control and each key/action pair atomic. Native flexbox wraps
+    // between them rather than shrinking a scope label inside a rigid column.
+    const auto flow = FlexboxConfig().SetGap(2, 0);
+    auto decision_button = [&](std::string label, Color ink, int index) {
+        auto el = text(std::move(label)) | color(ink);
+        if (st->focused_button == index) el = el | inverted | bold;
+        return el;
+    };
+    auto scope_toggle = [&](bool checked, std::string label, int index) {
+        auto el = hbox({pc::CheckboxBox(checked), text(" " + label)});
+        if (st->focused_button == index) el = el | inverted | bold;
+        return el;
+    };
+    Elements hints;
+    for (const auto& hint : std::vector<pc::KeyHint>{
+            {"y", "Allow"}, {"n", "Deny"}, {"a", "Always allow"},
+            {"d", "Always deny"}, {"s", "Toggle sandbox"}, {"Esc", "Cancel"},
+            {"PgUp/PgDn", "Details"}}) {
+        hints.push_back(pc::KeyboardHintRow({hint}));
+    }
     auto footer = vbox({
         pc::ThinDivider(),
-        hbox({
-            // Left: Deny column
-            vbox({
-                hbox({ deny_btn, text("  "), always_deny_cb,
-                       text(" Always deny this tool") }),
-                text("") | size(HEIGHT, EQUAL, 1),
-            }) | xflex,
-            // Middle: Allow column
-            vbox({
-                hbox({ allow_btn, text("  "), always_allow_cb,
-                       text(" Always allow this scope") }),
-                text("") | size(HEIGHT, EQUAL, 1),
-            }) | xflex,
-            // Right: Sandbox toggle
-            sandbox_btn,
-        }),
-        text(""),
-        pc::KeyboardHintRow({
-            {"y",     "Allow"},
-            {"n",     "Deny"},
-            {"a",     "Always allow"},
-            {"d",     "Always deny"},
-            {"s",     "Toggle sandbox"},
-            {"Esc",   "Cancel"},
-        }),
+        flexbox({
+            decision_button("× Deny", pal.danger, 1),
+            decision_button("✓ Allow once", pal.success, 0),
+            hbox({text("Sandbox "), st->sandbox_toggle
+                ? text("[ON]") | color(pal.info) | bold : text("[OFF]")}),
+        }, flow),
+        flexbox({
+            scope_toggle(st->always_deny_checkbox, "Always deny this tool", 3),
+            scope_toggle(st->always_allow_checkbox, "Always allow this scope", 2),
+        }, flow),
+        flexbox(std::move(hints), flow),
     });
 
-    // Assemble the body
-    Elements body_els;
-    body_els.push_back(title_bar);
-    body_els.push_back(pc::ThinDivider());
-    body_els.push_back(text(""));
-    body_els.push_back(desc_el);
-    body_els.push_back(text(""));
-    body_els.push_back(detail_el);
-    if (!p.affected_paths.empty()) {
-        body_els.push_back(text(""));
-        body_els.push_back(paths_el);
-    }
-    if (!p.rule_match_explanation.empty()) {
-        body_els.push_back(text(""));
-        body_els.push_back(rule_el);
-    }
-    body_els.push_back(text(""));
-    body_els.push_back(footer);
-
-    auto body = vbox(body_els) | color(pal.text) | xflex;
+    // The tool target precedes supplementary prose. Under the overlay's
+    // height budget, shrink only this detail region, never the decision footer.
+    Elements details{detail_el, desc_el};
+    if (!p.affected_paths.empty()) details.push_back(paths_el);
+    if (!p.rule_match_explanation.empty()) details.push_back(rule_el);
+    st->detail_content = vbox(std::move(details));
+    auto body = vbox({
+        title_bar,
+        st->detail_content | focusPosition(0, st->detail_line)
+            | vscroll_indicator | yframe
+            | reflect(st->detail_viewport_box) | yflex_shrink,
+        footer,
+    }) | color(pal.text) | xflex;
 
     auto border_col = [&] {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
@@ -465,7 +440,7 @@ struct PromptState {
     return window(
         text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} + " Permission ")) | bold | color(pal.warning),
         body | xflex
-    ) | color(border_col) | size(WIDTH, LESS_THAN, 90);
+    ) | clear_under | color(border_col) | size(WIDTH, LESS_THAN, 90);
 }
 
 // ============================================================
@@ -495,6 +470,7 @@ struct PromptState {
 
     return Renderer([state] { return RenderSinglePrompt(state); })
          | CatchEvent([state, emit](Event event) -> bool {
+        if (HandleDetailScroll(*state, event)) return true;
         // ----- Movement between buttons -----
         if (event == Event::ArrowLeft || event == Event::Character('h')) {
             state->focused_button = (state->focused_button - 1 + kButtonCount) % kButtonCount;

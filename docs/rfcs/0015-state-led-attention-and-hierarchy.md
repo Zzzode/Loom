@@ -218,7 +218,7 @@ own focus after a new query starts. Automatic retry while query_running stays
 Working. Dismiss/retry/clear keep their existing callbacks and request ownership.
 No prose matching, severity guessing or new business state is introduced.
 
-Existing layout limitation: the three-column single-permission footer can clip
+Initial-phase layout limitation: the three-column single-permission footer could clip
 the end of its always-allow scope label even at the 90-column panel cap. This
 work verifies the visible label ink and complete keyboard instructions without
 claiming to fix that pre-existing layout. The complete 85-character keyboard-hint row is verified at 120 columns; the
@@ -447,7 +447,30 @@ execution case and three clipboard source guards. The two disabled
 fullscreen callback tests remain disabled. Physical terminal color reproduction,
 custom ANSI palette contrast, Linux/Windows execution, hosted CI cold-build
 metrics and producer PSS remain unverified. Existing narrow permission-footer
-clipping is documented above and is not presented as fixed.
+clipping was outside that initial phase; the subsequent user-authorized bug fix
+is recorded separately below.
+
+### Post-implementation permission-footer correction
+
+A subsequent user request explicitly authorizes fixing the layout limitation
+above, without committing the result. A real Loom PTY reproduced a truncated
+scope label even at 120x40. The correction belongs to SinglePrompt: compact
+actions, independently wrapping scope labels, and atomic key/action hints.
+It leaves the shared KeyboardHintRow and overlay height policy unchanged.
+
+The existing 60% overlay height budget makes footer-only wrapping insufficient
+at 24 rows. Request details now occupy a separate bounded, pageable region;
+PageUp/PageDown preserve decision focus and callbacks. The registry adapter
+routes those two keys through the same local helper as the standalone prompt.
+The retained document requirement supplies its full rendered height; reflect
+is used only for the viewport, since FTXUI clips reflected content boxes while
+painting. Clearing the panel prevents transcript glyphs leaking into its gaps.
+
+This is a local bug correction rather than a new RFC phase. Independent review
+and measured build, native, golden and actual-terminal results are recorded
+in the appended history. That release run exposed an intermittent HUP
+shell-handoff failure; its subsequent root-cause correction and new verification
+are recorded separately below, without rewriting the failed run.
 
 ## Documentation impact
 
@@ -486,3 +509,12 @@ inspection UI and global motion/theme governance remain separate work.
 | 2026-10-14 | B | Whitespace audit preserves terminal snapshot geometry | local, independently reviewed golden content | Source/docs diff check passed; the3 native fixed-width ANSI golden files retain their original trailing cells and pass a scoped check with blank-at-eol disabled. Unqualified git diff --check reports those padded fixture lines; no global Git attributes/config or source whitespace rule changed. |
 | 2026-10-14 | B | Complete debug serial graduation passed | local, uncommitted | Final frozen source:2595registered=2573baseline+22new;2573passed,20skipped,2existingdisabled,0failed;414.28s. All replay/golden/real-PTY checks included. Release complete serial started on the identical production/test state; pending its result. Last baseline-only builds debug8.74s/release7.31s, default Ninja; no production edits since the approved token pair. |
 | 2026-10-14 | B | Final full serial graduation independently approved; RFC implemented | agent:code_review; local, uncommitted | Debug414.28s and release352.84s independently counted: each2595registered,2573passed,20skipped,2existingdisabled,0failed. Native22 additions/0deletions, finalpairedtokenPTY, all replay/golden/focus/resize/input/selection/recovery checks and graph/inline gates passed. No unresolved material review findings; documentation and platform/padded-fixture limits retained. HEAD remains30e12668; no commit or push. |
+| 2026-10-14 | Follow-up | Permission-footer correction independently approved | agent:footer_layout_review; agent:claude-cli-footer-review | Original scope/hint clipping reproduced in actual Loom120x40. Two initial P1 findings resolved: bounded request details now have explicit paging, and full height comes from the retained laid-out Element rather than stencil-clipped reflect. Final source review approved; optional comment/paging-polish nits are non-blocking and outside the correction. Shared adapter adds only PageUp/PageDown forwarding; overlay policy, permission decisions and persisted/public contracts unchanged. No commit or push. |
+| 2026-10-14 | Follow-up | Native and actual-terminal verification passed | local macOS | 4 added registrations,0 deletions:2599=2595+4. Native permission31/31 excluding separately updated3/3 golden cases; design50/50. Actual forkpty Loom at40/60/80/120cols and24/40rows verifies complete scope labels, six decision hints plus paging hint, first resize frames, retained checked scopes/sandbox, real paging events, Escape cancellation and no write. Long native bodies verify end/top access and one-shot decisions through both entry paths; underlay pixels are cleared. Raw/text/style evidence retained in /tmp/loom-permission-footer-pty-final. |
+| 2026-10-14 | Follow-up | Dual builds and complete debug passed; release gap retained | local, uncommitted | Default-Ninja debug/release builds passed. Debug serial404.25s:2599registered,2577passed,20existing skips,2existingdisabled,0failed. Release serial348.64s:2576passed,20skipped,2disabled,1failed: E2E_Pty_Handoff_hup timed out waiting for zsh. Isolated release replay passed9 times then failed on10th; no permission panel is entered in this scenario. Root cause not established; no exit/signal implementation changed and no green release-suite claim. Diagnostics /tmp/loom_pty_shutdown_06MxRN and /tmp/loom_pty_shutdown_IPY8pA; logs /tmp/loom-permission-footer-release-ctest.log and /tmp/loom-permission-footer-handoff-replay.log. Graph/UI9/store/TLL, inline ratchet and RFC lint passed; fixed-width ANSI golden padding retained. Cross-platform and smaller-than40x24 verification remain outside this run. |
+| 2026-10-14 | Follow-up | HUP shell-handoff root cause proved in live process | local macOS; agent:hup_signal_review | Unpatched real Loom failed with main in RunOnceBlocking/Receive condition-variable wait, input reader in read, animation listener gone. /tmp/loom_pty_shutdown_ddqb59 records ICANON/ECHO/VMIN0/0/0 before stop and1/1/1 at timeout. Diagnostic newline immediately returned shell_ready=1; original attempt remained failed, never counted as pass. FTXUI Signal(SIGABRT) called OnExit before stopping readers, leaving a canonical read holding the last sender. Initial EINTR hypothesis rejected by live evidence. |
+| 2026-10-14 | Follow-up | Minimal shared-root correction approved | agent:hup_signal_review; agent:claude-cli-hup-design | cmake/PatchFtxuiShutdown.cmake changes only FTXUI's internal Signal(SIGABRT) branch from OnExit to normal queued Exit. Quit/readers/senders finish before Uninstall joins then restores tty. No application exit callback, relay/status/API/configuration change. Exact source/updated guards fail on dependency drift; repeat debug configuration passed without rewriting the patched branch. Diagnostic newline code removed; optional bounded failure sample and terminal snapshots retained. New HupStress registration runs20 independent full real-shell handoffs. |
+| 2026-10-14 | Follow-up | Independent HUP/TERM pressure verification passed | local macOS, uncommitted | Final source and dual default-Ninja builds: each preset repeated100 HUP and100 TERM real zsh/Loom handoffs,400 total; debug166.27s/release162.74s,0failed. Each verifies mouse reset, original termios, exit statuses and exact subsequent shell input, without rescue input. Logs /tmp/loom-hup-debug-stress.log and /tmp/loom-hup-release-stress.log; final complete serial suites are pending and are not claimed green by this row. |
+| 2026-10-14 | Follow-up | First full-debug run retained an independent clipboard gap | local macOS | 2600 registered; 2577 passed,20 skipped,2 disabled,1 failed in432.43s. HUP and HupStress passed. Selection-wide failed before exit: native backend accepted6 bytes then exceeded its wait deadline; no clipboard payload file was created. Its concrete intermittent cause remains unconfirmed; no clipboard production or fixture code changed. Subsequent native isolated CTest replay30/30 passed in22.91s. Complete debug/release reruns remain the final gate; the original failure is not recast as a pass. |
+| 2026-10-14 | Follow-up | Complete debug HUP-correction gate passed | local macOS; agent:hup_signal_review final source APPROVE | Frozen production/test source:2600 registered=2599 baseline+1 HupStress;2578 passed,20 existing skips,2 existing disabled,0 failed in419.70s. Selection-wide, normal HUP/TERM and20 independent HupStress handoffs all passed. Review found no blocking findings; no clipboard change, rescue input, public API or persisted-contract change. Same-state release serial gate is pending; no commit or push. |
+| 2026-10-14 | Follow-up | HUP correction final dual-preset gate passed | agent:hup_signal_review; agent:claude-cli-hup-final-review; local macOS, uncommitted | Independent source reviews APPROVE with no blocking findings (Claude reviewed supplied source artifacts; on-disk integration independently checked). Same frozen production/test state: debug419.70s/release353.17s, each2600 registered,2578 passed,20 existing skips,2 existing disabled,0 failed. Both include full real-terminal HUP/TERM and20-attempt HupStress. Separate pre-gate400 real handoffs also passed. Complete logs /tmp/loom-hup-debug-ctest-final.log and /tmp/loom-hup-release-ctest-final.log; earlier failures retained above. Clipboard intermittent cause remains unconfirmed despite30 isolated and both final full passes; no clipboard implementation/fixture change. Other-platform runtime coverage is outside this macOS run. Prior permission-footer changes preserved; no commit or push. |

@@ -713,12 +713,11 @@ TEST(AttentionHierarchy, PermissionTitleTargetScopeAndInstructionsRemainReadable
             ExpectInk(screen, "Permission", pal.warning, true);
             ExpectInk(screen, "Approve command", pal.text);
             ExpectInk(screen, "TARGET-DETAIL", pal.text);
-            if (width == 120) {
-                // Existing three-column footer clips the scope label at the 90-cell
-                // panel cap. Check visible ink without asserting a layout redesign.
-                ExpectInk(screen, "Always allow this sc", pal.text);
-                ExpectInk(screen, "Toggle sandbox", pal.muted);
-                const std::string hints = "[y] Allow  [n] Deny  [a] Always allow  [d] Always deny  [s] Toggle sandbox  [Esc] Cancel";
+            ExpectInk(screen, "Always deny this tool", pal.text);
+            ExpectInk(screen, "Always allow this scope", pal.text);
+            ExpectInk(screen, "Toggle sandbox", pal.muted);
+            for (const std::string hints : {"[y] Allow", "[n] Deny", "[a] Always allow",
+                    "[d] Always deny", "[s] Toggle sandbox", "[Esc] Cancel", "[PgUp/PgDn] Details"}) {
                 const auto keys = FindWord(screen, hints);
                 ASSERT_TRUE(keys.has_value()) << screen.ToString();
                 bool in_key = false;
@@ -731,8 +730,8 @@ TEST(AttentionHierarchy, PermissionTitleTargetScopeAndInstructionsRemainReadable
                     EXPECT_EQ(pixel.foreground_color, in_key ? pal.text : pal.muted);
                     if (character == '[') in_key = true;
                 }
-                ExpectInk(screen, "more", pal.muted);
             }
+            ExpectInk(screen, "more", pal.muted);
         }
     }
 }

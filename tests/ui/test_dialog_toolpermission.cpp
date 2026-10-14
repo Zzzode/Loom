@@ -670,6 +670,111 @@ TEST(LayerAllDialogs, OverlaySuppressedWhenPromptActive) {
         << "Band3 overlay must render when prompt is idle";
 }
 
+TEST(LayerAllDialogs, PermissionFooterReflowsInsideExistingOverlayBudget) {
+    for (const int width : {40, 60, 80, 120}) {
+        for (const int height : {24, 40}) {
+            for (const int kind : {0, 1, 2}) {
+                SCOPED_TRACE(std::format("{}x{} kind={}", width, height, kind));
+                rs::ReplScreenState state;
+                dr::register_default_renderers(state.dialog_store.dialog_renderers);
+                state.dialog_store.PushDialog(kind == 0 ? MakeBashPayload() :
+                    kind == 1 ? MakeFileEditPayload() : MakeGenericPayload());
+                auto view = rs::dialog_queue_render::PrepareDialogLayers(state, false, true, width, height);
+                ftxui::Elements underlay;
+                for (int row = 0; row < height; ++row) underlay.push_back(ftxui::text(std::string(width, '@')));
+                const auto text = strip_ansi(render_to_ansi(rs::dialog_queue_render::LayerAllDialogs(
+                    ftxui::vbox(std::move(underlay)), std::move(view)), width, height));
+                std::istringstream lines(text);
+                for (std::string line; std::getline(lines, line);) {
+                    const auto left = line.find("│");
+                    const auto right = line.rfind("│");
+                    if (left != std::string::npos && right > left)
+                        EXPECT_EQ(line.substr(left, right - left).find('@'), std::string::npos) << line;
+                }
+                for (const auto* label : {"Permission", "Always deny this tool", "Always allow this scope",
+                        "Sandbox", "[y] Allow", "[n] Deny", "[a] Always allow", "[d] Always deny",
+                        "[s] Toggle sandbox", "[Esc] Cancel", "[PgUp/PgDn] Details"})
+                    EXPECT_NE(text.find(label), std::string::npos) << label << '\n' << text;
+            }
+        }
+    }
+}
+
+TEST(LayerAllDialogs, PermissionDetailsPageWithoutMovingDecisionFocusOrApproving) {
+    rs::ReplScreenState state;
+    dr::register_default_renderers(state.dialog_store.dialog_renderers);
+    auto request = MakeBashPayload();
+    request.description = std::string{};
+    for (int i = 0; i < 60; ++i) request.description += "BODY-DATA ";
+    request.affected_paths.clear();
+    request.rule_match_explanation = "DETAIL-END";
+    sp::DetailBash bash;
+    bash.command = "DETAIL-TARGET";
+    bash.is_destructive = true;
+    bash.destructive_reason = "DESTRUCTIVE-WARNING";
+    bash.working_dir = "/tmp/permission-workspace";
+    request.detail = bash;
+    int decisions = 0;
+    request.on_response = [&](sp::Decision, bool) { ++decisions; };
+    state.dialog_store.PushDialog(std::move(request));
+    auto paint = [&](int width = 40, int height = 24) {
+        return strip_ansi(render_to_ansi(rs::dialog_queue_render::PrepareDialogLayers(
+            state, false, true, width, height).overlay, width, height));
+    };
+    const auto initial = paint();
+    EXPECT_NE(initial.find("DESTRUCTIVE-WARNING"), std::string::npos) << initial;
+    EXPECT_EQ(initial.find("DETAIL-END"), std::string::npos) << initial;
+    auto& payload = std::get<dsys::ToolPermissionPayload>(state.dialog_store.dialog_queue.peek_overlay_mut()->get());
+    auto ui = std::static_pointer_cast<sp::PromptState>(payload.ui_state);
+    ui->focused_button = 1;
+    for (int i = 0; i < 100; ++i) {
+        EXPECT_TRUE(dr::HandleToolPermissionEvent(payload, ftxui::Event::PageDown));
+        (void)paint();
+    }
+    const auto bottom = paint();
+    EXPECT_NE(bottom.find("DETAIL-END"), std::string::npos) << bottom;
+    EXPECT_NE(bottom.find("[Esc] Cancel"), std::string::npos) << bottom;
+    EXPECT_EQ(ui->focused_button, 1);
+    EXPECT_EQ(decisions, 0);
+    (void)paint(120, 40);
+    (void)paint();
+    for (int i = 0; i < 100; ++i) {
+        EXPECT_TRUE(dr::HandleToolPermissionEvent(payload, ftxui::Event::PageUp));
+        (void)paint();
+    }
+    EXPECT_NE(paint().find("DESTRUCTIVE-WARNING"), std::string::npos);
+    EXPECT_TRUE(dr::HandleToolPermissionEvent(payload, ftxui::Event::Escape));
+    EXPECT_TRUE(dr::HandleToolPermissionEvent(payload, ftxui::Event::Character('y')));
+    EXPECT_EQ(decisions, 1);
+}
+
+TEST(ToolPermissionKeyboardEvents, StandaloneDetailPagingKeepsOneShotDecision) {
+    int decisions = 0;
+    sp::SinglePromptProps props;
+    props.tool_name = "Bash";
+    props.action_kind = sp::ActionKind::Execute;
+    props.risk_level = sp::RiskLevel::High;
+    for (int i = 0; i < 60; ++i) props.description += "BODY-DATA ";
+    props.detail = sp::DetailGeneric{"STANDALONE-TARGET"};
+    props.rule_match_explanation = "STANDALONE-END";
+    props.on_decide = [&](sp::Decision decision, bool) {
+        EXPECT_EQ(decision, sp::Decision::AllowOnce);
+        ++decisions;
+    };
+    auto component = sp::MakeSinglePromptDialog(std::move(props));
+    auto paint = [&] {
+        return strip_ansi(render_to_ansi(component->Render() | ftxui::size(ftxui::HEIGHT, ftxui::LESS_THAN, 14), 40, 24));
+    };
+    EXPECT_NE(paint().find("STANDALONE-TARGET"), std::string::npos);
+    EXPECT_EQ(paint().find("STANDALONE-END"), std::string::npos);
+    for (int i = 0; i < 100; ++i) { component->OnEvent(ftxui::Event::PageDown); (void)paint(); }
+    EXPECT_NE(paint().find("STANDALONE-END"), std::string::npos);
+    EXPECT_EQ(decisions, 0);
+    component->OnEvent(ftxui::Event::Return);
+    component->OnEvent(ftxui::Event::Character('n'));
+    EXPECT_EQ(decisions, 1);
+}
+
 TEST(LayerAllDialogs, StandaloneReplacesEntireChrome) {
     rs::ReplScreenState s;
     dsys::TrustDialogPayload trust;

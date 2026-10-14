@@ -1393,6 +1393,92 @@ std::string mouse_report(int button, std::pair<int, int> position, bool release 
 
 // RFC 0014: exercise real FTXUI hit-testing and stage lifecycle rather than
 // rendering synthetic VisibleRows. Model and tool completion are separate gates.
+void run_permission_footer_case(const std::string& binary, const fs::path& root) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false,"theme":"dark"})";
+    const auto target = root / "scope-target.txt";
+    ModelServer server(false, true, target.filename());
+    Terminal terminal(binary, root, server.url(), ModelOptions{});
+    server.start();
+    require(terminal.wait([&] { return terminal.installed(); }), "terminal installation not observed");
+    terminal.input("Request permission footer fixture\r");
+    require(terminal.wait([&] {
+        return terminal.latest_frame_text().find("[y] Allow") != std::string::npos;
+    }), "permission prompt not observed");
+    bool scopes_checked = false;
+    auto verify_footer = [&](const std::string& raw, int width, int height) {
+        const auto frame = decode_frame(raw);
+        for (const auto* label : {"Permission", "Always deny this tool", "Always allow this scope",
+                "Sandbox", "[y] Allow", "[n] Deny", "[a] Always allow", "[d] Always deny",
+                "[s] Toggle sandbox", "[Esc] Cancel", "[PgUp/PgDn] Details"}) {
+            const auto point = frame.find(label);
+            require(point.first + static_cast<int>(std::string_view(label).size()) <= width &&
+                    point.second < height, "footer label exceeds viewport: " + std::string(label));
+        }
+        for (const auto* label : {"Always deny this tool", "Always allow this scope"})
+            (void)frame.find(std::string(scopes_checked ? "[x] " : "[ ] ") + label);
+        (void)frame.find(scopes_checked ? "Sandbox [ON]" : "Sandbox [OFF]");
+        require(!fs::exists(target), "reflow or state-only keys approved the pending write");
+        require(server.requests.load() == 1, "pending permission unexpectedly advanced the query");
+    };
+    save_attention_frame(root, "initial-120x40", terminal.latest_frame());
+    verify_footer(terminal.latest_frame(), 120, 40);
+    terminal.input("12s");
+    require(terminal.wait([&] {
+        const auto text = terminal.latest_frame_text();
+        return text.find("[x] Always deny this tool") != std::string::npos &&
+               text.find("[x] Always allow this scope") != std::string::npos &&
+               text.find("Sandbox [ON]") != std::string::npos;
+    }), "scope/sandbox toggles did not render");
+    scopes_checked = true;
+    for (const auto [width, height] : {std::pair{80, 40}, {60, 40}, {40, 40}, {120, 24}, {80, 24}, {60, 24}, {40, 24}}) {
+        const auto start = terminal.output.rfind('\0') + 1;
+        terminal.resize(static_cast<unsigned short>(width), static_cast<unsigned short>(height));
+        require(terminal.wait([&] { return !terminal.first_resize_frame_since(start).empty(); }),
+                "permission resize did not produce a complete frame");
+        const auto raw = terminal.first_resize_frame_since(start);
+        save_attention_frame(root, "first-" + std::to_string(width) + "x" + std::to_string(height), raw);
+        verify_footer(raw, width, height);
+    }
+    std::string paged_text = terminal.latest_frame_text();
+    for (int page = 0; page < 8; ++page) {
+        const auto start = terminal.output.rfind('\0');
+        terminal.input("\x1b[6~");
+        require(terminal.wait([&] { return terminal.output.rfind('\0') > start; }),
+                "PageDown did not redraw permission details");
+        paged_text += terminal.latest_frame_text();
+        save_attention_frame(root, "details-page-" + std::to_string(page), terminal.latest_frame());
+        verify_footer(terminal.latest_frame(), 40, 24);
+    }
+    require(paged_text.find("scope-target.txt") != std::string::npos &&
+            paged_text.find("execute") != std::string::npos,
+            "paging could not reach the request target and final content");
+    terminal.input("\x1b[5~");
+    const auto wide_start = terminal.output.rfind('\0') + 1;
+    terminal.resize(120, 40);
+    require(terminal.wait([&] { return !terminal.first_resize_frame_since(wide_start).empty(); }),
+            "resize after paging did not complete");
+    verify_footer(terminal.first_resize_frame_since(wide_start), 120, 40);
+    // State survived every resize and page; toggling back never commits a rule.
+    save_attention_frame(root, "toggled", terminal.latest_frame());
+    verify_footer(terminal.latest_frame(), 120, 40);
+    terminal.input("12s");
+    require(terminal.wait([&] {
+        const auto text = terminal.latest_frame_text();
+        return text.find("[ ] Always deny this tool") != std::string::npos &&
+               text.find("[ ] Always allow this scope") != std::string::npos &&
+               text.find("Sandbox [OFF]") != std::string::npos;
+    }), "scope checkbox reset was not rendered");
+    scopes_checked = false;
+    verify_footer(terminal.latest_frame(), 120, 40);
+    terminal.input("\x1b");
+    require(terminal.wait([&] { return terminal.latest_frame_text().find("[y] Allow") == std::string::npos; }),
+            "visible Escape shortcut did not cancel permission");
+    require(!fs::exists(target), "cancelled write was executed");
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+}
+
 void run_compressed_chain_case(const std::string& binary, const fs::path& root) {
     std::ofstream(root / "config" / "settings.json") <<
         R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false,"theme":"dark"})";
@@ -2008,6 +2094,10 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
         run_handoff_case(binary, scenario, root, harness);
         return;
     }
+    if (scenario == "permission-footer") {
+        run_permission_footer_case(binary, root);
+        return;
+    }
     if (scenario == "compressed-chain-live") {
         run_compressed_chain_case(binary, root);
         return;
@@ -2166,7 +2256,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario == "prompt-wrap" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

@@ -618,6 +618,16 @@ printf '\nPTY-SHELL-RECEIVED\n'
         attributes.c_cc[VDISCARD] = _POSIX_VDISABLE;
         require(::tcsetattr(master_, TCSANOW, &attributes) == 0, "could not isolate transcript control-key driver");
     }
+    void capture_driver_state(const std::string& name) const {
+        termios current{};
+        std::ofstream out(root_ / (name + ".txt"));
+        out << "process=" << process_state() << "\nforeground_pgid=" << ::tcgetpgrp(master_) << '\n';
+        if (::tcgetattr(master_, &current) == 0)
+            out << "ICANON=" << ((current.c_lflag & ICANON) != 0)
+                << "\nECHO=" << ((current.c_lflag & ECHO) != 0)
+                << "\nVMIN=" << static_cast<int>(current.c_cc[VMIN])
+                << "\nVTIME=" << static_cast<int>(current.c_cc[VTIME]) << '\n';
+    }
     std::string process_state() const {
         if (!exited_) return "alive";
         if (WIFEXITED(status_)) return "exit=" + std::to_string(WEXITSTATUS(status_));
@@ -1901,6 +1911,33 @@ void run_escape_case(const std::string& binary, const std::string& scenario, con
     std::cout << "final deliberate Ctrl+D: " << terminal.process_state() << '\n';
 }
 
+// Retain the blocked application's stacks before Terminal's failure cleanup
+// kills its process group. Sampling is optional and never a test prerequisite.
+void sample_handoff_timeout(const fs::path& root) {
+#if defined(__APPLE__)
+    if (::access("/usr/bin/sample", X_OK) != 0) return;
+    const auto target = read_file(root / "loom.pid");
+    const auto destination = (root / "loom.sample.txt").string();
+    const auto sampler = ::fork();
+    if (sampler == 0) {
+        ::execl("/usr/bin/sample", "sample", target.c_str(), "1", "-file", destination.c_str(), nullptr);
+        ::_exit(127);
+    }
+    if (sampler < 0) return;
+    const auto deadline = Clock::now() + 5s;
+    while (::waitpid(sampler, nullptr, WNOHANG) == 0) {
+        if (Clock::now() >= deadline) {
+            ::kill(sampler, SIGKILL);
+            while (::waitpid(sampler, nullptr, 0) < 0 && errno == EINTR) {}
+            break;
+        }
+        ::poll(nullptr, 0, 20);
+    }
+#else
+    (void)root;
+#endif
+}
+
 void run_handoff_case(const std::string& binary, const std::string& scenario, const fs::path& root, const std::string& harness) {
     std::ofstream(root / "config" / "settings.json") <<
         R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
@@ -1916,6 +1953,7 @@ void run_handoff_case(const std::string& binary, const std::string& scenario, co
     require(terminal.mode_enabled(1003) && terminal.mode_enabled(1006), "terminal emulator mouse tracking not enabled");
     // Freeze the consumer while tracking remains enabled. These reports are
     // queued before exit, not fabricated after the emulator receives reset.
+    terminal.capture_driver_state("before-stop");
     terminal.signal(SIGSTOP);
     require(terminal.wait([&] { return fs::exists(root / "loom.stopped"); }),
             "Loom did not stop before queuing terminal reports");
@@ -1929,7 +1967,12 @@ void run_handoff_case(const std::string& binary, const std::string& scenario, co
     if (scenario == "handoff-term") terminal.signal(SIGTERM);
     if (scenario == "handoff-hup") terminal.signal(SIGHUP);
     terminal.signal(SIGCONT);
-    require(terminal.wait([&] { return terminal.output.find("PTY-SHELL-READY") != std::string::npos; }), "zsh did not regain the terminal");
+    const bool handed_off = terminal.wait([&] { return terminal.output.find("PTY-SHELL-READY") != std::string::npos; });
+    if (!handed_off) {
+        terminal.capture_driver_state("handoff-timeout");
+        sample_handoff_timeout(root);
+    }
+    require(handed_off, "zsh did not regain the terminal");
     for (const int mode : {1000, 1002, 1003, 1006, 1015})
         require(!terminal.mode_enabled(mode), "mouse tracking remained enabled at shell handoff");
     terminal.input("shell-handoff-ok\r");
@@ -1951,6 +1994,14 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
               const std::string& harness) {
     if (scenario.starts_with("escape-")) {
         run_escape_case(binary, scenario, root);
+        return;
+    }
+    if (scenario == "handoff-hup-stress") {
+        for (int attempt = 0; attempt < 20; ++attempt) {
+            const auto isolated = root / ("attempt-" + std::to_string(attempt));
+            fs::create_directories(isolated / "config");
+            run_handoff_case(binary, "handoff-hup", isolated, harness);
+        }
         return;
     }
     if (scenario.starts_with("handoff-")) {

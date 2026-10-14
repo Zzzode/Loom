@@ -251,6 +251,7 @@ set(CMAKE_CXX_SCAN_FOR_MODULES_OLD2 ${CMAKE_CXX_SCAN_FOR_MODULES})
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 FetchContent_MakeAvailable(yyjson libuv httplib ftxui benchmark)
 include(cmake/PatchFtxuiInput.cmake)
+include(cmake/PatchFtxuiShutdown.cmake)
 set(CMAKE_CXX_SCAN_FOR_MODULES ${CMAKE_CXX_SCAN_FOR_MODULES_OLD2})
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")

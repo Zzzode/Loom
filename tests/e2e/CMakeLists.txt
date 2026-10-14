@@ -179,6 +179,15 @@ foreach(_pty_handoff_case IN ITEMS ctrl-d exit term hup)
       SKIP_RETURN_CODE 125)
 endforeach()
 
+# Exercise the former signal/reader teardown race across independent real
+# shells. Every iteration checks termios, exit status and queued mouse input.
+add_test(NAME E2E_Pty_Handoff_HupStress COMMAND e2e_pty_shutdown handoff-hup-stress)
+set_tests_properties(E2E_Pty_Handoff_HupStress PROPERTIES
+    TIMEOUT 90
+    ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+    SKIP_RETURN_CODE 125)
+
+
 if(APPLE)
   # The test CA interposer only installs the existing fixture certificate in
   # SSL_new's client context. Verification stays enabled and system trust is

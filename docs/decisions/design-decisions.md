@@ -3845,3 +3845,38 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - Ordinary work uses canonical braille figures and existing reduced-motion static
   glyphs. The centralized bridge connection animation remains an explicit
   exception. No new ticker, theme token, store field or persisted shape is added.
+
+
+## Signal exit must join terminal readers before restoration
+
+- **Root cause:** FTXUI 5's `ScreenInteractive::Signal(SIGABRT)` used
+  `OnExit()` directly. That restored canonical terminal input while the event
+  reader could still execute `read()`. A read then waited for a newline and
+  retained the last task sender, leaving the UI loop blocked in Receive.
+  Loom's HUP relay records SIGTERM through FTXUI, so HUP and TERM share this
+  ordering defect. Normal Ctrl-D already uses the safe queued Exit path.
+- **Measured evidence:** an actual failed HUP shell handoff had its main
+  thread waiting in RunOnceBlocking/condition_variable and its input reader in
+  read, with the animation thread gone. Before stopping, ICANON/ECHO/VMIN were
+  0/0/0; at timeout they were 1/1/1. A diagnostic newline immediately released
+  the process and returned control to zsh. The rescued run remained a failure;
+  the newline was never a shipping workaround or counted as a passed test.
+- **Ownership:** `cmake/PatchFtxuiShutdown.cmake` changes only the internal
+  Signal(SIGABRT) branch from OnExit to Exit. It uses the existing configure-time
+  dependency-patch pattern for fetched/offline sources, recognizes the exact
+  patched branch, and fails on dependency drift. SIGTSTP/SIGWINCH, the Loom HUP
+  relay, public APIs, persisted configuration and exit statuses remain intact.
+- **Required ordering:** enqueue ExitNow, stop readers and release task senders,
+  let the loop return, then Uninstall joins threads before OnExit restores tty
+  attributes. ParentTerminalGuard still flushes queued UI input after workers
+  and readers finish, before the parent shell resumes. SA_RESTART cannot correct
+  an early canonical-mode restoration, and HUP-only polling would leave TERM's
+  shared defect in place.
+- **Regression evidence:** the native HUP stress case runs 20 independent real
+  zsh/Loom handoffs, checking mouse reset, original termios, actual/observed exit
+  status and exact subsequent shell input. Optional macOS failure sampling and
+  terminal-mode snapshots retain evidence before test cleanup kills the child.
+  Diagnostic newline injection is absent from the final fixture.
+- **Rollback:** remove the patch include and restore/repopulate the pinned
+  FTXUI source before rebuilding. Reusing an already patched fetched/offline
+  source does not undo a configure-time source patch.

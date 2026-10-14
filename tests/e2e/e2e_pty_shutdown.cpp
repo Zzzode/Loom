@@ -632,6 +632,18 @@ printf '\nPTY-SHELL-RECEIVED\n'
         const auto start = previous == std::string::npos ? 0 : previous + 1;
         return output.substr(start, end - start);
     }
+    std::string first_resize_frame_since(std::size_t start) const {
+        // FTXUI clears each previous screen row with EL when Draw changes its
+        // dimensions. Scan every complete frame, so a later corrected frame
+        // in the same PTY read cannot hide the first resized frame.
+        for (auto end = output.find('\0', start); end != std::string::npos;
+             end = output.find('\0', start)) {
+            auto frame = output.substr(start, end - start);
+            if (frame.find("\x1b[2K") != std::string::npos) return frame;
+            start = end + 1;
+        }
+        return {};
+    }
     std::string latest_frame_text() const {
         // Complete frames exclude historical output and partial stream data.
         return terminal_text(latest_frame());
@@ -750,11 +762,17 @@ void run_prompt_wrap_case(const std::string& binary, const fs::path& root) {
     const auto wide_rows = prompt_row_distance(terminal.latest_frame_text());
     require(server.requests.load() == 0, "typing unexpectedly submitted the prompt");
 
+    const auto resize_start = terminal.output.rfind('\0') + 1;
     terminal.resize(60, 40);
     require(terminal.wait([&] {
-        return prompt_row_distance(terminal.latest_frame_text()) > wide_rows;
-    }), "real PTY resize did not reflow the prompt while keeping both ends visible");
-    const auto resized_frame = terminal.latest_frame_text();
+        return !terminal.first_resize_frame_since(resize_start).empty();
+    }), "terminal did not emit a complete resized prompt frame");
+    const auto resized_raw = terminal.first_resize_frame_since(resize_start);
+    const auto resized_frame = terminal_text(resized_raw);
+    std::ofstream(root / "prompt-resize-first.raw", std::ios::binary) << resized_raw;
+    std::ofstream(root / "prompt-resize-first.txt") << resized_frame;
+    require(prompt_row_distance(resized_frame) > wide_rows,
+            "first resized frame did not reflow the prompt while keeping both ends visible");
     require(resized_frame.find("中文") != std::string::npos &&
             resized_frame.find("🙂") != std::string::npos,
             "resize lost Chinese or emoji glyphs");
@@ -1113,9 +1131,10 @@ void run_compressed_chain_case(const std::string& binary, const fs::path& root) 
     Terminal terminal(binary, root, server.url(), ModelOptions{});
     server.start();
     require(terminal.wait([&] { return terminal.installed(); }), "terminal installation not observed");
-    auto save_frame = [&](const std::string& name) {
-        std::ofstream(root / (name + ".raw"), std::ios::binary) << terminal.latest_frame();
-        const auto frame = decode_frame(terminal.latest_frame());
+    auto save_frame = [&](const std::string& name, std::string raw = {}) {
+        if (raw.empty()) raw = terminal.latest_frame();
+        std::ofstream(root / (name + ".raw"), std::ios::binary) << raw;
+        const auto frame = decode_frame(raw);
         std::ofstream text(root / (name + ".txt"));
         for (int y = 0; y < 40; ++y) text << frame.row(y) << '\n';
     };
@@ -1175,15 +1194,35 @@ void run_compressed_chain_case(const std::string& binary, const fs::path& root) 
         return terminal.latest_frame_text().find("Hide details") != std::string::npos;
     }), "clicking the activity line did not expand the chain");
     save_frame("expanded");
-    for (const auto width : {60, 120}) {
-        const auto before = terminal.output.rfind('\0');
+    int resize_step = 0;
+    for (const auto width : {60, 120, 40, 80, 120}) {
+        const auto start = terminal.output.rfind('\0') + 1;
         terminal.resize(static_cast<unsigned short>(width), 40);
         require(terminal.wait([&] {
-            const auto frame = terminal.latest_frame_text();
-            return terminal.output.rfind('\0') > before && frame.find("Hide details") != std::string::npos &&
-                frame.find("Running") != std::string::npos && frame.find("PTY-ACTIVITY") != std::string::npos;
-        }), "resize lost the live activity or explicit expansion state");
-        save_frame("expanded-" + std::to_string(width));
+            return !terminal.first_resize_frame_since(start).empty();
+        }), "terminal did not emit a complete resized frame");
+        const auto raw = terminal.first_resize_frame_since(start);
+        save_frame("expanded-first-" + std::to_string(++resize_step) + "-" + std::to_string(width), raw);
+        const auto frame = decode_frame(raw);
+        const auto activity = frame.find("Running");
+        require(frame.row(activity.second).find("PTY-ACTIVITY") != std::string::npos,
+                "first resized frame lost the current activity target");
+        require(frame.find("Hide details").first < width,
+                "first resized frame lost explicit expansion state");
+        int prompt_rules = 0;
+        for (int y = 0; y < 40; ++y) {
+            bool full_width = true;
+            for (int x = 0; x < width; ++x)
+                full_width = full_width && frame.cells[y][x].text == "─";
+            if (full_width) ++prompt_rules;
+        }
+        require(prompt_rules >= 2,
+                "first resized frame retained the previous prompt width at " + std::to_string(width) + " columns");
+        bool activity_ellipsis = false;
+        for (int x = width - 4; x < width; ++x)
+            activity_ellipsis = activity_ellipsis || frame.cells[activity.second][x].text == "…";
+        require(activity_ellipsis,
+                "first resized frame retained the previous activity width at " + std::to_string(width) + " columns");
     }
     std::ofstream(release) << "release fixture command\n";
     require(terminal.wait([&] {
@@ -1798,7 +1837,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario == "prompt-wrap")) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

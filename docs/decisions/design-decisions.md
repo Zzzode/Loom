@@ -3803,3 +3803,21 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   rendering re-arms it only while applicable. Bypass modes/completion/reset
   clear the request. There is no new thread or unconditional query render
   ticker, and the worker never reads the unsynchronized test-clock override.
+
+## Terminal dimensions during component construction
+
+- During an active FTXUI render, `ink_utils::query_terminal_size()` uses
+  `ftxui::Terminal::Size()`, the same live query as FTXUI's draw destination.
+  `ScreenInteractive::Draw()` constructs the component before updating its
+  screen dimensions; reading `Active()->dimx()/dimy()` for layout budgets
+  therefore reuses the previous frame on resize and startup. Screen dimensions
+  remain appropriate for bounds checks against already-rendered pixels.
+- Keep the existing once-per-frame query in `RenderReplScreen` and its shared
+  budgets for messages, activity, prompt and dialogs. Do not compensate with
+  extra redraws, a resize cache or a render ticker. Without an active screen,
+  retain the environment-variable/default fallback for deterministic headless
+  rendering.
+- The native PTY regression scans every complete frame after resize and
+  checks the first FTXUI resize-clear frame, rather than accepting a later
+  corrected frame. Both growth and shrink must immediately use the new prompt
+  and activity width while preserving the visible target and disclosure.

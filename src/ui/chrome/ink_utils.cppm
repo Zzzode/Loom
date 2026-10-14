@@ -474,11 +474,15 @@ inline auto get_focus_state() -> FocusState {
     };
 }
 
-/// Returns the size already tracked by the active FTXUI screen.
+/// Returns current terminal dimensions during an active FTXUI render.
 inline auto query_terminal_size() -> std::pair<int, int> {
-    if (const auto* screen = ftxui::ScreenInteractive::Active();
-        screen != nullptr && screen->dimx() > 0 && screen->dimy() > 0) {
-        return {screen->dimx(), screen->dimy()};
+    if (ftxui::ScreenInteractive::Active() != nullptr) {
+        // Draw updates Screen dimensions after component->Render(). Reading
+        // that previous frame here leaves resize/startup budgets one frame
+        // behind. Use the same live query Draw will use for its destination.
+        const auto terminal = ftxui::Terminal::Size();
+        if (terminal.dimx > 0 && terminal.dimy > 0)
+            return {terminal.dimx, terminal.dimy};
     }
 
     // Fallback: check COLUMNS and LINES env vars

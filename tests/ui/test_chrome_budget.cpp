@@ -10,6 +10,7 @@
 
 import std;
 import loom.ui.features.todos.todo_panel;
+import loom.ui.chrome.ink_utils;
 import loom.ui.features.teams.live_teammates;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
@@ -160,6 +161,15 @@ int transcript_height(const repl::ReplScreenState& state) {
     return std::max(0, box.y_max - box.y_min + 1);
 }
 }  // namespace
+
+TEST(ChromeBudget, HeadlessTerminalDimensionsKeepEnvironmentFallback) {
+    EnvironmentGuard cols("COLUMNS", "101");
+    EnvironmentGuard lines("LINES", "33");
+    EXPECT_EQ(loom::ui::ink_utils::query_terminal_size(), std::make_pair(101, 33));
+    setenv("COLUMNS", "0", 1);
+    setenv("LINES", "-1", 1);
+    EXPECT_EQ(loom::ui::ink_utils::query_terminal_size(), std::make_pair(80, 24));
+}
 
 TEST(ChromeBudget, TodoBudgetsZeroThroughFiveIncludeCountsAndStableActivePriority) {
     repl::ReplScreenState state;

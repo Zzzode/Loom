@@ -1057,8 +1057,11 @@ public:
         if (handler) register_event_handler(type, std::move(handler));
     }
 
+    /// Whether both real rendering and input capabilities are registered.
+    [[nodiscard]] bool has_renderer_and_handler(DialogType type) const noexcept;
+
     /// Render a dialog payload using its registered renderer.
-    /// Returns an empty element if no renderer is registered.
+    /// Uses a generic placeholder when no renderer is registered.
     [[nodiscard]] Element render(DialogPayloadVariant& payload,
                                  const DialogRenderContext& ctx) const {
         auto type = type_of(payload);

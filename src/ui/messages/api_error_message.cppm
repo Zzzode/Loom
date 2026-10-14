@@ -156,7 +156,7 @@ struct ErrorPalette {
         if (e.current_attempt && e.max_attempts) {
             parts.push_back(text(std::format(" attempt {}/{}",
                                              *e.current_attempt, *e.max_attempts))
-                            | dim | color(p.title));
+                            | color(loom::ui::design::theme::current_theme().palette->muted));
         }
         rows.push_back(hbox(parts));
     }
@@ -180,11 +180,11 @@ struct ErrorPalette {
             warn.push_back(text(" "));
             if (e.response_bytes) {
                 warn.push_back(text(std::format("response body: {} bytes",
-                                                *e.response_bytes)) | dim);
+                                                *e.response_bytes)) | color(loom::ui::design::theme::current_theme().palette->muted));
             }
             if (e.truncated) {
-                if (e.response_bytes) warn.push_back(text(" · ") | dim);
-                warn.push_back(text("truncated preview") | color(p.accent) | dim);
+                if (e.response_bytes) warn.push_back(text(" · ") | color(loom::ui::design::theme::current_theme().palette->muted));
+                warn.push_back(text("truncated preview") | color(loom::ui::design::theme::current_theme().palette->muted));
             }
             rows.push_back(hbox(warn));
         }
@@ -211,19 +211,19 @@ struct ErrorPalette {
         std::string countdown_text = std::format(
             " Retrying in {} {}… (attempt {}/{})",
             secs_int, unit, *e.current_attempt, *e.max_attempts);
-        rows.push_back(text(countdown_text) | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+        rows.push_back(text(countdown_text) | color(loom::ui::design::theme::current_theme().palette->muted));
     }
     if (opts.show_trace_ids) {
         Elements ids;
         auto add_id = [&](const char* label, const std::string& val) {
             if (val.empty()) return;
-            ids.push_back(text(std::format(" {}: ", label)) | dim);
-            ids.push_back(text(val) | color(loom::ui::design::theme::current_theme().palette->suggestion) | bold);
+            ids.push_back(text(std::format(" {}: ", label)) | color(loom::ui::design::theme::current_theme().palette->muted));
+            ids.push_back(text(val) | color(loom::ui::design::theme::current_theme().palette->muted));
         };
         add_id("trace-id",   e.trace_id);
         add_id("request-id", e.request_id);
         if (!ids.empty()) {
-            ids.insert(ids.begin(), text(" ") | dim);
+            ids.insert(ids.begin(), text(" ") | color(loom::ui::design::theme::current_theme().palette->muted));
             if (keyboard_interactive && opts.copyable_trace && opts.on_copy_trace) {
                 ids.push_back(filler());
                 ids.push_back(message_key_hint("T", "Copy trace"));

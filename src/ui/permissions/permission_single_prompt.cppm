@@ -170,7 +170,7 @@ namespace detail {
         text(std::string{pc::ToolIconGlyph(p.tool_name)}) | bold,
         text(" "),
         text(p.tool_name) | bold | color(pc::ActionColor(p.action_kind)),
-        text(" wants to ") | dim,
+        text(" wants to "),
         text(action_label),
         filler(),
         pc::RiskPill(p.risk_level),
@@ -185,7 +185,7 @@ namespace detail {
             Elements els = { pc::CommandPreview(d.command, 80) };
             if (d.working_dir) {
                 els.push_back(hbox({
-                    text(" in: ") | dim,
+                    text(" in: "),
                     pc::PathLabel(*d.working_dir, 60),
                 }));
             }
@@ -199,7 +199,7 @@ namespace detail {
         } else if constexpr (std::is_same_v<T, DetailFileEdit>) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             return vbox({
-                hbox({ text("File: ") | dim,
+                hbox({ text("File: "),
                        pc::PathLabel(d.file_path, 70) }),
                 text(""),
                 hbox({ text("- ") | color(pal.danger),
@@ -212,21 +212,21 @@ namespace detail {
         } else if constexpr (std::is_same_v<T, DetailFileWrite>) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             return vbox({
-                hbox({ text("File: ") | dim,
+                hbox({ text("File: "),
                        pc::PathLabel(d.file_path, 70) }),
-                hbox({ text("Size: ") | dim,
+                hbox({ text("Size: "),
                        text(std::format("{} bytes (~{} line{})",
                            d.content_bytes, d.content_lines,
-                           d.content_lines == 1 ? "" : "s")) | dim }),
-                (d.creates_file ? hbox({ text("new file") | color(pal.warning) | dim })
+                           d.content_lines == 1 ? "" : "s")) }),
+                (d.creates_file ? hbox({ text("new file") | color(pal.warning) })
                                 : text("")),
             });
         } else if constexpr (std::is_same_v<T, DetailFileRead>) {
             auto line_el = d.line_count
-                ? text(std::format(" ({})", *d.line_count)) | dim
+                ? text(std::format(" ({})", *d.line_count))
                 : text("");
             return hbox({
-                text("File: ") | dim,
+                text("File: "),
                 pc::PathLabel(d.file_path, 70),
                 line_el,
             });
@@ -236,25 +236,25 @@ namespace detail {
                 ? hbox({ text(" UPLOAD ") | color(pal.inverse_text)
                                      | bgcolor(pal.danger) | bold })
                 : hbox({ text(" fetch ") | color(pal.inverse_text)
-                                     | bgcolor(pal.info) | dim });
+                                     | bgcolor(pal.info) });
             return hbox({ tag, text("  "), pc::PathLabel(d.url_or_domain, 70) });
         } else if constexpr (std::is_same_v<T, DetailMCP>) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             return vbox({
-                hbox({ text("MCP server: ") | dim,
+                hbox({ text("MCP server: "),
                        text(d.server_id) | color(pal.primary) }),
-                hbox({ text("Tool: ") | dim,
+                hbox({ text("Tool: "),
                        text(d.tool_name) | bold }),
                 (d.description.empty() ? text("")
-                     : paragraph(d.description) | dim),
+                     : paragraph(d.description)),
             });
         } else if constexpr (std::is_same_v<T, DetailSkill>) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             return vbox({
-                hbox({ text("Skill: ") | dim,
+                hbox({ text("Skill: "),
                        text(d.skill_name) | color(pal.primary) | bold }),
                 (d.description.empty() ? text("")
-                     : paragraph(d.description) | dim),
+                     : paragraph(d.description)),
             });
         } else if constexpr (std::is_same_v<T, DetailPlan>) {
             return text(d.is_entry ? "Enter plan mode (output-only, pauses execution)"
@@ -262,7 +262,7 @@ namespace detail {
         } else if constexpr (std::is_same_v<T, DetailAskUser>) {
             Elements els = { paragraph(d.question) };
             for (const auto& opt : d.options) {
-                els.push_back(hbox({ text("  • ") | dim, text(opt) }));
+                els.push_back(hbox({ text("  • "), text(opt) }));
             }
             return vbox(els);
         } else if constexpr (std::is_same_v<T, DetailComputerUse>) {
@@ -275,15 +275,15 @@ namespace detail {
                 text(d.action_label) | bold,
             }));
             if (d.target_app) {
-                els.push_back(hbox({ text("  App: ") | dim, text(*d.target_app) }));
+                els.push_back(hbox({ text("  App: "), text(*d.target_app) }));
             }
             if (d.coordinates) {
-                els.push_back(hbox({ text("  Position: ") | dim,
+                els.push_back(hbox({ text("  Position: "),
                                      text(*d.coordinates) }));
             }
             if (d.text_to_type) {
                 els.push_back(hbox({
-                    text("  Text: ") | dim,
+                    text("  Text: "),
                     text(pc::HeadEllipsisCommand(*d.text_to_type, 60)),
                 }));
             }
@@ -326,8 +326,8 @@ namespace detail {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (explanation.empty()) return text("");
     return hbox({
-        text(" rule: ") | dim,
-        text(std::string{explanation}) | dim | color(pal.info),
+        text(" rule: "),
+        text(std::string{explanation}) | color(pal.info),
     });
 }
 
@@ -395,9 +395,9 @@ struct PromptState {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         auto on = st->sandbox_toggle;
         return hbox({
-            text("Sandbox ") | dim,
+            text("Sandbox "),
             on ? text("[ON]")  | color(pal.info) | bold
-               : text("[OFF]") | dim,
+               : text("[OFF]"),
         }) | borderStyled(pal.muted);
     }();
 
@@ -407,13 +407,13 @@ struct PromptState {
             // Left: Deny column
             vbox({
                 hbox({ deny_btn, text("  "), always_deny_cb,
-                       text(" Always deny this tool") | dim }),
+                       text(" Always deny this tool") }),
                 text("") | size(HEIGHT, EQUAL, 1),
             }) | xflex,
             // Middle: Allow column
             vbox({
                 hbox({ allow_btn, text("  "), always_allow_cb,
-                       text(" Always allow this scope") | dim }),
+                       text(" Always allow this scope") }),
                 text("") | size(HEIGHT, EQUAL, 1),
             }) | xflex,
             // Right: Sandbox toggle
@@ -449,7 +449,7 @@ struct PromptState {
     body_els.push_back(text(""));
     body_els.push_back(footer);
 
-    auto body = vbox(body_els) | xflex;
+    auto body = vbox(body_els) | color(pal.text) | xflex;
 
     auto border_col = [&] {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;

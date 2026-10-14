@@ -538,10 +538,15 @@ auto render_compressed_chain_row(const VisibleRow& vr,
     if (live) label << "…";
 
     const bool expanded = vr.chain_is_expanded;
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    // Pair quiet ink and the expanded fill with the readable canvas tokens.
+    const auto quiet_ink = pal.muted;
     const auto action = expanded ? "Hide details" : "Show details";
     const int action_width = string_width("[" + std::string(action) + "]");
     Element body = text(chain_one_line(label.str(), term_cols - action_width - 3))
-        | color(palette::muted_fg()) | xflex;
+        | color(live && vr.chain_emphasize_work
+            ? pal.primary : quiet_ink) | xflex;
+    if (live && vr.chain_emphasize_work) body = std::move(body) | bold;
     if (is_selected)
         body = std::move(body) | inverted | bgcolor(palette::selected_bg());
     const bool blink_off = live && (frame_count % 10 >= 5);
@@ -553,11 +558,11 @@ auto render_compressed_chain_row(const VisibleRow& vr,
     if (!vr.chain_current_activity.empty()) {
         rows.push_back(hbox({text("  "),
             text(chain_one_line(vr.chain_current_activity, term_cols - 2))
-                | color(palette::muted_fg()) | xflex}));
+                | color(loom::ui::design::theme::current_theme().palette->text) | xflex}));
     }
     Element block = vbox(std::move(rows));
     if (expanded)
-        block = std::move(block) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
+        block = std::move(block) | bgcolor(pal.background);
     return block;
 }
 

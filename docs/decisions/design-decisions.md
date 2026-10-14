@@ -3821,3 +3821,27 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   checks the first FTXUI resize-clear frame, rather than accepting a later
   corrected frame. Both growth and shrink must immediately use the new prompt
   and activity width while preserving the visible target and disclosure.
+
+
+## State-led attention and terminal hierarchy (RFC 0015)
+
+- Screens derives render-only attention from current query/error and actual
+  top visible dialog. Prepare bottom/overlay/modal Elements once in their
+  existing order and reuse them for composition. Registry capability plus
+  payload callback distinguishes real authorization from fallback placeholders;
+  suppression, null renderers and higher owners cannot claim permission focus.
+- Existing outer Settings/Agents/Trust components own decision keys before
+  hidden queued dialogs. Screens shares that ownership predicate between
+  rendering and input. Keep within-queue ordering and existing global-key policy;
+  this does not change the engine's permission decisions or risk policy.
+- Messages propagates one style-only work-emphasis input through static and
+  virtual compressed rows. Work emphasis changes ink/weight only, never timing,
+  lifecycle, current target, disclosure identity, height or next wake deadline.
+  Historical tool failure is distinct from a terminal current model failure.
+- Required metadata and permission/error instructions avoid SGR2 dim. Built-in
+  statusline uses neutral ink except actual context thresholds; custom command
+  ANSI remains authoritative without an application-added dim wrapper. Cost is
+  compact only on the ambient row; masks/defaults and detailed precision remain.
+- Ordinary work uses canonical braille figures and existing reduced-motion static
+  glyphs. The centralized bridge connection animation remains an explicit
+  exception. No new ticker, theme token, store field or persisted shape is added.

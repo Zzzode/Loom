@@ -387,6 +387,8 @@ struct MessagesListInput {
     /// timer + tool activity) instead of a static summary.  Synced from
     /// AppAdapter::query_running_ via ReplScreenState.
     bool                            query_running = false;
+    /// Style only: never changes lifecycle, geometry, disclosure or wake timing.
+    bool                            emphasize_work = true;
 
     /// Raw-stage lifecycle, updated even when compression is bypassed. Keys
     /// describe material boundaries, not temporary streaming-message UUIDs.
@@ -618,6 +620,7 @@ struct VisibleRow {
 
     // For Kind::CompressedChain — rich summary data.
     bool                            chain_is_live = false;
+    bool                            chain_emphasize_work = true;
     bool                            chain_has_tool_activity = false;
     std::optional<std::chrono::milliseconds> chain_elapsed = std::nullopt;
     std::vector<std::pair<std::string, std::size_t>> chain_tool_breakdown = {};

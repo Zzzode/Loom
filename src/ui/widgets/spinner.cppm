@@ -32,27 +32,12 @@ struct SpinnerOptions {
 
 namespace detail {
 
-std::vector<std::string> GetDefaultCharacters() {
-    // Use cross-platform default
-    return {"·", "✢", "*", "✶", "✻", "✽"};
-}
-
 std::vector<std::string> GetSpinnerFrames() {
-    auto chars = GetDefaultCharacters();
-    std::vector<std::string> frames;
-    frames.reserve(chars.size() * 2);
-
-    for (const auto& c : chars) {
-        frames.push_back(c);
-    }
-    for (auto it = chars.rbegin(); it != chars.rend(); ++it) {
-        frames.push_back(*it);
-    }
-
-    return frames;
+    const auto& frames = loom::ui::design::figures::kSpinnerFrames;
+    return {frames.begin(), frames.end()};
 }
 
-/// Total number of distinct animation frames (forward + backward sweep).
+/// Number of canonical ordinary-work animation frames.
 [[nodiscard]] inline std::size_t SpinnerFrameCount() {
     return GetSpinnerFrames().size();
 }
@@ -61,10 +46,10 @@ std::vector<std::string> GetSpinnerFrames() {
 /// Used by callers (e.g. RenderToolHeader) that drive animation externally
 /// and want a single Element instead of an interactive component.
 [[nodiscard]] inline std::string SpinnerGlyphAt(int frame) {
-    auto frames = GetSpinnerFrames();
-    if (frames.empty()) return GetDefaultCharacters().front();
-    if (frame < 0) return frames.front();
-    return frames[static_cast<std::size_t>(frame) % frames.size()];
+    const auto& theme = loom::ui::design::theme::current_theme();
+    if (theme.a11y.reduced_motion)
+        return std::string(loom::ui::design::figures::kBullet);
+    return std::string(loom::ui::design::figures::spinner_frame_glyph(std::max(0, frame)));
 }
 
 class SpinnerImpl {
@@ -86,12 +71,12 @@ public:
             });
         }
         
-        if (options_.reduced_motion) {
+        if (options_.reduced_motion || loom::ui::design::theme::current_theme().a11y.reduced_motion) {
             auto element = text(std::string(loom::ui::design::figures::kBullet)) | color(pal.muted);
             if (!options_.message.empty()) {
                 return hbox({
                     element,
-                    text(" " + options_.message) | dim
+                    text(" " + options_.message) | color(pal.muted)
                 });
             }
             return element;
@@ -104,7 +89,7 @@ public:
             ? (options_.frame % static_cast<int>(frames_.size()))
             : static_cast<int>((elapsed / 120) % frames_.size());
         
-        auto spinner = text(frames_[frame_index]) | color(pal.info);
+        auto spinner = text(frames_[frame_index]) | color(pal.primary);
         
         if (options_.message.empty()) {
             return spinner;
@@ -145,12 +130,12 @@ ftxui::Element SpinnerElement(const SpinnerOptions& options = {}) {
         });
     }
     
-    if (options.reduced_motion) {
+    if (options.reduced_motion || loom::ui::design::theme::current_theme().a11y.reduced_motion) {
         auto element = text(std::string(loom::ui::design::figures::kBullet)) | color(pal.muted);
         if (!options.message.empty()) {
             return hbox({
                 element,
-                text(" " + options.message) | dim
+                text(" " + options.message) | color(pal.muted)
             });
         }
         return element;
@@ -159,8 +144,8 @@ ftxui::Element SpinnerElement(const SpinnerOptions& options = {}) {
     // Caller-driven frame wins when set (>= 0); otherwise static first glyph.
     auto glyph = options.frame >= 0
         ? detail::SpinnerGlyphAt(options.frame)
-        : detail::GetDefaultCharacters()[0];
-    auto spinner = text(glyph) | color(pal.info);
+        : detail::SpinnerGlyphAt(0);
+    auto spinner = text(glyph) | color(pal.primary);
     
     if (options.message.empty()) {
         return spinner;

@@ -88,11 +88,7 @@ using namespace ftxui;
 // (bodies in repl_screen_welcome.cpp)
 // =========================================================
 
-// UI1: status bar — delegates to loom.ui.components.status_line.
-[[nodiscard]] Element RenderStatusBar(const StatusBarData& d);
-
-// UI19: spinner line shell.  Single loom-gold theme, cycling
-// TEARDROP_ASTERISK glyph, random playful verb, 3-dot blink cadence.
+// Ordinary work uses canonical figures; motion follows the current theme.
 [[nodiscard]] Element RenderSpinner(
     SpinnerMode m, const std::optional<std::string>& verb,
     const std::optional<std::string>& tip,
@@ -165,7 +161,8 @@ ComputeUnseenDivider(const ReplScreenState& s);
     // Defaults to 80 for tests/dialogs; production passes the real width.
     int term_cols = 80,
     // Dismiss callback for API error cards (ESC / q).
-    std::function<void()> on_dismiss_error = nullptr);
+    std::function<void()> on_dismiss_error = nullptr,
+    bool emphasize_work = true);
 
 /// Count '\n'-separated lines in text (minimum 1).
 [[nodiscard]] int CountTextLines(std::string_view text);
@@ -333,13 +330,21 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
                                bool is_prompt_input_active,
                                bool allow_dialogs_with_animation);
 
-/// Combine Overlay + Modal + Bottom into one dbox over the base chrome.
+/// Same-frame render results: prepare once, classify, then compose once.
+struct PreparedDialogLayers {
+    Element bottom;
+    Element overlay;
+    Element modal;
+    bool takes_focus = false;
+    bool awaiting_permission = false;
+};
+
+[[nodiscard]] PreparedDialogLayers PrepareDialogLayers(
+    ReplScreenState& s, bool is_prompt_input_active,
+    bool allow_dialogs_with_animation, int w = 120, int h = 40);
+
 [[nodiscard]] Element LayerAllDialogs(
-    Element base_chrome,
-    ReplScreenState& s,
-    bool is_prompt_input_active,
-    bool allow_dialogs_with_animation,
-    int w = 120, int h = 40);
+    Element base_chrome, PreparedDialogLayers prepared);
 
 }  // namespace dialog_queue_render
 
@@ -352,6 +357,9 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
 // Full layout composition
 // (body in repl_screen_layout.cpp)
 // =========================================================
+
+/// Existing outer component owners mask queue focus and decision keys.
+[[nodiscard]] bool HasOuterFocusOwner(ReplMode mode);
 
 /// Compose the REPL screen via the FullscreenLayout slot system and layer
 /// the dialog queue on top.

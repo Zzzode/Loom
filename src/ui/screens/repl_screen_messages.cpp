@@ -138,7 +138,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // Terminal column width for the virtual-path height estimator.
     int term_cols,
     // Dismiss callback for API error cards (ESC / q).
-    std::function<void()> on_dismiss_error) {
+    std::function<void()> on_dismiss_error, bool emphasize_work) {
     // NOTE: We no longer early-return on empty entries.  The leading_element
     // (welcome/logo card) must always be rendered inside the yframe so it
     // scrolls with messages.  The messages_list handles empty rows gracefully
@@ -475,6 +475,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
     input.show_all_in_transcript = show_all_in_transcript;
     input.disable_chain_compression = disable_chain_compression;
     input.query_running = query_running;
+    input.emphasize_work = emphasize_work;
     // expanded_keys — user-expanded rows show
     // verbose full content.  Passed by copy (cheap for small sets).
     input.expanded_keys = expanded_keys;

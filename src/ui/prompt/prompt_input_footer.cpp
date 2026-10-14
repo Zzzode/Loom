@@ -65,8 +65,8 @@ using namespace ftxui;
         namespace msgs = loom::ui::messages;
         auto lines = std::static_pointer_cast<std::vector<Element>>(
             msgs::ansi_to_ftxui_elements(opts.content));
-        // Preserve external command colors and the existing dim chrome style.
-        content = vbox(std::move(*lines)) | dim;
+        // Explicit command colors and attributes remain authoritative.
+        content = vbox(std::move(*lines));
     }
     if (opts.columns > 0) content = std::move(content) | size(WIDTH, EQUAL, usable);
     if (padding > 0) {
@@ -115,9 +115,9 @@ struct StatusField {
         fields.push_back({folder.empty() ? "~" : folder, pal.muted, false, true, 2, {}});
     }
     if (data.segments.git && !data.git_branch.empty())
-        fields.push_back({data.git_branch, pal.success, false, true, 4, {}});
+        fields.push_back({data.git_branch, pal.muted, false, true, 4, {}});
     if (data.segments.model && !data.model_name.empty())
-        fields.push_back({data.model_name, pal.info, true, true, 1, {}});
+        fields.push_back({data.model_name, pal.text, true, true, 1, {}});
     if (data.segments.tokens) {
         const double pct = data.context_window_size > 0
             ? 100.0 * data.context_token_count / data.context_window_size : 0.0;
@@ -130,14 +130,17 @@ struct StatusField {
     }
     if (data.segments.cost && data.cost_usd && *data.cost_usd > 0.0) {
         char cost[32];
-        std::snprintf(cost, sizeof(cost), "$%.4f", *data.cost_usd);
+        if (*data.cost_usd < 0.01)
+            std::snprintf(cost, sizeof(cost), "<$0.01");
+        else
+            std::snprintf(cost, sizeof(cost), "$%.2f", *data.cost_usd);
         fields.push_back({cost, pal.muted, false, false, 5, {}});
     }
     if (data.segments.tasks && data.task_count > 0)
         fields.push_back({std::format("{} team{}", data.task_count,
-            data.task_count == 1 ? "" : "s"), pal.warning, false, false, 6, {}});
+            data.task_count == 1 ? "" : "s"), pal.muted, false, false, 6, {}});
     if (data.segments.agent && !data.agent_name.empty())
-        fields.push_back({"@" + data.agent_name, pal.info, false, true, 7, {}});
+        fields.push_back({"@" + data.agent_name, pal.muted, false, true, 7, {}});
     if (!data.mouse_mode_label.empty())
         fields.push_back({data.mouse_mode_label, pal.muted, false, false, 3, {}});
 
@@ -166,7 +169,8 @@ struct StatusField {
         if (field.selected.empty()) continue;
         if (!parts.empty()) parts.push_back(text(" · ") | color(pal.muted) | dim);
         auto value = text(field.selected) | color(field.foreground);
-        parts.push_back(std::move(value) | (field.emphasized ? bold : dim));
+        if (field.emphasized) value = std::move(value) | bold;
+        parts.push_back(std::move(value));
     }
     return hbox(std::move(parts)) | size(HEIGHT, EQUAL, 1);
 }

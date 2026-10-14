@@ -216,7 +216,7 @@ TEST(ThemeWidgetsFeatures, HeldSpinnerUsesCurrentThemeAndStableReducedMotionFigu
     for (const auto variant : kVariants) {
         theme::set_theme(variant);
         auto screen = Paint(spinner->Render(), 10, 1);
-        EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, theme::current_theme().palette->info);
+        EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, theme::current_theme().palette->primary);
         screen = Paint(reduced->Render(), 10, 1);
         EXPECT_EQ(screen.PixelAt(0, 0).character, figs::kBullet);
         EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, theme::current_theme().palette->muted);

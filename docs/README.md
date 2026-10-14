@@ -67,6 +67,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0012-loom-prompt-and-chrome.md`](rfcs/0012-loom-prompt-and-chrome.md) | **Implemented.** Cell-aware prompt wrapping, responsive built-in statusline and Loom-only welcome artwork. |
 | [`rfcs/0013-readable-bounded-brand-ui.md`](rfcs/0013-readable-bounded-brand-ui.md) | **Implemented.** Readable secondary text, bounded task/team chrome, duplicate/unused token deletion and Loom brand coordination. |
 | [`rfcs/0014-compressed-chain-activity.md`](rfcs/0014-compressed-chain-activity.md) | **Implemented.** Stable stage elapsed time and bounded current activity for compressed chains. |
+| [`rfcs/0015-state-led-attention-and-hierarchy.md`](rfcs/0015-state-led-attention-and-hierarchy.md) | **Implemented.** Four-state attention and semantic terminal hierarchy for the actual REPL. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

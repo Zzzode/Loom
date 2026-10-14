@@ -670,6 +670,17 @@ TEST(StreamingReplay, ToolSpinnerPhasesPreserveLabelsAndMessageContent) {
             }
         }
     }
+    for (const auto glyph : {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}) {
+        const auto spinner = std::string("  ") + glyph + " mcp__server_2__read-file…...";
+        const auto normalized = normalize_screen(spinner + prompt);
+        EXPECT_EQ(normalized, "  ✻ mcp__server_2__read-file…." + prompt);
+        EXPECT_EQ(normalize_screen(normalized), normalized);
+        // Preserve a quoted tool label: only its ordinary braille glyph is
+        // normalized by the pre-existing global glyph pass, not its content.
+        EXPECT_EQ(normalize_screen("quoted " + spinner + prompt),
+                  "quoted   <spinner> mcp__server_2__read-file…..." + prompt);
+    }
+
 }
 
 TEST(StreamingReplay, DetailsActionsKeepBlinkingDotSnapshotsDeterministic) {

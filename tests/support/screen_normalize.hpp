@@ -116,7 +116,7 @@ namespace loom::testing {
     // ── Step 2b: chrome spinner line normalization ────────────────────
     // The task-view chrome spinner (RenderSpinner in
     // repl_screen_welcome.cpp) is non-deterministic in three ways:
-    //   - glyph: 8 teardrop-asterisk frames indexed by (wall-clock) frame
+    //   - glyph: canonical braille already mapped to <spinner> in step 2
     //   - verb: randomly sampled from SPINNER_VERBS via std::random_device
     //     whenever spinner_verb is nullopt — which every text
     //     content_block_delta causes (app_handle_submit.cpp sets it to
@@ -151,10 +151,10 @@ namespace loom::testing {
             // glyph that happens to appear in message content is not
             // mistaken for the chrome spinner.
             if (i >= 2 && clean[i - 1] == ' ' && clean[i - 2] == ' ' &&
-                is_chrome_glyph(clean, i) && i + 3 < clean.size() &&
-                clean[i + 3] == ' ') {
+                ((is_chrome_glyph(clean, i) && i + 3 < clean.size() && clean[i + 3] == ' ')
+                 || clean.compare(i, 10, "<spinner> ") == 0)) {
                 // Match: <glyph> <verb>…<dots>
-                std::size_t j = i + 4;  // skip glyph + space
+                std::size_t j = i + (clean.compare(i, 10, "<spinner> ") == 0 ? 10 : 4);
                 const std::size_t verb_start = j;
                 while (j < clean.size() &&
                        ((clean[j] >= 'A' && clean[j] <= 'Z') ||
@@ -200,6 +200,8 @@ namespace loom::testing {
                                 ++i;
                                 continue;
                             }
+                            // Retain the established golden marker; actual
+                            // canonical glyphs are asserted outside normalization.
                             tmp += "✻ ";
                             tmp += label;
                             tmp += "\xE2\x80\xA6.";

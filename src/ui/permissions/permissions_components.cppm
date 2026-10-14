@@ -399,7 +399,7 @@ struct KeyHint {
     std::string action;     // e.g. "Allow once"
 };
 
-/// Render a row of keyboard hints, dimmed: `[y] Allow  [n] Deny  [Esc] Cancel`
+/// Render a row of readable keyboard hints: `[y] Allow  [n] Deny  [Esc] Cancel`
 [[nodiscard]] inline Element KeyboardHintRow(
     const std::vector<KeyHint>& hints)
 {
@@ -407,11 +407,11 @@ struct KeyHint {
     for (std::size_t i = 0; i < hints.size(); ++i) {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto& h = hints[i];
-        parts.push_back(text("[") | dim);
-        parts.push_back(text(h.key) | color(pal.info) | bold | dim);
-        parts.push_back(text("] ") | dim);
-        parts.push_back(text(h.action) | dim);
-        if (i + 1 < hints.size()) parts.push_back(text("  ") | dim);
+        parts.push_back(text("[") | color(pal.muted));
+        parts.push_back(text(h.key) | color(pal.text) | bold);
+        parts.push_back(text("] ") | color(pal.muted));
+        parts.push_back(text(h.action) | color(pal.muted));
+        if (i + 1 < hints.size()) parts.push_back(text("  ") | color(pal.muted));
     }
     return hbox(parts);
 }
@@ -501,7 +501,7 @@ struct CheckboxState {
     }
     if (paths.size() > static_cast<std::size_t>(max_shown)) {
         auto remaining = paths.size() - static_cast<std::size_t>(max_shown);
-        els.push_back(text(std::format("… and {} more", remaining)) | dim | color(pal.muted));
+        els.push_back(text(std::format("… and {} more", remaining)) | color(pal.muted));
     }
     return els;
 }

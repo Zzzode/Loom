@@ -253,35 +253,62 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
     return false;
 }
 
-/// Convenience: combine Overlay + Modal + Bottom into a single dbox
-/// that callers can overlay onto the base chrome.  Standalone is handled
-/// separately (full-takeover, replaces the entire render).
-[[nodiscard]] Element LayerAllDialogs(
-    Element base_chrome,
-    ReplScreenState& s,
-    bool is_prompt_input_active,
-    bool allow_dialogs_with_animation,
-    int w, int h)
-{
-    Elements layers;
-    layers.push_back(std::move(base_chrome));
-    Element bottom = RenderBottomDialog(
-        s, is_prompt_input_active, allow_dialogs_with_animation, w, h);
-    if (bottom) {
-        layers.push_back(vbox({
-            filler(),
-            std::move(bottom),
-        }) | flex);
+namespace {
+bool permission_payload(const dsys::DialogPayloadVariant& payload) {
+    return std::holds_alternative<dsys::ToolPermissionPayload>(payload)
+        || std::holds_alternative<dsys::SandboxPermissionPayload>(payload)
+        || std::holds_alternative<dsys::WorkerSandboxPermissionPayload>(payload);
+}
+
+bool actionable_permission(ReplScreenState& s, dsys::DialogPayloadVariant& payload) {
+    if (!s.dialog_store.dialog_renderers.has_renderer_and_handler(dsys::type_of(payload)))
+        return false;
+    return std::visit([](const auto& request) {
+        using T = std::decay_t<decltype(request)>;
+        if constexpr (std::is_same_v<T, dsys::ToolPermissionPayload> ||
+                      std::is_same_v<T, dsys::SandboxPermissionPayload> ||
+                      std::is_same_v<T, dsys::WorkerSandboxPermissionPayload>)
+            return static_cast<bool>(request.on_response);
+        return false;
+    }, payload);
+}
+} // namespace
+
+PreparedDialogLayers PrepareDialogLayers(
+    ReplScreenState& s, bool typing, bool allow_animation, int w, int h) {
+    PreparedDialogLayers prepared;
+    // Preserve renderer execution order, including lazy payload initialization.
+    prepared.bottom = RenderBottomDialog(s, typing, allow_animation, w, h);
+    prepared.overlay = RenderOverlayDialog(s, typing, allow_animation, w, h);
+    prepared.modal = RenderModalDialog(s, w, h);
+    if (prepared.modal) {
+        prepared.takes_focus = true;
+        return prepared;
     }
-    Element overlay = RenderOverlayDialog(
-        s, is_prompt_input_active, allow_dialogs_with_animation, w, h);
-    if (overlay) layers.push_back(std::move(overlay));
-    Element modal = RenderModalDialog(s, w, h);
-    if (modal)   layers.push_back(std::move(modal));
+    if (prepared.overlay) {
+        auto top = s.dialog_store.dialog_queue.peek_overlay_mut();
+        prepared.awaiting_permission = top && actionable_permission(s, top->get());
+        prepared.takes_focus = prepared.awaiting_permission
+            || (top && !permission_payload(top->get()));
+    } else if (prepared.bottom) {
+        auto top = s.dialog_store.dialog_queue.peek_bottom_mut(typing, allow_animation);
+        prepared.awaiting_permission = top && actionable_permission(s, top->get());
+        prepared.takes_focus = prepared.awaiting_permission
+            || (top && !permission_payload(top->get()));
+    }
+    return prepared;
+}
+
+Element LayerAllDialogs(Element base_chrome, PreparedDialogLayers prepared) {
+    Elements layers{std::move(base_chrome)};
+    if (prepared.bottom)
+        layers.push_back(vbox({filler(), std::move(prepared.bottom)}) | flex);
+    if (prepared.overlay) layers.push_back(std::move(prepared.overlay));
+    if (prepared.modal) layers.push_back(std::move(prepared.modal));
     if (layers.size() == 1) return layers.front();
     return dbox(std::move(layers));
 }
 
 } // namespace dialog_queue_render
 
-}  // namespace loom::ui::repl_screen
+} // namespace loom::ui::repl_screen

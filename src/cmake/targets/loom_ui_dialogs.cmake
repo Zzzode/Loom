@@ -51,6 +51,7 @@ target_sources(loom_ui_dialogs
 # the interface BMIs for edit isolation. Moved from loom_ui unchanged; they
 # implement the module interfaces owned by this target.
 target_sources(loom_ui_dialogs PRIVATE
+    ui/dialogs/dialog_system.cpp
     ui/dialogs/hooks_dialog_renderer_impl.cpp
     ui/dialogs/plugin_dialog_renderer_impl.cpp
 )

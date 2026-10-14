@@ -163,6 +163,7 @@ public:
     std::atomic<bool> retry_fault{true};
     std::atomic<bool> selection_grow{false};
     std::atomic<bool> chain_finish{false};
+    std::atomic<bool> chain_tools{false};
     std::vector<std::string> request_bodies() {
         std::lock_guard lock(mutex_);
         return request_bodies_;
@@ -216,9 +217,24 @@ private:
             if (index == 0) {
                 const auto command = "printf PTY-ACTIVITY; for attempt in {1..300}; do [ -f '" + target_.string() +
                     "' ] && break; sleep 0.1; done";
-                const auto body = tool_response("Bash", "{\"command\":\"" + escape_json(command) + "\"}", "pty-chain-bash");
-                send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
-                    std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+                const auto prefix = message_start() +
+                    event("content_block_start", R"({"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}})") +
+                    event("content_block_delta", R"({"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"PTY initial planning"}})");
+                if (!send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n" + prefix)) return;
+                const auto deadline = Clock::now() + 15s;
+                while (!chain_tools.load() && !stopping_ && Clock::now() < deadline) {
+                    pollfd descriptor{fd, POLLIN, 0};
+                    if (::poll(&descriptor, 1, 20) > 0 && read_bytes(buffer.data(), buffer.size()) <= 0) return;
+                }
+                if (stopping_ || !chain_tools.load()) return;
+                const auto input = "{\"command\":\"" + escape_json(command) + "\"}";
+                const auto body = event("content_block_stop", R"({"type":"content_block_stop","index":0})") +
+                    event("content_block_start", R"({"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"pty-chain-bash","name":"Bash","input":{}}})") +
+                    event("content_block_delta", "{\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"" + escape_json(input) + "\"}}") +
+                    event("content_block_stop", R"({"type":"content_block_stop","index":1})") +
+                    event("message_delta", R"({"type":"message_delta","delta":{"stop_reason":"tool_use","stop_sequence":null},"usage":{"output_tokens":12}})") +
+                    event("message_stop", R"({"type":"message_stop"})");
+                send_bytes(body);
                 ::shutdown(fd, SHUT_WR);
                 return;
             }
@@ -500,6 +516,7 @@ printf '\nPTY-SHELL-RECEIVED\n'
         if (pid_ == 0) {
             ::chdir(root.c_str());
             ::setenv("TERM", "xterm-256color", 1);
+            ::setenv("COLORTERM", "truecolor", 1);
             if (options.capture_clipboard) {
                 const char* inherited = ::getenv("PATH");
                 const auto path = (root / "clipboard-bin").string() + ":" +
@@ -652,7 +669,10 @@ printf '\nPTY-SHELL-RECEIVED\n'
         const auto frame = latest_frame_text();
         if (frame.find(response) == std::string::npos || frame.find(" to interrupt") != std::string::npos ||
             frame.find("Model request failed") != std::string::npos || frame.find("Retry request") != std::string::npos) return false;
-        constexpr std::array<std::string_view, 8> spinner_glyphs = {"✻", "❋", "✦", "✧", "✶", "✷", "✸", "✹"};
+        constexpr std::array<std::string_view, 18> spinner_glyphs = {
+            "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏",
+            "✻", "❋", "✦", "✧", "✶", "✷", "✸", "✹"
+        };
         return std::none_of(spinner_glyphs.begin(), spinner_glyphs.end(), [&](auto glyph) {
             return frame.find("  " + std::string(glyph) + " ") != std::string::npos;
         });
@@ -792,19 +812,32 @@ void run_prompt_wrap_case(const std::string& binary, const fs::path& root) {
     terminal.verify_exit(0);
 }
 
+// Attribute evidence uses the same complete ANSI frames as interaction tests.
+enum class ChainAttention { Working, Permission, Completed };
+void save_attention_frame(const fs::path& root, const std::string& name, const std::string& raw);
+void verify_normal_attention(const std::string& raw);
+void verify_chain_attention(const std::string& raw, ChainAttention attention);
+void verify_failure_attention(const std::string& raw, const std::string& diagnostic);
+void verify_corrected_permission_attention(const std::string& raw, const std::string& diagnosis);
+
 void run_recovery_case(const std::string& binary, const std::string& scenario, const fs::path& root) {
     const bool retry = scenario.starts_with("api-retry");
     std::ofstream(root / "config" / "settings.json") <<
-        R"({"mouseMode":false,"permissionMode":"default","extendedThinking":false})";
+        R"({"mouseMode":false,"permissionMode":"default","extendedThinking":false,"theme":"dark"})";
     const auto sentinel = root / "once.txt";
     ModelServer server(false, false, sentinel, false, scenario);
     Terminal terminal(binary, root, server.url(), ModelOptions{});
     server.start();
-    require(terminal.wait([&] { return terminal.installed(); }), "terminal installation not observed");
+    require(terminal.wait([&] {
+        return terminal.installed() && terminal.latest_frame_text().find("loom_pty_") != std::string::npos;
+    }), "complete normal terminal frame not observed");
+    save_attention_frame(root, "normal", terminal.latest_frame());
+    verify_normal_attention(terminal.latest_frame());
     constexpr auto prompt = "Run the PTY recovery probe";
     terminal.input(std::string(prompt) + "\r");
-    require(terminal.wait([&] { return terminal.permission_visible(); }), "initial Bash permission UI not observed");
-    const auto after_first_permission = terminal.output.size();
+    require(terminal.wait([&] {
+        return terminal.latest_frame_text().find("[y] Allow  [n] Deny") != std::string::npos;
+    }), "initial Bash permission UI not observed");
     // Approval and denial exercise the actual keyboard permission path; the
     // only write command targets this test's private sentinel.
     terminal.input(scenario == "permission-denial" ? "n" : "y");
@@ -818,11 +851,14 @@ void run_recovery_case(const std::string& binary, const std::string& scenario, c
         require(read_file(sentinel) == "PTY-once", "approved Bash did not execute exactly once before API failure");
         require(first_result.find("\"is_error\":true") == std::string::npos, "completed Bash was marked failed");
         require(terminal.wait([&] {
-            const auto text = terminal_text(terminal.output.substr(after_first_permission));
+            const auto text = terminal.latest_frame_text();
             return text.find("Model request failed") != std::string::npos &&
                 text.find(scenario == "api-retry-network" ? "HTTP request failed" : "PTY injected request failure") != std::string::npos &&
                 text.find("Retry request") != std::string::npos && text.find("Dismiss error") != std::string::npos;
         }), "idle retryable model error and keyboard actions were not visible");
+        save_attention_frame(root, "failed-request", terminal.latest_frame());
+        verify_failure_attention(terminal.latest_frame(), scenario == "api-retry-network"
+            ? "HTTP request failed" : "PTY injected request failure");
         const auto failed_requests = server.requests.load();
         server.retry_fault = false;
         terminal.input("r");
@@ -848,12 +884,17 @@ void run_recovery_case(const std::string& binary, const std::string& scenario, c
                 frame.find(R"({"command":"pwd"})") != std::string::npos &&
                 frame.find("[y] Allow  [n] Deny") != std::string::npos;
         }), "corrected Bash permission UI not observed");
+        save_attention_frame(root, "corrected-permission", terminal.latest_frame());
+        verify_corrected_permission_attention(terminal.latest_frame(), scenario == "permission-denial"
+            ? "Permission denied" : "No such file or directory");
         terminal.input("y");
     }
 
     require(terminal.wait([&] {
         return terminal.idle_response_visible("PTY recovery complete");
     }), "conversation did not recover to its final assistant response");
+    save_attention_frame(root, "recovered", terminal.latest_frame());
+    verify_normal_attention(terminal.latest_frame());
     const auto recovered_text = terminal_text(terminal.output);
     if (!retry) {
         require(recovered_text.find(scenario == "permission-denial" ? "Permission denied" : "No such file or directory") != std::string::npos,
@@ -1005,6 +1046,9 @@ void run_round_budget_cli_case(const std::string& binary, const fs::path& root) 
 struct TerminalCell {
     std::string text = " ";
     std::string background;
+    std::string foreground;
+    bool bold = false;
+    bool dim = false;
 };
 struct TerminalFrame {
     std::array<std::array<TerminalCell, 120>, 40> cells{};
@@ -1030,7 +1074,8 @@ struct TerminalFrame {
 TerminalFrame decode_frame(const std::string& bytes) {
     TerminalFrame frame;
     int x = 0, y = 0;
-    std::string background;
+    std::string background, foreground;
+    bool bold = false, dim = false;
     for (std::size_t i = 0; i < bytes.size();) {
         const auto ch = static_cast<unsigned char>(bytes[i]);
         if (ch == 0x1b && i + 1 < bytes.size()) {
@@ -1060,20 +1105,31 @@ TerminalFrame decode_frame(const std::string& bytes) {
                     break;
                 case 'm':
                     for (std::size_t n = 0; n < values.size(); ++n) {
-                        if (values[n] == 0 || values[n] == 49) background.clear();
-                        else if (values[n] >= 40 && values[n] <= 47)
-                            background = std::to_string(values[n]);
-                        else if (values[n] >= 100 && values[n] <= 107)
-                            background = std::to_string(values[n]);
-                        else if (values[n] == 38 || values[n] == 48) {
-                            const bool bg = values[n] == 48;
-                            const auto count = n + 1 < values.size() && values[n + 1] == 2 ? 4U : 2U;
-                            if (n + count < values.size()) {
-                                if (bg) {
-                                    background = "48";
-                                    for (std::size_t k = 1; k <= count; ++k)
-                                        background += ";" + std::to_string(values[n + k]);
-                                }
+                        const auto attribute = values[n];
+                        if (attribute == 0) {
+                            background.clear();
+                            foreground.clear();
+                            bold = dim = false;
+                        } else if (attribute == 1) bold = true;
+                        else if (attribute == 2) dim = true;
+                        else if (attribute == 22) bold = dim = false;
+                        else if (attribute == 39) foreground.clear();
+                        else if (attribute == 49) background.clear();
+                        else if ((attribute >= 30 && attribute <= 37) ||
+                                 (attribute >= 90 && attribute <= 97))
+                            foreground = std::to_string(attribute);
+                        else if ((attribute >= 40 && attribute <= 47) ||
+                                 (attribute >= 100 && attribute <= 107))
+                            background = std::to_string(attribute);
+                        else if (attribute == 38 || attribute == 48) {
+                            if (n + 1 >= values.size()) continue;
+                            const auto mode = values[n + 1];
+                            const auto count = mode == 2 ? 4U : mode == 5 ? 2U : 0U;
+                            if (count && n + count < values.size()) {
+                                auto color = std::to_string(attribute);
+                                for (std::size_t k = 1; k <= count; ++k)
+                                    color += ";" + std::to_string(values[n + k]);
+                                (attribute == 48 ? background : foreground) = std::move(color);
                                 n += count;
                             }
                         }
@@ -1108,12 +1164,216 @@ TerminalFrame decode_frame(const std::string& bytes) {
             (codepoint >= 0x2e80 && codepoint <= 0xa4cf) ||
             (codepoint >= 0xac00 && codepoint <= 0xd7a3) ||
             (codepoint >= 0xf900 && codepoint <= 0xfaff) || codepoint >= 0x1f300 ? 2 : 1;
-        if (x < 120) frame.cells[y][x] = {glyph, background};
-        if (width == 2 && x + 1 < 120) frame.cells[y][x + 1] = {"", background};
+        if (x < 120) frame.cells[y][x] = {glyph, background, foreground, bold, dim};
+        if (width == 2 && x + 1 < 120) frame.cells[y][x + 1] = {"", background, foreground, bold, dim};
         x += width;
         i += length;
     }
     return frame;
+}
+
+// Expected colors come from the explicitly selected dark theme's existing
+// tokens. Other themes are covered by native pixel tests, not this PTY fixture.
+constexpr std::string_view kDarkPrimary = "38;2;224;137;105";
+constexpr std::string_view kDarkText = "38;2;224;218;210";
+constexpr std::string_view kDarkMuted = "38;2;184;184;184";
+constexpr std::string_view kDarkBackground = "48;2;32;33;36";
+constexpr std::string_view kDarkWarning = "38;2;255;193;7";
+constexpr std::string_view kDarkDanger = "38;2;255;107;128";
+constexpr std::array<std::string_view, 10> kCanonicalWorkGlyphs = {
+    "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"
+};
+
+std::pair<int, int> attention_label(const TerminalFrame& frame, const std::string& label,
+                                   bool last = false) {
+    for (int step = 0; step < 40; ++step) {
+        const int y = last ? 39 - step : step;
+        for (int x = 0; x < 120; ++x) {
+            std::string value;
+            for (int next = x; next < 120 && value.size() < label.size(); ++next)
+                value += frame.cells[y][next].text;
+            if (value == label) return {x, y};
+        }
+    }
+    throw std::runtime_error("visible attention frame lacks " + label);
+}
+
+void require_attention_cell(const TerminalCell& cell, std::string_view foreground,
+                            bool bold, const std::string& label) {
+    require(cell.foreground == foreground && cell.bold == bold && !cell.dim,
+            label + " unexpected style: fg=" + cell.foreground + " bold=" +
+            std::to_string(cell.bold) + " dim=" + std::to_string(cell.dim));
+}
+
+void require_attention_label(const TerminalFrame& frame, const std::string& label,
+                             std::string_view foreground, bool bold, bool last = false) {
+    const auto [x, y] = attention_label(frame, label, last);
+    std::size_t consumed = 0;
+    for (int column = x; column < 120 && consumed < label.size(); ++column) {
+        const auto& cell = frame.cells[y][column];
+        if (!cell.text.empty() && cell.text != " ")
+            require_attention_cell(cell, foreground, bold, label);
+        consumed += cell.text.size();
+    }
+    require(consumed == label.size(), "attention label crossed the physical row: " + label);
+}
+
+std::pair<int, int> bottom_work_glyph(const TerminalFrame& frame) {
+    for (int y = 39; y >= 30; --y) {
+        const auto& glyph = frame.cells[y][2].text;
+        if (std::find(kCanonicalWorkGlyphs.begin(), kCanonicalWorkGlyphs.end(), glyph) !=
+            kCanonicalWorkGlyphs.end()) return {2, y};
+        constexpr std::array<std::string_view, 8> legacy = {"✻", "❋", "✦", "✧", "✶", "✷", "✸", "✹"};
+        require(std::find(legacy.begin(), legacy.end(), glyph) == legacy.end(),
+                "ordinary work retained a legacy star spinner");
+    }
+    return {-1, -1};
+}
+
+void save_attention_frame(const fs::path& root, const std::string& name, const std::string& raw) {
+    require(!raw.empty(), "cannot retain an empty terminal frame");
+    std::ofstream(root / (name + ".raw"), std::ios::binary) << raw;
+    const auto frame = decode_frame(raw);
+    std::ofstream text(root / (name + ".txt"));
+    std::ofstream styles(root / (name + ".styles.txt"));
+    styles << "positions are 1-based physical terminal cells; default foreground/background are empty\n";
+    for (int y = 0; y < 40; ++y) {
+        text << frame.row(y) << '\n';
+        for (int x = 0; x < 120; ++x) {
+            const auto& cell = frame.cells[y][x];
+            if (cell.text == " " && cell.background.empty()) continue;
+            styles << "row=" << y + 1 << " col=" << x + 1 << " glyph=\"" << escape_json(cell.text)
+                   << "\" fg=" << cell.foreground << " bg=" << cell.background
+                   << " bold=" << cell.bold << " dim=" << cell.dim << '\n';
+        }
+    }
+}
+
+void verify_decoder_attention_attributes() {
+    const auto frame = decode_frame("\x1b[31;44;1;2mA\x1b[22;39mB\x1b[49mC"
+        "\x1b[38;5;123;48;5;45;1mD\x1b[38;2;1;2;3;48;2;4;5;6;2mE\x1b[0mF"
+        "\x1b[91;104mG");
+    const auto& cells = frame.cells[0];
+    require(cells[0].foreground == "31" && cells[0].background == "44" && cells[0].bold && cells[0].dim,
+            "SGR decoder lost 16-color/bold/dim attributes");
+    require(cells[1].foreground.empty() && cells[1].background == "44" && !cells[1].bold && !cells[1].dim,
+            "SGR22/39 reset did not preserve the independent background");
+    require(cells[2].background.empty(), "SGR49 reset did not clear the background");
+    require(cells[3].foreground == "38;5;123" && cells[3].background == "48;5;45" && cells[3].bold && !cells[3].dim,
+            "SGR decoder lost indexed256 colors or inherited attributes");
+    require(cells[4].foreground == "38;2;1;2;3" && cells[4].background == "48;2;4;5;6" && cells[4].bold && cells[4].dim,
+            "SGR decoder lost truecolor or independent bold/dim attributes");
+    require(cells[5].foreground.empty() && cells[5].background.empty() && !cells[5].bold && !cells[5].dim,
+            "SGR0 did not reset all decoded attributes");
+    require(cells[6].foreground == "91" && cells[6].background == "104",
+            "SGR decoder lost bright16 colors");
+}
+
+void verify_bottom_work_attention(const TerminalFrame& frame) {
+    const auto spinner = bottom_work_glyph(frame);
+    require(spinner.first >= 0, "working frame lacks a canonical bottom braille spinner");
+    const auto& glyph = frame.cells[spinner.second][spinner.first];
+    require(glyph.foreground == kDarkPrimary && !glyph.dim,
+            "canonical work glyph did not use readable primary ink");
+    bool saw_label = false;
+    for (int x = spinner.first + 2; x < 120; ++x) {
+        const auto& cell = frame.cells[spinner.second][x];
+        if (cell.text == "…" || cell.text == ".") break;
+        if (cell.text.empty() || cell.text == " ") continue;
+        require_attention_cell(cell, kDarkMuted, false, "bottom work label");
+        saw_label = true;
+    }
+    require(saw_label, "canonical bottom spinner lacks a readable work label");
+}
+
+void verify_thinking_work_attention(const std::string& raw) {
+    const auto frame = decode_frame(raw);
+    const auto title = attention_label(frame, "Thinking");
+    const auto disclosure = attention_label(frame, "Show details");
+    require(title.second == disclosure.second, "thinking title and disclosure changed row geometry");
+    for (int x = title.first; x < disclosure.first - 1; ++x) {
+        const auto& cell = frame.cells[title.second][x];
+        if (!cell.text.empty() && cell.text != " ")
+            require_attention_cell(cell, kDarkPrimary, true, "thinking work summary");
+    }
+    verify_bottom_work_attention(frame);
+}
+
+void verify_builtin_metadata_attention(const TerminalFrame& frame) {
+    const auto model = attention_label(frame, "pty-test-model", /*last=*/true);
+    const auto path = attention_label(frame, "loom_pty_", /*last=*/true);
+    require(model.second >= 35 && path.second == model.second,
+            "metadata oracle matched welcome/history text instead of the real built-in statusline");
+    require_attention_label(frame, "pty-test-model", kDarkText, true, /*last=*/true);
+    require_attention_label(frame, "loom_pty_", kDarkMuted, false, /*last=*/true);
+}
+
+void verify_normal_attention(const std::string& raw) {
+    const auto frame = decode_frame(raw);
+    verify_builtin_metadata_attention(frame);
+    require(bottom_work_glyph(frame).first < 0, "normal frame retained a competing bottom work spinner");
+}
+
+void verify_chain_attention(const std::string& raw, ChainAttention attention) {
+    const auto frame = decode_frame(raw);
+    const bool working = attention == ChainAttention::Working;
+    const bool completed = attention == ChainAttention::Completed;
+    const auto title = attention_label(frame, completed ? "Worked" : "Working");
+    const bool expanded = terminal_text(raw).find("Hide details") != std::string::npos;
+    const auto disclosure = attention_label(frame, expanded ? "Hide details" : "Show details");
+    require(title.second == disclosure.second, "chain title and disclosure changed row geometry");
+    for (int x = title.first; x < disclosure.first - 1; ++x) {
+        const auto& cell = frame.cells[title.second][x];
+        if (cell.text.empty() || cell.text == " ") continue;
+        require_attention_cell(cell, working ? kDarkPrimary : kDarkMuted, working, "chain summary");
+        if (expanded)
+            require(cell.background == kDarkBackground,
+                    "expanded chain summary did not use the theme background surface");
+    }
+    if (!completed) {
+        require_attention_label(frame, working ? "Running Bash" : "Preparing Bash", kDarkText, false);
+        require_attention_label(frame, "PTY-ACTIVITY", kDarkText, false);
+    }
+    const auto spinner = bottom_work_glyph(frame);
+    if (working) {
+        verify_bottom_work_attention(frame);
+    } else {
+        require(spinner.first < 0, "permission/completed frame retained a competing bottom work spinner");
+    }
+    if (attention == ChainAttention::Permission) {
+        require_attention_label(frame, "(?) Permission", kDarkWarning, true);
+        require_attention_label(frame, R"("command":"printf PTY-ACTIVITY;)", kDarkText, false);
+        const auto instruction = attention_label(frame, "[y] Allow  [n] Deny");
+        for (int x = instruction.first; x < instruction.first + 19; ++x)
+            require(!frame.cells[instruction.second][x].dim, "required permission instruction was dim");
+    }
+}
+
+void verify_failure_attention(const std::string& raw, const std::string& diagnostic) {
+    const auto frame = decode_frame(raw);
+    require_attention_label(frame, "Model request failed", kDarkDanger, true);
+    require_attention_label(frame, diagnostic, kDarkText, false);
+    require_attention_label(frame, "Retry request", kDarkText, false);
+    require_attention_label(frame, "Dismiss error", kDarkText, false);
+    require(bottom_work_glyph(frame).first < 0, "failed request retained a competing bottom work spinner");
+    verify_builtin_metadata_attention(frame);
+}
+
+void verify_corrected_permission_attention(const std::string& raw, const std::string& diagnosis) {
+    const auto frame = decode_frame(raw);
+    const auto text = terminal_text(raw);
+    require(text.find(diagnosis) != std::string::npos, "corrected approval hid the prior tool diagnosis");
+    require(text.find("Model request failed") == std::string::npos,
+            "old tool failure became a global model-request failure");
+    // The real centered overlay can cover this later chain's title/activity.
+    // Its neutral style is asserted in the unobscured compressed-chain case;
+    // here inspect only visible diagnosis, decision target and actual controls.
+    require_attention_label(frame, "(?) Permission", kDarkWarning, true);
+    require_attention_label(frame, R"({"command":"pwd"})", kDarkText, false);
+    const auto keys = attention_label(frame, "[y] Allow  [n] Deny");
+    for (int x = keys.first; x < keys.first + 19; ++x)
+        require(!frame.cells[keys.second][x].dim, "corrected approval instructions were dim");
+    require(bottom_work_glyph(frame).first < 0, "corrected approval competed with a work spinner");
 }
 
 std::string mouse_report(int button, std::pair<int, int> position, bool release = false) {
@@ -1125,18 +1385,20 @@ std::string mouse_report(int button, std::pair<int, int> position, bool release 
 // rendering synthetic VisibleRows. Model and tool completion are separate gates.
 void run_compressed_chain_case(const std::string& binary, const fs::path& root) {
     std::ofstream(root / "config" / "settings.json") <<
-        R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
+        R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false,"theme":"dark"})";
     const auto release = root / "release.txt";
     ModelServer server(false, false, release, false, "compressed-chain-live");
     Terminal terminal(binary, root, server.url(), ModelOptions{});
     server.start();
-    require(terminal.wait([&] { return terminal.installed(); }), "terminal installation not observed");
+    require(terminal.wait([&] {
+        return terminal.installed() && terminal.latest_frame_text().find("loom_pty_") != std::string::npos;
+    }), "complete normal terminal frame not observed");
+    verify_decoder_attention_attributes();
+    save_attention_frame(root, "normal", terminal.latest_frame());
+    verify_normal_attention(terminal.latest_frame());
     auto save_frame = [&](const std::string& name, std::string raw = {}) {
         if (raw.empty()) raw = terminal.latest_frame();
-        std::ofstream(root / (name + ".raw"), std::ios::binary) << raw;
-        const auto frame = decode_frame(raw);
-        std::ofstream text(root / (name + ".txt"));
-        for (int y = 0; y < 40; ++y) text << frame.row(y) << '\n';
+        save_attention_frame(root, name, raw);
     };
     auto elapsed_seconds = [&](const std::string& status) -> int {
         const auto frame = decode_frame(terminal.latest_frame());
@@ -1170,10 +1432,21 @@ void run_compressed_chain_case(const std::string& binary, const fs::path& root) 
     terminal.input("Run the compressed chain fixture\r");
     require(terminal.wait([&] {
         const auto frame = terminal.latest_frame_text();
-        return frame.find("[y] Allow") != std::string::npos && frame.find("Working") != std::string::npos &&
-            frame.find("Preparing") != std::string::npos && frame.find("Show details") != std::string::npos;
-    }), "pending chain and authoritative permission prompt were not both visible");
+        return frame.find("Thinking") != std::string::npos && frame.find("Show details") != std::string::npos &&
+            bottom_work_glyph(decode_frame(terminal.latest_frame())).first >= 0;
+    }), "initial thinking and bottom canonical work spinner were not visible");
+    save_frame("working");
+    verify_thinking_work_attention(terminal.latest_frame());
+    server.chain_tools = true;
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return frame.find("[y] Allow  [n] Deny") != std::string::npos && frame.find("Working") != std::string::npos &&
+            frame.find("Preparing") != std::string::npos && frame.find("Show details") != std::string::npos &&
+            frame.find(R"("command":"printf PTY-ACTIVITY;)") != std::string::npos &&
+            frame.find("'" + release.string() + "'") != std::string::npos;
+    }), "pending chain, exact command target and authoritative permission prompt were not visible together");
     save_frame("pending");
+    verify_chain_attention(terminal.latest_frame(), ChainAttention::Permission);
     terminal.input("y");
     require(terminal.wait([&] {
         const auto frame = terminal.latest_frame_text();
@@ -1181,11 +1454,13 @@ void run_compressed_chain_case(const std::string& binary, const fs::path& root) 
             frame.find("[y] Allow") == std::string::npos;
     }), "running tool's actual command was absent from collapsed activity line");
     save_frame("running");
+    verify_chain_attention(terminal.latest_frame(), ChainAttention::Working);
     const auto initial_elapsed = std::max(0, elapsed_seconds("Working"));
     require(terminal.wait([&] { return elapsed_seconds("Working") >= initial_elapsed + 2; }),
             "live stage elapsed did not advance in the real terminal");
     const auto live_elapsed = elapsed_seconds("Working");
     save_frame("ticking");
+    verify_chain_attention(terminal.latest_frame(), ChainAttention::Working);
 
     // Click the activity body, not the disclosure action: the entire two-line
     // synthetic row must share the expansion hit target.
@@ -1247,12 +1522,15 @@ void run_compressed_chain_case(const std::string& binary, const fs::path& root) 
             "completion reset explicit chain expansion");
     const auto completed_elapsed = elapsed_seconds("Worked");
     save_frame("completed-expanded");
+    verify_chain_attention(terminal.latest_frame(), ChainAttention::Completed);
+    verify_normal_attention(terminal.latest_frame());
     click_label("Hide details");
     require(terminal.wait([&] {
         return terminal.latest_frame_text().find("Show details") != std::string::npos &&
             elapsed_seconds("Worked") == completed_elapsed;
     }), "collapsed completion changed duration or disclosure interaction");
     save_frame("completed-collapsed");
+    verify_chain_attention(terminal.latest_frame(), ChainAttention::Completed);
     // A fresh resize after at least a full display second forces projection and
     // rendering again; a wall-clock recomputation would incorrectly grow here.
     const auto frozen_until = Clock::now() + 1500ms;
@@ -1837,7 +2115,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario == "prompt-wrap")) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario == "prompt-wrap" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

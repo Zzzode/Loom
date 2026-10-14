@@ -28,6 +28,11 @@ import loom.ui.widgets.text_input;
 namespace loom::ui::repl_screen {
 using namespace ftxui;
 
+bool HasOuterFocusOwner(ReplMode mode) {
+    return mode == ReplMode::SettingsView || mode == ReplMode::AgentsView
+        || mode == ReplMode::TrustDialog;
+}
+
 /// Build the REPL screen as an FTXUI Component.
 /// Engine updates the externally-held state between frames.
 /// Event tiers (global+command keybindings):
@@ -80,7 +85,8 @@ using namespace ftxui;
     // so that a ToolPermission overlay consumes y/n/a before the
     // legacy in_dialog / input paths see it.
     const bool tool_animating = IsToolAnimating(state->task_view_store);
-    if (dialog_queue_render::DispatchDialogQueueEvents(
+    if (!HasOuterFocusOwner(state->mode) &&
+        dialog_queue_render::DispatchDialogQueueEvents(
             *state, ev, state->is_prompt_input_active,
             /*allow_dialogs_with_animation=*/!state->is_tool_animation_active)) {
         return true;
@@ -116,6 +122,11 @@ using namespace ftxui;
         // consumes it).
         if (ev == Event::Character('\x0C')) {
             if (cb->on_redraw) cb->on_redraw();
+            return true;
+        }
+        if (state->mode == ReplMode::SettingsView &&
+            ev != Event::Character('\x03') && ev != Event::Character('\x04')) {
+            (void)dialog_router::forward_settings(state, cb, ev);
             return true;
         }
         // UI13 agent wizard: forward every event to the wizard component

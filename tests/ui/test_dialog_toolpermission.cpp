@@ -653,11 +653,11 @@ TEST(LayerAllDialogs, OverlaySuppressedWhenPromptActive) {
 
     auto base = ftxui::text("base chrome") | ftxui::bold;
     Element active = rs::dialog_queue_render::LayerAllDialogs(
-        ftxui::Element{base}, s,
-        /*is_prompt_input_active=*/true, /*allow_anim=*/true, 100, 25);
+        ftxui::Element{base}, rs::dialog_queue_render::PrepareDialogLayers(
+        s, /*is_prompt_input_active=*/true, /*allow_anim=*/true, 100, 25));
     Element idle = rs::dialog_queue_render::LayerAllDialogs(
-        ftxui::Element{base}, s,
-        /*is_prompt_input_active=*/false, /*allow_anim=*/true, 100, 25);
+        ftxui::Element{base}, rs::dialog_queue_render::PrepareDialogLayers(
+        s, /*is_prompt_input_active=*/false, /*allow_anim=*/true, 100, 25));
 
     std::string active_str = render_to_ansi(std::move(active), 100, 25);
     std::string idle_str   = render_to_ansi(std::move(idle), 100, 25);

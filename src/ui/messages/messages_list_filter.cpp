@@ -731,6 +731,7 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
             chain.kind = VisibleRow::Kind::CompressedChain;
             chain.chain_uuid = timing->disclosure_id;
             chain.chain_elapsed = timing->elapsed;
+            chain.chain_emphasize_work = input.emphasize_work;
             chain.chain_is_live = input.query_running && end == N && !timing->finished;
             chain.chain_is_expanded = !chain.chain_uuid.empty() &&
                 input.expanded_keys.contains("chain:" + chain.chain_uuid);

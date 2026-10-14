@@ -169,14 +169,8 @@ inline constexpr std::string_view kBridgeFailedIndicator = "\xC3\x97";  // × U+
 // ⌐ U+2310 "REVERSED NOT SIGN"
 //     Rendered vertically aligned between tool-use row and tool-result row.
 // ─── Spinner frames ────────────────────────────────────────────────────
-// BRIDGE_SPINNER_FRAMES (8 braille dots sweeping from top-left to
-// bottom-right).  Used for:
-//   - Bridge + MCP connection-establishment indicator
-//   - loom::ui::components::Spinner (the compact teardrop braille animator)
-//
-// WARNING: tool_use_loader / thinking_message both had truncated 8-frame
-// variants dropping frames [7,8] ('⠇⠏').  Standardize on the 10-frame
-// SpinnerGlyph sequence below for EVERY in-app spinner.
+// Canonical ordinary-work animation. Bridge connection establishment keeps
+// its separate centralized four-frame indicator above.
 inline constexpr std::array<std::string_view, 10> kSpinnerFramesBraille = {{
     "\xE2\xA0\x8B",  // ⠋ frame 0 (U+280B)
     "\xE2\xA0\x99",  // ⠙ frame 1 (U+2819)
@@ -194,7 +188,7 @@ inline constexpr std::array<std::string_view, 10> kSpinnerFramesBraille = {{
 /// The braille set below is the unified spinner used by thinking_message,
 /// tool_use_loader, progress_bar, and messages_list.
 ///
-/// All modules MUST import this instead of defining local frame arrays,
+/// Ordinary-work modules MUST import this instead of defining local frame arrays,
 /// so that the animation speed and visual style are consistent everywhere.
 inline constexpr auto& kSpinnerFrames = kSpinnerFramesBraille;
 inline constexpr std::size_t kSpinnerFrameCount = kSpinnerFramesBraille.size();

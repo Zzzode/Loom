@@ -111,6 +111,17 @@ using namespace ftxui;
     }
     s.messages_store.viewport_width_cols = term_cols;
 
+    if (s.dialog_store.dialog_queue.has_standalone())
+        return dialog_queue_render::RenderStandaloneDialog(s, term_cols, term_rows);
+    auto prepared_dialogs = dialog_queue_render::PrepareDialogLayers(
+        s, s.is_prompt_input_active, !s.is_tool_animation_active, term_cols, term_rows);
+    const bool current_failure = !s.query_running && !s.messages_store.messages.empty()
+        && s.messages_store.messages.back().is_model_error
+        && s.messages_store.messages.back().is_error;
+    const bool emphasize_work = !HasOuterFocusOwner(s.mode)
+        && !prepared_dialogs.takes_focus && !current_failure;
+    const bool show_work_spinner = emphasize_work && IsToolAnimating(s.task_view_store);
+
     // Time-based spinner frame: 100 ms per frame (10 fps), matching the
     // reference.  Previously this was a per-render counter, which made the
     // spinner flash fast during stream events (many renders per second).
@@ -225,7 +236,7 @@ using namespace ftxui;
         // Real terminal width for the virtual-path height estimator.
         term_cols,
         // Dismiss callback for API error cards (ESC / q).
-        on_dismiss_error));
+        on_dismiss_error, emphasize_work));
     // These error shortcuts belong to the screen, not historical error cards.
     if (!s.query_running && !s.messages_store.messages.empty() &&
         s.messages_store.messages.back().is_model_error &&
@@ -249,7 +260,7 @@ using namespace ftxui;
     // Spinner lives in the chrome BETWEEN messages list and prompt input
     // (BriefSpinner top margin = 1, NOT a message row inside scroll content).
     Element spinner_chrome = text("");
-    if (IsToolAnimating(s.task_view_store))
+    if (show_work_spinner)
         spinner_chrome = RenderSpinner(s.task_view_store.spinner_mode, s.task_view_store.spinner_verb,
                                        s.task_view_store.spinner_tip, spinner_frame);
     // M7.5: Panel views (Tasks/Teams/Help/Settings/About/QuickOpen) are
@@ -369,7 +380,7 @@ using namespace ftxui;
         // leading text("") row.
         L.reserve(5);
         L.push_back(text(""));   // top margin = 1
-        if (IsToolAnimating(s.task_view_store)) {
+        if (show_work_spinner) {
             L.push_back(hbox({spinner_chrome, filler()}) | flex_shrink);
         }
         // Activity is inserted here after fixed chrome has been measured.
@@ -563,15 +574,6 @@ using namespace ftxui;
         slots.bottom = vbox(std::move(L)) | flex_shrink;
     }
 
-    // M7: Standalone slot (trust dialog, first-run onboarding) takes over
-    // the entire terminal — no chrome, no prompt, no messages rendered.
-    // ModalContext provides actual
-    // terminal dimensions to dialogs.  Pass real term_cols/term_rows instead
-    // of the old hardcoded 120x40.
-    if (s.dialog_store.dialog_queue.has_standalone()) {
-        return dialog_queue_render::RenderStandaloneDialog(s, term_cols, term_rows);
-    }
-
     // Legacy RouteDialog path — only used when dialog_queue has no
     // overlay/bottom/modal slots.  Eventually this will be phased out
     // in favour of the queue for all dialogs.
@@ -684,10 +686,7 @@ using namespace ftxui;
     // terminal dimensions (cols-4, rows-PEEK-1) to modal dialogs.  Pass real
     // term_cols/term_rows here instead of the old hardcoded 120x40 so dialog
     // renderers get accurate viewport geometry.
-    return dialog_queue_render::LayerAllDialogs(
-        std::move(base), s, s.is_prompt_input_active,
-        /*allow_dialogs_with_animation=*/!s.is_tool_animation_active,
-        term_cols, term_rows);
+    return dialog_queue_render::LayerAllDialogs(std::move(base), std::move(prepared_dialogs));
 }
 
 }  // namespace loom::ui::repl_screen

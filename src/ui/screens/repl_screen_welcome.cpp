@@ -18,57 +18,21 @@ import loom.ui.screens.task_view_store;
 import loom.ui.screens.chrome_store;
 import loom.constants.spinner_verbs;
 import loom.ui.foundation.logo;
+import loom.ui.foundation.design_figures;
 import loom.ui.foundation.theme_provider;
 
 namespace loom::ui::repl_screen {
 using namespace ftxui;
 
-// UI1: status bar — delegates to loom.ui.components.status_line.
-// For now we provide a semantic assembler that status_line will style.
-[[nodiscard]] Element RenderStatusBar(const StatusBarData& d) {
-    const auto& palette = *loom::ui::design::theme::current_theme().palette;
-    Elements L = { text(" ") };
-    L.push_back(text(d.model_name) | bold | color(palette.info));
-    if (d.is_fast_mode)  L.push_back(text(" fast") | color(palette.fast_mode) | dim);
-    if (d.is_auto_mode)  L.push_back(text(" [auto]") | color(palette.auto_accept));
-    if (d.agent_name)   { L.push_back(text(" @") | dim);
-        L.push_back(text(*d.agent_name) | color(palette.info)); }
-    if (d.effort_level) L.push_back(text(" [" + *d.effort_level + "]") | dim);
-    if (d.is_brief_mode)L.push_back(text(" [brief]") | dim | color(palette.brief_label));
-    Elements R;
-    if (d.context_token_count > 0) {
-        R.push_back(text(std::format("ctx:{}", d.context_token_count)) | dim);
-        R.push_back(text(" | ") | dim); }
-    if (d.input_tokens || d.output_tokens) R.push_back(
-        text(std::format("{}v {}^", d.input_tokens, d.output_tokens)) | dim);
-    if (d.cost_usd) { R.push_back(text(" ") | dim); R.push_back(
-        text(std::format("${:.4f}", *d.cost_usd)) | dim | color(palette.success)); }
-    if (d.swarm_session_count > 0) {
-        R.push_back(text(" | ") | dim);
-        R.push_back(text(std::format("{} swarm", d.swarm_session_count))
-                        | dim | color(palette.auto_accept)); }
-    if (d.session_name) { R.push_back(text(" | ") | dim);
-        R.push_back(text(*d.session_name) | dim); }
-    if (d.bridge_connected) {
-        R.push_back(text(" | ") | dim);
-        R.push_back(text("<-> bridge") | color(palette.info) | dim); }
-    R.push_back(text(" "));
-    return hbox({ hbox(L), filler(), hbox(R) })
-         | bgcolor(palette.status_bar_background);
-}
-
-// UI19: spinner line shell.
-// Single loom-gold theme, cycling TEARDROP_ASTERISK glyph, random playful
-// verb sampled from spinner_verbs list, 3-dot blink cadence.
+// Canonical work glyph, readable neutral label, decorative dot cadence.
 [[nodiscard]] Element RenderSpinner(
     SpinnerMode m, const std::optional<std::string>& verb,
     const std::optional<std::string>& tip,
     int frame) {
     if (m == SpinnerMode::Hidden) return text("");
-    // Single theme token regardless of mode — no per-mode color switch.
-    const Color kLoomGold =
-        loom::ui::design::theme::current_theme().palette->spinner_gold;
-
+    const auto& theme = loom::ui::design::theme::current_theme();
+    const auto& pal = *theme.palette;
+    namespace figures = loom::ui::design::figures;
     // Pick a random playful verb once "per mount".  We don't track mount
     // state here, so hash the mode + pid and sample the verbs list.
     using loom::constants::spinner_verbs::SPINNER_VERBS;
@@ -82,27 +46,23 @@ using namespace ftxui;
 
     // 3-dot blink cycle: floor(time/300)%3.
     // Frame is time-based (100 ms/frame); frame/3 = 300 ms per state.
-    const int dot_idx = std::max(0, frame / 3) % 3;
+    const int dot_idx = theme.a11y.reduced_motion ? 0 : std::max(0, frame / 3) % 3;
     const std::string dots = std::string(static_cast<std::size_t>(dot_idx + 1), '.') +
                              std::string(static_cast<std::size_t>(3 - dot_idx - 1), ' ');
 
-    // SpinnerGlyph cycle (frames of TEARDROP_ASTERISK animation); 8 frames.
-    // Frame is time-based (100 ms/frame); each frame advances one glyph.
-    constexpr std::array<std::string_view, 8> kGlyphs = {
-        "✻", "❋", "✦", "✧", "✶", "✷", "✸", "✹"
-    };
-    const auto glyph = kGlyphs[static_cast<std::size_t>(std::max(0, frame)) % kGlyphs.size()];
+    const auto glyph = theme.a11y.reduced_motion
+        ? figures::kBullet : figures::spinner_frame_glyph(std::max(0, frame));
 
     std::string_view selected_verb = verb ? std::string_view(*verb) : cached_verb;
     std::string label = std::string(selected_verb) + "\xE2\x80\xA6";  // …
     Elements p = {
         text("  ") | size(WIDTH, EQUAL, 2),  // left padding = 2
-        text(std::string(glyph)) | color(kLoomGold),
+        text(std::string(glyph)) | color(pal.primary),
         text(" "),
-        text(label) | color(kLoomGold),
-        text(dots)  | color(kLoomGold) | dim,
+        text(label) | color(pal.muted),
+        text(dots)  | color(pal.muted) | dim,
     };
-    if (tip) p.push_back(text("  -- " + *tip) | dim);
+    if (tip) p.push_back(text("  -- " + *tip) | color(pal.muted));
     return hbox(p);
 }
 

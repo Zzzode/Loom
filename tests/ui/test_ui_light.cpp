@@ -88,7 +88,7 @@ TEST(StatusLine, BuiltinUsesTextLabelsWithoutDecorativeEmoji) {
     const auto text = strip_ansi(render_to_plain_text(
         pif::RenderBuiltinStatusLine(data), 200, 1));
     for (const auto label : {"tmp/project", "feature", "test-model",
-            "@worker", "2 teams", "14%", "28.0K/200.0K", "$0.1234", "Select text to copy"}) {
+            "@worker", "2 teams", "14%", "28.0K/200.0K", "$0.12", "Select text to copy"}) {
         EXPECT_NE(text.find(label), std::string::npos) << label;
     }
     EXPECT_EQ(text.find("\xf0"), std::string::npos);
@@ -661,28 +661,19 @@ TEST(Components, TextInputHistoryUpDown) {
     EXPECT_NE(rendered_down.find("second"), std::string::npos);
 }
 
-TEST(StatusLine, AppliesGlobalDimAndStripsOuterBgcolor) {
-    // Verifies the Phase 2 / Round 6 visual fix: external flux-statusline script
-    // emits ANSI bold colors AND pill background SGR codes (48;2 / 48;5); the
-    // faithful render applies |dim so the statusline reads as muted chrome
-    // instead of shouting neon, and wraps the content in a neutral bgcolor
-    // (RGB 20,20,22) so any external SGR 48/49 pill doesn't bleed a colored
-    // box into the prompt footer (reported in IMG#18 as "folder pill has a
-    // deep blue background").
+TEST(StatusLine, ExternalCommandDoesNotReceiveApplicationDim) {
     namespace pif = loom::ui::prompt::footer;
-
-    auto rendered = render_to_plain_text(
-        pif::RenderStatusLine(pif::StatusLineOptions{
-            .content = "\033[38;5;44mbright-status\033[0m",
-            .should_display = true,
-            .builtin = std::nullopt,
-        }),
-        120,
-        1);
-
-    EXPECT_NE(rendered.find("bright-status"), std::string::npos);
-    // Dim (SGR 2) MUST be present around the user-facing content.
-    EXPECT_NE(rendered.find("\033[2m"), std::string::npos);
+    auto screen = ftxui::Screen::Create(
+        ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(1));
+    ftxui::Render(screen, pif::RenderStatusLine(pif::StatusLineOptions{
+        .content = "\033[38;5;44mbright-status\033[0m",
+        .should_display = true,
+        .builtin = std::nullopt,
+    }));
+    EXPECT_NE(strip_ansi(screen.ToString()).find("bright-status"), std::string::npos);
+    EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, ftxui::Color::Palette256(44));
+    EXPECT_FALSE(screen.PixelAt(0, 0).bold);
+    EXPECT_FALSE(screen.PixelAt(0, 0).dim);
 }
 
 // P0-6: Builtin statusline shows when user command returns empty (or no
@@ -724,7 +715,7 @@ TEST(StatusLine, BuiltinShowsFolderGitModelTokens) {
     // Percentage
     EXPECT_NE(rendered.find("14%"), std::string::npos);
     // Cost
-    EXPECT_NE(rendered.find("$0.1234"), std::string::npos);
+    EXPECT_NE(rendered.find("$0.12"), std::string::npos);
 }
 
 TEST(StatusLine, BuiltinNoGitBranchOmitsBranch) {
@@ -886,7 +877,7 @@ TEST(StatusLine, SegmentMasksAndMasterSwitchRemainEffective) {
     data.segments.tokens = false;
     data.segments.git = false;
     auto rendered = strip_ansi(render_to_plain_text(pif::RenderBuiltinStatusLine(data), 40, 1));
-    EXPECT_NE(rendered.find("$0.1234"), std::string::npos);
+    EXPECT_NE(rendered.find("$0.12"), std::string::npos);
     EXPECT_EQ(rendered.find(" · "), std::string::npos);
     EXPECT_EQ(rendered.find("project"), std::string::npos);
     data.status_bar_enabled = false;
@@ -952,11 +943,150 @@ TEST(StatusLine, ExternalCommandKeepsPriorityPaddingAndAnsiStyles) {
     ftxui::Render(screen, pif::RenderStatusLine(opts));
     EXPECT_EQ(screen.PixelAt(2, 0).character, "C");
     EXPECT_TRUE(screen.PixelAt(2, 0).bold);
-    EXPECT_TRUE(screen.PixelAt(2, 0).dim);
+    EXPECT_FALSE(screen.PixelAt(2, 0).dim);
     EXPECT_EQ(screen.PixelAt(2, 0).foreground_color, ftxui::Color::Palette256(44));
     const auto rendered = strip_ansi(screen.ToString());
     EXPECT_NE(rendered.find("CUSTOM"), std::string::npos);
     EXPECT_EQ(rendered.find("hidden"), std::string::npos);
+}
+
+TEST(StatusLine, BuiltinMetadataIsNeutralReadableAndOnlyModelIsBold) {
+    namespace pif = loom::ui::prompt::footer;
+    namespace theme = loom::ui::design::theme;
+    RestoreUiTheme restore;
+    for (const auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+            theme::ThemeVariant::LightAnsi}) {
+        SCOPED_TRACE(static_cast<int>(variant));
+        theme::set_theme(variant);
+        const auto& pal = *theme::current_theme().palette;
+        pif::BuiltinStatusLineData data;
+        data.cwd = "/tmp/project";
+        data.git_branch = "feature";
+        data.model_name = "test-model";
+        data.agent_name = "worker";
+        data.task_count = 2;
+        data.context_token_count = 28000;
+        data.context_window_size = 200000;
+        data.cost_usd = 0.1234;
+        data.mouse_mode_label = "Select text to copy";
+        data.segments.tasks = true;
+        data.segments.agent = true;
+        data.columns = 200;
+        auto screen = ftxui::Screen::Create(
+            ftxui::Dimension::Fixed(200), ftxui::Dimension::Fixed(1));
+        ftxui::Render(screen, pif::RenderBuiltinStatusLine(data));
+        const auto expect_label = [&](std::string_view label, ftxui::Color ink, bool bold) {
+            SCOPED_TRACE(label);
+            int start = -1;
+            for (int x = 0; x + static_cast<int>(label.size()) <= screen.dimx(); ++x) {
+                bool matches = true;
+                for (std::size_t i = 0; i < label.size(); ++i) {
+                    if (screen.PixelAt(x + static_cast<int>(i), 0).character
+                            != label.substr(i, 1)) {
+                        matches = false;
+                        break;
+                    }
+                }
+                if (matches) { start = x; break; }
+            }
+            ASSERT_GE(start, 0);
+            for (std::size_t i = 0; i < label.size(); ++i) {
+                const auto& pixel = screen.PixelAt(start + static_cast<int>(i), 0);
+                EXPECT_EQ(pixel.foreground_color, ink);
+                EXPECT_EQ(pixel.bold, bold);
+                EXPECT_FALSE(pixel.dim);
+            }
+        };
+        expect_label("test-model", pal.text, true);
+        for (const auto label : {"tmp/project", "feature", "@worker", "2 teams",
+                "14%", "28.0K/200.0K", "$0.12", "Select text to copy"})
+            expect_label(label, pal.muted, false);
+    }
+}
+
+TEST(StatusLine, ContextRetainsExactThresholdsWithoutDimAcrossThemes) {
+    namespace pif = loom::ui::prompt::footer;
+    namespace theme = loom::ui::design::theme;
+    RestoreUiTheme restore;
+    for (const auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+            theme::ThemeVariant::LightAnsi}) {
+        SCOPED_TRACE(static_cast<int>(variant));
+        theme::set_theme(variant);
+        const auto& pal = *theme::current_theme().palette;
+        for (const int percentage : {0, 49, 50, 79, 80, 100}) {
+            SCOPED_TRACE(percentage);
+            pif::BuiltinStatusLineData data;
+            data.segments = {.cwd = false, .git = false, .model = false,
+                .tokens = true, .cost = false, .tasks = false, .agent = false};
+            data.context_window_size = 10000;
+            data.context_token_count = percentage * 100;
+            data.columns = 40;
+            auto screen = ftxui::Screen::Create(
+                ftxui::Dimension::Fixed(40), ftxui::Dimension::Fixed(1));
+            ftxui::Render(screen, pif::RenderBuiltinStatusLine(data));
+            EXPECT_EQ(strip_ansi(screen.ToString()).find(std::to_string(percentage) + "%"), 0u);
+            const auto expected = percentage >= 80 ? pal.danger
+                : percentage >= 50 ? pal.warning : pal.muted;
+            EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, expected);
+            EXPECT_FALSE(screen.PixelAt(0, 0).bold);
+            EXPECT_FALSE(screen.PixelAt(0, 0).dim);
+        }
+    }
+}
+
+TEST(StatusLine, CostUsesSubCentMarkerOrTwoDecimalsAndOmitsAbsentTotals) {
+    namespace pif = loom::ui::prompt::footer;
+    struct Case {
+        std::optional<double> cost;
+        std::string_view expected;
+    };
+    for (const auto& test : std::array<Case, 9>{{
+            {std::nullopt, ""}, {0.0, ""}, {-1.0, ""}, {0.0001, "<$0.01"},
+            {0.00999, "<$0.01"}, {0.01, "$0.01"}, {0.1234, "$0.12"},
+            {1.236, "$1.24"}, {1234.567, "$1234.57"}}}) {
+        SCOPED_TRACE(test.expected);
+        pif::BuiltinStatusLineData data;
+        data.segments = {.cwd = false, .git = false, .model = false,
+            .tokens = false, .cost = true, .tasks = false, .agent = false};
+        data.cost_usd = test.cost;
+        data.columns = 40;
+        auto rendered = strip_ansi(render_to_plain_text(
+            pif::RenderBuiltinStatusLine(data), 40, 1));
+        const auto end = rendered.find_last_not_of(' ');
+        rendered = end == std::string::npos ? "" : rendered.substr(0, end + 1);
+        EXPECT_EQ(rendered, test.expected);
+    }
+}
+
+TEST(StatusLine, ExternalCommandRetainsExplicitDimBackgroundAndIntensityReset) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::StatusLineOptions opts;
+    opts.should_display = true;
+    opts.content = "\033[2;38;2;1;2;3;48;5;24mD\033[22mR\033[0mN\nSECOND";
+    opts.padding_x = 2;
+    opts.columns = 20;
+    auto screen = ftxui::Screen::Create(
+        ftxui::Dimension::Fixed(20), ftxui::Dimension::Fixed(1));
+    ftxui::Render(screen, pif::RenderStatusLine(opts));
+    EXPECT_EQ(screen.dimy(), 1);
+    EXPECT_EQ(screen.PixelAt(0, 0).character, " ");
+    EXPECT_EQ(screen.PixelAt(1, 0).character, " ");
+    EXPECT_EQ(screen.PixelAt(2, 0).character, "D");
+    EXPECT_TRUE(screen.PixelAt(2, 0).dim);
+    EXPECT_EQ(screen.PixelAt(2, 0).foreground_color, ftxui::Color::RGB(1, 2, 3));
+    EXPECT_EQ(screen.PixelAt(2, 0).background_color, ftxui::Color::Palette256(24));
+    EXPECT_EQ(screen.PixelAt(3, 0).character, "R");
+    EXPECT_FALSE(screen.PixelAt(3, 0).bold);
+    EXPECT_FALSE(screen.PixelAt(3, 0).dim);
+    EXPECT_EQ(screen.PixelAt(3, 0).foreground_color, ftxui::Color::RGB(1, 2, 3));
+    EXPECT_EQ(screen.PixelAt(3, 0).background_color, ftxui::Color::Palette256(24));
+    EXPECT_EQ(screen.PixelAt(4, 0).character, "N");
+    EXPECT_FALSE(screen.PixelAt(4, 0).dim);
+    EXPECT_EQ(strip_ansi(screen.ToString()).find("SECOND"), std::string::npos);
 }
 
 TEST(Panels, PanelTypeNamesAreStable) {

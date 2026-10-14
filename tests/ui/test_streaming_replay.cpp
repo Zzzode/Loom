@@ -209,6 +209,45 @@ TEST(StreamingReplay, ThinkingThenText) {
                               snapshots.at("after_end_query"));
 }
 
+TEST(StreamingReplay, CompressedChainCurrentActivityFollowsCommittedToolLifecycle) {
+    const auto snapshots = play_fixture("compressed_chain_activity");
+    expect_checkpoints(snapshots, {"preparing", "running", "progress", "empty_progress", "first_done", "second_running", "waiting", "completed"});
+    for (const auto* checkpoint : {"preparing", "running", "progress", "empty_progress", "first_done", "second_running", "waiting", "completed"})
+        expect_streaming_snapshot("compressed_chain_activity", checkpoint, snapshots.at(checkpoint));
+    EXPECT_NE(snapshots.at("preparing").find("Preparing Read src/query/query_engine.cppm"), std::string::npos);
+    for (const auto* checkpoint : {"running", "progress", "empty_progress"}) {
+        EXPECT_NE(snapshots.at(checkpoint).find("Running Read src/query/query_engine.cppm"), std::string::npos);
+        EXPECT_EQ(snapshots.at(checkpoint).find("file-preview-secret-body"), std::string::npos);
+    }
+    // Thinking grace must not duplicate a committed call's target/count.
+    const auto& running = snapshots.at("running");
+    const auto target = running.find("src/query/query_engine.cppm");
+    ASSERT_NE(target, std::string::npos);
+    EXPECT_EQ(running.find("src/query/query_engine.cppm", target + 1), std::string::npos);
+    EXPECT_NE(running.find("2 file reads"), std::string::npos);
+    EXPECT_NE(snapshots.at("first_done").find("Preparing Read src/query/wire_protocol.cppm"), std::string::npos);
+    EXPECT_NE(snapshots.at("second_running").find("Running Read src/query/wire_protocol.cppm"), std::string::npos);
+    EXPECT_EQ(snapshots.at("second_running").find("Running Read src/query/query_engine.cppm"), std::string::npos);
+    EXPECT_NE(snapshots.at("waiting").find("Waiting for model"), std::string::npos);
+    EXPECT_NE(snapshots.at("completed").find("Worked"), std::string::npos);
+    EXPECT_EQ(snapshots.at("completed").find("Waiting for model"), std::string::npos);
+    EXPECT_EQ(snapshots.at("completed").find("Running Read"), std::string::npos);
+}
+
+TEST(StreamingReplay, CompressedChainFailedCallRemainsVisibleAcrossResultCommit) {
+    const auto snapshots = play_fixture("compressed_chain_failure");
+    expect_checkpoints(snapshots, {"failed_before_commit", "failed_after_commit"});
+    for (const auto* checkpoint : {"failed_before_commit", "failed_after_commit"}) {
+        const auto& screen = snapshots.at(checkpoint);
+        expect_streaming_snapshot("compressed_chain_failure", checkpoint, screen);
+        EXPECT_NE(screen.find("Read"), std::string::npos);
+        EXPECT_EQ(screen.find("Show details"), std::string::npos);
+        EXPECT_EQ(screen.find("Running Read"), std::string::npos);
+        EXPECT_EQ(screen.find("Waiting for model"), std::string::npos);
+    }
+    EXPECT_NE(snapshots.at("failed_after_commit").find("RFC0014 file missing"), std::string::npos);
+}
+
 TEST(StreamingReplay, ThinkingLongTruncated) {
     auto snapshots = play_fixture("thinking_long_truncated");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
@@ -648,6 +687,8 @@ TEST(StreamingReplay, DetailsActionsKeepBlinkingDotSnapshotsDeterministic) {
         for (const auto& labels : {
                  std::pair{"Thought for 0s, ran 1 shell command", "Thought, ran 1 shell command"},
                  std::pair{"Thought for 12s", "Thought"},
+                 std::pair{"Worked for 12s, ran 1 shell command", "Worked, ran 1 shell command"},
+                 std::pair{"Working for 1m 12s, read 2 files…", "Working, read 2 files…"},
                  std::pair{"Thinking for 0s…", "Thinking…"}}) {
             const auto timed = normalize_screen("● " + aligned(labels.first));
             const auto untimed = normalize_screen("● " + aligned(labels.second));

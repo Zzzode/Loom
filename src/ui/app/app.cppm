@@ -258,6 +258,7 @@ private:
     std::atomic<bool> welcome_animation_active_{true};
     std::atomic<std::int64_t> thinking_collapse_deadline_ms_{0};
     std::atomic<std::int64_t> paste_submission_deadline_ms_{0};
+    std::atomic<std::int64_t> chain_label_deadline_ms_{0};
     std::atomic<bool> conversation_projection_dirty_{true};
     struct CachedMessageProjection {
         Message source;
@@ -343,6 +344,7 @@ private:
         int         error_code      = 0;  /// 0=none, >0 shell exit/HTTP code
         bool        truncated       = false;/// result > 4 KiB threshold
         bool complete = false;       ///< ContentBlockStop: input_json fully streamed
+        bool exec_started = false;   ///< Execution state is independent of output text
         bool exec_done = false;      ///< ToolExecutionEnd: tool has finished executing
         bool is_error = false;
         /// Wall-clock start time (steady_clock) — set on ContentBlockStart.

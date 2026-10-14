@@ -45,6 +45,14 @@ void AppAdapter::StartUiAnimationTicker() {
                 paste_submission_deadline_ms_.compare_exchange_strong(paste_due, 0)) {
                 advanced = true;
             }
+            // Only a projected live elapsed label arms its next change. The
+            // render consumes/re-arms this one-shot deadline; silent tools do
+            // not require an unconditional query animation/render ticker.
+            auto chain_due = chain_label_deadline_ms_.load();
+            if (chain_due != 0 && now_ms >= chain_due &&
+                chain_label_deadline_ms_.compare_exchange_strong(chain_due, 0)) {
+                advanced = true;
+            }
             if (advanced) {
                 ui_animation_tick_count_.fetch_add(1, std::memory_order_relaxed);
                 PostRenderEvent();

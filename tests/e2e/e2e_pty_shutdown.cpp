@@ -162,6 +162,7 @@ public:
     std::atomic<int> requests{0};
     std::atomic<bool> retry_fault{true};
     std::atomic<bool> selection_grow{false};
+    std::atomic<bool> chain_finish{false};
     std::vector<std::string> request_bodies() {
         std::lock_guard lock(mutex_);
         return request_bodies_;
@@ -211,6 +212,38 @@ private:
             request_bodies_.push_back(request.substr(request.find("\r\n\r\n") + 4));
         }
         const int index = requests.fetch_add(1);
+        if (recovery_ == "compressed-chain-live") {
+            if (index == 0) {
+                const auto command = "printf PTY-ACTIVITY; for attempt in {1..300}; do [ -f '" + target_.string() +
+                    "' ] && break; sleep 0.1; done";
+                const auto body = tool_response("Bash", "{\"command\":\"" + escape_json(command) + "\"}", "pty-chain-bash");
+                send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
+                    std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+                ::shutdown(fd, SHUT_WR);
+                return;
+            }
+            const auto prefix = message_start() +
+                event("content_block_start", R"({"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}})") +
+                event("content_block_delta", R"({"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"PTY chain reasoning"}})");
+            if (!send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n" + prefix)) return;
+            ++parked;
+            while (!chain_finish.load() && !stopping_) {
+                if (selection_grow.exchange(false) && !send_bytes(event("content_block_delta",
+                    R"({"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" UPDATED"}})"))) return;
+                pollfd descriptor{fd, POLLIN, 0};
+                if (::poll(&descriptor, 1, 20) > 0 && read_bytes(buffer.data(), buffer.size()) <= 0) return;
+            }
+            if (stopping_) return;
+            const auto suffix = event("content_block_stop", R"({"type":"content_block_stop","index":0})") +
+                event("content_block_start", R"({"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}})") +
+                event("content_block_delta", R"({"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"PTY chain complete"}})") +
+                event("content_block_stop", R"({"type":"content_block_stop","index":1})") +
+                event("message_delta", R"({"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":5}})") +
+                event("message_stop", R"({"type":"message_stop"})");
+            send_bytes(suffix);
+            ::shutdown(fd, SHUT_WR);
+            return;
+        }
         if (!answer_.empty()) {
             if (recovery_ == "selection-streaming") {
                 const auto body = message_start() +
@@ -789,9 +822,13 @@ void run_recovery_case(const std::string& binary, const std::string& scenario, c
             require(first_result.find("No such file or directory") != std::string::npos, "Bash failure output was lost");
         }
         require(terminal.wait([&] {
-            const auto text = terminal_text(terminal.output.substr(after_first_permission));
-            return text.find("pwd") != std::string::npos &&
-                text.find("[y] Allow  [n] Deny") != std::string::npos;
+            // A Preparing activity can mention pwd before its dialog exists.
+            // Historical/partial output can retain the first dialog's Allow;
+            // approve only the corrected command in one complete current frame.
+            const auto frame = terminal.latest_frame_text();
+            return frame.find("Permission") != std::string::npos &&
+                frame.find(R"({"command":"pwd"})") != std::string::npos &&
+                frame.find("[y] Allow  [n] Deny") != std::string::npos;
         }), "corrected Bash permission UI not observed");
         terminal.input("y");
     }
@@ -1064,6 +1101,133 @@ TerminalFrame decode_frame(const std::string& bytes) {
 std::string mouse_report(int button, std::pair<int, int> position, bool release = false) {
     return "\x1b[<" + std::to_string(button) + ';' + std::to_string(position.first + 1) + ';' +
         std::to_string(position.second + 1) + (release ? "m" : "M");
+}
+
+// RFC 0014: exercise real FTXUI hit-testing and stage lifecycle rather than
+// rendering synthetic VisibleRows. Model and tool completion are separate gates.
+void run_compressed_chain_case(const std::string& binary, const fs::path& root) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
+    const auto release = root / "release.txt";
+    ModelServer server(false, false, release, false, "compressed-chain-live");
+    Terminal terminal(binary, root, server.url(), ModelOptions{});
+    server.start();
+    require(terminal.wait([&] { return terminal.installed(); }), "terminal installation not observed");
+    auto save_frame = [&](const std::string& name) {
+        std::ofstream(root / (name + ".raw"), std::ios::binary) << terminal.latest_frame();
+        const auto frame = decode_frame(terminal.latest_frame());
+        std::ofstream text(root / (name + ".txt"));
+        for (int y = 0; y < 40; ++y) text << frame.row(y) << '\n';
+    };
+    auto elapsed_seconds = [&](const std::string& status) -> int {
+        const auto frame = decode_frame(terminal.latest_frame());
+        for (int y = 0; y < 40; ++y) {
+            const auto row = frame.row(y);
+            const auto label = row.find(status + " for ");
+            if (label == std::string::npos) continue;
+            auto position = label + status.size() + 5;
+            int total = 0;
+            while (position < row.size()) {
+                while (position < row.size() && row[position] == ' ') ++position;
+                if (position == row.size() || !std::isdigit(static_cast<unsigned char>(row[position]))) break;
+                int value = 0;
+                while (position < row.size() && std::isdigit(static_cast<unsigned char>(row[position])))
+                    value = value * 10 + row[position++] - '0';
+                if (position == row.size()) return -1;
+                const auto unit = row[position++];
+                if (unit == 'h') total += value * 3600;
+                else if (unit == 'm') total += value * 60;
+                else if (unit == 's') { total += value; return total; }
+                else return -1;
+            }
+            return total;
+        }
+        return -1;
+    };
+    auto click_label = [&](const std::string& label) {
+        const auto point = decode_frame(terminal.latest_frame()).find(label);
+        terminal.input(mouse_report(0, point) + mouse_report(0, point, true));
+    };
+    terminal.input("Run the compressed chain fixture\r");
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return frame.find("[y] Allow") != std::string::npos && frame.find("Working") != std::string::npos &&
+            frame.find("Preparing") != std::string::npos && frame.find("Show details") != std::string::npos;
+    }), "pending chain and authoritative permission prompt were not both visible");
+    save_frame("pending");
+    terminal.input("y");
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return frame.find("Running") != std::string::npos && frame.find("PTY-ACTIVITY") != std::string::npos &&
+            frame.find("[y] Allow") == std::string::npos;
+    }), "running tool's actual command was absent from collapsed activity line");
+    save_frame("running");
+    const auto initial_elapsed = std::max(0, elapsed_seconds("Working"));
+    require(terminal.wait([&] { return elapsed_seconds("Working") >= initial_elapsed + 2; }),
+            "live stage elapsed did not advance in the real terminal");
+    const auto live_elapsed = elapsed_seconds("Working");
+    save_frame("ticking");
+
+    // Click the activity body, not the disclosure action: the entire two-line
+    // synthetic row must share the expansion hit target.
+    click_label("Running");
+    require(terminal.wait([&] {
+        return terminal.latest_frame_text().find("Hide details") != std::string::npos;
+    }), "clicking the activity line did not expand the chain");
+    save_frame("expanded");
+    for (const auto width : {60, 120}) {
+        const auto before = terminal.output.rfind('\0');
+        terminal.resize(static_cast<unsigned short>(width), 40);
+        require(terminal.wait([&] {
+            const auto frame = terminal.latest_frame_text();
+            return terminal.output.rfind('\0') > before && frame.find("Hide details") != std::string::npos &&
+                frame.find("Running") != std::string::npos && frame.find("PTY-ACTIVITY") != std::string::npos;
+        }), "resize lost the live activity or explicit expansion state");
+        save_frame("expanded-" + std::to_string(width));
+    }
+    std::ofstream(release) << "release fixture command\n";
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return server.parked.load() == 1 && frame.find("Waiting for model") != std::string::npos &&
+            frame.find("Hide details") != std::string::npos;
+    }), "finished tool did not leave an expanded live stage waiting for the model");
+    server.selection_grow = true;
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return frame.find("UPDATED") != std::string::npos && frame.find("Hide details") != std::string::npos;
+    }), "SSE thinking update lost explicit expansion state");
+    save_frame("waiting-updated");
+    server.chain_finish = true;
+    require(terminal.wait([&] {
+        return terminal.idle_response_visible("PTY chain complete") && elapsed_seconds("Worked") >= live_elapsed;
+    }), "completion decreased elapsed duration or never reached the idle final response");
+    require(terminal.latest_frame_text().find("Waiting for model") == std::string::npos &&
+            terminal.latest_frame_text().find("Running") == std::string::npos,
+            "completed chain retained the current-activity line");
+    require(terminal.latest_frame_text().find("Hide details") != std::string::npos,
+            "completion reset explicit chain expansion");
+    const auto completed_elapsed = elapsed_seconds("Worked");
+    save_frame("completed-expanded");
+    click_label("Hide details");
+    require(terminal.wait([&] {
+        return terminal.latest_frame_text().find("Show details") != std::string::npos &&
+            elapsed_seconds("Worked") == completed_elapsed;
+    }), "collapsed completion changed duration or disclosure interaction");
+    save_frame("completed-collapsed");
+    // A fresh resize after at least a full display second forces projection and
+    // rendering again; a wall-clock recomputation would incorrectly grow here.
+    const auto frozen_until = Clock::now() + 1500ms;
+    require(terminal.wait([&] { return Clock::now() >= frozen_until; }), "terminal exited during freeze probe");
+    const auto before = terminal.output.rfind('\0');
+    terminal.resize(60, 40);
+    require(terminal.wait([&] {
+        return terminal.output.rfind('\0') > before && elapsed_seconds("Worked") == completed_elapsed;
+    }), "completed elapsed did not remain frozen after a later terminal redraw");
+    save_frame("completed-frozen-60");
+    std::ofstream(root / "timing.txt") << "initial=" << initial_elapsed << "s\nlive=" << live_elapsed
+        << "s\ncompleted=" << completed_elapsed << "s\nfrozen=" << elapsed_seconds("Worked") << "s\n";
+    terminal.input("\x04");
+    terminal.verify_exit(0);
 }
 
 void install_clipboard_capture(const fs::path& root) {
@@ -1476,6 +1640,10 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
         run_handoff_case(binary, scenario, root, harness);
         return;
     }
+    if (scenario == "compressed-chain-live") {
+        run_compressed_chain_case(binary, root);
+        return;
+    }
     if (scenario.starts_with("selection-")) {
         run_selection_case(binary, scenario, root);
         return;
@@ -1609,7 +1777,7 @@ int main(int argc, char** argv) {
     // Bash's destructive-command guard also examines path arguments; a
     // recovery path containing "shutdown" would reject even fixture reads.
     const std::string scenario(argv[1]);
-    std::string pattern = scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry") || scenario.starts_with("round-")
+    std::string pattern = scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry") || scenario.starts_with("round-") || scenario.starts_with("compressed-chain-")
         ? "/tmp/loom_pty_recovery_XXXXXX" : "/tmp/loom_pty_shutdown_XXXXXX";
     const char* directory = ::mkdtemp(pattern.data());
     if (!directory) return 1;
@@ -1630,7 +1798,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

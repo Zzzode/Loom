@@ -4,7 +4,7 @@
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  <tmpdir>
 
-<dot> Thought, ran 1 shell command                                                                           [Show details]
+<dot> Worked, 1 shell command                                                                                [Show details]
 
 ● Four files are modified: the build glue, the core types, the submit handler, and the test CMake. No untracked files
   yet, since the fixtures are not written.

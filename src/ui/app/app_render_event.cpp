@@ -330,6 +330,30 @@ Element AppAdapter::Render() {
             committed_row_count_ = new_messages.size();
         }
 
+        // Tool execution advances without another conversation commit. Keep
+        // retained rows authoritative by call ID even while thinking grace
+        // suppresses or retains the streaming overlay (RFC 0014).
+        // Appending the tail below must not invalidate the map's row pointers
+        // or string_view keys (small-string tool IDs can live inside a row).
+        new_messages.reserve(new_messages.size() + streaming_tools_.size() +
+                             streaming_thinking_.size() + 1);
+        std::unordered_map<std::string_view, repl::MessageDisplayEntry*> committed_calls;
+        for (auto& row : new_messages) {
+            if (row.is_tool_use && row.tool_use_id && !row.tool_use_id->empty())
+                committed_calls[*row.tool_use_id] = &row;
+        }
+        for (const auto& [index, tool] : streaming_tools_) {
+            (void)index;
+            if (tool.tool_use_id.empty()) continue;
+            const auto found = committed_calls.find(tool.tool_use_id);
+            if (found == committed_calls.end()) continue;
+            auto& row = *found->second;
+            row.tool_status = tool.exec_done ? (tool.is_error ? "error" : "success")
+                : (tool.exec_started ? "running" : "pending");
+            row.tool_start_time = tool.streaming_started_at.value_or(
+                std::chrono::steady_clock::time_point{});
+        }
+
         // ── Faithful live-path: project in-flight content blocks ──
         // Each content block renders as a separate message row as it
         // streams in (thinking → text → tool-use, in block-index order).
@@ -479,11 +503,14 @@ Element AppAdapter::Render() {
                     // before execute_pending_tools ran).  Skip it here to
                     // avoid a duplicate green-dot row in the transcript.
                     if (tlu->second.exec_done) continue;
+                    if (!tlu->second.tool_use_id.empty() &&
+                        committed_calls.contains(tlu->second.tool_use_id)) continue;
 
                     repl::MessageDisplayEntry e;
                     e.role = "assistant";
                     e.is_tool_use = true;
                     e.tool_name = tlu->second.tool_name;
+                    e.tool_use_id = tlu->second.tool_use_id;
                     e.tool_input_json = tlu->second.input_json;
                     // Status: if tool execution has completed
                     // (ToolExecutionEnd received), show resolved status
@@ -500,7 +527,7 @@ Element AppAdapter::Render() {
                         e.tool_status = tlu->second.is_error
                             ? "error" : "success";
                     } else {
-                        e.tool_status = "running";
+                        e.tool_status = tlu->second.exec_started ? "running" : "pending";
                     }
                     e.content_preview = tlu->second.input_json;
                     // result_preview: ONLY forward while the tool is
@@ -573,7 +600,13 @@ Element AppAdapter::Render() {
     // One inline surface for progress, confirmed native copy, an unconfirmed
     // terminal request, or failure. RenderReplScreen populates bottom_float.
     screen_state_->copy_toast_text = text_selection_.copy_feedback;
+    // Alternate screens/dialogs may skip RenderMessages entirely.
+    screen_state_->messages_store.render_input.chain_update_due.reset();
     auto el = repl_component_->Render() | dc::cursor_reset();
+    const auto chain_due = screen_state_->messages_store.render_input.chain_update_due;
+    chain_label_deadline_ms_.store(screen_.load() && query_running_.load() && chain_due
+        ? std::chrono::duration_cast<std::chrono::milliseconds>(chain_due->time_since_epoch()).count()
+        : 0);
     // Drag-to-select: paint the linear selection's background after
     // the normal render pass.  SelectionHighlightNode (defined in
     // app_text_selection.cpp) follows FTXUI's own `inverted` decorator

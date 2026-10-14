@@ -6,6 +6,7 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
+#include <ftxui/screen/string.hpp>
 
 module loom.ui.messages.messages_list;
 
@@ -471,134 +472,93 @@ auto render_compact_group_row(const VisibleRow& vr,
     return std::to_string(mins) + "m " + std::to_string(secs) + "s";
 }
 
-/// Map a tool name + count to a human-readable phrase.
-/// live=true → present continuous ("running 1 shell command")
-/// live=false → past tense ("ran 1 shell command")
-[[nodiscard]] auto tool_phrase(
-    std::string_view name, std::size_t count, bool live) -> std::string {
+/// Cumulative call counts do not imply that an unfinished call succeeded.
+[[nodiscard]] auto tool_phrase(std::string_view name, std::size_t count) -> std::string {
     const auto plural = count == 1 ? "" : "s";
-    if (name == "Bash") {
-        return live
-            ? "running " + std::to_string(count) + " shell command" + plural
-            : "ran " + std::to_string(count) + " shell command" + plural;
+    std::string noun;
+    if (name == "Bash") noun = "shell command";
+    else if (name == "Read") noun = "file read";
+    else if (name == "Grep" || name == "Glob") noun = "search";
+    else if (name == "WebSearch") noun = "web search";
+    else if (name == "WebFetch") noun = "URL fetch";
+    else noun = std::string(name) + " call";
+    const auto suffix = (name == "Grep" || name == "Glob" || name == "WebSearch")
+        ? (count == 1 ? "" : "es") : plural;
+    return std::to_string(count) + " " + noun + suffix;
+}
+
+// FTXUI glyphs include empty wide-cell continuations; never byte-slice targets.
+[[nodiscard]] std::string chain_one_line(std::string_view raw, int columns) {
+    std::string clean;
+    bool space = true;
+    for (std::size_t i = 0; i < raw.size(); ++i) {
+        auto ch = static_cast<unsigned char>(raw[i]);
+        if (ch == 0xC2 && i + 1 < raw.size() &&
+            static_cast<unsigned char>(raw[i + 1]) >= 0x80 &&
+            static_cast<unsigned char>(raw[i + 1]) <= 0x9F) {
+            ++i;
+            ch = ' ';
+        }
+        if (ch < 0x20 || ch == 0x7F) ch = ' ';
+        if (ch == ' ' && space) continue;
+        clean += static_cast<char>(ch);
+        space = ch == ' ';
     }
-    if (name == "Read") {
-        return live
-            ? "reading " + std::to_string(count) + " file" + plural
-            : "read " + std::to_string(count) + " file" + plural;
+    if (!clean.empty() && clean.back() == ' ') clean.pop_back();
+    if (columns <= 0) return {};
+    if (string_width(clean) <= columns) return clean;
+    std::string clipped;
+    int used = 0;
+    for (const auto& glyph : Utf8ToGlyphs(clean)) {
+        if (glyph.empty()) continue;
+        const int width = string_width(glyph);
+        if (used + width > columns - 1) break;
+        clipped += glyph;
+        used += width;
     }
-    if (name == "Grep" || name == "Glob") {
-        return live
-            ? "searching for " + std::to_string(count) + " pattern" + plural
-            : "searched for " + std::to_string(count) + " pattern" + plural;
-    }
-    if (name == "Edit") {
-        return live
-            ? "editing " + std::to_string(count) + " file" + plural
-            : "edited " + std::to_string(count) + " file" + plural;
-    }
-    if (name == "Write") {
-        return live
-            ? "writing " + std::to_string(count) + " file" + plural
-            : "wrote " + std::to_string(count) + " file" + plural;
-    }
-    if (name == "WebSearch") {
-        return live
-            ? "searching the web"
-            : "searched the web " + std::to_string(count) + " time" + plural;
-    }
-    if (name == "WebFetch") {
-        return live
-            ? "fetching " + std::to_string(count) + " URL" + plural
-            : "fetched " + std::to_string(count) + " URL" + plural;
-    }
-    // Default: "N <tool> calls"
-    return std::to_string(count) + " " + std::string(name) +
-           (count == 1 ? " call" : " calls");
+    return clipped + "…";
 }
 
 auto render_compressed_chain_row(const VisibleRow& vr,
-                                        bool is_selected,
-                                        std::size_t frame_count) -> Element
+                                bool is_selected,
+                                std::size_t frame_count,
+                                int term_cols) -> Element
 {
     const bool live = vr.chain_is_live;
+    const bool has_tools = vr.chain_has_tool_activity;
     std::ostringstream label;
-
-    // Thinking duration.
-    const bool has_thinking = vr.group_count > 0;
-    const bool has_duration = vr.chain_thinking_duration.count() > 0;
-    if (has_thinking) {
-        if (live) {
-            label << "Thinking";
-            if (has_duration) {
-                label << " for "
-                      << format_chain_duration(vr.chain_thinking_duration);
-            }
-        } else {
-            label << "Thought";
-            if (has_duration) {
-                label << " for "
-                      << format_chain_duration(vr.chain_thinking_duration);
-            }
-        }
+    label << (has_tools ? (live ? "Working" : "Worked")
+                        : (live ? "Thinking" : "Thought"));
+    if (vr.chain_elapsed)
+        label << " for " << format_chain_duration(*vr.chain_elapsed);
+    for (std::size_t i = 0; i < vr.chain_tool_breakdown.size(); ++i) {
+        const auto& [name, count] = vr.chain_tool_breakdown[i];
+        label << ", " << tool_phrase(name, count);
     }
-
-    // Tool breakdown.
-    if (!vr.chain_tool_breakdown.empty()) {
-        if (has_thinking) {
-            label << ", ";
-        }
-        bool first = true;
-        for (const auto& [name, count] : vr.chain_tool_breakdown) {
-            if (!first) label << ", ";
-            label << tool_phrase(name, count, live);
-            first = false;
-        }
-    }
-
-    // Fallback for chains with no thinking or tools (shouldn't normally
-    // happen — the filter requires at least one).
-    if (!has_thinking && vr.chain_tool_breakdown.empty()) {
-        if (live) {
-            label << "Working…";
-        } else {
-            label << "Worked";
-        }
-    }
-
-    // Live status gets an ellipsis to indicate ongoing activity.
     if (live) label << "…";
 
-    // Expand/collapse hint.
     const bool expanded = vr.chain_is_expanded;
-    Element body = text(label.str())
-        | color(palette::muted_fg()) | dim | xflex;
-    if (is_selected) {
+    const auto action = expanded ? "Hide details" : "Show details";
+    const int action_width = string_width("[" + std::string(action) + "]");
+    Element body = text(chain_one_line(label.str(), term_cols - action_width - 3))
+        | color(palette::muted_fg()) | xflex;
+    if (is_selected)
         body = std::move(body) | inverted | bgcolor(palette::selected_bg());
-    }
-    // Block-level presentation: ● origin dot + label at the left margin
-    // (same alignment as user/assistant messages).
-    //
-    // Collapsed chains render as a plain line — no background, no separator.
-    // Expanded chain headers get a gray background to visually group the
-    // expanded content that follows.
-    //
-    // Live chains blink the ● dot (like Bash tool calls: ~500ms on/off)
-    // instead of showing a spinner glyph.
     const bool blink_off = live && (frame_count % 10 >= 5);
     Element dot = text(blink_off ? " " : "●")
-                  | dim | color(loom::ui::design::theme::current_theme().palette->muted);
-    Element row = hbox({
-        std::move(dot),
-        text(" "),
-        std::move(body),
-        text(" "),
-        loom::ui::messages::message_action(expanded ? "Hide details" : "Show details"),
-    });
-    if (expanded) {
-        return std::move(row) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
+        | color(loom::ui::design::theme::current_theme().palette->muted);
+    Element header = hbox({std::move(dot), text(" "), std::move(body),
+        text(" "), loom::ui::messages::message_action(action)});
+    Elements rows{std::move(header)};
+    if (!vr.chain_current_activity.empty()) {
+        rows.push_back(hbox({text("  "),
+            text(chain_one_line(vr.chain_current_activity, term_cols - 2))
+                | color(palette::muted_fg()) | xflex}));
     }
-    return row;
+    Element block = vbox(std::move(rows));
+    if (expanded)
+        block = std::move(block) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
+    return block;
 }
 
 /// Returns a lowercase copy of the search query (if any) — used to highlight

@@ -442,8 +442,8 @@ constexpr int kMaxRowHeight = 1000;
         return 1;
     }
     if (vr.kind == K::CompressedChain) {
-        // 1-line top margin + 1-line summary
-        return 2;
+        // Top margin + header + optional single-line current activity.
+        return vr.chain_current_activity.empty() ? 2 : 3;
     }
     if (vr.kind == K::TranscriptCapDivider) {
         // "─── N older messages hidden · Ctrl+E to show all ───"

@@ -3773,3 +3773,33 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   identity palettes remain explicit exceptions with glyph/name cues. No
   StatusLine default, message format, persistence, protocol or motion-policy
   change belongs to this work.
+
+## Compressed stage timing and current activity (RFC 0014)
+
+- `messages_list` owns bounded, UI-local stage timing in the existing
+  `MessagesListInput`. Elapsed measures a locally observed stage interval,
+  including tool/request gaps, and freezes when the stage ends. Never replace
+  it with a sum of thinking/tool durations: parallel work overlaps. Historical
+  stages not observed live omit total elapsed; nothing is serialized.
+- Raw material boundaries establish stage identity before display filters.
+  Use full semantic boundary text, shape and duplicate occurrence, because
+  both streaming anchors and preceding assistant text change synthetic UUID
+  on commit. Retain a collision-safe stage disclosure ID through replacement.
+  The existing screen clear/restore hook resets these records, including a
+  direct restore whose deterministic message IDs match a previous session.
+- A live tool stage has at most one current-activity row. Display only eligible
+  visible running/pending calls, with type-checked decoded JSON display fields;
+  unknown tools show their name. Completed calls, hidden targets and output
+  bodies are excluded. Clip controls and Unicode by display cells; preserve
+  disclosure at narrow widths. Static and virtual estimates include the extra
+  row and budget the scrollbar column consistently.
+- Committed tool messages can precede execution. App rendering overlays their
+  existing streaming execution state by nonempty tool-use ID on every active
+  render, not only conversation commits. `exec_started` is independent of
+  output-preview text. A committed call suppresses its same-ID streaming
+  duplicate during thinking grace; distinct same-name IDs remain independent.
+- A normal-mode projected live elapsed label requests only its next displayed
+  second boundary. The existing app wake worker consumes that single deadline;
+  rendering re-arms it only while applicable. Bypass modes/completion/reset
+  clear the request. There is no new thread or unconditional query render
+  ticker, and the worker never reads the unsynchronized test-clock override.

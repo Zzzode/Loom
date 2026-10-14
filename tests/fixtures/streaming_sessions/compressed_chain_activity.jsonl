@@ -1,0 +1,29 @@
+{"type":"stream_start","message_id":"chain-live","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"thinking","thinking":"","signature":"chain-sig"}}
+{"type":"content_block_delta","index":0,"delta_text":"Inspect query implementation."}
+{"type":"content_block_stop","index":0}
+{"type":"content_block_start","index":1,"block":{"type":"tool_use","id":"chain-read","name":"Read","input_json":"{}"}}
+{"type":"content_block_delta","index":1,"delta_text":"{\"file_path\":\"src/query/query_engine.cppm\"}"}
+{"type":"content_block_stop","index":1}
+{"type":"content_block_start","index":2,"block":{"type":"tool_use","id":"chain-read-second","name":"Read","input_json":"{}"}}
+{"type":"content_block_delta","index":2,"delta_text":"{\"file_path\":\"src/query/wire_protocol.cppm\"}"}
+{"type":"content_block_stop","index":2}
+{"type":"stream_end","stop_reason":"tool_use","usage":{"input_tokens":10,"output_tokens":5}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"tool_use","content":[{"type":"thinking","thinking":"Inspect query implementation.","signature":"chain-sig"},{"type":"tool_use","id":"chain-read","name":"Read","input_json":"{\"file_path\":\"src/query/query_engine.cppm\"}"},{"type":"tool_use","id":"chain-read-second","name":"Read","input_json":"{\"file_path\":\"src/query/wire_protocol.cppm\"}"}]}}
+{"type":"__checkpoint__","name":"preparing"}
+{"type":"tool_execution_start","tool_use_id":"chain-read","tool_name":"Read","input_json":"{\"file_path\":\"src/query/query_engine.cppm\"}"}
+{"type":"__checkpoint__","name":"running"}
+{"type":"tool_execution_progress","tool_use_id":"chain-read","partial_result":"file-preview-secret-body"}
+{"type":"__checkpoint__","name":"progress"}
+{"type":"tool_execution_progress","tool_use_id":"chain-read","partial_result":""}
+{"type":"__checkpoint__","name":"empty_progress"}
+{"type":"tool_execution_end","tool_use_id":"chain-read","result":"file body","is_error":false}
+{"type":"__commit__","message":{"role":"tool","tool_use_id":"chain-read","content":[{"type":"text","text":"file body"}],"is_error":false,"tool_name":"Read"}}
+{"type":"__checkpoint__","name":"first_done"}
+{"type":"tool_execution_start","tool_use_id":"chain-read-second","tool_name":"Read","input_json":"{\"file_path\":\"src/query/wire_protocol.cppm\"}"}
+{"type":"__checkpoint__","name":"second_running"}
+{"type":"tool_execution_end","tool_use_id":"chain-read-second","result":"second file body","is_error":false}
+{"type":"__commit__","message":{"role":"tool","tool_use_id":"chain-read-second","content":[{"type":"text","text":"second file body"}],"is_error":false,"tool_name":"Read"}}
+{"type":"__checkpoint__","name":"waiting"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"completed"}

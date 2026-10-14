@@ -285,6 +285,8 @@ inline void ClearRepinState(MessagesStore& store) {
 /// Called on /clear, callback-clear, and session restore to ensure
 /// the next render starts from Static mode with a fresh counter.
 inline void reset_virtual_renderer_state(MessagesStore& store) {
+    store.render_input.chain_timings.clear();
+    store.render_input.chain_update_due.reset();
     store.rendered_content_height_lines.reset();
     store.virtual_renderer_mode =
         ::loom::ui::messages_list::VirtualRendererMode::Static;

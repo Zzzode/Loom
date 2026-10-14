@@ -1,0 +1,12 @@
+{"type":"stream_start","message_id":"chain-error","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"tool_use","id":"read-failed","name":"Read","input_json":"{}"}}
+{"type":"content_block_delta","index":0,"delta_text":"{\"file_path\":\"missing.cpp\"}"}
+{"type":"content_block_stop","index":0}
+{"type":"stream_end","stop_reason":"tool_use","usage":{"input_tokens":10,"output_tokens":5}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"tool_use","content":[{"type":"tool_use","id":"read-failed","name":"Read","input_json":"{\"file_path\":\"missing.cpp\"}"}]}}
+{"type":"tool_execution_start","tool_use_id":"read-failed","tool_name":"Read","input_json":"{\"file_path\":\"missing.cpp\"}"}
+{"type":"tool_execution_end","tool_use_id":"read-failed","result":"RFC0014 file missing","is_error":true}
+{"type":"__checkpoint__","name":"failed_before_commit"}
+{"type":"__commit__","message":{"role":"tool","tool_use_id":"read-failed","tool_name":"Read","is_error":true,"content":[{"type":"text","text":"RFC0014 file missing"}]}}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"failed_after_commit"}

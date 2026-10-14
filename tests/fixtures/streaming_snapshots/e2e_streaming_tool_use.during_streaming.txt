@@ -5,7 +5,7 @@
 █░█░█░█░█  <tmpdir>
 
 ● Bash (npm test)
-  ⎿  Running…
+  ⎿  Waiting to run…
 
 
 

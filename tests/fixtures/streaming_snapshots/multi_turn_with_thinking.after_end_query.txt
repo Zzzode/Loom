@@ -4,7 +4,7 @@
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  <tmpdir>
 
-<dot> Thought, ran 1 shell command                                                                           [Show details]
+<dot> Worked, 1 shell command                                                                                [Show details]
 
 ● All 12 debug tests passed in 4.2 seconds, including the timing-sensitive ServerMain socket tests. The refactor is
   safe to commit.

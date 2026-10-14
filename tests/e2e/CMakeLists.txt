@@ -102,6 +102,13 @@ foreach(_pty_round_case IN ITEMS round-unbounded round-budget round-click round-
       SKIP_RETURN_CODE 125)
 endforeach()
 
+# RFC 0014: actual collapsed/expanded stage timing, current target and reflow.
+add_test(NAME E2E_Pty_CompressedChain COMMAND e2e_pty_shutdown compressed-chain-live)
+set_tests_properties(E2E_Pty_CompressedChain PROPERTIES
+    TIMEOUT 45
+    ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+    SKIP_RETURN_CODE 125)
+
 # Real Bash errors remain visible and recover inside the original turn; an
 # actual R key retries only the failed request after a committed side effect.
 foreach(_pty_recovery_case IN ITEMS bash-failure permission-denial api-retry api-retry-network)

@@ -30,6 +30,7 @@ import loom.ui.visual.markdown;
 import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_figures;
+import loom.ui.foundation.clock;
 import loom.constants.constants;
 import loom.text.parse_references;
 import loom.ui.widgets.components;
@@ -1414,6 +1415,622 @@ using ml::MessageShape;
 }
 
 }  // namespace chain_compression_test
+
+namespace chain_activity_test {
+using namespace chain_compression_test;
+using namespace std::chrono_literals;
+
+// The injected clock is process-global; always release it, including ASSERT exits.
+struct ClockScope {
+    ~ClockScope() { loom::ui::clock::set_steady_now_for_testing(std::nullopt); }
+    void at(std::chrono::milliseconds since_epoch) {
+        loom::ui::clock::set_steady_now_for_testing(
+            std::chrono::steady_clock::time_point(since_epoch));
+    }
+};
+
+auto running_tool(std::string name, std::string parameters,
+                  std::chrono::milliseconds start = 100s) -> ToolUseRenderOptions {
+    auto tool = make_tool_use(std::move(name), ToolStatus::Running);
+    tool.call.raw_parameters = std::move(parameters);
+    tool.call.start_time = std::chrono::steady_clock::time_point(start);
+    return tool;
+}
+
+auto live_input() -> MessagesListInput {
+    auto in = make_input({{MessageShape::AssistantToolUse,
+        running_tool("Read", R"({"file_path":"src/main.cpp"})")}});
+    in.uuids[0] = "streaming-anchor";
+    in.query_running = true;
+    return in;
+}
+
+auto chain_rows(const MessagesListInput& in)
+    -> std::vector<loom::ui::messages_list::VisibleRow> {
+    auto rows = build_visible_rows(in);
+    std::erase_if(rows, [](const auto& row) {
+        return row.kind != compressed_chain_kind();
+    });
+    return rows;
+}
+
+auto screen_lines(ftxui::Element element, int columns)
+    -> std::vector<std::string> {
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
+                                       ftxui::Dimension::Fixed(12));
+    ftxui::Render(screen, std::move(element));
+    std::vector<std::string> lines;
+    for (int y = 0; y < screen.dimy(); ++y)
+        lines.push_back(prompt_screen_row(screen, y));
+    return lines;
+}
+
+auto find_line(const std::vector<std::string>& lines, std::string_view needle)
+    -> std::string {
+    for (const auto& line : lines)
+        if (line.find(needle) != std::string::npos) return line;
+    return {};
+}
+}  // namespace chain_activity_test
+
+TEST(MessagesList, ChainActivity_ElapsedIsOneIntervalAcrossExpansionAndCompletion) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto thought = make_thinking("Two parallel calls follow.");
+    thought.data.thinking_start_time = std::chrono::steady_clock::time_point(100s);
+    // Neither thinking nor overlapping tool durations are elapsed stage time.
+    thought.data.duration = 90s;
+    auto first = running_tool("Read", R"({"file_path":"first.cpp"})", 102s);
+    auto second = running_tool("Bash", R"({"command":"pwd"})", 102s);
+    first.call.duration = 60s;
+    second.call.duration = 60s;
+    auto in = make_input({{MessageShape::AssistantThinking, thought},
+        {MessageShape::AssistantToolUse, first},
+        {MessageShape::AssistantToolUse, second}});
+    in.query_running = true;
+    in.uuids[0] = "stage";
+    auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_elapsed, 10s);
+    in.expanded_keys.insert("chain:" + rows[0].chain_uuid);
+    clock.at(112s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_TRUE(rows[0].chain_is_expanded);
+    EXPECT_EQ(rows[0].chain_elapsed, 12s);
+    in.query_running = false;
+    clock.at(115s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_FALSE(rows[0].chain_is_live);
+    EXPECT_TRUE(rows[0].chain_current_activity.empty());
+    EXPECT_EQ(rows[0].chain_elapsed, 15s);
+    in.expanded_keys.clear();
+    clock.at(300s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_elapsed, 15s);
+    // A later query cannot reopen a completed stage even without new rows yet.
+    in.query_running = true;
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_FALSE(rows[0].chain_is_live);
+    EXPECT_EQ(rows[0].chain_elapsed, 15s);
+}
+
+TEST(MessagesList, ChainActivity_PruneAndAnchorReplacementPreserveStartAndDisclosure) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto thought = make_thinking("Ephemeral thinking.");
+    thought.data.thinking_start_time = std::chrono::steady_clock::time_point(100s);
+    auto in = make_input({{MessageShape::AssistantThinking, thought},
+        {MessageShape::AssistantToolUse,
+            running_tool("Read", R"({"file_path":"file.cpp"})", 108s)}});
+    in.query_running = true;
+    in.uuids = {"streaming", "streaming"};
+    auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    const auto disclosure = rows[0].chain_uuid;
+    in.expanded_keys.insert("chain:" + disclosure);
+    in.rows.erase(in.rows.begin());
+    in.shapes.erase(in.shapes.begin());
+    in.uuids = {"committed"};
+    clock.at(113s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_elapsed, 13s);
+    EXPECT_EQ(rows[0].chain_uuid, disclosure);
+    EXPECT_TRUE(rows[0].chain_is_expanded);
+    // Missing/newer projection metadata cannot push the saved start forward.
+    std::get<ToolUseRenderOptions>(in.rows[0]).call.start_time =
+        std::chrono::steady_clock::time_point(112s);
+    clock.at(114s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_elapsed, 14s);
+    clock.at(109s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_elapsed, 14s);
+}
+
+TEST(MessagesList, ChainActivity_MissingAndFutureStartAreSafeAndEarlierMetadataIsAccepted) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    for (const auto initial_start : {0s, 500s}) {
+        SCOPED_TRACE(initial_start.count());
+        clock.at(110s);
+        auto in = live_input();
+        auto& tool = std::get<ToolUseRenderOptions>(in.rows[0]).call;
+        tool.start_time = std::chrono::steady_clock::time_point(initial_start);
+        auto rows = chain_rows(in);
+        ASSERT_EQ(rows.size(), 1u);
+        EXPECT_EQ(rows[0].chain_elapsed, 0ms);
+        clock.at(112s);
+        rows = chain_rows(in);
+        ASSERT_EQ(rows.size(), 1u);
+        EXPECT_EQ(rows[0].chain_elapsed, 2s);
+        tool.start_time = std::chrono::steady_clock::time_point(100s);
+        rows = chain_rows(in);
+        ASSERT_EQ(rows.size(), 1u);
+        EXPECT_EQ(rows[0].chain_elapsed, 12s);
+    }
+}
+
+TEST(MessagesList, ChainActivity_TextBoundaryCommitKeepsDistinctExpandableStages) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("Before commentary.")},
+        {MessageShape::AssistantText, make_text("Inspecting the implementation.")},
+        {MessageShape::AssistantToolUse,
+            running_tool("Read", R"({"file_path":"messages.cpp"})")}});
+    in.query_running = true;
+    in.uuids = {"streaming", "streaming", "streaming"};
+    auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 2u);
+    ASSERT_NE(rows[0].chain_uuid, rows[1].chain_uuid);
+    const auto first_key = rows[0].chain_uuid;
+    const auto second_key = rows[1].chain_uuid;
+    EXPECT_FALSE(rows[0].chain_elapsed.has_value());
+    EXPECT_EQ(rows[1].chain_elapsed, 10s);
+    in.expanded_keys.insert("chain:" + second_key);
+    // Committing a mixed assistant message replaces every subrow's UUID.
+    in.uuids = {"committed", "committed", "committed"};
+    clock.at(113s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 2u);
+    EXPECT_EQ(rows[0].chain_uuid, first_key);
+    EXPECT_EQ(rows[1].chain_uuid, second_key);
+    EXPECT_FALSE(rows[0].chain_is_expanded);
+    EXPECT_TRUE(rows[1].chain_is_expanded);
+    EXPECT_EQ(rows[1].chain_elapsed, 13s);
+    in.expanded_keys = {"chain:" + first_key};
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 2u);
+    EXPECT_TRUE(rows[0].chain_is_expanded);
+    EXPECT_FALSE(rows[1].chain_is_expanded);
+}
+
+TEST(MessagesList, ChainActivity_DuplicateBoundaryOccurrencesKeepSeparateIntervals) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto in = make_input({{MessageShape::AssistantText, make_text("Same commentary")},
+        {MessageShape::AssistantToolUse,
+            running_tool("Read", R"({"file_path":"first.cpp"})")}});
+    in.uuids = {"same-id", "same-id"};
+    in.query_running = true;
+    auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_elapsed, 10s);
+    in.rows.push_back(make_text("Same commentary"));
+    in.shapes.push_back(MessageShape::AssistantText);
+    in.uuids.push_back("same-id");
+    in.rows.push_back(running_tool("Read", R"({"file_path":"second.cpp"})", 112s));
+    in.shapes.push_back(MessageShape::AssistantToolUse);
+    in.uuids.push_back("same-id");
+    clock.at(115s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 2u);
+    EXPECT_EQ(rows[0].chain_elapsed, 15s);
+    EXPECT_EQ(rows[1].chain_elapsed, 3s);
+    EXPECT_NE(rows[0].chain_uuid, rows[1].chain_uuid);
+    clock.at(120s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 2u);
+    EXPECT_EQ(rows[0].chain_elapsed, 15s);
+    EXPECT_EQ(rows[1].chain_elapsed, 8s);
+}
+
+TEST(MessagesList, ChainActivity_FullBoundaryTextDistinguishesIdenticalPrefixes) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    const std::string prefix(300, 'x');
+    auto in = make_input({{MessageShape::AssistantText, make_text(prefix + "first")},
+        {MessageShape::AssistantToolUse,
+            running_tool("Read", R"({"file_path":"first.cpp"})")}});
+    in.query_running = true;
+    auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_elapsed, 10s);
+    in.rows[0] = make_text(prefix + "second");
+    in.rows[1] = running_tool("Read", R"({"file_path":"second.cpp"})", 112s);
+    clock.at(115s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_elapsed, 3s);
+    EXPECT_EQ(in.chain_timings.size(), 1u);
+}
+
+TEST(MessagesList, ChainActivity_EmptyAndPrunedStagesReleaseTimingState) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto in = live_input();
+    ASSERT_EQ(chain_rows(in).size(), 1u);
+    ASSERT_EQ(in.chain_timings.size(), 1u);
+    in.rows = {make_text("Only a final answer remains.")};
+    in.shapes = {MessageShape::AssistantText};
+    EXPECT_TRUE(chain_rows(in).empty());
+    EXPECT_TRUE(in.chain_timings.empty());
+    in = live_input();
+    ASSERT_EQ(chain_rows(in).size(), 1u);
+    in.rows.clear();
+    in.shapes.clear();
+    in.uuids.clear();
+    EXPECT_TRUE(build_visible_rows(in).empty());
+    EXPECT_TRUE(in.chain_timings.empty());
+}
+
+TEST(MessagesList, ChainActivity_SessionResetDropsSameIdTimingWithoutEmptyRender) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    loom::ui::repl_screen::MessagesStore store;
+    store.render_input = live_input();
+    auto rows = chain_rows(store.render_input);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_elapsed, 10s);
+    // /clear, callback-clear and /resume share this existing lifecycle hook.
+    loom::ui::repl_screen::reset_virtual_renderer_state(store);
+    EXPECT_TRUE(store.render_input.chain_timings.empty());
+    store.render_input.query_running = false;
+    clock.at(500s);
+    rows = chain_rows(store.render_input);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_FALSE(rows[0].chain_elapsed.has_value());
+}
+
+TEST(MessagesList, ChainActivity_HistoryOmitsElapsedIncludingThinkingAndToolDurations) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto thought = make_thinking("Historical thinking.");
+    thought.data.duration = 45s;
+    thought.data.thinking_start_time = std::chrono::steady_clock::time_point(100s);
+    auto in = make_input({{MessageShape::AssistantThinking, thought},
+        {MessageShape::AssistantToolUse, running_tool("Read", "{}")}});
+    auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_FALSE(rows[0].chain_elapsed.has_value());
+    EXPECT_FALSE(rows[0].chain_is_live);
+    clock.at(500s);
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_FALSE(rows[0].chain_elapsed.has_value());
+}
+
+TEST(MessagesList, ChainActivity_BypassModesKeepTrackingAndObserveCompletion) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    for (int mode = 0; mode < 3; ++mode) {
+        SCOPED_TRACE(mode);
+        clock.at(110s);
+        auto in = live_input();
+        if (mode == 0) in.is_transcript_mode = true;
+        if (mode == 1) in.search_query = "Read";
+        if (mode == 2) in.disable_chain_compression = true;
+        EXPECT_TRUE(chain_rows(in).empty());
+        in.query_running = false;
+        clock.at(115s);
+        EXPECT_TRUE(chain_rows(in).empty());
+        in.is_transcript_mode = false;
+        in.search_query.clear();
+        in.disable_chain_compression = false;
+        clock.at(200s);
+        const auto rows = chain_rows(in);
+        ASSERT_EQ(rows.size(), 1u);
+        EXPECT_EQ(rows[0].chain_elapsed, 15s);
+        EXPECT_FALSE(rows[0].chain_is_live);
+    }
+}
+
+TEST(MessagesList, ChainActivity_RunningPrecedesPendingAndCompletedTargetsAreOmitted) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto pending = make_tool_use("Read", ToolStatus::Pending);
+    pending.call.raw_parameters = R"({"file_path":"queued.cpp"})";
+    auto finished = make_tool_use("Bash");
+    finished.call.raw_parameters = R"({"command":"completed-command"})";
+    auto in = make_input({{MessageShape::AssistantToolUse, pending},
+        {MessageShape::AssistantToolUse, finished},
+        {MessageShape::AssistantToolUse,
+            running_tool("Read", R"({"file_path":"active.cpp"})")}});
+    in.query_running = true;
+    auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_NE(rows[0].chain_current_activity.find("Running"), std::string::npos);
+    EXPECT_NE(rows[0].chain_current_activity.find("active.cpp"), std::string::npos);
+    EXPECT_EQ(rows[0].chain_current_activity.find("queued.cpp"), std::string::npos);
+    EXPECT_EQ(rows[0].chain_current_activity.find("completed-command"), std::string::npos);
+    std::get<ToolUseRenderOptions>(in.rows[2]).call.status = ToolStatus::Success;
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_NE(rows[0].chain_current_activity.find("Preparing"), std::string::npos);
+    EXPECT_NE(rows[0].chain_current_activity.find("queued.cpp"), std::string::npos);
+    EXPECT_EQ(rows[0].chain_current_activity.find("approval"), std::string::npos);
+    std::get<ToolUseRenderOptions>(in.rows[0]).call.status = ToolStatus::Success;
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_current_activity, "Waiting for model");
+}
+
+TEST(MessagesList, ChainActivity_GroupedToolsKeepTwoTargetsAndOmittedCount) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    loom::ui::messages::tool_use_message::GroupedToolsOptions group;
+    group.calls = {
+        running_tool("Read", R"({"file_path":"first.cpp"})").call,
+        running_tool("Bash", R"({"command":"second-command"})").call,
+        running_tool("Read", R"({"file_path":"omitted.cpp"})").call,
+        make_tool_use("Read").call,
+    };
+    auto in = make_input({{MessageShape::AssistantGroupedTools, group}});
+    in.query_running = true;
+    const auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    const auto& activity = rows[0].chain_current_activity;
+    const auto first = activity.find("first.cpp");
+    const auto second = activity.find("second-command");
+    EXPECT_NE(first, std::string::npos);
+    EXPECT_NE(second, std::string::npos);
+    EXPECT_LT(first, second);
+    EXPECT_EQ(activity.find("omitted.cpp"), std::string::npos);
+    EXPECT_NE(activity.find("+1 more"), std::string::npos);
+}
+
+TEST(MessagesList, ChainActivity_TargetFieldsAreAllowlistedAndUnknownToolsDoNotSpillJson) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    struct Example { std::string name; std::string json; std::string target; };
+    const Example examples[] = {
+        {"Read", R"({"file_path":"read.cpp","other":"PRIVATE"})", "read.cpp"},
+        {"Grep", R"({"pattern":"needle","path":"src/","other":"PRIVATE"})", "needle in src/"},
+        {"Glob", R"({"pattern":"*.cpp","other":"PRIVATE"})", "*.cpp"},
+        {"Bash", R"({"command":"pwd","other":"PRIVATE"})", "pwd"},
+        {"WebSearch", R"({"query":"C++ modules","other":"PRIVATE"})", "C++ modules"},
+        {"WebFetch", R"({"url":"https://example.com/","other":"PRIVATE"})", "https://example.com/"},
+        {"mcp__server__lookup", R"({"token":"PRIVATE","path":"PRIVATE"})", "mcp__server__lookup"},
+        {"Read", R"({"file_path":123,"other":"PRIVATE"})", "Read"},
+    };
+    for (const auto& example : examples) {
+        SCOPED_TRACE(example.name + " " + example.json);
+        auto in = make_input({{MessageShape::AssistantToolUse,
+            running_tool(example.name, example.json)}});
+        in.query_running = true;
+        const auto rows = chain_rows(in);
+        ASSERT_EQ(rows.size(), 1u);
+        EXPECT_NE(rows[0].chain_current_activity.find(example.target), std::string::npos);
+        EXPECT_EQ(rows[0].chain_current_activity.find("PRIVATE"), std::string::npos);
+    }
+}
+
+TEST(MessagesList, ChainActivity_JsonTargetsDecodeEscapesAndRejectIncompleteObjects) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto in = make_input({{MessageShape::AssistantToolUse, running_tool("Bash",
+        R"({"command":"printf \"quoted\" C:\\tmp\\file \u4f60\u597d\nnext\u001b[31m"})")}});
+    in.query_running = true;
+    const auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_NE(rows[0].chain_current_activity.find("printf \"quoted\" C:\\tmp\\file 你好"),
+              std::string::npos);
+    EXPECT_EQ(rows[0].chain_current_activity.find("\\u4f60"), std::string::npos);
+    const auto lines = screen_lines(
+        ml::render_messages_list_view(in, 0, 80, {}, false), 120);
+    const auto activity = find_line(lines, "Running Bash");
+    ASSERT_FALSE(activity.empty());
+    EXPECT_NE(activity.find("你好 next"), std::string::npos);
+    EXPECT_EQ(activity.find('\n'), std::string::npos);
+    EXPECT_EQ(activity.find('\x1b'), std::string::npos);
+    auto element = ml::render_messages_list_view(in, 0, 80, {}, false);
+    element->ComputeRequirement();
+    EXPECT_EQ(element->requirement().min_y, 3);
+
+    for (const auto malformed : {"not JSON", "{\"command\":\"PRIVATE\"",
+                                 "{\"command\":\"PRIVATE\",", "[\"PRIVATE\"]"}) {
+        SCOPED_TRACE(malformed);
+        std::get<ToolUseRenderOptions>(in.rows[0]).call.raw_parameters = malformed;
+        const auto fallback = chain_rows(in);
+        ASSERT_EQ(fallback.size(), 1u);
+        EXPECT_EQ(fallback[0].chain_current_activity, "Running Bash");
+    }
+}
+
+TEST(MessagesList, ChainActivity_ElapsedLabelSchedulesOnlyItsNextVisibleChange) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110250ms);
+    auto in = live_input();
+    ASSERT_EQ(chain_rows(in).size(), 1u);
+    const auto next_second = std::chrono::steady_clock::time_point(111s);
+    EXPECT_EQ(in.chain_update_due, next_second);
+    // Hidden compressed summaries must not keep scheduling redraws, but their
+    // lifecycle continues and the deadline returns when the summary is visible.
+    for (int mode = 0; mode < 3; ++mode) {
+        SCOPED_TRACE(mode);
+        if (mode == 0) in.is_transcript_mode = true;
+        if (mode == 1) in.search_query = "Read";
+        if (mode == 2) in.disable_chain_compression = true;
+        EXPECT_TRUE(chain_rows(in).empty());
+        EXPECT_FALSE(in.chain_update_due.has_value());
+        in.is_transcript_mode = false;
+        in.search_query.clear();
+        in.disable_chain_compression = false;
+        ASSERT_EQ(chain_rows(in).size(), 1u);
+        EXPECT_EQ(in.chain_update_due, next_second);
+    }
+    clock.at(111s);
+    ASSERT_EQ(chain_rows(in).size(), 1u);
+    EXPECT_EQ(in.chain_update_due, std::chrono::steady_clock::time_point(112s));
+    in.query_running = false;
+    ASSERT_EQ(chain_rows(in).size(), 1u);
+    EXPECT_FALSE(in.chain_update_due.has_value());
+    in = live_input();
+    ASSERT_EQ(chain_rows(in).size(), 1u);
+    ASSERT_TRUE(in.chain_update_due.has_value());
+    in.rows.clear();
+    in.shapes.clear();
+    in.uuids.clear();
+    EXPECT_TRUE(build_visible_rows(in).empty());
+    EXPECT_FALSE(in.chain_update_due.has_value());
+}
+
+TEST(MessagesList, ChainActivity_DisplayFiltersDoNotLeakTargetsOrMislabelToolStages) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto in = make_input({
+        {MessageShape::AssistantToolUse, make_tool_use("Brief", ToolStatus::Pending)},
+        {MessageShape::AssistantToolUse,
+            running_tool("Read", R"({"file_path":"HIDDEN_TARGET.cpp"})")}});
+    in.query_running = true;
+    in.is_brief_mode = true;
+    auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_NE(rows[0].chain_current_activity.find("Preparing Brief"), std::string::npos);
+    EXPECT_EQ(rows[0].chain_current_activity.find("Read"), std::string::npos);
+    EXPECT_EQ(rows[0].chain_current_activity.find("HIDDEN_TARGET"), std::string::npos);
+
+    in = make_input({{MessageShape::AssistantThinking, make_thinking("Inspecting.")},
+        {MessageShape::AssistantToolUse, running_tool("Read", "{}")},
+        {MessageShape::UserToolResult, make_tool_result("Read")}});
+    in.filters.show_tool_in = false;
+    in.query_running = true;
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_TRUE(rows[0].chain_has_tool_activity);
+    auto lines = screen_lines(ml::render_messages_list_view(in, 0, 80, {}, false), 80);
+    EXPECT_FALSE(find_line(lines, "Working").empty());
+    EXPECT_TRUE(find_line(lines, "Thinking").empty());
+    EXPECT_TRUE(find_line(lines, "HIDDEN_TARGET").empty());
+    in.query_running = false;
+    rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_TRUE(rows[0].chain_has_tool_activity);
+    lines = screen_lines(ml::render_messages_list_view(in, 0, 80, {}, false), 80);
+    EXPECT_FALSE(find_line(lines, "Worked").empty());
+    EXPECT_TRUE(find_line(lines, "Thought").empty());
+}
+
+TEST(MessagesList, ChainActivity_NarrowStaticAndVirtualRowsKeepDisclosureAndExactHeight) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    for (const int width : {40, 80, 120}) {
+        SCOPED_TRACE(width);
+        auto in = live_input();
+        in.term_cols = width;
+        // A long wide-character target must stay one row with no escape/control bytes.
+        std::get<ToolUseRenderOptions>(in.rows[0]).call.raw_parameters =
+            R"({"file_path":"目录/文件名文件名文件名文件名文件名文件名文件名文件名文件名.cpp\n\u001b[31m"})";
+        auto rows = chain_rows(in);
+        ASSERT_EQ(rows.size(), 1u);
+        auto geometry = ml::visible_rows_to_virtual(rows, in, width);
+        ASSERT_EQ(geometry.size(), 1u);
+        EXPECT_EQ(geometry[0].estimated_height_lines, 3);
+        auto static_element = ml::render_messages_list_view(in, 0, 80, {}, false);
+        static_element->ComputeRequirement();
+        EXPECT_EQ(static_element->requirement().min_y, 3);
+        // Both wrapped paths reserve a column for the scroll indicator.
+        // Bare static rendering keeps the full width and is checked above.
+        const auto static_lines = screen_lines(
+            ml::render_messages_list_view(in, 0, 80, {}, true), width);
+        const auto virtual_lines = screen_lines(
+            ml::render_messages_list_virtual(in, 0, 12, 0), width);
+        const auto static_header = find_line(static_lines, "[Show details]");
+        const auto virtual_header = find_line(virtual_lines, "[Show details]");
+        EXPECT_FALSE(static_header.empty());
+        EXPECT_EQ(static_header, virtual_header);
+        const auto static_activity = find_line(static_lines, "Running Read");
+        const auto virtual_activity = find_line(virtual_lines, "Running Read");
+        EXPECT_FALSE(static_activity.empty());
+        EXPECT_EQ(static_activity, virtual_activity);
+        EXPECT_EQ(static_activity.find('\x1b'), std::string::npos);
+        EXPECT_EQ(static_activity.find('\n'), std::string::npos);
+        in.query_running = false;
+        rows = chain_rows(in);
+        ASSERT_EQ(rows.size(), 1u);
+        EXPECT_TRUE(rows[0].chain_current_activity.empty());
+        geometry = ml::visible_rows_to_virtual(rows, in, width);
+        ASSERT_EQ(geometry.size(), 1u);
+        EXPECT_EQ(geometry[0].estimated_height_lines, 2);
+        auto completed = ml::render_messages_list_view(in, 0, 80, {}, false);
+        completed->ComputeRequirement();
+        EXPECT_EQ(completed->requirement().min_y, 2);
+    }
+}
+
+TEST(MessagesList, ChainActivity_ControlCharactersCannotAddRowsOrTerminalEscapes) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto in = live_input();
+    auto& call = std::get<ToolUseRenderOptions>(in.rows[0]).call;
+    call.tool_name = "mcp__lookup\n\r\t\x1b[31m\x7f\xc2\x9b";
+    const auto lines = screen_lines(
+        ml::render_messages_list_view(in, 0, 80, {}, false), 80);
+    const auto activity = find_line(lines, "Running mcp__lookup");
+    ASSERT_FALSE(activity.empty());
+    EXPECT_EQ(activity.find('\x1b'), std::string::npos);
+    EXPECT_EQ(activity.find('\x7f'), std::string::npos);
+    EXPECT_EQ(activity.find("\xc2\x9b"), std::string::npos);
+    EXPECT_EQ(activity.find('\n'), std::string::npos);
+    EXPECT_EQ(activity.find('\r'), std::string::npos);
+    EXPECT_EQ(activity.find('\t'), std::string::npos);
+    auto element = ml::render_messages_list_view(in, 0, 80, {}, false);
+    element->ComputeRequirement();
+    EXPECT_EQ(element->requirement().min_y, 3);
+}
+
+TEST(MessagesList, ChainActivity_ThinkingOnlyKeepsSingleSummaryAndCorrectTime) {
+    using namespace chain_activity_test;
+    ClockScope clock;
+    clock.at(110s);
+    auto thought = make_thinking("A private multiline thought.\nMore detail.");
+    thought.data.thinking_start_time = std::chrono::steady_clock::time_point(100s);
+    auto in = make_input({{MessageShape::AssistantThinking, thought}});
+    in.query_running = true;
+    const auto rows = chain_rows(in);
+    ASSERT_EQ(rows.size(), 1u);
+    EXPECT_EQ(rows[0].chain_elapsed, 10s);
+    EXPECT_TRUE(rows[0].chain_current_activity.empty());
+    const auto geometry = ml::visible_rows_to_virtual(rows, in, 80);
+    ASSERT_EQ(geometry.size(), 1u);
+    EXPECT_EQ(geometry[0].estimated_height_lines, 2);
+    const auto lines = screen_lines(ml::render_messages_list_view(in, 0, 80, {}, false), 80);
+    EXPECT_FALSE(find_line(lines, "Thinking for 10s").empty());
+    EXPECT_TRUE(find_line(lines, "private").empty());
+}
 
 /// Basic compression: thinking + tool_use + tool_result → 1 CompressedChain.
 TEST(MessagesList, ChainCompression_BasicThinkingPlusTool) {

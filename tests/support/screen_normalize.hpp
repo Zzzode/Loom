@@ -221,9 +221,9 @@ namespace loom::testing {
     // The collapsed thinking row (RenderThinkingMessageCollapsed) shows
     // "∴ Thought for Xms" / "∴ Thought for X.Xs" when the thinking
     // duration is known, or "∴ Thinking" when it is zero.  The compressed
-    // chain row (render_compressed_chain_row) shows "Thought for Xs" /
-    // "Thinking for Xs" when the summed thinking duration is non-zero,
-    // or omits the "for Xs" entirely when it is zero.  The duration is
+    // chain row shows Thinking/Thought or Working/Worked with optional
+    // observed stage elapsed time. Historical unknown time is omitted.
+    // Exact elapsed semantics are tested before normalization. The duration is
     // wall-clock-driven (steady_clock ticks between content_block_start
     // and content_block_stop) and non-deterministic in replay: debug
     // builds measure ~2ms, optimized release builds ~0ms.  Normalize
@@ -256,6 +256,30 @@ namespace loom::testing {
                 tmp.append(removed_cells, ' ');
                 removed_cells = 0;
             }
+            bool normalized_stage = false;
+            for (const std::string_view word : {"Thinking", "Thought", "Working", "Worked"}) {
+                const auto prefix = std::string(word) + " for ";
+                if (clean.compare(i, prefix.size(), prefix) != 0) continue;
+                auto j = i + prefix.size();
+                const auto digits = j;
+                while (j < clean.size() && clean[j] >= '0' && clean[j] <= '9') ++j;
+                if (j == digits) continue;
+                if (j + 2 < clean.size() && clean.compare(j, 2, "m ") == 0) {
+                    j += 2;
+                    const auto seconds = j;
+                    while (j < clean.size() && clean[j] >= '0' && clean[j] <= '9') ++j;
+                    if (j == seconds) continue;
+                }
+                if (j >= clean.size() || clean[j] != 's') continue;
+                const auto end = j + 1;
+                if (end < clean.size() && clean[end] != ',' && clean[end] != ' ' &&
+                    clean.compare(end, 3, "…") != 0) continue;
+                append_thinking(i, end, word);
+                i = end;
+                normalized_stage = true;
+                break;
+            }
+            if (normalized_stage) continue;
             // "Thought for <digits>..." — collapsed row or static chain
             if (i + 12 <= clean.size() &&
                 clean.compare(i, 12, "Thought for ") == 0) {

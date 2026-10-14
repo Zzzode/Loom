@@ -231,7 +231,8 @@ Element capture_selection_row(Element row, const MessagesListInput& input, int i
             if (ml_row.kind == VisibleRow::Kind::CompactGroup) {
                 row_el = detail::render_compact_group_row(ml_row, is_selected);
             } else if (ml_row.kind == VisibleRow::Kind::CompressedChain) {
-                row_el = detail::render_compressed_chain_row(ml_row, is_selected, frame_count);
+                row_el = detail::render_compressed_chain_row(
+                    ml_row, is_selected, frame_count, std::max(1, input.term_cols - 1));
                 // Track clickable compressed chains for mouse hit-testing.
                 if (input.row_click_tracker && !ml_row.chain_uuid.empty()) {
                     Box& box = input.row_click_tracker->track_row(
@@ -501,7 +502,8 @@ Element capture_selection_row(Element row, const MessagesListInput& input, int i
         } else if (vr.kind == VisibleRow::Kind::CompressedChain) {
             // compressed thinking+tool chain — top margin for visual separation
             Element chain_el = detail::render_compressed_chain_row(
-                vr, is_selected, frame_count);
+                vr, is_selected, frame_count,
+                std::max(1, input.term_cols - (wrap_in_yframe ? 1 : 0)));
             // Track clickable compressed chains for mouse hit-testing.
             if (input.row_click_tracker && !vr.chain_uuid.empty()) {
                 Box& box = input.row_click_tracker->track_row(

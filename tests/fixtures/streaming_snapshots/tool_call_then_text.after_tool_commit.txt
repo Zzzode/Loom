@@ -4,8 +4,8 @@
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  <tmpdir>
 
-<dot> running 1 shell command…                                                                               [Show details]
-
+<dot> Working, 1 shell command…                                                                              [Show details]
+  Waiting for model
 
 
 

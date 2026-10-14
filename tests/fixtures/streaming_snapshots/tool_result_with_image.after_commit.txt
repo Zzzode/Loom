@@ -4,8 +4,8 @@
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  <tmpdir>
 
-<dot> Working……                                                                                              [Show details]
-
+<dot> Working…                                                                                               [Show details]
+  Waiting for model
 
 
 

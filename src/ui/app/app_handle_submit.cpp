@@ -393,9 +393,9 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
             std::lock_guard lk(result_mutex_);
             for (auto& [idx, preview] : streaming_tools_) {
                 if (preview.tool_use_id == e.tool_use_id &&
-                    !preview.exec_done &&
-                    preview.result_preview.empty()) {
-                    preview.result_preview = "Starting…";
+                    !preview.exec_done) {
+                    preview.exec_started = true;
+                    if (preview.result_preview.empty()) preview.result_preview = "Starting…";
                     break;
                 }
             }

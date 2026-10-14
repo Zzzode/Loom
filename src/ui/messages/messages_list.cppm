@@ -53,7 +53,7 @@
 /// │    ├─ on_click_attachment(size_t row_idx, size_t attachment_idx)     │
 /// │    └─ on_search_changed(const string& query)                         │
 /// │                                                                      │
-/// │  build_visible_rows(input) -> vector<VisibleRow>   (pure O(N))       │
+/// │  build_visible_rows(input) -> vector<VisibleRow>   (linear tracking/filtering)       │
 /// │                                                                      │
 /// │  render_messages_list_view(input, frame_count) -> Element            │
 /// │    ├─ STATIC / NON-INTERACTIVE variant                               │
@@ -70,9 +70,8 @@
 ///   * MAX_ROWS_RENDERED_LAST_N = 80
 ///       -> non-virtualized "last-N" window for render.  The UI22
 ///          VirtualScroll wrapper is expected to bump this to 200+.
-///   * build_visible_rows is O(N) over rows.size() (<= 100 000) and
-///     guaranteed sub-16 ms on reasonable hardware (single pass, no
-///     allocations per-row beyond string::find on lowered text).
+///   * build_visible_rows performs linear scans over rows, boundary text and
+///     compact groups; stage lifecycle state is bounded by extant stages.
 /// =========================================================================
 
 module;
@@ -328,6 +327,14 @@ struct SelectionRowGeometry {
     Box box{};
 };
 
+/// UI-local observation of one raw compressed stage. Never serialized.
+struct ChainTiming {
+    std::chrono::steady_clock::time_point started_at{};
+    std::optional<std::chrono::milliseconds> elapsed = std::nullopt;
+    bool finished = false;
+    std::string disclosure_id;
+};
+
 struct MessagesListInput {
     std::vector<MessageRowPayload> rows;
     /// Parallel to `rows`.  The dispatcher needs both shape and payload.
@@ -380,6 +387,14 @@ struct MessagesListInput {
     /// timer + tool activity) instead of a static summary.  Synced from
     /// AppAdapter::query_running_ via ReplScreenState.
     bool                            query_running = false;
+
+    /// Raw-stage lifecycle, updated even when compression is bypassed. Keys
+    /// describe material boundaries, not temporary streaming-message UUIDs.
+    /// Pruned to extant stages per projection; clear on session replacement.
+    mutable std::unordered_map<std::string, ChainTiming> chain_timings;
+    /// One-shot invalidation for the next visible elapsed-label change.
+    /// Empty in bypass modes and after completion; consumed by the app worker.
+    mutable std::optional<std::chrono::steady_clock::time_point> chain_update_due = std::nullopt;
 
     /// Optional pointer to a shared StreamingMarkdown instance used for the
     /// streaming-text tail row.  When set and the row's is_streaming=true,
@@ -597,14 +612,17 @@ struct VisibleRow {
     // For Kind::TranscriptCapDivider — number of messages hidden by the cap.
     // For Kind::CompressedChain — group_count = thinking blocks in chain,
     // tool_turns = tool calls in chain, chain_tool_breakdown = per-tool-type
-    // counts, chain_thinking_duration = total thinking time, chain_is_live =
+    // counts, chain_elapsed = observed stage wall time, chain_is_live =
     // true while the query is still streaming (renders as a live status row).
     std::size_t hidden_count    = 0;
 
     // For Kind::CompressedChain — rich summary data.
     bool                            chain_is_live = false;
-    std::chrono::milliseconds       chain_thinking_duration{0};
+    bool                            chain_has_tool_activity = false;
+    std::optional<std::chrono::milliseconds> chain_elapsed = std::nullopt;
     std::vector<std::pair<std::string, std::size_t>> chain_tool_breakdown = {};
+    /// One bounded detail row while tool work is live; no output bodies.
+    std::string                     chain_current_activity = {};
     /// UUID of the chain's anchor row (first row in the chain).
     /// Used as the expand/collapse key: "chain:" + chain_uuid.
     std::string                     chain_uuid = {};
@@ -814,12 +832,12 @@ auto render_payload_row(const MessagesListInput& input,
 auto render_compact_group_row(const VisibleRow& vr,
                               bool is_selected) -> Element;
 
-/// Render a compressed thinking+tool chain as a single dim summary line.
-/// Live chains (query still streaming) show a spinner + elapsed timer +
-/// present-continuous tool activity; static chains show "Thought for X, …".
+/// Render a stage header and, while tools are live, one current-activity row.
+/// Elapsed has the same observed wall-time meaning expanded or collapsed.
 auto render_compressed_chain_row(const VisibleRow& vr,
                                  bool is_selected,
-                                 std::size_t frame_count = 0) -> Element;
+                                 std::size_t frame_count = 0,
+                                 int term_cols = 80) -> Element;
 
 /// Returns a lowercase copy of the search query (if any) — used to highlight
 /// matched substrings in render output.  (Currently used for the empty-state

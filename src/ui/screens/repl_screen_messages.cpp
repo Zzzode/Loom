@@ -71,6 +71,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
             m.is_image, m.image_display_id, m.tool_name, m.tool_status,
             m.tool_input_json, m.tool_result_preview, m.agent_display_name,
             m.agent_color_name, m.thinking_duration,
+            m.thinking_start_time, m.tool_start_time,
             m.estimated_height_lines, m.system_subtype, m.retry_after_ms,
             m.retry_attempt, m.max_retries, m.session_expired,
             m.is_model_error, m.can_retry, m.can_continue);

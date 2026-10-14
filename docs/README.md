@@ -27,6 +27,12 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 
 ## Current docs
 
+### User guides (`user/`)
+
+| File | What |
+|---|---|
+| [`user/terminal-status.md`](user/terminal-status.md) | Automatic OSC 7501 capability detection, activity and decision status, result retention and exit behavior. |
+
 ### Developer guides (`dev/`)
 
 | File | What |
@@ -68,6 +74,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0013-readable-bounded-brand-ui.md`](rfcs/0013-readable-bounded-brand-ui.md) | **Implemented.** Readable secondary text, bounded task/team chrome, duplicate/unused token deletion and Loom brand coordination. |
 | [`rfcs/0014-compressed-chain-activity.md`](rfcs/0014-compressed-chain-activity.md) | **Implemented.** Stable stage elapsed time and bounded current activity for compressed chains. |
 | [`rfcs/0015-state-led-attention-and-hierarchy.md`](rfcs/0015-state-led-attention-and-hierarchy.md) | **Implemented.** Four-state attention and semantic terminal hierarchy for the actual REPL. |
+| [`rfcs/0016-terminal-program-status.md`](rfcs/0016-terminal-program-status.md) | **Implemented.** OSC 7501 interactive state, capability detection and terminal-exit lifecycle. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

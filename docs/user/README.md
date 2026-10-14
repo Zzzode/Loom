@@ -18,6 +18,9 @@ The repo-root [`README.md`](../../README.md) currently serves as the de facto
 user manual (features, build, run, flags, config, slash-command tables).
 Guides will be extracted here incrementally.
 
+- [Terminal program status](terminal-status.md): automatic OSC 7501 detection,
+  activity and decision status, result retention and exit behavior.
+
 ## Naming convention
 
 `kebab-case.md` — e.g. `getting-started.md`, `settings-reference.md`.

@@ -3880,3 +3880,47 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Rollback:** remove the patch include and restore/repopulate the pinned
   FTXUI source before rebuilding. Reusing an already patched fetched/offline
   source does not undo a configure-time source patch.
+
+## OSC 7501 reports belong to the interactive App lifecycle
+
+- **Protocol ownership:** `loom.terminal.osc` encodes fixed state/kind values
+  and `app=loom`. `loom.ui.app.program_status` owns capability negotiation,
+  deduplication and retained foreground outcomes. It does not own permission
+  decisions or cancellation. The App projects existing requests and captures
+  the outer operation outcome before publishing worker completion; individual
+  HTTP stream ends and recoverable tool failures are not task completion.
+- **Delivery:** Start, the end of OnEvent and Finish are the only write
+  boundaries. Callbacks and Render can update state but never emit bytes.
+  Completion callbacks carry an operation generation so a stale queued callback
+  cannot overwrite a newer operation. The existing terminal output writer
+  flushes before the terminal loop restores its tty.
+- **Negotiation:** send one query only with terminal stdin/stdout after FTXUI
+  installs its reader. Enable on the first compatible reply within 1000 ms;
+  require the five base states and omit unsupported optional kinds. No reply,
+  write failure or expiry disables reporting for that lifetime. No heartbeat,
+  timer thread, terminal-name allowlist or second stdin reader is introduced.
+- **Input framing:** the existing FTXUI reader remains the sole reader.
+  `PatchFtxuiOsc.cmake` keeps possible 7501 prefixes and complete raw control
+  events opaque, accepts ST/BEL for 7501 only, and bounds total frame age to
+  1000 ms and stored bytes to 4096. Overflow discards only through its terminator
+  or original deadline. Other OSC framing and standalone Escape timing stay
+  unchanged. After the recovery deadline, fresh input is accepted; an arbitrarily
+  late unframed tail cannot be distinguished from fresh keystrokes.
+- **Attention and exit:** actual permission/question requests overlay work and
+  retained outcomes. Answering them does not acknowledge a previous result.
+  Done/error survive redraw, resize, focus and mouse motion, including dragging.
+  Normal exit preserves an unacknowledged result even under a background
+  decision overlay, provided no foreground work is active. Active, cancelled
+  or abnormal exit reports idle. Finish is idempotent and detaches the writer
+  before loop destruction; no signal-handler or post-handoff output is allowed.
+- **Ask-user prerequisite:** the setter and getter in `loom.tools.ask_user`
+  share the getter's existing static responder slot. Separate slots caused
+  actual UI questions to fall back to stdio (`No interactive input available`
+  in the reproduced PTY), bypassing the intended PromptDialog. The minimal
+  storage repair preserves signatures, both existing permission gates and
+  global callback teardown; native registry and real-question PTY regressions
+  verify the same UI responder reaches the tool dispatcher.
+- **Compatibility and rollback:** OSC traffic is additive; configuration,
+  model/session formats, permissions and exit statuses do not change. Remove
+  the integration and OSC patch include to roll back, then restore/repopulate
+  patched FTXUI sources before rebuilding. See RFC 0016 for native/PTY gates.

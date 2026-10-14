@@ -213,6 +213,36 @@ private:
             request_bodies_.push_back(request.substr(request.find("\r\n\r\n") + 4));
         }
         const int index = requests.fetch_add(1);
+        if (recovery_.starts_with("osc7501-")) {
+            if (recovery_ == "osc7501-cancel" || recovery_ == "osc7501-handoff") {
+                const auto prefix = message_start() +
+                    event("content_block_start", R"({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}})") +
+                    event("content_block_delta", R"({"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"PTY status streaming"}})");
+                if (!send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n" + prefix)) return;
+                ++parked;
+                while (read_bytes(buffer.data(), buffer.size()) > 0) {}
+                ++closed;
+                closed_cv_.notify_all();
+                return;
+            }
+            std::string body;
+            const bool failed = recovery_ == "osc7501-error";
+            if (failed) {
+                body = R"({"type":"error","error":{"type":"invalid_request_error","message":"PTY terminal status failure"}})";
+            } else if (index == 0 && recovery_ == "osc7501-permission") {
+                body = tool_response("Write", "{\"file_path\":\"" + escape_json(target_.string()) +
+                    "\",\"content\":\"PTY status write\"}", "pty-status-permission");
+            } else if (index == 0 && recovery_ == "osc7501-question") {
+                body = tool_response("ask_user_question", R"({"question":"PTY status question","default_answer":"PTY status answer"})", "pty-status-question");
+            } else {
+                body = text_response("PTY status complete");
+            }
+            send_bytes("HTTP/1.1 " + std::string(failed ? "400 Bad Request" : "200 OK") +
+                "\r\nContent-Type: " + (failed ? "application/json" : "text/event-stream") +
+                "\r\nContent-Length: " + std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            ::shutdown(fd, SHUT_WR);
+            return;
+        }
         if (recovery_ == "compressed-chain-live") {
             if (index == 0) {
                 const auto command = "printf PTY-ACTIVITY; for attempt in {1..300}; do [ -f '" + target_.string() +
@@ -2076,8 +2106,306 @@ void run_handoff_case(const std::string& binary, const std::string& scenario, co
     terminal.verify_exit(0);
 }
 
+constexpr std::string_view status_probe = "\x1b]7501;?\x1b\\";
+
+// Parse the actual PTY byte stream independently of Loom's encoder. Reports
+// must contain only the root identity, state and optional blocked kind.
+std::vector<std::string> status_reports(std::string_view output) {
+    constexpr std::string_view prefix = "\x1b]7501;";
+    std::vector<std::string> reports;
+    std::size_t offset = 0;
+    while ((offset = output.find(prefix, offset)) != std::string_view::npos) {
+        const auto start = offset + prefix.size();
+        const auto end = output.find("\x1b\\", start);
+        if (end == std::string_view::npos) break;
+        const auto payload = output.substr(start, end - start);
+        offset = end + 2;
+        if (payload == "?") continue;
+        std::map<std::string, std::string> fields;
+        for (std::size_t at = 0; at < payload.size();) {
+            const auto delimiter = payload.find(':', at);
+            const auto item = payload.substr(at, delimiter == std::string_view::npos ? payload.size() - at : delimiter - at);
+            const auto equal = item.find('=');
+            require(equal != std::string_view::npos, "OSC 7501 report field has no value");
+            const auto key = std::string(item.substr(0, equal));
+            require(key == "state" || key == "app" || key == "kind", "OSC 7501 leaked an unexpected field: " + key);
+            require(fields.emplace(key, item.substr(equal + 1)).second, "duplicate OSC 7501 field");
+            if (delimiter == std::string_view::npos) break;
+            at = delimiter + 1;
+        }
+        require(fields["app"] == "loom", "OSC 7501 report lost root app identity");
+        const auto& state = fields["state"];
+        require(state == "idle" || state == "working" || state == "blocked" || state == "done" || state == "error",
+                "OSC 7501 report has an unknown state");
+        const auto kind = fields.find("kind");
+        require(kind == fields.end() || (state == "blocked" &&
+            (kind->second == "permission" || kind->second == "question" || kind->second == "auth")),
+            "OSC 7501 emitted kind outside a blocked request");
+        reports.push_back(state + (kind == fields.end() ? "" : ":" + kind->second));
+    }
+    return reports;
+}
+
+std::string describe_statuses(const std::vector<std::string>& states) {
+    std::string result;
+    for (const auto& state : states) result += (result.empty() ? "" : " -> ") + state;
+    return result;
+}
+
+void expect_statuses(const Terminal& terminal, const std::vector<std::string>& expected) {
+    const auto actual = status_reports(terminal.output);
+    require(actual == expected, "OSC 7501 order: expected " + describe_statuses(expected) +
+            "; received " + describe_statuses(actual));
+}
+
+// Find one complete tool-result object, rather than accepting answer text
+// merely echoed inside the preceding assistant tool-use input.
+std::string status_question_result(const std::string& request) {
+    const auto messages = request_messages(request);
+    std::vector<std::size_t> objects;
+    bool quoted = false;
+    bool escaped = false;
+    for (std::size_t at = 0; at < messages.size(); ++at) {
+        const char ch = messages[at];
+        if (ch == '"' && !escaped) quoted = !quoted;
+        if (!quoted) {
+            if (ch == '{') objects.push_back(at);
+            if (ch == '}') {
+                require(!objects.empty(), "malformed status fixture request object");
+                const auto object = messages.substr(objects.back(), at - objects.back() + 1);
+                objects.pop_back();
+                if (object.starts_with("{\"type\":\"tool_result\",") &&
+                    object.find("\"tool_use_id\":\"pty-status-question\"") != std::string::npos)
+                    return object;
+            }
+        }
+        escaped = ch == '\\' && !escaped;
+    }
+    throw std::runtime_error("question tool result missing from the real model request");
+}
+
+void settle_terminal(Terminal& terminal, std::chrono::milliseconds duration) {
+    const auto deadline = Clock::now() + duration;
+    require(terminal.wait([&] { return Clock::now() >= deadline; }, 3s),
+            "terminal exited during the observation window");
+}
+
+void negotiate_status(Terminal& terminal, const std::string& scenario) {
+    require(terminal.wait([&] { return terminal.output.find(status_probe) != std::string::npos; }),
+            "OSC 7501 capability probe was not observed");
+    const auto install = terminal.output.find("\x1b[?1049h");
+    require(install != std::string::npos && install < terminal.output.find(status_probe),
+            "OSC 7501 probe preceded raw terminal installation");
+    require(status_reports(terminal.output).empty(), "OSC 7501 reported before capability reply");
+    if (scenario == "osc7501-unsupported") return;
+    if (scenario == "osc7501-late") settle_terminal(terminal, 1200ms);
+    if (scenario == "osc7501-truncated") {
+        terminal.input("\x1b]7501;?:states=idle,work");
+        settle_terminal(terminal, 1200ms);
+        return;
+    }
+    if (scenario == "osc7501-fragmented") {
+        // Split the command itself after ESC ] and then the payload. Both
+        // pauses exceed FTXUI's original 50ms incomplete-sequence timeout.
+        terminal.input("\x1b]75");
+        settle_terminal(terminal, 100ms);
+        terminal.input("01;?:states=idle,working,");
+        settle_terminal(terminal, 100ms);
+        terminal.input("done,blocked,error:kinds=permission,question,auth\x1b\\");
+    } else if (scenario == "osc7501-restricted-states") {
+        terminal.input("\x1b]7501;?:states=idle,working,done,blocked\x1b\\");
+    } else if (scenario == "osc7501-restricted-kind") {
+        terminal.input("\x1b]7501;?:kinds=auth\x1b\\");
+    } else if (scenario == "osc7501-bel") {
+        terminal.input("\x1b]7501;?\a");
+    } else if (scenario == "osc7501-st") {
+        terminal.input("\x1b]7501;?: states = idle,working,done,blocked,error : unknown = ignored : kinds = permission,question,auth \x1b\\");
+    } else {
+        terminal.input(std::string(status_probe));
+    }
+    if (scenario == "osc7501-late" || scenario == "osc7501-restricted-states") {
+        settle_terminal(terminal, 100ms);
+        require(status_reports(terminal.output).empty(), "late/restricted capabilities enabled OSC 7501 reports");
+    } else {
+        require(terminal.wait([&] { return status_reports(terminal.output) == std::vector<std::string>{"idle"}; }),
+                "capability reply did not emit exactly one initial idle");
+    }
+}
+
+void run_status_handoff_case(const std::string& binary, const fs::path& root, const std::string& harness) {
+    std::ofstream summary(root / "status-handoff.txt");
+    for (const std::string kind : {"ctrl-d", "term", "hup"}) {
+        const auto isolated = root / kind;
+        fs::create_directories(isolated / "config");
+        std::ofstream(isolated / "config" / "settings.json") <<
+            R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
+        ModelServer server(false, false, isolated / "unused.txt", false, "osc7501-handoff");
+        ModelOptions options;
+        options.shell_handoff = true;
+        options.handoff_helper = harness;
+        Terminal terminal(binary, isolated, server.url(), options);
+        server.start();
+        negotiate_status(terminal, "osc7501-st");
+        require(terminal.wait([&] { return fs::exists(isolated / "loom.pid") && terminal.mode_enabled(1003); }),
+                "status handoff child did not install mouse input");
+        terminal.input("PTY status handoff\r");
+        require(terminal.wait([&] { return server.parked.load() == 1 &&
+            status_reports(terminal.output) == std::vector<std::string>{"idle", "working"}; }),
+            "status handoff operation did not start");
+        terminal.capture_driver_state("before-stop");
+        terminal.signal(SIGSTOP);
+        require(terminal.wait([&] { return fs::exists(isolated / "loom.stopped"); }),
+                "status handoff did not stop before queued input");
+        std::string pending = kind == "ctrl-d" ? "\x04" : "";
+        for (int report = 0; report < 20; ++report) pending += "\x1b[<35;74;23M";
+        pending += status_probe;
+        terminal.input(pending);
+        if (kind == "term") terminal.signal(SIGTERM);
+        if (kind == "hup") terminal.signal(SIGHUP);
+        terminal.signal(SIGCONT);
+        const bool ready = terminal.wait([&] { return terminal.output.find("PTY-SHELL-READY") != std::string::npos; });
+        if (!ready) {
+            terminal.capture_driver_state("handoff-timeout");
+            sample_handoff_timeout(isolated);
+        }
+        require(ready, "status handoff did not return to real zsh");
+        expect_statuses(terminal, {"idle", "working", "idle"});
+        require(terminal.output.rfind("\x1b]7501;") < terminal.output.find("PTY-SHELL-READY"),
+                "OSC 7501 wrote after parent-shell handoff");
+        for (const int mode : {1000, 1002, 1003, 1006, 1015})
+            require(!terminal.mode_enabled(mode), "status handoff left mouse tracking enabled");
+        terminal.input("shell-handoff-ok\r");
+        require(terminal.wait([&] { return fs::exists(isolated / "shell-input.txt"); }),
+                "real shell did not consume status handoff follow-up");
+        require(read_file(isolated / "shell-input.txt") == "shell-handoff-ok",
+                "queued terminal control bytes polluted real shell input");
+        const std::string expected_exit = kind == "ctrl-d" ? "0" : "1";
+        require(read_file(isolated / "loom.actual-status") == expected_exit &&
+                read_file(isolated / "loom.status") == expected_exit, "status integration changed signal exit codes");
+        terminal.verify_exit(0);
+        summary << kind << ": " << describe_statuses(status_reports(terminal.output))
+                << "; exact shell input=16 bytes; mouse modes reset; termios restored; Loom exit=" << expected_exit << '\n';
+        std::ofstream(root / ("handoff-" + kind + ".raw"), std::ios::binary) << terminal.output;
+    }
+}
+
+void run_status_case(const std::string& binary, const std::string& scenario, const fs::path& root,
+                     const std::string& harness) {
+    if (scenario == "osc7501-handoff") {
+        run_status_handoff_case(binary, root, harness);
+        return;
+    }
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
+    const bool disabled = scenario == "osc7501-unsupported" || scenario == "osc7501-late" ||
+        scenario == "osc7501-restricted-states" || scenario == "osc7501-truncated";
+    const bool permission = scenario == "osc7501-permission" || scenario == "osc7501-restricted-kind";
+    const bool question = scenario == "osc7501-question";
+    const bool budget = scenario == "osc7501-budget";
+    const bool cancel = scenario == "osc7501-cancel";
+    const bool error = scenario == "osc7501-error";
+    const auto fixture = budget ? "round-click" : permission ? "osc7501-permission" : scenario;
+    const auto target = root / "status-tool.txt";
+    ModelServer server(false, false, target, false, fixture);
+    ModelOptions options;
+    if (budget) options.extra_arguments = {"--max-tool-rounds=1"};
+    Terminal terminal(binary, root, server.url(), options);
+    server.start();
+    negotiate_status(terminal, scenario);
+    if (disabled && scenario == "osc7501-unsupported") settle_terminal(terminal, 1200ms);
+    constexpr auto prompt = "PTY status prompt";
+    terminal.input(std::string(prompt) + '\r');
+    if (permission || question || budget) {
+        const auto blocked = scenario == "osc7501-restricted-kind" ? "blocked" : "blocked:permission";
+        require(terminal.wait([&] { return terminal.permission_visible() &&
+            status_reports(terminal.output) == std::vector<std::string>{"idle", "working", blocked}; }),
+            "actual tool permission was not reported as blocked");
+        require(!fs::exists(target), "unapproved status fixture executed a file write");
+        terminal.input("y");
+    }
+    if (question) {
+        // This runtime tool is checked both by QueryEngine and by its live
+        // registry permission checker. Approve each actual request; neither
+        // approval is a response to the subsequent ask-user dialog.
+        require(terminal.wait([&] { return terminal.permission_visible() &&
+            status_reports(terminal.output) == std::vector<std::string>{"idle", "working", "blocked:permission", "working", "blocked:permission"}; }),
+            "runtime ask-user permission was not reported as blocked permission");
+        terminal.input("y");
+        require(terminal.wait([&] { return terminal.latest_frame_text().find("Question") != std::string::npos &&
+            terminal.latest_frame_text().find("[Enter] Submit") != std::string::npos &&
+            status_reports(terminal.output) == std::vector<std::string>{"idle", "working", "blocked:permission", "working", "blocked:permission", "working", "blocked:question"}; }),
+            "actual ask-user dialog was not reported as blocked question");
+        // The existing prompt UI accepts its supplied default on Return; it
+        // does not implement free-form editing. Exercise that real decision.
+        terminal.input("\r");
+    }
+    if (budget) {
+        require(terminal.wait([&] { return terminal.latest_frame_text().find("[C] Continue") != std::string::npos &&
+            status_reports(terminal.output) == std::vector<std::string>{"idle", "working", "blocked:permission", "working", "blocked:question"}; }),
+            "actual tool-round limit was not reported as blocked question");
+        require(server.requests.load() == 1, "round budget continued without human input");
+        terminal.input("c");
+    }
+    std::vector<std::string> expected = disabled ? std::vector<std::string>{} : std::vector<std::string>{"idle", "working"};
+    if (permission) expected.insert(expected.end(), {scenario == "osc7501-restricted-kind" ? "blocked" : "blocked:permission", "working"});
+    if (question) expected.insert(expected.end(), {"blocked:permission", "working", "blocked:permission", "working", "blocked:question", "working"});
+    if (budget) expected.insert(expected.end(), {"blocked:permission", "working", "blocked:question", "working"});
+    if (cancel) {
+        require(terminal.wait([&] { return server.parked.load() == 1 &&
+            terminal.latest_frame_text().find("PTY status streaming") != std::string::npos; }),
+            "status cancellation stream did not start");
+        terminal.input("\x1b");
+        expected.push_back("idle");
+        require(terminal.wait([&] { return server.closed.load() == 1 && status_reports(terminal.output) == expected; }),
+                "actual Esc cancellation did not finish idle");
+        require(server.requests.load() == 1, "cancellation issued an extra model request");
+    } else if (error) {
+        expected.push_back("error");
+        require(terminal.wait([&] { return terminal.latest_frame_text().find("Model request failed") != std::string::npos &&
+            status_reports(terminal.output) == expected; }), "stopped model error did not report error");
+    } else {
+        if (!disabled) expected.push_back("done");
+        require(terminal.wait([&] { return terminal.idle_response_visible(budget ? "PTY round-budget complete" : "PTY status complete") &&
+            status_reports(terminal.output) == expected; }), "whole operation did not finish with the expected terminal status");
+    }
+    const auto bodies = server.request_bodies();
+    require(!bodies.empty(), "status fixture saw no real model request");
+    const auto messages = request_messages(bodies.front());
+    require(messages.find("\"content\":\"PTY status prompt\"") != std::string::npos ||
+            messages.find("\"text\":\"PTY status prompt\"") != std::string::npos,
+            "terminal capability bytes contaminated the submitted prompt");
+    if (question) {
+        const auto result = status_question_result(bodies.back());
+        require(result == R"({"type":"tool_result","tool_use_id":"pty-status-question","is_error":false,"content":"PTY status answer"})",
+                "accepted default answer did not reach the exact successful tool result");
+    }
+    if (permission) require(read_file(target) == "PTY status write", "approved permission did not execute its actual file write");
+    if (budget) require(read_file(target) == "PTY-round-0\n", "round continuation repeated or lost the committed tool");
+    const auto before_resize = terminal.output.size();
+    terminal.resize(100, 36);
+    require(terminal.wait([&] { return !terminal.first_resize_frame_since(before_resize).empty(); }),
+            "status resize did not produce a complete real frame");
+    // Synthetic redraws, duplicate/malformed control replies and mouse motion
+    // must not acknowledge a retained done/error or create duplicate reports.
+    terminal.input(std::string(status_probe) + "\x1b]7501;?:states=invalid\x1b\\"
+                   "\x1b[<35;74;23M\x1b[<32;74;23M\x1b[<34;74;23M");
+    settle_terminal(terminal, 100ms);
+    expect_statuses(terminal, expected);
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+    expect_statuses(terminal, expected);
+    require(occurrences(terminal.output, std::string(status_probe)) == 1,
+            "OSC 7501 sent more than one capability probe");
+    std::ofstream(root / "status-result.txt") << describe_statuses(expected)
+        << "\nexact submitted prompt retained; resize/control/motion deduplicated; direct Ctrl+D outcome retained; termios restored\n";
+}
+
 void run_case(const std::string& binary, const std::string& scenario, const fs::path& root,
               const std::string& harness) {
+    if (scenario.starts_with("osc7501-")) {
+        run_status_case(binary, scenario, root, harness);
+        return;
+    }
     if (scenario.starts_with("escape-")) {
         run_escape_case(binary, scenario, root);
         return;
@@ -2235,12 +2563,12 @@ int main(int argc, char** argv) {
     // Bash's destructive-command guard also examines path arguments; a
     // recovery path containing "shutdown" would reject even fixture reads.
     const std::string scenario(argv[1]);
-    std::string pattern = scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry") || scenario.starts_with("round-") || scenario.starts_with("compressed-chain-")
+    std::string pattern = scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry") || scenario.starts_with("round-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-")
         ? "/tmp/loom_pty_recovery_XXXXXX" : "/tmp/loom_pty_shutdown_XXXXXX";
     const char* directory = ::mkdtemp(pattern.data());
     if (!directory) return 1;
     const fs::path root(directory);
-    if (scenario.starts_with("handoff-") && ::access("/bin/zsh", X_OK) != 0 && ::access("/usr/bin/zsh", X_OK) != 0) {
+    if ((scenario.starts_with("handoff-") || scenario == "osc7501-handoff") && ::access("/bin/zsh", X_OK) != 0 && ::access("/usr/bin/zsh", X_OK) != 0) {
         std::error_code ignored;
         fs::remove_all(root, ignored);
         return 125;
@@ -2256,7 +2584,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

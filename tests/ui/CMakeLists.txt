@@ -28,6 +28,7 @@ gtest_discover_tests(test_ui_messages DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TI
 add_executable(test_ui_runtime
     test_app_runtime.cpp
     test_app_coordinators.cpp
+    test_app_program_status.cpp
     test_ui_render.cpp
     test_ui_render_state.cpp
     test_ui_render_pure.cpp
@@ -36,6 +37,11 @@ add_executable(test_ui_runtime
     ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_ui_runtime ${_ui_test_libs})
 gtest_discover_tests(test_ui_runtime DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_program_status test_program_status.cpp)
+target_include_directories(test_program_status PRIVATE "${ftxui_SOURCE_DIR}/src")
+target_link_libraries(test_program_status ${_ui_test_libs})
+gtest_discover_tests(test_program_status DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 add_executable(test_ui_features test_ui_features.cpp ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_ui_features ${_ui_test_libs})

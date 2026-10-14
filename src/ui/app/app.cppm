@@ -197,6 +197,18 @@ private:
 
     std::function<void()> on_exit_;
 
+    // OSC 7501 lifecycle stays behind AppImpl; painting never sends reports.
+    void StartProgramStatusWithWriter(bool interactive,
+        std::function<bool(std::string_view)> writer);
+    [[nodiscard]] std::uint64_t BeginProgramStatusOperation();
+    void CancelProgramStatusOperation();
+    void CompleteProgramStatusOperation(std::uint64_t generation, bool error, bool paused);
+    [[nodiscard]] bool HandleProgramStatusControl(const Event& event);
+    void PrepareProgramStatusInput(Event& event);
+    [[nodiscard]] std::pair<bool, bool> ProgramStatusBlocks(); // permission, question
+    void UpdateProgramStatusSnapshot();
+    void RefreshProgramStatus() noexcept;
+
     std::shared_ptr<repl::ReplScreenState> screen_state_;
     Component repl_component_;
     std::vector<repl::MessageDisplayEntry> local_command_messages_;
@@ -652,6 +664,9 @@ private:
 public:
     ~AppAdapter() override;
 
+    void StartProgramStatus(bool interactive) noexcept;
+    void FinishProgramStatus(bool normal) noexcept;
+
     AppAdapter(void* engine, void* lifecycle_hooks,
                void* cmd_registry,
                std::optional<std::filesystem::path> sessions_dir,
@@ -964,6 +979,8 @@ struct AppTestingSeams {
     [[nodiscard]] std::shared_ptr<const repl::ReplScreenState> screen_state_for_testing() const;
     [[nodiscard]] bool stop_background_workers_for_testing();
     [[nodiscard]] std::size_t pending_ui_action_count_for_testing() const;
+    void start_program_status_for_testing(std::function<bool(std::string_view)> writer);
+    void enqueue_program_status_completion_for_testing(bool error, bool paused = false);
 
     // ── Teammate inbox seams ──────────────────────────────────────
     void configure_teammate_for_testing(std::string agent_name, std::string team);

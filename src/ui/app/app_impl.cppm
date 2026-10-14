@@ -19,10 +19,13 @@ import loom.ui.app.app;
 import loom.vim.vim_mode;
 import loom.hooks.exit_handler;
 import loom.constants.paths;
+import loom.ui.app.program_status;
 
 namespace loom::ui {
 
 struct AppImpl {
+    std::unique_ptr<ProgramStatusReporter> program_status;
+    std::uint64_t program_status_generation = 0;
     struct UiActions {
         std::mutex mutex;
         std::vector<std::function<void()>> pending;

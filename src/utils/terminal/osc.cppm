@@ -19,4 +19,12 @@ export namespace loom::terminal::osc {
 /// Arbitrary text bytes are supported. No terminal acceptance is implied.
 [[nodiscard]] std::string clipboard_request(std::string_view text);
 
+enum class ProgramStatusState { Idle, Working, Done, Blocked, Error };
+enum class ProgramStatusKind { None, Permission, Question, Auth };
+
+/// Query OSC 7501 support. Reports address only Loom's root record.
+[[nodiscard]] std::string program_status_query();
+[[nodiscard]] loom::utils::Result<std::string> program_status(
+    ProgramStatusState state, ProgramStatusKind kind = ProgramStatusKind::None);
+
 }  // namespace loom::terminal::osc

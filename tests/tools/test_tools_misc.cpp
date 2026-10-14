@@ -46,6 +46,7 @@ import loom.tools.todo_write;
 import loom.tools.notebook;
 import loom.tools.registry;
 import loom.tools.runtime_registry;
+import loom.tools.ask_user;
 import loom.config.config;
 import loom.tools.path_validation;
 import loom.tools.bash_security;
@@ -1089,6 +1090,39 @@ TEST(ToolRegistry, RegistersRuntimeTools) {
     EXPECT_TRUE(registry.contains("lsp"));
     EXPECT_TRUE(registry.contains("skill"));
     EXPECT_TRUE(registry.contains("task_create"));
+}
+
+TEST(ToolRegistry, AskUserUsesInstalledResponderAndReturnsPrevious) {
+    struct RestoreResponder {
+        loom::tools::AskUserResponder original =
+            std::move(loom::tools::get_global_ask_user_responder());
+        ~RestoreResponder() {
+            loom::tools::set_global_ask_user_responder(std::move(original));
+        }
+    } restore;
+    loom::tools::set_global_ask_user_responder(
+        [](std::string_view, std::optional<std::string>) -> std::optional<std::string> {
+            return "previous answer";
+        });
+    ASSERT_TRUE(loom::tools::get_global_ask_user_responder());
+    auto previous = loom::tools::set_global_ask_user_responder(
+        [](std::string_view question, std::optional<std::string>) -> std::optional<std::string> {
+            return "UI answer: " + std::string(question);
+        });
+    ASSERT_TRUE(previous);
+    EXPECT_EQ(previous("unused", std::nullopt), "previous answer");
+    EXPECT_EQ(loom::tools::get_global_ask_user_responder()("direct", std::nullopt),
+              "UI answer: direct");
+    loom::core::ToolRegistry registry;
+    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
+        .permission_check = test_allow_all_check(),
+    });
+    auto result = registry.execute("ask_user_question", loom::core::ToolInput::from_json(
+        R"({"question":"real registry"})"));
+    ASSERT_TRUE(result.has_value());
+    ASSERT_FALSE(result->is_error);
+    ASSERT_FALSE(result->content.empty());
+    EXPECT_EQ(result->content.front().text, "UI answer: real registry");
 }
 
 TEST(ToolRegistry, TaskToolsRegistrationMatchesDiscovery) {

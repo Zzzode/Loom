@@ -616,8 +616,15 @@ Element AppAdapter::Render() {
 }
 
 bool AppAdapter::OnEvent(Event event) {
+    const bool status_control = HandleProgramStatusControl(event);
+    struct FlushStatus {
+        AppAdapter* app;
+        ~FlushStatus() { app->RefreshProgramStatus(); }
+    } flush_status{this};
     DrainUiActions();
     ConsumePendingResult();
+    if (status_control) return true;
+    PrepareProgramStatusInput(event);
     if (event == Event::Return && pending_paste_submission_) return true;
     // Drain any background-thread paste results that completed since the
     // last event.  Must happen on the render thread (we mutate

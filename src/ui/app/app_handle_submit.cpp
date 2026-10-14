@@ -204,6 +204,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
     }
 
     query_running_.store(true);
+    const auto program_generation = BeginProgramStatusOperation();
     screen_state_->query_running = true;
     last_submitted_text_ = text;
     repl::SetSpinner(screen_state_->task_view_store, repl::SpinnerMode::Requesting);
@@ -245,7 +246,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
         });
     for (const auto& ref : refs) paste_.pasted_text_contents().erase(ref.id);
 
-    query_thread_ = std::jthread([this, text = std::move(expanded_text), attachments = std::move(attachments), cwd = screen_state_->cwd, retry_request, tool_round_budget = tool_round_budget_](std::stop_token st) {
+    query_thread_ = std::jthread([this, text = std::move(expanded_text), attachments = std::move(attachments), cwd = screen_state_->cwd, retry_request, tool_round_budget = tool_round_budget_, program_generation, dispatch = ui_dispatcher()](std::stop_token st) {
         core::QueryOptions opts;
         opts.max_tool_rounds = tool_round_budget;
         opts.resume_from_conversation = retry_request;
@@ -272,6 +273,17 @@ void AppAdapter::HandleSubmit(const std::string& text,
             engine->stream_query(materialized.text, opts);
         }
 
+        // Capture before publishing completion: Render may consume pending_error_.
+        bool failed = false;
+        bool paused = false;
+        {
+            std::lock_guard lock(result_mutex_);
+            paused = pending_error_ && pending_error_->type == "tool_round_limit";
+            failed = pending_error_.has_value() && !paused;
+        }
+        dispatch([this, program_generation, failed, paused] {
+            CompleteProgramStatusOperation(program_generation, failed, paused);
+        });
         query_running_.store(false);
         PostRenderEvent();
     });

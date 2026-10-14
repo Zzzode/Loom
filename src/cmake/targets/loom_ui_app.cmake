@@ -34,6 +34,7 @@ target_sources(loom_ui_app
         ui/app/paste_coordinator.cppm
         # P4-1d: tool-permission + MCP-elicitation blocking-response state.
         ui/app/permission_coordinator.cppm
+        ui/app/program_status.cppm
 )
 # Module implementation units for loom.ui.app.app_dialog_registration — one per
 # dialog-renderer aggregator, so no single TU imports more than one aggregator's
@@ -43,6 +44,8 @@ target_sources(loom_ui_app
 target_sources(loom_ui_app PRIVATE
     ui/app/app_autocomplete.cpp
     ui/app/app_render_event.cpp
+    ui/app/app_program_status.cpp
+    ui/app/program_status.cpp
     ui/app/app_text_selection.cpp
     ui/app/app_extra_methods.cpp
     ui/app/app_constructor.cpp

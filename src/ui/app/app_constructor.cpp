@@ -63,6 +63,13 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
       on_exit_(std::move(on_exit)),
       screen_state_(std::make_shared<repl::ReplScreenState>()) {
     construct_impl(engine, lifecycle_hooks, cmd_registry, std::move(sessions_dir));
+    if (on_exit_) {
+        auto exit = std::move(on_exit_);
+        on_exit_ = [this, exit = std::move(exit)] {
+            FinishProgramStatus(true);
+            exit();
+        };
+    }
     construct_settings();
     auto* engine_ = static_cast<loom::core::QueryEngine*>(engine);
     auto* lifecycle_hooks_ =
@@ -174,6 +181,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     set_exit_message_impl("Press Ctrl+C again to exit");
     cbs.on_interrupt = [this]() {
         if (query_running_.load()) {
+            CancelProgramStatusOperation();
             // A running query aborts immediately — never arms the exit
             // double-press and never leaves a stale footer from a previous
             // idle press.

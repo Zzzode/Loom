@@ -132,6 +132,55 @@ TEST(TerminalOsc, HyperlinkRejectsEveryC0AndDelControlInUri) {
         EXPECT_EQ(result.error().code(), loom::utils::ErrorCode::invalid_argument);
     }
 }
+TEST(TerminalOsc, ProgramStatusQuery) {
+    EXPECT_EQ(osc::program_status_query(), "\033]7501;?\033\\");
+}
+TEST(TerminalOsc, ProgramStatusIdle) {
+    const auto encoded = osc::program_status(osc::ProgramStatusState::Idle);
+    ASSERT_TRUE(encoded);
+    EXPECT_EQ(*encoded, "\033]7501;state=idle:app=loom\033\\");
+}
+TEST(TerminalOsc, ProgramStatusWorkingAndTerminalOutcomes) {
+    for (const auto& [state, name] : {
+             std::pair{osc::ProgramStatusState::Working, "working"},
+             std::pair{osc::ProgramStatusState::Done, "done"},
+             std::pair{osc::ProgramStatusState::Error, "error"}}) {
+        const auto encoded = osc::program_status(state);
+        ASSERT_TRUE(encoded);
+        EXPECT_EQ(*encoded, "\033]7501;state=" + std::string(name) + ":app=loom\033\\");
+    }
+}
+TEST(TerminalOsc, ProgramStatusBlockedKinds) {
+    const auto untyped = osc::program_status(osc::ProgramStatusState::Blocked);
+    ASSERT_TRUE(untyped);
+    EXPECT_EQ(*untyped, "\033]7501;state=blocked:app=loom\033\\");
+    for (const auto& [kind, name] : {
+             std::pair{osc::ProgramStatusKind::Permission, "permission"},
+             std::pair{osc::ProgramStatusKind::Question, "question"},
+             std::pair{osc::ProgramStatusKind::Auth, "auth"}}) {
+        const auto encoded = osc::program_status(osc::ProgramStatusState::Blocked, kind);
+        ASSERT_TRUE(encoded);
+        EXPECT_EQ(*encoded, "\033]7501;state=blocked:kind=" + std::string(name) +
+                            ":app=loom\033\\");
+    }
+}
+TEST(TerminalOsc, ProgramStatusRejectsInvalidState) {
+    const auto encoded = osc::program_status(static_cast<osc::ProgramStatusState>(999));
+    ASSERT_FALSE(encoded);
+    EXPECT_EQ(encoded.error().code(), loom::utils::ErrorCode::invalid_argument);
+}
+TEST(TerminalOsc, ProgramStatusRejectsInvalidKind) {
+    const auto encoded = osc::program_status(osc::ProgramStatusState::Blocked,
+                                            static_cast<osc::ProgramStatusKind>(999));
+    ASSERT_FALSE(encoded);
+    EXPECT_EQ(encoded.error().code(), loom::utils::ErrorCode::invalid_argument);
+}
+TEST(TerminalOsc, ProgramStatusRejectsKindOnNonBlockedState) {
+    for (const auto state : {osc::ProgramStatusState::Idle, osc::ProgramStatusState::Working,
+                             osc::ProgramStatusState::Done, osc::ProgramStatusState::Error}) {
+        EXPECT_FALSE(osc::program_status(state, osc::ProgramStatusKind::Permission));
+    }
+}
 TEST(TerminalOsc, EncodingAndValidationNeverWriteStdout) {
     StdoutCapture capture;
     ASSERT_TRUE(capture.ready());
@@ -140,5 +189,7 @@ TEST(TerminalOsc, EncodingAndValidationNeverWriteStdout) {
     EXPECT_FALSE(osc::window_title("\033").has_value());
     EXPECT_FALSE(osc::hyperlink("\a", "Example").has_value());
     EXPECT_FALSE(osc::clipboard_request("text").empty());
+    EXPECT_FALSE(osc::program_status_query().empty());
+    EXPECT_TRUE(osc::program_status(osc::ProgramStatusState::Done).has_value());
     EXPECT_EQ(capture.size(), 0);
 }

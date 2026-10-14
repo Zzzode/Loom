@@ -99,9 +99,11 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
     PostRenderEvent();
 
     bash_running_.store(true);
+    const auto program_generation = BeginProgramStatusOperation();
     const std::string cwd = static_cast<loom::core::QueryEngine*>(engine_raw()) ? static_cast<loom::core::QueryEngine*>(engine_raw())->working_directory() : std::string{};
     bash_thread_ = std::jthread(
-        [this, command, cwd, session_id = current_session_id_](std::stop_token st) {
+        [this, command, cwd, session_id = current_session_id_, program_generation,
+         dispatch = ui_dispatcher()](std::stop_token st) {
             // POSIX single-quote helper for paths with spaces/quotes.
             auto sq = [](std::string_view s) {
                 std::string out = "'";
@@ -174,6 +176,9 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
                     .cwd = new_cwd != cwd ? std::move(new_cwd) : std::string{},
                     .session_id = session_id};
             }
+            dispatch([this, program_generation, is_error] {
+                CompleteProgramStatusOperation(program_generation, is_error, false);
+            });
             bash_running_.store(false);
             PostRenderEvent();
         });

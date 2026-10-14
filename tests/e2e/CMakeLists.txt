@@ -195,6 +195,19 @@ set_tests_properties(E2E_Pty_Handoff_HupStress PROPERTIES
     ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
     SKIP_RETURN_CODE 125)
 
+# RFC 0016: negotiate through the real FTXUI reader and inspect raw status
+# ordering, real tool/question/Continue decisions, cancellation and zsh handoff.
+foreach(_pty_status_case IN ITEMS
+    st bel fragmented unsupported late restricted-states restricted-kind
+    truncated permission question error cancel budget handoff)
+  add_test(NAME E2E_Pty_ProgramStatus_${_pty_status_case}
+      COMMAND e2e_pty_shutdown osc7501-${_pty_status_case})
+  set_tests_properties(E2E_Pty_ProgramStatus_${_pty_status_case} PROPERTIES
+      TIMEOUT 45
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
 
 if(APPLE)
   # The test CA interposer only installs the existing fixture certificate in

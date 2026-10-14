@@ -213,13 +213,16 @@ private:
         hangup_guard = std::make_unique<TerminalHangupGuard>();
 #endif
         try {
+            app->StartProgramStatus(::isatty(STDIN_FILENO) && ::isatty(STDOUT_FILENO));
             loop.Run();
         } catch (...) {
+            app->FinishProgramStatus(false);
 #if defined(__APPLE__) || defined(__linux__)
             hangup_guard->Deactivate();
 #endif
             throw;
         }
+        app->FinishProgramStatus(should_exit);
 #if defined(__APPLE__) || defined(__linux__)
         hangup_guard->Deactivate();
 #endif

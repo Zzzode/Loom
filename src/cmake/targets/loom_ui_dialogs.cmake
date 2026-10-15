@@ -52,6 +52,7 @@ target_sources(loom_ui_dialogs
 # implement the module interfaces owned by this target.
 target_sources(loom_ui_dialogs PRIVATE
     ui/dialogs/dialog_system.cpp
+    ui/dialogs/dialog_question.cpp
     ui/dialogs/hooks_dialog_renderer_impl.cpp
     ui/dialogs/plugin_dialog_renderer_impl.cpp
 )

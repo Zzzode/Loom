@@ -213,6 +213,23 @@ private:
             request_bodies_.push_back(request.substr(request.find("\r\n\r\n") + 4));
         }
         const int index = requests.fetch_add(1);
+        if (recovery_.starts_with("question-")) {
+            std::string body;
+            if (index == 0) {
+                std::string input = R"({"question":"PTY exact question words")";
+                if (recovery_ != "question-resize" && recovery_ != "question-empty-no-default")
+                    input += ",\"default_answer\":\"" +
+                        std::string(recovery_ == "question-unicode" ? "甲乙🙂" : "seed") + "\"";
+                input += '}';
+                body = tool_response("ask_user_question", input, "pty-status-question");
+            } else {
+                body = text_response(index == 1 ? "PTY question complete" : "PTY question follow-up complete");
+            }
+            send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
+                std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            ::shutdown(fd, SHUT_WR);
+            return;
+        }
         if (recovery_.starts_with("osc7501-")) {
             if (recovery_ == "osc7501-cancel" || recovery_ == "osc7501-handoff") {
                 const auto prefix = message_start() +
@@ -442,6 +459,7 @@ std::string terminal_text(const std::string& raw) {
 }
 
 struct ModelOptions {
+    unsigned short initial_columns = 120;
     bool direct = false;
     bool capture_clipboard = false;
     bool shell_handoff = false;
@@ -531,7 +549,7 @@ printf '\nPTY-SHELL-RECEIVED\n'
         argv.push_back(nullptr);
         winsize dimensions{};
         dimensions.ws_row = 40;
-        dimensions.ws_col = 120;
+        dimensions.ws_col = options.initial_columns;
         // Capture the attributes before exec can enter raw mode. Supplying
         // them to forkpty removes a startup race in the restoration assertion.
         int initial_master = -1;
@@ -2400,8 +2418,157 @@ void run_status_case(const std::string& binary, const std::string& scenario, con
         << "\nexact submitted prompt retained; resize/control/motion deduplicated; direct Ctrl+D outcome retained; termios restored\n";
 }
 
+std::string first_question_frame_since(const Terminal& terminal, std::size_t start) {
+    for (auto end = terminal.output.find('\0', start); end != std::string::npos;
+         end = terminal.output.find('\0', start)) {
+        const auto frame = terminal.output.substr(start, end - start);
+        const auto visible = terminal_text(frame);
+        if (visible.find("Question") != std::string::npos && visible.find("[Enter] Submit") != std::string::npos)
+            return frame;
+        start = end + 1;
+    }
+    return {};
+}
+
+void verify_question_spaces(const std::string& raw, const fs::path& artifacts, const std::string& label) {
+    std::ofstream(artifacts / (label + ".raw"), std::ios::binary) << raw;
+    std::ofstream(artifacts / (label + ".txt")) << terminal_text(raw);
+    const auto frame = decode_frame(raw);
+    const auto position = frame.find("PTY exact question words");
+    require(position.first >= 0, "question words lost their actual spaces in " + label);
+    require(terminal_text(raw).find("[Enter] Submit") != std::string::npos &&
+            terminal_text(raw).find("[Esc] Cancel") != std::string::npos,
+            "question decision hints were clipped in " + label);
+}
+
+void run_question_session(const std::string& binary, const std::string& scenario, const fs::path& root,
+                          const fs::path& artifacts, unsigned short columns, const std::string& label) {
+    fs::create_directories(root / "config");
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
+    ModelServer server(false, false, root / "unused.txt", false, scenario);
+    ModelOptions options;
+    options.initial_columns = columns;
+    Terminal terminal(binary, root, server.url(), options);
+    server.start();
+    negotiate_status(terminal, "osc7501-st");
+    terminal.input("PTY question request\r");
+    std::vector<std::string> blocked{"idle", "working"};
+    std::size_t question_start = 0;
+    for (int gate = 0; gate < 2; ++gate) {
+        blocked.push_back("blocked:permission");
+        require(terminal.wait([&] { return terminal.permission_visible() && status_reports(terminal.output) == blocked; }),
+                "question fixture did not reach its actual tool permission");
+        question_start = terminal.output.rfind('\0') + 1;
+        terminal.input("y");
+        blocked.push_back("working");
+    }
+    blocked.push_back("blocked:question");
+    require(terminal.wait([&] { return status_reports(terminal.output) == blocked &&
+        !first_question_frame_since(terminal, question_start).empty(); }),
+        "actual question did not reach a complete first frame and blocked status");
+    verify_question_spaces(first_question_frame_since(terminal, question_start), artifacts, label + "-first");
+
+    auto expected_answer = scenario == "question-unicode" ? std::string("甲乙🙂") :
+        scenario == "question-resize" || scenario == "question-empty-no-default" ? std::string{} : std::string("seed");
+    const auto edit = [&](const std::string& bytes, const std::string& visible) {
+        const auto before = terminal.output.size();
+        terminal.input(bytes);
+        require(terminal.wait([&] { return terminal.output.size() > before &&
+            terminal.latest_frame_text().find(visible) != std::string::npos; }),
+            "question edit did not appear in the actual input row");
+        settle_terminal(terminal, 80ms);
+        expect_statuses(terminal, blocked);
+        require(server.requests.load() == 1, "editing an answer prematurely submitted to the model");
+    };
+    if (scenario == "question-edit") {
+        edit("\x1b[H\x1b[3~S\x1b[F edited", "Seed edited");
+        expected_answer = "Seed edited";
+    } else if (scenario == "question-unicode") {
+        edit("\x7f\x1b[D\x1b[3~中文\x1b[H\x1b[3~\x1b[F🙂", "中文🙂");
+        expected_answer = "中文🙂";
+    } else if (scenario == "question-resize") {
+        for (int segment = 0; segment < 20; ++segment) expected_answer += "word" + std::to_string(segment) + " ";
+        expected_answer += "尾🙂 ENDMARK";
+        edit(expected_answer, "ENDMARK");
+        for (const unsigned short width : {40, 80, 120, 40}) {
+            const auto start = terminal.output.rfind('\0') + 1;
+            terminal.resize(width, 40);
+            require(terminal.wait([&] { return !terminal.first_resize_frame_since(start).empty(); }),
+                    "question resize did not produce a first complete frame");
+            const auto raw = terminal.first_resize_frame_since(start);
+            verify_question_spaces(raw, artifacts, label + "-resized-" + std::to_string(width));
+            require(terminal_text(raw).find("ENDMARK") != std::string::npos,
+                    "long answer cursor/end vanished in the first resized frame");
+            expect_statuses(terminal, blocked);
+        }
+        edit("\x1b[HBEGIN ", "BEGIN");
+        expected_answer = "BEGIN " + expected_answer;
+        edit("\x1b[F END", "END");
+        expected_answer += " END";
+    } else if (scenario == "question-empty-default") {
+        // Home followed by Delete repeatedly clears the entire prefill.
+        terminal.input("\x1b[H\x1b[3~\x1b[3~\x1b[3~\x1b[3~");
+        settle_terminal(terminal, 100ms);
+        expect_statuses(terminal, blocked);
+        expected_answer.clear();
+    }
+    std::ofstream(artifacts / (label + "-edited.raw"), std::ios::binary) << terminal.latest_frame();
+    const bool cancelled = scenario == "question-cancel";
+    terminal.input(cancelled ? "\x1b" : "\r");
+    auto completed = blocked;
+    completed.insert(completed.end(), {"working", "done"});
+    require(terminal.wait([&] { return terminal.idle_response_visible("PTY question complete") &&
+        status_reports(terminal.output) == completed; }), "question decision did not resolve and recover the model turn");
+    auto bodies = server.request_bodies();
+    require(bodies.size() == 2, "question decision issued duplicate or missing model requests");
+    const auto result = status_question_result(bodies.back());
+    const auto expected_content = cancelled ? "User cancelled the prompt" : expected_answer;
+    const auto expected_result = std::string("{\"type\":\"tool_result\",\"tool_use_id\":\"pty-status-question\",\"is_error\":") +
+        (cancelled ? "true" : "false") + ",\"content\":\"" + escape_json(expected_content) + "\"}";
+    require(result == expected_result, "question result differs from the actual edited/empty/cancelled answer: " + result);
+
+    // A new real prompt must start empty: none of the dialog's edits or
+    // navigation bytes may have entered the underlying REPL input buffer.
+    terminal.input("PTY question follow-up\r");
+    completed.insert(completed.end(), {"idle", "working", "done"});
+    require(terminal.wait([&] { return terminal.idle_response_visible("PTY question follow-up complete") &&
+        status_reports(terminal.output) == completed; }), "REPL could not continue cleanly after the question");
+    bodies = server.request_bodies();
+    require(bodies.size() == 3, "question follow-up issued unexpected model requests");
+    const auto messages = request_messages(bodies.back());
+    require(messages.find("\"content\":\"PTY question follow-up\"") != std::string::npos ||
+            messages.find("\"text\":\"PTY question follow-up\"") != std::string::npos,
+            "question answer/edit keys leaked into the real REPL prompt");
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+    expect_statuses(terminal, completed);
+    std::ofstream(artifacts / (label + "-session.raw"), std::ios::binary) << terminal.output;
+    std::ofstream(artifacts / (label + "-result.txt")) << "initial columns=" << columns
+        << "\nexact tool result=" << result << "\nstatus=" << describe_statuses(completed)
+        << "\nfollow-up prompt exact; termios restored\n";
+}
+
+void run_question_case(const std::string& binary, const std::string& scenario, const fs::path& root) {
+    if (scenario == "question-layout") {
+        for (const unsigned short width : {40, 80, 120}) {
+            const auto label = "question-layout-" + std::to_string(width);
+            run_question_session(binary, scenario, root / label, root, width, label);
+        }
+    } else if (scenario == "question-empty") {
+        for (const std::string variant : {"question-empty-default", "question-empty-no-default"})
+            run_question_session(binary, variant, root / variant, root, 120, variant);
+    } else {
+        run_question_session(binary, scenario, root, root, 120, scenario);
+    }
+}
+
 void run_case(const std::string& binary, const std::string& scenario, const fs::path& root,
               const std::string& harness) {
+    if (scenario.starts_with("question-")) {
+        run_question_case(binary, scenario, root);
+        return;
+    }
     if (scenario.starts_with("osc7501-")) {
         run_status_case(binary, scenario, root, harness);
         return;
@@ -2563,7 +2730,7 @@ int main(int argc, char** argv) {
     // Bash's destructive-command guard also examines path arguments; a
     // recovery path containing "shutdown" would reject even fixture reads.
     const std::string scenario(argv[1]);
-    std::string pattern = scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry") || scenario.starts_with("round-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-")
+    std::string pattern = scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry") || scenario.starts_with("round-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-")
         ? "/tmp/loom_pty_recovery_XXXXXX" : "/tmp/loom_pty_shutdown_XXXXXX";
     const char* directory = ::mkdtemp(pattern.data());
     if (!directory) return 1;
@@ -2584,7 +2751,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

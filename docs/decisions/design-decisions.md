@@ -3924,3 +3924,30 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   model/session formats, permissions and exit statuses do not change. Remove
   the integration and OSC patch include to roll back, then restore/repopulate
   patched FTXUI sources before rebuilding. See RFC 0016 for native/PTY gates.
+
+## Ask-user questions own a held native editor and opaque local layer
+
+- **Ownership:** the actual queued `PromptDialogPayload` retains a defaulted,
+  transient editor state. The default renderer and event handler share one
+  FTXUI Input, initialized once even when input precedes the first render.
+  The unrelated standalone prompt component is not used by this production
+  path. A local DOM owner retains the state when an Element outlives its queue
+  payload; Input holds references to both its buffer and internal geometry.
+- **Input contract:** a supplied default is editable initial text. Enter returns
+  the current string, including an empty answer; Escape returns nullopt. Both
+  resolve once, marking the state before calling a copied callback that may
+  synchronously remove the payload. Native Input owns UTF-8 glyph editing and
+  horizontal scrolling. Defaults and character batches share single-line
+  normalization; this does not add general bracketed-paste or multiline input.
+- **Routing:** editing boundary keys stay with the question. Ctrl-C, Ctrl-D and
+  Ctrl-L keep their existing outer ownership. Suppression preserves question
+  drafts without consuming REPL input; no App-wide keyboard handling changes.
+- **Composition:** only the question renderer applies `clear_under` to its own
+  frame. Transparent paragraph gaps and padding previously exposed underlying
+  prompt separators and text. Shared DialogFrame and terminal layout stay
+  unchanged; adding a background color alone would not erase those characters.
+- **Verification and rollback:** native tests exercise real default registration,
+  cursor columns, callback/DOM lifetime, suppression and dbox overlap. Existing
+  forkpty infrastructure runs actual ask-user tool responses at 40/80/120
+  columns. Revert this local implementation, transient field and tests/docs
+  together; no persisted data, configuration or protocol migration is needed.

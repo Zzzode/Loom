@@ -24,8 +24,13 @@ their requests can still require a decision. A terminal that supports blocked
 status but does not advertise a particular kind receives `blocked` without
 that kind.
 
-In the current ask-user dialog, Enter submits a supplied default answer and
-Escape cancels the question.
+In an ask-user question, type your answer in the input row. A supplied default
+is editable initial text. Use the arrow keys, Home/End, Backspace and Delete
+to edit; long answers scroll horizontally and survive terminal resizing.
+Enter submits the current answer, including an empty answer. Escape cancels.
+Answers use one line: a text batch containing line breaks is flattened to
+spaces, but a terminal that sends a newline as Enter can submit the answer.
+Multiline paste and composition are not supported.
 
 Completion and failure remain until you type, click, scroll, or start another
 operation. Redrawing, resizing, focus changes and mouse movement preserve

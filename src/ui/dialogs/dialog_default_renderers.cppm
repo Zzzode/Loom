@@ -352,46 +352,11 @@ inline bool HandleIdleReturnEvent(
 // PromptDialog renderer (hook input)
 // ============================================================
 
-[[nodiscard]] inline Element RenderPromptDialog(
+[[nodiscard]] Element RenderPromptDialog(
     const dsys::PromptDialogPayload& p,
-    const dsys::DialogRenderContext& ctx)
-{
-    const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    dframe::DialogFrameProps props;
-    props.title = p.title.empty() ? std::string{"Input Required"} : p.title;
-    props.style = dframe::FrameStyle::Permission;
+    const dsys::DialogRenderContext& ctx);
 
-    auto value_display = p.default_value
-        ? hbox({ text("[") | dim, text(*p.default_value), text("]") | dim })
-        : text("");
-
-    props.content = vbox({
-        paragraph(p.prompt_text),
-        text(""),
-        value_display,
-        text(""),
-        hbox({
-            text(" [Enter] Submit") | color(pal.success),
-            text("  [Esc] Cancel") | color(pal.danger),
-        }),
-    });
-    return dframe::DialogFrame(props, ctx.theme);
-}
-
-inline bool HandlePromptDialogEvent(
-    dsys::PromptDialogPayload& p,
-    const Event& event)
-{
-    if (event == Event::Return) {
-        if (p.on_response) p.on_response(p.default_value);
-        return true;
-    }
-    if (event == Event::Escape) {
-        if (p.on_response) p.on_response(std::nullopt);
-        return true;
-    }
-    return false;
-}
+bool HandlePromptDialogEvent(dsys::PromptDialogPayload& p, const Event& event);
 
 // ============================================================
 // Elicitation renderer (MCP structured input)

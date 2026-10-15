@@ -194,7 +194,10 @@ target_link_libraries(test_dialog_triggers
 gtest_discover_tests(test_dialog_triggers
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
-add_executable(test_dialog_renderers test_dialog_renderers.cpp)
+add_executable(test_dialog_renderers
+    test_dialog_renderers.cpp
+    test_question_panel.cpp
+)
 target_link_libraries(test_dialog_renderers
     PRIVATE
         loom_core

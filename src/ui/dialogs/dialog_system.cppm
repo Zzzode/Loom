@@ -375,6 +375,8 @@ struct PromptDialogPayload {
     std::string prompt_text;
     std::optional<std::string> default_value;
     std::function<void(std::optional<std::string> value)> on_response;
+    /// Ephemeral editor state shared by rendering and input, never serialized.
+    mutable std::shared_ptr<void> ui_state;
 };
 
 /// Payload for Elicitation (MCP structured input) — bottom slot, band 3.

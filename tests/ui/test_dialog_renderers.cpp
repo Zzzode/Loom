@@ -442,36 +442,14 @@ TEST(SandboxPermissionEvents, UnrelatedKeys_NotConsumed) {
 TEST(DialogRenderers, Golden_PromptDialog) {
     auto theme = dialog_test_golden::get_light_theme();
 
+    struct RestoreTheme {
+        Theme previous = loom::ui::design::theme::current_theme();
+        ~RestoreTheme() { loom::ui::design::theme::set_theme(previous); }
+    } restore_theme;
+    loom::ui::design::theme::set_theme(theme);
+
     dsys::DialogRendererRegistry registry;
-    registry.register_dialog(dsys::DialogType::PromptDialog,
-        [&](dsys::DialogPayloadVariant& v,
-            const dsys::DialogRenderContext&) -> ftxui::Element {
-            const auto* p = std::get_if<dsys::PromptDialogPayload>(&v);
-            if (!p) return text("");
-
-            dframe::DialogFrameProps props;
-            props.title = p->title.empty()
-                ? std::string{"Input Required"} : p->title;
-            props.subtitle = "Loom needs clarification";
-            props.style = dframe::FrameStyle::Info;
-
-            auto def = p->default_value
-                ? hbox({text("[") | dim, text(*p->default_value), text("]") | dim})
-                : text("");
-
-            props.content = vbox({
-                paragraph(p->prompt_text),
-                text(""),
-                def,
-                text(""),
-                // accept / cancel rows
-                hbox({
-                    text(" [Enter] Submit") | color(ftxui::Color::Green),
-                    text("  [Esc] Cancel") | color(ftxui::Color::Red),
-                }),
-            });
-            return dframe::DialogFrame(props, theme);
-        });
+    drender::register_default_renderers(registry);
 
     dsys::PromptDialogPayload pd;
     pd.id = "prompt-gold-1";

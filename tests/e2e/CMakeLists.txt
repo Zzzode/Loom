@@ -208,6 +208,17 @@ foreach(_pty_status_case IN ITEMS
       SKIP_RETURN_CODE 125)
 endforeach()
 
+# RFC 0017: actual question text spaces, native editing/default/empty/cancel
+# decisions and retained long buffers through the first resized frame.
+foreach(_pty_question_case IN ITEMS layout edit unicode resize default empty cancel)
+  add_test(NAME E2E_Pty_Question_${_pty_question_case}
+      COMMAND e2e_pty_shutdown question-${_pty_question_case})
+  set_tests_properties(E2E_Pty_Question_${_pty_question_case} PROPERTIES
+      TIMEOUT 45
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
 
 if(APPLE)
   # The test CA interposer only installs the existing fixture certificate in

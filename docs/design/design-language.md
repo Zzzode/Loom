@@ -117,8 +117,38 @@ arrays; the historical lookup strings remain supported.
 
 The existing `primary` token owns live-work emphasis. Terracotta and amber/gold
 remain brand and mode accents on their existing surfaces. Light themes
-use darker equivalents for foreground contrast. The weave artwork keeps its
-identity color. Dark body text uses warm off-white as a visual choice.
+use darker equivalents for foreground contrast. The terminal welcome branding
+uses the full lowercase Loom wordmark from
+[assets/loom-identity.svg](assets/loom-identity.svg), including the copper OO join.
+It occupies twenty-eight columns and six rows in standalone welcome screens and
+condensed strips of at least 70 columns. Narrow layouts use nineteen columns and
+four rows; welcome cards select the size that fits their content panel. Strips
+below 29 columns and card interiors below 19 columns use a simple bold
+`loom` caption to keep the name readable without clipping. The two graphical
+sizes use the approved SVG contours, sampled at sixteen points per axis in
+each cell and fitted to quadrant and eighth-block characters. Eighth-cell
+edges refine stems and curves at the same dimensions, rather than enlarging
+a coarse icon. A 1:2 terminal cell aspect gives a 7:3
+large wordmark, close to the SVG's 388:168 proportions; actual proportions depend
+on the terminal's font and cell dimensions. It uses `text` for the glyph bodies and
+condensed/standalone caption and `loom_body` for the copper connection.
+Right and top partial blocks use SGR reverse video (swapping foreground and
+background) so their negative space retains the terminal's actual background.
+Glyphs stay solid-colored, including monochrome and ANSI themes; no interpolated
+RGB colors or image protocol are required.
+Welcome-card border titles retain their brand accent. Monochrome retains the
+wordmark shape without depending on color. Dark body text uses warm off-white
+as a visual choice.
+
+The vector identity study lives in [assets/loom-identity.svg](assets/loom-identity.svg).
+Its contours follow the approved raster study, preserving the original `l`.
+The `m` narrows its two counters by fifteen units each, reducing its width
+from about 173 to 143 while retaining the
+vertical stem widths and height. The double-o narrows its two counters without
+scaling down the vertical stems. The standalone icon and wordmark both reference the
+same `loom-oo` symbol with a 171-by-129 view box; all instances use uniform
+scaling. The monochrome variant references the same outline paths and changes
+only their fill colors. Do not redraw the wordmark's double-o independently.
 
 Success, warning and danger retain their meanings and shape/label cues. Agent
 identities retain eight named hues and their assignment rules; their colors

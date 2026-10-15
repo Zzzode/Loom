@@ -1,8 +1,11 @@
 ◆ Loom  · model_api/experimental_0812_256k
 
-█░█░█░█░█  Loom
-░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  <tmpdir>
+██▍
+██▍  ▃▄▅▅▄▖▗▅▅▅▄  ▂▄▅▄▃▄▅▅▄   Loom
+██▍ ▋██▀▀▜▉▃▅▅▜█▉▋██▀▜██▀▜█▊  model_api/experimental_0812_256k
+██▍ ▋█▉  ▗▇█  ▐█▉▋██ ▐█▉ ▐█▉  /var/…/
+██▍▁▋██▁▁▐▀▅▁▁▐█▉▋█▉ ▐█▊ ▐█▉
+▝▁██ ▃███▁▅▁███▁▘▋█▉ ▐█▊ ▐█▉
 
 ∴ Thinking…
   private streaming thinking
@@ -12,9 +15,6 @@
 
 ∴ Thinking…
   private streaming thinking
-
-
-
 
 
 

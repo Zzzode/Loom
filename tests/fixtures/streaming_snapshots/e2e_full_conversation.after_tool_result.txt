@@ -1,8 +1,11 @@
 ◆ Loom  · model_api/experimental_0812_256k
 
-█░█░█░█░█  Loom
-░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  <tmpdir>
+██▍
+██▍  ▃▄▅▅▄▖▗▅▅▅▄  ▂▄▅▄▃▄▅▅▄   Loom
+██▍ ▋██▀▀▜▉▃▅▅▜█▉▋██▀▜██▀▜█▊  model_api/experimental_0812_256k
+██▍ ▋█▉  ▗▇█  ▐█▉▋██ ▐█▉ ▐█▉  /var/…/
+██▍▁▋██▁▁▐▀▅▁▁▐█▉▋█▉ ▐█▊ ▐█▉
+▝▁██ ▃███▁▅▁███▁▘▋█▉ ▐█▊ ▐█▉
 
 ❯ describe this image
 
@@ -10,9 +13,6 @@
   Input:
   {"imageSource":"https://example.com/img.png","prompt":"Describe this image in detail"}
   ⎿  The image shows a dark-themed terminal interface.
-
-
-
 
 
 

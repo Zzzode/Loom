@@ -84,6 +84,13 @@ foreach(_pty_exit_case IN ITEMS
       SKIP_RETURN_CODE 125)
 endforeach()
 
+# Startup branding survives the first actual resized frame at 40/80/120 columns.
+add_test(NAME E2E_Pty_WelcomeMonogram COMMAND e2e_pty_shutdown welcome-monogram)
+set_tests_properties(E2E_Pty_WelcomeMonogram PROPERTIES
+    TIMEOUT 30
+    ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+    SKIP_RETURN_CODE 125)
+
 # RFC 0012: actual prompt wrapping and SIGWINCH reflow preserve submitted bytes.
 add_test(NAME E2E_Pty_PromptWrap COMMAND e2e_pty_shutdown prompt-wrap)
 set_tests_properties(E2E_Pty_PromptWrap PROPERTIES

@@ -1,6 +1,7 @@
-// Shared Loom weave and welcome rendering. No terminal I/O or animation.
+// Shared Loom wordmark and welcome rendering. No terminal I/O or animation.
 module;
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/string.hpp>
 
 module loom.ui.foundation.logo;
 
@@ -9,14 +10,61 @@ import loom.ui.foundation.theme_provider;
 
 namespace loom::ui::logo {
 namespace detail {
-[[nodiscard]] auto make_weave_icon() -> Element {
-    const auto accent = loom::ui::design::theme::current_theme().palette->loom_body;
-    // Plain weave alternates the warp and weft across three nine-cell rows.
-    return vbox({
-        text("█░█░█░█░█") | color(accent),
-        text("░█░█░█░█░") | color(accent),
-        text("█░█░█░█░█") | color(accent),
-    }) | ftxui::center;
+[[nodiscard]] auto make_wordmark(bool large) -> Element {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
+    // Source: docs/design/assets/loom-identity.svg (388x168 wordmark).
+    // SVG contours sampled at 16x16 points per cell; eighth blocks
+    // refine edges without enlarging the 28x6 / 19x4 banner or thinning stems.
+    // B/J = body/join; lowercase reverses ink and terminal background.
+    constexpr std::array<std::string_view, 6> large_glyphs{
+        "██▍                         ",
+        "██▍  ▃▄▅▅▄▖▗▅▅▅▄  ▂▄▅▄▃▄▅▅▄ ",
+        "██▍ ▋██▀▀▜▉▃▅▅▜█▉▋██▀▜██▀▜█▊",
+        "██▍ ▋█▉  ▗▇█  ▐█▉▋██ ▐█▉ ▐█▉",
+        "██▍▁▋██▁▁▐▀▅▁▁▐█▉▋█▉ ▐█▊ ▐█▉",
+        "▝▁██ ▃███▁▅▁███▁▘▋█▉ ▐█▊ ▐█▉",
+    };
+    constexpr std::array<std::string_view, 6> large_styles{
+        "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+        "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+        "BBBBbBBBBBBJbbBBBbBBBBBBBBBB",
+        "BBBBbBBBBJJJBBBBBbBBBBBBBBBB",
+        "BBBBbBBBBJJBBBBBBbBBBBBBBBBB",
+        "BbBBBbBBBbbbBBBbBbBBBBBBBBBB",
+    };
+    constexpr std::array<std::string_view, 4> compact_glyphs{
+        "█▋   ▁   ▁         ",
+        "█▋ ▟█▃█▋▃▜▇▏▇▛██▃█▖",
+        "█▋ ▏▋ ▍▁ ▊█▊█▎▎▉ █▋",
+        "▂█▋▜█▆▊▁▆▆▁▊█▎▎▉ █▌",
+    };
+    constexpr std::array<std::string_view, 4> compact_styles{
+        "BBBBBBBBBBBBBBBBBBB",
+        "BBBBBbBbbBBBBBBBbBB",
+        "BBBbBBjjBbBbBBbBBBB",
+        "bBBBBBBbBBbbBBbBBBB",
+    };
+    const std::span<const std::string_view> glyphs = large
+        ? std::span<const std::string_view>(large_glyphs)
+        : std::span<const std::string_view>(compact_glyphs);
+    const std::span<const std::string_view> styles = large
+        ? std::span<const std::string_view>(large_styles)
+        : std::span<const std::string_view>(compact_styles);
+    Elements rows;
+    for (std::size_t y = 0; y < glyphs.size(); ++y) {
+        Elements cells;
+        const auto characters = ftxui::Utf8ToGlyphs(std::string(glyphs[y]));
+        for (std::size_t x = 0; x < characters.size(); ++x) {
+            const char role = styles[y][x];
+            Element cell = text(characters[x]) | color(
+                role == 'J' || role == 'j' ? palette.loom_body : palette.text);
+            // SGR reverse preserves the terminal's actual background in gaps.
+            if (role == 'b' || role == 'j') cell = std::move(cell) | ftxui::inverted;
+            cells.push_back(std::move(cell));
+        }
+        rows.push_back(hbox(std::move(cells)));
+    }
+    return vbox(std::move(rows)) | ftxui::center;
 }
 } // namespace detail
 
@@ -30,11 +78,14 @@ namespace detail {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const Color kText  = pal.text;
     const Color kMuted = pal.muted;
-    Element weave_icon = detail::make_weave_icon();
+    const bool large = layout_mode_from_cols(term_cols) == LogoLayoutMode::Horizontal;
+    const bool text_only = term_cols < 29;
+    Element wordmark = text_only ? text("loom") | bold | color(kText) | center
+                                : detail::make_wordmark(large);
 
-    // --- Text column: 3 rows, width = max(term_cols - 15, 20)
-    // (15 = 9 icon + 2 gap + 4 pad).
-    const int text_width = std::max(term_cols - 15, 20);
+    // Reserve the icon, two-column gap and four columns of outer padding.
+    const int wordmark_width = large ? 28 : (text_only ? 4 : 19);
+    const int text_width = std::max(term_cols - wordmark_width - 6, 8);
 
     // Row 1: <Text bold>Loom</Text>
     Element row1 = text("Loom") | bold | color(kText);
@@ -98,12 +149,12 @@ namespace detail {
         std::move(row1),
         std::move(row2),
         std::move(row3),
-    });
+    }) | size(WIDTH, EQUAL, text_width) | vcenter;
 
     // Outer layout: hbox with 2-column gap.
     // gap = 2 means two whitespace columns between the icon and text col.
     return hbox({
-        std::move(weave_icon),
+        std::move(wordmark),
         text("  "),
         std::move(text_col),
     });
@@ -114,8 +165,8 @@ namespace detail {
     return vbox({
         text("Welcome to Loom") | bold | color(palette.text) | ftxui::center,
         text(""),
-        detail::make_weave_icon(),
-        text("Loom") | bold | color(palette.loom_body) | ftxui::center,
+        detail::make_wordmark(true),
+        text("Loom") | bold | color(palette.text) | ftxui::center,
         text(""),
     }) | size(WIDTH, EQUAL, kWelcomeFixedWidth);
 }

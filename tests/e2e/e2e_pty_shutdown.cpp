@@ -821,6 +821,49 @@ int prompt_row_distance(const std::string& frame) {
         frame.begin() + static_cast<std::ptrdiff_t>(tail), '\n'));
 }
 
+void run_welcome_monogram_case(const std::string& binary, const fs::path& root) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":false,"permissionMode":"default","extendedThinking":false})";
+    ModelServer server(false, false, root / "unused.txt", true);
+    Terminal terminal(binary, root, server.url(), ModelOptions{});
+    server.start();
+    require(terminal.wait([&] {
+        return terminal.latest_frame_text().find("▋██▀▀▜▉▃▅▅▜█▉") != std::string::npos;
+    }), "startup wordmark did not reach a complete terminal frame");
+
+    const auto verify_frame = [&](const std::string& raw, const std::string& name, int width) {
+        const auto text = terminal_text(raw);
+        const bool compact = occurrences(text, "▟█▃█▋▃▜▇") == 1 &&
+                occurrences(text, "█▋ ▏▋ ▍▁ ▊") == 1 &&
+                occurrences(text, "▂█▋▜█▆▊▁▆▆▁") == 1;
+        const bool large = occurrences(text, "▋██▀▀▜▉▃▅▅▜█▉") == 1 &&
+                occurrences(text, "▋██▀▜██▀▜█▊") == 1 &&
+                occurrences(text, "▝▁██ ▃███") == 1;
+        require(width >= 70 ? large && !compact : compact && !large,
+                "welcome wordmark was clipped or duplicated in " + name);
+        require(text.find("Loom") != std::string::npos &&
+                text.find("pty-test-model") != std::string::npos,
+                "welcome metadata was lost in " + name);
+        require(text.find("█░█") == std::string::npos,
+                "legacy weave remained in " + name);
+        std::ofstream(root / (name + ".raw"), std::ios::binary) << raw;
+        std::ofstream(root / (name + ".txt")) << text;
+    };
+    verify_frame(terminal.latest_frame(), "banner-initial-120", 120);
+    for (const auto width : {80, 69, 70, 40, 120}) {
+        const auto start = terminal.output.rfind('\0') + 1;
+        terminal.resize(static_cast<unsigned short>(width), 24);
+        require(terminal.wait([&] {
+            return !terminal.first_resize_frame_since(start).empty();
+        }), "welcome resize did not flush a complete frame");
+        verify_frame(terminal.first_resize_frame_since(start),
+                     "banner-" + std::to_string(width), width);
+    }
+    require(server.requests.load() == 0, "welcome rendering submitted a model request");
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+}
+
 void run_prompt_wrap_case(const std::string& binary, const fs::path& root) {
     std::ofstream(root / "config" / "settings.json") <<
         R"({"mouseMode":false,"permissionMode":"default","extendedThinking":false})";
@@ -2573,6 +2616,10 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
         run_status_case(binary, scenario, root, harness);
         return;
     }
+    if (scenario == "welcome-monogram") {
+        run_welcome_monogram_case(binary, root);
+        return;
+    }
     if (scenario.starts_with("escape-")) {
         run_escape_case(binary, scenario, root);
         return;
@@ -2751,7 +2798,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

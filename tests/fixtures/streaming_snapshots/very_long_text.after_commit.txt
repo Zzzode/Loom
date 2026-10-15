@@ -1,8 +1,11 @@
 ◆ Loom  · model_api/experimental_0812_256k
 
-█░█░█░█░█  Loom
-░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  <tmpdir>
+██▍
+██▍  ▃▄▅▅▄▖▗▅▅▅▄  ▂▄▅▄▃▄▅▅▄   Loom
+██▍ ▋██▀▀▜▉▃▅▅▜█▉▋██▀▜██▀▜█▊  model_api/experimental_0812_256k
+██▍ ▋█▉  ▗▇█  ▐█▉▋██ ▐█▉ ▐█▉  /var/…/
+██▍▁▋██▁▁▐▀▅▁▁▐█▉▋█▉ ▐█▊ ▐█▉
+▝▁██ ▃███▁▅▁███▁▘▋█▉ ▐█▊ ▐█▉
 
 ● Modern C++ codebases face a persistent tension between compile-time encapsulation and runtime flexibility, and the
   choice between header-only interfaces, named modules, and dynamic polymorphism shapes everything from incremental
@@ -13,9 +16,6 @@
   alone. The result is a codebase where restructuring a directory is a one-line CMake change instead of a sweeping
   import rewrite, and where the compiler can reason about interface boundaries that were previously invisible to the
   build system.
-
-
-
 
 
 

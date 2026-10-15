@@ -1,16 +1,16 @@
 ◆ Loom  · model_api/experimental_0812_256k
 
-█░█░█░█░█  Loom
-░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  <tmpdir>
+██▍
+██▍  ▃▄▅▅▄▖▗▅▅▅▄  ▂▄▅▄▃▄▅▅▄   Loom
+██▍ ▋██▀▀▜▉▃▅▅▜█▉▋██▀▜██▀▜█▊  model_api/experimental_0812_256k
+██▍ ▋█▉  ▗▇█  ▐█▉▋██ ▐█▉ ▐█▉  /var/…/
+██▍▁▋██▁▁▐▀▅▁▁▐█▉▋█▉ ▐█▊ ▐█▉
+▝▁██ ▃███▁▅▁███▁▘▋█▉ ▐█▊ ▐█▉
 
 <dot> Thought                                                                                                [Show details]
 
 ● Eager loading resolves all dependencies at startup; lazy loading defers resolution until first use. For a CLI
   harness, prefer lazy loading with explicit eager loading for hot-path modules.
-
-
-
 
 
 

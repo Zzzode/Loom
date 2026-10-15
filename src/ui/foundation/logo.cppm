@@ -58,14 +58,15 @@ struct LogoDisplayData {
 
 // ============================================================
 // Condensed logo
-// Layout: hbox of [9×3 Loom weave icon] + [gap=2 cols] + [3-line text column].
+// Layout: hbox of [28×6 Loom wordmark, 19×4 below 70 cols] + [gap=2 cols]
+// + [vertically centered 3-line text column].
 // Text column rows:
 //   1: Loom (bold, text)                                        — SINGLE line
 //   2: {model} [· {billing}]                                    — all dim
 //   3: [@{agent} · ] {truncate-path(cwd)}                       — all dim
 // ============================================================
 namespace detail {
-[[nodiscard]] auto make_weave_icon() -> Element;
+[[nodiscard]] auto make_wordmark(bool large = false) -> Element;
 }
 
 [[nodiscard]] auto RenderCondensedLogoElement(
@@ -681,7 +682,7 @@ inline constexpr int kContentPadding  = 2;
       text(" ") | color(kLoomAccent()),
   });
 
-  // --- Loom brand icon (9 cols × 3 rows): plain-weave, centered. ---
+  // --- Compact Loom wordmark (19 cols × 4 rows), centered. ---
 
   // --- Model line + billing + agent·cwd, all dim ---
   // Width budget = inner_width (inside card, after borders + padding).
@@ -724,7 +725,9 @@ inline constexpr int kContentPadding  = 2;
   Element inner = vbox({
     text(welcome_effective) | bold | ftxui::center,
     text(""),                        // top margin = 1 (weave icon wrapped in it)
-    make_weave_icon(),
+    inner_width >= 19 ? make_wordmark()
+        : text("loom") | bold | color(loom::ui::design::theme::current_theme().palette->text)
+                       | ftxui::center,
     text(model_display) | dim | color(kMuted()) | ftxui::center,
     text(billing_display) | dim | color(kMuted()) | ftxui::center,
     text(cwd_line)      | dim | color(kMuted()) | ftxui::center,
@@ -868,7 +871,7 @@ inline constexpr int kContentPadding  = 2;
       text("Loom") | color(kLoomAccent()) | bold,
   });
 
-  // --- Loom brand icon (9 cols × 3 rows): plain-weave, centered. ---
+  // --- Loom wordmark sized to the left panel, centered. ---
 
   // --- Left panel: space-between layout approximated. ---
   // FTXUI can't do true space-between; we push the welcome up, icon in middle,
@@ -878,7 +881,7 @@ inline constexpr int kContentPadding  = 2;
       text(""),
       hbox({ text(welcome) | bold }) | ftxui::center,
       text(""),
-      make_weave_icon(),
+      make_wordmark(left_width >= 28),
       ftxui::vbox({
           text(truncate_str(model_line_full, left_width - 2))
               | dim | color(kMuted()),

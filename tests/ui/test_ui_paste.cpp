@@ -38,6 +38,31 @@ struct RestoreLogoTheme {
     loom::ui::design::theme::Theme original = loom::ui::design::theme::current_theme();
     ~RestoreLogoTheme() noexcept { loom::ui::design::theme::set_theme(original); }
 };
+
+std::optional<std::pair<int, int>> wordmark_origin(const ftxui::Screen& screen, bool large) {
+    const int width = large ? 28 : 19;
+    const std::string top = large ? "██▍" + std::string(25, ' ')
+                                  : "█▋   ▁   ▁" + std::string(9, ' ');
+    for (int y = 0; y < screen.dimy(); ++y) {
+        for (int x = 0; x + width <= screen.dimx(); ++x) {
+            std::string row;
+            for (int dx = 0; dx < width; ++dx) row += screen.PixelAt(x + dx, y).character;
+            if (row == top) return std::pair{x, y};
+        }
+    }
+    return std::nullopt;
+}
+
+bool wordmark_join(int x, int y, std::pair<int, int> origin, bool large) {
+    x -= origin.first;
+    y -= origin.second;
+    if (!large) return y == 2 && (x == 6 || x == 7);
+    return (y == 2 && x == 11) || (y == 3 && x >= 9 && x <= 11) || (y == 4 && (x == 9 || x == 10));
+}
+
+bool wordmark_block(const std::string& character) {
+    return character != " " && std::string_view("▘▝▀▖▌▞▛▗▚▐▜▄▙▟█▁▂▃▅▆▇▉▊▋▍▎▏").find(character) != std::string_view::npos;
+}
 }
 
 TEST(PasteCoordinator, StopWaitsForActiveReadsAndCompletionCallbacks) {
@@ -195,18 +220,18 @@ TEST(Logo, CondensedModeRendersStripPlusNotices) {
     opts.model_display_name = "Loom Opus 4.8";
     opts.is_condensed_mode  = true;   // default / early-return branch
 
-    std::string s = strip_ansi(render_to_plain_text(
-        logo::render_logo(opts, /*cols=*/120), 120, 20));
+    auto result = logo::RenderLogo(opts, /*cols=*/120);
+    EXPECT_EQ(result.mode, logo::LogoLayoutMode::Condensed);
+    std::string s = strip_ansi(render_to_plain_text(result.root, 120, 20));
 
     // CondensedLogo triad.
     EXPECT_NE(s.find("Loom"), std::string::npos);
     EXPECT_NE(s.find("Loom Opus 4.8"), std::string::npos);
     EXPECT_NE(s.find("Team Seat"), std::string::npos);
     EXPECT_NE(s.find("/home/alice/dev/loom"), std::string::npos);
-    // Condensed path has NO rounded outer border — ╭ (U+256D) would appear if
-    // the round-border card was drawn.
-    EXPECT_EQ(s.find("\xE2\x95\xAD"), std::string::npos)
-        << "Condensed mode must not render the rounded outer border";
+    // The full wordmark does not opt the strip into a welcome card.
+    EXPECT_NE(s.find("▋██▀▀▜▉▃▅▅▜█▉"), std::string::npos);
+    EXPECT_EQ(s.find("Welcome back!"), std::string::npos);
 }
 
 
@@ -387,6 +412,110 @@ TEST(Logo, LayoutModeThresholdsMatchTSSpec) {
 }
 
 
+TEST(Logo, WordmarkPreservesCountersAndUsesFineContours) {
+    namespace logo = loom::ui::logo;
+    namespace theme = loom::ui::design::theme;
+    RestoreLogoTheme restore;
+    for (auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+             theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+             theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+             theme::ThemeVariant::LightAnsi}) {
+        theme::set_theme(variant);
+        const auto& palette = *theme::current_theme().palette;
+        for (bool large : {false, true}) {
+            const int width = large ? 28 : 19, height = large ? 6 : 4;
+            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                                ftxui::Dimension::Fixed(height));
+            ftxui::Render(screen, logo::detail::make_wordmark(large));
+            ASSERT_EQ(wordmark_origin(screen, large), (std::pair{0, 0}));
+            int partial = 0;
+            int fine_edges = 0;
+            int reversed_edges = 0;
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    const auto& pixel = screen.PixelAt(x, y);
+                    if (wordmark_block(pixel.character)) {
+                        if (pixel.character != "█") ++partial;
+                        if (std::string_view("▁▂▃▅▆▇▉▊▋▍▎▏").find(pixel.character) !=
+                            std::string_view::npos) ++fine_edges;
+                        if (pixel.inverted) ++reversed_edges;
+                        EXPECT_EQ(pixel.background_color, ftxui::Color::Default);
+                        EXPECT_EQ(pixel.foreground_color,
+                                  wordmark_join(x, y, {0, 0}, large) ? palette.loom_body : palette.text);
+                    }
+                }
+            }
+            // Both O counters and both m counters remain open and readable.
+            for (int x : large ? std::vector<int>{7, 13, 20, 24}
+                               : std::vector<int>{5, 8, 16}) {
+                EXPECT_EQ(screen.PixelAt(x, large ? 3 : 2).character, " ");
+            }
+            if (!large) {
+                // The narrowed first m counter spans two transparent partial cells.
+                EXPECT_EQ(screen.PixelAt(13, 2).character, "▎");
+                EXPECT_EQ(screen.PixelAt(14, 2).character, "▎");
+                EXPECT_EQ(screen.PixelAt(13, 2).background_color, ftxui::Color::Default);
+                EXPECT_EQ(screen.PixelAt(14, 2).background_color, ftxui::Color::Default);
+            }
+            EXPECT_GT(partial, large ? 40 : 15);
+            EXPECT_GT(fine_edges, large ? 20 : 10);
+            EXPECT_GT(reversed_edges, 0);
+            if (!large) {
+                EXPECT_FALSE(screen.PixelAt(13, 2).inverted);
+                EXPECT_TRUE(screen.PixelAt(14, 2).inverted);
+            }
+            EXPECT_NE(screen.PixelAt(1, 0).character, " ");
+            EXPECT_NE(screen.PixelAt(width - 2, height - 2).character, " ");
+        }
+    }
+}
+
+TEST(Logo, LongMetadataDoesNotCompressWordmark) {
+    namespace logo = loom::ui::logo;
+    logo::LogoOptions opts;
+    opts.is_condensed_mode = true;
+    opts.model_display_name = std::string(100, 'M');
+    opts.billing_type = std::string(50, 'B');
+    opts.cwd = "/workspace/with/a/long/directory/loom";
+    for (int width : {40, 69, 70, 80, 120}) {
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                            ftxui::Dimension::Fixed(16));
+        ftxui::Render(screen, logo::RenderLogo(opts, width).root);
+        const auto origin = wordmark_origin(screen, width >= 70);
+        ASSERT_TRUE(origin.has_value()) << width;
+        EXPECT_EQ(origin->first, 0);
+        EXPECT_EQ(origin->second, 0);
+        EXPECT_LT(origin->first + (width >= 70 ? 27 : 18), width);
+        // Reversed partial blocks must not invert the metadata or the gap.
+        for (int y = 0; y < screen.dimy(); ++y) {
+            for (int x = width >= 70 ? 28 : 19; x < screen.dimx(); ++x) {
+                EXPECT_FALSE(screen.PixelAt(x, y).inverted);
+            }
+        }
+    }
+}
+
+TEST(Logo, WordmarkFitsMinimumCardAndStripWidths) {
+    namespace logo = loom::ui::logo;
+    logo::LogoOptions opts;
+    opts.model_display_name = "MODEL";
+    opts.cwd = "/t";
+    for (bool condensed : {false, true}) {
+        opts.is_condensed_mode = condensed;
+        for (int width : {20, 22, 23, 28, 29, 30}) {
+            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                                ftxui::Dimension::Fixed(25));
+            ftxui::Render(screen, logo::RenderLogo(opts, width).root);
+            const bool text_only = condensed ? width < 29 : width < 23;
+            EXPECT_EQ(wordmark_origin(screen, false).has_value(), !text_only)
+                << "condensed=" << condensed << " width=" << width;
+            if (text_only) {
+                EXPECT_NE(strip_ansi(screen.ToString()).find("loom"), std::string::npos);
+            }
+        }
+    }
+}
+
 // Every terminal/theme variant uses the same Loom identity. Palette colors,
 // rather than alternate vendor artwork, provide dark/light accessibility.
 TEST(Logo, WelcomeBannerUsesLoomWeaveAcrossTerminalAndThemeVariants) {
@@ -409,12 +538,15 @@ TEST(Logo, WelcomeBannerUsesLoomWeaveAcrossTerminalAndThemeVariants) {
             ftxui::Render(screen, logo::RenderWelcome(welcome));
             const auto rendered = strip_ansi(screen.ToString());
             EXPECT_NE(rendered.find("Welcome to Loom"), std::string::npos);
-            EXPECT_NE(rendered.find("█░█░█░█░█"), std::string::npos);
-            EXPECT_NE(rendered.find("░█░█░█░█░"), std::string::npos);
-            for (const auto* legacy : {"▄", "▗", "▖", "▓", "▒", "*"}) {
+            const auto origin = wordmark_origin(screen, true);
+            ASSERT_TRUE(origin.has_value());
+            EXPECT_NE(rendered.find("▋██▀▀▜▉▃▅▅▜█▉"), std::string::npos);
+            EXPECT_NE(rendered.find("▋██▀▜██▀▜█▊"), std::string::npos);
+            for (const auto* legacy : {"╭─╮ ╭─╮", "│ ╰╱╯ │", "░", "▓", "▒", "*"}) {
                 EXPECT_EQ(rendered.find(legacy), std::string::npos) << legacy;
             }
-            int weave_cells = 0;
+            int outline_cells = 0;
+            int crossing_cells = 0;
             int wordmarks = 0;
             for (int y = 0; y < screen.dimy(); ++y) {
                 for (int x = 0; x < screen.dimx(); ++x) {
@@ -422,18 +554,23 @@ TEST(Logo, WelcomeBannerUsesLoomWeaveAcrossTerminalAndThemeVariants) {
                     if (pixel.character != " ") {
                         EXPECT_LT(x, logo::kWelcomeFixedWidth);
                     }
-                    if (pixel.character == "█" || pixel.character == "░") {
-                        ++weave_cells;
+                    const bool crossing = wordmark_join(x, y, *origin, true);
+                    if (!crossing && wordmark_block(pixel.character)) {
+                        ++outline_cells;
+                        EXPECT_EQ(pixel.foreground_color, palette.text);
+                    }
+                    if (crossing) {
+                        ++crossing_cells;
                         EXPECT_EQ(pixel.foreground_color, palette.loom_body);
                     }
                     if (pixel.character == "L" && pixel.bold) {
                         ++wordmarks;
-                        EXPECT_EQ(pixel.foreground_color,
-                                  wordmarks == 1 ? palette.text : palette.loom_body);
+                        EXPECT_EQ(pixel.foreground_color, palette.text);
                     }
                 }
             }
-            EXPECT_EQ(weave_cells, 27);
+            EXPECT_EQ(outline_cells, 119);
+            EXPECT_EQ(crossing_cells, 6);
             EXPECT_EQ(wordmarks, 2);
         }
     }
@@ -472,8 +609,9 @@ TEST(Logo, ReplScreenDefaultWelcomeHeaderStillCondensed) {
     EXPECT_NE(rendered.find("Loom"), std::string::npos);
     EXPECT_NE(rendered.find("GLM-5.2"), std::string::npos);
     EXPECT_NE(rendered.find("/tmp/cpp_migration"), std::string::npos);
-    // Round border MUST NOT appear in the default header.
-    EXPECT_EQ(rendered.find("\xE2\x95\xAD"), std::string::npos);
+    // The monogram uses rounded corners, but the full welcome card is absent.
+    EXPECT_EQ(rendered.find("Welcome back!"), std::string::npos);
+    EXPECT_NE(rendered.find("▋██▀▀▜▉▃▅▅▜█▉"), std::string::npos);
     // Feed column hint MUST NOT appear (no forced full logo).
     EXPECT_EQ(rendered.find("Recent activity"), std::string::npos);
 }
@@ -562,16 +700,26 @@ TEST(Logo, ColorsFollowSemanticTokensAcrossThemesAndLayouts) {
             opts.is_condensed_mode = width == 120;
             auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
                                                ftxui::Dimension::Fixed(40));
-            ftxui::Render(screen, logo::RenderLogo(opts, width).root);
-            bool found_border = false, found_weave = false, found_model = false, found_title = false;
+            const auto result = logo::RenderLogo(opts, width);
+            ftxui::Render(screen, result.root);
+            const bool large = opts.is_condensed_mode ? width >= 70
+                : result.mode == logo::LogoLayoutMode::Horizontal && result.left_width >= 28;
+            const auto origin = wordmark_origin(screen, large);
+            ASSERT_TRUE(origin.has_value());
+            int border_corners = 0, monogram_corners = 0;
+            bool found_weave = false, found_model = false, found_title = false;
             for (int y = 0; y < 40; ++y) {
                 for (int x = 0; x < width; ++x) {
                     const auto& pixel = screen.PixelAt(x, y);
                     if (pixel.character == "╭") {
-                        found_border = true;
+                        ++border_corners;
                         EXPECT_EQ(pixel.foreground_color, palette.loom_body);
                     }
-                    if (pixel.character == "█" || pixel.character == "░") {
+                    if (x == origin->first && y == origin->second) {
+                        ++monogram_corners;
+                        EXPECT_EQ(pixel.foreground_color, palette.text);
+                    }
+                    if (wordmark_join(x, y, *origin, large)) {
                         found_weave = true;
                         EXPECT_EQ(pixel.foreground_color, palette.loom_body);
                     }
@@ -586,7 +734,8 @@ TEST(Logo, ColorsFollowSemanticTokensAcrossThemesAndLayouts) {
                     }
                 }
             }
-            EXPECT_EQ(found_border, !opts.is_condensed_mode);
+            EXPECT_EQ(border_corners, opts.is_condensed_mode ? 0 : 1);
+            EXPECT_EQ(monogram_corners, 1);
             EXPECT_TRUE(found_weave);
             EXPECT_TRUE(found_model);
             EXPECT_TRUE(found_title);

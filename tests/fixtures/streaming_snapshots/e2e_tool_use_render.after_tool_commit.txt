@@ -1,15 +1,15 @@
 ◆ Loom  · model_api/experimental_0812_256k
 
-█░█░█░█░█  Loom
-░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  <tmpdir>
+██▍
+██▍  ▃▄▅▅▄▖▗▅▅▅▄  ▂▄▅▄▃▄▅▅▄   Loom
+██▍ ▋██▀▀▜▉▃▅▅▜█▉▋██▀▜██▀▜█▊  model_api/experimental_0812_256k
+██▍ ▋█▉  ▗▇█  ▐█▉▋██ ▐█▉ ▐█▉  /var/…/
+██▍▁▋██▁▁▐▀▅▁▁▐█▉▋█▉ ▐█▊ ▐█▉
+▝▁██ ▃███▁▅▁███▁▘▋█▉ ▐█▊ ▐█▉
 
 ✔ Analyze Image ("imageSource":"https://example.com/img.png","prompt":"Describe this image in det…)
   Input:
   {"imageSource":"https://example.com/img.png","prompt":"Describe this image in detail"}
-
-
-
 
 
 

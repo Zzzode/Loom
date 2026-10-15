@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="680" viewBox="0 0 1300 680" role="img" aria-labelledby="title desc">
+<title id="title">Loom OO — equal-height comparison</title>
+<desc id="desc">Five existing OO instances at 171 by 129. Top row retains original colors. Bottom row normalizes colors to isolate geometry. Original contour paths are unchanged.</desc>
+<defs>
+<path id="original-oo-body" fill-rule="evenodd" d="M32.414 0.414 C36.522 0.066 57.248 -0.107 60.508 0.020 C63.768 0.147 67.788 1.101 70.117 1.883 C72.446 2.664 74.618 3.943 76.586 5.414 C78.554 6.885 81.114 8.955 82.707 11.293 C84.300 13.631 86.257 17.469 87.121 20.879 C87.986 24.289 88.100 29.520 87.941 31.941 C87.783 34.363 86.665 37.453 85.941 38.941 C85.218 40.429 83.982 41.652 82.707 42.707 C81.432 43.762 70.782 51.598 70.312 51.875 C69.843 52.152 69.223 51.260 69.156 50.719 C69.089 50.178 68.997 41.462 68.859 40.141 C68.722 38.819 68.229 37.540 67.660 36.340 C67.091 35.139 66.250 33.433 65.141 32.297 C64.031 31.161 62.626 29.644 60.951 29.473 C59.275 29.302 41.263 29.306 39.192 29.648 C37.120 29.991 35.644 32.089 34.496 33.848 C33.348 35.606 32.368 38.000 32.262 40.262 C32.156 42.523 31.913 82.878 32.059 85.941 C32.205 89.005 34.324 93.548 34.856 94.707 C35.389 95.866 36.527 96.913 37.399 97.566 C38.270 98.219 39.311 98.816 40.400 98.859 C41.488 98.903 72.424 98.947 73.980 99.020 C75.537 99.092 77.773 99.192 78.367 100.633 C78.961 102.073 79.101 108.493 78.863 110.863 C78.626 113.233 77.819 115.580 76.660 117.660 C75.501 119.741 73.471 122.152 71.707 123.707 C69.943 125.262 67.824 126.472 65.666 127.352 C63.507 128.231 61.184 128.813 58.857 128.941 C56.530 129.070 40.587 129.274 36.254 128.980 C31.920 128.687 27.333 127.988 23.453 126.547 C19.573 125.106 15.190 122.106 12.750 120.250 C10.310 118.394 8.202 116.076 6.414 113.586 C4.626 111.096 2.944 108.039 1.883 105.117 C0.822 102.196 0.069 99.088 0.020 95.980 C-0.030 92.873 0.369 31.702 0.645 27.645 C0.920 23.587 3.584 19.454 5.414 16.414 C7.244 13.375 9.907 10.361 12.293 8.293 C14.679 6.225 17.473 4.566 20.414 3.414 C23.355 2.263 28.306 0.762 32.414 0.414Z M108.386 0.418 C111.139 0.131 134.068 -0.081 137.175 0.020 C140.281 0.120 143.426 0.607 146.355 1.645 C149.285 2.682 155.179 5.561 157.707 7.293 C160.235 9.025 162.372 11.528 164.156 13.844 C165.941 16.160 167.558 18.677 168.586 21.414 C169.614 24.151 170.879 28.397 170.980 32.020 C171.081 35.642 170.848 95.779 170.742 98.742 C170.636 101.705 169.452 104.564 168.293 107.293 C167.134 110.022 164.815 113.856 163.586 115.586 C162.357 117.316 160.838 118.863 159.156 120.156 C157.475 121.450 152.733 124.530 150.586 125.586 C148.439 126.642 146.102 127.365 143.738 127.738 C141.375 128.111 133.980 128.793 129.079 128.980 C124.179 129.168 113.699 129.100 111.302 128.980 C108.904 128.861 106.475 128.532 104.209 127.742 C101.942 126.953 95.275 123.985 93.293 122.707 C91.311 121.429 89.768 119.512 88.430 117.570 C87.091 115.629 85.571 112.869 84.723 110.277 C83.874 107.686 83.004 104.140 83.004 100.996 C83.004 97.852 83.792 93.898 84.723 91.723 C85.653 89.548 87.492 87.827 89.293 86.293 C91.094 84.759 100.206 78.388 100.684 78.121 C101.161 77.854 101.723 78.748 101.844 79.281 C101.965 79.815 103.138 90.565 104.051 92.938 C104.963 95.310 106.750 98.024 109.243 98.523 C111.736 99.023 130.281 98.713 131.951 98.527 C133.620 98.341 135.013 96.894 136.011 95.543 C137.009 94.192 138.448 91.730 138.566 89.566 C138.685 87.403 139.073 45.123 138.941 42.059 C138.809 38.994 136.682 34.444 136.144 33.293 C135.605 32.142 134.601 31.207 133.538 30.512 C132.475 29.816 131.122 29.191 129.794 29.137 C128.466 29.082 97.300 29.032 96.023 28.977 C94.747 28.921 92.900 28.729 92.477 27.523 C92.053 26.318 91.763 21.307 92.258 18.258 C92.752 15.208 94.094 11.646 95.414 9.414 C96.734 7.182 98.674 5.283 100.805 3.805 C102.936 2.327 105.633 0.704 108.386 0.418Z" />
+
+<path id="original-oo-join" fill-rule="evenodd" d="M101.395 32.441 C102.073 32.234 103.080 32.274 103.523 32.477 C103.967 32.679 104.284 33.260 104.250 33.746 C104.215 34.232 103.148 37.246 103.059 39.059 C102.969 40.871 103.092 58.849 102.863 61.863 C102.635 64.877 101.792 68.313 100.660 70.660 C99.529 73.007 97.696 75.024 95.707 76.707 C93.718 78.390 85.234 83.489 82.781 85.781 C80.328 88.074 78.200 93.005 77.098 94.098 C75.995 95.191 74.089 95.489 72.738 95.738 C71.387 95.988 68.781 97.028 68.617 95.664 C68.454 94.300 68.887 67.418 69.059 65.059 C69.230 62.699 70.336 60.224 71.336 58.336 C72.336 56.448 73.662 54.674 75.293 53.293 C76.924 51.912 86.223 45.976 88.664 43.664 C91.105 41.352 92.384 36.983 94.297 35.297 C96.210 33.610 100.716 32.649 101.395 32.441Z" />
+
+
+<symbol id="comparison-0-0" viewBox="0 0 171 129" preserveAspectRatio="xMidYMid meet">
+<use href="#original-oo-body" fill="#383836" />
+
+<use href="#original-oo-join" fill="#A95432" />
+
+</symbol>
+<symbol id="comparison-1-0" viewBox="0 0 171 129" preserveAspectRatio="xMidYMid meet">
+<use href="#original-oo-body" fill="#383836" />
+
+<use href="#original-oo-join" fill="#A95432" />
+
+</symbol>
+<symbol id="comparison-0-1" viewBox="0 0 171 129" preserveAspectRatio="xMidYMid meet">
+<use href="#original-oo-body" fill="#383836" />
+
+<use href="#original-oo-join" fill="#A95432" />
+
+</symbol>
+<symbol id="comparison-1-1" viewBox="0 0 171 129" preserveAspectRatio="xMidYMid meet">
+<use href="#original-oo-body" fill="#383836" />
+
+<use href="#original-oo-join" fill="#A95432" />
+
+</symbol>
+<symbol id="comparison-0-2" viewBox="0 0 171 129" preserveAspectRatio="xMidYMid meet">
+<use href="#original-oo-body" fill="#181818" />
+
+<use href="#original-oo-join" fill="#181818" />
+
+</symbol>
+<symbol id="comparison-1-2" viewBox="0 0 171 129" preserveAspectRatio="xMidYMid meet">
+<use href="#original-oo-body" fill="#383836" />
+
+<use href="#original-oo-join" fill="#A95432" />
+
+</symbol>
+<symbol id="comparison-0-3" viewBox="0 0 171 129" preserveAspectRatio="xMidYMid meet">
+<use href="#original-oo-body" fill="#383836" />
+
+<use href="#original-oo-join" fill="#A95432" />
+
+</symbol>
+<symbol id="comparison-1-3" viewBox="0 0 171 129" preserveAspectRatio="xMidYMid meet">
+<use href="#original-oo-body" fill="#383836" />
+
+<use href="#original-oo-join" fill="#A95432" />
+
+</symbol>
+<symbol id="comparison-0-4" viewBox="0 0 171 129" preserveAspectRatio="xMidYMid meet">
+<use href="#original-oo-body" fill="#F5F3EA" />
+
+<use href="#original-oo-join" fill="#A95432" />
+
+</symbol>
+<symbol id="comparison-1-4" viewBox="0 0 171 129" preserveAspectRatio="xMidYMid meet">
+<use href="#original-oo-body" fill="#383836" />
+
+<use href="#original-oo-join" fill="#A95432" />
+
+</symbol>
+</defs>
+<rect width="1300" height="680" fill="#FFFFFF"/>
+<g font-family="Arial, sans-serif" fill="#383836">
+<text x="36" y="43" font-size="24" font-weight="600">OO / Equal-height comparison</text>
+<text x="36" y="72" font-size="15" fill="#666662">All five: 171 x 129 / 57:43 / original outlines unchanged</text>
+<text x="36" y="112" font-size="15">Original colors — context removed</text>
+<use href="#comparison-0-0" x="70" y="160" width="171" height="129"/>
+<path d="M60 160h-10 M60 289h-10 M251 160h10 M251 289h10" fill="none" stroke="#B7B7B0" stroke-width="1"/>
+<text x="155.5" y="335" font-size="15" text-anchor="middle">1. Standalone</text>
+<use href="#comparison-0-1" x="320" y="160" width="171" height="129"/>
+<path d="M310 160h-10 M310 289h-10 M501 160h10 M501 289h10" fill="none" stroke="#B7B7B0" stroke-width="1"/>
+<text x="405.5" y="335" font-size="15" text-anchor="middle">2. Wordmark OO</text>
+<use href="#comparison-0-2" x="570" y="160" width="171" height="129"/>
+<path d="M560 160h-10 M560 289h-10 M751 160h10 M751 289h10" fill="none" stroke="#B7B7B0" stroke-width="1"/>
+<text x="655.5" y="335" font-size="15" text-anchor="middle">3. Monochrome</text>
+<use href="#comparison-0-3" x="820" y="160" width="171" height="129"/>
+<path d="M810 160h-10 M810 289h-10 M1001 160h10 M1001 289h10" fill="none" stroke="#B7B7B0" stroke-width="1"/>
+<text x="905.5" y="335" font-size="15" text-anchor="middle">4. Light icon</text>
+<rect x="1050" y="140" width="211" height="169" rx="0" fill="#383836"/>
+<use href="#comparison-0-4" x="1070" y="160" width="171" height="129"/>
+<path d="M1060 160h-10 M1060 289h-10 M1251 160h10 M1251 289h10" fill="none" stroke="#B7B7B0" stroke-width="1"/>
+<text x="1155.5" y="335" font-size="15" text-anchor="middle">5. Dark icon</text>
+<text x="36" y="373" font-size="15">Same colors — geometry only</text>
+<use href="#comparison-1-0" x="70" y="420" width="171" height="129"/>
+<path d="M60 420h-10 M60 549h-10 M251 420h10 M251 549h10" fill="none" stroke="#B7B7B0" stroke-width="1"/>
+<text x="155.5" y="595" font-size="15" text-anchor="middle">1. Standalone</text>
+<use href="#comparison-1-1" x="320" y="420" width="171" height="129"/>
+<path d="M310 420h-10 M310 549h-10 M501 420h10 M501 549h10" fill="none" stroke="#B7B7B0" stroke-width="1"/>
+<text x="405.5" y="595" font-size="15" text-anchor="middle">2. Wordmark OO</text>
+<use href="#comparison-1-2" x="570" y="420" width="171" height="129"/>
+<path d="M560 420h-10 M560 549h-10 M751 420h10 M751 549h10" fill="none" stroke="#B7B7B0" stroke-width="1"/>
+<text x="655.5" y="595" font-size="15" text-anchor="middle">3. Monochrome</text>
+<use href="#comparison-1-3" x="820" y="420" width="171" height="129"/>
+<path d="M810 420h-10 M810 549h-10 M1001 420h10 M1001 549h10" fill="none" stroke="#B7B7B0" stroke-width="1"/>
+<text x="905.5" y="595" font-size="15" text-anchor="middle">4. Light icon</text>
+<use href="#comparison-1-4" x="1070" y="420" width="171" height="129"/>
+<path d="M1060 420h-10 M1060 549h-10 M1251 420h10 M1251 549h10" fill="none" stroke="#B7B7B0" stroke-width="1"/>
+<text x="1155.5" y="595" font-size="15" text-anchor="middle">5. Dark icon</text>
+<text x="36" y="646" font-size="14" fill="#666662">Comparison changes presentation only; source identity and TUI are untouched.</text>
+</g>
+</svg>

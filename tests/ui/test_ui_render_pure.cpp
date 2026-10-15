@@ -55,10 +55,11 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
         120,
         16));
 
-    // The default welcome header is the three-line Loom weave strip.
+    // The default wide welcome header uses a six-line full Loom wordmark.
     EXPECT_NE(rendered.find("Loom"), std::string::npos);
-    EXPECT_NE(rendered.find("█░█░█░█░█"), std::string::npos);
-    EXPECT_NE(rendered.find("░█░█░█░█░"), std::string::npos);
+    EXPECT_NE(rendered.find("▋██▀▀▜▉▃▅▅▜█▉"), std::string::npos);
+    EXPECT_NE(rendered.find("▋██▀▜██▀▜█▊"), std::string::npos);
+    EXPECT_NE(rendered.find("▝▁██"), std::string::npos);
     EXPECT_NE(rendered.find("GLM-5.2"), std::string::npos);
     EXPECT_NE(rendered.find("/tmp/cpp_migration"), std::string::npos);
 
@@ -69,7 +70,7 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
     EXPECT_EQ(rendered.find("Welcome to Loom"), std::string::npos);
     EXPECT_EQ(rendered.find("Use /model to switch between models"),
               std::string::npos);
-    // The Loom brand icon is a 9×3 plain-weave block-art (█ ░) — there must
+    // The wide Loom branding is a 28×6 full wordmark — there must
     // be NO 🐱 U+1F431 emoji anywhere (the UTF-8 encoding of U+1F431 is the
     // 4-byte sequence below).
     EXPECT_EQ(rendered.find("\xF0\x9F\x90\xB1"), std::string::npos);

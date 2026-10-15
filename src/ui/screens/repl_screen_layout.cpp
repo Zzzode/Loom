@@ -262,7 +262,8 @@ using namespace ftxui;
     Element spinner_chrome = text("");
     if (show_work_spinner)
         spinner_chrome = RenderSpinner(s.task_view_store.spinner_mode, s.task_view_store.spinner_verb,
-                                       s.task_view_store.spinner_tip, spinner_frame);
+                                       s.task_view_store.spinner_tip, spinner_frame,
+                                       s.task_view_store.estimated_generation_tps);
     // M7.5: Panel views (Tasks/Teams/Help/Settings/About/QuickOpen) are
     // now rendered as modal dialogs via DialogQueue — no longer inlined
     // in the scrollable slot.

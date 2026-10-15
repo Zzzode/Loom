@@ -76,6 +76,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0015-state-led-attention-and-hierarchy.md`](rfcs/0015-state-led-attention-and-hierarchy.md) | **Implemented.** Four-state attention and semantic terminal hierarchy for the actual REPL. |
 | [`rfcs/0016-terminal-program-status.md`](rfcs/0016-terminal-program-status.md) | **Implemented.** OSC 7501 interactive state, capability detection and terminal-exit lifecycle. |
 | [`rfcs/0017-editable-question-panel.md`](rfcs/0017-editable-question-panel.md) | **Implemented.** Editable ask-user answers and question-local overlay clearing. |
+| [`rfcs/0018-live-generation-tps.md`](rfcs/0018-live-generation-tps.md) | **Implemented.** Estimated live generation rate beside the work indicator; stable Tasks/editor layout. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

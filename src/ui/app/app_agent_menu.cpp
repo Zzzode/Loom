@@ -395,6 +395,7 @@ void AppAdapter::ConsumePendingResult() {
             std::lock_guard lk(result_mutex_);
             spinner.swap(pending_spinner_);
             reset_markdown = std::exchange(pending_markdown_reset_, false);
+            ProjectGenerationRate();
         }
         if (reset_markdown) streaming_markdown_.reset();
         if (spinner && screen_state_->query_running) {

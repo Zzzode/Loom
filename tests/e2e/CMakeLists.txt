@@ -91,6 +91,16 @@ set_tests_properties(E2E_Pty_WelcomeMonogram PROPERTIES
     ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
     SKIP_RETURN_CODE 125)
 
+# RFC 0018: estimated output speed lives only beside foreground generation.
+foreach(_generation_case IN ITEMS messages cancel)
+  add_test(NAME E2E_Pty_GenerationTps_${_generation_case}
+      COMMAND e2e_pty_shutdown generation-tps-${_generation_case})
+  set_tests_properties(E2E_Pty_GenerationTps_${_generation_case} PROPERTIES
+      TIMEOUT 35
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
 # RFC 0012: actual prompt wrapping and SIGWINCH reflow preserve submitted bytes.
 add_test(NAME E2E_Pty_PromptWrap COMMAND e2e_pty_shutdown prompt-wrap)
 set_tests_properties(E2E_Pty_PromptWrap PROPERTIES

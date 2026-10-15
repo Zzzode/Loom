@@ -28,7 +28,7 @@ using namespace ftxui;
 [[nodiscard]] Element RenderSpinner(
     SpinnerMode m, const std::optional<std::string>& verb,
     const std::optional<std::string>& tip,
-    int frame) {
+    int frame, std::optional<double> estimated_tps) {
     if (m == SpinnerMode::Hidden) return text("");
     const auto& theme = loom::ui::design::theme::current_theme();
     const auto& pal = *theme.palette;
@@ -62,6 +62,9 @@ using namespace ftxui;
         text(label) | color(pal.muted),
         text(dots)  | color(pal.muted) | dim,
     };
+    if (estimated_tps && std::isfinite(*estimated_tps) && *estimated_tps > 0.0)
+        p.push_back(text(std::format("  ~{:.1f} tok/s", *estimated_tps)) |
+                    color(pal.muted));
     if (tip) p.push_back(text("  -- " + *tip) | color(pal.muted));
     return hbox(p);
 }

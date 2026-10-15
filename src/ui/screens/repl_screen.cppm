@@ -92,7 +92,8 @@ using namespace ftxui;
 [[nodiscard]] Element RenderSpinner(
     SpinnerMode m, const std::optional<std::string>& verb,
     const std::optional<std::string>& tip,
-    int frame = 0);
+    int frame = 0,
+    std::optional<double> estimated_tps = std::nullopt);
 
 // Column-width truncation helper; also used by the prompt-render unit.
 [[nodiscard]] std::string truncate_columns(std::string text, int max_cols);

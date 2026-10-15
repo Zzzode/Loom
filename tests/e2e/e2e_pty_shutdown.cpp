@@ -213,6 +213,55 @@ private:
             request_bodies_.push_back(request.substr(request.find("\r\n\r\n") + 4));
         }
         const int index = requests.fetch_add(1);
+        if (recovery_.starts_with("generation-tps-")) {
+            const auto delta = [&](const std::string& text) {
+                return event("content_block_delta", "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" +
+                    escape_json(text) + "\"}}");
+            };
+            const auto prefix = message_start() + event("content_block_start",
+                R"({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}})");
+            const auto finish = event("content_block_stop", R"({"type":"content_block_stop","index":0})") +
+                event("message_delta", R"({"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":200}})") +
+                event("message_stop", R"({"type":"message_stop"})");
+            if (!send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n" + prefix)) return;
+            if (index > 0) {
+                for (int i = 0; i < 6; ++i) {
+                    if (!send_bytes(delta("Follow-up streamed segment. "))) return;
+                    std::this_thread::sleep_for(120ms);
+                }
+                send_bytes(delta("Follow-up complete") + finish);
+                ::shutdown(fd, SHUT_WR);
+                return;
+            }
+            ++parked;
+            const auto connected = [&](int milliseconds) {
+                if (stopping_) return false;
+                pollfd descriptor{fd, POLLIN, 0};
+                const int ready = ::poll(&descriptor, 1, milliseconds);
+                if (ready < 0) return errno == EINTR;
+                return ready == 0 || read_bytes(buffer.data(), buffer.size()) > 0;
+            };
+            const auto gate = [&](std::string_view name) {
+                return fs::exists(target_.parent_path() / ("generation-" + std::string(name)));
+            };
+            bool live = true;
+            while (live && !gate("start")) live = connected(20);
+            int chunk = 0;
+            while (live && !gate("pause")) {
+                live = send_bytes(delta("Measured output segment " + std::to_string(chunk++) + ". ")) && connected(100);
+            }
+            while (live && !gate("resume")) live = connected(20);
+            while (live && !gate("finish")) {
+                live = send_bytes(delta("Resumed output segment " + std::to_string(chunk++) + ". ")) && connected(100);
+            }
+            if (live) {
+                send_bytes(finish);
+                ::shutdown(fd, SHUT_WR);
+            }
+            ++closed;
+            closed_cv_.notify_all();
+            return;
+        }
         if (recovery_.starts_with("question-")) {
             std::string body;
             if (index == 0) {
@@ -860,6 +909,81 @@ void run_welcome_monogram_case(const std::string& binary, const fs::path& root) 
                      "banner-" + std::to_string(width), width);
     }
     require(server.requests.load() == 0, "welcome rendering submitted a model request");
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+}
+
+// RFC 0018: real API streams, silence expiry and cancellation at a fixed prompt.
+void run_generation_tps_case(const std::string& binary, const std::string& scenario,
+                             const fs::path& root) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":false,"permissionMode":"default","extendedThinking":false})";
+    ModelServer server(false, false, root / "unused.txt", false, scenario);
+    Terminal terminal(binary, root, server.url(), ModelOptions{});
+    server.start();
+    require(terminal.wait([&] { return terminal.installed(); }), "TPS terminal startup not observed");
+    const auto has_rate = [&] {
+        const auto text = terminal.latest_frame_text();
+        const auto suffix = text.find(" tok/s");
+        return suffix != std::string::npos && text.rfind('~', suffix) != std::string::npos;
+    };
+    const auto capture = [&](const std::string& name) {
+        const auto raw = terminal.latest_frame();
+        std::ofstream(root / (name + ".raw"), std::ios::binary) << raw;
+        std::ofstream(root / (name + ".txt")) << terminal_text(raw);
+    };
+    const auto prompt_row = [&] {
+        const auto text = terminal.latest_frame_text();
+        const auto marker = text.rfind("❯");
+        require(marker != std::string::npos, "TPS editor marker not visible");
+        return std::count(text.begin(), text.begin() + static_cast<std::ptrdiff_t>(marker), '\n');
+    };
+    terminal.input("Measure the live output rate\r");
+    require(terminal.wait([&] { return server.requests.load() >= 1 &&
+        terminal.latest_frame_text().find("Thinking") != std::string::npos; }),
+        "TPS model request not observed");
+    require(!has_rate(), "TPS displayed before model output");
+    const auto editor_row = prompt_row();
+    capture("waiting");
+    std::ofstream(root / "generation-start") << "go";
+    require(terminal.wait(has_rate), "live estimated TPS did not appear");
+    require(prompt_row() == editor_row, "TPS moved the editor");
+    capture("generating-120");
+    for (const auto width : {80, 40, 120}) {
+        const auto start = terminal.output.rfind('\0') + 1;
+        terminal.resize(static_cast<unsigned short>(width), 40);
+        require(terminal.wait([&] { return !terminal.first_resize_frame_since(start).empty() && has_rate(); }),
+                "TPS resize frame not observed");
+        require(prompt_row() == editor_row, "TPS resize moved the editor vertically");
+        capture("generating-" + std::to_string(width));
+    }
+    if (scenario == "generation-tps-cancel") {
+        terminal.input("\x1b");
+        require(terminal.wait([&] { return !has_rate() && server.closed.load() == 1; }),
+                "TPS remained visible after cancellation");
+        capture("cancelled");
+    } else {
+        std::ofstream(root / "generation-pause") << "go";
+        require(terminal.wait([&] { return !has_rate(); }), "TPS did not expire during a silent stream");
+        require(server.closed.load() == 0, "silence fixture ended before expiry");
+        capture("expired");
+        std::ofstream(root / "generation-resume") << "go";
+        require(terminal.wait(has_rate), "TPS did not recover with fresh output");
+        capture("resumed");
+        std::ofstream(root / "generation-finish") << "go";
+        require(terminal.wait([&] { return !has_rate() && server.closed.load() == 1; }),
+                "TPS remained after stream completion");
+        capture("completed");
+    }
+    require(terminal.wait([&] { return terminal.idle_response_visible(""); }),
+            "generation probe did not return idle");
+    terminal.input("Check the next generation rate\r");
+    require(terminal.wait([&] { return server.requests.load() >= 2 && has_rate(); }),
+            "TPS did not recover on a new submission");
+    capture("follow-up-generating");
+    require(terminal.wait([&] { return terminal.idle_response_visible("Follow-up complete") && !has_rate(); }),
+            "follow-up generation did not finish without TPS");
+    capture("follow-up-completed");
     terminal.input("\x04");
     terminal.verify_exit(0);
 }
@@ -2616,6 +2740,10 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
         run_status_case(binary, scenario, root, harness);
         return;
     }
+    if (scenario.starts_with("generation-tps-")) {
+        run_generation_tps_case(binary, scenario, root);
+        return;
+    }
     if (scenario == "welcome-monogram") {
         run_welcome_monogram_case(binary, root);
         return;
@@ -2798,7 +2926,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

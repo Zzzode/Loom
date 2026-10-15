@@ -58,6 +58,12 @@ void AppAdapter::inject_stream_event_for_testing(const core::StreamEvent& ev) {
 }
 
 void AppAdapter::set_query_running_for_testing(bool running) {
+    const bool was_running = query_running_.load();
+    if (!running || !was_running) {
+        std::lock_guard lock(result_mutex_);
+        ResetGenerationRate();
+        if (running) generation_rate_.suppressed = false;
+    }
     conversation_projection_dirty_.store(true);
     query_running_.store(running);
     screen_state_->query_running = running;

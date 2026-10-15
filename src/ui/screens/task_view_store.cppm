@@ -41,6 +41,8 @@ struct TaskViewStore {
     // ── Spinner ─────────────────────────────────────────────────────────
     SpinnerMode spinner_mode = SpinnerMode::Hidden;
     std::optional<std::string> spinner_verb, spinner_tip;
+    // UI-projected foreground output estimate; absent outside generation.
+    std::optional<double> estimated_generation_tps;
 
     // ── Task notifications / footer counts ──────────────────────────────
     // Background-task and teammate counts for the footer mode indicator

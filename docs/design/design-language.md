@@ -78,6 +78,24 @@ These rules apply to RFC0015's bounded consumers: built-in statusline, compresse
 activity, work spinners, single permission requests and model-error metadata.
 They do not claim to restyle all historical/help/toast surfaces in one change.
 
+## Live generation rate
+
+The existing work row above the editor appends an estimated output rate such
+as `~42.1 tok/s`, using regular `muted` text before any optional tip. The tilde
+marks an estimate from the existing accumulated-content token estimator,
+not a provider token count or billing measurement. It includes foreground
+text, thinking and model-generated tool arguments; it excludes input, cached
+usage, background agents and tool execution/results. Network chunks are not
+tokens. The session-wide `/stats` throughput is a separate metric.
+
+The first sample establishes a baseline. Positive growth over at least 100ms
+is required before a value appears; a rolling two-second window smooths it.
+Block/stream completion, tool execution, errors, cancellation and idle clear
+the rate. Two seconds without content deltas also hide it through a one-shot
+expiry wake. A new generation starts with fresh history. The suffix stays in
+the existing single row and may clip in narrow terminals; it does not change
+Tasks, Teams, editor, footer or their row budgets.
+
 ## Activity height
 
 The REPL shares a finite row budget between todos and live teammates. Fixed

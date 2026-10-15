@@ -181,6 +181,10 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     set_exit_message_impl("Press Ctrl+C again to exit");
     cbs.on_interrupt = [this]() {
         if (query_running_.load()) {
+            {
+                std::lock_guard lock(result_mutex_);
+                ResetGenerationRate(/*suppress=*/true);
+            }
             CancelProgramStatusOperation();
             // A running query aborts immediately — never arms the exit
             // double-press and never leaves a stale footer from a previous

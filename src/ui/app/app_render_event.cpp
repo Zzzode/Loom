@@ -139,6 +139,10 @@ AppAdapter::~AppAdapter() {
 }
 
 void AppAdapter::StopBackgroundWorkers() {
+    {
+        std::lock_guard lock(result_mutex_);
+        ResetGenerationRate(/*suppress=*/true);
+    }
     CloseUiActions();
     if (teammate_.inbox_thread().joinable()) teammate_.inbox_thread().request_stop();
     if (leader_inbox_thread_.joinable()) leader_inbox_thread_.request_stop();

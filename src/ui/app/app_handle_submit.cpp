@@ -38,6 +38,7 @@ import loom.skills.support;
 
 // ── HandleSubmit-only imports (moved out of app_autocomplete.cpp) ───────
 import loom.ui.foundation.clock;
+import loom.model.token_budget;
 import loom.ui.foundation.design_figures;
 import loom.ui.prompt.at_attachments;
 import loom.ui.messages.message_pipeline;
@@ -211,6 +212,8 @@ void AppAdapter::HandleSubmit(const std::string& text,
     screen_state_->task_view_store.spinner_verb = "Thinking";
     {
         std::lock_guard lk(result_mutex_);
+        ResetGenerationRate();
+        generation_rate_.suppressed = false;
         pending_error_.reset();
         pending_spinner_.reset();
         pending_markdown_reset_ = false;
@@ -278,6 +281,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
         bool paused = false;
         {
             std::lock_guard lock(result_mutex_);
+            ResetGenerationRate();
             paused = pending_error_ && pending_error_->type == "tool_round_limit";
             failed = pending_error_.has_value() && !paused;
         }
@@ -303,16 +307,97 @@ void AppAdapter::handle_committed_message(const Message& message) {
     PostRenderEvent();
 }
 
+// RFC 0018: these helpers require result_mutex_; projection is UI-only.
+void AppAdapter::ResetGenerationRate(bool suppress) {
+    generation_rate_.block_index.reset();
+    generation_rate_.last_delta.reset();
+    generation_rate_.samples.clear();
+    generation_rate_.value.reset();
+    if (suppress) generation_rate_.suppressed = true;
+    generation_rate_deadline_ms_.store(0);
+}
+
+void AppAdapter::ObserveGenerationDelta(
+        std::uint32_t index, std::chrono::steady_clock::time_point now) {
+    auto& rate = generation_rate_;
+    if (rate.suppressed) return;
+    // Invalidate before replacing last_delta: an unconsumed expiry wake must
+    // not let fresh data bridge a silent interval or a backwards test clock.
+    if (rate.block_index != index || (rate.last_delta &&
+        (now < *rate.last_delta || now - *rate.last_delta >= std::chrono::seconds(2))))
+        ResetGenerationRate();
+    rate.block_index = index;
+    rate.last_delta = now;
+}
+
+void AppAdapter::ProjectGenerationRate() {
+    auto& projected = screen_state_->task_view_store.estimated_generation_tps;
+    projected.reset();
+    auto& rate = generation_rate_;
+    if (!query_running_.load()) { ResetGenerationRate(); return; }
+    if (rate.suppressed || !rate.block_index || !rate.last_delta) return;
+    const auto now = clock::steady_now();
+    if (now < *rate.last_delta || now - *rate.last_delta >= std::chrono::seconds(2) ||
+        (!rate.samples.empty() && now < rate.samples.back().at)) {
+        ResetGenerationRate();
+        return;
+    }
+    std::string_view buffer;
+    const auto index = *rate.block_index;
+    if (const auto it = streaming_tools_.find(index); it != streaming_tools_.end()) {
+        if (!it->second.complete && !it->second.exec_started) buffer = it->second.input_json;
+    } else if (const auto it = streaming_thinking_.find(index); it != streaming_thinking_.end()) {
+        if (!it->second.complete) buffer = it->second.text;
+    } else if (streaming_text_index_ == index) {
+        buffer = streaming_text_;
+    }
+    if (buffer.empty()) { ResetGenerationRate(); return; }
+
+    if (rate.samples.empty() ||
+        (now - rate.samples.back().at >= std::chrono::milliseconds(100) &&
+         *rate.last_delta > rate.samples.back().at)) {
+        const auto count = loom::utils::token_budget::TokenEstimator{}.estimate_tokens(buffer);
+        if (!rate.samples.empty() && count < rate.samples.back().tokens) {
+            ResetGenerationRate();
+            return;
+        }
+        const auto boundary = now - std::chrono::seconds(2);
+        while (rate.samples.size() > 1 && rate.samples[1].at <= boundary)
+            rate.samples.pop_front();
+        while (rate.samples.size() >= 22) rate.samples.pop_front();
+        rate.samples.push_back({now, count});
+        rate.value.reset();
+        if (rate.samples.size() >= 2) {
+            const auto& first = rate.samples.front();
+            const double seconds = std::chrono::duration<double>(now - first.at).count();
+            if (seconds > 0.0 && count > first.tokens) {
+                const double value = static_cast<double>(count - first.tokens) / seconds;
+                if (std::isfinite(value)) rate.value = value;
+            }
+        }
+    }
+    projected = rate.value;
+    // The real-clock wake only schedules a UI drain. Fake-clock tests validate
+    // expiry above without depending on this existing background wake loop.
+    if (projected && screen_.load()) {
+        generation_rate_deadline_ms_.store(std::chrono::ceil<std::chrono::milliseconds>(
+            (*rate.last_delta + std::chrono::seconds(2)).time_since_epoch()).count());
+    }
+}
+
 // ── Stream-event handler (extracted from the on_event lambda so tests can
 //    inject events directly — RFC 0003) ──────────────────────────────────
 void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
     bool apply_event = true;
+    bool refresh_rate = false;
 
-    std::visit([this, &apply_event](const auto& e) {
+    std::visit([this, &apply_event, &refresh_rate](const auto& e) {
         using T = std::decay_t<decltype(e)>;
 
         if constexpr (std::is_same_v<T, core::StreamStart>) {
             std::lock_guard lk(result_mutex_);
+            refresh_rate = generation_rate_.value.has_value();
+            ResetGenerationRate();
             streaming_text_.clear();
             streaming_text_index_.reset();
             streaming_finalizing_ = false;
@@ -329,6 +414,7 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
             apply_event = event_dedup_.should_accept_start(e.index);
             if (!apply_event) return;
             std::lock_guard lk(result_mutex_);
+            ResetGenerationRate();
             if (const auto* tool = std::get_if<core::ToolUseBlock>(&e.block)) {
                 streaming_tools_[e.index] = StreamingToolPreview{
                     .tool_name = tool->name,
@@ -369,10 +455,12 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
                 streaming_text_ += e.delta_text;
                 pending_spinner_ = PendingSpinner{repl::SpinnerMode::Responding, std::nullopt};
             }
+            if (!e.delta_text.empty()) ObserveGenerationDelta(e.index, clock::steady_now());
         } else if constexpr (std::is_same_v<T, core::ContentBlockStop>) {
             apply_event = event_dedup_.should_accept_stop(e.index);
             if (!apply_event) return;
             std::lock_guard lk(result_mutex_);
+            if (generation_rate_.block_index == e.index) ResetGenerationRate();
             if (auto tool = streaming_tools_.find(e.index); tool != streaming_tools_.end())
                 tool->second.complete = true;
             if (auto thinking = streaming_thinking_.find(e.index); thinking != streaming_thinking_.end()) {
@@ -403,6 +491,7 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
             apply_event = event_dedup_.should_accept_exec_start(e.tool_use_id);
             if (!apply_event) return;
             std::lock_guard lk(result_mutex_);
+            ResetGenerationRate();
             for (auto& [idx, preview] : streaming_tools_) {
                 if (preview.tool_use_id == e.tool_use_id &&
                     !preview.exec_done) {
@@ -442,6 +531,7 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
                 return;
             }
             std::lock_guard lk(result_mutex_);
+            ResetGenerationRate();
             pending_error_ = PendingError{
                 .type = e.error_type,
                 .message = e.message,
@@ -450,6 +540,7 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
             // Finish live styling but keep the body visible until the
             // engine publishes its committed replacement.
             std::lock_guard lk(result_mutex_);
+            ResetGenerationRate();
             pending_error_.reset();
             streaming_finalizing_ = true;
         }
@@ -457,8 +548,8 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
 
     if (apply_event) {
         statusline_update_pending_.store(true);
-        PostRenderEvent();
     }
+    if (apply_event || refresh_rate) PostRenderEvent();
 }
 
 // ── HandleCommand (moved out of app_autocomplete.cpp to reduce import closure) ──

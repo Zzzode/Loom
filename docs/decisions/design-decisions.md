@@ -3951,3 +3951,29 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   forkpty infrastructure runs actual ask-user tool responses at 40/80/120
   columns. Revert this local implementation, transient field and tests/docs
   together; no persisted data, configuration or protocol migration is needed.
+
+
+## Live generation TPS is ephemeral UI state, estimated from accumulated content
+
+- **Ownership:** App stream callbacks stage block identity/activity and reset
+  measurement under `result_mutex_`. Only the existing UI consumption point
+  samples the live buffer and projects `TaskViewStore::estimated_generation_tps`.
+  The screen's optional spinner argument is the matching internal shape seam;
+  changing either side requires updating both. No engine, wire, persisted
+  trace, settings, token-estimator or public API change is involved.
+- **Counting:** reuse `TokenEstimator` on the accumulated active block, at
+  most ten times per second, retaining a two-second window with a preceding
+  baseline and at most 22 samples. Never sum per-delta estimates or count
+  chunks. The visible `~` distinguishes approximate client-observed output
+  throughput from exact provider usage, which arrives only at stream end.
+- **Lifecycle:** compare a delta with the previous activity time before
+  replacing it, so late data cannot bridge a silent interval. Cancellation
+  suppresses late callbacks until a new submission. Block/round end, tool
+  execution, errors, outer completion and teardown invalidate the staged
+  measurement. The existing deadline service posts one expiry wake after
+  two seconds of silence; it never writes the screen store or renders at a
+  constant frequency.
+- **Presentation and rollback:** append regular muted `~N.N tok/s` beside the
+  existing work label, before any tip. Keep Tasks/Teams/editor/footer row
+  allocations unchanged. Revert the app record, screen suffix, tests and docs
+  together to remove this additive UI behavior. See RFC 0018.

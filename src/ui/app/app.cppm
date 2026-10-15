@@ -271,6 +271,7 @@ private:
     std::atomic<std::int64_t> thinking_collapse_deadline_ms_{0};
     std::atomic<std::int64_t> paste_submission_deadline_ms_{0};
     std::atomic<std::int64_t> chain_label_deadline_ms_{0};
+    std::atomic<std::int64_t> generation_rate_deadline_ms_{0};
     std::atomic<bool> conversation_projection_dirty_{true};
     struct CachedMessageProjection {
         Message source;
@@ -286,6 +287,23 @@ private:
     };
     std::optional<PendingPasteSubmission> pending_paste_submission_;
     std::mutex result_mutex_;
+    // RFC 0018: staged under result_mutex_; only the UI projects the rate.
+    struct GenerationRate {
+        struct Sample {
+            std::chrono::steady_clock::time_point at;
+            std::size_t tokens;
+        };
+        std::optional<std::uint32_t> block_index;
+        std::optional<std::chrono::steady_clock::time_point> last_delta;
+        std::deque<Sample> samples;
+        std::optional<double> value;
+        bool suppressed = false;
+    } generation_rate_;
+    // Caller holds result_mutex_. Reset retains cancellation suppression.
+    void ResetGenerationRate(bool suppress = false);
+    void ObserveGenerationDelta(std::uint32_t index,
+                                std::chrono::steady_clock::time_point now);
+    void ProjectGenerationRate();
     /// Pending error from a StreamError event.  Carries the error_type so
     /// ConsumePendingResult can distinguish API/network errors (retriable,
     /// show countdown + Retry button) from tool errors (not retriable,

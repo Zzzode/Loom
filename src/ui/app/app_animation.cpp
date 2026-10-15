@@ -53,6 +53,11 @@ void AppAdapter::StartUiAnimationTicker() {
                 chain_label_deadline_ms_.compare_exchange_strong(chain_due, 0)) {
                 advanced = true;
             }
+            auto rate_due = generation_rate_deadline_ms_.load();
+            if (rate_due != 0 && now_ms >= rate_due &&
+                generation_rate_deadline_ms_.compare_exchange_strong(rate_due, 0)) {
+                advanced = true;
+            }
             if (advanced) {
                 ui_animation_tick_count_.fetch_add(1, std::memory_order_relaxed);
                 PostRenderEvent();

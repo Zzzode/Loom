@@ -478,3 +478,50 @@ TEST(ChromeBudget, AllThemeVariantsRenderDenseBashWithSpinnerAndRestoreTheme) {
     EXPECT_EQ(theme::current_theme().palette, original.palette);
     EXPECT_EQ(theme::current_theme().a11y.reduced_motion, original.a11y.reduced_motion);
 }
+
+TEST(ChromeBudget, CopyFeedbackSharesWorkRowAndPreservesChromeGeometry) {
+    for (int columns : {40, 80, 120}) for (int rows : {24, 40}) {
+        for (bool running : {false, true}) for (bool multiline : {false, true}) {
+            SCOPED_TRACE(std::format("{}x{}, running={}, multiline={}",
+                columns, rows, running, multiline));
+            repl::ReplScreenState state;
+            populate(state, 2, 1);
+            state.input_text = multiline ? "draft\nsecond line" : "draft";
+            state.query_running = running;
+            if (running) {
+                state.task_view_store.spinner_mode = repl::SpinnerMode::Responding;
+                state.task_view_store.spinner_verb = "Working";
+                state.task_view_store.estimated_generation_tps = 42.1;
+            }
+            auto before = paint_repl(state, columns, rows);
+            const auto viewport = state.messages_store.scrollable_box;
+            const auto row_of = [](const Screen& screen, std::string_view label) {
+                for (int y = 0; y < screen.dimy(); ++y) {
+                    std::string row;
+                    for (int x = 0; x < screen.dimx(); ++x)
+                        row += screen.PixelAt(x, y).character;
+                    if (row.find(label) != std::string::npos) return y;
+                }
+                return -1;
+            };
+            const int expected_row = running ? row_of(before, "Working") : viewport.y_max + 1;
+            ASSERT_GE(expected_row, 0);
+            state.copy_toast_text = "Copied 5 chars to clipboard";
+            auto after = paint_repl(state, columns, rows);
+            ASSERT_EQ(row_of(after, "Copied"), expected_row);
+            EXPECT_EQ(state.messages_store.scrollable_box.y_max, viewport.y_max);
+            EXPECT_EQ(row_of(after, "FOOTER-MARK"), row_of(before, "FOOTER-MARK"));
+            if (running) {
+                EXPECT_EQ(row_of(after, "Working"), expected_row);
+                EXPECT_EQ(row_of(after, "~42.1 tok/s"), expected_row);
+            }
+            for (int y = 0; y < rows; ++y) {
+                if (y == expected_row) continue;
+                for (int x = 0; x < columns; ++x)
+                    EXPECT_EQ(after.PixelAt(x, y).character, before.PixelAt(x, y).character)
+                        << "Unrelated cell moved at " << x << ',' << y;
+            }
+            EXPECT_EQ(state.input_text, multiline ? "draft\nsecond line" : "draft");
+        }
+    }
+}

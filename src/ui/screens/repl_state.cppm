@@ -214,9 +214,8 @@ struct ReplScreenState {
     // Items are added via hooks (env-hook, rate-limit warnings, etc.) and
     // rotate through the footer's notification slot on a timeout basis.
     loom::ui::prompt::footer::NotificationQueue footer_notification_queue;
-    /// Inline "copied N chars to clipboard" toast (bottom_float slot).
-    /// Set by AppAdapter::Render from TextSelection state; consumed by
-    /// RenderReplScreen to populate slots.bottom_float.
+    /// Inline copy feedback, projected by AppAdapter::Render from TextSelection.
+    /// The REPL reuses its above-editor row; local JSX views retain bottom_float.
     std::optional<std::string> copy_toast_text;
     // Stable per-session welcome-tip index (seeded once from the session id in
     // app.cppm). The renderer mods this by kWelcomeTips.size(). Previously the

@@ -380,9 +380,18 @@ using namespace ftxui;
         // scrollback area and the top border of the input box.  We emulate with a
         // leading text("") row.
         L.reserve(5);
-        L.push_back(text(""));   // top margin = 1
+        // Copy feedback shares the work row instead of floating one blank row
+        // above it. Idle feedback reuses the existing top-margin row; neither
+        // path adds height or changes the task/editor allocation.
+        Element copy_feedback = s.copy_toast_text
+            ? hbox({text("  "), text(*s.copy_toast_text) | dim | xflex_shrink,
+                    text("  ")}) | xflex_shrink
+            : text("");
+        L.push_back(!show_work_spinner && s.copy_toast_text
+            ? hbox({filler(), copy_feedback}) | size(HEIGHT, EQUAL, 1)
+            : text(""));
         if (show_work_spinner) {
-            L.push_back(hbox({spinner_chrome, filler()}) | flex_shrink);
+            L.push_back(hbox({spinner_chrome, filler(), copy_feedback}) | flex_shrink);
         }
         // Activity is inserted here after fixed chrome has been measured.
         const auto activity_position = L.size();
@@ -591,9 +600,9 @@ using namespace ftxui;
     slots.pill_hit_box          = &s.messages_store.new_messages_pill_box;
     slots.scrollable_box        = &s.messages_store.scrollable_box;
 
-    // Inline "copied N chars to clipboard" toast (bottom_float slot).
-    // Set by AppAdapter::Render from TextSelection state.
-    if (s.copy_toast_text) {
+    // Local JSX views have no normal above-editor row; retain their existing
+    // scroll-region copy feedback placement.
+    if (s.copy_toast_text && s.active_local_jsx_command) {
         slots.bottom_float = hbox({
             text(*s.copy_toast_text) | dim,
             text("  ")  // right margin

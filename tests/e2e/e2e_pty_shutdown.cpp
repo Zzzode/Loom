@@ -1963,6 +1963,11 @@ void run_selection_case(const std::string& binary, const std::string& scenario, 
         require(terminal.wait([&] { return terminal.latest_frame_text().find("chars to clipboard") != std::string::npos; }),
                 "native backend success feedback not rendered");
         std::ofstream(root / "selected.raw", std::ios::binary) << terminal.latest_frame();
+        const auto copied_frame = decode_frame(terminal.latest_frame());
+        require(copied_frame.find("Copied").second == baseline.find("────────").second - 1,
+                "clipboard feedback is not on the existing above-editor row");
+        require(copied_frame.find("PTYSELECT start").second == baseline.find("PTYSELECT start").second,
+                "clipboard feedback moved the transcript");
         std::ofstream(root / "copied.txt") << read_file(root / "clipboard.txt");
         std::ofstream(root / "expected.txt") << (wide ? "甲乙" : "alpha");
         if (streaming) {

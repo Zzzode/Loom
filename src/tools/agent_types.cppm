@@ -28,6 +28,7 @@ struct MultiAgentResult {
     int turns_used;
     int tokens_used;
     bool completed;
+    bool started = false;
 };
 
 inline auto agent_type_to_string(AgentType type) -> std::string_view {

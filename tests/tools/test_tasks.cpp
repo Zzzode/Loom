@@ -3,12 +3,14 @@
 
 #include <gtest/gtest.h>
 #include <cstdlib>
+#include <httplib.h>
 
 import std;
 import loom.tools.agent_runtime;
 import loom.tools.agent_types;
 import loom.orchestration.agent.spawn_multi_agent;
 import loom.tools.team;
+import loom.tools.tool;
 import loom.tasks.local_agent_task;
 import loom.tasks.in_process_teammate_task;
 import loom.tasks.pill_label;
@@ -47,6 +49,136 @@ struct EnvironmentGuard {
         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())
     );
 }
+
+class BatchReadTool final : public loom::core::ITool {
+public:
+    const loom::core::ToolDefinition& definition() const override { return definition_; }
+    loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+        ++calls;
+        return loom::core::ToolResult::success("batch tool executed");
+    }
+    bool check_permission(const loom::core::ToolInput&) const override { return true; }
+    std::atomic<int> calls{0};
+
+private:
+    loom::core::ToolDefinition definition_{
+        .name = "Read", .description = "Read the batch test fixture",
+        .input_schema = {}, .permission = loom::core::ToolPermission::ReadOnly,
+    };
+};
+
+class BatchMessagesServer {
+public:
+    explicit BatchMessagesServer(bool hold = false) : released_(!hold) {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(4); };
+        server_.Post("/v1/messages", [this](const httplib::Request& request, httplib::Response& response) {
+            {
+                std::unique_lock lock(mutex_);
+                requests_.push_back(request.body);
+                api_keys_.push_back(request.get_header_value("x-api-key"));
+                cv_.notify_all();
+                cv_.wait_for(lock, std::chrono::seconds(10), [this] { return released_; });
+            }
+            if (request.body.find("fail this batch") != std::string::npos) {
+                response.status = 401;
+                response.set_content(R"({"error":{"type":"authentication_error","message":"batch endpoint rejected request"}})", "application/json");
+                return;
+            }
+            const bool tool_turn = request.body.find("exercise the registered tool") != std::string::npos &&
+                request.body.find("\"tool_result\"") == std::string::npos;
+            std::string events =
+                "event: message_start\n"
+                "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_batch\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"batch-test\",\"content\":[],\"usage\":{\"input_tokens\":11,\"output_tokens\":0}}}\n\n";
+            if (tool_turn) {
+                events +=
+                    "event: content_block_start\n"
+                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"read_batch\",\"name\":\"Read\",\"input\":{}}}\n\n"
+                    "event: content_block_delta\n"
+                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{}\"}}\n\n";
+            } else {
+                events +=
+                    "event: content_block_start\n"
+                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
+                    "event: content_block_delta\n"
+                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"batch final output\"}}\n\n";
+            }
+            events += "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\n";
+            events += std::format(
+                "event: message_delta\ndata: {{\"type\":\"message_delta\",\"delta\":{{\"stop_reason\":\"{}\"}},\"usage\":{{\"output_tokens\":{}}}}}\n\n",
+                tool_turn ? "tool_use" : "end_turn", tool_turn ? 7 : 3);
+            events += "event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n";
+            response.set_content(events, "text/event-stream");
+        });
+        port_ = server_.bind_to_any_port("127.0.0.1");
+        if (port_ > 0) {
+            thread_ = std::thread([this] { server_.listen_after_bind(); });
+            server_.wait_until_ready();
+        }
+    }
+    ~BatchMessagesServer() {
+        release();
+        server_.stop();
+        if (thread_.joinable()) thread_.join();
+    }
+    bool valid() const { return port_ > 0; }
+    std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
+    bool wait_for_requests(std::size_t count) {
+        std::unique_lock lock(mutex_);
+        return cv_.wait_for(lock, std::chrono::seconds(5), [this, count] { return requests_.size() >= count; });
+    }
+    void release() {
+        { std::lock_guard lock(mutex_); released_ = true; }
+        cv_.notify_all();
+    }
+    std::vector<std::string> requests() {
+        std::lock_guard lock(mutex_);
+        return requests_;
+    }
+    std::vector<std::string> api_keys() {
+        std::lock_guard lock(mutex_);
+        return api_keys_;
+    }
+
+private:
+    httplib::Server server_;
+    std::thread thread_;
+    int port_ = -1;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    bool released_;
+    std::vector<std::string> requests_;
+    std::vector<std::string> api_keys_;
+};
+
+class SpawnBatchTest : public ::testing::Test {
+protected:
+    fs::path root = unique_test_dir("loom-spawn-batch-");
+    EnvironmentGuard runtime_guard{"LOOM_AGENT_RUNTIME_DIR", (root / "agents").string()};
+    EnvironmentGuard wire_guard{"LOOM_WIRE_API", "messages"};
+    EnvironmentGuard key_guard{"LOOM_API_KEY", "batch-test-key"};
+
+    void SetUp() override {
+        fs::create_directories(root);
+        loom::tools::agent_runtime::native_agent_store().clear_for_testing();
+    }
+    void TearDown() override {
+        loom::tools::agent_runtime::native_agent_store().clear_for_testing();
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
+    loom::tools::MultiAgentConfig config(std::string prompt) {
+        return loom::tools::MultiAgentConfig{
+            .agents = {{
+                .type = loom::tools::AgentType::GeneralPurpose,
+                .name = "batch-worker", .model = "batch-test", .system_prompt = "batch system policy",
+                .allowed_tools = {"Read"}, .max_turns = 2,
+            }},
+            .parallel = false, .coordinator_prompt = std::move(prompt), .team_name = std::nullopt,
+            .working_dir = root.string(), .prefer_in_process = false,
+            .registry = std::make_shared<loom::core::ToolRegistry>(),
+        };
+    }
+};
 
 } // namespace
 
@@ -91,6 +223,7 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
         .team_name = std::string("migration-team"),
         .working_dir = root.string(),
         .prefer_in_process = true,
+        .registry = {},
     };
 
     auto futures = loom::tools::spawn_agents(config);
@@ -99,7 +232,13 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
     );
 
     ASSERT_EQ(results.size(), 1u);
-    EXPECT_TRUE(results[0].completed) << results[0].output;
+    EXPECT_FALSE(results[0].completed);
+    EXPECT_TRUE(results[0].started) << results[0].output;
+    EXPECT_EQ(results[0].tokens_used, 0);
+    EXPECT_NE(loom::tools::merge_agent_results(results).find("task completion is pending"), std::string::npos);
+    const std::array receipts{results[0], results[0]};
+    const auto merged = loom::tools::merge_agent_results(receipts);
+    EXPECT_NE(merged.find("2/2 agents started, 0/2 agents completed"), std::string::npos);
     EXPECT_NE(results[0].output.find("Spawned successfully."), std::string::npos) << results[0].output;
     EXPECT_NE(results[0].output.find("agent_id: reviewer-two-2@migration-team"), std::string::npos) << results[0].output;
     EXPECT_NE(results[0].output.find("backend: in-process"), std::string::npos) << results[0].output;
@@ -140,53 +279,160 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
     fs::remove_all(root, ec);
 }
 
-TEST(SpawnMultiAgent, NonTeamAgentsUseAgentToolBackgroundPath) {
-    const auto root = unique_test_dir("loom-spawn-multi-agent-local-");
-    fs::create_directories(root);
-    EnvironmentGuard agent_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
-    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
+TEST_F(SpawnBatchTest, NonTeamAgentWaitsForFinalOutputAndExecutesRegisteredTools) {
+    BatchMessagesServer server;
+    ASSERT_TRUE(server.valid());
+    EnvironmentGuard url_guard("LOOM_BASE_URL", server.base_url());
+    auto batch = config("exercise the registered tool");
+    auto read = std::make_unique<BatchReadTool>();
+    auto* read_ptr = read.get();
+    batch.registry->register_tool(std::move(read));
 
-    loom::tools::MultiAgentConfig config{
-        .agents = {
-            loom::tools::MultiAgentAgentConfig{
-                .type = loom::tools::AgentType::GeneralPurpose,
-                .name = "local-worker",
-                .model = "haiku",
-                .system_prompt = "Review migration parity",
-                .allowed_tools = {"Read"},
-                .max_turns = 1,
-            },
-        },
-        .parallel = false,
-        .coordinator_prompt = std::string("Inspect the non-team migration path"),
-        .team_name = std::nullopt,
-        .working_dir = root.string(),
-        .prefer_in_process = true,
-    };
-
-    auto futures = loom::tools::spawn_agents(config);
-    auto results = loom::tools::wait_all(
-        std::span<std::future<loom::tools::MultiAgentResult>>(futures.data(), futures.size())
-    );
+    auto futures = loom::tools::spawn_agents(batch);
+    EXPECT_EQ(futures[0].wait_for(std::chrono::seconds(0)), std::future_status::deferred);
+    EXPECT_TRUE(server.requests().empty());
+    auto results = loom::tools::wait_all(futures);
 
     ASSERT_EQ(results.size(), 1u);
     EXPECT_TRUE(results[0].completed) << results[0].output;
-    EXPECT_NE(results[0].output.find("Queued background agent local-worker"), std::string::npos) << results[0].output;
-    EXPECT_EQ(results[0].output.find("Agent 'local-worker'"), std::string::npos);
-
-    auto record = loom::tools::agent_runtime::native_agent_store().get("local-worker");
+    EXPECT_TRUE(results[0].started);
+    EXPECT_EQ(results[0].output, "batch final output");
+    EXPECT_EQ(results[0].turns_used, 2);
+    EXPECT_EQ(results[0].tokens_used, 32);
+    EXPECT_EQ(read_ptr->calls, 1);
+    const auto requests = server.requests();
+    ASSERT_EQ(requests.size(), 2u);
+    EXPECT_NE(requests.front().find("batch system policy"), std::string::npos);
+    EXPECT_NE(requests.back().find("batch tool executed"), std::string::npos);
+    auto record = loom::tools::agent_runtime::native_agent_store().get("batch-worker");
     ASSERT_TRUE(record);
-    EXPECT_TRUE(record->background);
-    EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Queued);
-    EXPECT_EQ(record->agent_type, "general-purpose");
-    ASSERT_TRUE(record->cwd);
-    EXPECT_EQ(*record->cwd, fs::weakly_canonical(root).string());
-    ASSERT_FALSE(record->transcript.empty());
-    EXPECT_NE(record->transcript.front().find("Inspect the non-team migration path"), std::string::npos);
+    EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Completed);
+    EXPECT_FALSE(record->background);
+    EXPECT_EQ(record->cwd, fs::weakly_canonical(root).string());
+}
 
-    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
-    std::error_code ec;
-    fs::remove_all(root, ec);
+TEST_F(SpawnBatchTest, ParallelAgentsExecuteConcurrentlyAndRetainRegistryOwnership) {
+    BatchMessagesServer server(true);
+    ASSERT_TRUE(server.valid());
+    EnvironmentGuard url_guard("LOOM_BASE_URL", server.base_url());
+    auto batch = config("complete parallel batch");
+    batch.parallel = true;
+    batch.agents.push_back(batch.agents.front());
+    batch.agents.back().name = "second-worker";
+    std::weak_ptr<loom::core::ToolRegistry> registry = batch.registry;
+    auto futures = loom::tools::spawn_agents(batch);
+    batch.registry.reset();
+
+    const auto both_started = server.wait_for_requests(2);
+    EXPECT_TRUE(both_started);
+    EXPECT_FALSE(registry.expired());
+    for (auto& future : futures) {
+        EXPECT_EQ(future.wait_for(std::chrono::seconds(0)), std::future_status::timeout);
+    }
+    server.release();
+    auto results = loom::tools::wait_all(futures);
+    ASSERT_EQ(results.size(), 2u);
+    for (const auto& result : results) {
+        EXPECT_TRUE(result.completed) << result.output;
+        EXPECT_TRUE(result.started);
+        EXPECT_EQ(result.output, "batch final output");
+        EXPECT_EQ(result.turns_used, 1);
+        EXPECT_EQ(result.tokens_used, 14);
+    }
+    futures.clear();
+    EXPECT_TRUE(registry.expired());
+}
+
+TEST_F(SpawnBatchTest, EndpointFailureIsNotReportedAsCompleted) {
+    BatchMessagesServer server;
+    ASSERT_TRUE(server.valid());
+    EnvironmentGuard url_guard("LOOM_BASE_URL", server.base_url());
+    auto batch = config("fail this batch");
+    auto futures = loom::tools::spawn_agents(batch);
+    auto results = loom::tools::wait_all(futures);
+    ASSERT_EQ(results.size(), 1u);
+    EXPECT_FALSE(results[0].completed);
+    EXPECT_TRUE(results[0].started);
+    EXPECT_NE(results[0].output.find("401"), std::string::npos);
+    EXPECT_EQ(results[0].tokens_used, 0);
+    auto record = loom::tools::agent_runtime::native_agent_store().get("batch-worker");
+    ASSERT_TRUE(record);
+    EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Failed);
+}
+
+TEST_F(SpawnBatchTest, MissingRegistryFailsWithoutQueueingAnAgent) {
+    auto batch = config("no registry");
+    batch.registry.reset();
+    auto futures = loom::tools::spawn_agents(batch);
+    auto results = loom::tools::wait_all(futures);
+    ASSERT_EQ(results.size(), 1u);
+    EXPECT_FALSE(results[0].completed);
+    EXPECT_FALSE(results[0].started);
+    EXPECT_EQ(results[0].tokens_used, 0);
+    EXPECT_NE(results[0].output.find("require a tool registry"), std::string::npos);
+    EXPECT_FALSE(loom::tools::agent_runtime::native_agent_store().get("batch-worker"));
+}
+
+TEST_F(SpawnBatchTest, CapturedSessionSnapshotOverridesConflictingEnvironment) {
+    BatchMessagesServer server;
+    ASSERT_TRUE(server.valid());
+    EnvironmentGuard url_guard("LOOM_BASE_URL", "http://127.0.0.1:1");
+    EnvironmentGuard wire_guard("LOOM_WIRE_API", "openai");
+    EnvironmentGuard model_guard("LOOM_MODEL", "wrong-environment-model");
+    EnvironmentGuard key_guard("LOOM_API_KEY", "wrong-environment-key");
+    auto batch = config("use the captured session");
+    batch.agents.front().model.clear();
+    batch.parent_model = "snapshot-parent-model";
+    batch.api_context = std::make_shared<const loom::core::ApiExecutionContext>(loom::core::ApiExecutionContext{
+        .wire_api = "messages", .base_url = server.base_url(),
+        .api_key = "snapshot-key", .auth_token = {},
+    });
+    auto futures = loom::tools::spawn_agents(batch);
+    batch.api_context.reset();
+    batch.parent_model.reset();
+    auto results = loom::tools::wait_all(futures);
+
+    ASSERT_EQ(results.size(), 1u);
+    EXPECT_TRUE(results[0].completed) << results[0].output;
+    EXPECT_TRUE(results[0].started);
+    const auto requests = server.requests();
+    ASSERT_EQ(requests.size(), 1u);
+    EXPECT_NE(requests[0].find("snapshot-parent-model"), std::string::npos);
+    EXPECT_EQ(requests[0].find("wrong-environment-model"), std::string::npos);
+    EXPECT_EQ(server.api_keys(), std::vector<std::string>{"snapshot-key"});
+}
+
+TEST_F(SpawnBatchTest, CapturedLivePermissionPolicyDeniesChildToolExecution) {
+    BatchMessagesServer server;
+    ASSERT_TRUE(server.valid());
+    EnvironmentGuard url_guard("LOOM_BASE_URL", server.base_url());
+    auto batch = config("exercise the registered tool");
+    auto read = std::make_unique<BatchReadTool>();
+    auto* read_ptr = read.get();
+    batch.registry->register_tool(std::move(read));
+    auto policy_calls = std::make_shared<std::atomic<int>>(0);
+    batch.permission_check = [policy_calls](std::string_view name, std::string_view, std::string_view) {
+        if (name == "Read") {
+            ++*policy_calls;
+            return loom::tools::AgentLivePermissionCheck{
+                .allowed = false, .updated_input_json = std::nullopt,
+                .message = "snapshot policy denied Read",
+            };
+        }
+        return loom::tools::AgentLivePermissionCheck{};
+    };
+    auto futures = loom::tools::spawn_agents(batch);
+    batch.permission_check = {};
+    auto results = loom::tools::wait_all(futures);
+
+    ASSERT_EQ(results.size(), 1u);
+    EXPECT_TRUE(results[0].completed) << results[0].output;
+    EXPECT_TRUE(results[0].started);
+    EXPECT_EQ(policy_calls->load(), 1);
+    EXPECT_EQ(read_ptr->calls.load(), 0);
+    const auto requests = server.requests();
+    ASSERT_EQ(requests.size(), 2u);
+    EXPECT_NE(requests[1].find("snapshot policy denied Read"), std::string::npos);
 }
 
 TEST(LocalAgentTask, NotificationLeavesOutputFileEmptyWhenNoPathIsKnown) {

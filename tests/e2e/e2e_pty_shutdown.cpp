@@ -1917,14 +1917,26 @@ void run_compressed_chain_case(const std::string& binary, const fs::path& root) 
     terminal.verify_exit(0);
 }
 
-void install_clipboard_capture(const fs::path& root) {
+void install_clipboard_capture(const fs::path& root, const fs::path& harness) {
     fs::create_directories(root / "clipboard-bin");
-    for (const auto& name : {"pbcopy", "wl-copy", "xclip"}) {
-        const auto path = root / "clipboard-bin" / name;
-        std::ofstream(path) << "#!/bin/sh\n/bin/cat > \"${PTY_CLIPBOARD_FILE}.pending\"\n"
-            "/bin/mv \"${PTY_CLIPBOARD_FILE}.pending\" \"${PTY_CLIPBOARD_FILE}\"\n";
-        fs::permissions(path, fs::perms::owner_all);
-    }
+    // Reuse the running native fixture. On this macOS host, fresh executable
+    // scripts stalled before interpreter entry during launch-policy checks.
+    for (const auto& name : {"pbcopy", "wl-copy", "xclip"})
+        fs::create_symlink(fs::canonical(harness), root / "clipboard-bin" / name);
+}
+
+int capture_clipboard() {
+    const char* destination = ::getenv("PTY_CLIPBOARD_FILE");
+    if (!destination || !*destination) return 2;
+    const fs::path path(destination);
+    const auto pending = path.string() + ".pending";
+    std::ofstream output(pending, std::ios::binary);
+    output << std::cin.rdbuf();
+    output.close();
+    if (!output || std::cin.bad()) return 1;
+    std::error_code error;
+    fs::rename(pending, path, error);
+    return error ? 1 : 0;
 }
 
 std::string selection_label(char prefix, int number) {
@@ -1932,10 +1944,11 @@ std::string selection_label(char prefix, int number) {
     return std::string(1, prefix) + std::string(3 - digits.size(), '0') + digits;
 }
 
-void run_selection_case(const std::string& binary, const std::string& scenario, const fs::path& root) {
+void run_selection_case(const std::string& binary, const std::string& scenario, const fs::path& root,
+                        const fs::path& harness) {
     std::ofstream(root / "config" / "settings.json") <<
         R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
-    install_clipboard_capture(root);
+    install_clipboard_capture(root, harness);
     const bool streaming = scenario.starts_with("selection-streaming");
     const bool transcript = scenario == "selection-streaming-transcript";
     const bool wide = scenario == "selection-wide";
@@ -2177,7 +2190,8 @@ void run_selection_case(const std::string& binary, const std::string& scenario, 
     terminal.verify_exit(0);
 }
 
-void run_escape_case(const std::string& binary, const std::string& scenario, const fs::path& root) {
+void run_escape_case(const std::string& binary, const std::string& scenario, const fs::path& root,
+                     const fs::path& harness) {
     std::ofstream(root / "config" / "settings.json") <<
         R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
     const bool tls = scenario == "escape-tls";
@@ -2193,7 +2207,7 @@ void run_escape_case(const std::string& binary, const std::string& scenario, con
     ModelOptions options;
     options.capture_clipboard = selection;
     options.tls = tls;
-    if (selection) install_clipboard_capture(root);
+    if (selection) install_clipboard_capture(root, harness);
     Terminal terminal(binary, root, server.url(), options);
     server.start();
     require(terminal.wait([&] { return terminal.installed() && !terminal.latest_frame().empty(); }),
@@ -2813,7 +2827,7 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
         return;
     }
     if (scenario.starts_with("escape-")) {
-        run_escape_case(binary, scenario, root);
+        run_escape_case(binary, scenario, root, harness);
         return;
     }
     if (scenario == "handoff-hup-stress") {
@@ -2841,7 +2855,7 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
         return;
     }
     if (scenario.starts_with("selection-")) {
-        run_selection_case(binary, scenario, root);
+        run_selection_case(binary, scenario, root, harness);
         return;
     }
     if (scenario == "prompt-wrap") {
@@ -2940,6 +2954,9 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
 } // namespace
 
 int main(int argc, char** argv) {
+    const auto invocation = fs::path(argv[0]).filename();
+    if (invocation == "pbcopy" || invocation == "wl-copy" || invocation == "xclip")
+        return capture_clipboard();
     if (argc >= 3 && std::string_view(argv[1]) == "--shell-loom-child") {
         const fs::path directory(::getenv("PTY_HANDOFF_DIR"));
         const pid_t child = ::fork();

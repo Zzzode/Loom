@@ -70,9 +70,18 @@ protected:
         if (!result) throw std::runtime_error(result.error().format());
         return std::move(*result);
     }
-    void fake_rg(std::string_view body) {
-        dir.write("bin/rg", "#!/bin/sh\n" + std::string(body));
-        fs::permissions(dir.path / "bin/rg", fs::perms::owner_all);
+    void fake_rg(std::string_view mode) {
+        std::array<char, 4096> executable{};
+        auto size = executable.size();
+        const int rc = uv_exepath(executable.data(), &size);
+        if (rc < 0) throw std::runtime_error(uv_strerror(rc));
+        fs::create_directories(dir.path / "bin");
+        std::ofstream config(dir.path / "fixture-mode");
+        config << mode;
+        config.close();
+        if (!config) throw std::runtime_error("cannot write fake ripgrep mode");
+        fs::remove(dir.path / "bin/rg");
+        fs::create_symlink(fs::path(std::string(executable.data(), size)), dir.path / "bin/rg");
     }
     bool wait_for_pid() {
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
@@ -95,7 +104,7 @@ protected:
 #endif
     }
     void stalled_rg() {
-        fake_rg(std::format("echo $$ > '{}/pid'\nexec /bin/sleep 60\n", dir.path.string()));
+        fake_rg("stall");
     }
 };
 
@@ -225,9 +234,9 @@ TEST_F(GrepTest, MissingExecutableIsAnExplicitError) {
 }
 
 #ifndef _WIN32
-// Shell fixtures and PID reap assertions exercise POSIX process lifecycle.
+// Native fixtures and PID reap assertions exercise POSIX process lifecycle.
 TEST_F(GrepTest, SuccessfulSearchPreservesMatchesAndDiagnostics) {
-    fake_rg("printf 'file:1:needle\\n'\nprintf 'warning\\n' >&2\n");
+    fake_rg("matches");
     EnvironmentGuard path("PATH", (dir.path / "bin").string());
     auto result = search(dir.path);
     ASSERT_FALSE(result.is_error);
@@ -239,7 +248,7 @@ TEST_F(GrepTest, DeadlineTerminatesAndReapsChild) {
     stalled_rg();
     EnvironmentGuard path("PATH", (dir.path / "bin").string());
     const auto start = std::chrono::steady_clock::now();
-    // Allow the platform to start the script before testing deadline cleanup.
+    // Allow the platform to start the child before testing deadline cleanup.
     auto result = search(dir.path, "needle", R"(,"timeout_ms":1000)");
     ASSERT_TRUE(result.is_error);
     EXPECT_NE(result.content.front().text.find("timed out"), std::string::npos);
@@ -276,7 +285,7 @@ TEST_F(GrepTest, PreCancelledSearchDoesNotSpawn) {
 }
 
 TEST_F(GrepTest, OutputCaptureIsBoundedAndChildIsReaped) {
-    fake_rg(std::format("echo $$ > '{}/pid'\nwhile :; do printf 'file:1:needle needle needle\\n'; done\n", dir.path.string()));
+    fake_rg("flood");
     EnvironmentGuard path("PATH", (dir.path / "bin").string());
     auto result = search(dir.path);
     ASSERT_FALSE(result.is_error);
@@ -286,7 +295,7 @@ TEST_F(GrepTest, OutputCaptureIsBoundedAndChildIsReaped) {
 }
 
 TEST_F(GrepTest, DeadlineStillAppliesAfterStdoutCloses) {
-    fake_rg(std::format("echo $$ > '{}/pid'\nexec 1>&- 2>&-\nexec /bin/sleep 60\n", dir.path.string()));
+    fake_rg("closed-stdout");
     EnvironmentGuard path("PATH", (dir.path / "bin").string());
     auto result = search(dir.path, "needle", R"(,"timeout_ms":1000)");
     ASSERT_TRUE(result.is_error);
@@ -330,4 +339,45 @@ TEST_F(GrepTest, QueryAbortShutdownAndExternalCancellationReachRunningSearch) {
 }
 #endif
 
+#ifndef _WIN32
+// Run the fake backend from the same native test executable image rather
+// than adding a newly generated shell script to the process-startup contract.
+int run_fake_ripgrep(const fs::path& directory) {
+    std::ifstream config(directory / "fixture-mode");
+    std::string mode;
+    if (!(config >> mode)) return 2;
+    if (mode == "matches") {
+        std::cout << "file:1:needle\n" << std::flush;
+        std::cerr << "warning\n" << std::flush;
+        return std::cout && std::cerr ? 0 : 1;
+    }
+    if (mode != "stall" && mode != "flood" && mode != "closed-stdout") return 2;
+    std::ofstream pid(directory / "pid");
+    pid << ::getpid();
+    pid.close();
+    if (!pid) return 1;
+    if (mode == "flood") {
+        ::signal(SIGPIPE, SIG_DFL);
+        while (std::cout << "file:1:needle needle needle\n") {}
+        return 1;
+    }
+    if (mode == "closed-stdout") {
+        const int stdout_result = ::close(STDOUT_FILENO);
+        const int stderr_result = ::close(STDERR_FILENO);
+        if (stdout_result != 0 || stderr_result != 0) return 1;
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(60));
+    return 0;
+}
+#endif
+
 } // namespace
+
+int main(int argc, char** argv) {
+#ifndef _WIN32
+    if (argc > 1 && fs::path(argv[0]).filename() == "rg")
+        return run_fake_ripgrep(fs::path(argv[argc - 1]));
+#endif
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}

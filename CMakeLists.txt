@@ -370,6 +370,7 @@ set(LOOM_SDK_EXPORT_TARGETS
     loom_vim
     loom_session
     loom_query
+    loom_wire
     loom_orchestration
     loom_memdir
     loom_services

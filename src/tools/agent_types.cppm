@@ -2,6 +2,7 @@
 export module loom.tools.agent_types;
 
 import std;
+import loom.types.tool_types;
 
 export namespace loom::tools {
 
@@ -61,6 +62,7 @@ struct AgentConfig {
     std::optional<std::string> parent_agent_id;
     std::optional<std::string> parent_permission_mode;
     bool prefer_in_process_teammate = false;
+    std::shared_ptr<const loom::core::ApiExecutionContext> api_context = {};
 };
 
 struct AgentLivePermissionCheck {

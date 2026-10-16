@@ -685,6 +685,7 @@ int run_runtime_tool_once(
     loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
         .parent_permission_mode = parent_permission_mode_from_options(opts),
         .default_model = config.model_params.model,
+        .api_context = loom::core::make_api_execution_context(config),
     });
     // Fallback: route unregistered tool names to MCP servers.
     // RFC-0001 B15: the fallback (NativeMcpRuntime iteration, last_error,
@@ -692,9 +693,10 @@ int run_runtime_tool_once(
     // main binds it onto this registry itself, there is no seam slot.
     tool_registry.set_missing_tool_handler(
         loom::orchestration::make_missing_tool_backend());
-    auto result = tool_registry.execute(
-        *opts.runtime_tool_name,
-        loom::core::ToolInput::from_json(opts.runtime_tool_input_json.value_or("{}")));
+    auto input = loom::core::ToolInput::from_json(opts.runtime_tool_input_json.value_or("{}"));
+    input.parent_model = config.model_params.model;
+    input.api_context = loom::core::make_api_execution_context(config);
+    auto result = tool_registry.execute(*opts.runtime_tool_name, input);
     if (!result) {
         std::println(stderr, "{}", result.error().message);
         return 1;
@@ -2016,6 +2018,7 @@ int main(int argc, const char* argv[]) {
         },
         .permission_hook_valid_for_background = true,
         .default_model = config.model_params.model,
+        .api_context = loom::core::make_api_execution_context(config),
     });
 
     // ── MCP tool fallback handler ────────────────────────────────────

@@ -13,6 +13,17 @@ export namespace loom::core {
 // Tool Input / Output types
 // ============================================================
 
+/// Immutable authenticated session snapshot. Internal only: never write it to
+/// tool JSON, transcripts, agent records, or session persistence.
+struct ApiExecutionContext {
+    std::string wire_api = "messages";
+    std::string base_url;
+    std::string api_key;
+    std::string auth_token;
+    std::string api_version = "2023-06-01";
+    std::chrono::milliseconds timeout{120000};
+};
+
 /// JSON-based tool input wrapping raw parameter data
 struct ToolInput {
     std::string raw_json;   // Raw JSON string of parameters
@@ -21,6 +32,7 @@ struct ToolInput {
     // Queried only during execute(); must be non-blocking and non-throwing.
     // Captures must outlive that execution.
     std::function<bool()> is_cancelled = {};
+    std::shared_ptr<const ApiExecutionContext> api_context = {};
 
     /// Get the raw JSON as string view
     [[nodiscard]] std::string_view json() const noexcept { return raw_json; }

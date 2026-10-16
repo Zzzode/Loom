@@ -24,12 +24,10 @@ import loom.tools.send_message;
 import loom.tools.team;
 import loom.orchestration.tools.mcp;
 import loom.tools.sleep;
-import loom.tools.web_fetch;
 import loom.skills.skill;
 import loom.teams.team_helpers;
 import loom.services.api.client;
 import loom.services.api.streaming;
-import loom.services.api.bootstrap;
 import loom.services.mcp.types;
 import loom.teams.swarm.backends;
 import loom.process.bash.bash_execution;
@@ -60,7 +58,6 @@ using loom::services::api::ContentBlockType;
 using loom::services::api::StreamParser;
 using loom::services::api::StreamEventType;
 using loom::services::api::StreamContentBlockType;
-using loom::services::api::get_default_client;
 
 // =========================================================================
 // Re-import helpers from sub-modules (P1-04 split)
@@ -314,7 +311,14 @@ public:
         return permission_check_(tool_name, input_json, tool_use_id);
     }
     
+    // Last-call measurements are meaningful after exclusive execution. Shared
+    // registry adapters may execute concurrently; metrics never serialize work.
+    [[nodiscard]] int last_run_turns() const noexcept;
+    [[nodiscard]] int last_run_tokens() const noexcept;
+
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
+        std::atomic_ref<int>(last_run_turns_).store(0, std::memory_order_relaxed);
+        std::atomic_ref<int>(last_run_tokens_).store(0, std::memory_order_relaxed);
         auto request = parse_agent_tool_request(input);
         if (!request) return ToolResult::error(std::format("Invalid Agent input: {}", request.error()));
 
@@ -324,6 +328,7 @@ public:
 
         auto plan = build_agent_execution_plan(*request, config_, input.parent_model);
         if (!plan) return ToolResult::error(plan.error());
+        plan->api_context = input.api_context ? input.api_context : config_.api_context;
 
         if (!plan->team_name) {
             if (auto current_team = loom::utils::get_team_name(); current_team && !current_team->empty()) {
@@ -789,7 +794,7 @@ private:
             lifecycle_hooks_active = true;
         }
         
-        auto client = get_default_client();
+        MessagesClient client(utils::agent_api_client_config(plan.api_context));
         
         // Build initial messages
         std::vector<Message> messages;
@@ -887,7 +892,8 @@ private:
             apply_agent_effort_to_request(req, plan.effort);
             
             // Perform streaming request
-            auto stream_result = client.create_message_stream(req);
+            std::atomic_ref<int>(last_run_turns_).fetch_add(1, std::memory_order_relaxed);
+            auto stream_result = utils::create_agent_model_stream(client, req, plan.api_context);
             if (!stream_result) {
                 return fail_agent(std::format(
                     "Agent API call failed: {}", stream_result.error().message()));
@@ -903,13 +909,19 @@ private:
             ContentBlock current_block;
             std::string accumulated_json;
             bool in_block = false;
+            bool message_stopped = false;
+            int input_tokens = 0;
+            int output_tokens = 0;
 
             while (true) {
                 if (auto reason = cancel_if_requested("while waiting for model stream")) {
                     return ToolResult::error(std::move(*reason));
                 }
                 auto event_result = parser.next_event();
-                if (!event_result) break;
+                if (!event_result) {
+                    return fail_agent(std::format(
+                        "Agent stream decode failed: {}", event_result.error().message()));
+                }
                 if (!event_result->has_value()) {
                     if (parser.has_error()) {
                         const auto error = parser.error_details();
@@ -928,6 +940,7 @@ private:
                 
                 switch (event.type) {
                     case StreamEventType::MessageStart:
+                        if (event.input_tokens) input_tokens = std::max(0, *event.input_tokens);
                         update_turn_progress(turn, 0.10);
                         break;
 
@@ -937,6 +950,7 @@ private:
                         current_block = ContentBlock{};
                         if (event.block_type == StreamContentBlockType::Text) {
                             current_block.type = ContentBlockType::Text;
+                            current_block.text = event.block_text;
                         } else if (event.block_type == StreamContentBlockType::ToolUse) {
                             current_block.type = ContentBlockType::ToolUse;
                             current_block.tool_use_id = event.tool_use_id;
@@ -968,6 +982,12 @@ private:
                         break;
                         
                     case StreamEventType::MessageDelta:
+                        if (event.message_delta.usage.input_tokens) {
+                            input_tokens = std::max(0, *event.message_delta.usage.input_tokens);
+                        }
+                        if (event.message_delta.usage.output_tokens) {
+                            output_tokens = std::max(0, *event.message_delta.usage.output_tokens);
+                        }
                         update_turn_progress(turn, 0.55);
                         if (event.message_delta.stop_reason) {
                             stop_reason = *event.message_delta.stop_reason;
@@ -976,7 +996,10 @@ private:
                         
                     case StreamEventType::MessageStop:
                         update_turn_progress(turn, 0.65);
-                        goto stream_done;
+                        // Wait for HTTP completion as well: an error status or
+                        // a failed transfer can arrive after the final frame.
+                        message_stopped = true;
+                        break;
                         
                     case StreamEventType::Error:
                         return fail_agent(std::format(
@@ -986,8 +1009,11 @@ private:
                         break;
                 }
             }
-            stream_done:
-            
+            if (!message_stopped || in_block) {
+                return fail_agent("Agent stream ended before the message completed");
+            }
+            record_run_usage(input_tokens, output_tokens);
+
             // If stop_reason is "end_turn" and no tool_use, we're done
             if (stop_reason == "end_turn" || tool_uses.empty()) {
                 final_output = text_content;
@@ -1177,6 +1203,7 @@ private:
                         if (!skip_tool_execution) {
                             auto tool_input = ToolInput::from_json(tool_input_json);
                             tool_input.parent_model = plan.model;
+                            tool_input.api_context = plan.api_context;
                             tool_input.is_cancelled = [id = plan.agent_id] {
                                 return loom::tools::agent_runtime::native_agent_store().is_cancel_requested(id);
                             };
@@ -1354,6 +1381,9 @@ private:
     }
     
     AgentConfig config_;
+    void record_run_usage(int input_tokens, int output_tokens) noexcept;
+    alignas(std::atomic_ref<int>::required_alignment) mutable int last_run_turns_ = 0;
+    alignas(std::atomic_ref<int>::required_alignment) mutable int last_run_tokens_ = 0;
     int current_depth_ = 0;
     loom::core::ToolRegistry* registry_ = nullptr;
     AgentLivePermissionCheckFn permission_check_;

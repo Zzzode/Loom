@@ -417,9 +417,9 @@ inline void append_message(json::JsonMutDoc& doc, const Message& msg,
 class OpenAiWireBackend final : public WireBackend {
 public:
     /// @param base_url        server root, e.g. "http://localhost:8080".
-    ///                        Must NOT already include "/v1" — the path is
-    ///                        appended by prepare(). A trailing '/' is
-    ///                        tolerated.
+    ///                        An optional path prefix and existing "/v1" are
+    ///                        preserved; prepare() appends the missing endpoint.
+    ///                        Trailing slashes are tolerated.
     /// @param extra_headers   caller-supplied headers (typically
     ///                        `Authorization: Bearer <key>`). They are added
     ///                        after the defaults and may override them.
@@ -455,6 +455,11 @@ public:
         root.add("max_tokens",
                  doc.number(static_cast<int64_t>(input.max_tokens)));
         root.add("stream", doc.boolean(input.stream));
+        if (input.stream) {
+            auto stream_options = doc.object();
+            stream_options.add("include_usage", doc.boolean(true));
+            root.add("stream_options", stream_options);
+        }
 
         // Optional sampling parameters. top_k has no OpenAI equivalent and is
         // intentionally dropped; most OpenAI-compatible servers reject unknown
@@ -533,7 +538,7 @@ public:
         doc.set_root(root);
 
         PreparedRequest prepared;
-        prepared.url = base + "/v1/chat/completions";
+        prepared.url = base + (base.ends_with("/v1") ? "/chat/completions" : "/v1/chat/completions");
         prepared.body = doc.to_string();
 
         prepared.headers.emplace_back("Content-Type", "application/json");
@@ -657,37 +662,11 @@ public:
     /// OpenAI streams `data: {json}` frames (event_name is normally empty) and
     /// terminates with `data: [DONE]`.
     ///
-    /// STREAMING CONTRACT (the backend is stateless, so StreamDelta carries no
-    /// index and no history can be kept):
-    ///   * TextDelta        — appended to the current text block. OpenAI emits
-    ///                        text before tool calls, so text and tool-call
-    ///                        accumulation do not interleave in practice.
-    ///   * ToolUseStart     — emitted whenever a delta carries a non-empty
-    ///                        `id` or `function.name`. OpenAI sends both only
-    ///                        in a tool call's FIRST chunk, so in practice
-    ///                        exactly one start is emitted per tool call. If an
-    ///                        endpoint re-sends them, the engine sees a
-    ///                        repeated start; consumers should treat a start
-    ///                        for an already-open call as a no-op.
-    ///   * ToolUseInputDelta— emitted for every non-empty `function.arguments`
-    ///                        fragment, carrying no id (it appeared only in the
-    ///                        start chunk). The engine therefore MUST
-    ///                        accumulate in arrival order into the most
-    ///                        recently started tool call.
-    ///   * BlockStop        — never emitted: the format has no block boundary
-    ///                        event. Consumers close open blocks on
-    ///                        MessageStop.
-    ///   * MessageStop      — emitted for a non-null `finish_reason` and again
-    ///                        for `[DONE]`. The [DONE] one carries an empty
-    ///                        stop_reason because the backend cannot know
-    ///                        whether one was already seen; consumers must
-    ///                        treat an empty stop_reason as "unchanged".
-    ///
-    /// KNOWN LIMITATION: parallel tool calls streamed with interleaved
-    /// `index` values cannot be demultiplexed without state. Sequential tool
-    /// calls (what llama.cpp / vLLM / Ollama emit) reconstruct correctly; with
-    /// interleaved parallel calls the fragments of later calls are appended to
-    /// the wrong call. A future stateful variant of the backend would fix this.
+    /// The backend is stateless. Tool starts and argument fragments preserve
+    /// their per-response index; consumers own an indexed accumulator. Repeated
+    /// starts update metadata without discarding earlier arguments. A finish
+    /// reason and [DONE] can both emit MessageStop; an empty reason never
+    /// overwrites the previous non-empty reason. Close blocks once per turn.
     [[nodiscard]] std::vector<StreamDelta> parse_stream_event(
         std::string_view event_name, std::string_view data) const override {
         (void)event_name;  // OpenAI frames carry no event name
@@ -764,6 +743,7 @@ public:
                         if (!id_sv.empty() || !name_sv.empty()) {
                             StreamDelta start;
                             start.kind = StreamDelta::Kind::ToolUseStart;
+                            start.tool_index = static_cast<std::uint32_t>(call.get("index").as_int());
                             start.tool_id = std::string(id_sv);
                             start.tool_name = std::string(name_sv);
                             deltas.push_back(std::move(start));
@@ -773,6 +753,7 @@ public:
                             StreamDelta fragment;
                             fragment.kind =
                                 StreamDelta::Kind::ToolUseInputDelta;
+                            fragment.tool_index = static_cast<std::uint32_t>(call.get("index").as_int());
                             fragment.partial_json =
                                 std::string(arguments.as_str());
                             deltas.push_back(std::move(fragment));

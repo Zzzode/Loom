@@ -477,18 +477,20 @@ build_structured_send_message_payload(
 [[nodiscard]] inline std::optional<std::string> try_start_native_agent_resume(
     const NativeAgentRecord& record,
     ToolRegistry* registry,
-    const std::optional<std::string>& parent_model = std::nullopt
+    const std::optional<std::string>& parent_model = std::nullopt,
+    std::shared_ptr<const loom::core::ApiExecutionContext> api_context = {}
 ) {
     if (!registry) return "background resume deferred: runtime registry is not attached";
     if (!native_agent_can_resume_locally(record)) {
         return "background resume deferred: agent is managed by a remote or external teammate backend";
     }
-    if (!runtime_has_agent_api_credentials()) {
+    if (!api_context && !runtime_has_agent_api_credentials()) {
         return "background resume deferred: no API credentials are configured";
     }
 
     auto input = ToolInput::from_json(build_native_agent_resume_input_json(record));
     input.parent_model = parent_model;
+    input.api_context = api_context;
     auto started = registry->execute("Agent", input);
     if (!started) {
         auto error = "background resume failed: " + started.error().message;
@@ -535,7 +537,8 @@ struct DeliveryOutcome {
     std::string_view input_json,
     ToolRegistry* registry,
     bool (*status_is_terminal)(NativeAgentStatus),
-    const std::optional<std::string>& parent_model = std::nullopt
+    const std::optional<std::string>& parent_model = std::nullopt,
+    std::shared_ptr<const loom::core::ApiExecutionContext> api_context = {}
 ) {
     auto parsed = json::parse(input_json);
     if (!parsed || !parsed->root().is_obj()) return ToolResult::error("send_message requires a JSON object input");
@@ -677,7 +680,7 @@ struct DeliveryOutcome {
             if (outcome.resumed_terminal_agent) {
                 auto queued_record = loom::tools::agent_runtime::native_agent_store().get(target_agent)
                     .value_or(*recipient_record);
-                outcome.resume_status_note = try_start_native_agent_resume(queued_record, registry, parent_model);
+                outcome.resume_status_note = try_start_native_agent_resume(queued_record, registry, parent_model, api_context);
             }
             loom::tools::agent_runtime::native_agent_store().append_transcript(
                 target_agent,

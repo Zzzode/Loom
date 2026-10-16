@@ -138,6 +138,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_skills.cmake")
 # dependency it needs this batch (loom_tools :112, loom_services :114,
 # loom_skills_core :111) and before the upper layers (loom_ui, loom_server) that
 # link it.
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_wire.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_orchestration.cmake")
 # RFC 0002 F4 — loom_ui area libraries, included in dependency order
 # (UI9_RANK ascending, leaves first: foundation/tools rank 1, visual rank 2,

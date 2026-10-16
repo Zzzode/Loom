@@ -139,6 +139,11 @@ TARGET_RANK = {
 # They are standalone transport/util modules with no upward deps; rank them
 # with utils so their importers do not acquire artificial upward edges.
 MODULE_RANK_OVERRIDE = {
+    # Engine-independent protocol modules shared with delegated orchestration.
+    # loom_wire is built above tools and below both execution-loop targets.
+    "loom.query.wire_protocol": 8,
+    "loom.query.wire_messages": 8,
+    "loom.query.wire_openai": 8,
     "loom.cli.ccr_client": 2,
     "loom.cli.sse_transport": 2,
     "loom.cli.websocket_transport": 2,

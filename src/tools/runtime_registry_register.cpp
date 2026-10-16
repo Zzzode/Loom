@@ -122,6 +122,7 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
         : slot_factory;
     AgentConfig agent_config;
     agent_config.default_model = std::move(options.default_model);
+    agent_config.api_context = std::move(options.api_context);
     agent_config.parent_permission_mode = std::move(options.parent_permission_mode);
     if (agent_factory) {
         registry.register_tool(agent_factory(

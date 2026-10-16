@@ -226,6 +226,11 @@ struct QueryEngineConfig {
     std::vector<std::string> fallback_models;       // Fallback models for capacity errors
 };
 
+/// Resolve once per session/tool call; explicit credentials (including empty)
+/// override environment/bootstrap state for delegated execution.
+[[nodiscard]] std::shared_ptr<const ApiExecutionContext>
+make_api_execution_context(const QueryEngineConfig& config);
+
 // ============================================================
 // Streaming callback interface
 // ============================================================
@@ -379,14 +384,10 @@ public:
         permission_hook_ = hook;
     }
 
-    /// Wire backend factory seam (RFC 0001 cc-sdk phase 3, §2.4). When set,
-    /// make_wire_backend() delegates to the factory; when unset, the default
-    /// Messages API/OpenAI construction runs unchanged. The seam intercepts
-    /// request-body serialization only — make_wire_backend() is called
-    /// solely from build_request_body and only prepare() is used. The
-    /// transport (httplib POST, SSE streaming, response parsing) does NOT
-    /// go through WireBackend, so a factory returning a mock backend does
-    /// not prevent real HTTP calls.
+    /// Wire backend factory seam. The backend owns request URL/headers/body,
+    /// non-streaming response parsing and protocol event decoding. HTTP still
+    /// runs through the real cancellable engine transport; supplying a backend
+    /// does not replace network I/O. Messages retains its extended event handler.
     using WireBackendFactory =
         std::function<std::unique_ptr<loom::query::wire::WireBackend>()>;
     void set_wire_backend_factory(WireBackendFactory factory);
@@ -697,6 +698,8 @@ private:
 
     void restore_task_budget_remaining_from_compact_boundaries_locked();
 
+    [[nodiscard]] std::shared_ptr<const ApiExecutionContext> api_execution_context() const;
+
     /// Construct the wire backend selected by `wire_api_`. Called per request
     /// (cheap) so a config change cannot leave a stale backend behind.
     [[nodiscard]] std::unique_ptr<loom::query::wire::WireBackend>
@@ -733,13 +736,6 @@ private:
 
     /// Classify HTTP status code to error code
     [[nodiscard]] ErrorCode classify_http_error(int status) const;
-
-    /// Parse API response to our types
-    [[nodiscard]] Result<ApiCallResult> parse_api_response(std::string_view response_body);
-
-    /// Parse a single content block from JSON
-    void parse_content_block(loom::utils::json::JsonVal block,
-                            std::vector<ContentBlock>& content) const;
 
     /// Single streaming API call result
     struct StreamCallResult {

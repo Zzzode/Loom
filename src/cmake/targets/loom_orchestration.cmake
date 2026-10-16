@@ -25,6 +25,7 @@ target_sources(loom_orchestration
 target_sources(loom_orchestration
     PRIVATE
         orchestration/agent/agent_tool.cpp
+        orchestration/agent/agent_wire.cpp
         # loom.orchestration.agent.utils implementation units.
         orchestration/agent/agent_sub_utils_json.cpp
         orchestration/agent/agent_sub_utils_config.cpp
@@ -51,6 +52,7 @@ target_sources(loom_orchestration
 target_link_libraries(loom_orchestration
     PUBLIC
         loom_tools
+        loom_wire
         loom_services
         loom_skills_core
         loom_hooks

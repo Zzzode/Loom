@@ -2,9 +2,6 @@
 add_library(loom_query)
 target_sources(loom_query
     PUBLIC FILE_SET CXX_MODULES FILES
-        query/wire_protocol.cppm
-        query/wire_messages.cppm
-        query/wire_openai.cppm
         query/query_engine.cppm
         # RFC 0001 cc-sdk phase 3 (§2.1): the assemble-only engine recipe
         # extracted from the server route, so both loom.server (rank 13) and
@@ -43,4 +40,4 @@ target_sources(loom_query
 # needs loom_orchestration for install_runtime_backends,
 # make_missing_tool_backend, and the collect_mcp_* providers. No cycle:
 # loom.orchestration does not import loom.query.
-target_link_libraries(loom_query PUBLIC loom_utils loom_state loom_config CURL::libcurl loom_orchestration)
+target_link_libraries(loom_query PUBLIC loom_utils loom_state loom_config CURL::libcurl loom_orchestration loom_wire)

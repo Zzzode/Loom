@@ -127,9 +127,8 @@ void QueryEngine::set_wire_backend_factory(WireBackendFactory factory) {
 
 [[nodiscard]] std::unique_ptr<loom::query::wire::WireBackend>
 QueryEngine::make_wire_backend() const {
-    // §2.4 seam: when a factory was injected (e.g. by loom.sdk.harness),
-    // delegate request-body serialization to it. The transport is NOT
-    // intercepted — send_request still does the real httplib POST.
+    // The backend supplies the prepared request and protocol decoding; the
+    // engine retains ownership of real HTTP, cancellation and tool execution.
     if (wire_backend_factory_) {
         return wire_backend_factory_();
     }

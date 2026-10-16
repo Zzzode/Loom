@@ -60,6 +60,7 @@ struct StreamContentDelta {
 
 struct StreamTokenUsage {
     std::optional<int> output_tokens;
+    std::optional<int> input_tokens;
 };
 
 // =========================================================================
@@ -100,6 +101,9 @@ struct StreamEvent {
 
     // Error fields
     ApiErrorDetails error;
+
+    // MessageStart usage; appended to preserve aggregate field ordering.
+    std::optional<int> input_tokens;
 };
 
 // =========================================================================
@@ -113,38 +117,26 @@ public:
     }
 
     [[nodiscard]] std::optional<std::pair<std::string, std::string>> next_event() {
-        std::string event_type;
-        std::string event_data;
-        bool event_complete = false;
-
-        while (!event_complete) {
-            auto newline_pos = buffer_.find('\n');
-            if (newline_pos == std::string::npos) {
-                break;  // Incomplete line
-            }
-
+        while (true) {
+            const auto newline_pos = buffer_.find('\n');
+            if (newline_pos == std::string::npos) return std::nullopt;
             auto line = buffer_.substr(0, newline_pos);
             buffer_.erase(0, newline_pos + 1);
-
-            // Remove trailing \r if present
-            if (!line.empty() && line.back() == '\r') {
-                line.pop_back();
-            }
-
+            if (!line.empty() && line.back() == '\r') line.pop_back();
             if (line.empty()) {
-                // Empty line = end of event
-                event_complete = !event_type.empty() || !event_data.empty();
-                break;
+                if (event_type_.empty() && event_data_.empty()) continue;
+                auto event = std::make_pair(std::move(event_type_), std::move(event_data_));
+                event_type_.clear();
+                event_data_.clear();
+                return event;
             }
-
-            // Parse field
+            // Keep partial-frame fields between next_event() calls: CURL may
+            // split anywhere, including between an event line and its data.
             if (line.starts_with("event:")) {
-                event_type = strip_prefix(line, "event:");
+                event_type_ = strip_prefix(line, "event:");
             } else if (line.starts_with("data:")) {
-                if (!event_data.empty()) {
-                    event_data += '\n';
-                }
-                event_data += strip_prefix(line, "data:");
+                if (!event_data_.empty()) event_data_ += '\n';
+                event_data_ += strip_prefix(line, "data:");
             } else if (line.starts_with("id:")) {
                 last_event_id_ = strip_prefix(line, "id:");
             } else if (line.starts_with("retry:")) {
@@ -152,18 +144,16 @@ public:
                     retry_ms_ = std::stoi(std::string(strip_prefix(line, "retry:")));
                 } catch (...) {}
             }
-            // Ignore comments (lines starting with :)
         }
-
-        if (event_complete) {
-            return std::make_pair(std::move(event_type), std::move(event_data));
-        }
-        return std::nullopt;
     }
 
     [[nodiscard]] const std::string& last_event_id() const { return last_event_id_; }
     [[nodiscard]] int retry_ms() const { return retry_ms_; }
-    void clear() { buffer_.clear(); }
+    void clear() {
+        buffer_.clear();
+        event_type_.clear();
+        event_data_.clear();
+    }
 
 private:
     [[nodiscard]] static std::string_view strip_prefix(std::string_view line, std::string_view prefix) {
@@ -175,6 +165,8 @@ private:
     }
 
     std::string buffer_;
+    std::string event_type_;
+    std::string event_data_;
     std::string last_event_id_;
     int retry_ms_ = 3000;
 };
@@ -229,6 +221,8 @@ private:
         event.message_id = std::string(message.get("id").as_str());
         event.model = std::string(message.get("model").as_str());
         event.role = std::string(message.get("role").as_str());
+        const auto input_tokens = message.get("usage").get("input_tokens");
+        if (input_tokens.is_num()) event.input_tokens = static_cast<int>(input_tokens.as_int());
 
         return event;
     }
@@ -327,6 +321,10 @@ private:
 
         auto usage = root.get("usage");
         if (usage.valid()) {
+            const auto input_tokens = usage.get("input_tokens");
+            if (input_tokens.is_num()) {
+                event.message_delta.usage.input_tokens = static_cast<int>(input_tokens.as_int());
+            }
             event.message_delta.usage.output_tokens =
                 static_cast<int>(usage.get("output_tokens").as_int());
         }
@@ -448,12 +446,20 @@ private:
 };
 
 class StreamParser {
+public:
+    using EventDecoder = std::function<Result<std::vector<StreamEvent>>(
+        std::string_view event_name, std::string_view data)>;
+
+private:
     struct SharedState {
-        explicit SharedState(StreamConfig cfg) : config(std::move(cfg)) {}
+        explicit SharedState(StreamConfig cfg, EventDecoder decode)
+            : config(std::move(cfg)), decoder(std::move(decode)) {}
 
         StreamConfig config;
         ConnectionState connection = ConnectionState::Idle;
         SseBuffer buffer;
+        EventDecoder decoder;
+        std::deque<StreamEvent> pending_events;
         StreamStatistics statistics;
         StreamState stream_state;
         std::optional<ApiErrorDetails> error_details;
@@ -469,8 +475,8 @@ class StreamParser {
     };
 
 public:
-    explicit StreamParser(StreamConfig config = {})
-        : state_(std::make_shared<SharedState>(std::move(config))) {}
+    explicit StreamParser(StreamConfig config = {}, EventDecoder decoder = {})
+        : state_(std::make_shared<SharedState>(std::move(config), std::move(decoder))) {}
 
     // Consumer copies share ownership of the transfer; the producer only holds
     // parser state, so dropping the last consumer stops and joins the request.
@@ -502,24 +508,25 @@ public:
     // Get next parsed event
     [[nodiscard]] Result<std::optional<StreamEvent>> next_event() {
         std::scoped_lock lock(state_->mutex);
-        while (true) {
+        while (state_->pending_events.empty()) {
             auto raw_event = state_->buffer.next_event();
-            if (!raw_event) {
-                return std::nullopt;
-            }
-
+            if (!raw_event) return std::nullopt;
             auto& [event_type, event_data] = *raw_event;
-            auto parse_result = StreamEventParser::parse(event_type, event_data);
-
-            if (!parse_result) {
-                return std::unexpected(parse_result.error());
+            if (state_->decoder) {
+                auto events = state_->decoder(event_type, event_data);
+                if (!events) return std::unexpected(events.error());
+                for (auto& event : *events) state_->pending_events.push_back(std::move(event));
+            } else {
+                auto event = StreamEventParser::parse(event_type, event_data);
+                if (!event) return std::unexpected(event.error());
+                state_->pending_events.push_back(std::move(*event));
             }
-
-            update_statistics_locked(*state_, *parse_result);
-            update_stream_state_locked(*state_, *parse_result);
-
-            return std::move(*parse_result);
         }
+        auto event = std::move(state_->pending_events.front());
+        state_->pending_events.pop_front();
+        update_statistics_locked(*state_, event);
+        update_stream_state_locked(*state_, event);
+        return event;
     }
 
     // Process all available events with callback
@@ -625,6 +632,7 @@ public:
     void clear() {
         std::scoped_lock lock(state_->mutex);
         state_->buffer.clear();
+        state_->pending_events.clear();
         state_->stream_state = StreamState{};
         state_->error_details = std::nullopt;
         state_->statistics = StreamStatistics{};
@@ -648,6 +656,10 @@ private:
         }
 
         switch (event.type) {
+            case StreamEventType::MessageStart:
+                if (event.input_tokens) state.statistics.input_tokens = *event.input_tokens;
+                break;
+
             case StreamEventType::ContentBlockStart:
                 if (event.block_type == StreamContentBlockType::Text) {
                     ++state.statistics.text_blocks;
@@ -657,6 +669,9 @@ private:
                 break;
 
             case StreamEventType::MessageDelta:
+                if (event.message_delta.usage.input_tokens) {
+                    state.statistics.input_tokens = *event.message_delta.usage.input_tokens;
+                }
                 if (event.message_delta.usage.output_tokens) {
                     state.statistics.output_tokens = *event.message_delta.usage.output_tokens;
                 }
@@ -672,6 +687,7 @@ private:
             case StreamEventType::MessageStart:
                 state.stream_state.message_id = event.message_id;
                 state.stream_state.model = event.model;
+                if (event.input_tokens) state.stream_state.input_tokens = *event.input_tokens;
                 break;
 
             case StreamEventType::ContentBlockDelta:
@@ -681,6 +697,9 @@ private:
                 break;
 
             case StreamEventType::MessageDelta:
+                if (event.message_delta.usage.input_tokens) {
+                    state.stream_state.input_tokens = *event.message_delta.usage.input_tokens;
+                }
                 if (event.message_delta.stop_reason) {
                     state.stream_state.stop_reason = *event.message_delta.stop_reason;
                 }

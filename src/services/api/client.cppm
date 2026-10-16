@@ -798,20 +798,44 @@ public:
 
     // Create streaming message — returns a StreamParser fed by a background CURL transfer
     [[nodiscard]] Result<StreamParser> create_message_stream(
-        const CreateMessageRequest& request) {
+        const CreateMessageRequest& request);
 
-        // Create streaming request
-        CreateMessageRequest stream_request = request;
-        stream_request.stream = true;
+    /// Send an already serialized streaming request through the same owned,
+    /// cancellable transfer as Messages requests. The caller owns the wire
+    /// format and supplies its SSE decoder; no protocol headers are added.
+    [[nodiscard]] Result<StreamParser> create_prepared_stream(
+        std::string url, std::string body, std::vector<std::string> headers,
+        StreamParser::EventDecoder decoder);
 
-        auto betas = betas_for_request(request);
-        auto prepared = prepare_request(stream_request, betas,
-                                        /*streaming=*/true);
-        if (!prepared) return std::unexpected(prepared.error());
+    // Verify API key
+    [[nodiscard]] Result<bool> verify_api_key() {
+        if (!config_.fallback_model || config_.fallback_model->empty()) {
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::invalid_argument,
+                "No model configured — set fallback_model in client config"));
+        }
+        CreateMessageRequest request;
+        request.model = *config_.fallback_model;
+        request.max_tokens = 1;
+        request.messages.push_back(Message::from_text("user", "test"));
 
-        auto& url = prepared->url;
-        auto& json_body = prepared->body;
-        auto& headers = prepared->headers;
+        auto result = create_message(request);
+        if (result) {
+            return true;
+        }
+        // Check if error is auth-related
+        return false;
+    }
+
+    // Configuration access
+    [[nodiscard]] const Config& config() const { return config_; }
+    void set_api_key(std::string api_key) { config_.api_key = std::move(api_key); }
+    void set_auth_token(std::string token) { config_.auth_token = std::move(token); }
+
+private:
+    [[nodiscard]] Result<StreamParser> start_stream(
+        std::string url, std::string json_body, std::vector<std::string> headers,
+        StreamParser::EventDecoder decoder, bool is_enterprise_provider) {
         headers.push_back("Accept: text/event-stream");
         headers.push_back("Cache-Control: no-cache");
         headers.push_back("Connection: keep-alive");
@@ -820,13 +844,11 @@ public:
         StreamConfig stream_config;
         stream_config.connect_timeout = config_.timeout;
         stream_config.read_timeout = config_.timeout;
-        auto parser = std::make_shared<StreamParser>(stream_config);
+        auto parser = std::make_shared<StreamParser>(stream_config, std::move(decoder));
         parser->start();
 
         // On streaming 401/403, invalidate caches so the QueryEngine's retry
         // loop (which re-enters create_message_stream) gets fresh tokens.
-        const bool is_enterprise_provider =
-            (auth_ctx_->provider() != EProv::FirstParty);
         auto auth_ctx_ptr = auth_ctx_.get();
 
         // The producer parser has no transfer owner; only consumer copies do.
@@ -956,32 +978,6 @@ public:
         return consumer;
     }
 
-    // Verify API key
-    [[nodiscard]] Result<bool> verify_api_key() {
-        if (!config_.fallback_model || config_.fallback_model->empty()) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::invalid_argument,
-                "No model configured — set fallback_model in client config"));
-        }
-        CreateMessageRequest request;
-        request.model = *config_.fallback_model;
-        request.max_tokens = 1;
-        request.messages.push_back(Message::from_text("user", "test"));
-
-        auto result = create_message(request);
-        if (result) {
-            return true;
-        }
-        // Check if error is auth-related
-        return false;
-    }
-
-    // Configuration access
-    [[nodiscard]] const Config& config() const { return config_; }
-    void set_api_key(std::string api_key) { config_.api_key = std::move(api_key); }
-    void set_auth_token(std::string token) { config_.auth_token = std::move(token); }
-
-private:
     [[nodiscard]] static std::vector<std::string> betas_for_request(
         const CreateMessageRequest& request
     ) {
@@ -1069,7 +1065,9 @@ private:
 
         std::string url;
         if (resolved->provider == EProv::FirstParty) {
-            url = std::format("{}/v1/messages", config_.base_url);
+            url = config_.base_url;
+            while (!url.empty() && url.ends_with('/')) url.pop_back();
+            url += url.ends_with("/v1") ? "/messages" : "/v1/messages";
         } else {
             // Bedrock: {base_url}{/model/.../invoke[-with-response-stream]}
             // Vertex:  {base_url}{/publishers/.../models/ID:streamRawPredict}

@@ -7,6 +7,7 @@ export module loom.orchestration.agent.utils;
 import std;
 
 import loom.serdes.json;
+import loom.utils.error;
 import loom.tools.tool;
 import loom.tools.agent_runtime;
 import loom.tools.agent_types;
@@ -20,6 +21,7 @@ import loom.tools.team;
 import loom.teams.swarm.backends;
 import loom.skills.skill;
 import loom.services.api.client;
+import loom.services.api.streaming;
 
 export namespace loom::tools::agent::utils {
 
@@ -33,6 +35,18 @@ using loom::services::api::CreateMessageRequest;
 using loom::services::api::Message;
 using loom::services::api::ContentBlock;
 using loom::services::api::ContentBlockType;
+
+/// Capture bootstrap defaults only for standalone calls without a parent
+/// execution context. Explicit session settings never fall back to process
+/// environment or another session's bootstrap configuration.
+[[nodiscard]] loom::services::api::MessagesClient::Config agent_api_client_config(
+    const std::shared_ptr<const loom::core::ApiExecutionContext>& context);
+
+[[nodiscard]] loom::utils::Result<loom::services::api::StreamParser>
+create_agent_model_stream(
+    loom::services::api::MessagesClient& client,
+    const CreateMessageRequest& request,
+    const std::shared_ptr<const loom::core::ApiExecutionContext>& context);
 
 // Agent Configuration
 // =========================================================================
@@ -152,6 +166,7 @@ struct AgentMcpToolBinding {
 };
 
 struct AgentExecutionPlan {
+    std::shared_ptr<const loom::core::ApiExecutionContext> api_context = {};
     std::string agent_id;
     std::string prompt;
     std::optional<std::string> description;

@@ -381,6 +381,7 @@ struct RuntimeToolOptions {
     AgentToolFactory agent_tool_factory = {};
     // Resolved session model for calls outside a QueryEngine execution.
     std::string default_model = {};
+    std::shared_ptr<const loom::core::ApiExecutionContext> api_context = {};
 };
 
 [[nodiscard]] std::vector<std::string> runtime_tool_names();

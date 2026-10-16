@@ -20,6 +20,7 @@ import std;
 import loom.types.types;
 import loom.utils.error;
 import loom.serdes.json;
+import loom.query.wire_protocol;
 
 namespace loom::core {
 
@@ -39,20 +40,20 @@ void suppress_socket_sigpipe(httplib::Client& client) {
 #endif
 }
 
-// TU-local replacement for the former QueryEngine::add_beta_headers private
-// member. Demoted to a free function so <httplib.h> never needs to name a
-// type in the class definition; both call sites (send_request and
-// stream_single_api_call) live in this same TU. The booleans are computed
-// by the callers (which have private access) instead of reading config_.
-void add_beta_headers(httplib::Headers& headers,
-                      bool has_task_budget,
-                      bool has_context_management) {
-    if (has_task_budget) {
-        headers.emplace("anthropic-beta", "task-budgets-2026-03-13");
+// Split an already prepared absolute URL without appending a protocol path.
+[[nodiscard]] std::expected<ApiMessagesEndpoint, std::string>
+prepared_endpoint(std::string_view url) {
+    if (!url.starts_with("http://") && !url.starts_with("https://")) {
+        return std::unexpected("API URL must include http:// or https://");
     }
-    if (has_context_management) {
-        headers.emplace("anthropic-beta", "context-management-2025-06-27");
+    const auto authority = url.find("://") + 3;
+    const auto path = url.find('/', authority);
+    if (authority == url.size() || path == authority) {
+        return std::unexpected("API URL host cannot be empty");
     }
+    return ApiMessagesEndpoint{
+        std::string(url.substr(0, path)),
+        path == std::string_view::npos ? "/" : std::string(url.substr(path))};
 }
 
 } // namespace
@@ -98,11 +99,13 @@ void add_beta_headers(httplib::Headers& headers,
     std::vector<SseEvent> out;
     buffer_.append(chunk.data(), chunk.size());
     while (true) {
-        const auto double_nl = buffer_.find("\n\n");
-        if (double_nl == std::string::npos) break;
+        const auto lf = buffer_.find("\n\n");
+        const auto crlf = buffer_.find("\r\n\r\n");
+        const auto boundary = std::min(lf, crlf);
+        if (boundary == std::string::npos) break;
 
-        std::string event_block = buffer_.substr(0, double_nl);
-        buffer_.erase(0, double_nl + 2);
+        std::string event_block = buffer_.substr(0, boundary);
+        buffer_.erase(0, boundary + (boundary == crlf ? 4 : 2));
 
         std::string event_data;
         std::size_t pos = 0;
@@ -116,13 +119,12 @@ void add_beta_headers(httplib::Headers& headers,
                 line = event_block.substr(pos, nl - pos);
                 pos = nl + 1;
             }
-            if (line.starts_with("event: ")) {
-                current_event_type_ = line.substr(7);
-            } else if (line.starts_with("data: ")) {
+            if (!line.empty() && line.back() == '\r') line.pop_back();
+            if (line.starts_with("event:")) {
+                current_event_type_ = line.substr(line.starts_with("event: ") ? 7 : 6);
+            } else if (line.starts_with("data:")) {
                 if (!event_data.empty()) event_data += '\n';
-                event_data += line.substr(6);
-            } else if (line == "data:") {
-                if (!event_data.empty()) event_data += '\n';
+                event_data += line.substr(line.starts_with("data: ") ? 6 : 5);
             }
         }
         if (!event_data.empty()) {
@@ -142,28 +144,18 @@ void add_beta_headers(httplib::Headers& headers,
     apply_time_based_microcompact();
     apply_tool_result_budget();
 
-    auto endpoint = api_messages_endpoint(api_config_.base_url);
+    auto backend = make_wire_backend();
+    auto prepared = backend->prepare(build_wire_input(options, false));
+    if (!prepared) {
+        return std::unexpected(Error::make(ErrorCode::InvalidRequest, prepared.error()));
+    }
+    auto endpoint = prepared_endpoint(prepared->url);
     if (!endpoint) {
-        return std::unexpected(Error::make(
-            ErrorCode::InvalidRequest,
-            endpoint.error()));
+        return std::unexpected(Error::make(ErrorCode::InvalidRequest, endpoint.error()));
     }
-
-    // Build headers
-    httplib::Headers headers;
-    headers.emplace("Content-Type", "application/json");
-    headers.emplace("anthropic-version", api_config_.api_version);
-    if (!api_config_.auth_token.empty()) {
-        headers.emplace("Authorization", std::format("Bearer {}", api_config_.auth_token));
-    } else {
-        headers.emplace("x-api-key", api_config_.api_key);
-    }
+    httplib::Headers headers(prepared->headers.begin(), prepared->headers.end());
     headers.emplace("User-Agent", "LOOM/1.0");
-    add_beta_headers(headers, config_.task_budget.has_value(),
-                     api_context_management().has_value());
-
-    // Build request body
-    std::string body = build_request_body(options);
+    const auto& body = prepared->body;
 
     // Create HTTP client (shared_ptr so abort_callback_ can safely call
     // cli->stop() from the main thread even after this function returns).
@@ -211,7 +203,14 @@ void add_beta_headers(httplib::Headers& headers,
     }
 
     // Parse response
-    return parse_api_response(res->body);
+    auto parsed = backend->parse_response(res->body);
+    if (!parsed) {
+        return std::unexpected(Error::make(ErrorCode::InvalidRequest, parsed.error()));
+    }
+    ApiCallResult result;
+    result.message = std::move(parsed->message);
+    result.usage = parsed->usage;
+    return result;
 }
 
 [[nodiscard]] ErrorCode QueryEngine::classify_http_error(int status) const {
@@ -229,102 +228,28 @@ void add_beta_headers(httplib::Headers& headers,
     return ErrorCode::InternalError;
 }
 
-[[nodiscard]] Result<QueryEngine::ApiCallResult> QueryEngine::parse_api_response(std::string_view response_body) {
-    auto doc_result = loom::utils::json::parse(response_body);
-    if (!doc_result) {
-        return std::unexpected(Error::make(
-            ErrorCode::InvalidRequest,
-            "Failed to parse API response"));
-    }
-
-    auto root = doc_result->root();
-
-    ApiCallResult result;
-
-    // Build assistant message
-    result.message.id.value = std::string(root.get("id").as_str());
-    result.message.model = std::string(root.get("model").as_str());
-    result.message.timestamp = std::chrono::system_clock::now();
-
-    // Parse stop reason
-    auto stop_reason = root.get("stop_reason");
-    if (stop_reason.valid() && !stop_reason.is_null()) {
-        result.message.stop_reason = std::string(stop_reason.as_str());
-    }
-
-    // Parse content
-    auto content = root.get("content");
-    if (content.valid() && content.is_arr()) {
-        content.iter([&](loom::utils::json::JsonVal block) {
-            parse_content_block(block, result.message.content);
-        });
-    }
-
-    // Parse usage
-    auto usage = root.get("usage");
-    if (usage.valid() && usage.is_obj()) {
-        result.usage.input_tokens = static_cast<std::uint32_t>(usage.get("input_tokens").as_int());
-        result.usage.output_tokens = static_cast<std::uint32_t>(usage.get("output_tokens").as_int());
-        auto cache_creation = usage.get("cache_creation_input_tokens");
-        if (cache_creation.valid()) {
-            result.usage.cache_creation_tokens = static_cast<std::uint32_t>(cache_creation.as_int());
-        }
-        auto cache_read = usage.get("cache_read_input_tokens");
-        if (cache_read.valid()) {
-            result.usage.cache_read_tokens = static_cast<std::uint32_t>(cache_read.as_int());
-        }
-    }
-
-    return result;
-}
-
-void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
-                                      std::vector<ContentBlock>& content) const {
-    auto type = block.get("type").as_str();
-
-    if (type == "text") {
-        TextBlock tb;
-        tb.text = std::string(block.get("text").as_str());
-        content.push_back(std::move(tb));
-    } else if (type == "tool_use") {
-        ToolUseBlock tub;
-        tub.id.value = std::string(block.get("id").as_str());
-        tub.name = std::string(block.get("name").as_str());
-        auto input = block.get("input");
-        tub.input_json = input.valid() ? loom::utils::json::to_string(input) : "{}";
-        content.push_back(std::move(tub));
-    } else if (type == "thinking") {
-        ThinkingBlock tb;
-        tb.thinking = std::string(block.get("thinking").as_str());
-        auto signature = block.get("signature");
-        if (signature.valid()) {
-            tb.signature = std::string(signature.as_str());
-        }
-        content.push_back(std::move(tb));
-    }
-}
-
 [[nodiscard]] QueryEngine::StreamCallResult QueryEngine::stream_single_api_call(const QueryOptions& options) {
     StreamCallResult result;
     replay_snip_boundaries();
     apply_time_based_microcompact();
     apply_tool_result_budget();
 
-    // Build headers
-    httplib::Headers headers;
-    headers.emplace("Content-Type", "application/json");
-    headers.emplace("anthropic-version", api_config_.api_version);
-    if (!api_config_.auth_token.empty()) {
-        headers.emplace("Authorization", std::format("Bearer {}", api_config_.auth_token));
-    } else {
-        headers.emplace("x-api-key", api_config_.api_key);
+    auto backend = make_wire_backend();
+    auto prepared = backend->prepare(build_wire_input(options, true));
+    if (!prepared) {
+        result.failed = true;
+        result.error_message = prepared.error();
+        if (options.on_event) {
+            StreamError event;
+            event.error_type = "invalid_request_error";
+            event.message = result.error_message;
+            (*options.on_event)(event);
+        }
+        return result;
     }
+    httplib::Headers headers(prepared->headers.begin(), prepared->headers.end());
     headers.emplace("User-Agent", "LOOM/1.0");
-    add_beta_headers(headers, config_.task_budget.has_value(),
-                     api_context_management().has_value());
-
-    // Build streaming request body
-    std::string body = build_request_body(options, /*stream=*/true);
+    const auto& body = prepared->body;
 
     // ── Dump Prompts: log API request ──
     if (dump_prompts_dir_) {
@@ -340,7 +265,7 @@ void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
         }
     }
 
-    auto endpoint = api_messages_endpoint(api_config_.base_url);
+    auto endpoint = prepared_endpoint(prepared->url);
     if (!endpoint) {
         result.failed = true;
         result.error_message = endpoint.error();
@@ -544,6 +469,119 @@ void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
         }
     };
 
+    // OpenAI tool fragments may interleave; the wire index identifies each
+    // request-local accumulator independently from the UI block index.
+    std::unordered_map<std::uint32_t, std::size_t> tool_blocks;
+    std::optional<std::size_t> text_block;
+    bool wire_started = false;
+    bool wire_stopped = false;
+    bool wire_terminated = false;
+    bool wire_finish_reason = false;
+    auto parse_wire_event = [&](const SseEvent& frame) {
+        const auto first = frame.data.find_first_not_of(" \t\r\n");
+        const auto last = frame.data.find_last_not_of(" \t\r\n");
+        if (first != std::string::npos && frame.data.substr(first, last - first + 1) == "[DONE]") {
+            wire_terminated = true;
+        }
+        if (!wire_started) {
+            wire_started = true;
+            if (options.on_event) {
+                StreamStart event;
+                event.model = config_.model_params.model;
+                (*options.on_event)(event);
+            }
+        }
+        auto start_block = [&](ContentBlock block) {
+            const auto index = blocks.size();
+            blocks.push_back(BlockAccum{std::move(block), {}, {}});
+            if (options.on_event) {
+                ContentBlockStart event;
+                event.index = static_cast<std::uint32_t>(index);
+                event.block = blocks.back().block;
+                (*options.on_event)(event);
+            }
+            return index;
+        };
+        auto emit_delta = [&](std::size_t index, const std::string& text) {
+            if (options.on_event && !text.empty()) {
+                ContentBlockDelta event;
+                event.index = static_cast<std::uint32_t>(index);
+                event.delta_text = text;
+                (*options.on_event)(event);
+            }
+        };
+        for (const auto& delta : backend->parse_stream_event(frame.type, frame.data)) {
+            using Kind = loom::query::wire::StreamDelta::Kind;
+            switch (delta.kind) {
+                case Kind::TextDelta:
+                    if (!text_block) text_block = start_block(TextBlock{});
+                    blocks[*text_block].accumulated_text += delta.text;
+                    emit_delta(*text_block, delta.text);
+                    break;
+                case Kind::ToolUseStart: {
+                    const auto key = delta.tool_index.value_or(0);
+                    auto found = tool_blocks.find(key);
+                    if (found == tool_blocks.end()) {
+                        ToolUseBlock tool;
+                        tool.id.value = delta.tool_id;
+                        tool.name = delta.tool_name;
+                        tool_blocks.emplace(key, start_block(std::move(tool)));
+                    } else {
+                        auto& tool = std::get<ToolUseBlock>(blocks[found->second].block);
+                        if ((!delta.tool_id.empty() && !tool.id.value.empty() && tool.id.value != delta.tool_id) ||
+                            (!delta.tool_name.empty() && !tool.name.empty() && tool.name != delta.tool_name)) {
+                            emit_stream_error("invalid_response", "Tool metadata changed within one index");
+                            break;
+                        }
+                        if (!delta.tool_id.empty()) tool.id.value = delta.tool_id;
+                        if (!delta.tool_name.empty()) tool.name = delta.tool_name;
+                    }
+                    break;
+                }
+                case Kind::ToolUseInputDelta: {
+                    const auto found = tool_blocks.find(delta.tool_index.value_or(0));
+                    if (found == tool_blocks.end()) {
+                        emit_stream_error("invalid_response", "Tool arguments arrived before tool metadata");
+                        break;
+                    }
+                    blocks[found->second].accumulated_json += delta.partial_json;
+                    emit_delta(found->second, delta.partial_json);
+                    break;
+                }
+                case Kind::Usage:
+                    result.usage = delta.usage;
+                    break;
+                case Kind::MessageStop:
+                    if (!delta.stop_reason.empty()) {
+                        result.message.stop_reason = delta.stop_reason;
+                        wire_finish_reason = true;
+                    }
+                    if (!wire_stopped) {
+                        wire_stopped = true;
+                        for (std::size_t i = 0; i < blocks.size(); ++i) {
+                            auto& accum = blocks[i];
+                            if (auto* text = std::get_if<TextBlock>(&accum.block)) {
+                                text->text = accum.accumulated_text;
+                            } else if (auto* tool = std::get_if<ToolUseBlock>(&accum.block)) {
+                                tool->input_json = accum.accumulated_json.empty() ? "{}" : accum.accumulated_json;
+                            }
+                            if (options.on_event) {
+                                ContentBlockStop event;
+                                event.index = static_cast<std::uint32_t>(i);
+                                (*options.on_event)(event);
+                            }
+                        }
+                    }
+                    break;
+                case Kind::Error:
+                    emit_stream_error("stream_error", delta.text);
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
     // Track current SSE event type
     // (now held inside sse_decoder_)
 
@@ -554,14 +592,24 @@ void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
     req.headers = headers;
     req.headers.emplace("Content-Type", "application/json");
     req.body = body;
+    bool accepted_response = false;
+    req.response_handler = [&](const httplib::Response& response) {
+        accepted_response = response.status < 400;
+        return true;
+    };
     req.content_receiver = [&](const char* data, size_t len,
                                uint64_t /*offset*/, uint64_t /*total*/) -> bool {
         if (should_abort()) return false;
+        if (!accepted_response) return true;
 
         // The decoder buffers partial chunks and yields complete events;
         // dispatch each to the domain handler (parse_sse_event).
         for (const auto& ev : sse_decoder_.feed(std::string_view(data, len))) {
-            parse_sse_event(ev.type, ev.data);
+            if (backend->api() == loom::query::wire::WireApi::Messages) {
+                parse_sse_event(ev.type, ev.data);
+            } else {
+                parse_wire_event(ev);
+            }
         }
 
         return true;
@@ -588,7 +636,7 @@ void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
         return result;
     }
 
-    if (!ok || (res.status >= 400 && blocks.empty())) {
+    if (!ok || res.status >= 400) {
         // If streaming failed and we got nothing, fall back to non-streaming
         auto fallback = send_request(options);
         if (should_abort()) {
@@ -627,6 +675,25 @@ void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
         if (!usage_hdr.empty()) {
             try { result.usage.input_tokens = static_cast<std::uint32_t>(std::stoul(usage_hdr)); }
             catch (...) {}
+        }
+    }
+
+    if (backend->api() != loom::query::wire::WireApi::Messages &&
+        (!wire_stopped || !wire_terminated || !wire_finish_reason) &&
+        !result.failed && ok && res.status < 400) {
+        emit_stream_error("stream_error", "Model stream ended without a completion event");
+    }
+
+    if (backend->api() != loom::query::wire::WireApi::Messages && !result.failed) {
+        for (const auto& block : result.message.content) {
+            const auto* tool = std::get_if<ToolUseBlock>(&block);
+            if (!tool) continue;
+            const auto arguments = loom::utils::json::parse(tool->input_json);
+            if (tool->id.value.empty() || tool->name.empty() ||
+                !arguments || !arguments->root().is_obj()) {
+                emit_stream_error("invalid_response", "Model stream ended with an incomplete or invalid tool call");
+                break;
+            }
         }
     }
 

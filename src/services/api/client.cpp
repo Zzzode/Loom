@@ -7,6 +7,25 @@ import std;
 
 namespace loom::services::api {
 
+Result<StreamParser> MessagesClient::create_message_stream(
+    const CreateMessageRequest& request) {
+    CreateMessageRequest stream_request = request;
+    stream_request.stream = true;
+    auto betas = betas_for_request(request);
+    auto prepared = prepare_request(stream_request, betas, /*streaming=*/true);
+    if (!prepared) return std::unexpected(prepared.error());
+    return start_stream(std::move(prepared->url), std::move(prepared->body),
+                        std::move(prepared->headers), {},
+                        auth_ctx_->provider() != EProv::FirstParty);
+}
+
+Result<StreamParser> MessagesClient::create_prepared_stream(
+    std::string url, std::string body, std::vector<std::string> headers,
+    StreamParser::EventDecoder decoder) {
+    return start_stream(std::move(url), std::move(body), std::move(headers),
+                        std::move(decoder), false);
+}
+
 MessagesClient::~MessagesClient() {
     // Streams may outlive this client, but must stop borrowing its auth
     // context before it is destroyed. Request all stops before any join.

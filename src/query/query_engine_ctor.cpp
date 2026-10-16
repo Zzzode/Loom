@@ -15,6 +15,31 @@ import loom.services.analytics;
 
 namespace loom::core {
 
+std::shared_ptr<const ApiExecutionContext>
+make_api_execution_context(const QueryEngineConfig& config) {
+    auto context = std::make_shared<ApiExecutionContext>();
+    context->base_url = config.base_url.value_or("");
+    context->api_key = config.api_key;
+    context->auth_token = config.auth_token;
+    const auto selected = config.wire_api.value_or(
+        std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages");
+    if (auto api = loom::query::wire::wire_api_from_string(selected)) {
+        context->wire_api = std::string(loom::query::wire::wire_api_name(*api));
+    }
+    return context;
+}
+
+std::shared_ptr<const ApiExecutionContext> QueryEngine::api_execution_context() const {
+    auto context = std::make_shared<ApiExecutionContext>();
+    context->wire_api = std::string(loom::query::wire::wire_api_name(wire_api_));
+    context->base_url = api_config_.base_url;
+    context->api_key = api_config_.api_key;
+    context->auth_token = api_config_.auth_token;
+    context->api_version = api_config_.api_version;
+    context->timeout = api_config_.timeout;
+    return context;
+}
+
 QueryEngine::QueryEngine(QueryEngineConfig config, ToolRegistry& registry)
     : config_(std::move(config)), tool_registry_(&registry),
       session_start_(std::chrono::system_clock::now()) {

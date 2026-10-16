@@ -163,6 +163,7 @@ struct StreamDelta {
     std::string partial_json;
     std::string stop_reason;
     TokenUsage usage;
+    std::optional<std::uint32_t> tool_index;
 };
 
 // =========================================================================

@@ -7,6 +7,24 @@ import std;
 
 namespace loom::tools::agent {
 
+int AgentTool::last_run_turns() const noexcept {
+    return std::atomic_ref<int>(last_run_turns_).load(std::memory_order_relaxed);
+}
+int AgentTool::last_run_tokens() const noexcept {
+    return std::atomic_ref<int>(last_run_tokens_).load(std::memory_order_relaxed);
+}
+void AgentTool::record_run_usage(int input_tokens, int output_tokens) noexcept {
+    auto counter = std::atomic_ref<int>(last_run_tokens_);
+    auto observed = counter.load(std::memory_order_relaxed);
+    int next;
+    do {
+        const auto sum = static_cast<long long>(observed) + input_tokens + output_tokens;
+        next = static_cast<int>(std::min(sum,
+            static_cast<long long>(std::numeric_limits<int>::max())));
+    } while (!counter.compare_exchange_weak(observed, next, std::memory_order_relaxed));
+}
+
+
 [[nodiscard]] Result<ToolResult> AgentTool::run_agent_and_finalize(
     const AgentExecutionPlan& plan,
     std::optional<std::string> startup_error,

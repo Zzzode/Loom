@@ -188,7 +188,7 @@ using loom::core::ToolResult;
     if (name == "script") return execute_script(input);
     if (name == "send_message") {
         return runtime_message_delivery::execute_send_message(
-            json, registry, &native_agent_status_is_terminal, input.parent_model);
+            json, registry, &native_agent_status_is_terminal, input.parent_model, input.api_context);
     }
     if (name == "shared") {
         auto key = json_string(json, "key");

@@ -140,6 +140,7 @@ namespace json = loom::utils::json;
                 default_mode,
                 default_isolation));
             agent_input.parent_model = input.parent_model;
+            agent_input.api_context = input.api_context;
             auto started = registry->execute("Agent", agent_input);
             if (!started) {
                 auto error = "failed to start team member " + member.agent_id + ": " + started.error().message;

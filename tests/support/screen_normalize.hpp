@@ -123,7 +123,7 @@ namespace loom::testing {
     //     nullopt on entering "Responding" mode)
     //   - dots: 3-dot blink cycle, also wall-clock-driven
     // Replace the whole "<glyph> <verb>…<dots>" segment with placeholders.
-    // The two leading spaces (spinner left padding) are left intact.
+    // The chrome spinner starts at the left edge of its physical row.
     {
         // Whether s[i..i+3) is one of the 8 teardrop-asterisk glyphs from
         // RenderSpinner's kGlyphs (✻ ❋ ✦ ✧ ✶ ✷ ✸ ✹).
@@ -147,10 +147,9 @@ namespace loom::testing {
         std::string tmp;
         tmp.reserve(clean.size());
         for (std::size_t i = 0; i < clean.size();) {
-            // Require the two leading spaces of the spinner padding so a
-            // glyph that happens to appear in message content is not
-            // mistaken for the chrome spinner.
-            if (i >= 2 && clean[i - 1] == ' ' && clean[i - 2] == ' ' &&
+            // Anchor at the row's left edge so an inline message glyph is
+            // not mistaken for the chrome spinner.
+            if ((i == 0 || clean[i - 1] == '\n') &&
                 ((is_chrome_glyph(clean, i) && i + 3 < clean.size() && clean[i + 3] == ' ')
                  || clean.compare(i, 10, "<spinner> ") == 0)) {
                 // Match: <glyph> <verb>…<dots>
@@ -194,8 +193,7 @@ namespace loom::testing {
                             }
                             is_prompt_divider = is_prompt_divider &&
                                 clean.compare(divider_end + 1, 5, " ❯ ") == 0;
-                            const bool at_line_start = i == 2 || clean[i - 3] == '\n';
-                            if (!at_line_start || !is_prompt_divider) {
+                            if (!is_prompt_divider) {
                                 tmp += clean[i];
                                 ++i;
                                 continue;

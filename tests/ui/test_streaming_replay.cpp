@@ -654,31 +654,31 @@ TEST(StreamingReplay, ToolSpinnerPhasesPreserveLabelsAndMessageContent) {
     for (const auto label : {"analyze_image", "mcp__server_2__read-file"}) {
         for (const auto glyph : {"✻", "❋", "✦", "✧", "✶", "✷", "✸", "✹"}) {
             for (const auto dots : {".", "..", "..."}) {
-                const auto spinner = std::string("  ") + glyph + " " + label + "…" + dots;
+                const auto spinner = std::string(glyph) + " " + label + "…" + dots;
                 const auto normalized = normalize_screen(spinner + prompt);
-                EXPECT_EQ(normalized, std::string("  ✻ ") + label + "…." + prompt);
+                EXPECT_EQ(normalized, std::string("✻ ") + label + "…." + prompt);
                 EXPECT_EQ(normalize_screen(normalized), normalized);
                 EXPECT_EQ(normalize_screen(spinner + "   \n────────────────────   \n ❯ draft"),
                           normalized);
                 for (const auto& body : {spinner, "body\n" + spinner + "\nnext",
-                         "quoted " + spinner + prompt,
+                         "quoted " + spinner + prompt, "  " + spinner + prompt,
                          spinner + "\n────────────────────\nbody"}) {
                     EXPECT_EQ(normalize_screen(body), body);
                 }
-                EXPECT_EQ(normalize_screen(std::string("  ") + glyph + " Thinking…" + dots),
-                          "  <spinner> <verb>….");
+                EXPECT_EQ(normalize_screen(std::string(glyph) + " Thinking…" + dots),
+                          "<spinner> <verb>….");
             }
         }
     }
     for (const auto glyph : {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}) {
-        const auto spinner = std::string("  ") + glyph + " mcp__server_2__read-file…...";
+        const auto spinner = std::string(glyph) + " mcp__server_2__read-file…...";
         const auto normalized = normalize_screen(spinner + prompt);
-        EXPECT_EQ(normalized, "  ✻ mcp__server_2__read-file…." + prompt);
+        EXPECT_EQ(normalized, "✻ mcp__server_2__read-file…." + prompt);
         EXPECT_EQ(normalize_screen(normalized), normalized);
         // Preserve a quoted tool label: only its ordinary braille glyph is
         // normalized by the pre-existing global glyph pass, not its content.
         EXPECT_EQ(normalize_screen("quoted " + spinner + prompt),
-                  "quoted   <spinner> mcp__server_2__read-file…..." + prompt);
+                  "quoted <spinner> mcp__server_2__read-file…..." + prompt);
     }
 
 }

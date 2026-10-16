@@ -541,7 +541,9 @@ using namespace ftxui;
         const int todo_need = s.todo_store.items.empty() ? 0
             : static_cast<int>(s.todo_store.items.size()) + 1;
         const int team_need = static_cast<int>(s.task_view_store.live_teammates.size());
-        const int todo_columns = std::max(0, term_cols - 2);
+        // MessageResponse envelope: the hook appears once beside the header;
+        // all task detail rows share the five-column body indentation.
+        const int todo_columns = std::max(0, term_cols - 5);
         Elements activity;
         if (activity_budget == 1 && todo_need > 0 && team_need > 0) {
             const auto done = std::ranges::count_if(s.todo_store.items, [](const auto& item) {
@@ -552,7 +554,7 @@ using namespace ftxui;
                     s.todo_store.items.size(), s.todo_store.items.size(), team_need, team_need)
                 : std::format("Tasks {}/{} done (+{} hidden) · Teams {} (+{} hidden)",
                     done, s.todo_store.items.size(), s.todo_store.items.size(), team_need, team_need);
-            activity.push_back(hbox({text("  "),
+            activity.push_back(hbox({text("  ⎿  ") | dim,
                 text(teams::live::one_line_tail(summary,
                     static_cast<std::size_t>(todo_columns)))
                     | color(loom::ui::design::theme::current_theme().palette->muted)
@@ -573,7 +575,7 @@ using namespace ftxui;
                 }
             }
             if (todo_rows > 0)
-                activity.push_back(hbox({text("  "),
+                activity.push_back(hbox({text("  ⎿  ") | dim,
                     todos::RenderTodoPanel(s.todo_store.items, todo_columns, todo_rows)}));
             if (team_rows > 0)
                 activity.push_back(teams::live::RenderLiveTeammateStrip(

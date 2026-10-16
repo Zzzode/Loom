@@ -126,6 +126,12 @@ set_tests_properties(E2E_Pty_CompressedChain PROPERTIES
     ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
     SKIP_RETURN_CODE 125)
 
+add_test(NAME E2E_Pty_TaskResponseLayout COMMAND e2e_pty_shutdown task-response-layout)
+set_tests_properties(E2E_Pty_TaskResponseLayout PROPERTIES
+    TIMEOUT 30
+    ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+    SKIP_RETURN_CODE 125)
+
 # Permission footer labels and atomic key/action hints reflow in the first
 # resized frame, including short terminals, without resolving the request.
 add_test(NAME E2E_Pty_PermissionFooter COMMAND e2e_pty_shutdown permission-footer)

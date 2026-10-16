@@ -387,6 +387,37 @@ TEST(ChromeBudget, ActiveSpinnerPreservesTranscriptCaretAndFooterAcrossFrames) {
     EXPECT_EQ(state.input_text, bytes);
 }
 
+TEST(ChromeBudget, WorkRowAlignsWithPromptAndTasksUseResponseEnvelope) {
+    for (const int columns : {40, 80, 120}) {
+        repl::ReplScreenState state;
+        populate(state, 3, 0);
+        state.task_view_store.spinner_mode = repl::SpinnerMode::Thinking;
+        state.task_view_store.spinner_verb = "Working";
+        auto screen = paint_repl(state, columns, 30);
+        int work_y = -1;
+        int header_y = -1;
+        for (int y = 0; y < screen.dimy(); ++y) {
+            if (screen.PixelAt(2, y).character == "W" &&
+                screen.PixelAt(3, y).character == "o") work_y = y;
+            if (screen.PixelAt(2, y).character == "⎿") header_y = y;
+        }
+        ASSERT_GE(work_y, 0);
+        ASSERT_EQ(header_y, work_y + 1);
+        EXPECT_EQ(screen.PixelAt(0, header_y).character, " ");
+        EXPECT_EQ(screen.PixelAt(1, header_y).character, " ");
+        EXPECT_EQ(screen.PixelAt(5, header_y).character, "T");
+        EXPECT_TRUE(screen.PixelAt(2, header_y).dim);
+        for (int row = 1; row <= 3; ++row) {
+            for (int x = 0; x < 5; ++x)
+                EXPECT_EQ(screen.PixelAt(x, header_y + row).character, " ");
+            EXPECT_EQ(screen.PixelAt(5, header_y + row).character, "○");
+        }
+        // The prompt's horizontal rule starts at the same left edge as work.
+        EXPECT_EQ(screen.PixelAt(0, header_y + 4).character, "─");
+        expect_caret(screen);
+    }
+}
+
 TEST(ChromeBudget, AutocompleteHeightLeavesCaretFooterAndTranscriptVisible) {
     repl::ReplScreenState state;
     populate(state);

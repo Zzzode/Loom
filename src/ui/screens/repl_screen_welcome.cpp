@@ -56,7 +56,6 @@ using namespace ftxui;
     std::string_view selected_verb = verb ? std::string_view(*verb) : cached_verb;
     std::string label = std::string(selected_verb) + "\xE2\x80\xA6";  // …
     Elements p = {
-        text("  ") | size(WIDTH, EQUAL, 2),  // left padding = 2
         text(std::string(glyph)) | color(pal.primary),
         text(" "),
         text(label) | color(pal.muted),

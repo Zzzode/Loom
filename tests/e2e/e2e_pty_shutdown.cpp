@@ -213,6 +213,22 @@ private:
             request_bodies_.push_back(request.substr(request.find("\r\n\r\n") + 4));
         }
         const int index = requests.fetch_add(1);
+        if (recovery_ == "task-response-layout") {
+            if (index == 0) {
+                const auto body = tool_response("todo_write",
+                    R"({"todos":[{"content":"PTY active task","status":"in_progress"},{"content":"PTY pending task","status":"pending"},{"content":"PTY completed task","status":"completed"}]})");
+                send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
+                    std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+                ::shutdown(fd, SHUT_WR);
+            } else {
+                if (!send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n" + message_start())) return;
+                ++parked;
+                while (read_bytes(buffer.data(), buffer.size()) > 0) {}
+                ++closed;
+                closed_cv_.notify_all();
+            }
+            return;
+        }
         if (recovery_.starts_with("generation-tps-")) {
             const auto delta = [&](const std::string& text) {
                 return event("content_block_delta", "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" +
@@ -781,7 +797,8 @@ printf '\nPTY-SHELL-RECEIVED\n'
             "✻", "❋", "✦", "✧", "✶", "✷", "✸", "✹"
         };
         return std::none_of(spinner_glyphs.begin(), spinner_glyphs.end(), [&](auto glyph) {
-            return frame.find("  " + std::string(glyph) + " ") != std::string::npos;
+            const auto prefix = std::string(glyph) + " ";
+            return frame.starts_with(prefix) || frame.find("\n" + prefix) != std::string::npos;
         });
     }
     void verify_completion(int expected) {
@@ -1445,9 +1462,9 @@ void require_attention_label(const TerminalFrame& frame, const std::string& labe
 
 std::pair<int, int> bottom_work_glyph(const TerminalFrame& frame) {
     for (int y = 39; y >= 30; --y) {
-        const auto& glyph = frame.cells[y][2].text;
+        const auto& glyph = frame.cells[y][0].text;
         if (std::find(kCanonicalWorkGlyphs.begin(), kCanonicalWorkGlyphs.end(), glyph) !=
-            kCanonicalWorkGlyphs.end()) return {2, y};
+            kCanonicalWorkGlyphs.end()) return {0, y};
         constexpr std::array<std::string_view, 8> legacy = {"✻", "❋", "✦", "✧", "✶", "✷", "✸", "✹"};
         require(std::find(legacy.begin(), legacy.end(), glyph) == legacy.end(),
                 "ordinary work retained a legacy star spinner");
@@ -1472,6 +1489,48 @@ void save_attention_frame(const fs::path& root, const std::string& name, const s
                    << " bold=" << cell.bold << " dim=" << cell.dim << '\n';
         }
     }
+}
+
+void run_task_response_layout_case(const std::string& binary, const fs::path& root) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":false,"permissionMode":"default","extendedThinking":false})";
+    ModelServer server(false, false, root / "unused.txt", false, "task-response-layout");
+    Terminal terminal(binary, root, server.url(), ModelOptions{});
+    server.start();
+    require(terminal.wait([&] { return terminal.installed(); }), "task layout startup not observed");
+    terminal.input("Track the task layout\r");
+    require(terminal.wait([&] {
+        return terminal.latest_frame_text().find("[y] Allow  [n] Deny") != std::string::npos;
+    }), "todo_write permission prompt not observed");
+    terminal.input("y");
+    require(terminal.wait([&] {
+        return server.parked.load() == 1 && terminal.latest_frame_text().find("Tasks 1/3 done") != std::string::npos;
+    }), "real todo_write result did not reach the pinned task list");
+    for (const int width : {40, 80, 120}) {
+        const auto start = terminal.output.rfind('\0') + 1;
+        terminal.resize(static_cast<unsigned short>(width), 40);
+        require(terminal.wait([&] { return !terminal.first_resize_frame_since(start).empty(); }),
+                "task layout resize frame not observed");
+        const auto raw = terminal.first_resize_frame_since(start);
+        const auto frame = decode_frame(raw);
+        const auto spinner = bottom_work_glyph(frame);
+        require(spinner.first == 0, "work row is not aligned with the input's left edge");
+        const int header_y = spinner.second + 1;
+        require(header_y + 3 < 40, "task response extends beyond the terminal");
+        require(frame.cells[header_y][2].text == "⎿" && frame.cells[header_y][5].text == "T",
+                "task header is not a MessageResponse directly below work");
+        for (int row = 1; row <= 3; ++row) {
+            for (int x = 0; x < 5; ++x)
+                require(frame.cells[header_y + row][x].text == " ", "task details repeat the hook or lose indentation");
+        }
+        require(frame.row(header_y + 1).find("PTY active task") != std::string::npos &&
+                frame.row(header_y + 2).find("PTY pending task") != std::string::npos &&
+                frame.row(header_y + 3).find("PTY completed task") != std::string::npos,
+                "task response lost status rows during resize");
+        save_attention_frame(root, "tasks-" + std::to_string(width), raw);
+    }
+    terminal.input("\x04");
+    terminal.verify_exit(0);
 }
 
 void verify_decoder_attention_attributes() {
@@ -2775,6 +2834,10 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
     }
     if (scenario == "compressed-chain-live") {
         run_compressed_chain_case(binary, root);
+        return;
+    }
+    if (scenario == "task-response-layout") {
+        run_task_response_layout_case(binary, root);
         return;
     }
     if (scenario.starts_with("selection-")) {

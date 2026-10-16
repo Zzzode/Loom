@@ -672,9 +672,9 @@ TEST(AttentionHierarchy, OrdinarySpinnersUseCanonicalFramesAndHonorThemeMotion) 
         for (int frame = 0; frame < static_cast<int>(figures::kSpinnerFrames.size()); ++frame) {
             const auto screen = Paint(rs::RenderSpinner(rs::SpinnerMode::ToolUse,
                 "Activity", "Readable tip", frame), 80, 1);
-            EXPECT_EQ(screen.PixelAt(2, 0).character, figures::spinner_frame_glyph(frame));
-            EXPECT_EQ(screen.PixelAt(2, 0).foreground_color, pal.primary);
-            EXPECT_FALSE(screen.PixelAt(2, 0).dim);
+            EXPECT_EQ(screen.PixelAt(0, 0).character, figures::spinner_frame_glyph(frame));
+            EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, pal.primary);
+            EXPECT_FALSE(screen.PixelAt(0, 0).dim);
             ExpectInk(screen, "Activity", pal.muted);
             ExpectInk(screen, "Readable tip", pal.muted);
             auto widget = Paint(ui::components::SpinnerElement({.message = {}, .frame = frame}), 10, 1);
@@ -686,7 +686,7 @@ TEST(AttentionHierarchy, OrdinarySpinnersUseCanonicalFramesAndHonorThemeMotion) 
         const auto first = Paint(rs::RenderSpinner(rs::SpinnerMode::ToolUse, "Activity", {}, 0), 80, 1);
         const auto later = Paint(rs::RenderSpinner(rs::SpinnerMode::ToolUse, "Activity", {}, 9), 80, 1);
         EXPECT_EQ(CellText(first), CellText(later));
-        EXPECT_EQ(first.PixelAt(2, 0).character, figures::kBullet);
+        EXPECT_EQ(first.PixelAt(0, 0).character, figures::kBullet);
         for (const bool explicit_reduce : {false, true}) {
             auto widget = Paint(ui::components::SpinnerElement({
                 .reduced_motion = explicit_reduce, .message = {}, .frame = 9}), 10, 1);

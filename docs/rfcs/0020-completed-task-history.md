@@ -177,6 +177,48 @@ not substitutes for project-native regression evidence. For this delivery, the
 owner explicitly overrides serial scheduling: run all cases with eight parallel
 workers per preset, without exclusions or retry-until-pass flags.
 
+### Committed-source terminal verification (2026-10-16)
+
+Verified source: [`6dc112f9`](https://github.com/Zzzode/Loom/commit/6dc112f90a6daba7c3da765c699a1beb26805600)
+in a clean isolated worktree. Session `8a664ae9-e9da-40f1-af78-60a7363ceeac` used the configured
+model service and a real 120-column by 40-row forkpty/FTXUI loop. The actual
+task inspected the committed layout, ran native todo regressions, and wrote
+and read back a verification report before completing all three tasks.
+
+- Build check: `cmake --build --preset debug --target loom test_design_system -j8`
+  succeeded with `ninja: no work to do`; existing artifacts matched the clean
+  committed source. This was not a new cold build.
+- Executed Loom SHA-256: `44381891652e5161e4cb46a41c70039b1c935e0656236941f152ef67e8072c98`.
+- Native command: `ctest --preset debug -j8 -R '^ChromeBudget\.Todo' --output-on-failure`.
+  All three cases passed, zero failures, 0.17 seconds, including
+  `ChromeBudget.TodoEnvelopeRequiresVisibleWorkRow`.
+- The completed checklist remained expanded before collapsing; observed time
+  between captured frames was 3.05672 seconds for the configured three-second
+  grace. After the work row disappeared, the summary started at column zero
+  as `✓ Tasks 3/3 completed`, without a response hook or its indentation.
+- Completion records remained in message history. Source and executed binary
+  hashes did not drift; the session exited normally with Ctrl+D. No repository
+  files were changed by this verification run.
+
+The following screenshots are rendered directly from that session's original
+ANSI terminal frames. These are absolute, host-local evidence paths, not
+repository assets or hosted screenshot URLs.
+
+| Stage | Observed behavior | Screenshot |
+|---|---|---|
+| Running | `Tasks 2/3 done` uses the response hook beneath its visible work row | [running-chrome-detail.png](/Users/bytedance/.codex/visualizations/2026/10/15/01a13f31-082a-7283-b620-3f30d5288e11/committed-parent-terminal-task/running-chrome-detail.png) |
+| All tasks completed | `Tasks 3/3 completed` retains all three detail rows during grace | [completed-expanded-chrome-detail.png](/Users/bytedance/.codex/visualizations/2026/10/15/01a13f31-082a-7283-b620-3f30d5288e11/committed-parent-terminal-task/completed-expanded-chrome-detail.png) |
+| Work row gone | Standalone `✓ Tasks 3/3 completed` at column zero; no orphan response hook | [final-chrome-detail.png](/Users/bytedance/.codex/visualizations/2026/10/15/01a13f31-082a-7283-b620-3f30d5288e11/committed-parent-terminal-task/final-chrome-detail.png) |
+
+Supporting local artifacts: [evidence.json](/Users/bytedance/.codex/visualizations/2026/10/15/01a13f31-082a-7283-b620-3f30d5288e11/committed-parent-terminal-task/evidence.json),
+[terminal.raw](/Users/bytedance/.codex/visualizations/2026/10/15/01a13f31-082a-7283-b620-3f30d5288e11/committed-parent-terminal-task/terminal.raw),
+[messages.jsonl](/Users/bytedance/.codex/visualizations/2026/10/15/01a13f31-082a-7283-b620-3f30d5288e11/committed-parent-terminal-task/messages.jsonl), and
+[task-report.md](/Users/bytedance/.codex/visualizations/2026/10/15/01a13f31-082a-7283-b620-3f30d5288e11/committed-parent-terminal-task/task-report.md).
+
+This verification-only run did not repeat release or full-repository checks.
+The preceding dual-preset full gates remain separately recorded below;
+Linux and hosted CI remain unverified.
+
 ## Documentation impact
 
 This RFC and the docs index record the task lifecycle. Implementation comments
@@ -207,3 +249,4 @@ Explicitly clearing tasks remains possible; message history is retained.
 | 2026-10-16 | A | Final frozen parallel gates pass; phase graduation recorded | local, awaiting commit | Final unfiltered ctest --preset debug -j8 --output-on-failure and release equivalent each register 2719 tests: 2697 passed, 20 skipped, 2 disabled, zero failures (60.53s / 59.50s). No retry flags, exclusions or diagnostic environment overrides. Source/fixture and executed-binary drift are zero; candidate patched FTXUI is unchanged and primary dependency bytes are preserved. Both configurations build with -Werror; final cancellation-focused checks pass 11/11 per preset. Prior failures and diagnostic limitations remain in this history. Independent agent:review_task_completion approved feature, native fixtures, shared resize and cancellation fixture; final conformance review confirms graduation. Delivery contains 20 unique files in four coherent commits: native process fixtures, authorized shared resize repair, cancellation UI fixture, and task lifecycle/strikethrough. Existing public inputs, configuration and persisted schemas remain unchanged; Linux and hosted CI remain unverified. |
 | 2026-10-16 | A | Correct orphan task response after parent work row disappears | local, uncommitted | The screen layout now selects the MessageResponse hook and five-column indentation from the existing visible-work-row predicate; idle and focus-suppressed tasks use full width at column zero, including shared Tasks/Teams summaries. No task lifecycle, history, shared renderer or public contract changes. New native regressions fail 2/2 before the fix. Debug/release builds and all ChromeBudget plus native task-response/completion PTY checks pass 23/23 per preset (4.72s / 8.48s); 36 state/width combinations also assert the five reclaimed columns. agent:review_task_layout APPROVED static scope and correctness. New actual-model PTY session 901a7aa6-5c7c-4586-b899-c1576b3b40cc passes 3/3 task-render tests (0.14s), writes/reads its report, and captures running, completed and standalone collapsed states. Full repository suites and Linux/hosted CI were not rerun for this local correction. No commit or push in this follow-up. |
 | 2026-10-16 | A | Complete full commit gates for orphan-response correction | local, ready to commit | Owner authorized committing and pushing this four-file follow-up. This later validation supersedes the preceding row's unverified full-suite state while preserving its historical result. Parallel full debug/release -Werror builds pass (188.27s / 272.02s). Unfiltered ctest --preset debug -j8 --output-on-failure and release equivalent each register 2720 tests: 2698 passed, 20 skipped, 2 disabled, zero failures (76.77s / 62.15s), without exclusions or retry flags. Frozen tracked source and all captured executable hashes show zero drift across the complete pair. agent:review_task_layout confirms the four-file scope and Conventional Commit message; the earlier static review has no unresolved findings. Actual-model PTY evidence from the preceding row remains valid. No shared renderer or public-contract changes; Linux and hosted CI remain unverified. |
+| 2026-10-16 | A | Record committed-source actual terminal verification | 6dc112f9 (verified source) | Session 8a664ae9-e9da-40f1-af78-60a7363ceeac ran the configured model in a real 120x40 PTY; native task-render regressions passed 3/3 in 0.17s. Captured running response, expanded 3/3 completion and standalone idle summary; observed grace 3.05672s, retained history, zero source/binary drift and normal Ctrl+D exit. The committed-source verification section records the three absolute screenshot paths and supporting raw artifacts. Documentation-only evidence addition; prior full gates are reused, not rerun. |

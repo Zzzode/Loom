@@ -264,3 +264,19 @@ if(APPLE)
       ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN};LOOM_PTY_TLS_CA_LIBRARY=$<TARGET_FILE:e2e_tls_test_ca>;LOOM_PTY_TLS_CA_CERT=${CMAKE_CURRENT_SOURCE_DIR}/../fixtures/sse_cert.pem;LOOM_PTY_TLS_CA_KEY=${CMAKE_CURRENT_SOURCE_DIR}/../fixtures/sse_key.pem"
       SKIP_RETURN_CODE 125)
 endif()
+
+# Opt-in live model acceptance in the real FTXUI terminal. Default runs skip
+# rather than contacting external services; staged credentials stay local.
+add_executable(e2e_subagent_live e2e_subagent_live.cpp)
+set_target_properties(e2e_subagent_live PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+target_compile_features(e2e_subagent_live PRIVATE cxx_std_20)
+target_link_libraries(e2e_subagent_live PRIVATE Threads::Threads util)
+add_dependencies(e2e_subagent_live loom)
+foreach(_live_case IN ITEMS parallel cancel-resume cancel-resume-sighup)
+    add_test(NAME E2E_SubagentLive_${_live_case} COMMAND e2e_subagent_live ${_live_case})
+    set_tests_properties(E2E_SubagentLive_${_live_case} PROPERTIES
+        TIMEOUT 190
+        ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+        SKIP_RETURN_CODE 125
+        RUN_SERIAL TRUE)
+endforeach()

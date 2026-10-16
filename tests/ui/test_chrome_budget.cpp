@@ -400,20 +400,89 @@ TEST(ChromeBudget, OneSharedRowKeepsBothCountsInNarrowTerminal) {
     expect_caret(screen);
 }
 
+TEST(ChromeBudget, TodoEnvelopeRequiresVisibleWorkRow) {
+    for (int columns : {40, 80}) {
+        for (int phase : {0, 1, 2}) {
+            for (int work : {0, 1, 2}) {
+                SCOPED_TRACE(std::format("columns={}, phase={}, work={}", columns, phase, work));
+                repl::ReplScreenState state;
+                populate(state, 3, 0);
+                state.todo_store.items.front().content = "task-0 " + std::string(columns - 10, 'x') + "Z";
+                if (phase == 0) {
+                    state.todo_store.items.front().status = todo::TodoDisplayItem::Status::InProgress;
+                } else {
+                    for (auto& item : state.todo_store.items)
+                        item.status = todo::TodoDisplayItem::Status::Completed;
+                }
+                state.todo_store.completed_collapsed = phase == 2;
+                state.query_running = work != 0;
+                state.task_view_store.spinner_mode = work == 0
+                    ? repl::SpinnerMode::Hidden : repl::SpinnerMode::Thinking;
+                state.task_view_store.spinner_verb = "Working";
+                // An outer focus owner hides work chrome even during a query.
+                if (work == 2) state.mode = repl::ReplMode::SettingsView;
+                const auto screen = paint_repl(state, columns, 30);
+                int header = -1;
+                std::string line;
+                for (int y = 0; y < screen.dimy(); ++y) {
+                    std::string row;
+                    for (int x = 0; x < screen.dimx(); ++x)
+                        row += screen.PixelAt(x, y).character;
+                    if (row.find("Tasks") != std::string::npos) {
+                        header = y;
+                        line = std::move(row);
+                        break;
+                    }
+                }
+                ASSERT_GE(header, 0);
+                if (work == 1) {
+                    EXPECT_TRUE(line.starts_with("  ⎿  ")) << line;
+                    ASSERT_GT(header, 0);
+                    std::string parent;
+                    for (int x = 0; x < screen.dimx(); ++x)
+                        parent += screen.PixelAt(x, header - 1).character;
+                    EXPECT_NE(parent.find("Working"), std::string::npos) << parent;
+                } else {
+                    EXPECT_TRUE(line.starts_with(phase == 2 ? "✓ Tasks" : "Tasks")) << line;
+                    EXPECT_EQ(line.find("⎿"), std::string::npos);
+                }
+                if (phase != 2) {
+                    const int indent = work == 1 ? 5 : 0;
+                    EXPECT_EQ(screen.PixelAt(indent, header + 1).character, phase == 0 ? "●" : "✓");
+                    EXPECT_EQ(screen.PixelAt(indent + 2, header + 1).character, "t");
+                    EXPECT_EQ(screen.PixelAt(columns - 1, header + 1).character, work == 1 ? "…" : "Z");
+                }
+                EXPECT_GE(transcript_height(state), 12);
+                expect_caret(screen);
+            }
+        }
+    }
+}
+
 TEST(ChromeBudget, CompletedTasksKeepCompletionWordingWithTeamsInOneSharedRow) {
-    repl::ReplScreenState state;
-    populate(state, 3, 2);
-    for (auto& item : state.todo_store.items)
-        item.status = todo::TodoDisplayItem::Status::Completed;
-    state.input_text = std::string(200, 'x');
-    for (bool collapsed : {false, true}) {
-        state.todo_store.completed_collapsed = collapsed;
-        const auto screen = paint_repl(state, 40, 24);
-        const auto text = visible(screen);
-        EXPECT_NE(text.find("Tasks 3/3 completed · Teams 2"), std::string::npos);
-        EXPECT_EQ(text.find("task-0"), std::string::npos);
-        EXPECT_GE(transcript_height(state), 8);
-        expect_caret(screen);
+    for (bool working : {false, true}) {
+        repl::ReplScreenState state;
+        populate(state, 3, 2);
+        for (auto& item : state.todo_store.items)
+            item.status = todo::TodoDisplayItem::Status::Completed;
+        state.query_running = working;
+        state.task_view_store.spinner_mode = working
+            ? repl::SpinnerMode::Thinking : repl::SpinnerMode::Hidden;
+        state.task_view_store.spinner_verb = "Working";
+        // Leave one activity row with or without the work row above it.
+        state.input_text = std::string(working ? 160 : 200, 'x');
+        for (bool collapsed : {false, true}) {
+            state.todo_store.completed_collapsed = collapsed;
+            const auto screen = paint_repl(state, 40, 24);
+            const auto text = visible(screen);
+            const std::string prefix = working ? "  ⎿  " : "";
+            EXPECT_NE(text.find(prefix + (collapsed ? "✓ " : "") +
+                "Tasks 3/3 completed · Teams 2 +2"), std::string::npos);
+            if (!working) EXPECT_EQ(text.find("⎿"), std::string::npos);
+            EXPECT_EQ(text.find("task-0"), std::string::npos);
+            EXPECT_GE(transcript_height(state), 8);
+            expect_caret(screen);
+        }
     }
 }
 

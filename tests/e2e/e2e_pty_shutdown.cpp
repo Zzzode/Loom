@@ -1603,6 +1603,9 @@ void run_task_completion_case(const std::string& binary, const fs::path& root) {
             return y >= 0 && frame.row(y).find("✓ Tasks 3/3 completed") != std::string::npos &&
                 frame.row(y + 1).find("PTY inspect source") == std::string::npos;
         }), "idle checklist did not collapse without user input");
+        const auto collapsed = decode_frame(terminal.latest_frame());
+        require(collapsed.cells[header_row(collapsed)][0].text == "✓",
+            "idle completed summary retained an orphan MessageResponse prefix");
         save_attention_frame(root, "completion-collapsed", terminal.latest_frame());
         terminal.input("/resume missing-task-session\r");
         require(terminal.wait([&] {

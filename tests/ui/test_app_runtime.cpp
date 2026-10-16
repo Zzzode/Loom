@@ -1024,6 +1024,7 @@ TEST(AppRuntime, CtrlCWhileStreamingQueryCancelsWithoutExiting) {
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
+    std::atomic<bool> abort_requested{false};
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
@@ -1051,7 +1052,11 @@ TEST(AppRuntime, CtrlCWhileStreamingQueryCancelsWithoutExiting) {
     EXPECT_TRUE(test_seams(app).is_loading_for_testing());
     EXPECT_TRUE(test_seams(app).is_query_running_for_testing());
 
+    // Keep transport completion behind the fixture release while checking
+    // the in-flight UI. Native socket interruption has separate PTY coverage.
+    engine.set_abort_callback([&] { abort_requested.store(true); });
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Special("\x03")));
+    EXPECT_TRUE(abort_requested.load());
     EXPECT_FALSE(exited);
     EXPECT_TRUE(test_seams(app).is_loading_for_testing());
     EXPECT_TRUE(test_seams(app).is_query_running_for_testing());
@@ -1082,6 +1087,7 @@ TEST(AppRuntime, EscWhileStreamingQueryInterruptsAndRestoresInput) {
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
+    std::atomic<bool> abort_requested{false};
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
@@ -1112,12 +1118,14 @@ TEST(AppRuntime, EscWhileStreamingQueryInterruptsAndRestoresInput) {
     // ESC interrupts the running query.  Unlike Ctrl+C (which has an idle
     // double-press-to-exit binding), ESC must never exit the app — it is
     // purely the cancel binding.
+    // Keep transport completion behind the fixture release while checking
+    // the in-flight UI. Native socket interruption has separate PTY coverage.
+    engine.set_abort_callback([&] { abort_requested.store(true); });
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
+    EXPECT_TRUE(abort_requested.load());
     EXPECT_FALSE(exited);
-    // Abort is asynchronous: engine->abort() sets the flag, but the HTTP
-    // stream only disconnects on the next chunk (the server is blocked
-    // waiting for release_after_cancel below).  So the query is still
-    // "running" and the spinner still shows "Cancelling...".
+    // The controlled transport stays open until release_after_cancel, so
+    // worker completion cannot race these intermediate cancellation checks.
     EXPECT_TRUE(test_seams(app).is_loading_for_testing());
     EXPECT_TRUE(test_seams(app).is_query_running_for_testing());
     EXPECT_EQ(test_seams(app).status_message_for_testing(), "Cancelling...");

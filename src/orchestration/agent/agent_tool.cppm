@@ -403,7 +403,7 @@ public:
             return start_background_agent(std::move(*plan));
         }
         
-        return run_agent_and_finalize(*plan);
+        return run_agent_and_finalize(*plan, std::nullopt, input.is_cancelled);
     }
 
 private:
@@ -730,7 +730,8 @@ private:
     /// their synchronous ToolResult error while using the same cleanup ordering.
     [[nodiscard]] Result<ToolResult> run_agent_and_finalize(
         const AgentExecutionPlan& plan,
-        std::optional<std::string> startup_error = std::nullopt);
+        std::optional<std::string> startup_error = std::nullopt,
+        std::function<bool()> parent_is_cancelled = {});
 
     /// Run the sub-agent's recursive API loop
     [[nodiscard]] Result<ToolResult> run_agent_loop(const AgentExecutionPlan& plan) {
@@ -1023,9 +1024,33 @@ private:
             // Execute tools and add results
             Message tool_result_msg;
             tool_result_msg.role = "user";
+            auto finish_cancelled_tools = [&](std::string reason,
+                                               std::string_view interrupted_id = {}) -> Result<ToolResult> {
+                // Preserve completed calls and close every emitted tool use.
+                // Otherwise resume filtering drops the assistant call and its
+                // execution/cancellation history, inviting duplicate effects.
+                for (const auto& pending : tool_uses) {
+                    if (std::ranges::any_of(tool_result_msg.content, [&](const auto& result) {
+                            return result.tool_use_id == pending.tool_use_id;
+                        })) continue;
+                    ContentBlock cancelled;
+                    cancelled.type = ContentBlockType::ToolResult;
+                    cancelled.tool_use_id = pending.tool_use_id;
+                    cancelled.text = pending.tool_use_id == interrupted_id
+                        ? std::format("[Tool cancelled during execution: {}. Tool side effects may have occurred; "
+                                      "do not retry automatically.]", reason)
+                        : "[Tool not executed: agent cancelled before this call.]";
+                    tool_result_msg.content.push_back(std::move(cancelled));
+                }
+                loom::tools::agent_runtime::native_agent_store().append_transcript(
+                    plan.agent_id, "user: " + message_content_text(tool_result_msg));
+                append_agent_sidechain_message(plan.agent_id, tool_result_msg);
+                messages.push_back(std::move(tool_result_msg));
+                return ToolResult::error(std::move(reason));
+            };
             for (const auto& tu : tool_uses) {
                 if (auto reason = cancel_if_requested("before executing tool " + tu.tool_name)) {
-                    return ToolResult::error(std::move(*reason));
+                    return finish_cancelled_tools(std::move(*reason));
                 }
                 update_turn_progress(turn, 0.75);
                 ContentBlock result_block;
@@ -1152,6 +1177,9 @@ private:
                         if (!skip_tool_execution) {
                             auto tool_input = ToolInput::from_json(tool_input_json);
                             tool_input.parent_model = plan.model;
+                            tool_input.is_cancelled = [id = plan.agent_id] {
+                                return loom::tools::agent_runtime::native_agent_store().is_cancel_requested(id);
+                            };
                             if (auto scope_error = mcp_scope_error_for_plan(tool_input, plan)) {
                                 result_block.text = std::format("[Tool execution error: {}]", *scope_error);
                                 tool_execution_succeeded = false;
@@ -1163,7 +1191,7 @@ private:
                                 if (normalized_tool_name_is(tu.tool_name, "sleep")) {
                                     auto exec_result = execute_agent_sleep_tool(plan.agent_id, tool_input);
                                     if (auto reason = cancel_if_requested("while executing tool sleep")) {
-                                        return ToolResult::error(std::move(*reason));
+                                        return finish_cancelled_tools(std::move(*reason), tu.tool_use_id);
                                     }
                                     tool_execution_succeeded = !exec_result.is_error;
                                     std::string output;
@@ -1175,7 +1203,7 @@ private:
                                 } else if (normalized_tool_name_is(tu.tool_name, "WebFetch")) {
                                     auto exec_result = execute_agent_web_fetch_tool(plan.agent_id, tool_input);
                                     if (auto reason = cancel_if_requested("while executing tool WebFetch")) {
-                                        return ToolResult::error(std::move(*reason));
+                                        return finish_cancelled_tools(std::move(*reason), tu.tool_use_id);
                                     }
                                     tool_execution_succeeded = !exec_result.is_error;
                                     std::string output;
@@ -1208,7 +1236,7 @@ private:
                                 } else {
                                     auto exec_result = registry_->execute(tu.tool_name, tool_input);
                                     if (auto reason = cancel_if_requested("while executing tool " + tu.tool_name)) {
-                                        return ToolResult::error(std::move(*reason));
+                                        return finish_cancelled_tools(std::move(*reason), tu.tool_use_id);
                                     }
                                     if (exec_result) {
                                         tool_execution_succeeded = !exec_result->is_error;

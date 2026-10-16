@@ -745,6 +745,7 @@ private:
             : std::optional<loom::tools::agent_runtime::NativeAgentRecord>{};
 
         std::string final_output;
+        bool agent_completed = false;
         bool agent_hook_prevented_continuation = false;
         std::optional<std::string> agent_hook_stop_reason;
         bool lifecycle_hooks_active = plan.background;
@@ -1014,8 +1015,9 @@ private:
             }
             record_run_usage(input_tokens, output_tokens);
 
-            // If stop_reason is "end_turn" and no tool_use, we're done
-            if (stop_reason == "end_turn" || tool_uses.empty()) {
+            // Completion must be explicit and leave no pending tool calls.
+            if (stop_reason == "end_turn" && tool_uses.empty()) {
+                agent_completed = true;
                 final_output = text_content;
                 if (!text_content.empty()) {
                     auto assistant_message = Message::from_text("assistant", text_content);
@@ -1044,6 +1046,16 @@ private:
                 "assistant: " + message_content_text(assistant_msg));
             append_agent_sidechain_message(plan.agent_id, assistant_msg);
             messages.push_back(std::move(assistant_msg));
+            if (stop_reason != "tool_use" || tool_uses.empty()) {
+                if (!text_content.empty()) final_output += text_content + "\n";
+                auto error = std::format(
+                    "Agent {} stopped before completing the task: stop_reason={}. "
+                    "Resume the agent to continue; check the endpoint response or output-token limit.",
+                    plan.agent_id,
+                    stop_reason.empty() ? "[missing]" : stop_reason);
+                if (!final_output.empty()) error += "\n\nPartial output:\n" + final_output;
+                return fail_agent(std::move(error));
+            }
             const auto& parent_assistant_message = messages.back();
             update_turn_progress(turn, 0.70);
 
@@ -1361,6 +1373,7 @@ private:
                 final_output += text_content + "\n";
             }
             if (agent_hook_prevented_continuation) {
+                agent_completed = true;
                 const auto stop_text = agent_hook_stop_reason.value_or("Execution stopped by hook");
                 if (!final_output.empty() && !final_output.ends_with('\n')) final_output += "\n";
                 final_output += stop_text;
@@ -1371,6 +1384,16 @@ private:
             }
         }
         
+        if (!agent_completed) {
+            auto error = std::format(
+                "Agent {} reached its maximum of {} turns before completing the task. "
+                "Resume the agent to continue, or increase maxTurns in its definition.",
+                plan.agent_id,
+                plan.max_turns);
+            if (!final_output.empty()) error += "\n\nPartial output:\n" + final_output;
+            return fail_agent(std::move(error));
+        }
+
         if (final_output.empty()) {
             final_output = "[Agent completed without producing output]";
         }

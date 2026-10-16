@@ -24,7 +24,7 @@ set(TOOL_TEST_LIBS
     GTest::gtest_main
 )
 
-add_executable(test_agent test_agent.cpp test_agent_wire.cpp test_runtime_backends_install.cpp)
+add_executable(test_agent test_agent.cpp test_agent_budget.cpp test_agent_wire.cpp test_runtime_backends_install.cpp)
 target_link_libraries(test_agent PRIVATE ${TOOL_TEST_LIBS})
 gtest_discover_tests(test_agent DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 

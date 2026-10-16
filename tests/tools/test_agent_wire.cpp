@@ -688,6 +688,28 @@ TEST(AgentWire, ParallelSessionsKeepEndpointAndCredentialsSeparate) {
     }
 }
 
+TEST(AgentWire, OutputLimitIsIncompleteAndPreservesPartialAnswer) {
+    AgentWireSandbox sandbox;
+    AgentWireServer server([](const auto&, auto& response, std::size_t) {
+        response.set_content(
+            openai_frame(R"({"choices":[{"delta":{"content":"unfinished answer"},"finish_reason":"length"}]})") +
+            openai_frame("[DONE]"), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    config.api_context = agent_wire_context(server);
+    loom::tools::AgentTool tool(config, 0, &registry);
+    auto result = tool.execute(agent_wire_input("wire-output-limit"));
+    ASSERT_TRUE(result);
+    EXPECT_TRUE(result->is_error);
+    EXPECT_NE(result_text(*result).find("unfinished answer"), std::string::npos);
+    const auto record = runtime::native_agent_store().get("wire-output-limit");
+    ASSERT_TRUE(record);
+    EXPECT_EQ(record->status, runtime::NativeAgentStatus::Failed);
+    EXPECT_FALSE(record->sidechain_entries.empty());
+}
+
 TEST(AgentWire, MessagesSessionUsesPrefixedEndpointAndExplicitEmptyCredentials) {
     AgentWireSandbox sandbox;
     AgentWireEnv wrong_key("LOOM_API_KEY", "must-not-leak-environment-key");

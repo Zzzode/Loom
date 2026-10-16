@@ -3953,7 +3953,7 @@ TEST(Tools, TodoWriteParsesTypeScriptInputShape) {
     EXPECT_NE(result->content.front().text.find("2 total, 2 added"), std::string::npos);
 }
 
-TEST(Tools, TodoWriteClearsAllDoneReplacementLists) {
+TEST(Tools, TodoWriteRetainsAllDoneReplacementLists) {
     loom::tools::clear_all_todos_for_testing();
     loom::core::ToolRegistry registry;
     loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
@@ -3977,7 +3977,47 @@ TEST(Tools, TodoWriteClearsAllDoneReplacementLists) {
     ASSERT_TRUE(completed.has_value());
     ASSERT_FALSE(completed->is_error);
     ASSERT_FALSE(completed->content.empty());
-    EXPECT_NE(completed->content.front().text.find("0 total"), std::string::npos);
+    const auto& history = completed->content.front().text;
+    EXPECT_NE(history.find("2 total"), std::string::npos);
+    EXPECT_NE(history.find("Tasks 2/2 completed"), std::string::npos);
+    EXPECT_NE(history.find("✓ Implement parser"), std::string::npos);
+    EXPECT_NE(history.find("✓ Verify parser"), std::string::npos);
+    EXPECT_EQ(loom::tools::todo_write_store().get_items().size(), 2u);
+    auto clear = registry.execute("todo_write", loom::core::ToolInput::from_json(R"({"todos":[]})"));
+    ASSERT_TRUE(clear.has_value());
+    EXPECT_TRUE(loom::tools::todo_write_store().get_items().empty());
+    EXPECT_NE(history.find("✓ Verify parser"), std::string::npos);
+}
+
+TEST(Tools, TodoWriteCompletedMergeCapturesTheEntireScopedList) {
+    loom::tools::clear_all_todos_for_testing();
+    auto tool = loom::tools::make_todo_write_tool();
+    auto initial = tool->execute(loom::core::ToolInput::from_json(R"({
+      "agentId":"completion-scope", "todos":[
+        {"id":"a","content":"Inspect input","status":"completed"},
+        {"id":"b","content":"Validate output","status":"in_progress"}
+      ]})"));
+    ASSERT_TRUE(initial);
+    EXPECT_EQ(initial->content.front().text.find("Tasks 2/2 completed"), std::string::npos);
+    auto complete = tool->execute(loom::core::ToolInput::from_json(R"({
+      "agentId":"completion-scope", "merge":true, "todos":[
+        {"id":"b","content":"Validate output","status":"completed"}
+      ]})"));
+    ASSERT_TRUE(complete);
+    const auto& record = complete->content.front().text;
+    EXPECT_NE(record.find("Tasks 2/2 completed"), std::string::npos);
+    EXPECT_NE(record.find("✓ Inspect input"), std::string::npos);
+    EXPECT_NE(record.find("✓ Validate output"), std::string::npos);
+    EXPECT_EQ(loom::tools::todo_write_store().get_items("completion-scope").size(), 2u);
+    EXPECT_TRUE(loom::tools::todo_write_store().get_items().empty());
+    auto replacement = tool->execute(loom::core::ToolInput::from_json(R"({
+      "agentId":"completion-scope", "todos":[
+        {"id":"new","content":"Next work","status":"in_progress"}
+      ]})"));
+    ASSERT_TRUE(replacement);
+    EXPECT_NE(record.find("✓ Inspect input"), std::string::npos);
+    EXPECT_EQ(record.find("Next work"), std::string::npos);
+    loom::tools::clear_all_todos_for_testing();
 }
 
 TEST(Tools, TodoWriteScopesItemsByAgentId) {
@@ -4006,17 +4046,18 @@ TEST(Tools, TodoWriteScopesItemsByAgentId) {
     EXPECT_EQ(loom::tools::todo_count_for_agent("agent-a"), 1U);
     EXPECT_EQ(loom::tools::todo_count_for_agent("agent-b"), 1U);
 
-    auto clear_a = registry.execute("todo_write", loom::core::ToolInput::from_json(R"({
+    auto complete_a = registry.execute("todo_write", loom::core::ToolInput::from_json(R"({
       "agent_id": "agent-a",
       "todos": [
         {"content":"Implement agent A work","status":"completed","activeForm":"Implementing agent A work"}
       ]
     })"));
-    ASSERT_TRUE(clear_a.has_value());
-    ASSERT_FALSE(clear_a->is_error);
+    ASSERT_TRUE(complete_a.has_value());
+    ASSERT_FALSE(complete_a->is_error);
 
-    EXPECT_EQ(loom::tools::todo_count_for_agent("agent-a"), 0U);
+    EXPECT_EQ(loom::tools::todo_count_for_agent("agent-a"), 1U);
     EXPECT_EQ(loom::tools::todo_count_for_agent("agent-b"), 1U);
+    EXPECT_NE(complete_a->content.front().text.find("✓ Implement agent A work"), std::string::npos);
 }
 
 TEST(Tools, TodoWriteCleanupRemovesAgentScopedTodos) {

@@ -22,6 +22,7 @@ import std;
 import loom.query.query_engine;
 import loom.commands.registry;
 import loom.commands.command;
+import loom.tools.todo_write;
 import loom.hooks.lifecycle_hooks;
 
 // ── Base imports (shared with app_autocomplete.cpp) ─────────────────────
@@ -565,6 +566,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
     if (query_running_.load()) return;
     if (normalized == "/clear") {
         static_cast<loom::core::QueryEngine*>(engine_raw())->clear_conversation();
+        (void)loom::tools::todo_write_store().clear_scope(loom::tools::TodoWriteTool::kDefaultScope);
         local_command_messages_.clear();
         screen_state_->messages_store.divider_index.reset();
         screen_state_->messages_store.unseen_divider.reset();
@@ -865,6 +867,7 @@ bool AppAdapter::ResumeSessionFromDirectory(
     }
 
     engine->restore_conversation(std::move(messages));
+    (void)loom::tools::todo_write_store().clear_scope(loom::tools::TodoWriteTool::kDefaultScope);
     engine->set_session_id(std::string(session_id));
     current_session_id_ = std::string(session_id);
     session_start_time_ = std::chrono::steady_clock::now();

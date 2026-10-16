@@ -272,6 +272,7 @@ private:
     std::atomic<std::int64_t> paste_submission_deadline_ms_{0};
     std::atomic<std::int64_t> chain_label_deadline_ms_{0};
     std::atomic<std::int64_t> generation_rate_deadline_ms_{0};
+    std::atomic<std::int64_t> todo_collapse_deadline_ms_{0};
     std::atomic<bool> conversation_projection_dirty_{true};
     struct CachedMessageProjection {
         Message source;

@@ -30,6 +30,7 @@ add_executable(test_ui_runtime
     test_app_coordinators.cpp
     test_app_program_status.cpp
     test_generation_tps.cpp
+    test_todo_completion.cpp
     test_ui_render.cpp
     test_ui_render_state.cpp
     test_ui_render_pure.cpp

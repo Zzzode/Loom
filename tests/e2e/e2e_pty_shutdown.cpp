@@ -213,6 +213,26 @@ private:
             request_bodies_.push_back(request.substr(request.find("\r\n\r\n") + 4));
         }
         const int index = requests.fetch_add(1);
+        if (recovery_ == "task-completion") {
+            if (index == 1) {
+                ++parked;
+                const auto deadline = Clock::now() + 15s;
+                while (!fs::exists(target_) && !stopping_ && Clock::now() < deadline)
+                    std::this_thread::sleep_for(20ms);
+                if (stopping_ || !fs::exists(target_)) return;
+            }
+            std::string body;
+            if (index == 0) body = tool_response("todo_write",
+                R"({"todos":[{"content":"PTY inspect source","status":"in_progress"},{"content":"PTY validate result","status":"pending"},{"content":"PTY record evidence","status":"pending"}]})", "pty-todo-active");
+            else if (index == 1) body = tool_response("todo_write",
+                R"({"todos":[{"content":"PTY inspect source","status":"completed"},{"content":"PTY validate result","status":"completed"},{"content":"PTY record evidence","status":"completed"}]})", "pty-todo-complete");
+            else if (index == 3) body = tool_response("todo_write", R"({"todos":[]})", "pty-todo-clear");
+            else body = text_response(index == 2 ? "PTY completion finished" : "PTY active tasks cleared");
+            send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
+                std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            ::shutdown(fd, SHUT_WR);
+            return;
+        }
         if (recovery_ == "task-response-layout") {
             if (index == 0) {
                 const auto body = tool_response("todo_write",
@@ -1533,6 +1553,122 @@ void run_task_response_layout_case(const std::string& binary, const fs::path& ro
     terminal.verify_exit(0);
 }
 
+// Completed data must survive UI expiry, explicit active-list clear and restart.
+void run_task_completion_case(const std::string& binary, const fs::path& root) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":false,"permissionMode":"default","extendedThinking":false})";
+    const auto gate = root / "complete-tasks";
+    ModelServer server(false, false, gate, false, "task-completion");
+    ModelOptions options;
+    server.start();
+    {
+        Terminal terminal(binary, root, server.url(), options);
+        require(terminal.wait([&] { return terminal.installed(); }), "task completion startup not observed");
+        terminal.input("Track completion\r");
+        require(terminal.wait([&] {
+            return terminal.latest_frame_text().find("[y] Allow  [n] Deny") != std::string::npos;
+        }), "task permission not observed");
+        terminal.input("y");
+        require(terminal.wait([&] {
+            return server.parked.load() == 1 && terminal.latest_frame_text().find("Tasks 0/3 done") != std::string::npos;
+        }), "active checklist not observed");
+        save_attention_frame(root, "completion-running", terminal.latest_frame());
+        std::ofstream(gate) << "complete";
+        bool permission_answered = false;
+        require(terminal.wait([&] {
+            const auto text = terminal.latest_frame_text();
+            if (!permission_answered && text.find("[y] Allow  [n] Deny") != std::string::npos) {
+                terminal.input("y");
+                permission_answered = true;
+            }
+            return text.find("PTY completion finished") != std::string::npos &&
+                text.find("Tasks 3/3 completed") != std::string::npos;
+        }), "completed checklist and final response not observed");
+        const auto header_row = [](const auto& frame) {
+            int found = -1;
+            for (int y = 0; y < 40; ++y)
+                if (frame.row(y).find("Tasks 3/3 completed") != std::string::npos) found = y;
+            return found;
+        };
+        const auto completed = decode_frame(terminal.latest_frame());
+        const int expanded_y = header_row(completed);
+        require(expanded_y >= 0 && expanded_y + 3 < 40 &&
+            completed.row(expanded_y + 1).find("PTY inspect source") != std::string::npos &&
+            completed.row(expanded_y + 3).find("PTY record evidence") != std::string::npos,
+            "completed detail rows disappeared before grace expiry");
+        save_attention_frame(root, "completion-expanded", terminal.latest_frame());
+        require(terminal.wait([&] {
+            const auto frame = decode_frame(terminal.latest_frame());
+            const int y = header_row(frame);
+            return y >= 0 && frame.row(y).find("✓ Tasks 3/3 completed") != std::string::npos &&
+                frame.row(y + 1).find("PTY inspect source") == std::string::npos;
+        }), "idle checklist did not collapse without user input");
+        save_attention_frame(root, "completion-collapsed", terminal.latest_frame());
+        terminal.input("/resume missing-task-session\r");
+        require(terminal.wait([&] {
+            const auto text = terminal.latest_frame_text();
+            return text.find("not found") != std::string::npos &&
+                text.find("✓ Tasks 3/3 completed") != std::string::npos;
+        }), "failed resume changed the current completed checklist");
+        std::string current_id;
+        for (const auto& entry : fs::directory_iterator(root / "config" / "sessions"))
+            if (fs::exists(entry.path() / "messages.jsonl")) current_id = entry.path().filename().string();
+        require(!current_id.empty(), "current task session not persisted");
+        terminal.input("/resume " + current_id + "\r");
+        require(terminal.wait([&] {
+            const auto text = terminal.latest_frame_text();
+            return text.find("Resuming session:") != std::string::npos &&
+                text.find("✓ Tasks 3/3 completed") == std::string::npos;
+        }), "same-process resume leaked the previous activity summary");
+        terminal.prepare_transcript_shortcut();
+        terminal.input("\x0f");
+        require(terminal.wait([&] {
+            return terminal.latest_frame_text().find("✓ PTY record evidence") != std::string::npos;
+        }), "same-process resume lost the completed history details");
+        save_attention_frame(root, "completion-same-process-resume", terminal.latest_frame());
+        terminal.input("Clear active tasks\r");
+        permission_answered = false;
+        require(terminal.wait([&] {
+            const auto text = terminal.latest_frame_text();
+            if (!permission_answered && text.find("[y] Allow  [n] Deny") != std::string::npos) {
+                terminal.input("y");
+                permission_answered = true;
+            }
+            return text.find("PTY active tasks cleared") != std::string::npos;
+        }), "explicit active-list clear did not finish");
+        const auto cleared = terminal.latest_frame_text();
+        require(cleared.find("✓ Tasks 3/3 completed") == std::string::npos &&
+            cleared.find("Tasks 3/3 completed") != std::string::npos &&
+            cleared.find("✓ PTY record evidence") != std::string::npos,
+            "clearing active tasks removed the completed history record");
+        terminal.input("\x04");
+        terminal.verify_exit(0);
+    }
+    std::string saved_id;
+    for (const auto& entry : fs::directory_iterator(root / "config" / "sessions"))
+        if (fs::exists(entry.path() / "messages.jsonl")) saved_id = entry.path().filename().string();
+    require(!saved_id.empty(), "completed session history was not persisted");
+    {
+        Terminal replay(binary, root, server.url(), options);
+        require(replay.wait([&] { return replay.installed(); }), "history replay startup not observed");
+        replay.input("/resume " + saved_id + "\r");
+        require(replay.wait([&] {
+            return replay.latest_frame_text().find("Resuming session:") != std::string::npos;
+        }), "interactive resume did not finish");
+        replay.prepare_transcript_shortcut();
+        replay.input("\x0f");
+        require(replay.wait([&] {
+            const auto text = replay.latest_frame_text();
+            return text.find("Tasks 3/3 completed") != std::string::npos &&
+                text.find("✓ PTY inspect source") != std::string::npos &&
+                text.find("✓ PTY record evidence") != std::string::npos;
+        }), "saved completion checklist was not visible after resume");
+        save_attention_frame(root, "completion-resumed-history", replay.latest_frame());
+        replay.input("\x04");
+        replay.verify_exit(0);
+    }
+}
+
 void verify_decoder_attention_attributes() {
     const auto frame = decode_frame("\x1b[31;44;1;2mA\x1b[22;39mB\x1b[49mC"
         "\x1b[38;5;123;48;5;45;1mD\x1b[38;2;1;2;3;48;2;4;5;6;2mE\x1b[0mF"
@@ -2850,6 +2986,10 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
         run_compressed_chain_case(binary, root);
         return;
     }
+    if (scenario == "task-completion") {
+        run_task_completion_case(binary, root);
+        return;
+    }
     if (scenario == "task-response-layout") {
         run_task_response_layout_case(binary, root);
         return;
@@ -3011,7 +3151,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("task-") || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

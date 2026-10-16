@@ -38,6 +38,8 @@ struct TodoDisplayItem {
     std::string content;
     Status status = Status::Pending;
     Priority priority = Priority::Medium;
+
+    bool operator==(const TodoDisplayItem&) const = default;
 };
 
 namespace detail {
@@ -120,13 +122,15 @@ namespace thm = loom::ui::design::theme;
         : std::string(detail::status_glyph(item.status)) + (columns > 1 ? " " : "");
     const int prefix_cols = string_width(prefix);
     const int content_cols = std::max(0, columns - prefix_cols);
-    Element content = text(detail::one_line(item.content, static_cast<std::size_t>(content_cols)))
+    const auto label = detail::one_line(item.content, static_cast<std::size_t>(content_cols));
+    Element content = text(label)
                     | color(done ? pal.muted : pal.text)
-                    | size(WIDTH, EQUAL, content_cols);
+                    | size(WIDTH, EQUAL, string_width(label));
     if (done) content = content | strikethrough;
     return hbox({
         text(prefix) | color(glyph_color) | size(WIDTH, EQUAL, prefix_cols),
         std::move(content),
+        filler() | flex,
     }) | size(WIDTH, EQUAL, columns);
 }
 
@@ -135,18 +139,23 @@ namespace thm = loom::ui::design::theme;
 /// RenderLiveTeammateStrip's contract.
 [[nodiscard]] inline Element RenderTodoPanel(
     const std::vector<TodoDisplayItem>& items, int term_cols = 120,
-    int max_rows = -1) {
+    int max_rows = -1, bool completed_collapsed = false) {
     if (items.empty() || max_rows == 0) return vbox({});
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const auto done = std::ranges::count_if(items, [](const auto& it) {
         return it.status == TodoDisplayItem::Status::Completed;
     });
+    const bool all_completed = static_cast<std::size_t>(done) == items.size();
+    if (all_completed && completed_collapsed) max_rows = 1;
     const int detail_rows = max_rows < 0 ? static_cast<int>(items.size())
         : std::min(static_cast<int>(items.size()), std::max(0, max_rows - 1));
     std::string header = max_rows < 0
         ? std::format("Tasks ({}/{} done)", done, items.size())
         : std::format("Tasks {}/{} done (+{} hidden)", done, items.size(),
                       items.size() - static_cast<std::size_t>(detail_rows));
+    if (all_completed)
+        header = std::format("{}Tasks {}/{} completed", completed_collapsed ? "✓ " : "",
+                             done, items.size());
     Elements rows;
     rows.push_back(text(detail::one_line(header, static_cast<std::size_t>(std::max(0, term_cols))))
                    | color(pal.muted) | size(WIDTH, EQUAL, std::max(0, term_cols)));

@@ -35,6 +35,7 @@ import loom.scm.git.git;
 import loom.text.parse_references;
 import loom.ui.features.agents.agent_shared_widgets;
 import loom.ui.features.todos.todo_panel;       // TodoDisplayItem
+import loom.ui.foundation.clock;
 import loom.tools.todo_write;                    // todo_write_store()
 import loom.tools.agent_display;
 
@@ -251,8 +252,8 @@ void AppAdapter::ToggleMouseTracking() {
 // the AI-managed task list. Called from Render() every frame.
 void AppAdapter::ProjectTodosToScreenState() {
     const auto items = loom::tools::todo_write_store().get_sorted_items();
-    auto& out = screen_state_->todo_store.items;
-    out.clear();
+    auto& store = screen_state_->todo_store;
+    std::vector<todos::TodoDisplayItem> out;
     out.reserve(items.size());
     for (const auto& item : items) {
         todos::TodoDisplayItem display;
@@ -283,6 +284,26 @@ void AppAdapter::ProjectTodosToScreenState() {
         }
         out.push_back(std::move(display));
     }
+    const auto now = clock::steady_now();
+    if (out != store.items) store.completed_at.reset();
+    store.items = std::move(out);
+    const bool all_completed = !store.items.empty() &&
+        std::ranges::all_of(store.items, [](const auto& item) {
+            return item.status == todos::TodoDisplayItem::Status::Completed;
+        });
+    todo_collapse_deadline_ms_.store(0);
+    store.completed_collapsed = false;
+    if (!all_completed) {
+        store.completed_at.reset();
+        return;
+    }
+    if (!store.completed_at || now < *store.completed_at) store.completed_at = now;
+    const auto due = *store.completed_at + std::chrono::seconds(3);
+    store.completed_collapsed = now >= due;
+    // The worker only wakes the UI; it never reads the unsynchronized test clock.
+    if (!store.completed_collapsed && screen_.load())
+        todo_collapse_deadline_ms_.store(std::chrono::ceil<std::chrono::milliseconds>(
+            due.time_since_epoch()).count());
 }
 
 // ── ApplyMessageCollapsePipeline (moved out of app.cppm) ────────────────

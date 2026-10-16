@@ -171,6 +171,39 @@ TEST(ChromeBudget, HeadlessTerminalDimensionsKeepEnvironmentFallback) {
     EXPECT_EQ(loom::ui::ink_utils::query_terminal_size(), std::make_pair(80, 24));
 }
 
+TEST(ChromeBudget, TodoStrikethroughCoversOnlyVisibleLabelCells) {
+    struct Case {
+        int columns;
+        std::string content;
+        std::string label;
+    };
+    for (const auto& sample : std::vector<Case>{
+            {80, "Run lifecycle tests", "Run lifecycle tests"},
+            {30, "修复删除线范围", "修复删除线范围"},
+            {12, "Long task description", "Long task…"},
+            {9, "检查任务范围", "检查任…"},
+            {2, "Short", ""},
+            {1, "Short", ""}}) {
+        for (auto status : {todo::TodoDisplayItem::Status::Completed,
+                            todo::TodoDisplayItem::Status::Pending,
+                            todo::TodoDisplayItem::Status::InProgress}) {
+            SCOPED_TRACE(std::format("{} columns, content={}, status={}",
+                sample.columns, sample.content, static_cast<int>(status)));
+            todo::TodoDisplayItem item;
+            item.content = sample.content;
+            item.status = status;
+            auto screen = paint(todo::RenderTodoRow(item, sample.columns), sample.columns, 1);
+            EXPECT_NE(visible(screen).find(sample.label), std::string::npos);
+            const int label_end = 2 + string_width(sample.label);
+            for (int x = 0; x < sample.columns; ++x) {
+                EXPECT_EQ(static_cast<bool>(screen.PixelAt(x, 0).strikethrough),
+                    status == todo::TodoDisplayItem::Status::Completed && x >= 2 && x < label_end)
+                    << "column " << x;
+            }
+        }
+    }
+}
+
 TEST(ChromeBudget, TodoBudgetsZeroThroughFiveIncludeCountsAndStableActivePriority) {
     repl::ReplScreenState state;
     populate(state);
@@ -365,6 +398,23 @@ TEST(ChromeBudget, OneSharedRowKeepsBothCountsInNarrowTerminal) {
     EXPECT_EQ(text.find("task-5"), std::string::npos);
     EXPECT_GE(transcript_height(state), 8);
     expect_caret(screen);
+}
+
+TEST(ChromeBudget, CompletedTasksKeepCompletionWordingWithTeamsInOneSharedRow) {
+    repl::ReplScreenState state;
+    populate(state, 3, 2);
+    for (auto& item : state.todo_store.items)
+        item.status = todo::TodoDisplayItem::Status::Completed;
+    state.input_text = std::string(200, 'x');
+    for (bool collapsed : {false, true}) {
+        state.todo_store.completed_collapsed = collapsed;
+        const auto screen = paint_repl(state, 40, 24);
+        const auto text = visible(screen);
+        EXPECT_NE(text.find("Tasks 3/3 completed · Teams 2"), std::string::npos);
+        EXPECT_EQ(text.find("task-0"), std::string::npos);
+        EXPECT_GE(transcript_height(state), 8);
+        expect_caret(screen);
+    }
 }
 
 TEST(ChromeBudget, ActiveSpinnerPreservesTranscriptCaretAndFooterAcrossFrames) {

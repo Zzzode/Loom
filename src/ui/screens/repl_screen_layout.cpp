@@ -539,7 +539,7 @@ using namespace ftxui;
             bottom_limit - fixed_rows,
             term_rows - header_rows - scroll_chrome_rows - transcript_floor - fixed_rows}));
         const int todo_need = s.todo_store.items.empty() ? 0
-            : static_cast<int>(s.todo_store.items.size()) + 1;
+            : s.todo_store.completed_collapsed ? 1 : static_cast<int>(s.todo_store.items.size()) + 1;
         const int team_need = static_cast<int>(s.task_view_store.live_teammates.size());
         // MessageResponse envelope: the hook appears once beside the header;
         // all task detail rows share the five-column body indentation.
@@ -549,7 +549,12 @@ using namespace ftxui;
             const auto done = std::ranges::count_if(s.todo_store.items, [](const auto& item) {
                 return item.status == todos::TodoDisplayItem::Status::Completed;
             });
-            const auto summary = term_cols < 70
+            const bool all_completed = static_cast<std::size_t>(done) == s.todo_store.items.size();
+            const auto summary = all_completed
+                ? std::format("{}Tasks {}/{} completed · Teams {} +{}",
+                    s.todo_store.completed_collapsed ? "✓ " : "", done,
+                    s.todo_store.items.size(), team_need, team_need)
+                : term_cols < 70
                 ? std::format("Tasks {}/{} +{} · Teams {} +{}", done,
                     s.todo_store.items.size(), s.todo_store.items.size(), team_need, team_need)
                 : std::format("Tasks {}/{} done (+{} hidden) · Teams {} (+{} hidden)",
@@ -576,7 +581,8 @@ using namespace ftxui;
             }
             if (todo_rows > 0)
                 activity.push_back(hbox({text("  ⎿  ") | dim,
-                    todos::RenderTodoPanel(s.todo_store.items, todo_columns, todo_rows)}));
+                    todos::RenderTodoPanel(s.todo_store.items, todo_columns, todo_rows,
+                        s.todo_store.completed_collapsed)}));
             if (team_rows > 0)
                 activity.push_back(teams::live::RenderLiveTeammateStrip(
                     s.task_view_store.live_teammates, term_cols, team_rows));

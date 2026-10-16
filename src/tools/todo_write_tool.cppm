@@ -92,6 +92,8 @@ struct TodoWriteResult {
     size_t items_added{0};
     size_t items_updated{0};
     size_t items_removed{0};
+    // Captured under the store lock, independent of subsequent replacements.
+    std::vector<TodoItem> completed_items;
 };
 
 // TodoWriteTool - manages todo list state
@@ -208,6 +210,11 @@ public:
         }
 
         result.total_items = items.size();
+        if (!items.empty() && std::ranges::all_of(items, [](const auto& item) {
+                return item.status == TodoStatus::Completed;
+            })) {
+            result.completed_items = items;
+        }
         if (items.empty()) {
             items_by_scope_.erase(scope);
         }
@@ -437,13 +444,6 @@ using JsonVal = loom::utils::json::JsonVal;
 
     if (error) return std::unexpected(*error);
 
-    if (!request.merge && !request.items.empty()) {
-        const bool all_done = std::ranges::all_of(request.items, [](const TodoItem& item) {
-            return item.status == TodoStatus::Completed;
-        });
-        if (all_done) request.items.clear();
-    }
-
     return request;
 }
 
@@ -501,6 +501,11 @@ using JsonVal = loom::utils::json::JsonVal;
             if (result) {
                 auto msg = std::format("Todo list updated: {} total, {} added, {} updated, {} removed",
                     result->total_items, result->items_added, result->items_updated, result->items_removed);
+                if (!result->completed_items.empty()) {
+                    msg += std::format("\nTasks {}/{} completed", result->total_items, result->total_items);
+                    for (const auto& item : result->completed_items)
+                        msg += "\n✓ " + item.content;
+                }
                 return loom::core::ToolResult::success(std::move(msg));
             }
             return std::unexpected(loom::core::Error::make(

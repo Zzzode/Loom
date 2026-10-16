@@ -30,6 +30,8 @@ export namespace loom::ui::repl_screen {
 /// see the file header for the threading and import rules.
 struct TodoStore {
     std::vector<todos::TodoDisplayItem> items;
+    std::optional<std::chrono::steady_clock::time_point> completed_at;
+    bool completed_collapsed = false;
 };
 
 }  // namespace loom::ui::repl_screen

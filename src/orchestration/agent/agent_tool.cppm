@@ -335,6 +335,7 @@ public:
         auto plan = build_agent_execution_plan(*request, config_, input.parent_model);
         if (!plan) return ToolResult::error(plan.error());
         plan->api_context = input.api_context ? input.api_context : config_.api_context;
+        if (input.parent_session_id) plan->parent_session_id = input.parent_session_id;
 
         if (!plan->team_name) {
             if (auto current_team = loom::utils::get_team_name(); current_team && !current_team->empty()) {
@@ -1222,6 +1223,7 @@ private:
                             auto tool_input = ToolInput::from_json(tool_input_json);
                             tool_input.parent_model = plan.model;
                             tool_input.api_context = plan.api_context;
+                            tool_input.parent_session_id = plan.parent_session_id;
                             tool_input.is_cancelled = [id = plan.agent_id] {
                                 return loom::tools::agent_runtime::native_agent_store().is_cancel_requested(id);
                             };

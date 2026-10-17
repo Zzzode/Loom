@@ -64,6 +64,7 @@ struct AgentConfig {
     std::optional<std::string> parent_permission_mode;
     bool prefer_in_process_teammate = false;
     std::shared_ptr<const loom::core::ApiExecutionContext> api_context = {};
+    std::optional<std::string> parent_session_id = std::nullopt;
 };
 
 struct AgentLivePermissionCheck {

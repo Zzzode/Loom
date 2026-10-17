@@ -166,7 +166,7 @@ TEST(AutocompleteSources, BuildAgentSuggestionsHasColors) {
     EXPECT_TRUE(filtered.empty());
 }
 
-TEST(LiveTeamsUi, StripRendersNameStatusAndTail) {
+TEST(LiveTeamsUi, MainScreenShowsActiveAgentsAndFoldsIdlePeersWithoutDroppingState) {
     namespace repl = loom::ui::repl_screen;
     namespace live = loom::ui::teams::live;
 
@@ -196,19 +196,33 @@ TEST(LiveTeamsUi, StripRendersNameStatusAndTail) {
     const auto txt = strip_ansi(
         render_to_plain_text(repl::RenderReplScreen(s), 140, 40));
     EXPECT_NE(txt.find("alice"), std::string::npos);
-    EXPECT_NE(txt.find("running"), std::string::npos);
+    EXPECT_NE(txt.find("Agent Teams · 1 agent running"), std::string::npos);
     EXPECT_NE(txt.find("BUILD TARGET widgets OK"), std::string::npos);
-    EXPECT_NE(txt.find("bob"), std::string::npos);
-    EXPECT_NE(txt.find("idle"), std::string::npos);
-    // Footer pill (prompt_input_footer ModeIndicator label "N teams").
-    EXPECT_NE(txt.find("2 teams"), std::string::npos);
+    EXPECT_EQ(txt.find("bob"), std::string::npos);
+    EXPECT_EQ(txt.find("idle"), std::string::npos);
+    EXPECT_EQ(txt.find("waiting for review"), std::string::npos);
+    ASSERT_EQ(s.task_view_store.live_teammates.size(), 2u);
+    EXPECT_EQ(s.task_view_store.live_teammates[1].name, "bob");
+    EXPECT_EQ(s.task_view_store.live_teammates[1].status, "idle");
+    EXPECT_EQ(s.task_view_store.live_teammates[1].last_output_tail, "waiting for review");
+    // Footer pill counts team agents, rather than distinct teams.
+    EXPECT_NE(txt.find("2 Team Agents"), std::string::npos);
+
+    s.task_view_store.live_teammates[0].status = "idle";
+    const auto idle = strip_ansi(
+        render_to_plain_text(repl::RenderReplScreen(s), 140, 40));
+    EXPECT_NE(idle.find("Agent Teams · 2 agents idle"), std::string::npos);
+    EXPECT_EQ(idle.find("@alice"), std::string::npos);
+    EXPECT_EQ(idle.find("@bob"), std::string::npos);
+    EXPECT_NE(idle.find("2 Team Agents"), std::string::npos);
+    EXPECT_EQ(s.task_view_store.live_teammates.size(), 2u);
 
     repl::ReplScreenState empty;
     empty.cwd = "/tmp/x";
     const auto none = strip_ansi(
         render_to_plain_text(repl::RenderReplScreen(empty), 140, 40));
     EXPECT_EQ(none.find("@alice"), std::string::npos);
-    EXPECT_EQ(none.find("teams"), std::string::npos);
+    EXPECT_EQ(none.find("Team Agent"), std::string::npos);
 }
 
 TEST(LiveTeamsUi, SlashTeamsOpensOverviewModal) {

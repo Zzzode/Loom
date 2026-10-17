@@ -680,6 +680,15 @@ class NativeAgentStore {
 public:
     ~NativeAgentStore();
 
+    /// Dispatch is synchronous within the mutating call, after persistence and
+    /// without store locks. Callbacks may re-enter and unsubscribe themselves;
+    /// exceptions are contained. Callers must keep this store alive until their
+    /// mutating calls return. Destruction joins the store's owned workers.
+    [[nodiscard]] std::size_t subscribe_changed(std::function<void()> callback);
+    /// Non-blocking: callbacks already admitted by dispatch may finish.
+    /// Unsubscribing does not extend the store's lifetime.
+    void unsubscribe_changed(std::size_t token);
+
     /// Own background executions until their threads have fully exited.
     void run_background_agent(std::string agent_id, std::function<void()> execute,
                               std::stop_token owner = {});
@@ -763,31 +772,42 @@ private:
 
     template <typename Fn>
     void update(std::string_view agent_id, Fn&& fn) {
-        std::scoped_lock lock(mutex_);
-        auto it = records_.find(std::string(agent_id));
-        if (it == records_.end()) {
-            if (auto loaded = load_native_agent_record(agent_id)) {
-                auto loaded_agent_id = loaded->agent_id;
-                auto [inserted, _] = records_.emplace(std::move(loaded_agent_id), std::move(*loaded));
-                it = inserted;
-            } else {
-                return;
+        {
+            std::scoped_lock lock(mutex_);
+            auto it = records_.find(std::string(agent_id));
+            if (it == records_.end()) {
+                if (auto loaded = load_native_agent_record(agent_id)) {
+                    auto loaded_agent_id = loaded->agent_id;
+                    auto [inserted, _] = records_.emplace(std::move(loaded_agent_id), std::move(*loaded));
+                    it = inserted;
+                } else {
+                    return;
+                }
             }
+            fn(it->second);
+            if (!it->second.transcript_path) {
+                it->second.transcript_path = agent_transcript_path(it->second.agent_id).string();
+            }
+            if (!it->second.sidechain_jsonl_path) {
+                it->second.sidechain_jsonl_path = agent_sidechain_jsonl_path(it->second.agent_id).string();
+            }
+            if (!it->second.output_file_path) {
+                it->second.output_file_path = agent_output_file_path(it->second.agent_id).string();
+            }
+            it->second.updated_at = std::chrono::system_clock::now();
+            (void)persist_native_agent_record(it->second);
         }
-        fn(it->second);
-        if (!it->second.transcript_path) {
-            it->second.transcript_path = agent_transcript_path(it->second.agent_id).string();
-        }
-        if (!it->second.sidechain_jsonl_path) {
-            it->second.sidechain_jsonl_path = agent_sidechain_jsonl_path(it->second.agent_id).string();
-        }
-        if (!it->second.output_file_path) {
-            it->second.output_file_path = agent_output_file_path(it->second.agent_id).string();
-        }
-        it->second.updated_at = std::chrono::system_clock::now();
-        (void)persist_native_agent_record(it->second);
+        notify_changed();
     }
 
+    void notify_changed() noexcept;
+    struct ChangeObserver {
+        std::atomic<bool> active{true};
+        std::function<void()> callback;
+    };
+    std::mutex observers_mutex_;
+    std::unordered_map<std::size_t, std::shared_ptr<ChangeObserver>> observers_;
+    std::size_t next_observer_token_ = 0;
     mutable std::mutex mutex_;
     mutable std::unordered_map<std::string, NativeAgentRecord> records_;
     struct ActiveExecution {

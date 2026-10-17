@@ -1524,7 +1524,7 @@ void run_task_response_layout_case(const std::string& binary, const fs::path& ro
     }), "todo_write permission prompt not observed");
     terminal.input("y");
     require(terminal.wait([&] {
-        return server.parked.load() == 1 && terminal.latest_frame_text().find("Tasks 1/3 done") != std::string::npos;
+        return server.parked.load() == 1 && terminal.latest_frame_text().find("Tasks 1 active · 1/3 done") != std::string::npos;
     }), "real todo_write result did not reach the pinned task list");
     for (const int width : {40, 80, 120}) {
         const auto start = terminal.output.rfind('\0') + 1;
@@ -1540,8 +1540,10 @@ void run_task_response_layout_case(const std::string& binary, const fs::path& ro
         require(frame.cells[header_y][2].text == "⎿" && frame.cells[header_y][5].text == "T",
                 "task header is not a MessageResponse directly below work");
         for (int row = 1; row <= 3; ++row) {
-            for (int x = 0; x < 5; ++x)
+            for (int x = 0; x < 7; ++x)
                 require(frame.cells[header_y + row][x].text == " ", "task details repeat the hook or lose indentation");
+            require(frame.cells[header_y + row][7].text == (row == 1 ? "●" : row == 2 ? "○" : "✓"),
+                    "task child must begin two cells beyond its heading");
         }
         require(frame.row(header_y + 1).find("PTY active task") != std::string::npos &&
                 frame.row(header_y + 2).find("PTY pending task") != std::string::npos &&
@@ -1570,7 +1572,7 @@ void run_task_completion_case(const std::string& binary, const fs::path& root) {
         }), "task permission not observed");
         terminal.input("y");
         require(terminal.wait([&] {
-            return server.parked.load() == 1 && terminal.latest_frame_text().find("Tasks 0/3 done") != std::string::npos;
+            return server.parked.load() == 1 && terminal.latest_frame_text().find("Tasks 1 active · 0/3 done") != std::string::npos;
         }), "active checklist not observed");
         save_attention_frame(root, "completion-running", terminal.latest_frame());
         std::ofstream(gate) << "complete";

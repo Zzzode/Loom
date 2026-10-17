@@ -376,6 +376,10 @@ void AppAdapter::SyncState() {
     // timer; pane changes wake the UI via the observer subscription.
     this->ProjectLiveTeammatesToScreenState();
 
+    // Successful session resume calls SyncState after publishing the new ID.
+    // /clear preserves that ID, so running instances remain in this snapshot.
+    this->ProjectRuntimeAgentsToScreenState();
+
     // Notify cost hook subscribers (drives CostThreshold dialog, etc.).
     loom::hooks::update_cost(loom::hooks::CostUpdate{
         .session_cost = screen_state_->chrome_store.status_bar.cost_usd.value_or(0.0),

@@ -218,6 +218,7 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     auto input = ToolInput::from_json(effective_input_json);
     input.parent_model = config_.model_params.model;
     input.api_context = api_execution_context();
+    input.parent_session_id = session_id_.str();
     input.is_cancelled = [this, shutdown = tool_registry_->background_stop_token()] {
         return shutdown.stop_requested() || should_abort();
     };

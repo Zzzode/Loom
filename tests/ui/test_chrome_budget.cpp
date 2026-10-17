@@ -12,6 +12,7 @@ import std;
 import loom.ui.features.todos.todo_panel;
 import loom.ui.chrome.ink_utils;
 import loom.ui.features.teams.live_teammates;
+import loom.ui.features.agents.runtime_agents;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.task_view_store;
@@ -307,16 +308,20 @@ TEST(ChromeBudget, CompletedTextAndLiveTailUseReadableUndimmedForegrounds) {
         }
     }
 }
-TEST(ChromeBudget, DenseEightyByTwentyFourPreservesTwelveTranscriptRowsAndCounts) {
+TEST(ChromeBudget, DenseEightyByTwentyFourKeepsLayeredHeadersAndCurrentTask) {
     repl::ReplScreenState state;
     populate(state);
     auto screen = paint_repl(state, 80, 24);
     EXPECT_GE(transcript_height(state), 12);
     const auto text = visible(screen);
-    EXPECT_NE(text.find("Tasks 0/10 done (+9 hidden)"), std::string::npos);
-    EXPECT_NE(text.find("Teams 20 (+19 hidden)"), std::string::npos);
+    EXPECT_NE(text.find("Background agents running"), std::string::npos);
+    EXPECT_NE(text.find("Tasks 2 active · 0/10 done"), std::string::npos);
+    EXPECT_NE(text.find("Agent Teams · 20 agents running"), std::string::npos);
     EXPECT_NE(text.find("task-5"), std::string::npos);
-    EXPECT_NE(text.find("@worker-0"), std::string::npos);
+    EXPECT_LT(text.find("Tasks 2 active · 0/10 done"), text.find("task-5"));
+    EXPECT_LT(text.find("task-5"), text.find("Agent Teams · 20 agents running"));
+    EXPECT_EQ(text.find("@worker-0"), std::string::npos);
+    EXPECT_EQ(text.find("hidden"), std::string::npos);
     EXPECT_NE(text.find("FOOTER-MARK"), std::string::npos);
     expect_caret(screen);
     EXPECT_EQ(state.todo_store.items.size(), 10u);
@@ -356,44 +361,64 @@ TEST(ChromeBudget, EmptyActivityConsumesNoRowsAndTinyFixedChromeTakesPriority) {
     populate(empty, 0, 0);
     auto baseline = paint_repl(empty, 80, 24);
     EXPECT_EQ(visible(baseline).find("Tasks"), std::string::npos);
+    EXPECT_EQ(visible(baseline).find("Agents"), std::string::npos);
+    EXPECT_EQ(visible(baseline).find("Background agents"), std::string::npos);
+    EXPECT_NE(visible(baseline).find("FOOTER-MARK"), std::string::npos);
+    expect_caret(baseline);
     const int empty_height = transcript_height(empty);
     repl::ReplScreenState dense;
     populate(dense);
     auto populated = paint_repl(dense, 80, 24);
-    (void)populated;
+    EXPECT_NE(visible(populated).find("Tasks 2 active · 0/10 done"), std::string::npos);
+    EXPECT_NE(visible(populated).find("Agent Teams · 20 agents running"), std::string::npos);
+    EXPECT_NE(visible(populated).find("Background agents running"), std::string::npos);
+    EXPECT_NE(visible(populated).find("FOOTER-MARK"), std::string::npos);
+    expect_caret(populated);
+    // Three activity rows plus the static background work row use four rows.
     EXPECT_EQ(empty_height - transcript_height(dense), 4);
     dense.input_text = std::string(400, 'x');
     auto small = paint_repl(dense, 40, 12);
     EXPECT_EQ(visible(small).find("Tasks"), std::string::npos);
-    EXPECT_EQ(visible(small).find("Teams"), std::string::npos);
+    EXPECT_EQ(visible(small).find("Agent Teams · 20 agents running"), std::string::npos);
+    EXPECT_NE(visible(small).find("Background agents running"), std::string::npos);
     expect_caret(small);
 }
-TEST(ChromeBudget, UnusedTodoAndTeamCapacityTransfersToOtherGroup) {
+TEST(ChromeBudget, LayeredAgentDetailsUseSpareCapacityAfterCurrentTask) {
     repl::ReplScreenState few_tasks;
     populate(few_tasks, 1, 20);
     auto screen = paint_repl(few_tasks, 80, 30);
     const auto text = visible(screen);
-    EXPECT_NE(text.find("Tasks 0/1 done (+0 hidden)"), std::string::npos);
-    EXPECT_NE(text.find("Teams 20 (+18 hidden)"), std::string::npos);
-    EXPECT_NE(text.find("@worker-1"), std::string::npos);
+    EXPECT_NE(text.find("Tasks 0/1 done"), std::string::npos);
+    EXPECT_NE(text.find("Agent Teams · 20 agents running"), std::string::npos);
+    EXPECT_NE(text.find("Agent Teams"), std::string::npos);
+    EXPECT_NE(text.find("@worker-2"), std::string::npos);
+    EXPECT_EQ(text.find("task-0"), std::string::npos);
     repl::ReplScreenState few_teams;
     populate(few_teams, 10, 1);
     const auto transferred = visible(paint_repl(few_teams, 80, 30));
-    EXPECT_NE(transferred.find("Tasks 0/10 done (+7 hidden)"), std::string::npos);
+    EXPECT_NE(transferred.find("Tasks 2 active · 0/10 done"), std::string::npos);
+    EXPECT_NE(transferred.find("Agent Teams · 1 agent running"), std::string::npos);
+    EXPECT_NE(transferred.find("task-5"), std::string::npos);
+    EXPECT_NE(transferred.find("task-8"), std::string::npos);
     EXPECT_NE(transferred.find("task-0"), std::string::npos);
     EXPECT_NE(transferred.find("@worker-0"), std::string::npos);
-    EXPECT_EQ(transferred.find("Teams"), std::string::npos);
+    EXPECT_LT(transferred.find("task-8"), transferred.find("Agent Teams · 1 agent running"));
+    EXPECT_LT(transferred.find("Agent Teams · 1 agent running"), transferred.find("@worker-0"));
+    EXPECT_EQ(transferred.find("hidden"), std::string::npos);
 }
 
-TEST(ChromeBudget, OneSharedRowKeepsBothCountsInNarrowTerminal) {
+TEST(ChromeBudget, OneActivityRowUsesCanonicalTieOrderForEquallyActiveGroups) {
     repl::ReplScreenState state;
     populate(state);
-    // Six input rows plus the fixed rules/footer/margin leave one row
-    // under the existing twelve-row fullscreen bottom cap.
-    state.input_text = std::string(200, 'x');
+    // The static background work row shares the existing twelve-row cap.
+    // Five input rows leave one activity row; equally active groups use canonical order.
+    state.input_text = std::string(160, 'x');
     auto screen = paint_repl(state, 40, 24);
     const auto text = visible(screen);
-    EXPECT_NE(text.find("Tasks 0/10 +10 · Teams 20 +20"), std::string::npos);
+    EXPECT_NE(text.find("Background agents running"), std::string::npos);
+    EXPECT_EQ(text.find("Agent Teams"), std::string::npos);
+    EXPECT_NE(text.find("Tasks 2 active · 0/10 done"), std::string::npos);
+    EXPECT_EQ(text.find("hidden"), std::string::npos);
     EXPECT_EQ(text.find("@worker-0"), std::string::npos);
     EXPECT_EQ(text.find("task-5"), std::string::npos);
     EXPECT_GE(transcript_height(state), 8);
@@ -447,10 +472,10 @@ TEST(ChromeBudget, TodoEnvelopeRequiresVisibleWorkRow) {
                     EXPECT_EQ(line.find("⎿"), std::string::npos);
                 }
                 if (phase != 2) {
-                    const int indent = work == 1 ? 5 : 0;
+                    const int indent = work == 1 ? 7 : 2;
                     EXPECT_EQ(screen.PixelAt(indent, header + 1).character, phase == 0 ? "●" : "✓");
                     EXPECT_EQ(screen.PixelAt(indent + 2, header + 1).character, "t");
-                    EXPECT_EQ(screen.PixelAt(columns - 1, header + 1).character, work == 1 ? "…" : "Z");
+                    EXPECT_EQ(screen.PixelAt(columns - 1, header + 1).character, "…");
                 }
                 EXPECT_GE(transcript_height(state), 12);
                 expect_caret(screen);
@@ -459,7 +484,7 @@ TEST(ChromeBudget, TodoEnvelopeRequiresVisibleWorkRow) {
     }
 }
 
-TEST(ChromeBudget, CompletedTasksKeepCompletionWordingWithTeamsInOneSharedRow) {
+TEST(ChromeBudget, OneActivityRowKeepsRunningAgentsAheadOfCompletedTasks) {
     for (bool working : {false, true}) {
         repl::ReplScreenState state;
         populate(state, 3, 2);
@@ -469,20 +494,46 @@ TEST(ChromeBudget, CompletedTasksKeepCompletionWordingWithTeamsInOneSharedRow) {
         state.task_view_store.spinner_mode = working
             ? repl::SpinnerMode::Thinking : repl::SpinnerMode::Hidden;
         state.task_view_store.spinner_verb = "Working";
-        // Leave one activity row with or without the work row above it.
-        state.input_text = std::string(working ? 160 : 200, 'x');
+        // Foreground and static background work each reserve the same row.
+        state.input_text = std::string(160, 'x');
         for (bool collapsed : {false, true}) {
             state.todo_store.completed_collapsed = collapsed;
             const auto screen = paint_repl(state, 40, 24);
             const auto text = visible(screen);
-            const std::string prefix = working ? "  ⎿  " : "";
-            EXPECT_NE(text.find(prefix + (collapsed ? "✓ " : "") +
-                "Tasks 3/3 completed · Teams 2 +2"), std::string::npos);
-            if (!working) EXPECT_EQ(text.find("⎿"), std::string::npos);
+            EXPECT_NE(text.find("Agent Teams · 2 agents running"), std::string::npos);
+            EXPECT_EQ(text.find("Tasks"), std::string::npos);
+            EXPECT_EQ(text.find("hidden"), std::string::npos);
+            EXPECT_NE(text.find(working ? "Working" : "Background agents running"), std::string::npos);
+            EXPECT_NE(text.find("⎿"), std::string::npos);
             EXPECT_EQ(text.find("task-0"), std::string::npos);
             EXPECT_GE(transcript_height(state), 8);
             expect_caret(screen);
         }
+    }
+}
+
+TEST(ChromeBudget, CompletedTasksKeepDistinctCompletionHeaderWhenSpaceAllows) {
+    for (const bool working : {false, true}) for (const bool collapsed : {false, true}) {
+        SCOPED_TRACE(std::format("working={},collapsed={}", working, collapsed));
+        repl::ReplScreenState state;
+        populate(state, 3, 2);
+        for (auto& item : state.todo_store.items) item.status = todo::TodoDisplayItem::Status::Completed;
+        state.todo_store.completed_collapsed = collapsed;
+        state.query_running = working;
+        state.task_view_store.spinner_mode = working ? repl::SpinnerMode::Thinking : repl::SpinnerMode::Hidden;
+        state.task_view_store.spinner_verb = "Working";
+        const auto screen = paint_repl(state, 80, 30);
+        const auto text = visible(screen);
+        EXPECT_NE(text.find("Tasks 3/3 completed"), std::string::npos);
+        EXPECT_NE(text.find("Agent Teams · 2 agents running"), std::string::npos);
+        EXPECT_LT(text.find("Tasks 3/3 completed"), text.find("Agent Teams · 2 agents running"));
+        EXPECT_NE(text.find("@worker-0"), std::string::npos);
+        EXPECT_EQ(text.find("task-0") != std::string::npos, !collapsed);
+        EXPECT_EQ(text.find("✓ Tasks 3/3 completed") != std::string::npos, collapsed);
+        EXPECT_EQ(text.find("hidden"), std::string::npos);
+        EXPECT_NE(text.find("FOOTER-MARK"), std::string::npos);
+        EXPECT_GE(transcript_height(state), 12);
+        expect_caret(screen);
     }
 }
 
@@ -495,7 +546,7 @@ TEST(ChromeBudget, ActiveSpinnerPreservesTranscriptCaretAndFooterAcrossFrames) {
     EXPECT_GE(transcript_height(state), 12);
     EXPECT_NE(visible(normal).find("FOOTER-MARK"), std::string::npos);
     EXPECT_NE(visible(normal).find("Tasks"), std::string::npos);
-    EXPECT_NE(visible(normal).find("Teams"), std::string::npos);
+    EXPECT_NE(visible(normal).find("Agent Teams · 20 agents running"), std::string::npos);
     expect_caret(normal);
     state.input_text = std::string(500, 'x') + "中文😀";
     const auto bytes = state.input_text;
@@ -525,11 +576,12 @@ TEST(ChromeBudget, WorkRowAlignsWithPromptAndTasksUseResponseEnvelope) {
         EXPECT_EQ(screen.PixelAt(0, header_y).character, " ");
         EXPECT_EQ(screen.PixelAt(1, header_y).character, " ");
         EXPECT_EQ(screen.PixelAt(5, header_y).character, "T");
-        EXPECT_TRUE(screen.PixelAt(2, header_y).dim);
+        EXPECT_EQ(screen.PixelAt(2, header_y).foreground_color,
+                  loom::ui::design::theme::current_theme().palette->muted);
         for (int row = 1; row <= 3; ++row) {
-            for (int x = 0; x < 5; ++x)
+            for (int x = 0; x < 7; ++x)
                 EXPECT_EQ(screen.PixelAt(x, header_y + row).character, " ");
-            EXPECT_EQ(screen.PixelAt(5, header_y + row).character, "○");
+            EXPECT_EQ(screen.PixelAt(7, header_y + row).character, "○");
         }
         // The prompt's horizontal rule starts at the same left edge as work.
         EXPECT_EQ(screen.PixelAt(0, header_y + 4).character, "─");
@@ -611,9 +663,11 @@ TEST(ChromeBudget, AllThemeVariantsRenderDenseBashWithSpinnerAndRestoreTheme) {
             auto screen = paint_repl(state, 80, 30);
             const auto text = visible(screen);
             EXPECT_NE(text.find("echo Loom"), std::string::npos);
-            EXPECT_NE(text.find("Tasks 0/10 done (+8 hidden)"), std::string::npos);
-            EXPECT_NE(text.find("Teams 20 (+19 hidden)"), std::string::npos);
+            EXPECT_NE(text.find("Tasks 2 active · 0/10 done"), std::string::npos);
+            EXPECT_NE(text.find("Agent Teams · 20 agents running"), std::string::npos);
+            EXPECT_NE(text.find("task-5"), std::string::npos);
             EXPECT_NE(text.find("@worker-0"), std::string::npos);
+            EXPECT_EQ(text.find("hidden"), std::string::npos);
             EXPECT_NE(text.find("for bash mode"), std::string::npos);
             EXPECT_GE(transcript_height(state), 12);
             expect_caret(screen);
@@ -654,16 +708,22 @@ TEST(ChromeBudget, CopyFeedbackSharesWorkRowAndPreservesChromeGeometry) {
                 }
                 return -1;
             };
-            const int expected_row = running ? row_of(before, "Working") : viewport.y_max + 1;
+            const int expected_row = row_of(before, running ? "Working" : "Background agents running");
             ASSERT_GE(expected_row, 0);
             state.copy_toast_text = "Copied 5 chars to clipboard";
             auto after = paint_repl(state, columns, rows);
             ASSERT_EQ(row_of(after, "Copied"), expected_row);
+            EXPECT_EQ(row_of(after, "Copied 5 chars to clipboard"), expected_row);
             EXPECT_EQ(state.messages_store.scrollable_box.y_max, viewport.y_max);
             EXPECT_EQ(row_of(after, "FOOTER-MARK"), row_of(before, "FOOTER-MARK"));
-            if (running) {
-                EXPECT_EQ(row_of(after, "Working"), expected_row);
-                EXPECT_EQ(row_of(after, "~42.1 tok/s"), expected_row);
+            if (columns >= 80) {
+                EXPECT_EQ(row_of(after, running ? "Working" : "Background agents running"), expected_row);
+                if (running) EXPECT_EQ(row_of(after, "~42.1 tok/s"), expected_row);
+            } else {
+                // The toast takes priority within forty cells. The remaining
+                // work prefix stays in its original row; its full label and
+                // throughput are allowed to clip rather than moving chrome.
+                EXPECT_EQ(after.PixelAt(2, expected_row).character, running ? "W" : "B");
             }
             for (int y = 0; y < rows; ++y) {
                 if (y == expected_row) continue;
@@ -672,6 +732,71 @@ TEST(ChromeBudget, CopyFeedbackSharesWorkRowAndPreservesChromeGeometry) {
                         << "Unrelated cell moved at " << x << ',' << y;
             }
             EXPECT_EQ(state.input_text, multiline ? "draft\nsecond line" : "draft");
+            expect_caret(after);
         }
+    }
+}
+
+
+TEST(ChromeBudget, ThreePeerGroupsHaveIndentedChildrenWithinMeasuredChrome) {
+    for (const auto dimensions : {std::pair{40, 24}, std::pair{60, 30},
+                                  std::pair{80, 40}, std::pair{120, 48}}) {
+        SCOPED_TRACE(std::format("{}x{}", dimensions.first, dimensions.second));
+        repl::ReplScreenState state;
+        populate(state, 4, 2);
+        state.todo_store.items.front().status = todo::TodoDisplayItem::Status::InProgress;
+        state.task_view_store.runtime_agents = {
+            {"sub-one", "SUB-ONE", "", loom::ui::agents::runtime::Status::Running, true},
+            {"sub-two", "SUB-TWO", "", loom::ui::agents::runtime::Status::Running, true}};
+        state.input_text = "EDITOR-MARK";
+        const auto screen = paint_repl(state, dimensions.first, dimensions.second);
+        const auto text = visible(screen);
+        const auto locate = [&](std::string_view label) {
+            for (int y = 0; y < screen.dimy(); ++y) {
+                std::string row;
+                for (int x = 0; x < screen.dimx(); ++x) row += screen.PixelAt(x, y).character;
+                if (row.find(label) != std::string::npos) return y;
+            }
+            return -1;
+        };
+        const int task_y = locate("Tasks 1 active");
+        const int sub_y = locate("Subagents 2 running");
+        const int team_y = locate("Agent Teams");
+        ASSERT_GE(task_y, 0);
+        ASSERT_GT(sub_y, task_y);
+        ASSERT_GT(team_y, sub_y);
+        EXPECT_EQ(screen.PixelAt(2, task_y).character, "⎿");
+        for (const int y : {task_y, sub_y, team_y}) {
+            EXPECT_TRUE(screen.PixelAt(5, y).bold);
+            if (y != task_y)
+                for (int x = 0; x < 5; ++x) EXPECT_EQ(screen.PixelAt(x, y).character, " ");
+        }
+        if (dimensions.second >= 30) {
+            for (const auto label : {"task-0", "SUB-ONE", "@worker-0"}) {
+                const int y = locate(label);
+                ASSERT_GE(y, 0) << label;
+                for (int x = 0; x < 7; ++x) EXPECT_EQ(screen.PixelAt(x, y).character, " ");
+            }
+            EXPECT_GT(locate("task-0"), task_y);
+            EXPECT_LT(locate("task-0"), sub_y);
+            EXPECT_GT(locate("SUB-ONE"), sub_y);
+            EXPECT_LT(locate("SUB-ONE"), team_y);
+            EXPECT_GT(locate("@worker-0"), team_y);
+        }
+        if (dimensions.second >= 40) {
+            EXPECT_GE(locate("task-3"), 0);
+            EXPECT_GE(locate("SUB-TWO"), 0);
+            EXPECT_GE(locate("@worker-1"), 0);
+            EXPECT_GT(team_y - task_y + 3, 5);
+        }
+        EXPECT_EQ(std::count(text.begin(), text.end(), '\x1b'), 0);
+        EXPECT_NE(text.find("EDITOR-MARK"), std::string::npos);
+        EXPECT_NE(text.find("FOOTER-MARK"), std::string::npos);
+        EXPECT_GE(transcript_height(state), 12);
+        EXPECT_LE(dimensions.second - transcript_height(state), dimensions.second / 2 + 3);
+        expect_caret(screen);
+        EXPECT_EQ(state.todo_store.items.size(), 4u);
+        EXPECT_EQ(state.task_view_store.runtime_agents.size(), 2u);
+        EXPECT_EQ(state.task_view_store.live_teammates.size(), 2u);
     }
 }

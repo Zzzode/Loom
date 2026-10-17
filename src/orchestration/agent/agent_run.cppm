@@ -229,6 +229,7 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     plan.omit_loom_md = definition.omit_loom_md;
     plan.critical_system_reminder = definition.critical_system_reminder;
     plan.parent_agent_id = config.parent_agent_id;
+    plan.parent_session_id = config.parent_session_id;
     hydrate_resume_plan_from_existing_record(plan);
     const auto runtime_context = format_agent_runtime_context(plan);
     if (!plan.system_prompt_overridden) {

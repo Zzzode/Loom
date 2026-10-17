@@ -581,6 +581,7 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan,
 
     if (plan.resume_existing) {
         if (auto existing = loom::tools::agent_runtime::native_agent_store().get(plan.agent_id)) {
+            record.created_at = existing->created_at;
             record.parent_agent_id = record.parent_agent_id.or_else([&] { return existing->parent_agent_id; });
             record.description = record.description.or_else([&] { return existing->description; });
             record.name = record.name.or_else([&] { return existing->name; });

@@ -120,6 +120,10 @@ bool same_projection_message(const Message& a, const Message& b) {
 // compilation (exit code 139 in NamespaceDecl::getMostRecentDeclImpl).
 
 AppAdapter::~AppAdapter() {
+    // Closing the shared queue makes already-admitted observer callbacks safe
+    // before nonblocking unsubscribe releases their registration.
+    CloseUiActions();
+    UnsubscribeRuntimeAgentChanges();
     // Unsubscribe from the pane observer before other teardown so a late
     // capture-pass callback cannot flag/post on a torn-down adapter.
     if (pane_observer_token_ != 0) {
@@ -210,6 +214,7 @@ std::size_t AppAdapter::DrainPendingAtMentionInserts() {
 
 Element AppAdapter::Render() {
     DrainUiActions();
+    ProjectRuntimeAgentsToScreenState();
     this->ProjectRuntimeMetadataToScreenState();
     this->ProjectTodosToScreenState();
     ConsumePendingResult();
@@ -626,6 +631,7 @@ bool AppAdapter::OnEvent(Event event) {
         ~FlushStatus() { app->RefreshProgramStatus(); }
     } flush_status{this};
     DrainUiActions();
+    ProjectRuntimeAgentsToScreenState();
     ConsumePendingResult();
     if (status_control) return true;
     PrepareProgramStatusInput(event);

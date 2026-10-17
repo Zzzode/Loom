@@ -232,7 +232,7 @@ struct ModeIndicatorOptions {
 
     // ── Teams pill ──────────────────────────────────────────────────────
     if (has_teams) {
-        std::string label = std::format("{} team{}",
+        std::string label = std::format("{} Team Agent{}",
             opts.teammate_count,
             opts.teammate_count == 1 ? "" : "s");
         Color c = pal.primary;
@@ -402,7 +402,7 @@ struct StatusBarSegments {
     bool model = true;     // model display name
     bool tokens = true;    // context usage percentage + token counts
     bool cost = true;      // $ session cost
-    bool tasks = false;    // N teams
+    bool tasks = false;    // N Team Agents
     bool agent = false;    // current agent name
 };
 

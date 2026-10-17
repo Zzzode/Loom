@@ -18,7 +18,60 @@ namespace {
 thread_local NativeAgentStore* executing_background_store = nullptr;
 }
 
+std::size_t NativeAgentStore::subscribe_changed(std::function<void()> callback) {
+    auto observer = std::make_shared<ChangeObserver>();
+    observer->callback = std::move(callback);
+    std::scoped_lock lock(observers_mutex_);
+    const auto token = ++next_observer_token_;
+    observers_.emplace(token, std::move(observer));
+    return token;
+}
+
+void NativeAgentStore::unsubscribe_changed(std::size_t token) {
+    std::shared_ptr<ChangeObserver> removed;
+    {
+        std::scoped_lock lock(observers_mutex_);
+        if (auto it = observers_.find(token); it != observers_.end()) {
+            removed = std::move(it->second);
+            removed->active.store(false, std::memory_order_release);
+            observers_.erase(it);
+        }
+    }
+    // Destroy client captures after releasing the observer lock too.
+}
+
+void NativeAgentStore::notify_changed() noexcept {
+    try {
+        std::vector<std::shared_ptr<ChangeObserver>> observers;
+        {
+            std::scoped_lock lock(observers_mutex_);
+            observers.reserve(observers_.size());
+            for (const auto& [_, observer] : observers_) observers.push_back(observer);
+        }
+        for (const auto& observer : observers) {
+            // The active load admits a callback. Unsubscribe never waits for
+            // admitted calls; clients retain their handoff state independently.
+            if (!observer->active.load(std::memory_order_acquire)) continue;
+            try {
+                if (observer->callback) observer->callback();
+            } catch (...) {
+                // An observer must never turn a persisted mutation into failure.
+            }
+        }
+    } catch (...) {
+        // Allocation failure in notification must not fail agent execution.
+    }
+}
+
 NativeAgentStore::~NativeAgentStore() {
+    {
+        decltype(observers_) removed;
+        {
+            std::scoped_lock lock(observers_mutex_);
+            for (const auto& [_, observer] : observers_) observer->active.store(false);
+            observers_.swap(removed);
+        }
+    }
     {
         std::scoped_lock lock(mutex_);
         for (auto& [_, record] : records_) record.cancel_requested = true;
@@ -27,15 +80,27 @@ NativeAgentStore::~NativeAgentStore() {
 }
 
 void NativeAgentStore::begin_execution(std::string_view agent_id, std::stop_token owner) {
-    std::scoped_lock lock(mutex_);
-    begin_execution_locked(agent_id, owner);
+    try {
+        std::scoped_lock lock(mutex_);
+        begin_execution_locked(agent_id, owner);
+    } catch (...) {
+        notify_changed();
+        throw;
+    }
+    notify_changed();
 }
 
 void NativeAgentStore::begin_execution(NativeAgentRecord record, std::stop_token owner) {
-    std::scoped_lock lock(mutex_);
-    const auto agent_id = record.agent_id;
-    upsert_locked(std::move(record));
-    begin_execution_locked(agent_id, owner);
+    try {
+        std::scoped_lock lock(mutex_);
+        const auto agent_id = record.agent_id;
+        upsert_locked(std::move(record));
+        begin_execution_locked(agent_id, owner);
+    } catch (...) {
+        notify_changed();
+        throw;
+    }
+    notify_changed();
 }
 
 void NativeAgentStore::begin_execution_locked(std::string_view agent_id, std::stop_token owner) {
@@ -54,49 +119,63 @@ void NativeAgentStore::begin_execution_locked(std::string_view agent_id, std::st
 }
 
 void NativeAgentStore::end_execution(std::string_view agent_id) {
-    std::scoped_lock lock(mutex_);
-    auto it = active_executions_.find(std::string(agent_id));
-    if (it != active_executions_.end() && --it->second.count == 0) {
-        active_executions_.erase(it);
+    {
+        std::scoped_lock lock(mutex_);
+        auto it = active_executions_.find(std::string(agent_id));
+        if (it != active_executions_.end() && --it->second.count == 0) {
+            active_executions_.erase(it);
+        }
     }
+    notify_changed();
 }
 
 void NativeAgentStore::run_background_agent(std::string agent_id,
     std::function<void()> execute, std::stop_token owner) {
-    std::scoped_lock workers_lock(workers_mutex_);
-    for (auto it = workers_.begin(); it != workers_.end();) {
-        if (it->finished->load()) {
-            it->thread.join();
-            it = workers_.erase(it);
-        } else {
-            ++it;
-        }
-    }
-    // Allocate before creating a joinable thread: insertion then cannot strand
-    // a thread handle if vector growth fails.
-    workers_.reserve(workers_.size() + 1);
-    auto finished = std::make_shared<std::atomic<bool>>(false);
-    begin_execution(agent_id, owner);
     try {
-        workers_.push_back(BackgroundWorker{owner, finished, std::thread([this, agent_id, finished, execute = std::move(execute)]() mutable {
-            executing_background_store = this;
-            try {
-                mark_running(agent_id);
-                execute();
-            } catch (const std::exception& error) {
-                finish_agent(agent_id, std::unexpected(std::string(error.what())));
-            } catch (...) {
-                finish_agent(agent_id, std::unexpected(std::string("Background agent execution failed")));
+        std::scoped_lock workers_lock(workers_mutex_);
+        for (auto it = workers_.begin(); it != workers_.end();) {
+            if (it->finished->load()) {
+                it->thread.join();
+                it = workers_.erase(it);
+            } else {
+                ++it;
             }
-            execute = {};
-            end_execution(agent_id);
-            executing_background_store = nullptr;
-            finished->store(true);
-        })});
+        }
+        // Allocate before creating a joinable thread: insertion then cannot
+        // strand a thread handle if vector growth fails.
+        workers_.reserve(workers_.size() + 1);
+        auto finished = std::make_shared<std::atomic<bool>>(false);
+        {
+            std::scoped_lock lock(mutex_);
+            begin_execution_locked(agent_id, owner);
+        }
+        try {
+            workers_.push_back(BackgroundWorker{owner, finished, std::thread([this, agent_id, finished, execute = std::move(execute)]() mutable {
+                executing_background_store = this;
+                try {
+                    mark_running(agent_id);
+                    execute();
+                } catch (const std::exception& error) {
+                    finish_agent(agent_id, std::unexpected(std::string(error.what())));
+                } catch (...) {
+                    finish_agent(agent_id, std::unexpected(std::string("Background agent execution failed")));
+                }
+                execute = {};
+                end_execution(agent_id);
+                executing_background_store = nullptr;
+                finished->store(true);
+            })});
+        } catch (...) {
+            std::scoped_lock lock(mutex_);
+            auto it = active_executions_.find(agent_id);
+            if (it != active_executions_.end() && --it->second.count == 0) active_executions_.erase(it);
+            throw;
+        }
     } catch (...) {
-        end_execution(agent_id);
+        notify_changed();
         throw;
     }
+    notify_changed();
 }
 
 void NativeAgentStore::finish_agent(
@@ -159,10 +238,12 @@ void NativeAgentStore::cancel_and_wait_for_background_agents(std::stop_token own
                     (record->second.status == NativeAgentStatus::Queued ||
                      record->second.status == NativeAgentStatus::Running)) {
                     record->second.cancel_requested = true;
+                    (void)persist_native_agent_record(record->second);
                 }
             }
         }
     }
+    notify_changed();
     std::scoped_lock drain_lock(drain_mutex_);
     for (;;) {
         std::vector<BackgroundWorker> workers;
@@ -183,8 +264,11 @@ void NativeAgentStore::cancel_and_wait_for_background_agents(std::stop_token own
 }
 
 void NativeAgentStore::upsert(NativeAgentRecord record) {
-    std::scoped_lock lock(mutex_);
-    upsert_locked(std::move(record));
+    {
+        std::scoped_lock lock(mutex_);
+        upsert_locked(std::move(record));
+    }
+    notify_changed();
 }
 
 void NativeAgentStore::upsert_locked(NativeAgentRecord record) {
@@ -221,6 +305,11 @@ std::vector<NativeAgentRecord> NativeAgentStore::list() const {
         std::scoped_lock lock(mutex_);
         for (auto record : load_all_native_agent_records()) {
             auto agent_id = record.agent_id;
+            // Creation time is process-local metadata in the existing format.
+            // Refresh persisted fields without changing stable instance order.
+            if (auto existing = records_.find(agent_id); existing != records_.end()) {
+                record.created_at = existing->second.created_at;
+            }
             records_[std::move(agent_id)] = std::move(record);
         }
         std::vector<NativeAgentRecord> out;
@@ -318,6 +407,11 @@ std::vector<std::string> NativeAgentStore::take_pending_task_notifications() {
         std::scoped_lock lock(mutex_);
         for (auto record : load_all_native_agent_records()) {
             auto agent_id = record.agent_id;
+            // Creation time is process-local metadata in the existing format.
+            // Refresh persisted fields without changing stable instance order.
+            if (auto existing = records_.find(agent_id); existing != records_.end()) {
+                record.created_at = existing->second.created_at;
+            }
             records_[std::move(agent_id)] = std::move(record);
         }
 

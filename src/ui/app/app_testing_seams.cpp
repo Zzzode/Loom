@@ -45,6 +45,23 @@ bool AppTestingSeams::stop_background_workers_for_testing() {
         !app->teammate_.inbox_thread().joinable();
 }
 
+std::function<void()> AppTestingSeams::runtime_agent_change_callback_for_testing() {
+    return app->MakeRuntimeAgentChangeCallback();
+}
+
+std::shared_ptr<std::atomic<bool>> AppTestingSeams::runtime_agent_dirty_for_testing() const {
+    return app->runtime_agents_dirty_;
+}
+
+std::function<void(std::function<void()>)> AppTestingSeams::ui_dispatcher_for_testing() {
+    return app->ui_dispatcher();
+}
+
+bool AppTestingSeams::resume_session_for_testing(
+    const std::filesystem::path& sessions_dir, std::string session_id) {
+    return app->ResumeSessionFromDirectory(sessions_dir, session_id, "Session resumed for testing");
+}
+
 bool AppAdapter::is_query_running_for_testing() const noexcept {
     return query_running_.load();
 }

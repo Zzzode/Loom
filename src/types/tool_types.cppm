@@ -33,6 +33,8 @@ struct ToolInput {
     // Captures must outlive that execution.
     std::function<bool()> is_cancelled = {};
     std::shared_ptr<const ApiExecutionContext> api_context = {};
+    // Root session ownership for native subagent instances; never model input.
+    std::optional<std::string> parent_session_id = std::nullopt;
 
     /// Get the raw JSON as string view
     [[nodiscard]] std::string_view json() const noexcept { return raw_json; }

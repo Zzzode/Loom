@@ -9,6 +9,7 @@ import std;
 import loom.orchestration.agent;
 import loom.tools.agent_runtime;
 import loom.tools.tool;
+import loom.tools.runtime_registry;
 import loom.services.api.streaming;
 import loom.serdes.json;
 
@@ -61,6 +62,23 @@ struct AgentWireSandbox {
     return openai_frame(doc.to_string()) +
         openai_frame(std::format(R"({{"choices":[],"usage":{{"prompt_tokens":11,"completion_tokens":{}}}}})", tokens)) +
         openai_frame("[DONE]");
+}
+
+[[nodiscard]] std::string messages_text(std::string_view text) {
+    json::JsonMutDoc doc;
+    auto delta = doc.object();
+    delta.add("type", doc.string("text_delta"));
+    delta.add("text", doc.string(text));
+    auto root = doc.object();
+    root.add("index", doc.number(static_cast<int64_t>(0)));
+    root.add("delta", delta);
+    doc.set_root(root);
+    return "event: message_start\ndata: {\"message\":{\"id\":\"session-probe\",\"role\":\"assistant\",\"model\":\"wire-model\",\"content\":[]}}\n\n"
+        "event: content_block_start\ndata: {\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
+        "event: content_block_delta\ndata: " + doc.to_string() + "\n\n"
+        "event: content_block_stop\ndata: {\"index\":0}\n\n"
+        "event: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":3}}\n\n"
+        "event: message_stop\ndata: {}\n\n";
 }
 
 class AgentWireServer {
@@ -629,6 +647,7 @@ TEST(AgentWire, RecursiveAgentUsesImmediateParentsExecutionContext) {
     loom::tools::AgentTool tool(config, 0, &registry, allow);
     auto input = agent_wire_input("wire-outer");
     input.api_context = agent_wire_context(server);
+    input.parent_session_id = "nested-root-session";
     auto result = tool.execute(input);
     ASSERT_TRUE(result);
     ASSERT_FALSE(result->is_error) << result_text(*result);
@@ -639,6 +658,8 @@ TEST(AgentWire, RecursiveAgentUsesImmediateParentsExecutionContext) {
     const auto inner = runtime::native_agent_store().get("wire-inner");
     ASSERT_TRUE(inner);
     EXPECT_EQ(inner->status, runtime::NativeAgentStatus::Completed);
+    EXPECT_EQ(inner->parent_session_id, "nested-root-session");
+    EXPECT_EQ(runtime::native_agent_store().get("wire-outer")->parent_session_id, "nested-root-session");
 }
 
 TEST(AgentWire, ParallelSessionsKeepEndpointAndCredentialsSeparate) {
@@ -741,4 +762,181 @@ TEST(AgentWire, MessagesSessionUsesPrefixedEndpointAndExplicitEmptyCredentials) 
     ASSERT_FALSE(result->is_error) << result_text(*result);
     EXPECT_EQ(result_text(*result), "prefixed messages complete");
     EXPECT_EQ(tool.last_run_tokens(), 14);
+}
+
+class AgentWireSessionScope : public testing::TestWithParam<const char*> {};
+
+TEST_P(AgentWireSessionScope, ForegroundBackgroundAndResumeUseCurrentParentSession) {
+    const std::string protocol = GetParam();
+    for (const bool background : {false, true}) {
+        SCOPED_TRACE(background ? "background" : "foreground");
+        AgentWireSandbox sandbox;
+        AgentWireServer server([&](const auto&, auto& response, std::size_t index) {
+            const auto text = index == 0 ? "retained session answer" : "resumed session answer";
+            response.set_content(protocol == "messages" ? messages_text(text) : openai_text(text), "text/event-stream");
+        });
+        loom::core::ToolRegistry registry;
+        loom::tools::AgentConfig config;
+        config.default_model = "wire-model";
+        config.parent_session_id = "configured-fallback";
+        auto context = std::make_shared<loom::core::ApiExecutionContext>(*agent_wire_context(server));
+        context->wire_api = protocol;
+        config.api_context = context;
+        loom::tools::AgentTool tool(config, 0, &registry);
+        auto input = agent_wire_input("session-owned", background);
+        input.parent_session_id = "first-parent-session";
+        auto result = tool.execute(input);
+        ASSERT_TRUE(result && !result->is_error);
+        runtime::native_agent_store().wait_for_background_agents();
+        const auto first = runtime::native_agent_store().get("session-owned");
+        ASSERT_TRUE(first);
+        ASSERT_EQ(first->status, runtime::NativeAgentStatus::Completed);
+        EXPECT_EQ(first->parent_session_id, "first-parent-session");
+        auto resumed_input = loom::core::ToolInput::from_json(
+            R"({"prompt":"Continue prior work","agent_id":"session-owned","resume_existing":true})");
+        resumed_input.parent_session_id = "current-parent-session";
+        auto resumed = tool.execute(resumed_input);
+        ASSERT_TRUE(resumed && !resumed->is_error);
+        const auto current = runtime::native_agent_store().get("session-owned");
+        ASSERT_TRUE(current);
+        EXPECT_EQ(current->parent_session_id, "current-parent-session");
+        EXPECT_EQ(current->created_at, first->created_at);
+        EXPECT_EQ(current->status, runtime::NativeAgentStatus::Completed);
+        EXPECT_TRUE(std::ranges::contains(current->transcript, "assistant: retained session answer"));
+        EXPECT_TRUE(std::ranges::contains(current->transcript, "assistant: resumed session answer"));
+        // Public mailbox resume must carry the current caller's ownership too.
+        loom::tools::RuntimeToolOptions options;
+        options.permission_check = [](std::string_view, std::string_view, std::string_view) {
+            return loom::tools::AgentLivePermissionCheck{};
+        };
+        options.permission_hook_valid_for_background = true;
+        options.agent_tool_factory = loom::tools::make_agent_tool;
+        options.default_model = "wire-model";
+        loom::tools::register_runtime_tools(registry, std::move(options));
+        auto message = loom::core::ToolInput::from_json(
+            R"({"to":"session-owned","message":"Continue through the public mailbox"})");
+        message.api_context = context;
+        message.parent_model = "wire-model";
+        message.parent_session_id = "mailbox-parent-session";
+        auto delivered = registry.execute("send_message", message);
+        ASSERT_TRUE(delivered) << delivered.error().format();
+        ASSERT_FALSE(delivered->is_error) << result_text(*delivered);
+        EXPECT_NE(result_text(*delivered).find("background resume started"), std::string::npos);
+        runtime::native_agent_store().wait_for_background_agents();
+        const auto mailbox = runtime::native_agent_store().get("session-owned");
+        ASSERT_TRUE(mailbox);
+        EXPECT_EQ(mailbox->status, runtime::NativeAgentStatus::Completed);
+        EXPECT_EQ(mailbox->parent_session_id, "mailbox-parent-session");
+        EXPECT_EQ(mailbox->created_at, first->created_at);
+        EXPECT_TRUE(std::ranges::contains(mailbox->transcript, "assistant: retained session answer"));
+        const auto bodies = server.bodies();
+        ASSERT_EQ(bodies.size(), 3u);
+        EXPECT_NE(bodies[1].find("retained session answer"), std::string::npos);
+        EXPECT_NE(bodies[2].find("retained session answer"), std::string::npos);
+        EXPECT_NE(bodies[2].find("Continue through the public mailbox"), std::string::npos);
+        // Ownership is internal metadata, not new model-visible wire JSON.
+        for (const auto& body : bodies) EXPECT_EQ(body.find("parent_session_id"), std::string::npos);
+    }
+}
+
+TEST_P(AgentWireSessionScope, ConfigSessionIsTheFallbackWhenNoInputSessionIsPresent) {
+    AgentWireSandbox sandbox;
+    const std::string protocol = GetParam();
+    AgentWireServer server([&](const auto&, auto& response, std::size_t) {
+        response.set_content(protocol == "messages" ? messages_text("config-owned") : openai_text("config-owned"), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    config.parent_session_id = "configured-parent-session";
+    auto context = std::make_shared<loom::core::ApiExecutionContext>(*agent_wire_context(server));
+    context->wire_api = protocol;
+    config.api_context = context;
+    loom::tools::AgentTool tool(config, 0, &registry);
+    auto result = tool.execute(agent_wire_input("configured-session"));
+    ASSERT_TRUE(result && !result->is_error);
+    EXPECT_EQ(runtime::native_agent_store().get("configured-session")->parent_session_id, "configured-parent-session");
+}
+
+INSTANTIATE_TEST_SUITE_P(Protocols, AgentWireSessionScope,
+    testing::Values("openai", "messages"),
+    [](const testing::TestParamInfo<const char*>& info) {
+        return info.index == 0 ? "OpenAi" : "Messages";
+    });
+
+TEST(AgentWire, MessagesNestedAgentRetainsOriginatingRootSession) {
+    AgentWireSandbox sandbox;
+    AgentWireEnv nested("LOOM_ENABLE_NESTED_AGENTS", "1");
+    AgentWireServer server([](const auto&, auto& response, std::size_t index) {
+        if (index != 0) {
+            response.set_content(messages_text(index == 1 ? "nested result" : "parent result"), "text/event-stream");
+            return;
+        }
+        response.set_content(
+            "event: message_start\ndata: {\"message\":{\"id\":\"nested-session\",\"role\":\"assistant\",\"model\":\"wire-model\",\"content\":[]}}\n\n"
+            "event: content_block_start\ndata: {\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"nested-agent-call\",\"name\":\"Agent\",\"input\":{}}}\n\n"
+            "event: content_block_delta\ndata: {\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"prompt\\\":\\\"Finish child\\\",\\\"agent_id\\\":\\\"messages-inner\\\",\\\"subagent_type\\\":\\\"general-purpose\\\"}\"}}\n\n"
+            "event: content_block_stop\ndata: {\"index\":0}\n\n"
+            "event: message_delta\ndata: {\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":3}}\n\n"
+            "event: message_stop\ndata: {}\n\n", "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    registry.register_tool(loom::tools::make_agent_tool({}, 0, &registry));
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    config.parent_session_id = "stale-config-session";
+    auto context = std::make_shared<loom::core::ApiExecutionContext>(*agent_wire_context(server));
+    context->wire_api = "messages";
+    config.api_context = context;
+    auto allow = [](std::string_view, std::string_view, std::string_view) { return loom::tools::AgentLivePermissionCheck{}; };
+    loom::tools::AgentTool tool(config, 0, &registry, allow);
+    auto input = agent_wire_input("messages-outer");
+    input.parent_session_id = "messages-root-session";
+    auto result = tool.execute(input);
+    ASSERT_TRUE(result && !result->is_error);
+    const auto inner = runtime::native_agent_store().get("messages-inner");
+    ASSERT_TRUE(inner) << "request count: " << server.bodies().size();
+    EXPECT_EQ(inner->parent_session_id, "messages-root-session");
+    EXPECT_EQ(inner->status, runtime::NativeAgentStatus::Completed);
+    EXPECT_EQ(runtime::native_agent_store().get("messages-outer")->parent_session_id, "messages-root-session");
+}
+
+TEST(AgentWire, BackgroundLaunchSuccessDoesNotMeanFinalTaskOutput) {
+    AgentWireSandbox sandbox;
+    loom::tools::AgentConfig config;
+    config.default_model = "scripted-model";
+    loom::tools::AgentTool deferred(config);
+    auto input = agent_wire_input("scripted-background", true);
+    input.parent_session_id = "scripted-parent";
+    auto launch = deferred.execute(input);
+    ASSERT_TRUE(launch && !launch->is_error);
+    EXPECT_NE(result_text(*launch).find("Queued background agent"), std::string::npos);
+
+    loom::core::ToolRegistry registry;
+    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
+        .permission_check = [](std::string_view, std::string_view, std::string_view) {
+            return loom::tools::AgentLivePermissionCheck{};
+        },
+    });
+    auto output = [&] {
+        return registry.execute("task_output", loom::core::ToolInput::from_json(R"({"task_id":"scripted-background"})"));
+    };
+    auto queued = output();
+    ASSERT_TRUE(queued && !queued->is_error);
+    EXPECT_NE(result_text(*queued).find("[queued]"), std::string::npos);
+    EXPECT_EQ(result_text(*queued).find("[completed]"), std::string::npos);
+    runtime::native_agent_store().mark_running("scripted-background");
+    auto running = output();
+    ASSERT_TRUE(running && !running->is_error);
+    EXPECT_NE(result_text(*running).find("[running]"), std::string::npos);
+    runtime::native_agent_store().mark_completed("scripted-background", "verified final output");
+    auto completed = output();
+    ASSERT_TRUE(completed && !completed->is_error);
+    EXPECT_NE(result_text(*completed).find("[completed]"), std::string::npos);
+    EXPECT_NE(result_text(*completed).find("verified final output"), std::string::npos);
+    runtime::native_agent_store().mark_failed("scripted-background", "final error must be inspected");
+    auto failed = output();
+    ASSERT_TRUE(failed && !failed->is_error);
+    EXPECT_NE(result_text(*failed).find("[failed]"), std::string::npos);
+    EXPECT_NE(result_text(*failed).find("final error must be inspected"), std::string::npos);
 }

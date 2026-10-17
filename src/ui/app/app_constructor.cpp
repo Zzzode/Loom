@@ -466,6 +466,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     TriggerStatuslineUpdate();
 
     StartUiAnimationTicker();
+    SubscribeRuntimeAgentChanges();
 }
 
 // P3-1c: thin wrapper over StatuslineCoordinator.  Kept out of the app.cppm

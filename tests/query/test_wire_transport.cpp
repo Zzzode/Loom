@@ -116,6 +116,7 @@ public:
         {
             std::lock_guard lock(mutex_);
             values_.push_back(value);
+            parent_session_ids_.push_back(input.parent_session_id.value_or(""));
         }
         return ToolResult::success("echo:" + value);
     }
@@ -123,6 +124,10 @@ public:
     std::vector<std::string> values() const {
         std::lock_guard lock(mutex_);
         return values_;
+    }
+    std::vector<std::string> parent_session_ids() const {
+        std::lock_guard lock(mutex_);
+        return parent_session_ids_;
     }
 
 private:
@@ -133,6 +138,7 @@ private:
         .permission = ToolPermission::ReadOnly};
     mutable std::mutex mutex_;
     std::vector<std::string> values_;
+    std::vector<std::string> parent_session_ids_;
 };
 
 class WireTransport : public testing::Test {
@@ -187,6 +193,8 @@ TEST_F(WireTransport, OpenAiStreamingExecutesInterleavedToolCallsAndSendsToolRol
     auto values = observed->values();
     std::ranges::sort(values);
     EXPECT_EQ(values, (std::vector<std::string>{"first", "second"}));
+    EXPECT_EQ(observed->parent_session_ids(),
+        (std::vector<std::string>{engine.session_id().str(), engine.session_id().str()}));
     EXPECT_EQ(std::ranges::count_if(events, [](const auto& event) {
         return std::holds_alternative<StreamError>(event);
     }), 0);

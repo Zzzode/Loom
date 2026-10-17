@@ -137,7 +137,7 @@ struct StatusField {
         fields.push_back({cost, pal.muted, false, false, 5, {}});
     }
     if (data.segments.tasks && data.task_count > 0)
-        fields.push_back({std::format("{} team{}", data.task_count,
+        fields.push_back({std::format("{} Team Agent{}", data.task_count,
             data.task_count == 1 ? "" : "s"), pal.muted, false, false, 6, {}});
     if (data.segments.agent && !data.agent_name.empty())
         fields.push_back({"@" + data.agent_name, pal.muted, false, true, 7, {}});

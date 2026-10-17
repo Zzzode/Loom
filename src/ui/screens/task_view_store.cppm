@@ -19,6 +19,7 @@ export module loom.ui.screens.task_view_store;
 import std;
 
 import loom.ui.features.agents.agent_cards;        // AgentCardData
+import loom.ui.features.agents.runtime_agents;
 import loom.ui.features.teams.live_teammates;      // LiveTeammate
 
 export namespace loom::ui::repl_screen {
@@ -58,6 +59,9 @@ struct TaskViewStore {
     // Event-driven: the observer posts a refresh when pane content changes;
     // there is no render ticker (see app_team_projection.cpp).
     std::vector<teams::live::LiveTeammate> live_teammates;
+    // Ordinary instances belonging to the current root session. Definition
+    // cards and team membership retain their separate existing projections.
+    std::vector<agents::runtime::Instance> runtime_agents;
     // Selection cursor for the TeamsView modal (TeamsViewPayload.selected_index
     // mirrors this when the dialog is open).
     int teams_overview_selected_index = 0;

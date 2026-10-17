@@ -88,10 +88,49 @@ TEST(StatusLine, BuiltinUsesTextLabelsWithoutDecorativeEmoji) {
     const auto text = strip_ansi(render_to_plain_text(
         pif::RenderBuiltinStatusLine(data), 200, 1));
     for (const auto label : {"tmp/project", "feature", "test-model",
-            "@worker", "2 teams", "14%", "28.0K/200.0K", "$0.12", "Select text to copy"}) {
+            "@worker", "2 Team Agents", "14%", "28.0K/200.0K", "$0.12", "Select text to copy"}) {
         EXPECT_NE(text.find(label), std::string::npos) << label;
     }
     EXPECT_EQ(text.find("\xf0"), std::string::npos);
+}
+
+TEST(PromptInputFooter, TeamAgentCountsUseSingularPluralAndHideZeroInBothRenderers) {
+    namespace pif = loom::ui::prompt::footer;
+    for (const int count : {0, 1, 2}) {
+        SCOPED_TRACE(count);
+        const std::string expected = count == 1 ? "1 Team Agent" : "2 Team Agents";
+        for (const bool selected : {false, true}) {
+            SCOPED_TRACE(selected);
+            pif::ModeIndicatorOptions opts;
+            opts.teammate_count = count;
+            opts.teams_selected = selected;
+            opts.show_hint = false;
+            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(32), ftxui::Dimension::Fixed(1));
+            ftxui::Render(screen, pif::RenderModeIndicator(opts));
+            const auto text = strip_ansi(screen.ToString());
+            if (count == 0) {
+                EXPECT_EQ(text.find("Team Agent"), std::string::npos);
+            } else {
+                EXPECT_EQ(text.substr(0, expected.size()), expected);
+                EXPECT_EQ(text.find("Team Agents") != std::string::npos, count > 1);
+                EXPECT_EQ(screen.PixelAt(0, 0).inverted, selected);
+            }
+        }
+        pif::BuiltinStatusLineData data;
+        data.task_count = count;
+        data.columns = 32;
+        data.segments = {.cwd = false, .git = false, .model = false,
+            .tokens = false, .cost = false, .tasks = true, .agent = false};
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(32), ftxui::Dimension::Fixed(1));
+        ftxui::Render(screen, pif::RenderBuiltinStatusLine(data));
+        const auto text = strip_ansi(screen.ToString());
+        if (count == 0) {
+            EXPECT_EQ(text.find("Team Agent"), std::string::npos);
+        } else {
+            EXPECT_EQ(text.substr(0, expected.size()), expected);
+            EXPECT_EQ(text.find("Team Agents") != std::string::npos, count > 1);
+        }
+    }
 }
 
 TEST(PromptInputFooter, BridgeAndNotificationsFollowCurrentTheme) {
@@ -1000,7 +1039,7 @@ TEST(StatusLine, BuiltinMetadataIsNeutralReadableAndOnlyModelIsBold) {
             }
         };
         expect_label("test-model", pal.text, true);
-        for (const auto label : {"tmp/project", "feature", "@worker", "2 teams",
+        for (const auto label : {"tmp/project", "feature", "@worker", "2 Team Agents",
                 "14%", "28.0K/200.0K", "$0.12", "Select text to copy"})
             expect_label(label, pal.muted, false);
     }

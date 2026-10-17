@@ -22,7 +22,7 @@ import loom.ui.chrome.fullscreen_layout;
 import loom.ui.foundation.logo;
 import loom.ui.foundation.theme_provider;
 import loom.ui.features.teams.live_teammates;
-import loom.ui.features.todos.todo_panel;
+import loom.ui.features.agents.runtime_agents;
 import loom.ui.prompt.prompt_input_footer;
 import loom.ui.messages.message_components;
 import loom.ui.messages.virtual_list;
@@ -121,6 +121,18 @@ using namespace ftxui;
     const bool emphasize_work = !HasOuterFocusOwner(s.mode)
         && !prepared_dialogs.takes_focus && !current_failure;
     const bool show_work_spinner = emphasize_work && IsToolAnimating(s.task_view_store);
+    const bool background_running = std::ranges::any_of(
+        s.task_view_store.runtime_agents, [](const auto& instance) {
+            return instance.background && instance.status == agents::runtime::Status::Running;
+        }) || std::ranges::any_of(s.task_view_store.live_teammates,
+            [](const auto& teammate) { return teammate.status == "running"; });
+    const bool background_queued = std::ranges::any_of(
+        s.task_view_store.runtime_agents, [](const auto& instance) {
+            return instance.background && instance.status == agents::runtime::Status::Queued;
+        });
+    const bool show_background_status = emphasize_work && !show_work_spinner
+        && (background_running || background_queued);
+    const bool show_work_status = show_work_spinner || show_background_status;
 
     // Time-based spinner frame: 100 ms per frame (10 fps), matching the
     // reference.  Previously this was a per-render counter, which made the
@@ -264,6 +276,12 @@ using namespace ftxui;
         spinner_chrome = RenderSpinner(s.task_view_store.spinner_mode, s.task_view_store.spinner_verb,
                                        s.task_view_store.spinner_tip, spinner_frame,
                                        s.task_view_store.estimated_generation_tps);
+    else if (show_background_status) {
+        const auto& palette = *loom::ui::design::theme::current_theme().palette;
+        spinner_chrome = hbox({text("● ") | color(palette.primary),
+            text(background_running ? "Background agents running" : "Background agents queued")
+                | color(palette.muted)});
+    }
     // M7.5: Panel views (Tasks/Teams/Help/Settings/About/QuickOpen) are
     // now rendered as modal dialogs via DialogQueue — no longer inlined
     // in the scrollable slot.
@@ -380,18 +398,29 @@ using namespace ftxui;
         // scrollback area and the top border of the input box.  We emulate with a
         // leading text("") row.
         L.reserve(5);
-        // Copy feedback shares the work row instead of floating one blank row
-        // above it. Idle feedback reuses the existing top-margin row; neither
-        // path adds height or changes the task/editor allocation.
+        // Reserve bounded feedback first; work text uses the remaining cells.
+        // Both sides stay on one row even with a long Unicode clipboard toast.
+        const int feedback_padding = term_cols >= 5 ? 2 : 0;
+        const auto feedback_label = s.copy_toast_text
+            ? teams::live::one_line_tail(*s.copy_toast_text,
+                static_cast<std::size_t>(std::max(0, term_cols - 2 * feedback_padding)))
+            : std::string{};
         Element copy_feedback = s.copy_toast_text
-            ? hbox({text("  "), text(*s.copy_toast_text) | dim | xflex_shrink,
-                    text("  ")}) | xflex_shrink
+            ? hbox({text(std::string(feedback_padding, ' ')), text(feedback_label) | dim,
+                    text(std::string(feedback_padding, ' '))})
             : text("");
-        L.push_back(!show_work_spinner && s.copy_toast_text
+        copy_feedback->ComputeRequirement();
+        const int feedback_columns = s.copy_toast_text ? copy_feedback->requirement().min_x : 0;
+        copy_feedback = copy_feedback | size(WIDTH, EQUAL, feedback_columns);
+        L.push_back(!show_work_status && s.copy_toast_text
             ? hbox({filler(), copy_feedback}) | size(HEIGHT, EQUAL, 1)
             : text(""));
-        if (show_work_spinner) {
-            L.push_back(hbox({spinner_chrome, filler(), copy_feedback}) | flex_shrink);
+        const int work_columns = std::max(0, term_cols - feedback_columns);
+        const bool has_visible_response_parent = show_work_status && work_columns > 0;
+        if (show_work_status) {
+            auto bounded_work = spinner_chrome | xflex_shrink | xframe
+                | size(WIDTH, EQUAL, work_columns);
+            L.push_back(hbox({std::move(bounded_work), copy_feedback}) | size(HEIGHT, EQUAL, 1));
         }
         // Activity is inserted here after fixed chrome has been measured.
         const auto activity_position = L.size();
@@ -535,58 +564,19 @@ using namespace ftxui;
         }
         fixed_rows += prompt_height;
         const int activity_budget = std::max(0, std::min({
-            std::clamp(term_rows / 6, 1, 5),
             bottom_limit - fixed_rows,
             term_rows - header_rows - scroll_chrome_rows - transcript_floor - fixed_rows}));
-        const int todo_need = s.todo_store.items.empty() ? 0
-            : s.todo_store.completed_collapsed ? 1 : static_cast<int>(s.todo_store.items.size()) + 1;
-        const int team_need = static_cast<int>(s.task_view_store.live_teammates.size());
-        // A MessageResponse needs a visible work row to belong to. Without
-        // that parent, render tasks as standalone chrome at the input's edge.
-        const auto todo_prefix = show_work_spinner ? "  ⎿  " : "";
-        const int todo_columns = std::max(0, term_cols - (show_work_spinner ? 5 : 0));
+        // One response envelope contains peer headings and indented children.
+        // A full-width copy toast can leave no visible work parent to attach to.
+        const auto response_prefix = has_visible_response_parent ? "  ⎿  " : "";
         Elements activity;
-        if (activity_budget == 1 && todo_need > 0 && team_need > 0) {
-            const auto done = std::ranges::count_if(s.todo_store.items, [](const auto& item) {
-                return item.status == todos::TodoDisplayItem::Status::Completed;
-            });
-            const bool all_completed = static_cast<std::size_t>(done) == s.todo_store.items.size();
-            const auto summary = all_completed
-                ? std::format("{}Tasks {}/{} completed · Teams {} +{}",
-                    s.todo_store.completed_collapsed ? "✓ " : "", done,
-                    s.todo_store.items.size(), team_need, team_need)
-                : term_cols < 70
-                ? std::format("Tasks {}/{} +{} · Teams {} +{}", done,
-                    s.todo_store.items.size(), s.todo_store.items.size(), team_need, team_need)
-                : std::format("Tasks {}/{} done (+{} hidden) · Teams {} (+{} hidden)",
-                    done, s.todo_store.items.size(), s.todo_store.items.size(), team_need, team_need);
-            activity.push_back(hbox({text(todo_prefix) | dim,
-                text(teams::live::one_line_tail(summary,
-                    static_cast<std::size_t>(todo_columns)))
-                    | color(loom::ui::design::theme::current_theme().palette->muted)
-                    | size(WIDTH, EQUAL, todo_columns)}));
-        } else if (activity_budget > 0) {
-            int todo_rows = todo_need > 0 ? activity_budget : 0;
-            int team_rows = team_need > 0 ? activity_budget : 0;
-            if (todo_need > 0 && team_need > 0) {
-                todo_rows = (activity_budget + 1) / 2;
-                team_rows = activity_budget - todo_rows;
-                if (todo_need < todo_rows) {
-                    team_rows += todo_rows - todo_need;
-                    todo_rows = todo_need;
-                }
-                if (team_need < team_rows) {
-                    todo_rows = std::min(todo_need, todo_rows + team_rows - team_need);
-                    team_rows = team_need;
-                }
-            }
-            if (todo_rows > 0)
-                activity.push_back(hbox({text(todo_prefix) | dim,
-                    todos::RenderTodoPanel(s.todo_store.items, todo_columns, todo_rows,
-                        s.todo_store.completed_collapsed)}));
-            if (team_rows > 0)
-                activity.push_back(teams::live::RenderLiveTeammateStrip(
-                    s.task_view_store.live_teammates, term_cols, team_rows));
+        if (activity_budget > 0 && (!s.todo_store.items.empty()
+                || !s.task_view_store.runtime_agents.empty()
+                || !s.task_view_store.live_teammates.empty())) {
+            activity.push_back(agents::runtime::RenderRuntimeAgentActivity(
+                s.task_view_store.runtime_agents, s.todo_store.items,
+                s.task_view_store.live_teammates, term_cols, activity_budget,
+                s.todo_store.completed_collapsed, response_prefix));
         }
         L.insert(L.begin() + static_cast<std::ptrdiff_t>(activity_position),
                  activity.begin(), activity.end());

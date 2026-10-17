@@ -65,6 +65,7 @@ import loom.commands.config;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.tools.mcp;
 import loom.query.query_engine;
+import loom.query.assembly;
 import loom.memdir.paths;
 import loom.tools.agent_runtime;
 import loom.tools.team;
@@ -615,6 +616,7 @@ TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
         .background = true,
         .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
         .output = std::string("native agent completed with useful context"),
+        .parent_session_id = std::string("notification-parent"),
     });
 
     loom::core::ToolRegistry registry;
@@ -626,6 +628,8 @@ TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
     config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
 
     loom::core::QueryEngine engine(std::move(config), registry);
+    engine.set_session_id("notification-parent");
+    engine.set_session_storage(root / "sessions");
     auto first_response = engine.query("hello");
     ASSERT_TRUE(first_response.has_value()) << first_response.error().message;
 
@@ -668,6 +672,8 @@ TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
         EXPECT_NE(text.find("<task_id>query-notify-agent</task_id>"), std::string::npos);
         EXPECT_NE(text.find("<status>completed</status>"), std::string::npos);
         EXPECT_NE(text.find("native agent completed with useful context"), std::string::npos);
+        EXPECT_FALSE(message.has("origin"));
+        EXPECT_FALSE(message.has("task_event"));
         saw_user_notification = true;
     });
     EXPECT_TRUE(saw_user_notification);
@@ -675,7 +681,28 @@ TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
     auto delivered_record = loom::tools::agent_runtime::native_agent_store().get("query-notify-agent");
     ASSERT_TRUE(delivered_record.has_value());
     EXPECT_TRUE(delivered_record->notification_delivered);
-    EXPECT_TRUE(loom::tools::agent_runtime::native_agent_store().take_pending_task_notifications().empty());
+    EXPECT_TRUE(loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-parent").empty());
+
+    bool persisted_event = false;
+    bool persisted_human = false;
+    const auto stored = loom::session::load_messages(root / "sessions", "notification-parent");
+    for (std::size_t i = 0; i < stored.size(); ++i) {
+        const auto value = stored[i].root();
+        if (value.get_string("origin") == "human") persisted_human = true;
+        if (value.get_string("origin") != "task_event") continue;
+        const auto restored = loom::query::parse_session_message_value(value, i);
+        ASSERT_TRUE(restored.has_value());
+        const auto* user = std::get_if<loom::core::UserMessage>(&*restored);
+        ASSERT_NE(user, nullptr);
+        const auto* event = std::get_if<loom::core::TaskEvent>(&user->origin);
+        ASSERT_NE(event, nullptr);
+        EXPECT_EQ(event->task_id, "query-notify-agent");
+        EXPECT_EQ(event->parent_session_id, "notification-parent");
+        EXPECT_EQ(event->display_name, "Query notify agent");
+        persisted_event = true;
+    }
+    EXPECT_TRUE(persisted_human);
+    EXPECT_TRUE(persisted_event);
 
     auto second_response = engine.query("follow up");
     ASSERT_TRUE(second_response.has_value()) << second_response.error().message;
@@ -1569,3 +1596,66 @@ TEST(QueryEngine, TimeBasedMicrocompactClearsOldCompactableToolResultsBeforeRequ
 }
 
 // End of file
+
+
+TEST(QueryEngine, InterleavedParentsAndChildConsumeOnlyTheirOwnTypedTaskEvents) {
+    LocalMessagesServer server;
+    ASSERT_NE(server.port(), 0);
+    const auto root = fs::temp_directory_path() / "loom-query-typed-event-owners";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
+    auto& store = loom::tools::agent_runtime::native_agent_store();
+    store.clear_for_testing();
+    for (const auto owner : {"parent-a", "parent-b"}) {
+        auto record = loom::tools::agent_runtime::make_native_agent_record(std::string("task-") + owner, "general-purpose");
+        record.background = true;
+        record.status = loom::tools::agent_runtime::NativeAgentStatus::Completed;
+        record.parent_session_id = owner;
+        record.output = std::string("result for ") + owner;
+        store.upsert(std::move(record));
+    }
+    loom::core::ToolRegistry registry;
+    auto config = [&] {
+        loom::core::QueryEngineConfig value;
+        value.api_key = "test-key";
+        value.base_url = server.base_url();
+        value.cwd = root.string();
+        value.retry_policy.max_retries = 0;
+        value.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
+        return value;
+    };
+    loom::core::QueryEngine parent_a(config(), registry);
+    loom::core::QueryEngine parent_b(config(), registry);
+    loom::core::QueryEngine child(config(), registry);
+    parent_a.set_session_id("parent-a");
+    parent_b.set_session_id("parent-b");
+    child.set_session_id("child");
+    ASSERT_TRUE(child.query("child turn"));
+    EXPECT_FALSE(store.get("task-parent-a")->notification_delivered);
+    EXPECT_FALSE(store.get("task-parent-b")->notification_delivered);
+    ASSERT_TRUE(parent_b.query("parent b turn"));
+    EXPECT_FALSE(store.get("task-parent-a")->notification_delivered);
+    EXPECT_TRUE(store.get("task-parent-b")->notification_delivered);
+    ASSERT_TRUE(parent_a.query("parent a turn"));
+    EXPECT_TRUE(store.get("task-parent-a")->notification_delivered);
+    auto events = [](const auto& engine, std::string_view expected_owner) {
+        std::size_t count = 0;
+        for (const auto& message : engine.get_conversation()) {
+            const auto* user = std::get_if<loom::core::UserMessage>(&message);
+            if (!user) continue;
+            const auto* event = std::get_if<loom::core::TaskEvent>(&user->origin);
+            if (!event) continue;
+            EXPECT_EQ(event->parent_session_id, expected_owner);
+            ++count;
+        }
+        return count;
+    };
+    EXPECT_EQ(events(child, "child"), 0u);
+    EXPECT_EQ(events(parent_a, "parent-a"), 1u);
+    EXPECT_EQ(events(parent_b, "parent-b"), 1u);
+    ASSERT_TRUE(parent_b.query("another b turn"));
+    EXPECT_EQ(events(parent_b, "parent-b"), 1u);
+    store.clear_for_testing();
+    fs::remove_all(root);
+}

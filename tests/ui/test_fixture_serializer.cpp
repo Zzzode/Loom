@@ -51,9 +51,11 @@ namespace {
 [[nodiscard]] std::string round_trip_commit(const Message& msg) {
     const std::string s1 = commit_to_json(msg);
     auto doc = json::parse(s1);
-    if (!doc) return s1;
+    EXPECT_TRUE(doc.has_value());
+    if (!doc) return {};
     auto step = loom::testing::detail::parse_step(doc->root(), 0);
-    if (!step.message) return s1;
+    EXPECT_TRUE(step.message.has_value());
+    if (!step.message) return {};
     return commit_to_json(*step.message);
 }
 
@@ -488,4 +490,71 @@ TEST(FixtureSerializer, AllEventsProduceValidJson) {
         auto doc = json::parse(s);
         EXPECT_TRUE(doc.has_value()) << "Invalid JSON: " << s;
     }
+}
+
+TEST(FixtureSerializer, UserOriginsAndRawXmlRoundTripWithoutInference) {
+    const std::string body = "<task_notification><summary>raw &amp; /private/output</summary></task_notification>";
+    const std::vector<UserMessageOrigin> origins{
+        HumanInput{}, LegacyHistory{},
+        TaskEvent{"sub-1", "parent-1", TaskEventKind::Subagent,
+            TaskEventStatus::Failed, "Review 中文"},
+        TaskEvent{"team-1", "parent-1", TaskEventKind::TeamAgent,
+            TaskEventStatus::Stopped, "Tester & <literal>"}};
+    for (const auto& origin : origins) {
+        UserMessage user;
+        user.origin = origin;
+        user.content.push_back(TextBlock{body});
+        const auto encoded = commit_to_json(Message{user});
+        auto parsed = json::parse(encoded);
+        ASSERT_TRUE(parsed.has_value()) << encoded;
+        ASSERT_TRUE(parsed->root().get("message").get("origin").is_str());
+        auto step = loom::testing::detail::parse_step(parsed->root(), 0);
+        ASSERT_TRUE(step.message.has_value());
+        ASSERT_TRUE(std::holds_alternative<UserMessage>(*step.message));
+        const auto& decoded = std::get<UserMessage>(*step.message);
+        EXPECT_EQ(decoded.origin, origin);
+        ASSERT_EQ(decoded.content.size(), 1u);
+        EXPECT_EQ(std::get<TextBlock>(decoded.content.front()).text, body);
+        EXPECT_EQ(commit_to_json(*step.message), encoded);
+    }
+}
+
+TEST(FixtureSerializer, OldCommitIsLegacyAndInvalidMetadataStaysHuman) {
+    for (const auto& suffix : {std::string{}, std::string{R"(,"origin":null)"},
+                              std::string{R"(,"origin":"task_event","task_event":{})"}}) {
+        const auto input = std::string{R"({"type":"__commit__","message":{"role":"user","content":[{"type":"text","text":"<task_notification>same XML</task_notification>"}])"} + suffix + "}}";
+        auto parsed = json::parse(input);
+        ASSERT_TRUE(parsed.has_value()) << input;
+        auto step = loom::testing::detail::parse_step(parsed->root(), 0);
+        ASSERT_TRUE(step.message.has_value());
+        ASSERT_TRUE(std::holds_alternative<UserMessage>(*step.message));
+        const auto& user = std::get<UserMessage>(*step.message);
+        EXPECT_EQ(std::holds_alternative<LegacyHistory>(user.origin), suffix.empty());
+        EXPECT_EQ(std::holds_alternative<HumanInput>(user.origin), !suffix.empty());
+        auto saved = json::parse(commit_to_json(*step.message));
+        ASSERT_TRUE(saved.has_value());
+        EXPECT_EQ(saved->root().get("message").get_string("origin"),
+                  suffix.empty() ? "legacy_history" : "human");
+        EXPECT_EQ(std::get<TextBlock>(user.content.front()).text,
+                  "<task_notification>same XML</task_notification>");
+    }
+}
+
+TEST(FixtureSerializer, InvalidTaskEventResavesAsHumanWithoutLosingModelContent) {
+    UserMessage user;
+    user.origin = TaskEvent{"agent", "parent", TaskEventKind::Subagent,
+        TaskEventStatus::Completed, std::string(4097, 'x')};
+    const std::string body = "<task_notification><result>keep full /private/output &amp; context</result></task_notification>";
+    user.content.push_back(TextBlock{body});
+    auto parsed = json::parse(commit_to_json(Message{user}));
+    ASSERT_TRUE(parsed.has_value());
+    auto object = parsed->root().get("message");
+    EXPECT_EQ(object.get_string("origin"), "human");
+    EXPECT_FALSE(object.get("task_event").valid());
+    auto step = loom::testing::detail::parse_step(parsed->root(), 0);
+    ASSERT_TRUE(step.message.has_value());
+    const auto& decoded = std::get<UserMessage>(*step.message);
+    EXPECT_TRUE(std::holds_alternative<HumanInput>(decoded.origin));
+    ASSERT_EQ(decoded.content.size(), 1u);
+    EXPECT_EQ(std::get<TextBlock>(decoded.content.front()).text, body);
 }

@@ -465,7 +465,9 @@ private:
                 ? std::nullopt
                 : std::optional<std::string>{plan.system_prompt},
             .worktree_path = plan.worktree_path,
-            .parent_session_id = teammate_parent_session_id(),
+            .parent_session_id = plan.parent_session_id && !plan.parent_session_id->empty()
+                ? *plan.parent_session_id
+                : teammate_parent_session_id(),
             .permissions = plan.allowed_tools,
         };
         auto executor = loom::utils::swarm_backends::BackendRegistry::get_teammate_executor(

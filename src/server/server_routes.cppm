@@ -166,6 +166,9 @@ namespace detail {
             << R"(","role":")" << json_escape(role)
             << R"(","content":")" << json_escape(content)
             << R"(","created_at":)" << epoch_seconds(std::chrono::system_clock::now());
+        if (role == "user") {
+            out << R"(,"origin":"human")";
+        }
         if (model && !model->empty()) {
             out << R"(,"model":")" << json_escape(*model) << "\"";
         }

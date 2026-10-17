@@ -11,6 +11,7 @@ module loom.query.assembly;
 import std;
 
 import loom.types.types;
+import loom.types.message_origin_json;
 import loom.config.config;
 import loom.query.query_engine;
 import loom.tools.tool;
@@ -155,7 +156,8 @@ namespace fs = std::filesystem;
 
 // Rank-10 seed-line parser. The server's prior_message_lines are the
 // session messages.jsonl lines written by message_json()
-// (server_routes.cppm:141): {"id","role","content"(string),"created_at",...}.
+// (server_routes.cppm): {"id","role","content"(string),"created_at",...},
+// including local origin metadata for newly written user messages.
 // This is the same shape session_line_to_message parses (server_routes.cppm
 // :299), re-homed here so a rank-10 assembly need not call the rank-13
 // server helper. The seed is fed to QueryEngine::restore_conversation (the
@@ -206,6 +208,7 @@ namespace fs = std::filesystem;
         }
         if (role == "user" || role == "system") {
             loom::core::UserMessage msg{};
+            msg.origin = loom::core::read_user_message_origin(root);
             msg.id.value = id;
             msg.timestamp = timestamp;
             msg.content.push_back(loom::core::TextBlock{content});
@@ -266,6 +269,7 @@ namespace fs = std::filesystem;
     }
     if (role == "user" || role == "system") {
         loom::core::UserMessage msg{};
+        msg.origin = loom::core::read_user_message_origin(root);
         msg.id.value = id;
         msg.timestamp = timestamp;
         msg.content = std::move(blocks);

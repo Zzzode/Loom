@@ -167,10 +167,12 @@ TEST(NativeAgentObservers, PersistenceRefreshKeepsTheStoresOriginalCreationTime)
     auto& store = sandbox.store;
     const auto original = std::chrono::system_clock::time_point{std::chrono::seconds{123}};
     store.upsert(runtime::NativeAgentRecord{
-        .agent_id = "stable-order", .background = true, .created_at = original});
+        .agent_id = "stable-order", .background = true, .created_at = original,
+        .parent_session_id = std::string("notification-session"),
+    });
     EXPECT_EQ(store.list().front().created_at, original);
     store.mark_completed("stable-order", "done");
-    (void)store.take_pending_task_notifications();
+    (void)store.take_pending_task_events("notification-session");
     EXPECT_EQ(store.get("stable-order")->created_at, original);
     EXPECT_EQ(store.list().front().created_at, original);
 }

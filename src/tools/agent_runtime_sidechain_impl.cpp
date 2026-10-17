@@ -10,6 +10,7 @@ import std;
 
 import loom.constants.xml;
 import loom.serdes.json;
+import loom.types.message_origin_json;
 
 namespace loom::tools::agent_runtime {
 
@@ -63,6 +64,33 @@ inline constexpr std::string_view kForkSubagentType = "fork";
         xml::SUMMARY_TAG, xml_escape(summary), xml::SUMMARY_TAG,
         result_section, worktree_section, xml::TASK_NOTIFICATION_TAG);
 }
+
+std::optional<PendingTaskEvent> make_native_agent_task_event(const NativeAgentRecord& record) {
+    using loom::core::TaskEventKind;
+    using loom::core::TaskEventStatus;
+    TaskEventStatus status;
+    switch (record.status) {
+        case NativeAgentStatus::Completed: status = TaskEventStatus::Completed; break;
+        case NativeAgentStatus::Failed: status = TaskEventStatus::Failed; break;
+        case NativeAgentStatus::Cancelled: status = TaskEventStatus::Stopped; break;
+        case NativeAgentStatus::Queued:
+        case NativeAgentStatus::Running: return std::nullopt;
+        default: return std::nullopt;
+    }
+    loom::core::TaskEvent event{
+        .task_id = record.agent_id,
+        .parent_session_id = record.parent_session_id.value_or(""),
+        .kind = record.team_name && !record.team_name->empty()
+            ? TaskEventKind::TeamAgent : TaskEventKind::Subagent,
+        .status = status,
+        .display_name = native_agent_display_name(record),
+    };
+    if (!loom::core::is_valid_task_event(event)) return std::nullopt;
+    auto context = format_native_agent_task_notification(record);
+    if (!context) return std::nullopt;
+    return PendingTaskEvent{std::move(event), std::move(*context)};
+}
+
 void write_json_string_array(std::ostream& out, std::string_view name, const std::vector<std::string>& values) {
     out << R"(,")" << name << R"(":[)";
     for (std::size_t i = 0; i < values.size(); ++i) {

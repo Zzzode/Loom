@@ -100,6 +100,7 @@ bool same_projection_message(const Message& a, const Message& b) {
             x.content.size() != y.content.size() ||
             !std::equal(x.content.begin(), x.content.end(), y.content.begin(),
                         same_projection_block)) return false;
+        if constexpr (std::is_same_v<T, UserMessage>) return x.origin == y.origin;
         if constexpr (std::is_same_v<T, ToolUseMessage>)
             return x.tool_name == y.tool_name && x.tool_input_json == y.tool_input_json;
         if constexpr (std::is_same_v<T, ToolResultMessage>)

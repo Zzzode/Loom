@@ -550,3 +550,45 @@ TEST(MessagesWireBackend, PingIsIgnoredNotAnError) {
         EXPECT_NE(d.kind, StreamDelta::Kind::Error);
     }
 }
+
+
+TEST(WireProtocol, TaskOriginRemainsLocalWhileBothBackendsPreserveModelContextExactly) {
+    const std::string context = "<task_notification><task_id>wire-task</task_id><status>completed</status><result>MODEL_RESULT</result></task_notification>";
+    auto user = make_user(context);
+    user.origin = loom::core::TaskEvent{
+        .task_id = "wire-task", .parent_session_id = "OWNER_MUST_STAY_LOCAL",
+        .kind = loom::core::TaskEventKind::TeamAgent,
+        .status = loom::core::TaskEventStatus::Failed,
+        .display_name = "UI_LABEL_MUST_STAY_LOCAL"};
+    auto verify = [&](auto& backend) {
+        wire::RequestInput input;
+        input.model = "wire-model";
+        input.messages.push_back(user);
+        auto typed = backend.prepare(input);
+        ASSERT_TRUE(typed.has_value());
+        auto document = parse_or_fail(typed->body);
+        const auto messages = document.root().get("messages");
+        ASSERT_EQ(messages.size(), 1u);
+        const auto message = messages.at(0);
+        EXPECT_FALSE(message.has("origin"));
+        EXPECT_FALSE(message.has("task_event"));
+        EXPECT_EQ(typed->body.find("OWNER_MUST_STAY_LOCAL"), std::string::npos);
+        EXPECT_EQ(typed->body.find("UI_LABEL_MUST_STAY_LOCAL"), std::string::npos);
+        auto content = message.get("content");
+        const auto text = content.is_str() ? std::string(content.as_str()) : content.at(0).get_string("text");
+        EXPECT_EQ(text, context);
+        auto& ordinary = std::get<loom::core::UserMessage>(input.messages[0]);
+        ordinary.origin = loom::core::HumanInput{};
+        const auto human = backend.prepare(input);
+        ASSERT_TRUE(human.has_value());
+        EXPECT_EQ(typed->body, human->body);
+        ordinary.origin = loom::core::LegacyHistory{};
+        const auto legacy = backend.prepare(input);
+        ASSERT_TRUE(legacy.has_value());
+        EXPECT_EQ(typed->body, legacy->body);
+    };
+    wire::MessagesWireBackend messages("https://example.invalid");
+    wire::OpenAiWireBackend openai("https://example.invalid");
+    verify(messages);
+    verify(openai);
+}

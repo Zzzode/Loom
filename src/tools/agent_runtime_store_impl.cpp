@@ -403,7 +403,9 @@ bool NativeAgentStore::is_cancel_requested(std::string_view agent_id) const {
             (active != active_executions_.end() && active->second.owner.stop_requested());
 }
 
-std::vector<std::string> NativeAgentStore::take_pending_task_notifications() {
+std::vector<PendingTaskEvent> NativeAgentStore::take_pending_task_events(
+    std::string_view parent_session_id) {
+        if (parent_session_id.empty()) return {};
         std::scoped_lock lock(mutex_);
         for (auto record : load_all_native_agent_records()) {
             auto agent_id = record.agent_id;
@@ -415,16 +417,17 @@ std::vector<std::string> NativeAgentStore::take_pending_task_notifications() {
             records_[std::move(agent_id)] = std::move(record);
         }
 
-        std::vector<std::string> notifications;
+        std::vector<PendingTaskEvent> notifications;
         for (auto& [_, record] : records_) {
             if (!record.background || record.notification_delivered) continue;
-            auto notification = format_native_agent_task_notification(record);
+            if (!record.parent_session_id || *record.parent_session_id != parent_session_id) continue;
+            auto notification = make_native_agent_task_event(record);
             if (!notification) continue;
             notifications.push_back(std::move(*notification));
             record.notification_delivered = true;
             (void)persist_native_agent_record(record);
         }
-        std::ranges::sort(notifications);
+        std::ranges::sort(notifications, {}, &PendingTaskEvent::model_context);
         return notifications;
 }
 

@@ -2782,6 +2782,27 @@ promoted to the repository root in the same series of commits, so
 
 ### C.1 — Tag formats and string protocols shared across modules
 
+- **Structured task provenance (RFC 0022).** `loom.types.message_origin` owns
+  HumanInput / LegacyHistory / TaskEvent values; `message_origin_json` owns
+  the versioned local metadata codec and UTF-8/size validation. Session JSONL,
+  conversation history, fixture recording and their readers must evolve
+  together. Missing old provenance is ambiguous LegacyHistory; unknown or
+  invalid explicit provenance is HumanInput. New human XML never becomes a
+  runtime event. Local provenance is not sent to either model wire backend.
+- **Independent projections.** Native completion creates typed UI facts plus
+  existing model-context XML once. Typed metadata is the UI authority; context
+  replacement/compaction may change model text without changing that identity.
+  New UI does not parse XML, decode entity-like typed labels or expose result,
+  error/output/worktree bodies. LegacyHistory alone retains strict XML display
+  compatibility; this does not authenticate old text or execute anything.
+- **Event ownership.** The native drain selects exact nonempty parent session
+  under its existing lock, preserving foreign/ownerless/invalid records.
+  TeamCreate propagates the existing parent_session_id through both pre-created
+  member records and nested Agent input. Terminal mapping and nonempty team_name
+  classification live in one factory. Delivery remains best effort with the
+  existing delivered flag; same task resume may notify again and crash windows
+  are not an exactly-once guarantee. TaskOutput's external XML stays unchanged.
+
 - **`src/constants/xml.cppm`** — The tag-format contract: the **producers** are
   `local_agent_task.cppm`, `agent_runtime_sidechain_impl.cpp`, `runtime_registry_native_agents.cpp`,
   and `task_tool.cppm` (which write `<task_notification>`, `<status>`, `<summary>` — **underscored**),

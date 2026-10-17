@@ -9,6 +9,7 @@ module loom.query.query_engine;
 import std;
 
 import loom.types.types;
+import loom.types.message_origin_json;
 import loom.serdes.json;
 
 namespace loom::core {
@@ -22,6 +23,7 @@ void QueryEngine::append_message_to_json(const Message& msg,
 
         if constexpr (std::is_same_v<T, UserMessage>) {
             msg_obj.add("role", doc.string("user"));
+            write_user_message_origin(m.origin, msg_obj, doc);
             msg_obj.add("content", content_to_json(m.content, doc));
         } else if constexpr (std::is_same_v<T, AssistantMessage>) {
             msg_obj.add("role", doc.string("assistant"));

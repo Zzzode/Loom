@@ -55,6 +55,7 @@
 // headers exist for them). The imports are TU-scoped: any .cpp that
 // includes this header gets them automatically.
 import loom.types.types;
+import loom.types.message_origin_json;
 import loom.serdes.json;
 import loom.ui.app.app;
 import loom.query.query_engine;
@@ -386,6 +387,7 @@ namespace detail {
 
         if (role == "user") {
             loom::core::UserMessage msg;
+            msg.origin = loom::core::read_user_message_origin(msg_val);
             if (const auto content = msg_val.get("content"); content.is_arr()) {
                 for (std::size_t i = 0; i < content.size(); ++i) {
                     msg.content.push_back(

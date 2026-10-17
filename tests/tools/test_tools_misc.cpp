@@ -2708,6 +2708,7 @@ TEST(Tools, RuntimeTaskUpdateMarksNativeAgentFailedWithOutputArtifactAndNotifica
         .name = "failed reviewer",
         .background = true,
         .status = loom::tools::agent_runtime::NativeAgentStatus::Running,
+        .parent_session_id = std::string("notification-session"),
         .transcript = {"user: inspect failure path"},
     });
 
@@ -2748,10 +2749,10 @@ TEST(Tools, RuntimeTaskUpdateMarksNativeAgentFailedWithOutputArtifactAndNotifica
     EXPECT_NE(output->content.front().text.find("<status>failed</status>"), std::string::npos);
     EXPECT_NE(output->content.front().text.find("<result>agent crashed while reading bindings</result>"), std::string::npos);
 
-    auto notifications = loom::tools::agent_runtime::native_agent_store().take_pending_task_notifications();
+    auto notifications = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
     ASSERT_EQ(notifications.size(), 1u);
-    EXPECT_NE(notifications.front().find("<task_id>failed-agent</task_id>"), std::string::npos);
-    EXPECT_NE(notifications.front().find("<status>failed</status>"), std::string::npos);
+    EXPECT_NE(notifications.front().model_context.find("<task_id>failed-agent</task_id>"), std::string::npos);
+    EXPECT_NE(notifications.front().model_context.find("<status>failed</status>"), std::string::npos);
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
@@ -2770,20 +2771,21 @@ TEST(Tools, NativeAgentNotificationsAreConsumedOnce) {
         .name = "notify reviewer",
         .background = true,
         .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
+        .parent_session_id = std::string("notification-session"),
     });
     loom::tools::agent_runtime::native_agent_store().mark_completed("notify-agent", "review complete");
 
-    auto first = loom::tools::agent_runtime::native_agent_store().take_pending_task_notifications();
+    auto first = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
     ASSERT_EQ(first.size(), 1u);
-    EXPECT_NE(first.front().find("<task_notification>"), std::string::npos);
-    EXPECT_NE(first.front().find("<status>completed</status>"), std::string::npos);
-    EXPECT_NE(first.front().find("<result>review complete</result>"), std::string::npos);
+    EXPECT_NE(first.front().model_context.find("<task_notification>"), std::string::npos);
+    EXPECT_NE(first.front().model_context.find("<status>completed</status>"), std::string::npos);
+    EXPECT_NE(first.front().model_context.find("<result>review complete</result>"), std::string::npos);
 
-    auto second = loom::tools::agent_runtime::native_agent_store().take_pending_task_notifications();
+    auto second = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
     EXPECT_TRUE(second.empty());
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
-    auto restored = loom::tools::agent_runtime::native_agent_store().take_pending_task_notifications();
+    auto restored = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
     EXPECT_TRUE(restored.empty());
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
@@ -3094,6 +3096,7 @@ TEST(Tools, RuntimeSendMessageQueuesStoppedNativeAgentForResume) {
         .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
         .output = "old completed output",
         .capabilities = {"Read"},
+        .parent_session_id = std::string("notification-session"),
         .transcript = {"user: original prompt", "assistant: old completed output"},
         .progress = 1.0,
         .notification_delivered = true,
@@ -3131,7 +3134,7 @@ TEST(Tools, RuntimeSendMessageQueuesStoppedNativeAgentForResume) {
         return line.find("Resume with this follow-up") != std::string::npos;
     }));
 
-    auto notifications = loom::tools::agent_runtime::native_agent_store().take_pending_task_notifications();
+    auto notifications = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
     EXPECT_TRUE(notifications.empty());
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
@@ -3156,7 +3159,7 @@ TEST(Tools, RuntimeTeamCreateRegistersMembersAndSharedTasks) {
     loom::core::ToolRegistry registry;
     loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
-    auto created = registry.execute("team_create", loom::core::ToolInput::from_json(R"({
+    auto team_input = loom::core::ToolInput::from_json(R"({
       "team_id": "runtime-team-members",
       "team_name": "Runtime Team Members",
       "members": [
@@ -3166,8 +3169,9 @@ TEST(Tools, RuntimeTeamCreateRegistersMembersAndSharedTasks) {
       "task_list": [
         {"id": "task-1", "description": "Inspect migration parity", "assigned_to": "team-researcher"}
       ]
-    })"));
-
+    })");
+    team_input.parent_session_id = "precreated-parent";
+    auto created = registry.execute("team_create", team_input);
     ASSERT_TRUE(created.has_value());
     ASSERT_FALSE(created->is_error);
     ASSERT_FALSE(created->content.empty());
@@ -3188,6 +3192,7 @@ TEST(Tools, RuntimeTeamCreateRegistersMembersAndSharedTasks) {
     ASSERT_TRUE(record.has_value());
     ASSERT_TRUE(record->team_name.has_value());
     EXPECT_EQ(*record->team_name, "Runtime Team Members");
+    EXPECT_EQ(record->parent_session_id, std::optional<std::string>{"precreated-parent"});
 
     auto team = loom::tools::global_team_store().get("runtime-team-members");
     ASSERT_TRUE(team.has_value()) << std::string(loom::tools::format_error(team.error()));
@@ -3273,7 +3278,7 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
     loom::core::ToolRegistry registry;
     loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
-    auto created = registry.execute("team_create", loom::core::ToolInput::from_json(R"({
+    auto team_input = loom::core::ToolInput::from_json(R"({
       "team_id": "native-start-team-id",
       "team_name": "Native Start Team",
       "start_native_agents": true,
@@ -3284,7 +3289,9 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
       "task_list": [
         {"id": "review-task", "description": "Review the native team launch", "assigned_to": "reviewer@native-start-team"}
       ]
-    })"));
+    })");
+    team_input.parent_session_id = "team-notification-parent";
+    auto created = registry.execute("team_create", team_input);
 
     ASSERT_TRUE(created.has_value());
     ASSERT_FALSE(created->is_error);
@@ -3324,6 +3331,17 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
         return line.find("[Team task review-task assigned by Native Start Team]") != std::string::npos;
     }));
     EXPECT_EQ(reviewer->output, std::optional<std::string>{"late stream response"});
+    EXPECT_EQ(planner->parent_session_id, std::optional<std::string>{"team-notification-parent"});
+    EXPECT_EQ(reviewer->parent_session_id, std::optional<std::string>{"team-notification-parent"});
+    auto& event_store = loom::tools::agent_runtime::native_agent_store();
+    EXPECT_TRUE(event_store.take_pending_task_events("foreign-parent").empty());
+    const auto initial_events = event_store.take_pending_task_events("team-notification-parent");
+    ASSERT_EQ(initial_events.size(), 2u);
+    for (const auto& event : initial_events) {
+        EXPECT_EQ(event.event.kind, loom::core::TaskEventKind::TeamAgent);
+        EXPECT_EQ(event.event.parent_session_id, "team-notification-parent");
+    }
+
 
     auto wait_for_member_done = [](std::string_view member_id) {
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
@@ -3367,6 +3385,12 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
         return line.find("Continue reviewing the launched team path") != std::string::npos;
     }));
 
+
+    EXPECT_EQ(reviewer->parent_session_id, std::optional<std::string>{"team-notification-parent"});
+    const auto resumed_events = event_store.take_pending_task_events("team-notification-parent");
+    ASSERT_EQ(resumed_events.size(), 1u);
+    EXPECT_EQ(resumed_events.front().event.task_id, "reviewer@native-start-team");
+    EXPECT_EQ(resumed_events.front().event.kind, loom::core::TaskEventKind::TeamAgent);
     const auto planner_output_file = fs::path{*planner->output_file_path};
     const auto reviewer_output_file = fs::path{*reviewer->output_file_path};
     auto deleted = registry.execute("team_delete", loom::core::ToolInput::from_json(R"({
@@ -3403,14 +3427,16 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
     {
         loom::core::ToolRegistry initial_registry;
         loom::tools::register_runtime_tools(initial_registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-        auto created = initial_registry.execute("team_create", loom::core::ToolInput::from_json(R"({
+        auto team_input = loom::core::ToolInput::from_json(R"({
           "team_id": "restart-resume-team-id",
           "team_name": "Restart Resume Team",
           "start_native_agents": true,
           "members": [
             {"agent_id": "reviewer@restart-resume-team", "prompt": "Run the initial restart-resume task", "subagent_type": "general-purpose"}
           ]
-        })"));
+        })");
+        team_input.parent_session_id = "restart-parent";
+        auto created = initial_registry.execute("team_create", team_input);
         ASSERT_TRUE(created.has_value());
         ASSERT_FALSE(created->is_error);
         ASSERT_TRUE(server.wait_for_request_count(1));
@@ -3426,6 +3452,11 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
     ASSERT_TRUE(completed->team_name.has_value());
     EXPECT_EQ(*completed->team_name, "Restart Resume Team");
     EXPECT_FALSE(completed->name.has_value());
+    EXPECT_EQ(completed->parent_session_id, std::optional<std::string>{"restart-parent"});
+    const auto first_events = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("restart-parent");
+    ASSERT_EQ(first_events.size(), 1u);
+    EXPECT_EQ(first_events.front().event.kind, loom::core::TaskEventKind::TeamAgent);
+
 
     // Wait for the detached background thread to finish update_teammate_completion_status()
     // after mark_completed(). The thread holds references to team store data.
@@ -3455,6 +3486,13 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
     auto resumed = loom::tools::agent_runtime::native_agent_store().get("reviewer@restart-resume-team");
     ASSERT_TRUE(resumed.has_value());
     EXPECT_TRUE(resumed->pending_messages.empty());
+    EXPECT_EQ(resumed->parent_session_id, std::optional<std::string>{"restart-parent"});
+    EXPECT_TRUE(loom::tools::agent_runtime::native_agent_store().take_pending_task_events("foreign-parent").empty());
+    const auto resumed_events = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("restart-parent");
+    ASSERT_EQ(resumed_events.size(), 1u);
+    EXPECT_EQ(resumed_events.front().event.task_id, "reviewer@restart-resume-team");
+    EXPECT_EQ(resumed_events.front().event.kind, loom::core::TaskEventKind::TeamAgent);
+
     EXPECT_TRUE(std::ranges::any_of(resumed->transcript, [](const auto& line) {
         return line.find("Continue after a fresh runtime registry") != std::string::npos;
     }));

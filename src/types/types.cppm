@@ -10,6 +10,7 @@ module;
 export module loom.types.types;
 
 import std;
+export import loom.types.message_origin;
 
 export namespace loom::core {
 
@@ -179,6 +180,7 @@ struct MessageBase {
 /// Message sent by the user
 struct UserMessage : MessageBase {
     static constexpr Role role = Role::User;
+    UserMessageOrigin origin = HumanInput{};
 };
 
 /// Response from the assistant (may contain tool use blocks)

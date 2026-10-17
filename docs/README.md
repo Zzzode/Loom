@@ -79,6 +79,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0018-live-generation-tps.md`](rfcs/0018-live-generation-tps.md) | **Implemented.** Estimated live generation rate beside the work indicator; stable Tasks/editor layout. |
 | [`rfcs/0020-completed-task-history.md`](rfcs/0020-completed-task-history.md) | **Implemented.** Completed task feedback, timed collapse and retained message history. |
 | [`rfcs/0021-subagent-visibility-and-delegation.md`](rfcs/0021-subagent-visibility-and-delegation.md) | **Implemented.** Session-scoped subagent status and proportional proactive research delegation. |
+| [`rfcs/0022-structured-task-events.md`](rfcs/0022-structured-task-events.md) | **Implemented.** Typed session-owned task events with separate model context and user notifications. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

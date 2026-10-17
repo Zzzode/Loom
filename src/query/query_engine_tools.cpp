@@ -31,8 +31,9 @@ std::vector<PermissionDenial> QueryEngine::get_permission_denials() const {
 }
 
 void QueryEngine::append_pending_native_agent_notifications() {
-    for (auto& notification : loom::tools::agent_runtime::native_agent_store().take_pending_task_notifications()) {
-        auto msg = make_user_message(notification);
+    for (auto& notification : loom::tools::agent_runtime::native_agent_store().take_pending_task_events(session_id_.str())) {
+        auto msg = make_user_message(notification.model_context);
+        msg.origin = std::move(notification.event);
         append_message(Message{std::move(msg)});
     }
 }

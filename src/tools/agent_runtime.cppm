@@ -7,6 +7,7 @@ export module loom.tools.agent_runtime;
 import std;
 
 import loom.serdes.json;
+import loom.types.types;
 // loom.teams.team_helpers is no longer named by any declaration in this
 // interface (its only caller, has_teammate_identity, moved to
 // agent_runtime_builtin_impl.cpp), but removing this import makes
@@ -122,6 +123,12 @@ struct NativeAgentRecord {
     bool cancel_requested = false;
     bool notification_delivered = false;
     bool worktree_cleanup_performed = false;
+};
+
+// One completion has independent user-facing facts and model-facing context.
+struct PendingTaskEvent {
+    loom::core::TaskEvent event;
+    std::string model_context;
 };
 
 [[nodiscard]] inline NativeAgentRecord make_native_agent_record(
@@ -603,6 +610,9 @@ AgentLifecycle get_agent_lifecycle(std::string_view agent_id);
 [[nodiscard]] std::optional<std::string> format_native_agent_task_notification(
     const NativeAgentRecord& record);
 
+[[nodiscard]] std::optional<PendingTaskEvent> make_native_agent_task_event(
+    const NativeAgentRecord& record);
+
 void write_json_string_array(std::ostream& out, std::string_view name, const std::vector<std::string>& values);
 
 void write_json_optional_string(
@@ -727,7 +737,8 @@ public:
 
     [[nodiscard]] bool is_cancel_requested(std::string_view agent_id) const;
 
-    [[nodiscard]] std::vector<std::string> take_pending_task_notifications();
+    [[nodiscard]] std::vector<PendingTaskEvent> take_pending_task_events(
+        std::string_view parent_session_id);
 
     void clear_for_testing();
 

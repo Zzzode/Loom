@@ -79,6 +79,7 @@ namespace json = loom::utils::json;
         record.agent_id = member.agent_id;
         record.agent_type = std::string(member_role_name(member.role));
         record.team_name = (*result)->name;
+        record.parent_session_id = input.parent_session_id;
         record.background = true;
         record.status = loom::tools::agent_runtime::NativeAgentStatus::Queued;
         loom::tools::agent_runtime::native_agent_store().upsert(std::move(record));
@@ -141,6 +142,7 @@ namespace json = loom::utils::json;
                 default_isolation));
             agent_input.parent_model = input.parent_model;
             agent_input.api_context = input.api_context;
+            agent_input.parent_session_id = input.parent_session_id;
             auto started = registry->execute("Agent", agent_input);
             if (!started) {
                 auto error = "failed to start team member " + member.agent_id + ": " + started.error().message;

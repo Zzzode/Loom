@@ -167,7 +167,9 @@ Every session persists two traces, both under the storage dir
 
 - `~/.loom/sessions/<session_id>/messages.jsonl` — the full conversation: every
   message appended to the engine, with tool-use/tool-result/text/thinking
-  blocks. One JSON object per line.
+  blocks. One JSON object per line. Local user records also carry RFC 0022
+  origin metadata (`human`, `task_event`, or the `legacy_history` re-save
+  sentinel). Task-event identity is not inferred from message text.
 - `~/.loom/dump-prompts/<session_id>.jsonl` — the API request body (messages
   array, system prompt, tool schemas) and the parsed response.
 
@@ -206,10 +208,15 @@ side silently breaks the other rather than failing to compile. Examples:
 - `tools/runtime_registry.cppm`'s `parse_lsp_action` mirrors
   `lsp_action_name()` in `lsp_tool.cppm`; a mismatch silently falls through to
   `LspAction::Symbols` — a *wrong answer*, not an error.
-- The `<task_notification>` / `<status>` / `<summary>` tag format is produced by
-  three modules (`local_agent_task`, `local_shell_task`, `runtime_registry`) and
-  consumed by `ui/messages/collapse_background_bash.cppm`; changing the
-  emitters' spelling silently stops the collapsing.
+- RFC 0022 task origin is encoded by `types/message_origin_json` and consumed
+  by session JSONL, conversation save/load, fixture recording/replay and App
+  projection. Change those local readers/writers together. Both model wire
+  backends deliberately exclude local origin metadata.
+- `<task_notification>` remains the model/tool compatibility envelope, emitted
+  by `local_agent_task`, `agent_runtime_sidechain_impl`,
+  `runtime_registry_native_agents`, and `task_tool`. XML constants keep their
+  underscored spelling. Only explicit `LegacyHistory` uses XML display parsing;
+  new TaskEvent UI reads typed fields and new human XML remains user text.
 
 `docs/decisions/design-decisions.md` catalogues these — consult it before
 changing a wire shape, a registry key, or a tag format.

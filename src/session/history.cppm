@@ -11,6 +11,7 @@ export module loom.session.history;
 import std;
 
 import loom.types.types;
+import loom.types.message_origin_json;
 import loom.serdes.json;
 
 export namespace loom::core {
@@ -436,7 +437,9 @@ private:
             obj.add("content", serialize_content_blocks(doc, value.content));
 
             using T = std::decay_t<decltype(value)>;
-            if constexpr (std::is_same_v<T, AssistantMessage>) {
+            if constexpr (std::is_same_v<T, UserMessage>) {
+                write_user_message_origin(value.origin, obj, doc);
+            } else if constexpr (std::is_same_v<T, AssistantMessage>) {
                 if (value.stop_reason) obj.add("stop_reason", doc.string(*value.stop_reason));
                 if (value.model) obj.add("model", doc.string(*value.model));
             } else if constexpr (std::is_same_v<T, SystemMessage>) {
@@ -611,7 +614,9 @@ private:
 
         auto role = value.get_string("role");
         if (role == "user") {
-            return UserMessage{std::move(base)};
+            UserMessage message{std::move(base)};
+            message.origin = read_user_message_origin(value);
+            return message;
         }
         if (role == "assistant") {
             auto tool_name = value.get_string("tool_name");

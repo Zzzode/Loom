@@ -172,7 +172,7 @@ protected:
 
     auto run(BudgetMessagesServer& server, loom::core::ToolRegistry& registry, bool background = false) {
         BudgetEnvironmentGuard base_url("LOOM_BASE_URL", server.base_url());
-        loom::tools::AgentTool tool({}, 0, &registry);
+        loom::tools::AgentTool tool({.parent_session_id = std::string("notification-session")}, 0, &registry);
         auto result = tool.execute(loom::core::ToolInput::from_json(std::format(
             R"({{"description":"Budget regression","prompt":"Use BudgetProbe and finish","subagent_type":"budget-worker","name":"budget-agent","run_in_background":{}}})",
             background)));
@@ -339,10 +339,10 @@ TEST_F(AgentTurnBudget, BackgroundExhaustionPublishesFailedNotification) {
     const auto record = store().get("budget-agent");
     ASSERT_TRUE(record.has_value());
     EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Failed);
-    const auto notifications = store().take_pending_task_notifications();
+    const auto notifications = store().take_pending_task_events("notification-session");
     ASSERT_EQ(notifications.size(), 1u);
-    EXPECT_NE(notifications.front().find("<status>failed</status>"), std::string::npos);
-    EXPECT_NE(notifications.front().find("partial background investigation"), std::string::npos);
+    EXPECT_NE(notifications.front().model_context.find("<status>failed</status>"), std::string::npos);
+    EXPECT_NE(notifications.front().model_context.find("partial background investigation"), std::string::npos);
     EXPECT_EQ(server.request_count(), 1);
     expect_stop_hook_once();
 }
@@ -359,7 +359,7 @@ TEST_F(AgentTurnBudget, ExhaustedAgentCanResumeWithCompletedToolResultHistory) {
     ASSERT_TRUE(first->is_error);
     expect_stop_hook_once();
     BudgetEnvironmentGuard base_url("LOOM_BASE_URL", server.base_url());
-    loom::tools::AgentTool tool({}, 0, &registry);
+    loom::tools::AgentTool tool({.parent_session_id = std::string("notification-session")}, 0, &registry);
     auto resumed = tool.execute(loom::core::ToolInput::from_json(
         R"({"description":"Resume budget regression","prompt":"Continue the unfinished task","subagent_type":"budget-worker","agent_id":"budget-agent","resume_existing":true})"));
     ASSERT_TRUE(resumed.has_value()) << resumed.error().format();

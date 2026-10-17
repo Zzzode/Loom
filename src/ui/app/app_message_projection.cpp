@@ -45,15 +45,15 @@ std::optional<std::string> take_notification_tag(
     return value;
 }
 
-std::string notification_label(std::string_view value) {
-    // Decode the five entities emitted by the notification producers exactly
-    // once. Decoding a second time would reinterpret literal entity-like names.
+std::string notification_label(std::string_view value, bool decode_entities) {
+    // Only legacy XML names decode producer entities, exactly once. Typed
+    // names are raw text, so entity-like substrings must remain literal.
     constexpr std::array<std::pair<std::string_view, char>, 5> entities{{
         {"&amp;", '&'}, {"&lt;", '<'}, {"&gt;", '>'}, {"&quot;", '"'}, {"&apos;", '\''}}};
     std::string decoded;
     for (std::size_t i = 0; i < value.size();) {
         char character = value[i++];
-        if (character == '&') {
+        if (decode_entities && character == '&') {
             for (const auto& [entity, replacement] : entities) {
                 if (value.substr(i - 1).starts_with(entity)) {
                     character = replacement;
@@ -80,8 +80,32 @@ std::string notification_label(std::string_view value) {
 
 std::optional<repl::MessageDisplayEntry> project_task_notification(
     const UserMessage& message, std::chrono::system_clock::time_point timestamp) {
-    // There is no trusted internal/user flag in the persisted message format.
-    // Match only the complete, single-text-block protocol, never mixed content.
+    if (const auto* event = std::get_if<TaskEvent>(&message.origin)) {
+        std::string_view actor;
+        switch (event->kind) {
+            case TaskEventKind::Subagent: actor = "Subagent"; break;
+            case TaskEventKind::TeamAgent: actor = "Team Agent"; break;
+        }
+        std::string_view state;
+        switch (event->status) {
+            case TaskEventStatus::Completed: state = "completed"; break;
+            case TaskEventStatus::Failed: state = "failed"; break;
+            case TaskEventStatus::Stopped: state = "stopped"; break;
+        }
+        if (actor.empty() || state.empty()) return std::nullopt;
+        auto name = notification_label(event->display_name, false);
+        if (name.empty()) name = notification_label(event->task_id, false);
+        repl::MessageDisplayEntry entry;
+        entry.role = "system";
+        entry.system_subtype = "background_task";
+        entry.content_preview = std::format("{} {} · {}", actor, state, name);
+        entry.timestamp = timestamp;
+        return entry;
+    }
+    // Missing provenance is ambiguous old history, never evidence of a trusted
+    // runtime event. New human text remains user text even if XML is identical.
+    if (!std::holds_alternative<LegacyHistory>(message.origin)) return std::nullopt;
+    // Display compatibility accepts only a complete single-text-block envelope.
     if (message.content.size() != 1) return std::nullopt;
     const auto* text = std::get_if<TextBlock>(&message.content.front());
     if (!text) return std::nullopt;
@@ -144,8 +168,8 @@ std::optional<repl::MessageDisplayEntry> project_task_notification(
             label = label.substr(start, label.size() - start - suffix.size());
         }
     } else if (label.starts_with("Agent ")) return std::nullopt;
-    auto name = notification_label(label);
-    if (name.empty()) name = notification_label(*id);
+    auto name = notification_label(label, true);
+    if (name.empty()) name = notification_label(*id, true);
     if (name.empty()) name = "background task";
     repl::MessageDisplayEntry entry;
     entry.role = "system";

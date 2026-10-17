@@ -8,6 +8,7 @@ module loom.query.fixture_serializer;
 import std;
 
 import loom.types.types;
+import loom.types.message_origin_json;
 import loom.serdes.json;
 
 namespace loom::core {
@@ -96,6 +97,7 @@ namespace json = loom::utils::json;
             msg_obj.add("content", content_arr);
         } else if constexpr (std::is_same_v<T, UserMessage>) {
             msg_obj.set("role", "user");
+            write_user_message_origin(m.origin, msg_obj, doc);
             auto content_arr = doc.array();
             for (const auto& block : m.content) {
                 content_arr.append(content_block_to_json_val(block, doc));

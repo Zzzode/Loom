@@ -18,6 +18,9 @@
 import std;
 
 import loom.types.types;
+import loom.types.message_origin_json;
+import loom.query.assembly;
+import loom.serdes.json;
 import loom.tools.tool;              // ToolInput, ToolResult, ToolPermission
 import loom.tools.runtime_registry;  // make_runtime_tool (detail namespace)
 import loom.hooks.tool_permissions;  // PermissionContext, PermissionResponse
@@ -390,4 +393,91 @@ TEST(SdkHarness, PermissionCallbackInvoked) {
     EXPECT_GE(permission_asks.load(), 1)
         << "the PermissionCallback must be invoked for the mock tool";
     EXPECT_EQ(result->tool_rounds, 1u);
+}
+
+TEST(SdkHarness, ResumePreservesStructuredOriginsAndLegacyXmlWithoutInference) {
+    using namespace loom::core;
+    const auto sessions_dir = fs::temp_directory_path() /
+        ("loom_harness_origins_" + std::to_string(::getpid()) + "_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const std::string session_id = "origin-session";
+    const std::string body = "<task_notification>same &amp; /private/path</task_notification>";
+    const std::vector<UserMessageOrigin> origins{
+        HumanInput{}, LegacyHistory{},
+        TaskEvent{"sub-1", session_id, TaskEventKind::Subagent, TaskEventStatus::Completed, "Review"},
+        TaskEvent{"tester", session_id, TaskEventKind::TeamAgent, TaskEventStatus::Stopped, "Test 中文"}};
+    for (const auto& origin : origins) {
+        loom::utils::json::JsonMutDoc doc;
+        auto object = doc.object();
+        object.add("role", doc.string("user"));
+        object.add("content", doc.string(body));
+        write_user_message_origin(origin, object, doc);
+        doc.set_root(object);
+        ASSERT_TRUE(loom::session::append_message(sessions_dir, session_id, doc.to_string()));
+    }
+    ASSERT_TRUE(loom::session::append_message(sessions_dir, session_id,
+        R"({"role":"user","content":"<task_notification>old XML</task_notification>"})"));
+    loom::sdk::HarnessConfig config;
+    config.model = "loom-test";
+    config.api_key_provider = [] { return "test-key"; };
+    config.sessions_dir = sessions_dir;
+    loom::sdk::Harness harness(std::move(config));
+    ASSERT_TRUE(harness.resume(session_id).has_value());
+    const auto messages = harness.conversation();
+    ASSERT_EQ(messages.size(), origins.size() + 1);
+    for (std::size_t index = 0; index < origins.size(); ++index) {
+        ASSERT_TRUE(std::holds_alternative<UserMessage>(messages[index]));
+        const auto& user = std::get<UserMessage>(messages[index]);
+        EXPECT_EQ(user.origin, origins[index]);
+        ASSERT_EQ(user.content.size(), 1u);
+        EXPECT_EQ(std::get<TextBlock>(user.content.front()).text, body);
+    }
+    ASSERT_TRUE(std::holds_alternative<UserMessage>(messages.back()));
+    EXPECT_TRUE(std::holds_alternative<LegacyHistory>(std::get<UserMessage>(messages.back()).origin));
+    fs::remove_all(sessions_dir);
+}
+
+TEST(SdkHarness, SessionSeedParserPreservesOriginForStringAndBlockContent) {
+    using namespace loom::core;
+    const TaskEvent event{"agent-1", "parent-1", TaskEventKind::TeamAgent,
+        TaskEventStatus::Failed, "Name & <literal>"};
+    for (const bool array_content : {false, true}) {
+        for (const UserMessageOrigin& origin :
+             {UserMessageOrigin{HumanInput{}}, UserMessageOrigin{LegacyHistory{}}, UserMessageOrigin{event}}) {
+            loom::utils::json::JsonMutDoc doc;
+            auto object = doc.object();
+            object.add("role", doc.string("user"));
+            if (array_content) {
+                auto blocks = doc.array();
+                auto block = doc.object();
+                block.add("type", doc.string("text"));
+                block.add("text", doc.string("unchanged XML &amp; /private/result"));
+                blocks.append(block);
+                object.add("content", blocks);
+            } else {
+                object.add("content", doc.string("unchanged XML &amp; /private/result"));
+            }
+            write_user_message_origin(origin, object, doc);
+            doc.set_root(object);
+            auto parsed = loom::utils::json::parse(doc.to_string());
+            ASSERT_TRUE(parsed.has_value());
+            auto message = loom::query::parse_session_message_value(parsed->root(), 0);
+            ASSERT_TRUE(message.has_value());
+            ASSERT_TRUE(std::holds_alternative<UserMessage>(*message));
+            const auto& user = std::get<UserMessage>(*message);
+            EXPECT_EQ(user.origin, origin);
+            ASSERT_EQ(user.content.size(), 1u);
+            EXPECT_EQ(std::get<TextBlock>(user.content.front()).text, "unchanged XML &amp; /private/result");
+        }
+    }
+    for (const auto metadata : {R"("origin":null)", R"("origin":"unknown")",
+                               R"("origin":"task_event","task_event":{})"}) {
+        auto parsed = loom::utils::json::parse(std::string{R"({"role":"user","content":"keep raw XML",)"} + metadata + "}");
+        ASSERT_TRUE(parsed.has_value());
+        auto message = loom::query::parse_session_message_value(parsed->root(), 0);
+        ASSERT_TRUE(message.has_value());
+        const auto& user = std::get<UserMessage>(*message);
+        EXPECT_TRUE(std::holds_alternative<HumanInput>(user.origin));
+        EXPECT_EQ(std::get<TextBlock>(user.content.front()).text, "keep raw XML");
+    }
 }

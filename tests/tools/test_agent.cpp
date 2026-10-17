@@ -2485,6 +2485,7 @@ TEST(NativeAgentStore, ActiveCancellationWaitsForCleanupAndWinsOverSuccess) {
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
     loom::tools::agent_runtime::NativeAgentStore store;
     auto record = loom::tools::agent_runtime::make_native_agent_record("cleanup-agent", "runtime");
+    record.parent_session_id = "notification-session";
     record.background = true;
     store.upsert(std::move(record));
 
@@ -2508,7 +2509,7 @@ TEST(NativeAgentStore, ActiveCancellationWaitsForCleanupAndWinsOverSuccess) {
         EXPECT_EQ(pending->status, loom::tools::agent_runtime::NativeAgentStatus::Running);
         EXPECT_TRUE(pending->cancel_requested);
     }
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
 
     release_cleanup.set_value();
     store.wait_for_background_agents();
@@ -2517,8 +2518,8 @@ TEST(NativeAgentStore, ActiveCancellationWaitsForCleanupAndWinsOverSuccess) {
     EXPECT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
     EXPECT_TRUE(std::ranges::contains(cancelled->transcript, "system: cleanup finished"));
     EXPECT_FALSE(cancelled->output.has_value());
-    EXPECT_EQ(store.take_pending_task_notifications().size(), 1u);
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_EQ(store.take_pending_task_events("notification-session").size(), 1u);
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
     store.clear_for_testing();
     fs::remove_all(root);
 }
@@ -2606,6 +2607,7 @@ TEST(NativeAgentStore, RepeatedBackgroundLaunchesPublishEachCompletionOnce) {
     for (int index = 0; index < worker_count; ++index) {
         const auto agent_id = std::format("repeated-agent-{}", index);
         auto record = loom::tools::agent_runtime::make_native_agent_record(agent_id, "runtime");
+        record.parent_session_id = "notification-session";
         record.background = true;
         store.upsert(std::move(record));
         auto completed = std::make_shared<std::promise<void>>();
@@ -2623,8 +2625,8 @@ TEST(NativeAgentStore, RepeatedBackgroundLaunchesPublishEachCompletionOnce) {
         EXPECT_EQ(record.status, loom::tools::agent_runtime::NativeAgentStatus::Completed);
         EXPECT_EQ(std::ranges::count(record.transcript, "assistant: finished result"), 1);
     }
-    EXPECT_EQ(store.take_pending_task_notifications().size(), worker_count);
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_EQ(store.take_pending_task_events("notification-session").size(), worker_count);
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
     store.clear_for_testing();
     fs::remove_all(root);
 }
@@ -2719,13 +2721,13 @@ TEST(NativeAgentStore, ClosedOwnerRejectsForegroundExecutionWithoutPublishingBef
     ASSERT_TRUE(rejected.has_value());
     EXPECT_EQ(rejected->status, loom::tools::agent_runtime::NativeAgentStatus::Queued);
     EXPECT_TRUE(rejected->cancel_requested);
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
     store.append_transcript("closed-foreground", "system: rejected execution cleanup finished");
     store.finish_agent("closed-foreground", std::unexpected(std::string("owner is shutting down")));
     const auto finished = store.get("closed-foreground");
     ASSERT_TRUE(finished.has_value());
     EXPECT_EQ(finished->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
     store.clear_for_testing();
     fs::remove_all(root);
 }
@@ -2756,7 +2758,7 @@ TEST(NativeAgentStore, ForegroundCancellationWaitsForCleanupAndPublishesOnce) {
         EXPECT_EQ(pending->status, loom::tools::agent_runtime::NativeAgentStatus::Running);
         EXPECT_TRUE(pending->cancel_requested);
     }
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
     cleanup_gate.release();
     execution.get();
     const auto cancelled = store.get("foreground-cleanup");
@@ -2768,7 +2770,7 @@ TEST(NativeAgentStore, ForegroundCancellationWaitsForCleanupAndPublishesOnce) {
     const auto transcript = cancelled->transcript;
     store.finish_agent("foreground-cleanup", std::string("late success"));
     EXPECT_EQ(store.get("foreground-cleanup")->transcript, transcript);
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
     store.clear_for_testing();
     fs::remove_all(root);
 }
@@ -2780,6 +2782,7 @@ TEST(NativeAgentStore, FinalizationPreservesPublishedResultsAndDeliveredNotifica
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
     loom::tools::agent_runtime::NativeAgentStore store;
     auto completed_record = loom::tools::agent_runtime::make_native_agent_record("published-completion", "runtime");
+    completed_record.parent_session_id = "notification-session";
     completed_record.background = true;
     std::stop_source completion_owner;
     store.begin_execution(std::move(completed_record), completion_owner.get_token());
@@ -2788,7 +2791,7 @@ TEST(NativeAgentStore, FinalizationPreservesPublishedResultsAndDeliveredNotifica
     const auto completed = store.get("published-completion");
     ASSERT_TRUE(completed.has_value());
     ASSERT_EQ(completed->status, loom::tools::agent_runtime::NativeAgentStatus::Completed);
-    ASSERT_EQ(store.take_pending_task_notifications().size(), 1u);
+    ASSERT_EQ(store.take_pending_task_events("notification-session").size(), 1u);
     // Owner shutdown also sees the brief interval between finalization and unregistration.
     completion_owner.request_stop();
     store.cancel_and_wait_for_background_agents(completion_owner.get_token());
@@ -2797,7 +2800,7 @@ TEST(NativeAgentStore, FinalizationPreservesPublishedResultsAndDeliveredNotifica
     EXPECT_EQ(owner_shutdown_completion->status, loom::tools::agent_runtime::NativeAgentStatus::Completed);
     EXPECT_FALSE(owner_shutdown_completion->cancel_requested);
     EXPECT_EQ(owner_shutdown_completion->output, completed->output);
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
     // The execution remains registered briefly after finalization while its caller unwinds.
     store.request_cancel("published-completion", "late cancellation after successful finalization");
     store.finish_agent("published-completion", std::unexpected(std::string("late conflicting failure")));
@@ -2810,9 +2813,10 @@ TEST(NativeAgentStore, FinalizationPreservesPublishedResultsAndDeliveredNotifica
     EXPECT_EQ(unchanged_completion->cancel_requested, completed->cancel_requested);
     EXPECT_EQ(unchanged_completion->transcript, completed->transcript);
     EXPECT_TRUE(unchanged_completion->notification_delivered);
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
 
     auto cancelled_record = loom::tools::agent_runtime::make_native_agent_record("published-cancellation", "runtime");
+    cancelled_record.parent_session_id = "notification-session";
     cancelled_record.background = true;
     store.begin_execution(std::move(cancelled_record));
     store.mark_running("published-cancellation");
@@ -2822,7 +2826,7 @@ TEST(NativeAgentStore, FinalizationPreservesPublishedResultsAndDeliveredNotifica
     const auto cancelled = store.get("published-cancellation");
     ASSERT_TRUE(cancelled.has_value());
     ASSERT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
-    ASSERT_EQ(store.take_pending_task_notifications().size(), 1u);
+    ASSERT_EQ(store.take_pending_task_events("notification-session").size(), 1u);
     store.request_cancel("published-cancellation", "late conflicting cancellation request");
     store.finish_agent("published-cancellation", std::unexpected(std::string("late conflicting cancellation reason")));
     store.finish_agent("published-cancellation", std::string("late conflicting success"));
@@ -2834,7 +2838,7 @@ TEST(NativeAgentStore, FinalizationPreservesPublishedResultsAndDeliveredNotifica
     EXPECT_EQ(unchanged_cancellation->error, cancelled->error);
     EXPECT_EQ(unchanged_cancellation->transcript, cancelled->transcript);
     EXPECT_TRUE(unchanged_cancellation->notification_delivered);
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
     store.clear_for_testing();
     fs::remove_all(root);
 }
@@ -2849,6 +2853,7 @@ TEST(NativeAgentStore, RecordRegistrationMakesQueuedAndRunningExecutionsActiveAt
                               loom::tools::agent_runtime::NativeAgentStatus::Running}) {
         const auto agent_id = std::format("registered-{}", loom::tools::agent_runtime::native_agent_status_name(status));
         auto record = loom::tools::agent_runtime::make_native_agent_record(agent_id, "runtime");
+        record.parent_session_id = "notification-session";
         record.status = status;
         store.begin_execution(std::move(record));
         const auto registered = store.get(agent_id);
@@ -2860,7 +2865,7 @@ TEST(NativeAgentStore, RecordRegistrationMakesQueuedAndRunningExecutionsActiveAt
         // There is no visible record without its active execution registration.
         EXPECT_EQ(pending->status, status);
         EXPECT_TRUE(pending->cancel_requested);
-        EXPECT_TRUE(store.take_pending_task_notifications().empty());
+        EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
         store.append_transcript(agent_id, "system: registered execution cleanup finished");
         store.finish_agent(agent_id, std::string("result before cancellation"));
         store.end_execution(agent_id);
@@ -2868,7 +2873,7 @@ TEST(NativeAgentStore, RecordRegistrationMakesQueuedAndRunningExecutionsActiveAt
         ASSERT_TRUE(cancelled.has_value());
         EXPECT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
         EXPECT_TRUE(std::ranges::contains(cancelled->transcript, "system: registered execution cleanup finished"));
-        EXPECT_TRUE(store.take_pending_task_notifications().empty());
+        EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
     }
     std::stop_source closed_owner;
     closed_owner.request_stop();
@@ -2885,7 +2890,7 @@ TEST(NativeAgentStore, RecordRegistrationMakesQueuedAndRunningExecutionsActiveAt
     ASSERT_TRUE(cancelled.has_value());
     EXPECT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
     EXPECT_TRUE(std::ranges::contains(cancelled->transcript, "system: closed owner cleanup finished"));
-    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
     store.clear_for_testing();
     fs::remove_all(root);
 }
@@ -3127,7 +3132,7 @@ TEST(Tools, ForegroundAgentFinalizesSuccessFailureAndExceptionAfterOwnedCleanup)
             EXPECT_FALSE(record->worktree_path.has_value());
             EXPECT_FALSE(fs::exists(root / ".loom" / "worktrees" / agent_id));
             EXPECT_TRUE(loom::tools::todo_write_store().get_items(agent_id).empty());
-            EXPECT_TRUE(store.take_pending_task_notifications().empty());
+            EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
             auto completed_team = team_store.get("lifecycle-team");
             ASSERT_TRUE(completed_team.has_value());
             const auto member = std::ranges::find_if((*completed_team)->members, [&](const auto& candidate) {
@@ -4750,6 +4755,7 @@ TEST(Tools, AgentToolSpawnsTeammateWithDeterministicAgentId) {
     fs::create_directories(root);
     EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
     EnvironmentGuard agent_runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
+    EnvironmentGuard ambient_session_guard("LOOM_SESSION_ID", "ambient-session");
     EnvironmentGuard teammate_backend_guard("LOOM_TEAMMATE_BACKEND", "in-process");
     loom::utils::swarm_backends::BackendRegistry::reset();
     loom::tools::global_team_store().clear_for_testing();
@@ -4759,14 +4765,16 @@ TEST(Tools, AgentToolSpawnsTeammateWithDeterministicAgentId) {
     ASSERT_TRUE(team.has_value()) << std::string(loom::tools::format_error(team.error()));
 
     loom::tools::AgentTool tool;
-    auto result = tool.execute(loom::core::ToolInput::from_json(R"({
+    auto input = loom::core::ToolInput::from_json(R"({
       "description": "Spawn reviewer",
       "prompt": "Review migration parity",
       "name": "reviewer-one",
       "team_name": "migration-team",
       "subagent_type": "general-purpose",
       "mode": "plan"
-    })"));
+    })");
+    input.parent_session_id = "actual-parent-session";
+    auto result = tool.execute(input);
 
     ASSERT_TRUE(result.has_value());
     ASSERT_FALSE(result->is_error);
@@ -4793,7 +4801,7 @@ TEST(Tools, AgentToolSpawnsTeammateWithDeterministicAgentId) {
     EXPECT_EQ(*record->teammate_task_id, "in-process:reviewer-one@migration-team");
     EXPECT_FALSE(record->teammate_pane_id.has_value());
     ASSERT_TRUE(record->parent_session_id.has_value());
-    EXPECT_EQ(*record->parent_session_id, "native-session");
+    EXPECT_EQ(*record->parent_session_id, "actual-parent-session");
 
     auto restored_team = loom::tools::global_team_store().get("migration-team");
     ASSERT_TRUE(restored_team.has_value()) << std::string(loom::tools::format_error(restored_team.error()));
@@ -4816,6 +4824,16 @@ TEST(Tools, AgentToolSpawnsTeammateWithDeterministicAgentId) {
         listed->content.front().text.find("teammate_task_id: in-process:reviewer-one@migration-team"),
         std::string::npos);
 
+    auto& store = loom::tools::agent_runtime::native_agent_store();
+    store.mark_completed("reviewer-one@migration-team", "review complete");
+    EXPECT_TRUE(store.take_pending_task_events("ambient-session").empty());
+    EXPECT_TRUE(store.take_pending_task_events("native-session").empty());
+    auto events = store.take_pending_task_events("actual-parent-session");
+    ASSERT_EQ(events.size(), 1u);
+    EXPECT_EQ(events.front().event.kind, loom::core::TaskEventKind::TeamAgent);
+    EXPECT_EQ(events.front().event.parent_session_id, "actual-parent-session");
+    EXPECT_EQ(events.front().event.task_id, "reviewer-one@migration-team");
+
     loom::tools::global_team_store().clear_for_testing();
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     loom::utils::swarm_backends::BackendRegistry::reset();
@@ -4828,6 +4846,7 @@ TEST(Tools, AgentToolSpawnsTeammateWithUniqueNameWhenTeamAlreadyHasMember) {
     fs::create_directories(root);
     EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
     EnvironmentGuard agent_runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
+    EnvironmentGuard ambient_session_guard("LOOM_SESSION_ID", "fallback-parent-session");
     EnvironmentGuard teammate_backend_guard("LOOM_TEAMMATE_BACKEND", "in-process");
     loom::utils::swarm_backends::BackendRegistry::reset();
     loom::tools::global_team_store().clear_for_testing();
@@ -4866,6 +4885,8 @@ TEST(Tools, AgentToolSpawnsTeammateWithUniqueNameWhenTeamAlreadyHasMember) {
     ASSERT_TRUE(record.has_value());
     ASSERT_TRUE(record->name.has_value());
     EXPECT_EQ(*record->name, "reviewer-one-3");
+    ASSERT_TRUE(record->parent_session_id.has_value());
+    EXPECT_EQ(*record->parent_session_id, "fallback-parent-session");
     ASSERT_TRUE(record->teammate_task_id.has_value());
     EXPECT_EQ(*record->teammate_task_id, "in-process:reviewer-one-3@migration-team");
 
@@ -5076,7 +5097,7 @@ TEST(Tools, AgentToolPreservesChangedWorktreeAndReportsPath) {
 
     {
         CurrentPathGuard cwd(root);
-        loom::tools::AgentTool tool;
+        loom::tools::AgentTool tool({.parent_session_id = std::string("notification-session")});
         auto result = tool.execute(loom::core::ToolInput::from_json(R"({
           "description": "Run isolated",
           "prompt": "Leave changed worktree",
@@ -5111,11 +5132,11 @@ TEST(Tools, AgentToolPreservesChangedWorktreeAndReportsPath) {
     EXPECT_FALSE(retained->worktree_cleanup_performed);
 
     loom::tools::agent_runtime::native_agent_store().mark_completed("dirty-agent", "dirty worktree retained");
-    auto notifications = loom::tools::agent_runtime::native_agent_store().take_pending_task_notifications();
+    auto notifications = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
     ASSERT_EQ(notifications.size(), 1u);
-    EXPECT_NE(notifications.front().find("<worktree_path>"), std::string::npos);
-    EXPECT_NE(notifications.front().find(worktree_path.string()), std::string::npos);
-    EXPECT_NE(notifications.front().find("<worktree_branch>loom-agent-dirty-agent</worktree_branch>"), std::string::npos);
+    EXPECT_NE(notifications.front().model_context.find("<worktree_path>"), std::string::npos);
+    EXPECT_NE(notifications.front().model_context.find(worktree_path.string()), std::string::npos);
+    EXPECT_NE(notifications.front().model_context.find("<worktree_branch>loom-agent-dirty-agent</worktree_branch>"), std::string::npos);
 
     (void)std::system(std::format("git -C \"{}\" worktree remove --force \"{}\" >/dev/null 2>&1",
         root.string(), worktree_path.string()).c_str());
@@ -6025,4 +6046,116 @@ TEST(Tools, DelegationMetadataExplainsContextCompletionAndSnapshotParameters) {
     std::vector<std::string> properties;
     for (const auto& property : definition.input_schema.properties) properties.push_back(property.name);
     EXPECT_EQ(properties, (std::vector<std::string>{"task_id", "pid"}));
+}
+
+
+TEST(TaskEvents, FactoryMapsNativeStatusTeamAndNameWithoutReadingModelContext) {
+    namespace runtime = loom::tools::agent_runtime;
+    using namespace loom::core;
+    const std::array states{
+        std::pair{runtime::NativeAgentStatus::Completed, TaskEventStatus::Completed},
+        std::pair{runtime::NativeAgentStatus::Failed, TaskEventStatus::Failed},
+        std::pair{runtime::NativeAgentStatus::Cancelled, TaskEventStatus::Stopped}};
+    for (const auto& [native, expected] : states) {
+        for (const auto& team : {std::string{}, std::string{"review-team"}}) {
+            auto record = runtime::make_native_agent_record("event-worker", "general-purpose");
+            record.parent_session_id = "event-parent";
+            record.description = "literal &quot; name";
+            record.name = "not-the-description";
+            record.team_name = team;
+            record.teammate_backend = "in-process";
+            record.status = native;
+            record.output = "PRIVATE_RESULT";
+            record.error = "PRIVATE_ERROR";
+            record.worktree_path = "/internal/worktree";
+            const auto pending = runtime::make_native_agent_task_event(record);
+            ASSERT_TRUE(pending.has_value());
+            EXPECT_EQ(pending->event.task_id, "event-worker");
+            EXPECT_EQ(pending->event.parent_session_id, "event-parent");
+            EXPECT_EQ(pending->event.status, expected);
+            EXPECT_EQ(pending->event.kind, team.empty() ? TaskEventKind::Subagent : TaskEventKind::TeamAgent);
+            EXPECT_EQ(pending->event.display_name, "literal &quot; name");
+            const auto old_projection = runtime::format_native_agent_task_notification(record);
+            ASSERT_TRUE(old_projection.has_value());
+            EXPECT_EQ(pending->model_context, *old_projection);
+            EXPECT_NE(pending->model_context.find("PRIVATE_RESULT"), std::string::npos);
+            EXPECT_NE(pending->model_context.find("/internal/worktree"), std::string::npos);
+        }
+    }
+}
+
+TEST(TaskEvents, FactoryRejectsInvalidOriginsWithoutChangingModelProjection) {
+    namespace runtime = loom::tools::agent_runtime;
+    auto record = runtime::make_native_agent_record("event-worker", "general-purpose");
+    record.parent_session_id = "parent";
+    record.description = "有效显示名\nraw controls";
+    record.status = runtime::NativeAgentStatus::Completed;
+    ASSERT_TRUE(runtime::make_native_agent_task_event(record));
+    for (const int scenario : {0, 1, 2, 3, 4, 5}) {
+        auto invalid = record;
+        if (scenario == 0) invalid.parent_session_id.reset();
+        if (scenario == 1) invalid.agent_id = "";
+        if (scenario == 2) invalid.description = std::string(4097, 'x');
+        if (scenario == 3) invalid.description = std::string("\xc0\xaf", 2);
+        if (scenario == 4) invalid.parent_session_id = "parent\ncontrol";
+        if (scenario == 5) invalid.status = runtime::NativeAgentStatus::Running;
+        EXPECT_FALSE(runtime::make_native_agent_task_event(invalid)) << scenario;
+        if (scenario == 2) {
+            const auto context = runtime::format_native_agent_task_notification(invalid);
+            ASSERT_TRUE(context);
+            EXPECT_NE(context->find(*invalid.description), std::string::npos);
+        }
+    }
+}
+
+TEST(TaskEvents, SessionDrainPreservesForeignOwnerlessAndInvalidRecordsAcrossReloadAndResume) {
+    namespace runtime = loom::tools::agent_runtime;
+    const auto root = fs::temp_directory_path() / "loom_typed_event_routing";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir("LOOM_AGENT_RUNTIME_DIR", root.string());
+    runtime::NativeAgentStore store;
+    auto append = [&](std::string id, std::optional<std::string> owner, bool background = true) {
+        auto record = runtime::make_native_agent_record(std::move(id), "general-purpose");
+        record.parent_session_id = std::move(owner);
+        record.background = background;
+        record.status = runtime::NativeAgentStatus::Completed;
+        record.output = "first completion";
+        if (record.agent_id == "invalid") record.description = std::string(4097, 'x');
+        store.upsert(std::move(record));
+    };
+    append("a-second", "parent-a");
+    append("a-first", "parent-a");
+    append("b-only", "parent-b");
+    append("ownerless", std::nullopt);
+    append("invalid", "parent-a");
+    append("foreground", "parent-a", false);
+    EXPECT_TRUE(store.take_pending_task_events("").empty());
+    EXPECT_TRUE(store.take_pending_task_events("child-session").empty());
+    auto first = store.take_pending_task_events("parent-a");
+    ASSERT_EQ(first.size(), 2u);
+    EXPECT_EQ(first[0].event.task_id, "a-first");
+    EXPECT_EQ(first[1].event.task_id, "a-second");
+    EXPECT_TRUE(store.take_pending_task_events("parent-a").empty());
+    for (const auto id : {"b-only", "ownerless", "invalid", "foreground"}) {
+        const auto pending = store.get(id);
+        ASSERT_TRUE(pending);
+        EXPECT_FALSE(pending->notification_delivered) << id;
+    }
+    store.clear_for_testing();
+    auto foreign = store.take_pending_task_events("parent-b");
+    ASSERT_EQ(foreign.size(), 1u);
+    EXPECT_EQ(foreign[0].event.task_id, "b-only");
+    EXPECT_TRUE(store.take_pending_task_events("parent-a").empty());
+    store.enqueue_resume_message("a-first", "continue");
+    EXPECT_EQ(store.get("a-first")->parent_session_id, std::optional<std::string>{"parent-a"});
+    EXPECT_TRUE(store.take_pending_task_events("parent-a").empty());
+    store.mark_completed("a-first", "second completion");
+    auto resumed = store.take_pending_task_events("parent-a");
+    ASSERT_EQ(resumed.size(), 1u);
+    EXPECT_EQ(resumed[0].event.task_id, "a-first");
+    EXPECT_NE(resumed[0].model_context.find("second completion"), std::string::npos);
+    store.clear_for_testing();
+    EXPECT_TRUE(store.take_pending_task_events("parent-a").empty());
+    fs::remove_all(root);
 }

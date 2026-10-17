@@ -1168,6 +1168,56 @@ void expect_wire_tool_result(std::string_view body, std::string_view id, bool er
 
 } // namespace
 
+TEST(QueryEngineFix, LargeToolOutputPreservesUtf8AtWireBudgetBoundary) {
+    struct LargeReadTool final : loom::core::ITool {
+        loom::core::ToolDefinition definition_{};
+        std::string output;
+        explicit LargeReadTool(std::string value) : output(std::move(value)) {
+            definition_.name = "Read";
+            definition_.permission = loom::core::ToolPermission::ReadOnly;
+        }
+        const loom::core::ToolDefinition& definition() const override { return definition_; }
+        loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+            return loom::core::ToolResult::success(output);
+        }
+        bool check_permission(const loom::core::ToolInput&) const override { return true; }
+    };
+
+    // Exercise every cut position within two-, three-, and four-byte scalars,
+    // including a complete scalar exactly at the budget and ASCII boundaries.
+    std::vector<std::pair<std::string, std::string>> cases;
+    for (const std::string& scalar : {std::string{"é"}, std::string{"─"}, std::string{"😀"}}) {
+        for (std::size_t retained = 1; retained <= scalar.size(); ++retained) {
+            const std::string prefix(30000 - retained, 'x');
+            cases.emplace_back(prefix + scalar + "tail",
+                               prefix + (retained == scalar.size() ? scalar : ""));
+        }
+    }
+    cases.emplace_back(std::string(30000, 'x'), std::string(30000, 'x'));
+    cases.emplace_back(std::string(30001, 'x'), std::string(30000, 'x'));
+    for (const auto& [output, prefix] : cases) {
+        SCOPED_TRACE(std::format("output bytes: {}, retained bytes: {}", output.size(), prefix.size()));
+        ScriptedHttpServer server({recovery_tool_call("large-read", "Read", "{}"),
+                                   recovery_final_reply()});
+        ASSERT_NE(server.port(), 0);
+        loom::core::ToolRegistry registry;
+        registry.register_tool(std::make_unique<LargeReadTool>(output));
+        loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+        engine.stream_query("read the source");
+        const auto results = recovery_tool_results(engine.get_conversation());
+        ASSERT_EQ(results.size(), 1u);
+        ASSERT_EQ(results[0].content.size(), 1u);
+        const auto& text = std::get<loom::core::TextBlock>(results[0].content[0]).text;
+        EXPECT_EQ(text, prefix + (output.size() > 30000
+            ? "\n\n[Output truncated at 30000 chars. Full output omitted.]" : ""));
+        const auto bodies = server.wait_for_bodies(2);
+        ASSERT_TRUE(bodies.has_value());
+        ASSERT_EQ(bodies->size(), 2u);
+        expect_wire_tool_result((*bodies)[1], "large-read", false);
+        expect_recovery_completed(engine.get_conversation());
+    }
+}
+
 TEST(QueryEngineFix, StreamingBashFailureRecoversWithinOriginalTurn) {
     ScriptedHttpServer server({
         recovery_tool_call("bash-bad", "Bash", R"({"command":"broken"})"),

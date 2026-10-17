@@ -269,7 +269,14 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
             }
             // P1-11: Truncate large outputs with disk spill
             if (content.text.size() > 30000) {
-                auto truncated = content.text.substr(0, 30000);
+                std::size_t end = 30000;
+                // Keep valid UTF-8 intact: a split scalar makes the wire JSON
+                // writer reject the complete request, not just this result.
+                while (end > 0 &&
+                       (static_cast<unsigned char>(content.text[end]) & 0xC0) == 0x80) {
+                    --end;
+                }
+                auto truncated = content.text.substr(0, end);
                 truncated += "\n\n[Output truncated at 30000 chars. Full output omitted.]";
                 result_msg.content.push_back(TextBlock{std::move(truncated)});
             } else {

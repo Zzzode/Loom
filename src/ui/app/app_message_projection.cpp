@@ -18,8 +18,144 @@ import std;
 import loom.types.types;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.messages_store;
+import loom.ui.messages.xml_tags;
+import loom.constants.xml;
 
 namespace loom::ui {
+
+
+namespace {
+
+std::string_view notification_trim(std::string_view value) {
+    const auto first = value.find_first_not_of(" \t\r\n");
+    if (first == std::string_view::npos) return {};
+    return value.substr(first, value.find_last_not_of(" \t\r\n") - first + 1);
+}
+
+// Unlike a tag search, consuming at the cursor rejects prose, duplicates and
+// unknown fields. The engine's XML envelope remains unchanged in the transcript.
+std::optional<std::string> take_notification_tag(
+    std::string_view& remaining, std::string_view tag) {
+    remaining = notification_trim(remaining);
+    const auto open = "<" + std::string(tag) + ">";
+    if (!remaining.starts_with(open)) return std::nullopt;
+    auto value = messages::xml_tags::extract_tag(remaining, tag);
+    if (!value) return std::nullopt;
+    remaining.remove_prefix(open.size() + value->size() + tag.size() + 3);
+    return value;
+}
+
+std::string notification_label(std::string_view value) {
+    // Decode the five entities emitted by the notification producers exactly
+    // once. Decoding a second time would reinterpret literal entity-like names.
+    constexpr std::array<std::pair<std::string_view, char>, 5> entities{{
+        {"&amp;", '&'}, {"&lt;", '<'}, {"&gt;", '>'}, {"&quot;", '"'}, {"&apos;", '\''}}};
+    std::string decoded;
+    for (std::size_t i = 0; i < value.size();) {
+        char character = value[i++];
+        if (character == '&') {
+            for (const auto& [entity, replacement] : entities) {
+                if (value.substr(i - 1).starts_with(entity)) {
+                    character = replacement;
+                    i += entity.size() - 1;
+                    break;
+                }
+            }
+        }
+        if (static_cast<unsigned char>(character) < 0x20 || character == 0x7f)
+            character = ' ';
+        if (character != ' ' || (!decoded.empty() && decoded.back() != ' '))
+            decoded += character;
+    }
+    if (!decoded.empty() && decoded.back() == ' ') decoded.pop_back();
+    constexpr std::size_t max_bytes = 96;
+    if (decoded.size() > max_bytes) {
+        std::size_t end = max_bytes;
+        while (end > 0 && (static_cast<unsigned char>(decoded[end]) & 0xC0) == 0x80) --end;
+        decoded.resize(end);
+        decoded += "…";
+    }
+    return decoded;
+}
+
+std::optional<repl::MessageDisplayEntry> project_task_notification(
+    const UserMessage& message, std::chrono::system_clock::time_point timestamp) {
+    // There is no trusted internal/user flag in the persisted message format.
+    // Match only the complete, single-text-block protocol, never mixed content.
+    if (message.content.size() != 1) return std::nullopt;
+    const auto* text = std::get_if<TextBlock>(&message.content.front());
+    if (!text) return std::nullopt;
+    namespace xml = loom::constants::xml;
+    auto envelope = notification_trim(text->text);
+    auto remaining = envelope;
+    auto body = take_notification_tag(remaining, xml::TASK_NOTIFICATION_TAG);
+    if (!body || !notification_trim(remaining).empty()) return std::nullopt;
+    remaining = *body;
+    const auto scalar = [](const auto& value) {
+        return value && value->find_first_of("<>") == std::string::npos;
+    };
+    auto id = take_notification_tag(remaining, xml::TASK_ID_TAG);
+    if (!scalar(id) || notification_trim(*id).empty()) return std::nullopt;
+    if (notification_trim(remaining).starts_with("<tool_use_id>")) {
+        if (!scalar(take_notification_tag(remaining, xml::TOOL_USE_ID_TAG))) return std::nullopt;
+    }
+    if (!scalar(take_notification_tag(remaining, xml::OUTPUT_FILE_TAG))) return std::nullopt;
+    auto status = take_notification_tag(remaining, xml::STATUS_TAG);
+    if (!scalar(status)) return std::nullopt;
+    const auto state = notification_trim(*status);
+    if (state != "completed" && state != "failed" && state != "stopped") return std::nullopt;
+    auto summary = take_notification_tag(remaining, xml::SUMMARY_TAG);
+    if (!scalar(summary)) return std::nullopt;
+    if (notification_trim(remaining).starts_with("<result>")) {
+        if (!scalar(take_notification_tag(remaining, xml::RESULT_TAG))) return std::nullopt;
+    }
+    if (notification_trim(remaining).starts_with("<worktree>")) {
+        auto worktree = take_notification_tag(remaining, xml::WORKTREE_TAG);
+        if (!worktree) return std::nullopt;
+        auto fields = std::string_view(*worktree);
+        if (!scalar(take_notification_tag(fields, xml::WORKTREE_PATH_TAG))) return std::nullopt;
+        if (notification_trim(fields).starts_with("<worktree_branch>"))
+            if (!scalar(take_notification_tag(fields, xml::WORKTREE_BRANCH_TAG))) return std::nullopt;
+        if (!notification_trim(fields).empty()) return std::nullopt;
+    } else {
+        if (notification_trim(remaining).starts_with("<worktree_path>"))
+            if (!scalar(take_notification_tag(remaining, xml::WORKTREE_PATH_TAG))) return std::nullopt;
+        if (notification_trim(remaining).starts_with("<worktree_branch>"))
+            if (!scalar(take_notification_tag(remaining, xml::WORKTREE_BRANCH_TAG))) return std::nullopt;
+    }
+    if (!notification_trim(remaining).empty()) return std::nullopt;
+
+    auto label = notification_trim(*summary);
+    const auto quote = label.starts_with("Agent &quot;") ? std::string_view{"&quot;"}
+        : label.starts_with("Agent \"") ? std::string_view{"\""} : std::string_view{};
+    if (!quote.empty()) {
+        const auto start = std::string_view{"Agent "}.size() + quote.size();
+        if (state == "failed") {
+            const auto marker = std::string(quote) + " failed:";
+            const auto end = label.find(marker, start);
+            // An escaped name and an error can both contain this marker.
+            // Ambiguity yields the stable task ID, never failure/result text.
+            if (end == std::string_view::npos || label.find(marker, end + marker.size()) != std::string_view::npos)
+                label = *id;
+            else label = label.substr(start, end - start);
+        } else {
+            const auto suffix = std::string(quote) + (state == "completed" ? " completed" : " was stopped");
+            if (!label.ends_with(suffix) || label.size() < start + suffix.size()) return std::nullopt;
+            label = label.substr(start, label.size() - start - suffix.size());
+        }
+    } else if (label.starts_with("Agent ")) return std::nullopt;
+    auto name = notification_label(label);
+    if (name.empty()) name = notification_label(*id);
+    if (name.empty()) name = "background task";
+    repl::MessageDisplayEntry entry;
+    entry.role = "system";
+    entry.system_subtype = "background_task";
+    entry.content_preview = std::format("Agent {} · {}", state, name);
+    entry.timestamp = timestamp;
+    return entry;
+}
+
+} // namespace
 
 // ============================================================
 // Projection: Engine state -> ReplScreenState
@@ -33,6 +169,7 @@ namespace loom::ui {
             ? std::chrono::system_clock::now() : m.timestamp;
 
         if constexpr (std::is_same_v<T, UserMessage>) {
+            if (auto notification = project_task_notification(m, e.timestamp)) return *notification;
             e.role = "user";
             for (const auto& block : m.content) {
                 if (const auto* tb = std::get_if<TextBlock>(&block)) {
@@ -260,6 +397,10 @@ project_messages(const Message& msg) {
             }
             flush_text();  // emit any trailing text
         } else if constexpr (std::is_same_v<T, UserMessage>) {
+            if (auto notification = project_task_notification(m, now)) {
+                out.push_back(std::move(*notification));
+                return;
+            }
             // ── Each ImageBlock in the user message becomes its own
             //    transcript row, interleaved with text rows in the same
             //    order as m.content.

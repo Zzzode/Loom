@@ -31,6 +31,7 @@ import loom.commands.registry;
 import loom.query.query_engine;
 import loom.tools.tool;
 import loom.tools.agent_runtime;
+import loom.tasks.local_agent_task;
 import loom.teams.team_helpers;
 import loom.teams.swarm.helpers;
 import loom.constants.constants;
@@ -3218,4 +3219,246 @@ TEST(AppRuntime, ContinueMouseAndKeyboardShareGuardsAndHiddenActionsHaveNoHitBox
         (void)component->OnEvent(ftxui::Event::Character('c'));
         EXPECT_EQ(continued, 2) << guard;
     }
+}
+
+
+namespace {
+loom::core::UserMessage notification_user(std::string content) {
+    loom::core::UserMessage message;
+    message.id.value = "native-notification";
+    message.timestamp = std::chrono::system_clock::time_point{std::chrono::seconds{42}};
+    message.content.push_back(loom::core::TextBlock{std::move(content)});
+    return message;
+}
+
+std::string native_notification(std::string name = "sub-read",
+    loom::tools::agent_runtime::NativeAgentStatus status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
+    std::string error = "CAUSE_SECRET /private/internal/failure") {
+    loom::tools::agent_runtime::NativeAgentRecord record;
+    record.agent_id = "native-7";
+    record.name = std::move(name);
+    record.status = status;
+    record.output_file_path = "/private/internal/output.file";
+    record.worktree_path = "/private/internal/worktree";
+    record.worktree_branch = "INTERNAL_BRANCH";
+    record.output = "RESULT_BODY_SECRET <internal> & data";
+    record.error = std::move(error);
+    return *loom::tools::agent_runtime::format_native_agent_task_notification(record);
+}
+
+void expect_clean_notification(const loom::ui::repl_screen::MessageDisplayEntry& entry,
+                               std::string_view expected) {
+    EXPECT_EQ(entry.role, "system");
+    EXPECT_EQ(entry.system_subtype, std::optional<std::string>{"background_task"});
+    EXPECT_EQ(entry.content_preview, expected);
+    EXPECT_TRUE(entry.full_content.empty());
+    EXPECT_FALSE(entry.is_error);
+    EXPECT_FALSE(entry.is_model_error);
+    for (const auto hidden : {"task_notification", "output_file", "<summary>", "<result>",
+                              "/private/internal", "RESULT_BODY_SECRET", "CAUSE_SECRET", "INTERNAL_BRANCH"})
+        EXPECT_EQ(entry.content_preview.find(hidden), std::string::npos) << hidden;
+}
+}
+
+TEST(AppRuntime, TaskNotificationsProjectRealProducerStatusesAsConciseSystemNotices) {
+    namespace ar = loom::tools::agent_runtime;
+    const std::string name = "研究 \"alpha\" & beta's <pair>";
+    for (const auto status : {ar::NativeAgentStatus::Completed, ar::NativeAgentStatus::Failed,
+                              ar::NativeAgentStatus::Cancelled}) {
+        const auto state = ar::native_agent_terminal_notification_status(status).value();
+        auto source = notification_user(native_notification(name, status));
+        const auto original = std::get<loom::core::TextBlock>(source.content.front()).text;
+        const auto expected = std::format("Agent {} · {}", state, name);
+        const auto one = loom::ui::project_message(source);
+        const auto many = loom::ui::project_messages(source);
+        expect_clean_notification(one, expected);
+        ASSERT_EQ(many.size(), 1u);
+        expect_clean_notification(many[0], expected);
+        EXPECT_EQ(one.timestamp, source.timestamp);
+        EXPECT_EQ(many[0].timestamp, source.timestamp);
+        EXPECT_EQ(source.id.value, "native-notification");
+        EXPECT_EQ(std::get<loom::core::TextBlock>(source.content.front()).text, original);
+        for (const int columns : {40, 60, 120}) {
+            const auto rendered = render_to_plain_text(loom::ui::RenderMessage(source), columns, 8);
+            EXPECT_NE(rendered.find(std::format("Agent {}", state)), std::string::npos);
+            EXPECT_EQ(rendered.find("task_notification"), std::string::npos);
+            EXPECT_EQ(rendered.find("/private/internal"), std::string::npos);
+            EXPECT_EQ(rendered.find("&quot;"), std::string::npos);
+            EXPECT_EQ(rendered.find("RESULT_BODY_SECRET"), std::string::npos);
+        }
+    }
+}
+
+TEST(AppRuntime, TaskNotificationsAcceptLiteralQuoteEmitterAndLegacyDescription) {
+    for (const auto& status : {std::string{"completed"}, std::string{"failed"}, std::string{"stopped"}}) {
+        const auto raw = loom::tasks::generate_agent_notification(
+            "legacy-1", "review \"quoted\" & checked", status,
+            "CAUSE_SECRET /private/internal/failure", "RESULT_BODY_SECRET", "tool-1",
+            "/private/internal/worktree", "INTERNAL_BRANCH", "/private/internal/output.file");
+        const auto projected = loom::ui::project_messages(notification_user(raw));
+        ASSERT_EQ(projected.size(), 1u);
+        expect_clean_notification(projected[0], "Agent " + status + " · review \"quoted\" & checked");
+    }
+    auto raw = native_notification();
+    const auto start = raw.find("<summary>") + std::string("<summary>").size();
+    raw.replace(start, raw.find("</summary>") - start, "Legacy &amp; review");
+    expect_clean_notification(loom::ui::project_message(notification_user(raw)),
+                              "Agent completed · Legacy & review");
+}
+
+TEST(AppRuntime, FailedNotificationAmbiguityNeverFallsBackToCauseOrResult) {
+    namespace ar = loom::tools::agent_runtime;
+    for (const auto& [name, cause] : std::vector<std::pair<std::string, std::string>>{
+            {"review \" failed: label", "CAUSE_SECRET /private/internal/failure"},
+            {"review", "CAUSE_SECRET \" failed: /private/internal/failure"},
+            {"review \" failed: label", "CAUSE_SECRET \" failed: /private/internal/failure"}}) {
+        const auto raw = native_notification(name, ar::NativeAgentStatus::Failed, cause);
+        expect_clean_notification(loom::ui::project_message(notification_user(raw)), "Agent failed · native-7");
+    }
+    auto raw = native_notification("review", ar::NativeAgentStatus::Failed);
+    const auto start = raw.find("<summary>") + std::string("<summary>").size();
+    raw.replace(start, raw.find("</summary>") - start, "Agent &quot;broken without a closing marker");
+    expect_clean_notification(loom::ui::project_message(notification_user(raw)), "Agent failed · native-7");
+}
+
+TEST(AppRuntime, NotificationLabelsDecodeOnceNormalizeControlsAndPreserveUtf8Boundary) {
+    const auto once = loom::ui::project_message(notification_user(native_notification("literal &quot; entity")));
+    EXPECT_EQ(once.content_preview, "Agent completed · literal &quot; entity");
+    const auto controls = loom::ui::project_message(notification_user(native_notification("  review\n\t\x1b\x7f checked  ")));
+    EXPECT_EQ(controls.content_preview, "Agent completed · review checked");
+    std::string long_name(95, 'x');
+    long_name += "中文😀 tail";
+    const auto bounded = loom::ui::project_message(notification_user(native_notification(long_name)));
+    EXPECT_EQ(bounded.content_preview, "Agent completed · " + std::string(95, 'x') + "…");
+    const auto rendered = render_to_plain_text(loom::ui::RenderMessage(notification_user(native_notification(long_name))), 40, 8);
+    EXPECT_NE(rendered.find("Agent completed"), std::string::npos);
+    EXPECT_EQ(rendered.find("task_notification"), std::string::npos);
+}
+
+TEST(AppRuntime, NotificationGrammarRejectsUnknownDuplicateNestedOrUnterminatedFields) {
+    const auto good = native_notification();
+    std::vector<std::string> malformed;
+    auto edit = [&](std::string_view from, std::string_view to) {
+        auto raw = good;
+        const auto at = raw.find(from);
+        EXPECT_NE(at, std::string::npos);
+        if (at != std::string::npos) raw.replace(at, from.size(), to);
+        malformed.push_back(std::move(raw));
+    };
+    edit("</status>", "</status><status>failed</status>");
+    edit("<summary>", "<unknown>raw</unknown><summary>");
+    edit("<summary>", "inner prose<summary>");
+    edit("Agent &quot;sub-read&quot; completed", "Agent <inner>sub-read</inner> completed");
+    edit("Agent &quot;sub-read&quot; completed", "Agent malformed canonical text");
+    edit("<status>completed</status>", "<status>running</status>");
+    edit("<task_id>native-7</task_id>", "<task_id></task_id>");
+    edit("<task_id>native-7</task_id>", "<task_id><inner>native-7</inner></task_id>");
+    edit("</task_notification>", "");
+    edit("<output_file>", "<different_output>");
+    for (const auto& raw : malformed) {
+        SCOPED_TRACE(raw);
+        const auto user = notification_user(raw);
+        const auto single = loom::ui::project_message(user);
+        const auto split = loom::ui::project_messages(user);
+        EXPECT_EQ(single.role, "user");
+        EXPECT_EQ(single.content_preview, raw);
+        ASSERT_EQ(split.size(), 1u);
+        EXPECT_EQ(split[0].role, "user");
+        EXPECT_EQ(split[0].content_preview, raw);
+    }
+    const auto nested = loom::tasks::generate_agent_notification(
+        "nested-1", "review", "completed", std::nullopt, std::nullopt, std::nullopt,
+        "/private/internal/worktree", "INTERNAL_BRANCH", "/private/internal/output.file");
+    auto bad_nested = nested;
+    const auto at = bad_nested.find("</worktree_path>") + std::string("</worktree_path>").size();
+    bad_nested.insert(at, "<unknown>raw</unknown>");
+    EXPECT_EQ(loom::ui::project_message(notification_user(bad_nested)).role, "user");
+}
+
+TEST(AppRuntime, NotificationsEmbeddedInProseCodeOrMixedContentRemainUserMessages) {
+    const auto good = native_notification();
+    for (const auto& raw : {"Explain this:\n" + good, good + "\nExplain this.", "```xml\n" + good + "\n```",
+                            std::string{"<task_notification>example</task_notification>"}}) {
+        EXPECT_EQ(loom::ui::project_message(notification_user(raw)).role, "user");
+        const auto split = loom::ui::project_messages(notification_user(raw));
+        ASSERT_EQ(split.size(), 1u);
+        EXPECT_EQ(split[0].content_preview, raw);
+    }
+    auto image = notification_user(good);
+    loom::core::ImageBlock attachment;
+    attachment.media_type = "image/png";
+    attachment.data = "AA==";
+    image.content.push_back(std::move(attachment));
+    const auto mixed = loom::ui::project_messages(image);
+    ASSERT_EQ(mixed.size(), 2u);
+    EXPECT_EQ(mixed[0].role, "user");
+    EXPECT_EQ(mixed[0].content_preview, good);
+    EXPECT_TRUE(mixed[1].is_image);
+    auto multipart = notification_user(good);
+    multipart.content.push_back(loom::core::TextBlock{""});
+    EXPECT_EQ(loom::ui::project_message(multipart).role, "user");
+    EXPECT_EQ(loom::ui::project_messages(multipart)[0].role, "user");
+    const auto whitespace = loom::ui::project_messages(notification_user(" \n" + good + "\n\t"));
+    ASSERT_EQ(whitespace.size(), 1u);
+    expect_clean_notification(whitespace[0], "Agent completed · sub-read");
+}
+
+TEST_F(AppThreadBoundary, TaskNotificationProjectionSurvivesCommittedRenderVirtualHistoryAndRestore) {
+    const auto raw = native_notification();
+    const auto notification = notification_user(raw);
+    for (const int history : {0, 1, 2}) {
+        const bool long_history = history != 0;
+        SCOPED_TRACE(history);
+        std::vector<loom::core::Message> conversation;
+        if (long_history) {
+            for (int i = 0; i < 81; ++i) {
+                if (history == 1) {
+                    auto prior = notification_user(native_notification("earlier-" + std::to_string(i)));
+                    prior.id.value = "prior-" + std::to_string(i);
+                    prior.timestamp = notification.timestamp - std::chrono::seconds{1};
+                    conversation.push_back(std::move(prior));
+                } else {
+                    loom::core::AssistantMessage prior;
+                    prior.id.value = "prior-" + std::to_string(i);
+                    prior.timestamp = notification.timestamp - std::chrono::seconds{1};
+                    prior.content.push_back(loom::core::TextBlock{"Earlier answer " + std::to_string(i)});
+                    conversation.push_back(std::move(prior));
+                }
+            }
+        }
+        conversation.push_back(notification);
+        engine->restore_conversation(conversation);
+        test_seams(app).notify_conversation_changed_for_testing();
+        test_seams(app).set_query_running_for_testing(true);
+        auto state = test_seams(app).screen_state_for_testing();
+        test_seams(app).set_input_text_for_testing("EDITOR-MARK");
+        for (const bool sync : {false, true}) {
+            if (sync) app->SyncState();
+            for (int render = 0; render < 2; ++render) {
+                const auto screen = render_to_plain_text(app->Render(), 120, 40);
+                EXPECT_NE(screen.find("Agent completed · sub-read"), std::string::npos) << screen;
+                EXPECT_EQ(screen.find("task_notification"), std::string::npos);
+                EXPECT_EQ(screen.find("/private/internal"), std::string::npos);
+                EXPECT_EQ(screen.find("RESULT_BODY_SECRET"), std::string::npos);
+                EXPECT_NE(screen.find("EDITOR-MARK"), std::string::npos);
+            }
+        }
+        EXPECT_EQ(state->messages_store.virtual_list_active, long_history);
+        const auto source = engine->get_conversation();
+        EXPECT_EQ(std::get<loom::core::TextBlock>(std::get<loom::core::UserMessage>(source.back()).content.front()).text, raw);
+        const auto& entries = state->messages_store.messages;
+        ASSERT_EQ(entries.size(), conversation.size());
+        expect_clean_notification(entries.back(), "Agent completed · sub-read");
+        const auto identity = entries.back().id;
+        (void)app->Render();
+        EXPECT_EQ(state->messages_store.messages.back().id, identity);
+        engine->clear_conversation();
+        test_seams(app).notify_conversation_changed_for_testing();
+        (void)app->Render();
+        EXPECT_TRUE(state->messages_store.messages.empty());
+        engine->restore_conversation({notification});
+        app->SyncState();
+        EXPECT_NE(render_to_plain_text(app->Render(), 120, 40).find("Agent completed · sub-read"), std::string::npos);
+    }
+    test_seams(app).set_query_running_for_testing(false);
 }

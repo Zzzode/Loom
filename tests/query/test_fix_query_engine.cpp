@@ -1719,3 +1719,69 @@ TEST(QueryEngineFix, StreamingHttpFailuresPreservePermanentAndRetryableCategorie
         EXPECT_EQ(errors, (std::vector<std::string>{expected})) << status;
     }
 }
+
+// RFC 0021: exercise the actual builder rather than the unused constants composer.
+TEST(QueryEngineFix, DelegationGuidanceMatchesSessionCapabilities) {
+    loom::core::UserContext user{"/prompt-probe", "test-platform", "tester", {"EXTRA_CONTEXT"}};
+    for (const auto& tools : std::vector<std::vector<std::string>>{
+             {"Read"}, {"task_output"}, {"Agent"}, {"Agent", "task_output"}}) {
+        loom::core::SystemContext system{tools, "test-model", "default"};
+        const auto prompt = loom::core::SystemPromptBuilder::build(
+            std::nullopt, "APPENDED_CONSTRAINT", user, system);
+        const bool agent = std::ranges::find(tools, "Agent") != tools.end();
+        const bool output = std::ranges::find(tools, "task_output") != tools.end();
+        EXPECT_EQ(prompt.find("# Delegation") != std::string::npos, agent);
+        if (agent) {
+            EXPECT_NE(prompt.find("independent research or review"), std::string::npos);
+            EXPECT_NE(prompt.find("general-purpose"), std::string::npos);
+            EXPECT_NE(prompt.find("does not duplicate"), std::string::npos);
+            EXPECT_NE(prompt.find("not task completion"), std::string::npos);
+            EXPECT_NE(prompt.find("verify material findings"), std::string::npos);
+            EXPECT_NE(prompt.find("Request-specific tool filtering"), std::string::npos);
+            EXPECT_EQ(prompt.find("non-blocking snapshot") != std::string::npos, output);
+            EXPECT_LT(prompt.find("# Delegation"), prompt.find("APPENDED_CONSTRAINT"));
+        }
+        EXPECT_LT(prompt.find("APPENDED_CONSTRAINT"), prompt.find("<context>"));
+        EXPECT_NE(prompt.find("EXTRA_CONTEXT"), std::string::npos);
+        EXPECT_EQ(prompt.find("Explore"), std::string::npos);
+        EXPECT_EQ(prompt.find("Plan"), std::string::npos);
+    }
+}
+
+TEST(QueryEngineFix, CustomPromptReplacementDoesNotAcquireDefaultDelegationPolicy) {
+    loom::core::UserContext user{"/prompt-probe", "test-platform", "tester", {"EXTRA_CONTEXT"}};
+    loom::core::SystemContext system{{"Agent", "task_output"}, "test-model", "default"};
+    for (const auto& custom : {std::string("CUSTOM_BASE"), std::string{}}) {
+        const auto prompt = loom::core::SystemPromptBuilder::build(
+            custom, "APPENDED_CONSTRAINT", user, system);
+        EXPECT_TRUE(prompt.starts_with(custom));
+        EXPECT_EQ(prompt.find("You are Loom"), std::string::npos);
+        EXPECT_EQ(prompt.find("# Delegation"), std::string::npos);
+        EXPECT_EQ(prompt.find("non-blocking snapshot"), std::string::npos);
+        EXPECT_LT(prompt.find("APPENDED_CONSTRAINT"), prompt.find("<context>"));
+        EXPECT_NE(prompt.find("EXTRA_CONTEXT"), std::string::npos);
+    }
+}
+
+TEST(QueryEngineFix, AlwaysDeniedAgentIsNotAdvertisedInDefaultPrompt) {
+    const auto root = fs::temp_directory_path() / ("loom-prompt-denied-" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(root);
+    EnvironmentGuard home("HOME", root.string());
+    EnvironmentGuard memory("LOOM_DISABLE_AUTO_MEMORY", "1");
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
+    config.cwd = root.string();
+    config.context_window.auto_compact = false;
+    loom::core::ToolDefinition agent;
+    agent.name = "Agent";
+    agent.permission = loom::core::ToolPermission::Execute;
+    config.tools.push_back(agent);
+    config.always_deny_rules = {"Agent"};
+    loom::core::QueryEngine engine(std::move(config), registry);
+    const auto prompt = first_system_prompt_text(engine.get_conversation());
+    ASSERT_TRUE(prompt);
+    EXPECT_EQ(prompt->find("# Delegation"), std::string::npos);
+    EXPECT_EQ(prompt->find("\n  - Agent"), std::string::npos);
+    fs::remove_all(root);
+}

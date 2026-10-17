@@ -417,9 +417,15 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
 
     if constexpr (features::kTaskTools) {
         for (const auto& name : {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
-            registry.register_tool(simple(name, std::format("Runtime task operation {}", name), ToolPermission::Write,
+            const bool output = std::string_view(name) == "task_output";
+            auto description = output
+                ? std::string("Read a non-blocking snapshot of a task or subagent by task_id. "
+                    "Returns immediately with current status and available output or error. "
+                    "Queued or running status is not completion; inspect the final result before relying on it.")
+                : std::format("Runtime task operation {}", name);
+            registry.register_tool(simple(name, std::move(description), ToolPermission::Write,
                 {
-                    prop("task_id", "string", "Task ID", false),
+                    prop("task_id", "string", output ? "Task or agent ID returned by a tool" : "Task ID", false),
                     prop("pid", "number", "Background process PID", false),
                 }, "tasks"));
         }

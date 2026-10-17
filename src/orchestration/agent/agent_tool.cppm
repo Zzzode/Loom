@@ -196,9 +196,15 @@ class AgentTool {
 public:
     static constexpr std::string_view kName = "Agent";
     static constexpr std::string_view kDescription = 
-        "Launch a new agent to handle complex, multi-step tasks autonomously. "
-        "The agent runs in a recursive loop, making API calls and executing tools "
-        "until it completes the task or reaches the turn limit.";
+        "Delegate substantial independent research, review, or implementation work "
+        "when a separate scoped task improves coverage or latency. Give a clear "
+        "objective, relevant context, permitted scope, and expected evidence; the "
+        "child does not inherit the full parent conversation. Select subagent_type "
+        "general-purpose unless another type is known to be available. Use "
+        "run_in_background=true for concurrent work, continue useful non-duplicating "
+        "work, then collect and verify the final result. A successful launch is not "
+        "task completion. Keep simple or tightly dependent steps local, and preserve "
+        "the user's and repository's constraints.";
     
     static ToolDefinition definition() {
         return ToolDefinition{
@@ -207,13 +213,13 @@ public:
             .input_schema = InputSchema{
                 .properties = {
                     agent_schema_property("description", "string", "A short description of the task", true),
-                    agent_schema_property("prompt", "string", "The task for the agent to perform", true),
-                    agent_schema_property("subagent_type", "string", "The specialized agent type to use"),
+                    agent_schema_property("prompt", "string", "Self-contained task: objective, relevant context, permitted scope, expected output, and verification evidence", true),
+                    agent_schema_property("subagent_type", "string", "Explicit agent type; use general-purpose for ordinary delegation. Other types must be available in this session"),
                     agent_schema_property("model", "string", "Optional model override: sonnet, opus, haiku, or a concrete model id"),
-                    agent_schema_property("run_in_background", "boolean", "Run the agent asynchronously"),
+                    agent_schema_property("run_in_background", "boolean", "Start concurrently and return an agent ID immediately; collect its final status and output before relying on the result"),
                     agent_schema_property("task", "string", "Legacy alias for prompt"),
                     agent_schema_property("skill", "string", "Legacy alias for subagent_type"),
-                    agent_schema_property("name", "string", "Teammate name for agent swarms"),
+                    agent_schema_property("name", "string", "Optional agent display name; with team_name, the teammate name"),
                     agent_schema_property("team_name", "string", "Team name for agent swarms"),
                     agent_schema_property("mode", "string", "Permission mode for spawned teammates"),
                     agent_schema_property("isolation", "string", "Isolation mode for worktree agents"),

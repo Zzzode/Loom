@@ -13,6 +13,7 @@ module loom.query.query_engine;
 import std;
 
 import loom.types.types;
+import loom.security.tool_deny_rules;
 import loom.memdir.paths;
 // Genuinely used via global-namespace calls (::memdir::build_memory_lines,
 // ::memdir::join_lines, ::memdir::truncate_entrypoint_content); the
@@ -36,6 +37,21 @@ namespace loom::core {
         prompt = std::string(*custom_prompt);
     } else {
         prompt = build_default_system_prompt();
+        if (std::ranges::find(system_ctx.tool_descriptions, "Agent") !=
+            system_ctx.tool_descriptions.end()) {
+            prompt += R"(
+
+# Delegation
+Proactively delegate substantial independent research or review questions when separate scopes improve coverage or latency. Keep simple tasks and tightly dependent steps local; respect the user's delegation preferences. Scale the number and scope of agents to the task rather than creating agents by default.
+Give each agent a clear objective, relevant context, permitted scope or file ownership, expected output, and evidence to return. Use subagent_type="general-purpose" unless another type is known to be available. Preserve the user's and repository's constraints, including read-only work and requests not to commit.
+For independent concurrent work, use run_in_background=true. Continue useful work that does not duplicate the delegated scope. A successful launch is not task completion: collect the final results, check status and errors, verify material findings, and integrate them before presenting the task as complete. The main agent remains responsible for the result.
+Use only the tools exposed in the current request. Request-specific tool filtering and permission checks take precedence over this session guidance.)";
+            if (std::ranges::find(system_ctx.tool_descriptions, "task_output") !=
+                system_ctx.tool_descriptions.end()) {
+                prompt += R"(
+Use task_output with the returned agent ID as task_id to inspect its status and output. It returns a non-blocking snapshot; a queued or running snapshot is not a final result. Do useful work or wait a bounded interval before checking again, and inspect the final output or error.)";
+            }
+        }
     }
 
     // Append additional instructions
@@ -179,6 +195,13 @@ void QueryEngine::build_and_add_system_prompt() {
         "default"
     };
     for (const auto& tool : config_.tools) {
+        // Keep delegation guidance consistent with the request's deny rules,
+        // without changing the context listing of unrelated tools.
+        if (tool.name == "Agent" || tool.name == "task_output") {
+            loom::utils::tool_deny_rules::DenyToolView view;
+            view.name = tool.name;
+            if (loom::utils::tool_deny_rules::is_tool_denied(config_.always_deny_rules, view)) continue;
+        }
         system_ctx.tool_descriptions.push_back(tool.name);
     }
 

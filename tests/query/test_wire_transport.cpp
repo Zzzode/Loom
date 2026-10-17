@@ -11,6 +11,8 @@ import loom.query.query_engine;
 import loom.query.wire_protocol;
 import loom.query.wire_openai;
 import loom.tools.tool;
+import loom.tools.runtime_registry;
+import loom.orchestration.agent;
 import loom.serdes.json;
 
 namespace {
@@ -336,4 +338,95 @@ TEST_F(WireTransport, DecodesFragmentedCrLfFramesWithoutOptionalSpaces) {
     EXPECT_EQ(events[0].type, "content_block_delta");
     EXPECT_EQ(events[0].data, R"({"text":"hello"})");
     EXPECT_EQ(events[1].data, "[DONE]");
+}
+
+TEST_F(WireTransport, DelegationPolicyAndMetadataReachBothProductionWireFormats) {
+    for (const auto protocol : {"messages", "openai"}) {
+        SCOPED_TRACE(protocol);
+        for (const auto scenario : {"default", "missing", "denied", "custom", "append", "request-filter"}) {
+            SCOPED_TRACE(scenario);
+            const std::string messages_answer =
+                "event: message_start\ndata: {\"message\":{\"id\":\"prompt-probe\",\"model\":\"transport-model\",\"usage\":{\"input_tokens\":1}}}\n\n"
+                "event: content_block_start\ndata: {\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
+                "event: content_block_delta\ndata: {\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"wire complete\"}}\n\n"
+                "event: content_block_stop\ndata: {\"index\":0}\n\n"
+                "event: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":1}}\n\n"
+                "event: message_stop\ndata: {}\n\n";
+            WireHttpServer server({{std::string_view(protocol) == "messages"
+                ? messages_answer : openai_answer_stream()}});
+            ASSERT_TRUE(server.valid());
+            ToolRegistry registry;
+            loom::tools::RuntimeToolOptions runtime_options;
+            runtime_options.agent_tool_factory = loom::tools::make_agent_tool;
+            runtime_options.default_model = "transport-model";
+            loom::tools::register_runtime_tools(registry, std::move(runtime_options));
+            auto settings = config(server, registry);
+            settings.wire_api = protocol;
+            if (std::string_view(scenario) == "missing") {
+                std::erase_if(settings.tools, [](const auto& tool) { return tool.name == "Agent"; });
+            } else if (std::string_view(scenario) == "denied") {
+                settings.always_deny_rules = {"Agent"};
+            } else if (std::string_view(scenario) == "custom") {
+                settings.custom_system_prompt = "CUSTOM_WIRE_PROMPT";
+            } else if (std::string_view(scenario) == "append") {
+                settings.append_system_prompt = "APPEND_WIRE_CONSTRAINT";
+            }
+            QueryEngine engine(std::move(settings), registry);
+            QueryOptions options;
+            if (std::string_view(scenario) == "request-filter") options.enabled_tools = {"task_output"};
+            std::vector<StreamEvent> events;
+            options.on_event = [&](const auto& event) { events.push_back(event); };
+            engine.stream_query("Return a short answer without using tools", options);
+            EXPECT_EQ(std::ranges::count_if(events, [](const auto& event) {
+                return std::holds_alternative<StreamError>(event);
+            }), 0);
+            const auto requests = server.requests();
+            ASSERT_EQ(requests.size(), 1u);
+            EXPECT_EQ(requests.front().path, std::string_view(protocol) == "messages"
+                ? "/v1/messages" : "/v1/chat/completions");
+            auto parsed = loom::utils::json::parse(requests.front().body);
+            ASSERT_TRUE(parsed);
+            const auto root = parsed->root();
+            std::string system;
+            if (std::string_view(protocol) == "messages") {
+                system = root.get("system").as_str();
+            } else {
+                root.get("messages").iter([&](const auto message) {
+                    if (message.get("role").as_str() == "system") system = message.get("content").as_str();
+                });
+            }
+            const auto mode = std::string_view(scenario);
+            const bool policy = mode != "missing" && mode != "denied" && mode != "custom";
+            EXPECT_EQ(system.find("# Delegation") != std::string::npos, policy);
+            EXPECT_EQ(system.find("non-blocking snapshot") != std::string::npos, policy);
+            if (policy) {
+                EXPECT_NE(system.find("general-purpose"), std::string::npos);
+                EXPECT_NE(system.find("Request-specific tool filtering"), std::string::npos);
+            }
+            if (mode == "custom") {
+                EXPECT_TRUE(system.starts_with("CUSTOM_WIRE_PROMPT"));
+                EXPECT_EQ(system.find("You are Loom"), std::string::npos);
+            } else if (mode == "append") {
+                EXPECT_LT(system.find("# Delegation"), system.find("APPEND_WIRE_CONSTRAINT"));
+                EXPECT_LT(system.find("APPEND_WIRE_CONSTRAINT"), system.find("<context>"));
+            }
+            bool agent_advertised = false;
+            bool snapshot_advertised = false;
+            root.get("tools").iter([&](auto tool) {
+                if (std::string_view(protocol) == "openai") tool = tool.get("function");
+                if (tool.get("name").as_str() == "Agent") {
+                    agent_advertised = true;
+                    const auto description = tool.get("description").as_str();
+                    EXPECT_NE(description.find("research"), std::string_view::npos);
+                    EXPECT_NE(description.find("general-purpose"), std::string_view::npos);
+                    EXPECT_NE(description.find("completion"), std::string_view::npos);
+                } else if (tool.get("name").as_str() == "task_output") {
+                    snapshot_advertised = true;
+                    EXPECT_NE(tool.get("description").as_str().find("Returns immediately"), std::string_view::npos);
+                }
+            });
+            EXPECT_EQ(agent_advertised, mode != "missing" && mode != "denied" && mode != "request-filter");
+            EXPECT_TRUE(snapshot_advertised);
+        }
+    }
 }

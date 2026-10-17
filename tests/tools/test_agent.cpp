@@ -5987,3 +5987,42 @@ TEST(AgentDisplay, CanonicalDisplayResolvesOverridesAndModelWithoutScaffolds) {
     EXPECT_EQ(display::resolve_agent_model_display(resolved[1].definition, "default-model"), "custom-model");
     EXPECT_EQ(display::override_source_label(*resolved[0].overridden_by), "project");
 }
+
+TEST(Tools, ForkWorkerGuidancePreservesCallerConstraintsWithoutMandatoryCommits) {
+    const auto prompt = loom::tools::agent_runtime::build_fork_child_message(
+        "Inspect the parser without editing or committing");
+    EXPECT_NE(prompt.find("Inspect the parser without editing or committing"), std::string::npos);
+    EXPECT_NE(prompt.find("Do NOT spawn sub-agents"), std::string::npos);
+    EXPECT_NE(prompt.find("repository's constraints"), std::string::npos);
+    EXPECT_NE(prompt.find("read-only work"), std::string::npos);
+    EXPECT_NE(prompt.find("unless explicitly authorized"), std::string::npos);
+    EXPECT_NE(prompt.find("Scope:"), std::string::npos);
+    EXPECT_EQ(prompt.find("default to forking"), std::string::npos);
+    EXPECT_EQ(prompt.find("commit your changes before reporting"), std::string::npos);
+}
+
+TEST(Tools, DelegationMetadataExplainsContextCompletionAndSnapshotParameters) {
+    const auto agent = loom::tools::AgentTool::definition();
+    EXPECT_NE(agent.description.find("research"), std::string::npos);
+    EXPECT_NE(agent.description.find("context"), std::string::npos);
+    EXPECT_NE(agent.description.find("general-purpose"), std::string::npos);
+    EXPECT_NE(agent.description.find("completion"), std::string::npos);
+    auto background = std::ranges::find_if(agent.input_schema.properties, [](const auto& property) {
+        return property.name == "run_in_background";
+    });
+    ASSERT_NE(background, agent.input_schema.properties.end());
+    EXPECT_NE(background->description.find("final"), std::string::npos);
+
+    loom::core::ToolRegistry registry;
+    loom::tools::register_runtime_tools(registry);
+    auto* output = registry.get("task_output");
+    ASSERT_NE(output, nullptr);
+    const auto& definition = output->definition();
+    EXPECT_NE(definition.description.find("non-blocking snapshot"), std::string::npos);
+    EXPECT_NE(definition.description.find("Returns immediately"), std::string::npos);
+    EXPECT_NE(definition.description.find("status"), std::string::npos);
+    EXPECT_NE(definition.description.find("error"), std::string::npos);
+    std::vector<std::string> properties;
+    for (const auto& property : definition.input_schema.properties) properties.push_back(property.name);
+    EXPECT_EQ(properties, (std::vector<std::string>{"task_id", "pid"}));
+}

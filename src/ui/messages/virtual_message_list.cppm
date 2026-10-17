@@ -773,7 +773,7 @@ render_list_as_elements(VirtualListState &s) {
     double const span  = std::min(
         1.0, static_cast<double>(s.viewport_rows) / total);
     return hbox({
-      body,
+      body | xflex,
       ascii_scroll_gutter(s.viewport_rows, ratio, span),
     });
   }

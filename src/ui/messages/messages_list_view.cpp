@@ -87,6 +87,18 @@ Element capture_selection_row(Element row, const MessagesListInput& input, int i
     return std::make_shared<SelectionRowGeometryNode>(std::move(row), std::move(geometry));
 }
 
+// Keep both renderers on the same per-message spacing policy. Geometry
+// already includes an assistant margin for every row, not just each turn.
+bool payload_add_margin(MessageShape shape, bool& previous_user) {
+    using S = MessageShape;
+    const bool is_user = shape == S::UserText || shape == S::UserPrompt ||
+        shape == S::UserCommand || shape == S::UserImage;
+    const bool is_tool_result = shape == S::UserToolResult || shape == S::UserBashOutput;
+    const bool margin = is_user ? !previous_user : !is_tool_result;
+    previous_user = is_user;
+    return margin;
+}
+
 // The static threshold check and the windowed renderer share one projection.
 [[nodiscard]] auto render_messages_list_virtual_rows(
     const MessagesListInput& input_const,
@@ -104,10 +116,16 @@ Element capture_selection_row(Element row, const MessagesListInput& input, int i
              | yframe | vscroll_indicator;
     }
 
-    // Build virtual rows.  Use the real terminal width from the caller so
-    // narrow terminals don't underestimate wrapped line counts.
-    const int term_cols_est = input.term_cols;
+    // The outer scroll indicator always reserves one column. The ASCII
+    // gutter reserves another only when the virtual content overflows.
+    const int viewport = std::max(1, viewport_rows);
+    const bool must_overflow = visible.size() > static_cast<std::size_t>(viewport);
+    int term_cols_est = std::max(1, input.term_cols - (must_overflow ? 2 : 1));
     auto virt_rows = visible_rows_to_virtual(visible, input, term_cols_est);
+    if (!must_overflow && vl::build_geometry(std::span{virt_rows}).total() > viewport) {
+        term_cols_est = std::max(1, input.term_cols - 2);
+        virt_rows = visible_rows_to_virtual(visible, input, term_cols_est);
+    }
 
     const std::size_t divider_before_vi =
         detail::find_divider_before_visible_index(input, visible);
@@ -133,68 +151,22 @@ Element capture_selection_row(Element row, const MessagesListInput& input, int i
         state.scroll_top = std::max(0, scroll_top_lines);
     }
 
-    // ── Pre-compute add_margin for each visible row using the same
-    //    turn-state machine as the static path. ──
+    // Compute over the full visible sequence so window boundaries do not
+    // turn a user continuation into a new user message.
     std::vector<bool> add_margin_for_vi(visible.size(), true);
-    {
-        bool next_add_margin = true;
-        bool prev_was_user = false;
-        for (std::size_t vi = 0; vi < visible.size(); ++vi) {
-            const auto& vr = visible[vi];
-            if (vr.kind == VisibleRow::Kind::Payload) {
-                const MessageShape shape =
-                    (vr.row_idx < input.shapes.size())
-                        ? input.shapes[vr.row_idx]
-                        : MessageShape::SystemTaskAssignment;
-                using S = MessageShape;
-                const bool is_assistant_block =
-                    (shape == S::AssistantText ||
-                     shape == S::AssistantThinking ||
-                     shape == S::AssistantRedactedThinking ||
-                     shape == S::AssistantToolUse ||
-                     shape == S::AssistantGroupedTools);
-                const bool is_user_row =
-                    (shape == S::UserText ||
-                     shape == S::UserPrompt ||
-                     shape == S::UserCommand ||
-                     shape == S::UserImage);
-                const bool is_tool_result = (shape == S::UserToolResult);
-                const bool is_same_turn_as_assistant =
-                    is_assistant_block || is_tool_result;
-                const bool is_turn_boundary = is_user_row ||
-                    (!is_same_turn_as_assistant && !is_tool_result);
-
-                add_margin_for_vi[vi] = is_user_row
-                    ? !prev_was_user
-                    : (is_turn_boundary ? true : next_add_margin);
-                prev_was_user = is_user_row;
-
-                // Note: the streaming thinking tail is forced flush
-                // against the preceding user message, but that
-                // looks cramped — the thinking block needs visual separation
-                // from the user's message, so we keep the margin.
-
-                if (is_turn_boundary) {
-                    next_add_margin = !is_user_row;
-                } else if (is_tool_result) {
-                    // After a tool result, the next assistant response
-                    // starts a new visual group with top margin = 1.
-                    next_add_margin = true;
-                } else {
-                    next_add_margin = false;
-                }
-            } else {
-                add_margin_for_vi[vi] = true;
-                next_add_margin = true;
-                prev_was_user = false;
-            }
-        }
+    bool previous_user = false;
+    for (std::size_t vi = 0; vi < visible.size(); ++vi) {
+        const auto& row = visible[vi];
+        if (row.kind != VisibleRow::Kind::Payload) continue;
+        const auto shape = row.row_idx < input.shapes.size()
+            ? input.shapes[row.row_idx] : MessageShape::SystemTaskAssignment;
+        add_margin_for_vi[vi] = payload_add_margin(shape, previous_user);
     }
 
     // ── render_row callback: translate virtual back to messages_list VR
     state.callbacks.render_row =
         [frame_count, &input, &visible, divider_before_vi, has_divider,
-         &add_margin_for_vi]
+         &add_margin_for_vi, term_cols_est]
         (size_t row_index, const vl::VisibleRow& vr)
             -> ftxui::Element
         {
@@ -232,7 +204,7 @@ Element capture_selection_row(Element row, const MessagesListInput& input, int i
                 row_el = detail::render_compact_group_row(ml_row, is_selected);
             } else if (ml_row.kind == VisibleRow::Kind::CompressedChain) {
                 row_el = detail::render_compressed_chain_row(
-                    ml_row, is_selected, frame_count, std::max(1, input.term_cols - 1));
+                    ml_row, is_selected, frame_count, term_cols_est);
                 // Track clickable compressed chains for mouse hit-testing.
                 if (input.row_click_tracker && !ml_row.chain_uuid.empty()) {
                     Box& box = input.row_click_tracker->track_row(
@@ -469,30 +441,7 @@ Element capture_selection_row(Element row, const MessagesListInput& input, int i
                 (vr.row_idx < input.shapes.size())
                     ? input.shapes[vr.row_idx]
                     : MessageShape::SystemTaskAssignment;   // = max enum; treated as "not user/assistant"
-            using S = MessageShape;
-            const bool is_user_row =
-                (shape == S::UserText ||
-                 shape == S::UserPrompt ||
-                 shape == S::UserCommand ||
-                 shape == S::UserImage);
-            // UserToolResultMessage has 0 top margin (no add_margin flag).
-            // Also include UserBashOutput and UserLocalCommandOutput as
-            // tool-result-like rows that sit flush.
-            const bool is_tool_result =
-                (shape == S::UserToolResult ||
-                 shape == S::UserBashOutput);
-
-            // Compute add_margin per-row, not per-turn.
-            //   - User rows: first user in turn → true, continuation → false (⎿)
-            //   - Tool result rows: false (flush against preceding tool_use)
-            //   - All other rows: true
-            bool row_add_margin = is_user_row
-                ? !prev_was_user
-                : (is_tool_result ? false : true);
-            // Note: the streaming thinking tail is forced flush,
-            // but that looks cramped — keep the margin for visual
-            // separation from the preceding user message.
-            prev_was_user = is_user_row;
+            const bool row_add_margin = payload_add_margin(shape, prev_was_user);
 
             rows.push_back(detail::render_payload_row(
                 input, vr.row_idx, is_selected, frame_count, row_add_margin));

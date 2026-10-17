@@ -587,6 +587,11 @@ constexpr int kMaxRowHeight = 1000;
             content_lines = estimate_content_lines(preview, term_cols, 0);
             break;
         case S::SystemText:
+            // Faithful SystemText's summary is a single-line event for every
+            // subtype, preceded by the per-message top margin. This includes
+            // Plain /resume events as well as background notifications.
+            content_lines = 2;
+            break;
         case S::SystemRateLimit:
         case S::SystemPlanApproval:
         case S::SystemHookProgress:

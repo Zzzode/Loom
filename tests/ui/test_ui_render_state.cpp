@@ -33,6 +33,9 @@ import loom.ui.widgets.all_components;
 import loom.ui.messages.message_pipeline;
 import loom.ui.messages.messages_list;
 import loom.ui.messages.message_row;
+import loom.ui.messages.message_tool_result;
+import loom.ui.messages.message_bash_io;
+import loom.ui.messages.system_text_message;
 import loom.ui.messages.user_text_message;
 import loom.ui.messages.assistant_text_message;
 import loom.ui.foundation.declared_cursor;
@@ -1395,4 +1398,247 @@ TEST(ReplScreen, StaticPausedTranscriptScrollsAfterResize) {
     ftxui::Mouse wheel;
     wheel.button = ftxui::Mouse::WheelUp;
     EXPECT_FALSE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
+}
+
+
+TEST(ReplScreen, VirtualAssistantSpacingMatchesStaticMessagesAndUserContinuations) {
+    namespace ml = loom::ui::messages_list;
+    for (const int columns : {40, 60, 120}) {
+        for (const int scenario : {0, 1, 2, 3, 4, 5}) {
+            SCOPED_TRACE(columns);
+            SCOPED_TRACE(scenario);
+            ml::MessagesListInput input;
+            input.term_cols = columns;
+            input.viewport_rows = 24;
+            input.disable_chain_compression = true;
+            if (scenario != 0) {
+                for (const auto content : {"USER-FIRST", "USER-CONTINUATION"}) {
+                    ml::UserTextMessageData user;
+                    user.content = content;
+                    input.rows.push_back(user);
+                    input.shapes.push_back(ml::MessageShape::UserPrompt);
+                }
+            }
+            if (scenario == 2) {
+                loom::ui::messages::image::ImageMessageData image;
+                image.source = "fixture.png";
+                image.file_name = "fixture.png";
+                image.media_type = "image/png";
+                input.rows.insert(input.rows.begin() + 1, image);
+                input.shapes.insert(input.shapes.begin() + 1, ml::MessageShape::UserImage);
+            } else if (scenario == 3 || scenario == 4) {
+                if (scenario == 3) {
+                    ml::ToolResultOptions result;
+                    result.tool_name = "Bash";
+                    result.output = "TOOL-RESULT";
+                    input.rows.insert(input.rows.begin() + 1, result);
+                    input.shapes.insert(input.shapes.begin() + 1, ml::MessageShape::UserToolResult);
+                } else {
+                    ml::BashIOEntry result;
+                    result.content = "TOOL-RESULT";
+                    input.rows.insert(input.rows.begin() + 1, result);
+                    input.shapes.insert(input.shapes.begin() + 1, ml::MessageShape::UserBashOutput);
+                }
+            } else if (scenario == 5) {
+                ml::AssistantTextMessageData hidden;
+                hidden.content = "COMPACTED";
+                input.rows.insert(input.rows.begin() + 1, hidden);
+                input.shapes.insert(input.shapes.begin() + 1, ml::MessageShape::AssistantText);
+                input.compact_boundary_groups.emplace_back(1, 2);
+            }
+            for (const auto content : {"ASSISTANT-FIRST", "ASSISTANT-NEXT", "ASSISTANT-LAST"}) {
+                ml::AssistantTextMessageData assistant;
+                assistant.content = content;
+                input.rows.push_back(assistant);
+                input.shapes.push_back(ml::MessageShape::AssistantText);
+            }
+            auto draw = [&](bool use_virtual) {
+                auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
+                                                   ftxui::Dimension::Fixed(24));
+                auto element = use_virtual
+                    ? ml::render_messages_list_virtual(input, 0, 24, 0)
+                    : ml::render_messages_list_view(input, 0);
+                ftxui::Render(screen, std::move(element));
+                return strip_ansi(screen.ToString());
+            };
+            const auto ordinary = draw(false);
+            const auto row_of = [&](std::string_view marker) {
+                const auto at = ordinary.find(marker);
+                EXPECT_NE(at, std::string::npos) << ordinary;
+                if (at == std::string::npos) return -1;
+                return static_cast<int>(std::count(ordinary.begin(), ordinary.begin() + at, '\n'));
+            };
+            // Independent fixed coordinates preserve the pre-existing static
+            // contract even if both callers accidentally change together.
+            constexpr std::array first_assistant{1, 4, 6, 6, 9, 6};
+            EXPECT_EQ(row_of("ASSISTANT-FIRST"), first_assistant[scenario]);
+            EXPECT_EQ(row_of("ASSISTANT-NEXT"), first_assistant[scenario] + 2);
+            EXPECT_EQ(row_of("ASSISTANT-LAST"), first_assistant[scenario] + 4);
+            if (scenario != 0) {
+                EXPECT_EQ(row_of("USER-FIRST"), 1);
+                constexpr std::array continuation{0, 2, 4, 4, 7, 4};
+                EXPECT_EQ(row_of("USER-CONTINUATION"), continuation[scenario]);
+            }
+            if (scenario == 2) {
+                EXPECT_EQ(row_of("[Image]"), 2);
+                EXPECT_EQ(row_of("fixture.png"), 3);
+            }
+            if (scenario == 3 || scenario == 4)
+                EXPECT_EQ(row_of("TOOL-RESULT"), scenario == 3 ? 2 : 5);
+            if (scenario == 5) EXPECT_EQ(row_of("messages collapsed"), 3);
+            EXPECT_EQ(ordinary.find("bad payload"), std::string::npos);
+            EXPECT_EQ(draw(true), ordinary);
+            EXPECT_EQ(draw(true), ordinary);
+        }
+        // A short list can still overflow through wrapped prompt content.
+        // Exercise both sides of the conditional inner-gutter boundary.
+        for (const int viewport : {3, 24}) {
+            ml::MessagesListInput input;
+            input.term_cols = columns;
+            input.pin_to_bottom = true;
+            input.disable_chain_compression = true;
+            std::vector<std::shared_ptr<ml::SelectionRowGeometry>> geometry;
+            input.selection_rows = &geometry;
+            ml::UserTextMessageData user;
+            user.content = std::string(columns - 4, 'x') + " end";
+            input.rows.push_back(user);
+            input.shapes.push_back(ml::MessageShape::UserPrompt);
+            ml::AssistantTextMessageData assistant;
+            assistant.content = "BOUNDARY-TAIL";
+            input.rows.push_back(assistant);
+            input.shapes.push_back(ml::MessageShape::AssistantText);
+            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
+                                               ftxui::Dimension::Fixed(viewport));
+            ftxui::Render(screen, ml::render_messages_list_virtual(input, 0, viewport, 0));
+            ASSERT_FALSE(geometry.empty());
+            const auto& box = geometry.back()->box;
+            EXPECT_EQ(box.x_max - box.x_min + 1, columns - (viewport == 3 ? 2 : 1));
+            EXPECT_NE(strip_ansi(screen.ToString()).find("BOUNDARY-TAIL"), std::string::npos);
+        }
+    }
+}
+
+TEST(ReplScreen, ConsecutiveAssistantVirtualHistoryKeepsTailAndScrollsOnFirstEventAcrossResize) {
+    namespace repl = loom::ui::repl_screen;
+    auto state = std::make_shared<repl::ReplScreenState>();
+    AddTestMessages(state->messages_store, 120, "HISTORY");
+    repl::MessageDisplayEntry notice;
+    notice.id = "history-completion";
+    notice.role = "system";
+    notice.system_subtype = "background_task";
+    notice.content_preview = "Agent completed · history-check";
+    state->messages_store.messages.push_back(std::move(notice));
+    auto component = MakeComponent(state);
+    auto draw = [&](int columns) {
+        ScopedEnvVar terminal_columns("COLUMNS");
+        ScopedEnvVar terminal_rows("LINES");
+        terminal_columns.set(std::to_string(columns));
+        terminal_rows.set("40");
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
+                                           ftxui::Dimension::Fixed(40));
+        ftxui::Render(screen, component->Render());
+        return strip_ansi(screen.ToString());
+    };
+    for (const int columns : {120, 60, 40, 120}) {
+        SCOPED_TRACE(columns);
+        // Seed the measured viewport, as the App's startup render does.
+        (void)draw(columns);
+        const auto pinned = draw(columns);
+        ASSERT_TRUE(state->messages_store.virtual_list_active);
+        EXPECT_EQ(state->messages_store.virtual_jh.total(), 242);
+        ASSERT_FALSE(state->messages_store.selection_rows.empty());
+        const auto& body_box = state->messages_store.selection_rows.back()->box;
+        // The native scroll indicator and the virtual ASCII gutter each
+        // reserve one column; the transcript owns every remaining cell.
+        EXPECT_EQ(body_box.x_max - body_box.x_min + 1, columns - 2);
+        EXPECT_NE(pinned.find("HISTORY message 119"), std::string::npos);
+        EXPECT_NE(pinned.find("Agent completed"), std::string::npos);
+        EXPECT_EQ(draw(columns), pinned);
+        ftxui::Mouse wheel;
+        wheel.button = ftxui::Mouse::WheelUp;
+        wheel.x = state->messages_store.scrollable_box.x_min + 1;
+        wheel.y = state->messages_store.scrollable_box.y_min + 1;
+        EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
+        EXPECT_FALSE(state->messages_store.scroll_pinned_to_bottom);
+        EXPECT_NE(draw(columns), pinned);
+        EXPECT_TRUE(component->OnEvent(ftxui::Event::PageUp));
+        EXPECT_FALSE(state->messages_store.scroll_pinned_to_bottom);
+        EXPECT_NE(draw(columns), pinned);
+        EXPECT_TRUE(component->OnEvent(ftxui::Event::Special("\x1b[1;5B")));
+        EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+        EXPECT_EQ(draw(columns), pinned);
+    }
+}
+
+
+TEST(ReplScreen, SystemEventVirtualHeightMatchesFaithfulSingleLineSummaryForEverySubtype) {
+    namespace msg = loom::ui::messages;
+    namespace ml = loom::ui::messages_list;
+    using ST = msg::SystemMessageSubtype;
+    for (const auto subtype : {ST::Plain, ST::TurnDuration, ST::MemorySaved, ST::BridgeStatus,
+            ST::ThinkingSummary, ST::HookSummary, ST::ModelSwitch, ST::AwaySummary,
+            ST::BackgroundTask, ST::Other}) {
+        for (const int columns : {40, 60, 120}) {
+            SCOPED_TRACE(static_cast<int>(subtype));
+            SCOPED_TRACE(columns);
+            msg::SystemTextMessageData event;
+            event.subtype = subtype;
+            event.summary = "Resuming session: history";
+            ml::MessagesListInput input;
+            input.rows.push_back(event);
+            input.shapes.push_back(ml::MessageShape::SystemText);
+            const auto visible = ml::build_visible_rows(input);
+            ASSERT_EQ(visible.size(), 1u);
+            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
+                                               ftxui::Dimension::Fixed(8));
+            ftxui::Render(screen, ftxui::vbox({msg::RenderSystemTextMessageFaithful(event),
+                                              ftxui::text("AFTER-EVENT")}));
+            int after_row = -1;
+            for (int y = 0; y < screen.dimy(); ++y)
+                if (screen.PixelAt(0, y).character == "A") after_row = y;
+            EXPECT_EQ(after_row, 2);
+            EXPECT_EQ(ml::detail::estimate_row_height(visible[0], input, columns), after_row);
+        }
+    }
+}
+
+TEST(ReplScreen, RestoredAssistantHistorySystemEventsKeepLatestReplyVisible) {
+    namespace repl = loom::ui::repl_screen;
+    for (const int columns : {40, 60, 120}) {
+        SCOPED_TRACE(columns);
+        ScopedEnvVar terminal_columns("COLUMNS");
+        ScopedEnvVar terminal_rows("LINES");
+        terminal_columns.set(std::to_string(columns));
+        terminal_rows.set("30");
+        auto state = std::make_shared<repl::ReplScreenState>();
+        AddTestMessages(state->messages_store, 120, "HISTORY");
+        auto append = [&](std::string id, std::string role, std::string text,
+                          std::optional<std::string> subtype = std::nullopt) {
+            repl::MessageDisplayEntry entry;
+            entry.id = std::move(id);
+            entry.role = std::move(role);
+            entry.content_preview = std::move(text);
+            entry.system_subtype = std::move(subtype);
+            state->messages_store.messages.push_back(std::move(entry));
+        };
+        append("completed", "system", "Agent completed · history-check", "background_task");
+        append("resume", "system", "Resuming session: history");
+        append("followup", "user", "真实端点验收：上面的120条Assistant消息和完成通知是明确标注的UI测试数据。"
+                                     "不要调用工具，只回复长历史已确认。");
+        append("thinking", "assistant", "Confirm the history fixture.");
+        state->messages_store.messages.back().is_thinking = true;
+        state->messages_store.messages.back().full_content = "Confirm the history fixture.";
+        append("reply", "assistant", "长历史已确认");
+        auto component = MakeComponent(state);
+        for (int frame = 0; frame < 4; ++frame) {
+            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
+                                               ftxui::Dimension::Fixed(30));
+            ftxui::Render(screen, component->Render());
+            const auto text = strip_ansi(screen.ToString());
+            EXPECT_TRUE(state->messages_store.virtual_list_active);
+            // The initial native frame establishes the viewport geometry.
+            if (frame != 0)
+                EXPECT_NE(text.find("● 长历史已确认"), std::string::npos) << text;
+        }
+    }
 }

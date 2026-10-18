@@ -1567,13 +1567,13 @@ std::function<void()> on_dynamic_skills_loaded(std::function<void()> callback) {
         }
     };
 
+    const std::size_t slot = state.on_loaded_callbacks.size();
     state.on_loaded_callbacks.push_back(wrapped);
 
-    // Return unsubscribe function
-    return [&state, it = std::prev(state.on_loaded_callbacks.end())]() {
+    // Slots are append-only; vector growth invalidates iterators, not indices.
+    return [&state, slot]() {
         std::lock_guard unsub_lock(state.mutex);
-        // Mark as empty function rather than erase to avoid iterator invalidation
-        *it = nullptr;
+        state.on_loaded_callbacks[slot] = nullptr;
     };
 }
 

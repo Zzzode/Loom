@@ -69,6 +69,10 @@ namespace detail {
             }
             Element line_el = code_highlight::colored_text_line(
                 std::move(segments));
+            // A named syntax palette owns its declared canvas. The normal
+            // palette-driven Markdown path deliberately remains transparent.
+            if (!opts.theme_name.empty())
+                line_el = line_el | bgcolor(theme.bg);
             if (opts.dim_color) line_el = line_el | dim;
             out.push_back(std::move(line_el));
         }

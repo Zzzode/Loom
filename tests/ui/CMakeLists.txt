@@ -53,6 +53,9 @@ add_executable(test_design_system test_design_readability.cpp test_chrome_budget
     test_attention_hierarchy.cpp
     test_reduced_motion.cpp
     test_reduced_motion_cursor.cpp
+    test_text_contrast.cpp
+    test_text_contrast_controls.cpp
+    test_text_contrast_dialogs.cpp
     ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_design_system ${_ui_test_libs})
 gtest_discover_tests(test_design_system DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

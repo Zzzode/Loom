@@ -14,11 +14,11 @@
 ///
 /// VISUAL SPEC (permission-colored dialog):
 ///   ┌─ MCP Server Request ─────────────────────────────────────┐
-///   │ "Brave Search" needs additional input                    │ ← subtitle, dim
+///   │ "Brave Search" needs additional input                    │ ← readable subtitle
 ///   ├──────────────────────────────────────────────────────────┤
 ///   │  Allow connecting to Brave Search?                       │ ← body (paragraph)
 ///   │                                                          │
-///   │  Request ID: 42                                          │ ← dim row
+///   │  Request ID: 42                                          │ ← metadata row
 ///   │                                                          │
 ///   │  [y] Allow    [n] Deny    [Esc] Cancel                   │ ← buttons row
 ///   └──────────────────────────────────────────────────────────┘
@@ -85,7 +85,7 @@ using Theme = loom::ui::design::theme::Theme;
     // Body:
     //   - question: "Allow connecting to <server_name>?"
     //   - blank
-    //   - "Request ID: <id>"  (dim)
+    //   - "Request ID: <id>"  (readable metadata)
     //   - blank
     //   - buttons row
     Elements body;
@@ -104,15 +104,15 @@ using Theme = loom::ui::design::theme::Theme;
 
     // --- Optional request-description paragraph ---
     if (!p.request_description.empty()) {
-        body.push_back(paragraph(p.request_description) | dim);
+        body.push_back(paragraph(p.request_description) | color(theme.palette->text));
         body.push_back(text(""));
     }
 
-    // --- Request ID row (dim, mono-ish) ---
+    // --- Request ID row ---
     body.push_back(hbox({
-        text("Request ID: ") | dim,
-        text(std::to_string(p.request_id)) | dim,
-    }));
+        text("Request ID: "),
+        text(std::to_string(p.request_id)),
+    }) | color(theme.palette->muted));
 
     body.push_back(text(""));
 
@@ -127,11 +127,11 @@ using Theme = loom::ui::design::theme::Theme;
         }),
         text("  "),
         hbox({
-            text("[Esc] Cancel") | color(theme.palette->muted) | dim,
+            text("[Esc] Cancel") | color(theme.palette->muted),
         }),
     }));
 
-    props.content = vbox(std::move(body));
+    props.content = vbox(std::move(body)) | color(theme.palette->text);
     return dframe::DialogFrame(props, theme);
 }
 

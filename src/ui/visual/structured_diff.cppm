@@ -80,11 +80,15 @@ struct DiffSyntaxTheme {
     Color added_fg        = loom::ui::design::theme::current_theme().palette->success;
     Color removed_fg      = loom::ui::design::theme::current_theme().palette->danger;
     Color context_fg      = loom::ui::design::theme::current_theme().palette->text;
+    // Default/custom diffs inherit the caller's canvas; explicit named themes
+    // supply a matching context surface rather than borrowing a different UI theme.
+    std::optional<Color> context_bg;
     Color added_bg        = loom::ui::design::theme::current_theme().palette->success_tint_bg;
     Color removed_bg      = loom::ui::design::theme::current_theme().palette->danger_tint_bg;
     Color added_word_bg   = loom::ui::design::theme::current_theme().palette->surface_tint_3;
     Color removed_word_bg = loom::ui::design::theme::current_theme().palette->surface_tint_3;
     Color hunk_header_fg  = loom::ui::design::theme::current_theme().palette->info;
+    Color hunk_header_bg  = loom::ui::design::theme::current_theme().palette->info_tint_bg;
     Color line_num_fg     = loom::ui::design::theme::current_theme().palette->muted;
 };
 
@@ -277,7 +281,7 @@ struct BlockDiffStatus {
                                    files_changed,
                                    files_changed == 1 ? "" : "s");
     Elements els;
-    els.push_back(text(files_label) | dim);
+    els.push_back(text(files_label) | color(loom::ui::design::theme::current_theme().palette->muted));
     if (additions > 0) {
         els.push_back(text(std::format(" +{}", additions))
                       | color(loom::ui::design::theme::current_theme().palette->success) | bold);
@@ -426,15 +430,21 @@ get_diff_syntax_theme(const std::string& theme_name) {
     DiffSyntaxTheme theme;
     theme.name = theme_name;
     if (theme_name == "default") return theme;
-    theme.added_fg = Color::Green;
-    theme.removed_fg = Color::Red;
-    theme.context_fg = Color::GrayLight;
+    const auto& dark = *loom::ui::design::theme::palette_for_variant(
+        loom::ui::design::theme::ThemeVariant::Dark);
+    const auto& light = *loom::ui::design::theme::palette_for_variant(
+        loom::ui::design::theme::ThemeVariant::Light);
+    theme.added_fg = dark.success;
+    theme.removed_fg = dark.danger;
+    theme.context_fg = Color::RGB(192, 192, 192);
+    theme.context_bg = Color::RGB(15, 15, 15);
     theme.added_bg = Color::RGB(0, 30, 0);
     theme.removed_bg = Color::RGB(30, 0, 0);
     theme.added_word_bg = Color::RGB(0, 60, 0);
     theme.removed_word_bg = Color::RGB(60, 0, 0);
-    theme.hunk_header_fg = Color::Cyan;
-    theme.line_num_fg = Color::GrayDark;
+    theme.hunk_header_fg = Color::RGB(135, 215, 215);
+    theme.hunk_header_bg = dark.info_tint_bg;
+    theme.line_num_fg = dark.muted;
 
     if (theme_name == "dark" || theme_name == "default") {
         return theme;
@@ -443,6 +453,10 @@ get_diff_syntax_theme(const std::string& theme_name) {
         theme.added_fg = Color::RGB(0, 100, 0);
         theme.removed_fg = Color::RGB(150, 0, 0);
         theme.context_fg = Color::RGB(60, 60, 60);
+        theme.context_bg = Color::RGB(255, 255, 255);
+        theme.hunk_header_fg = Color::RGB(0, 100, 125);
+        theme.hunk_header_bg = light.info_tint_bg;
+        theme.line_num_fg = light.muted;
         theme.added_bg = Color::RGB(220, 255, 220);
         theme.removed_bg = Color::RGB(255, 220, 220);
         theme.added_word_bg = Color::RGB(180, 255, 180);
@@ -561,6 +575,8 @@ get_diff_syntax_theme(const std::string& theme_name) {
         result = result | bgcolor(theme.added_bg);
     } else if (line.type == StructuredDiffLine::Type::Removed) {
         result = result | bgcolor(theme.removed_bg);
+    } else if (theme.context_bg) {
+        result = result | bgcolor(*theme.context_bg);
     }
 
     if (selected) {
@@ -578,7 +594,7 @@ get_diff_syntax_theme(const std::string& theme_name) {
 [[nodiscard]] inline Element RenderBinaryFile() {
     return vbox({
         text("") | dim,
-        text("  Binary file — cannot display diff") | dim | center,
+        text("  Binary file — cannot display diff") | color(loom::ui::design::theme::current_theme().palette->muted) | center,
         text("") | dim,
     });
 }
@@ -589,10 +605,10 @@ get_diff_syntax_theme(const std::string& theme_name) {
         hbox({
             text(" + ") | color(loom::ui::design::theme::current_theme().palette->success) | bold,
             text(path) | bold,
-            text(" (new file)") | dim,
+            text(" (new file)") | color(loom::ui::design::theme::current_theme().palette->muted),
         }),
         separator(),
-        text("  Untracked file — full content not shown in diff") | dim,
+        text("  Untracked file — full content not shown in diff") | color(loom::ui::design::theme::current_theme().palette->muted),
     });
 }
 
@@ -605,7 +621,7 @@ get_diff_syntax_theme(const std::string& theme_name) {
         header_text += " " + hunk.header;
     }
     return text(" " + header_text) | color(theme.hunk_header_fg)
-           | bgcolor(loom::ui::design::theme::current_theme().palette->info_tint_bg);
+           | bgcolor(theme.hunk_header_bg);
 }
 
 /// Render the full structured diff view
@@ -625,8 +641,8 @@ get_diff_syntax_theme(const std::string& theme_name) {
     Elements elements;
     elements.push_back(hbox({
         text(" ") | dim,
-        text(diff.file_path) | bold,
-        diff.is_large_file ? (text(" (large file)") | dim | color(loom::ui::design::theme::current_theme().palette->warning))
+        text(diff.file_path) | bold | color(loom::ui::design::theme::current_theme().palette->text),
+        diff.is_large_file ? (text(" (large file)") | color(loom::ui::design::theme::current_theme().palette->warning))
                            : text(""),
     }));
     elements.push_back(separator());
@@ -662,11 +678,11 @@ get_diff_syntax_theme(const std::string& theme_name) {
     // Truncation notice
     if (diff.is_truncated || total_rendered >= opts.max_display_lines) {
         elements.push_back(
-            text("  ... diff truncated (too many lines) ...") | dim | center);
+            text("  ... diff truncated (too many lines) ...") | color(loom::ui::design::theme::current_theme().palette->muted) | center);
     }
 
     if (elements.size() <= 2) {
-        elements.push_back(text("  (no changes)") | dim);
+        elements.push_back(text("  (no changes)") | color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     return vbox(elements) | vscroll_indicator | yframe | flex;

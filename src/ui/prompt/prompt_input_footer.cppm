@@ -11,10 +11,10 @@
 ///   Narrow layouts stack the control columns below the status row.
 ///
 /// Left side contents:
-///   - Exit message (dim: "Press <key> again to exit")
-///   - Pasting indicator (dim: "Pasting text…")
+///   - Exit message (readable secondary text: "Press <key> again to exit")
+///   - Pasting indicator (readable secondary text: "Pasting text…")
 ///   - HistorySearchInput (when isSearching)
-///   - Vim INSERT badge (dim: "-- INSERT --")
+///   - Vim INSERT badge (readable secondary text: "-- INSERT --")
 ///   - ModeIndicator (permission mode, tasks, teams, PR, hints)
 ///
 /// STABLE HEIGHT: In fullscreen the bottom slot is fixed-height, so every
@@ -202,10 +202,10 @@ struct ModeIndicatorOptions {
         };
         // Show cycle hint only when few primary items
         if (primary_item_count < 2 && opts.show_hint) {
-            mode_el.push_back(text(" on") | dim);
-            mode_el.push_back(text(" (") | dim);
-            mode_el.push_back(text("shift+tab") | dim | bold);
-            mode_el.push_back(text(" to cycle)") | dim);
+            mode_el.push_back(text(" on"));
+            mode_el.push_back(text(" ("));
+            mode_el.push_back(text("shift+tab") | bold);
+            mode_el.push_back(text(" to cycle)"));
         }
         left_parts.push_back(hbox(std::move(mode_el)));
     }
@@ -223,8 +223,8 @@ struct ModeIndicatorOptions {
             // "↓ to manage" hint when tasks present and no teams
             pill = hbox({
                 std::move(pill),
-                text(" ↓") | dim,
-                text(" manage") | dim,
+                text(" ↓"),
+                text(" manage"),
             });
         }
         left_parts.push_back(std::move(pill));
@@ -268,15 +268,15 @@ struct ModeIndicatorOptions {
     if (opts.show_hint) {
         if (opts.is_loading) {
             hint_parts.push_back(
-                hbox({ text(opts.esc_shortcut) | dim | bold,
-                       text(" to interrupt") | dim }));
+                hbox({ text(opts.esc_shortcut) | bold,
+                       text(" to interrupt") }));
         } else if (has_background_tasks || has_teams) {
             hint_parts.push_back(
-                hbox({ text(opts.todos_shortcut) | dim | bold,
-                       text(" toggle tasks") | dim }));
+                hbox({ text(opts.todos_shortcut) | bold,
+                       text(" toggle tasks") }));
         } else if (left_parts.empty()) {
             // Default hint when nothing else is shown
-            hint_parts.push_back(text("? for shortcuts") | dim);
+            hint_parts.push_back(text("? for shortcuts"));
         }
     }
 
@@ -302,7 +302,7 @@ struct ModeIndicatorOptions {
         return text(" ") | size(HEIGHT, EQUAL, 1);
     }
 
-    return hbox(std::move(row_parts)) | size(HEIGHT, EQUAL, 1);
+    return hbox(std::move(row_parts)) | color(pal.muted) | size(HEIGHT, EQUAL, 1);
 }
 
 // ============================================================
@@ -345,12 +345,12 @@ struct LeftSideOptions {
     // 1. Exit message — highest priority, replaces everything
     if (opts.exit_message_show) {
         std::string msg = "Press " + opts.exit_message_key + " again to exit";
-        return hbox({ text(msg) | dim }) | size(HEIGHT, EQUAL, 1);
+        return hbox({ text(msg) | color(pal.muted) }) | size(HEIGHT, EQUAL, 1);
     }
 
     // 2. Pasting indicator
     if (opts.is_pasting) {
-        return hbox({ text("Pasting text…") | dim }) | size(HEIGHT, EQUAL, 1);
+        return hbox({ text("Pasting text…") | color(pal.muted) }) | size(HEIGHT, EQUAL, 1);
     }
 
     // 3. History search input
@@ -368,7 +368,7 @@ struct LeftSideOptions {
     bool show_vim = opts.vim_mode == VimMode::Insert;
     if (show_vim) {
         return hbox({
-            text("-- INSERT --") | dim,
+            text("-- INSERT --") | color(pal.muted),
             filler(),
             RenderModeIndicator(opts.mode_indicator),
         }) | size(HEIGHT, EQUAL, 1);
@@ -451,8 +451,7 @@ struct StatusLineOptions {
 /// Render the user-configurable StatusLine.
 ///
 ///   - Text may contain ANSI escape codes (SGR) for colored output
-///   - ANSI output keeps its own brightness; dim is applied to the local
-///     Text component
+///   - Explicit command ANSI colors and attributes remain authoritative
 ///   - Single line, truncated if too long
 ///   - In fullscreen mode, reserves a row even while loading (stable height)
 ///   - Horizontal padding from settings.statusLine.padding
@@ -503,7 +502,7 @@ struct BridgeOptions {
     if (opts.selected) {
         el = el | inverted;
         // "· Enter to view" when selected
-        el = hbox({ std::move(el), text(" · Enter to view") | dim });
+        el = hbox({ std::move(el), text(" · Enter to view") | color(pal.muted) });
     }
     return el;
 }
@@ -637,7 +636,7 @@ enum class NotificationPriority {
 struct NotificationItem {
     std::string key;                              ///< Unique key for dedup/invalidation
     std::string text;                             ///< Display text (plain string, no JSX)
-    std::string color;                            ///< "error", "warning", "success", "info", or empty=dim
+    std::string color;                            ///< "error", "warning", "success", "info", or empty=muted
     NotificationPriority priority = NotificationPriority::Low;  ///< Display priority
     int timeout_ms = 8000;                        ///< Display timeout
     std::vector<std::string> invalidates;         ///< Keys this notification invalidates
@@ -695,7 +694,7 @@ struct NotificationData {
     // When set, takes priority over most static notifications.
     // DEPRECATED: prefer using `queue` instead (NotificationQueue carousel).
     std::optional<std::string> dynamic_text;
-    std::optional<std::string> dynamic_color;  // "error", "warning", or empty=dim
+    std::optional<std::string> dynamic_color;  // "error", "warning", or empty=muted
 
     // Notification queue — priority-based rotating carousel of up to 12 items.
     // When queue.current is set, it takes highest priority in RenderNotifications.
@@ -708,6 +707,7 @@ struct NotificationData {
 [[nodiscard]] inline Element RenderIdeStatusIndicator(const IdeSelectionInfo& ide) {
     using ftxui::text;
     if (!ide.connected) return text("");
+    const auto muted = loom::ui::design::theme::current_theme().palette->muted;
 
     // shouldShowIdeSelection = ideStatus === "connected" &&
     //   (ideSelection?.filePath || (ideSelection?.text && ideSelection.lineCount > 0))
@@ -724,7 +724,7 @@ struct NotificationData {
         // "{lineCount} {unit} selected" — color="ide"
         return hbox({
             text("\xE2\xA7\x89 ") | color(ide_color),   // ⧉
-            text(std::to_string(n) + " " + unit + " selected") | color(ide_color),
+            text(std::to_string(n) + " " + unit + " selected") | color(muted),
         });
     }
 
@@ -736,8 +736,8 @@ struct NotificationData {
             ? path.substr(pos + 1) : path;
         // "⧉ In {basename}" — color="ide"
         return hbox({
-            text("\xE2\xA7\x89 In ") | color(ide_color),   // ⧉ In
-            text(basename) | color(ide_color),
+            text("\xE2\xA7\x89 ") | color(ide_color),   // ⧉
+            text("In " + basename) | color(muted),
         });
     }
 
@@ -763,7 +763,7 @@ namespace detail {
     if (color_name == "warning") return pal.warning;
     if (color_name == "success") return pal.success;
     if (color_name == "info")    return pal.info;
-    return pal.muted;   // default dim
+    return pal.muted;   // readable neutral default
 }
 
 } // namespace detail
@@ -782,7 +782,6 @@ namespace detail {
     using ftxui::color;
     using ftxui::bgcolor;
     using ftxui::bold;
-    using ftxui::dim;
     using ftxui::hbox;
 
     using namespace loom::ui::design;
@@ -805,7 +804,7 @@ namespace detail {
                 case ApiKeyStatus::Valid: {
                     // ✓ green — key is working
                     const std::string label = std::string(loom::ui::design::figures::kTick) + " API key OK";
-                    return hbox({ text(label) | color(pal.success) | dim })
+                    return hbox({ text(label) | color(pal.success) })
                          | size(HEIGHT, EQUAL, 1);
                 }
                 case ApiKeyStatus::Invalid: {
@@ -827,7 +826,7 @@ namespace detail {
         }
 
         case PillVariant::AutoUpdater: {
-            //   Downloading: "Auto-updating…" (dim text)
+            //   Downloading: "Auto-updating…" (readable secondary text)
             //   Installed:   "✓ Update installed · Restart to apply" (success)
             //   Error:       "✗ Auto-update failed" (error)
             //   Available:   "New version vX.Y.Z available" (info)
@@ -837,7 +836,7 @@ namespace detail {
                     // ⟳ U+27F3 — "updating"
                     const std::string label =
                         std::string("\xE2\x9F\xB3 ") + "Auto-updating…";
-                    return hbox({ text(label) | color(pal.muted) | dim })
+                    return hbox({ text(label) | color(pal.muted) })
                          | size(HEIGHT, EQUAL, 1);
                 }
                 case AutoUpdaterStatus::Installed: {
@@ -949,9 +948,9 @@ namespace detail {
         return hbox({ std::move(ide_el) }) | size(HEIGHT, EQUAL, 1);
     }
 
-    // 4. Overage mode — "Now using extra usage" (dim)
+    // 4. Overage mode — "Now using extra usage" (readable secondary text)
     if (data.is_overage_mode) {
-        return hbox({ text("Now using extra usage") | dim })
+        return hbox({ text("Now using extra usage") | color(pal.muted) })
              | size(HEIGHT, EQUAL, 1);
     }
 
@@ -974,11 +973,11 @@ namespace detail {
              | size(HEIGHT, EQUAL, 1);
     }
 
-    // 7. Verbose token count — "{tokenUsage} tokens" (dim, only when apiKey valid)
+    // 7. Verbose token count — readable secondary text, only when apiKey valid
     if (data.verbose && data.api_key_status == ApiKeyStatus::Valid
         && data.token_usage > 0)
     {
-        return hbox({ text(std::to_string(data.token_usage) + " tokens") | dim })
+        return hbox({ text(std::to_string(data.token_usage) + " tokens") | color(pal.muted) })
              | size(HEIGHT, EQUAL, 1);
     }
 
@@ -1300,7 +1299,7 @@ inline void AddApiKeyNotification(NotificationQueue& nq, ApiKeyStatus status) {
 /// Add an auto-updater status notification pill to the queue.
 ///
 ///   - Available:   blue "⬇ New: vX.Y.Z" (medium priority)
-///   - Downloading: dim "⟳ Auto-updating…" (immediate — user is waiting)
+///   - Downloading: muted "⟳ Auto-updating…" (immediate — user is waiting)
 ///   - Installed:   green "✓ Update installed · Restart to apply" (immediate)
 ///   - Error:       red "✗ Auto-update failed" (immediate)
 ///
@@ -1323,7 +1322,7 @@ inline void AddAutoUpdaterNotification(NotificationQueue& nq,
             break;
         case AutoUpdaterStatus::Downloading:
             item.text = "\xE2\x9F\xB3 Auto-updating…";   // ⟳
-            item.color = "";   // dim
+            item.color = "";   // muted
             item.priority = NotificationPriority::Immediate;
             item.timeout_ms = 30000;  // downloading takes a while
             break;

@@ -203,7 +203,7 @@ namespace detail {
     rows.push_back(hbox({
         text("Plugin: ") | bold,
         text(def.name) | color(pal.info),
-        text("  v" + def.version) | dim,
+        text("  v" + def.version) | color(pal.muted),
     }));
     if (!def.author.empty()) {
         rows.push_back(hbox({
@@ -212,7 +212,7 @@ namespace detail {
         }));
     }
     if (!def.description.empty()) {
-        rows.push_back(paragraph(std::format("About: {}", def.description)) | dim);
+        rows.push_back(paragraph(std::format("About: {}", def.description)) | color(pal.muted));
     }
     if (def.homepage) {
         rows.push_back(hbox({
@@ -257,7 +257,7 @@ namespace detail {
             text(m.path),
         }));
         if (!m.description.empty()) {
-            rows.push_back(text("      " + m.description) | dim);
+            rows.push_back(text("      " + m.description) | color(pal.muted));
         }
     }
     return vbox(std::move(rows));
@@ -285,7 +285,7 @@ namespace detail {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements parts;
     parts.push_back(hbox({
-        text("Accessing workspace: ") | dim,
+        text("Accessing workspace: ") | color(pal.muted),
         text(std::string{workspace_path}) | bold,
     }));
     parts.push_back(text(""));
@@ -294,7 +294,7 @@ namespace detail {
         "(Like your own code, a well-known open source project, or work from "
         "your team). If not, take a moment to review what's in this folder "
         "first."));
-    parts.push_back(text("Loom'll be able to read, edit, and execute files here.") | dim);
+    parts.push_back(text("Loom'll be able to read, edit, and execute files here.") | color(pal.muted));
 
     if (detail::has_any_concerns(src)) {
         parts.push_back(text(""));
@@ -399,7 +399,7 @@ struct DialogState {
     if (s.countdown_remaining <= 0) {
         return hbox({
             text(" ✓ ") | color(pal.success),
-            text("You may now proceed.") | color(pal.success) | dim,
+            text("You may now proceed.") | color(pal.success),
         });
     }
     return hbox({
@@ -423,15 +423,15 @@ struct DialogState {
     }));
     if (s.show_second_confirm || s.understand_risk) {
         parts.push_back(hbox({
-            text(" Type ") | dim,
+            text(" Type ") | color(pal.muted),
             text(std::string{tu::kCriticalConfirmWord}) | bold | color(pal.danger),
-            text(" to confirm: ") | dim,
+            text(" to confirm: ") | color(pal.muted),
             text(s.yes_input.empty() ? std::string{"(empty)"} : s.yes_input)
                 | color(s.yes_input == tu::kCriticalConfirmWord ? pal.success : pal.danger),
             text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
         }));
         parts.push_back(text(
-            " (Esc / Cancel aborts. Typing anything other than YES is rejected.)") | dim);
+            " (Esc / Cancel aborts. Typing anything other than YES is rejected.)") | color(pal.muted));
     }
     return vbox(std::move(parts));
 }
@@ -493,9 +493,9 @@ struct DialogState {
                 text(tu::format_list_with_and(summary.domains)),
             }));
         }
-        body.push_back(vbox(std::move(detail_rows)) | borderEmpty | dim);
+        body.push_back(vbox(std::move(detail_rows)) | borderEmpty | color(pal.text));
     } else {
-        body.push_back(text(" ▼ Press [D] to show details") | dim);
+        body.push_back(text(" ▼ Press [D] to show details") | color(pal.muted));
     }
 
     // Tier-specific safety gates
@@ -513,7 +513,7 @@ struct DialogState {
     if (level == tu::RiskLevel::Medium || level == tu::RiskLevel::High) {
         body.push_back(hbox({
             text(s->always_allow ? "☑ " : "☐ ") | color(pal.info),
-            text("Remember this decision for future prompts") | dim,
+            text("Remember this decision for future prompts") | color(pal.muted),
         }));
         body.push_back(text(""));
     }
@@ -527,7 +527,7 @@ struct DialogState {
     body.push_back(text(""));
     body.push_back(hbox({
         text("Security guide") | color(pal.info) | underlined,
-    }) | dim);
+    }));
     body.push_back(hbox({
         text("Enter") | bold,
         text(" to confirm · "),
@@ -539,7 +539,7 @@ struct DialogState {
         text(" details · "),
         text("Space") | bold,
         text(" toggle checkbox"),
-    }) | dim);
+    }) | color(pal.muted));
 
     const auto col = detail::risk_color(level);
     return window(

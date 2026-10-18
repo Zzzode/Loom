@@ -219,7 +219,7 @@ struct EditorState {
         auto t = static_cast<Tab>(i);
         auto el = text(std::format(" {} ", labels[i]));
         if (t == active) el = el | bold | inverted | color(pal.info);
-        else              el = el | dim;
+        else              el = el | color(pal.muted);
         els.push_back(el);
         if (i < 2) els.push_back(text(" "));
     }
@@ -248,20 +248,20 @@ struct EditorState {
         const auto& r = st.allowlist[i];
         bool sel = i == st.al_cursor;
         Elements cells = {
-            text(std::format("{:>2}.", i + 1)) | dim | size(WIDTH, EQUAL, 3),
+            text(std::format("{:>2}.", i + 1)) | color(pal.muted) | size(WIDTH, EQUAL, 3),
             pc::PathLabel(r.path_pattern, 36) | size(WIDTH, EQUAL, 38),
-            text(std::string{pc::MatchStrategyLabel(r.strategy)}) | dim | size(WIDTH, EQUAL, 10),
+            text(std::string{pc::MatchStrategyLabel(r.strategy)}) | color(pal.muted) | size(WIDTH, EQUAL, 10),
             pc::PathScopeBadge(r.scope) | size(WIDTH, EQUAL, 8),
-            (r.enabled ? text(" ✓ ") | color(pal.success) : text("   ") | dim) | size(WIDTH, EQUAL, 4),
-            (r.is_default ? text(" ") : text(" ✕ ") | color(pal.danger) | dim) | size(WIDTH, EQUAL, 4),
+            (r.enabled ? text(" ✓ ") | color(pal.success) : text("   ")) | size(WIDTH, EQUAL, 4),
+            (r.is_default ? text(" ") : text(" ✕ ") | color(pal.danger)) | size(WIDTH, EQUAL, 4),
         };
         auto row = hbox(cells);
         if (sel) row = row | inverted | focus;
-        if (!r.enabled) row = row | dim;
+        if (!r.enabled) row = row | color(pal.muted);
         rows.push_back(row);
     }
     if (st.allowlist.empty()) {
-        rows.push_back(text("  (no allowlist entries)") | dim);
+        rows.push_back(text("  (no allowlist entries)") | color(pal.muted));
     }
 
     // Add-row input row
@@ -275,17 +275,17 @@ struct EditorState {
         rows.push_back(hbox({
             text("  +  ") | color(pal.success) | bold,
             text(pattern_display) | color(pal.warning) | xflex_grow,
-            text(strat_labels[st.new_strategy_idx]) | dim,
+            text(strat_labels[st.new_strategy_idx]) | color(pal.muted),
             text(" / ") | dim,
-            text(scope_labels[st.new_scope_idx]) | dim,
+            text(scope_labels[st.new_scope_idx]) | color(pal.muted),
         }));
     } else {
         rows.push_back(hbox({
-            text(" [a] ") | color(pal.info) | dim,
-            text("Add entry") | dim,
+            text(" [a] ") | color(pal.info),
+            text("Add entry") | color(pal.muted),
             filler(),
-            text(" [i] import ") | dim,
-            text(" [e] export") | dim,
+            text(" [i] import ") | color(pal.muted),
+            text(" [e] export") | color(pal.muted),
         }));
     }
 
@@ -317,29 +317,29 @@ struct EditorState {
             ? std::format("{}h", r.time_window.count() / 3600)
             : std::string{"perm"};
         Elements cells = {
-            text(std::format("{:>2}.", i + 1)) | dim | size(WIDTH, EQUAL, 3),
+            text(std::format("{:>2}.", i + 1)) | color(pal.muted) | size(WIDTH, EQUAL, 3),
             text(r.tool_pattern) | color(pal.primary) | size(WIDTH, EQUAL, 18),
-            text(r.action_pattern) | dim | size(WIDTH, EQUAL, 10),
+            text(r.action_pattern) | color(pal.muted) | size(WIDTH, EQUAL, 10),
             pc::PathLabel(r.path_pattern, 28) | size(WIDTH, EQUAL, 30),
             text(std::string{detail::ActionLabel(r.action)})
                 | color(detail::ActionColor(r.action)) | size(WIDTH, EQUAL, 8),
-            text(std::string{detail::ScopeLabel(r.scope)}) | dim | size(WIDTH, EQUAL, 9),
-            (r.enabled ? text(" ✓ ") | color(pal.success) : text("   ") | dim) | size(WIDTH, EQUAL, 4),
+            text(std::string{detail::ScopeLabel(r.scope)}) | color(pal.muted) | size(WIDTH, EQUAL, 9),
+            (r.enabled ? text(" ✓ ") | color(pal.success) : text("   ")) | size(WIDTH, EQUAL, 4),
         };
         auto row = hbox(cells);
         if (sel) row = row | inverted | focus;
-        if (!r.enabled) row = row | dim;
+        if (!r.enabled) row = row | color(pal.muted);
         rows.push_back(row);
     }
     if (st.preapprovals.empty()) {
-        rows.push_back(text("  (no preapproval rules)") | dim);
+        rows.push_back(text("  (no preapproval rules)") | color(pal.muted));
     }
     rows.push_back(pc::ThinDivider());
     rows.push_back(hbox({
-        text(" [w] ") | color(pal.info) | dim,
-        text("New-rule wizard") | dim,
+        text(" [w] ") | color(pal.info),
+        text("New-rule wizard") | color(pal.muted),
         filler(),
-        text(" [Enter] edit  [Del] remove") | dim,
+        text(" [Enter] edit  [Del] remove") | color(pal.muted),
     }));
 
     // Mini-wizard overlay
@@ -379,11 +379,11 @@ struct EditorState {
                 ? " (type path glob pattern, e.g. /src/**/*.ts) "
                 : st.wizard.entered_path;
             wizard_rows.push_back(hbox({
-                text("  Path pattern: ") | dim,
+                text("  Path pattern: ") | color(pal.muted),
                 text(p) | color(pal.warning) | xflex_grow,
             }));
             wizard_rows.push_back(text("") | size(HEIGHT, EQUAL, 1));
-            wizard_rows.push_back(text("  [Enter] save  [Esc] cancel") | dim);
+            wizard_rows.push_back(text("  [Enter] save  [Esc] cancel") | color(pal.muted));
         }
         rows.insert(rows.end(), wizard_rows.begin(), wizard_rows.end());
     }
@@ -399,7 +399,7 @@ struct EditorState {
     rows.push_back(hbox({
         text(" High-risk default paths") | bold | color(pal.danger),
         filler(),
-        text(" Two actions per row: [w] = allow in workspace only, [n] = never") | dim,
+        text(" Two actions per row: [w] = allow in workspace only, [n] = never") | color(pal.muted),
     }));
     rows.push_back(pc::ThinDivider());
 
@@ -424,7 +424,7 @@ struct EditorState {
             text(" "),
             pc::PathLabelHighlighted(d.path, true, 40) | size(WIDTH, EQUAL, 42),
             text("  ") | dim,
-            text(d.reason) | dim | xflex_grow,
+            text(d.reason) | color(pal.muted) | xflex_grow,
         });
         if (sel) row = row | inverted | focus;
         rows.push_back(row);
@@ -432,10 +432,10 @@ struct EditorState {
 
     rows.push_back(pc::ThinDivider());
     rows.push_back(hbox({
-        text(" [↑↓/jk] select") | dim,
-        text("  [w] allow in workspace only") | dim,
-        text("  [n] never allow") | dim,
-        text("  [r] reset to default") | dim,
+        text(" [↑↓/jk] select") | color(pal.muted),
+        text("  [w] allow in workspace only") | color(pal.muted),
+        text("  [n] never allow") | color(pal.muted),
+        text("  [r] reset to default") | color(pal.muted),
         filler(),
     }));
 
@@ -457,14 +457,14 @@ struct EditorState {
     }
 
     auto footer = hbox({
-        text(" ←/→ ") | dim,
-        text("switch tab") | dim,
+        text(" ←/→ ") | color(pal.muted),
+        text("switch tab") | color(pal.muted),
         text("  ") | dim,
         text("Esc") | bold,
-        text(" close") | dim,
+        text(" close") | color(pal.muted),
         filler(),
         text(std::format(" changed:{}  exceptions:{}",
-            st->rules_changed_count, st->dangerous_exceptions)) | dim,
+            st->rules_changed_count, st->dangerous_exceptions)) | color(pal.muted),
     });
 
     auto full = vbox({

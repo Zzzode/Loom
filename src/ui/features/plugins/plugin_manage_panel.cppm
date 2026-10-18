@@ -120,20 +120,20 @@ namespace detail {
     auto sort_label   = sort_labels[(unsigned)sort];
 
     return hbox({
-        text(" " + std::string(loom::ui::design::figures::kInfo) + " ") | dim,
+        text(" " + std::string(loom::ui::design::figures::kInfo) + " ") | color(pal.muted),
         text(std::string{search_text.empty() ? "Search installed plugins… (press /)"
                                              : search_text})
              | color(search_text.empty() ? pal.muted : pal.text),
         text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | (search_text.empty() ? dim : color(pal.info)),
         filler(),
-        text("Filter:") | dim,
-        text(" " + std::string{filter_label} + " ") | color(pal.info) | borderLight | dim,
-        text("  Sort:") | dim,
-        text(" " + std::string{sort_label} + " ") | color(pal.primary) | borderLight | dim,
+        text("Filter:") | color(pal.muted),
+        text(" " + std::string{filter_label} + " ") | color(pal.info) | borderLight,
+        text("  Sort:") | color(pal.muted),
+        text(" " + std::string{sort_label} + " ") | color(pal.primary) | borderLight,
         text("  "),
         text(" [+] Install ") | bold | color(pal.success) | bgcolor(pal.success_tint_bg),
         text(" "),
-        text(std::format("{}/{}", visible_count, total_count)) | dim,
+        text(std::format("{}/{}", visible_count, total_count)) | color(pal.muted),
     }) | padding(0, 1, 0, 0);
 }
 
@@ -143,13 +143,6 @@ namespace detail {
 {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto name_color = p.enabled ? pal.text : pal.muted;
-    auto scope_color = [&pal](std::string_view s) -> Color {
-        if (s == "user")    return pal.info;
-        if (s == "project") return pal.primary;
-        if (s == "local")   return pal.muted;
-        if (s == "managed") return pal.primary;
-        return pal.muted;
-    }(p.scope);
 
     Elements left;
     left.push_back(text(selected ? std::string(loom::ui::design::figures::kPointerSmall) + " " : (is_target ? "★ " : "  "))
@@ -160,9 +153,9 @@ namespace detail {
     // Name + marketplace
     left.push_back(text(p.name) | bold | color(selected ? pal.text : name_color));
     left.push_back(text(" @") | dim);
-    left.push_back(text(p.marketplace) | dim | color(pal.info) | dim);
+    left.push_back(text(p.marketplace) | color(pal.info));
     if (p.version) {
-        left.push_back(text("  v" + *p.version) | dim);
+        left.push_back(text("  v" + *p.version) | color(pal.muted));
     }
     if (p.has_pending_update) {
         left.push_back(text(" " + std::string(loom::ui::design::figures::kArrowUp)) | color(pal.warning) | bold);
@@ -175,11 +168,11 @@ namespace detail {
     right.push_back(filler());
     // Tool/command counts
     if (p.tool_count || p.command_count) {
-        right.push_back(text(std::format("{} tools · {} commands", p.tool_count, p.command_count)) | dim);
+        right.push_back(text(std::format("{} tools · {} commands", p.tool_count, p.command_count)) | color(pal.muted));
         right.push_back(text(" "));
     }
     // Scope chip
-    right.push_back(text(" " + p.scope + " ") | color(scope_color) | dim | borderLight);
+    right.push_back(text(" " + p.scope + " ") | color(pal.muted) | borderLight);
 
     auto line = hbox({
         hbox(std::move(left)),
@@ -200,43 +193,43 @@ namespace detail {
     rows.push_back(hbox({
         text(" " + p.name + " ") | bold | color(pal.info),
         filler(),
-        p.version ? text("v" + *p.version) | dim : text(""),
+        p.version ? text("v" + *p.version) | color(pal.muted) : text(""),
     }));
     rows.push_back(separator());
 
     if (p.description) {
-        rows.push_back(paragraph(" " + *p.description) | dim);
+        rows.push_back(paragraph(" " + *p.description) | color(pal.muted));
         rows.push_back(text(""));
     }
 
     rows.push_back(hbox({
-        text("  Marketplace: ") | dim,
+        text("  Marketplace: ") | color(pal.muted),
         text(p.marketplace) | color(pal.info),
     }));
     rows.push_back(hbox({
-        text("  Scope:       ") | dim,
+        text("  Scope:       ") | color(pal.muted),
         text(p.scope) | color(pal.primary),
     }));
     rows.push_back(hbox({
-        text("  Status:      ") | dim,
+        text("  Status:      ") | color(pal.muted),
         text(p.enabled ? "● ENABLED" : "○ DISABLED")
              | color(p.enabled ? pal.success : pal.muted),
     }));
     if (p.last_updated) {
         rows.push_back(hbox({
-            text("  Updated:     ") | dim,
+            text("  Updated:     ") | color(pal.muted),
             text(*p.last_updated),
         }));
     }
     rows.push_back(text(""));
 
     rows.push_back(hbox({
-        text("  Tools: ") | dim,
+        text("  Tools: ") | color(pal.muted),
         text(std::format("{}", p.tool_count)) | color(pal.warning),
-        text("   Commands: ") | dim,
+        text("   Commands: ") | color(pal.muted),
         text(std::format("{}", p.command_count)) | color(pal.warning),
         p.has_config_options
-            ? text("   • Has options") | color(pal.info) | dim
+            ? text("   • Has options") | color(pal.info)
             : text(""),
     }));
 
@@ -251,13 +244,13 @@ namespace detail {
         rows.push_back(text(""));
         rows.push_back(hbox({
             text("  " + std::string(loom::ui::design::figures::kCross) + " ") | color(pal.danger) | bold,
-            text("Plugin has load errors — check the Errors tab") | color(pal.danger) | dim,
+            text("Plugin has load errors — check the Errors tab") | color(pal.danger),
         }));
     }
 
     // Action shortcut bar
     rows.push_back(text(""));
-    rows.push_back(text(" Actions:") | dim);
+    rows.push_back(text(" Actions:") | color(pal.muted));
     rows.push_back(hbox({
         text(" [") | dim,
         text("Space") | bold | color(pal.info),
@@ -275,7 +268,7 @@ namespace detail {
         text("x") | bold | color(pal.info),
         text("]") | dim,
         text(" Uninstall"),
-    }) | dim);
+    }) | color(pal.muted));
 
     return vbox(std::move(rows)) | borderLight | color(pal.info);
 }
@@ -408,7 +401,7 @@ inline void RecomputeFiltered(ManageState& s) {
         Elements list_rows;
         if (state->filtered_indices.empty()) {
             list_rows.push_back(text("  No plugins match the current filters.")
-                                | color(pal.warning) | dim | center);
+                                | color(pal.warning) | center);
         } else {
             for (std::size_t i = snap.start_index; i < snap.end_index; ++i) {
                 const int page_i = (int)(i - snap.start_index);
@@ -429,13 +422,13 @@ inline void RecomputeFiltered(ManageState& s) {
             text(std::format(" {}-{} / {}  ",
                              snap.scroll_position.current == 0 ? 0 : (int)snap.start_index + 1,
                              (int)snap.end_index, (int)snap.scroll_position.total))
-                | dim,
+                | color(pal.muted),
         };
         if (snap.scroll_position.can_scroll_up)
-            page_bits.push_back(text("PgUp ") | color(pal.info) | dim);
+            page_bits.push_back(text("PgUp ") | color(pal.info));
         page_bits.push_back(text("|") | dim);
         if (snap.scroll_position.can_scroll_down)
-            page_bits.push_back(text(" PgDn") | color(pal.info) | dim);
+            page_bits.push_back(text(" PgDn") | color(pal.info));
 
         auto list_panel = vbox({
             toolbar,
@@ -462,7 +455,7 @@ inline void RecomputeFiltered(ManageState& s) {
         if (!detail) {
             detail = text(" No plugin selected\n\n\n Use ↑/↓ or j/k to browse.\n"
                           " Press / to search, F to filter, S to sort.")
-                | dim | center | borderLight;
+                | color(pal.muted) | center | borderLight;
         }
 
         return hbox({

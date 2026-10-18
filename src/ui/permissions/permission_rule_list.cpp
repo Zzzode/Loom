@@ -126,7 +126,7 @@ namespace loom::ui::permissions::rule_list::render {
     Elements rows;
     rows.push_back(hbox({
         text("  Groups ") | bold | color(pal.info),
-        filler(), text("(g1..g8) ") | dim,
+        filler(), text("(g1..g8) ") | color(pal.muted),
     }));
     rows.push_back(pc::ThinDivider());
 
@@ -146,7 +146,7 @@ namespace loom::ui::permissions::rule_list::render {
         std::string left_pad = focus ? (std::string{loom::ui::design::figures::kPlay} + " ") : "  ";
         auto badge = text(std::format(" {}/{} ", en, tot))
                    | color(pal.muted)
-                   | bgcolor(pal.perm_rule_bg_alt);
+                   | bgcolor(pal.message_actions_background);
 
         Elements cells = {
             text(left_pad),
@@ -167,8 +167,8 @@ namespace loom::ui::permissions::rule_list::render {
     rows.push_back(pc::ThinDivider());
     rows.push_back(
         hbox({
-            text(" [Tab] ") | color(pal.info) | dim,
-            text("next zone") | dim,
+            text(" [Tab] ") | color(pal.info),
+            text("next zone") | color(pal.muted),
         })
     );
 
@@ -217,7 +217,7 @@ Element RulesHeader() {
 
     Element status = r.enabled
         ? text("  ✓ ") | color(pal.success)
-        : text("  ✕ ") | color(pal.danger) | dim;
+        : text("  ✕ ") | color(pal.danger);
 
     Element tool = pc::PathLabel(
         std::format("{}{}{}",
@@ -227,16 +227,16 @@ Element RulesHeader() {
         kTool - 4);
     if (!r.path_pattern && !r.description.empty())
         tool = hbox({tool, text("  ‹") | dim,
-                     pc::PathLabel(r.description, 10) | dim,
+                     pc::PathLabel(r.description, 10) | color(pal.muted),
                      text("›") | dim});
 
     Element action = text(std::string{detail::ActionName(r.action)})
                    | color(detail::ActionColor(r.action))
                    | bold;
 
-    Element strategy = text(std::string{detail::StrategyName(r.strategy)}) | dim;
-    Element scope    = text(std::string{detail::ScopeName(r.scope)}) | dim;
-    Element priority = text(std::format(" {:>2} ", r.priority)) | dim;
+    Element strategy = text(std::string{detail::StrategyName(r.strategy)}) | color(pal.muted);
+    Element scope    = text(std::string{detail::ScopeName(r.scope)}) | color(pal.muted);
+    Element priority = text(std::format(" {:>2} ", r.priority)) | color(pal.muted);
 
     Element source = [&]() {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
@@ -245,12 +245,12 @@ Element RulesHeader() {
         if (s == "Bundled") c = pal.success;
         else if (s == "User") c = pal.warning;
         else if (s == "CustomPath") c = pal.danger;
-        return text(std::format(" {} ", s)) | color(c) | dim;
+        return text(std::format(" {} ", s)) | color(c);
     }();
 
     Elements cells = {
         text(std::format(" {:>2} ", row_num))
-            | dim | size(WIDTH, EQUAL, kIdx),
+            | color(pal.muted) | size(WIDTH, EQUAL, kIdx),
         std::move(check) | size(WIDTH, EQUAL, kSt),
         std::move(tool) | size(WIDTH, EQUAL, kTool),
         std::move(action) | size(WIDTH, EQUAL, kAct),
@@ -260,7 +260,7 @@ Element RulesHeader() {
         std::move(source) | xflex_grow,
     };
     auto row = hbox(std::move(cells));
-    if (!r.enabled) row = row | dim;
+    if (!r.enabled) row = row | color(pal.muted);
     if (editing)   row = row | color(pal.info);
     if (selected)  row = row | bgcolor(pal.perm_rule_bg_info);
     if (hovered)   row = row | inverted | focus;
@@ -298,7 +298,7 @@ Element RulesHeader() {
                                  ? "  (no rules — press [n] to add)  "
                                  : std::format("  (no matches for '{}')  ",
                                                st.search_buf))
-                            | dim | color(pal.warning),
+                            | color(pal.warning),
                         filler(),
                     })
                 );
@@ -340,21 +340,21 @@ Element RulesHeader() {
     }();
     auto search_chip = !st.search_buf.empty()
         ? text(std::format(" {} '{}' ", loom::ui::design::figures::kInfo, st.search_buf))
-            | color(pal.info) | dim
+            | color(pal.info)
         : text("");
 
     Elements footer_parts = {
         text(st.focus == FocusZone::Rules ? " ▣ Rules" : " ▢ Rules")
             | color(st.focus == FocusZone::Rules
                         ? pal.info : pal.muted),
-        text(std::format(" {} / {} ", st.rule_cursor + 1, total)) | dim,
+        text(std::format(" {} / {} ", st.rule_cursor + 1, total)) | color(pal.muted),
         std::move(search_chip),
         filler(),
         std::move(batch_chip),
     };
     if (!st.status_bar_msg.empty()) {
         footer_parts.push_back(text(std::format(" • {}", st.status_bar_msg))
-                                   | color(pal.warning) | dim);
+                                   | color(pal.warning));
     }
     auto footer = hbox(std::move(footer_parts));
 
@@ -371,7 +371,7 @@ Element RulesHeader() {
                              : st.search_buf + "▊")
                         | color(pal.info) | bold,
                     filler(),
-                    text(std::format(" {:>3} results ", total)) | dim,
+                    text(std::format(" {:>3} results ", total)) | color(pal.muted),
                 })
             );
         } else {
@@ -380,8 +380,8 @@ Element RulesHeader() {
                     text(" Rule list ") | bold | color(pal.info),
                     filler(),
                     text(std::format(" {:>3} rules total ",
-                                     st.input.rules.size())) | dim,
-                    text("  [/] filter  [n] new  [space] sel  [a] all ") | dim,
+                                     st.input.rules.size())) | color(pal.muted),
+                    text("  [/] filter  [n] new  [space] sel  [a] all ") | color(pal.muted),
                 })
             );
         }
@@ -424,12 +424,12 @@ Element RulesHeader() {
     Elements rows;
     rows.push_back(hbox({
         text(" Effective Preview ") | bold | color(pal.primary),
-        filler(), text((" " + std::string{loom::ui::design::figures::kInfo} + " firewall ")) | dim,
+        filler(), text((" " + std::string{loom::ui::design::figures::kInfo} + " firewall ")) | color(pal.muted),
     }));
     rows.push_back(pc::ThinDivider());
     if (!r) {
         for (int i = 0; i < 3; ++i)
-            rows.push_back(text("  (no rule selected) ") | dim);
+            rows.push_back(text("  (no rule selected) ") | color(pal.muted));
         return vbox(std::move(rows));
     }
     const int shown = std::min<int>(3, (int)samples.size());
@@ -450,18 +450,18 @@ Element RulesHeader() {
             ? text(std::format(" ◉ HIT → {} ",
                                detail::ActionName(r->action)))
                 | color(detail::ActionColor(r->action)) | bold
-            : text(" ○ miss ") | color(pal.muted) | dim;
+            : text(" ○ miss ") | color(pal.muted);
 
         std::string auth_tag = st.cbs.on_hit_test
             ? st.cbs.on_hit_test(s, hit) : "";
         rows.push_back(vbox({
             hbox({
-                text(std::format(" {} ", i + 1)) | dim,
+                text(std::format(" {} ", i + 1)) | color(pal.muted),
                 pc::PathLabel(s.test_path, 28),
                 filler(), std::move(outcome),
             }),
             hbox({
-                text("    ") | dim, text(note) | dim,
+                text("    ") | dim, text(note) | color(pal.muted),
                 auth_tag.empty() ? text("")
                     : hbox({text("  ") | dim,
                             text(auth_tag) | color(pal.info)}),
@@ -495,7 +495,7 @@ Element RulesHeader() {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto& p = st.editor.pattern_buf;
         return hbox({
-            text("pattern: ") | dim,
+            text("pattern: ") | color(pal.muted),
             text(p.empty() ? std::string{"(type with [e] + Tab)"} : p)
                 | color(pal.warning) | bold,
         });
@@ -503,8 +503,8 @@ Element RulesHeader() {
 
     auto tools_line = [&]() {
         if (st.editor.selected_tools.empty())
-            return text("tools:   (all)  ") | dim;
-        Elements cells = {text("tools:   ") | dim};
+            return text("tools:   (all)  ") | color(pal.muted);
+        Elements cells = {text("tools:   ") | color(pal.muted)};
         for (std::size_t i = 0; i < st.editor.selected_tools.size(); ++i) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             const auto& t = st.editor.selected_tools[i];
@@ -523,14 +523,14 @@ Element RulesHeader() {
     auto desc_lines = SoftWrap(st.editor.description_buf,
                                detail::kDescriptionCols);
     Elements desc_row;
-    desc_row.push_back(text("desc:    ") | dim);
+    desc_row.push_back(text("desc:    ") | color(pal.muted));
     Elements desc_body;
     for (auto& l : desc_lines) {
         if (l.empty()) l = " " ;
         desc_body.push_back(text("   " + l) | color(pal.muted));
     }
     auto desc_block =
-        hbox({text("desc: ") | dim,
+        hbox({text("desc: ") | color(pal.muted),
               vbox(std::move(desc_body)) | xflex_grow})
         | size(WIDTH, EQUAL, detail::kRightColWidth - 6);
 
@@ -545,7 +545,7 @@ Element RulesHeader() {
     body_rows.push_back(pc::ThinDivider());
     body_rows.push_back(
         hbox({
-            text("group: ") | dim,
+            text("group: ") | color(pal.muted),
             hbox(std::move(group_els)),
             filler(),
             editing
@@ -560,13 +560,13 @@ Element RulesHeader() {
     body_rows.push_back(std::move(pattern_line));
     body_rows.push_back(std::move(tools_line));
     body_rows.push_back(
-        hbox({text("strat: ") | dim, MiniStrategyPicker(st.editor)})
+        hbox({text("strat: ") | color(pal.muted), MiniStrategyPicker(st.editor)})
     );
     body_rows.push_back(
-        hbox({text("scope: ") | dim, MiniScopePicker(st.editor)})
+        hbox({text("scope: ") | color(pal.muted), MiniScopePicker(st.editor)})
     );
     body_rows.push_back(
-        hbox({text("action:") | dim, MiniActionPicker(st.editor)})
+        hbox({text("action:") | color(pal.muted), MiniActionPicker(st.editor)})
     );
     body_rows.push_back(std::move(desc_block));
     body_rows.push_back(pc::ThinDivider());
@@ -575,12 +575,12 @@ Element RulesHeader() {
     body_rows.push_back(pc::ThinDivider());
     body_rows.push_back(
         hbox({
-            text(" [Ctrl+s] save ") | color(pal.info) | dim,
-            text(" [Esc] abandon ") | dim,
+            text(" [Ctrl+s] save ") | color(pal.info),
+            text(" [Esc] abandon ") | color(pal.muted),
             filler(),
             text(editing ? std::format(" id {} ", editing->id)
                                     .substr(0, 16) : std::string{" (new) "})
-                | dim,
+                | color(pal.muted),
         })
     );
 
@@ -607,16 +607,16 @@ Element RulesHeader() {
         auto chip = text(std::format(" {} ", kLabels[i]))
                   | color(kColors[i]);
         if (hovered) chip = chip | bold | inverted;
-        else         chip = chip | dim;
+        else         chip = chip | color(pal.muted);
         cells.push_back(std::move(chip));
         if (i < 3) cells.push_back(text("   "));
     }
     cells.push_back(filler());
     cells.push_back(
-        text(" [n/i/e/d] trigger • [Tab] cycle focus ") | dim
+        text(" [n/i/e/d] trigger • [Tab] cycle focus ") | color(pal.muted)
     );
     return hbox(std::move(cells))
-         | bgcolor(pal.perm_rule_bg_dark)
+         | bgcolor(pal.background)
          | borderDashed | color(pal.muted);
 }
 
@@ -631,17 +631,17 @@ Element RulesHeader() {
         window(
             text(" ⤴ Import Rules ") | bold | color(pal.info),
             vbox({
-                text(" Paste a JSON array of rule objects ") | dim,
+                text(" Paste a JSON array of rule objects ") | color(pal.muted),
                 pc::ThinDivider(),
                 text(std::string{" "} + hint + std::string{"▊"})
                     | color(pal.warning) | bold,
                 pc::ThinDivider(),
                 hbox({
-                    text(" [Enter] import ") | color(pal.info) | dim,
-                    text(" [Esc] cancel ") | dim,
+                    text(" [Enter] import ") | color(pal.info),
+                    text(" [Esc] cancel ") | color(pal.muted),
                     filler(),
                     text(std::format(" {} bytes typed ",
-                                     st.import_buf.size())) | dim,
+                                     st.import_buf.size())) | color(pal.muted),
                 }),
             }) | size(WIDTH, EQUAL, 80) | size(HEIGHT, EQUAL, 8)
         ) | color(pal.info),
@@ -708,7 +708,7 @@ namespace loom::ui::permissions::rule_list {
     auto top = hbox({
         text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} + " Permission Rule List ")) | bold | color(pal.primary),
         filler(),
-        text(" [Esc] close ") | dim,
+        text(" [Esc] close ") | color(pal.muted),
     });
 
     auto three_col = hbox({
@@ -891,14 +891,14 @@ namespace loom::ui::permissions::rule_list {
                 | bold | color(pal.inverse_text) | bgcolor(pal.danger),
             filler(),
             text("[j/k] scroll  [a] allow once  [A] always allow  [/] filter")
-                | dim,
+                | color(pal.muted),
         }));
         lines.push_back(pc::ThinDivider());
 
         // Optional filter row
         if (!filter_buf->empty() || true) {
             lines.push_back(hbox({
-                text(" Filter: ") | color(pal.info) | dim,
+                text(" Filter: ") | color(pal.info),
                 text(filter_buf->empty()
                          ? std::string{"(type / then a query to filter)"}
                          : *filter_buf + std::string{"| "})
@@ -910,11 +910,11 @@ namespace loom::ui::permissions::rule_list {
 
         // Column header
         lines.push_back(hbox({
-            text(" When ") | bold | dim | size(WIDTH, EQUAL, 10),
-            text(" Tool ") | bold | dim | size(WIDTH, EQUAL, 16),
-            text(" Path / Target ") | bold | dim | xflex_grow,
-            text(" Reason ") | bold | dim | size(WIDTH, EQUAL, 20),
-            text(" Actions ") | bold | dim | size(WIDTH, EQUAL, 22),
+            text(" When ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 10),
+            text(" Tool ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 16),
+            text(" Path / Target ") | bold | color(pal.muted) | xflex_grow,
+            text(" Reason ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 20),
+            text(" Actions ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 22),
         }));
         lines.push_back(separator() | dim);
 
@@ -926,7 +926,7 @@ namespace loom::ui::permissions::rule_list {
                     lines.push_back(hbox({
                         filler(),
                         text(" No permission denials yet ")
-                            | dim | color(pal.success) | center,
+                            | color(pal.success) | center,
                         filler(),
                     }));
                 } else {
@@ -984,12 +984,12 @@ namespace loom::ui::permissions::rule_list {
         lines.push_back(pc::ThinDivider());
         lines.push_back(hbox({
             text(std::format(" {} total / {} filtered ",
-                             data_fn().size(), n)) | dim,
+                             data_fn().size(), n)) | color(pal.muted),
             filler(),
             text(filter_buf->empty()
                      ? std::string{}
                      : std::format(" filter: '{}' ", *filter_buf))
-                | color(pal.info) | dim,
+                | color(pal.info),
         }));
         return vbox(std::move(lines)) | yflex_grow | yframe;
     }) | CatchEvent([cursor, filter_buf, filter_active](Event e) mutable {
@@ -1099,7 +1099,7 @@ namespace loom::ui::permissions::rule_list {
         Elements lines;
         lines.push_back(hbox({
             text(" Workspaces ") | bold | color(pal.info),
-            text(std::format(" {} ", n)) | dim,
+            text(std::format(" {} ", n)) | color(pal.muted),
             filler(),
             CompEl(Button(" + Add directory ", [add_modal_open] {
                 *add_modal_open = true;
@@ -1109,10 +1109,10 @@ namespace loom::ui::permissions::rule_list {
 
         // Columns: policy / path / default-badge / remove button
         lines.push_back(hbox({
-            text(" Policy ") | bold | dim | size(WIDTH, EQUAL, 12),
-            text(" Path ")   | bold | dim | xflex_grow,
+            text(" Policy ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 12),
+            text(" Path ")   | bold | color(pal.muted) | xflex_grow,
             text(" ")        | bold | dim | size(WIDTH, EQUAL, 10),
-            text(" Action ") | bold | dim | size(WIDTH, EQUAL, 12),
+            text(" Action ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 12),
         }));
         lines.push_back(separator() | dim);
 
@@ -1123,7 +1123,7 @@ namespace loom::ui::permissions::rule_list {
                     lines.push_back(hbox({
                         filler(),
                         text(" No workspace directories yet — click [+ Add] ")
-                            | dim | color(pal.warning),
+                            | color(pal.warning),
                         filler(),
                     }));
                 } else lines.push_back(text(""));
@@ -1140,7 +1140,7 @@ namespace loom::ui::permissions::rule_list {
                 Element path_el = pc::PathLabel(
                     w.path.string(), 60) | xflex_grow;
                 Element def_el = w.is_default
-                    ? text(" DEFAULT ") | dim | color(pal.muted)
+                    ? text(" DEFAULT ") | color(pal.muted)
                                        | size(WIDTH, EQUAL, 10)
                     : text("") | size(WIDTH, EQUAL, 10);
 
@@ -1168,9 +1168,9 @@ namespace loom::ui::permissions::rule_list {
 
         lines.push_back(pc::ThinDivider());
         lines.push_back(hbox({
-            text(" [j/k] navigate  [+] add  [x] remove ") | dim,
+            text(" [j/k] navigate  [+] add  [x] remove ") | color(pal.muted),
             filler(),
-            text(" Default entries cannot be removed ") | dim,
+            text(" Default entries cannot be removed ") | color(pal.muted),
         }));
 
         Element body = vbox(std::move(lines)) | yflex_grow | yframe;
@@ -1280,14 +1280,14 @@ namespace loom::ui::permissions::rule_list {
                     : (i == 1) ? pal.danger   : pal.muted;
             rb.push_back(
                 text(std::format(" {} ", kPolicies[i]))
-                | (sel ? (color(c) | inverted | bold) : dim)
+                | (sel ? (color(c) | inverted | bold) : color(pal.muted))
             );
             if (i + 1 < kPolicies.size()) rb.push_back(text("  "));
         }
 
         Element body = vbox({
             hbox({
-                text(" Directory: ") | dim,
+                text(" Directory: ") | color(pal.muted),
                 text(path_buf->empty()
                          ? std::string{"(type or use [Browse] to pick CWD)"}
                          : *path_buf)
@@ -1306,7 +1306,7 @@ namespace loom::ui::permissions::rule_list {
                 }) | color(pal.info)),
             }),
             hbox({
-                text(" Policy:    ") | dim,
+                text(" Policy:    ") | color(pal.muted),
                 hbox(std::move(rb)),
             }),
             separator() | dim,
@@ -1320,9 +1320,9 @@ namespace loom::ui::permissions::rule_list {
             CompEl(Button(" Cancel ", [&open, on_cancel] {
                 open = false;
                 if (on_cancel) on_cancel();
-            }) | dim),
+            }) | color(pal.muted)),
             filler(),
-            text(" [Enter] OK  [Esc] cancel  [Tab] cycle policy ") | dim,
+            text(" [Enter] OK  [Esc] cancel  [Tab] cycle policy ") | color(pal.muted),
         });
 
         return DialogFrame(" Add Workspace Directory ", pal.success,
@@ -1381,7 +1381,7 @@ namespace loom::ui::permissions::rule_list {
         body_lines.push_back(text(""));
         body_lines.push_back(
             text(" Actual directory WON'T be deleted.  Only the permission rule.")
-            | dim);
+            | color(pal.muted));
         if (disabled) {
             body_lines.push_back(text(""));
             body_lines.push_back(
@@ -1398,7 +1398,7 @@ namespace loom::ui::permissions::rule_list {
             text("   "),
             CompEl(Button(" No, keep rule ", do_no) | color(pal.info)),
             filler(),
-            text(" [y] yes  [n/Esc] no ") | dim,
+            text(" [y] yes  [n/Esc] no ") | color(pal.muted),
         });
         return DialogFrame(" Remove Workspace Rule ", pal.danger,
                            std::move(body), std::move(footer));
@@ -1482,19 +1482,19 @@ namespace loom::ui::permissions::rule_list {
                 : pal.warning;
         Element preview = vbox({
             hbox({
-                text(" Preview: ") | dim,
+                text(" Preview: ") | color(pal.muted),
                 text("{") | dim,
             }),
             text(std::format("   tool:   \"{}\"", *tool_p))
-                | color(pal.info) | dim,
+                | color(pal.info),
             text(std::format("   path:   \"{}\"",
                              path_p->empty() ? std::string{"**"} : *path_p))
-                | color(pal.info) | dim,
+                | color(pal.info),
             text(std::format("   action: {}", decision_s))
-                | color(dec_color) | dim,
+                | color(dec_color),
             text(std::format("   desc:   \"{}\"",
                              desc->empty() ? std::string{""} : *desc))
-                | color(pal.muted) | dim,
+                | color(pal.muted),
             text("}") | dim,
         }) | bgcolor(pal.perm_rule_bg) | borderLight;
 
@@ -1518,7 +1518,7 @@ namespace loom::ui::permissions::rule_list {
                 (i == 0 || i == 1) ? pal.success :
                 (i == 2 || i == 3) ? pal.danger   : pal.warning;
             rb.push_back(text(std::format(" {} ", kDecisionLabels[i]))
-                | (sel ? (color(c) | inverted | bold) : dim));
+                | (sel ? (color(c) | inverted | bold) : color(pal.muted)));
             if (i + 1 < kDecisionLabels.size()) rb.push_back(text("  "));
         }
 
@@ -1526,13 +1526,13 @@ namespace loom::ui::permissions::rule_list {
             hbox({
                 text(" Create Rule ") | bold | color(pal.success),
                 filler(),
-                text(" Fill in the fields, then [Submit]. ") | dim,
+                text(" Fill in the fields, then [Submit]. ") | color(pal.muted),
             }),
             pc::ThinDivider(),
 
             // Tool pattern
             hbox({
-                text(" Tool pattern: ") | dim | size(WIDTH, EQUAL, 18),
+                text(" Tool pattern: ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
                 text(tool_p->empty()
                          ? std::string{"(e.g. bash, file_*)"}
                          : *tool_p)
@@ -1543,7 +1543,7 @@ namespace loom::ui::permissions::rule_list {
             separator() | dim,
             // Path pattern
             hbox({
-                text(" Path pattern: ") | dim | size(WIDTH, EQUAL, 18),
+                text(" Path pattern: ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
                 text(path_p->empty()
                          ? std::string{"(e.g. **/*.cpp)"}
                          : *path_p)
@@ -1554,14 +1554,14 @@ namespace loom::ui::permissions::rule_list {
             separator() | dim,
             // Decision radiobox
             hbox({
-                text(" Decision:     ") | dim | size(WIDTH, EQUAL, 18),
+                text(" Decision:     ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
                 hbox(std::move(rb)),
             }),
 
             separator() | dim,
             // Description (multi-line-ish single input)
             hbox({
-                text(" Description:  ") | dim | size(WIDTH, EQUAL, 18),
+                text(" Description:  ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
                 text(desc->empty()
                          ? std::string{"(optional human-readable note)"}
                          : *desc)
@@ -1578,9 +1578,9 @@ namespace loom::ui::permissions::rule_list {
                 text("   "),
                 CompEl(Button(" Cancel ", [on_cancel] {
                     if (on_cancel) on_cancel();
-                }) | dim),
+                }) | color(pal.muted)),
                 filler(),
-                text(" [Tab] cycle decision  [Enter] submit  [Esc] cancel ") | dim,
+                text(" [Tab] cycle decision  [Enter] submit  [Esc] cancel ") | color(pal.muted),
             }),
         };
 
@@ -1657,19 +1657,19 @@ namespace loom::ui::permissions::rule_list {
                 text(" Rule: ") | bold | color(pal.info),
                 DecisionBadge(r.action),
                 filler(),
-                text(" id: ") | dim,
-                text(std::format(" {}", created_str)) | dim,
+                text(" id: ") | color(pal.muted),
+                text(std::format(" {}", created_str)) | color(pal.muted),
             }),
             pc::ThinDivider(),
             // Monospace tool/path patterns
             hbox({
-                text(" tool: ") | dim | size(WIDTH, EQUAL, 10),
+                text(" tool: ") | color(pal.muted) | size(WIDTH, EQUAL, 10),
                 text(std::format(" {} ", r.tool_pattern))
                     | color(pal.primary)
                     | bgcolor(pal.perm_rule_bg),
             }),
             hbox({
-                text(" path: ") | dim | size(WIDTH, EQUAL, 10),
+                text(" path: ") | color(pal.muted) | size(WIDTH, EQUAL, 10),
                 text(std::format(" {} ",
                                  r.path_pattern.value_or("(none)")))
                     | color(pal.info)
@@ -1678,7 +1678,7 @@ namespace loom::ui::permissions::rule_list {
             separator() | dim,
             // Description block
             hbox({
-                text(" desc: ") | dim | size(WIDTH, EQUAL, 10),
+                text(" desc: ") | color(pal.muted) | size(WIDTH, EQUAL, 10),
                 paragraph(r.description.empty()
                               ? std::string{"(no description)"}
                               : r.description),
@@ -1686,15 +1686,15 @@ namespace loom::ui::permissions::rule_list {
             separator() | dim,
             // Metadata row
             hbox({
-                text(" created: ") | dim,
-                text(created_str) | dim,
+                text(" created: ") | color(pal.muted),
+                text(created_str) | color(pal.muted),
                 text(" | ") | dim,
-                text(last_used) | dim,
+                text(last_used) | color(pal.muted),
                 filler(),
                 text(std::format(" scope={} strategy={} pri={} ",
                     detail::ScopeName(r.scope),
                     detail::StrategyName(r.strategy),
-                    r.priority)) | dim,
+                    r.priority)) | color(pal.muted),
             }),
             pc::ThinDivider(),
             // Action buttons
@@ -1710,8 +1710,8 @@ namespace loom::ui::permissions::rule_list {
                     | color(pal.success)),
                 filler(),
                 r.enabled
-                    ? text(" ENABLED ") | color(pal.success) | dim
-                    : text(" DISABLED ") | color(pal.danger) | dim,
+                    ? text(" ENABLED ") | color(pal.success)
+                    : text(" DISABLED ") | color(pal.danger),
             }),
         };
         return window(
@@ -2497,21 +2497,24 @@ namespace loom::ui::permissions::rule_list::ui_tabs_detail {
 
 [[nodiscard]] Element WorkspacePolicyBadge(peng::WorkspaceEntry::Policy p,
                                                   bool is_default) {
-    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    const auto& theme = loom::ui::design::theme::current_theme();
+    const auto& pal = *theme.palette;
+    const bool ansi = theme.variant == loom::ui::design::theme::ThemeVariant::LightAnsi
+                   || theme.variant == loom::ui::design::theme::ThemeVariant::DarkAnsi;
     if (is_default) {
         return text(" DEFAULT ") | color(pal.muted)
-               | bgcolor(pal.perm_rule_bg_alt) | dim;
+               | bgcolor(pal.message_actions_background);
     }
     switch (p) {
         case peng::WorkspaceEntry::Policy::Allow:
             return text(" ALLOW ") | color(pal.success)
-                   | bgcolor(pal.success_tint_bg) | bold;
+                   | bgcolor(ansi ? pal.background : pal.success_tint_bg) | bold;
         case peng::WorkspaceEntry::Policy::Deny:
             return text(" DENY ") | color(pal.danger)
-                   | bgcolor(pal.danger_tint_bg) | bold;
+                   | bgcolor(ansi ? pal.background : pal.danger_tint_bg) | bold;
         case peng::WorkspaceEntry::Policy::Default:
             return text(" DEFAULT ") | color(pal.muted)
-                   | bgcolor(pal.perm_rule_bg_alt) | dim;
+                   | bgcolor(pal.message_actions_background);
     }
     return text("");
 }

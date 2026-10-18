@@ -202,7 +202,7 @@ struct SettingsDialogOptions {
 
 /// Build a standard setting row: label | control | description.
 /// Each row takes label text, a control Element, an optional description
-/// (hint text rendered in dim gray below the row).
+/// (enabled hint text uses readable secondary ink below the row).
 [[nodiscard]] inline Element SettingRow(
     const std::string& label,
     Element control,
@@ -225,7 +225,7 @@ struct SettingsDialogOptions {
     if (description && !description->empty()) {
         result.push_back(hbox({
             text("   ") | dim,
-            text(*description) | dim | color(pal.muted),
+            text(*description) | color(pal.muted) | (disabled ? dim : nothing),
         }));
     }
     return vbox(result);
@@ -373,7 +373,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     if (!subtitle.empty()) {
         els.push_back(hbox({
             text(" "),
-            text(subtitle) | dim | color(pal.muted),
+            text(subtitle) | color(pal.muted),
         }));
     }
     els.push_back(separator());
@@ -434,7 +434,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         false, focus_row == -2));
 
     body.push_back(separator());
-    body.push_back(text("  Display options:") | dim);
+    body.push_back(text("  Display options:") | color(pal.muted));
     body.push_back(SettingRow(
         "Show thinking",
         text(w.show_thinking ? " [ON]  " : " [OFF] ") |
@@ -724,14 +724,14 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(text(" Configured servers:") | bold);
     body.push_back(separator());
     if (w.mcp_servers.empty()) {
-        body.push_back(text("   (none — use /mcp add to configure)") | dim);
+        body.push_back(text("   (none — use /mcp add to configure)") | color(pal.muted));
     } else {
         for (std::size_t i = 0; i < w.mcp_servers.size(); ++i) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             const auto& s = w.mcp_servers[i];
             bool sel = (int)i == selected_server;
             auto name = text(" " + s.name) | (sel ? bold : nothing);
-            auto transport = text(" [" + s.transport + "]") | dim;
+            auto transport = text(" [" + s.transport + "]") | color(pal.muted);
             auto cmd = s.command.empty()
                            ? (s.url.value_or("(remote)"))
                            : s.command;
@@ -740,9 +740,15 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                 name | size(WIDTH, EQUAL, 18),
                 transport,
                 text("  "),
-                text(cmd) | color(pal.info) | dim,
+                text(cmd) | color(pal.info),
             });
-            if (sel) row = row | bgcolor(pal.surface_tint_2);
+            if (sel) {
+                const auto& theme = loom::ui::design::theme::current_theme();
+                // Monochrome info and surface_tint_2 share the white index.
+                const auto selected_bg = theme.variant == loom::ui::design::theme::ThemeVariant::Monochrome
+                    ? pal.message_actions_background : pal.surface_tint_2;
+                row = row | bgcolor(selected_bg);
+            }
             body.push_back(row);
         }
     }
@@ -752,7 +758,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         text(" [a]") | color(pal.info), text("dd "),
         text("[r]") | color(pal.info), text("emove "),
         text("[e]") | color(pal.info), text("dit "),
-    }) | dim);
+    }) | color(pal.muted));
 
     body.push_back(separator());
     body.push_back(SettingRow(
@@ -912,7 +918,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         "Live health of API, MCP, LSP and bridge subsystems"));
 
     if (rows.empty()) {
-        body.push_back(text("  (no diagnostics yet — running checks…)") | dim);
+        body.push_back(text("  (no diagnostics yet — running checks…)") | color(loom::ui::design::theme::current_theme().palette->muted));
         return vbox(body);
     }
 
@@ -1027,8 +1033,9 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 // ============================================================
 
 [[nodiscard]] inline Element RenderSidebar(SettingsTabId selected) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements items;
-    items.push_back(text(" Sections") | dim);
+    items.push_back(text(" Sections") | color(pal.muted));
     items.push_back(separator());
 
     // Iterate all tabs in the sidebar order
@@ -1052,7 +1059,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         bool sel = (id == selected);
         auto el = text(" " + tab_label(id)) | (sel ? bold : nothing);
         if (sel) el = el | inverted;
-        else el = el | dim;
+        else el = el | color(pal.muted);
         items.push_back(el);
     }
 
@@ -1077,7 +1084,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     auto close_btn = style_btn("Close  Esc", pal.danger);
 
     auto dirty_marker = dirty
-        ? text(" * unsaved changes") | color(pal.warning) | dim
+        ? text(" * unsaved changes") | color(pal.warning)
         : text("");
 
     Element toast_el = text("");
@@ -1215,7 +1222,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         return window(
             text(" Settings ") | bold | color(pal.primary),
             hbox({sidebar, body | flex})
-        ) | color(pal.primary);
+        ) | color(pal.primary) | bgcolor(pal.background) | clear_under;
     }) | CatchEvent([state, toggle, mark, show_toast](Event event) -> bool {
 
         // --- Global hotkeys ---

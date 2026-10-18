@@ -91,7 +91,7 @@ struct DiffData {
     bool show_line_numbers = true)
 {
     if (hunks.empty()) {
-        return text("  (no changes)") | dim;
+        return text("  (no changes)") | color(loom::ui::design::theme::current_theme().palette->muted);
     }
 
     // Compute gutter width across all hunks for consistent alignment.
@@ -251,7 +251,7 @@ struct DiffData {
     auto data = compute_diff_data(props.file_path, file_content, props.edits);
     if (!data.has_value()) {
         // Fallback: show error message inside frame
-        return diff_frame(text("  " + data.error()) | color(loom::ui::design::theme::current_theme().palette->danger) | dim);
+        return diff_frame(text("  " + data.error()) | color(loom::ui::design::theme::current_theme().palette->danger));
     }
 
     auto theme_val = theme.value_or(sd::default_theme());

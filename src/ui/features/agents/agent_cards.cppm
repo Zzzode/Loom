@@ -126,11 +126,10 @@ enum class CardSize {
     std::string label(status_label(status));
     auto box = hbox({
         text(" " + glyph + " "),
-        text(label),
+        text(label) | color(status == AgentStatus::Errored ? pal.danger : pal.muted),
         text(" "),
     }) | color(c) | borderLight;
 
-    if (status == AgentStatus::Disabled) box = box | dim;
     if (status == AgentStatus::Errored)  box = box | color(pal.danger);
     return box;
 }
@@ -142,7 +141,7 @@ enum class CardSize {
     using ftxui::color;
     auto txt = text(std::format(" {} ", label)) | bold;
     if (disabled) txt = txt | dim;
-    else          txt = txt | color(col);
+    else          txt = txt | color(loom::ui::design::theme::current_theme().palette->text);
     return txt | borderLight | color(col);
 }
 
@@ -170,13 +169,13 @@ enum class CardSize {
     sd_opts.spinner_frame = anim_frame;
     auto status_dot = StatusDot(sd_opts);
 
-    // name (bold) + description (dim)
-    auto name_txt = text(agent.name) | bold;
-    if (agent.status == AgentStatus::Disabled) name_txt = name_txt | dim | strikethrough;
+    // Name and readable secondary description.
+    auto name_txt = text(agent.name) | color(agent.status == AgentStatus::Disabled ? pal.muted : pal.text) | bold;
+    if (agent.status == AgentStatus::Disabled) name_txt = name_txt | strikethrough;
 
     Element desc = text("");
     if (!agent.description.empty()) {
-        desc = text(" — " + agent.description) | dim;
+        desc = text(" — " + agent.description) | color(pal.muted);
     }
 
     auto row = hbox({
@@ -187,7 +186,9 @@ enum class CardSize {
         desc | size(WIDTH, LESS_THAN, 60) | flex,
     });
 
-    if (selected) row = row | bgcolor(pal.surface_tint_4);
+    if (selected) row = row | bgcolor(
+        loom::ui::design::theme::current_theme().variant == loom::ui::design::theme::ThemeVariant::Monochrome
+            ? pal.message_actions_background : pal.surface_tint_4);
     return row;
 }
 
@@ -214,18 +215,18 @@ enum class CardSize {
         text(" "),
         vbox({
             hbox({
-                text(agent.name) | bold,
+                text(agent.name) | color(pal.text) | bold,
                 filler(),
                 StatusBadge(agent.status, anim_frame),
             }),
             agent.role_tags.empty()
-                ? text(agent.agent_type) | dim
+                ? text(agent.agent_type) | color(pal.muted)
                 : RoleTags(agent.role_tags, 2),
         }) | flex,
     });
 
     // --- Body: 2 lines of tool names ---
-    Element tools_block = text("(no tools)") | dim;
+    Element tools_block = text("(no tools)") | color(pal.muted);
     if (!agent.tools.empty()) {
         ToolChipsOptions tc;
         tc.tools = agent.tools;
@@ -242,7 +243,7 @@ enum class CardSize {
         text(" "),
         FooterButton("Del",  pal.danger),
         filler(),
-        text(std::format("{} runs", agent.stats.run_count)) | dim,
+        text(std::format("{} runs", agent.stats.run_count)) | color(pal.muted),
     });
 
     auto box = vbox({
@@ -253,7 +254,9 @@ enum class CardSize {
         footer,
     }) | borderRounded | size(WIDTH, GREATER_THAN, 32);
 
-    if (selected) box = box | bgcolor(pal.surface_tint_4);
+    if (selected) box = box | bgcolor(
+        loom::ui::design::theme::current_theme().variant == loom::ui::design::theme::ThemeVariant::Monochrome
+            ? pal.message_actions_background : pal.surface_tint_4);
 
     // Colorize the border with the agent color if available.
     if (!agent.agent_type.empty()) {
@@ -283,7 +286,7 @@ enum class CardSize {
     av_opts.size_cells = 4;
 
     Elements name_line = {
-        text(agent.name) | bold | size(HEIGHT, EQUAL, 1),
+        text(agent.name) | color(pal.text) | bold | size(HEIGHT, EQUAL, 1),
         filler(),
         StatusBadge(agent.status, anim_frame),
     };
@@ -292,10 +295,10 @@ enum class CardSize {
     if (!agent.role_tags.empty()) {
         meta_line.push_back(RoleTags(agent.role_tags, 6));
     } else {
-        meta_line.push_back(text(agent.agent_type) | dim);
+        meta_line.push_back(text(agent.agent_type) | color(pal.muted));
     }
     if (agent.model_override) {
-        meta_line.push_back(text("  model: ") | dim);
+        meta_line.push_back(text("  model: ") | color(pal.muted));
         meta_line.push_back(text(*agent.model_override) | color(pal.info));
     }
 
@@ -309,14 +312,14 @@ enum class CardSize {
     });
 
     // --- Description block ---
-    Element desc = text("(no description)") | dim;
+    Element desc = text("(no description)") | color(pal.muted);
     if (!agent.description_long.empty()) {
         auto lines = shared::wrap_lines(agent.description_long, 5, 80);
         Elements row_el;
-        for (auto& ln : lines) row_el.push_back(text(ln));
+        for (auto& ln : lines) row_el.push_back(text(ln) | color(pal.muted));
         desc = vbox(std::move(row_el));
     } else if (!agent.description.empty()) {
-        desc = text(agent.description) | dim;
+        desc = text(agent.description) | color(pal.muted);
     }
 
     // --- Tools (collapsed chip list) ---
@@ -327,7 +330,7 @@ enum class CardSize {
     auto tools_header = hbox({
         text("Tools") | bold | color(pal.primary),
         filler(),
-        text(std::format(" ({})", agent.tools.size())) | dim,
+        text(std::format(" ({})", agent.tools.size())) | color(pal.muted),
     });
     auto tools_block = vbox({
         tools_header,
@@ -338,29 +341,29 @@ enum class CardSize {
     Elements perm_rows;
     std::string pm = agent.permission_mode.value_or("Ask (default)");
     perm_rows.push_back(hbox({
-        text("  Default: ") | dim,
-        text(pm) | color(pal.permission),
+        text("  Default: ") | color(pal.muted),
+        text(pm) | color(pal.muted),
     }));
     perm_rows.push_back(hbox({
-        text("  Allow tools: ") | dim,
-        text(std::to_string(agent.tools.size()) + " enabled") | color(pal.success),
+        text("  Allow tools: ") | color(pal.muted),
+        text(std::to_string(agent.tools.size()) + " enabled") | color(pal.muted),
     }));
     auto perms_col = vbox({
-        text("Permissions") | bold | color(pal.permission),
+        text("Permissions") | bold | color(pal.info),
         vbox(std::move(perm_rows)),
     });
 
     Elements env_rows;
     int env_count = std::min(3, static_cast<int>(agent.env_vars.size()));
     for (int i = 0; i < env_count; ++i) {
-        env_rows.push_back(text("  " + agent.env_vars[i]) | dim);
+        env_rows.push_back(text("  " + agent.env_vars[i]) | color(pal.muted));
     }
     int env_hidden = static_cast<int>(agent.env_vars.size()) - env_count;
     if (env_hidden > 0) {
         env_rows.push_back(
-            text(std::format("  ... +{} more", env_hidden)) | dim);
+            text(std::format("  ... +{} more", env_hidden)) | color(pal.muted));
     }
-    if (env_rows.empty()) env_rows.push_back(text("  (none)") | dim);
+    if (env_rows.empty()) env_rows.push_back(text("  (none)") | color(pal.muted));
     auto env_col = vbox({
         text("Env vars") | bold | color(pal.info),
         vbox(std::move(env_rows)),
@@ -389,7 +392,7 @@ enum class CardSize {
         FooterButton("⌫ Del",   pal.danger),
         filler(),
         agent.last_run_at
-            ? text("last: " + *agent.last_run_at) | dim
+            ? text("last: " + *agent.last_run_at) | color(pal.muted)
             : text("") | dim,
     });
 
@@ -407,7 +410,9 @@ enum class CardSize {
         footer,
     }) | borderRounded;
 
-    if (selected) box = box | bgcolor(pal.surface_tint_4);
+    if (selected) box = box | bgcolor(
+        loom::ui::design::theme::current_theme().variant == loom::ui::design::theme::ThemeVariant::Monochrome
+            ? pal.message_actions_background : pal.surface_tint_4);
 
     if (!agent.agent_type.empty()) {
         auto opt = loom::tools::agent_color_manager::get_agent_color(agent.agent_type);

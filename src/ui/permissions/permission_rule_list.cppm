@@ -283,7 +283,7 @@ template<std::size_t N>
     Elements els; els.reserve(2 * N);
     for (std::size_t i = 0; i < N; ++i) {
         auto e = text(std::format(" {}", names[i]))
-               | (std::size_t(sel) == i ? (bold | color(c) | inverted) : dim);
+               | (std::size_t(sel) == i ? (bold | color(c) | inverted) : color(loom::ui::design::theme::current_theme().palette->muted));
         els.push_back(std::move(e));
         if (i + 1 < N) els.push_back(text(" "));
     }

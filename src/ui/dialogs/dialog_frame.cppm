@@ -197,7 +197,7 @@ struct DialogFrameProps {
     // ---- Subtitle row ----
     auto subtitle_el = [&]() -> Element {
         if (!props.subtitle) return text("");
-        return text(*props.subtitle) | dim | color(theme.color_for(Role::Muted));
+        return text(*props.subtitle) | color(theme.color_for(Role::Muted));
     }();
 
     // ---- Header block (title + subtitle) ----

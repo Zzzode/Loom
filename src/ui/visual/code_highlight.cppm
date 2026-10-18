@@ -179,21 +179,28 @@ struct HighlightResult {
 /// Get a built-in syntax theme
 [[nodiscard]] inline SyntaxTheme get_theme(ThemeName name) {
     SyntaxTheme theme;
-    theme.plain = Color::GrayLight;
-    theme.keyword = Color::Magenta;
-    theme.string_lit = Color::Green;
-    theme.number = Color::Cyan;
-    theme.comment = Color::GrayDark;
-    theme.op = Color::White;
-    theme.punctuation = Color::GrayLight;
-    theme.function = Color::Yellow;
-    theme.type_name = Color::Cyan;
-    theme.variable = Color::White;
-    theme.constant = Color::Red;
-    theme.preprocessor = Color::Magenta;
-    theme.attribute = Color::Yellow;
-    theme.error = Color::Red;
-    theme.line_number = Color::GrayDark;
+    // Explicit named themes own RGB foreground/background pairs. Keeping
+    // these independent of terminal-defined ANSI indices makes their declared
+    // fixed RGB surfaces readable without changing the selected syntax identity.
+    const auto& dark = *loom::ui::design::theme::palette_for_variant(
+        loom::ui::design::theme::ThemeVariant::Dark);
+    const auto& light = *loom::ui::design::theme::palette_for_variant(
+        loom::ui::design::theme::ThemeVariant::Light);
+    theme.plain = Color::RGB(192, 192, 192);
+    theme.keyword = Color::RGB(215, 135, 215);
+    theme.string_lit = Color::RGB(135, 200, 135);
+    theme.number = Color::RGB(135, 215, 215);
+    theme.comment = dark.muted;
+    theme.op = Color::RGB(255, 255, 255);
+    theme.punctuation = Color::RGB(192, 192, 192);
+    theme.function = Color::RGB(215, 195, 135);
+    theme.type_name = Color::RGB(135, 215, 215);
+    theme.variable = Color::RGB(255, 255, 255);
+    theme.constant = Color::RGB(235, 135, 135);
+    theme.preprocessor = Color::RGB(215, 135, 215);
+    theme.attribute = Color::RGB(215, 195, 135);
+    theme.error = Color::RGB(235, 135, 135);
+    theme.line_number = dark.muted;
     theme.gutter_bg = Color::RGB(20, 20, 20);
     theme.bg = Color::RGB(15, 15, 15);
     theme.added_bg = Color::RGB(0, 30, 0);
@@ -204,7 +211,7 @@ struct HighlightResult {
             theme.keyword = Color::RGB(249, 38, 114);
             theme.string_lit = Color::RGB(230, 219, 116);
             theme.number = Color::RGB(174, 129, 255);
-            theme.comment = Color::RGB(117, 113, 94);
+            theme.comment = Color::RGB(139, 134, 110);
             theme.function = Color::RGB(166, 226, 46);
             theme.type_name = Color::RGB(102, 217, 239);
             theme.variable = Color::RGB(248, 248, 242);
@@ -215,7 +222,7 @@ struct HighlightResult {
             theme.keyword = Color::RGB(255, 121, 198);
             theme.string_lit = Color::RGB(241, 250, 140);
             theme.number = Color::RGB(189, 147, 249);
-            theme.comment = Color::RGB(98, 114, 164);
+            theme.comment = Color::RGB(110, 128, 179);
             theme.function = Color::RGB(80, 250, 123);
             theme.type_name = Color::RGB(139, 233, 253);
             theme.variable = Color::RGB(248, 248, 242);
@@ -226,7 +233,7 @@ struct HighlightResult {
             theme.keyword = Color::RGB(129, 161, 193);
             theme.string_lit = Color::RGB(163, 190, 140);
             theme.number = Color::RGB(180, 142, 173);
-            theme.comment = Color::RGB(76, 86, 106);
+            theme.comment = Color::RGB(120, 131, 151);
             theme.function = Color::RGB(136, 192, 208);
             theme.type_name = Color::RGB(143, 188, 187);
             theme.variable = Color::RGB(216, 222, 233);
@@ -236,15 +243,23 @@ struct HighlightResult {
             theme.name = "light";
             theme.plain = Color::RGB(30, 30, 30);
             theme.keyword = Color::RGB(0, 0, 200);
-            theme.string_lit = Color::RGB(0, 128, 0);
-            theme.number = Color::RGB(0, 128, 128);
-            theme.comment = Color::RGB(128, 128, 128);
+            theme.string_lit = Color::RGB(0, 118, 0);
+            theme.number = Color::RGB(0, 112, 112);
+            theme.comment = light.muted;
             theme.function = Color::RGB(128, 0, 0);
             theme.type_name = Color::RGB(0, 0, 128);
             theme.variable = Color::RGB(30, 30, 30);
             theme.bg = Color::RGB(255, 255, 255);
             theme.gutter_bg = Color::RGB(240, 240, 240);
-            theme.line_number = Color::RGB(150, 150, 150);
+            theme.line_number = light.muted;
+            theme.op = Color::RGB(30, 30, 30);
+            theme.punctuation = Color::RGB(60, 60, 60);
+            theme.constant = Color::RGB(160, 40, 40);
+            theme.preprocessor = Color::RGB(128, 0, 160);
+            theme.attribute = Color::RGB(128, 100, 0);
+            theme.error = Color::RGB(180, 0, 0);
+            theme.added_bg = light.success_tint_bg;
+            theme.removed_bg = light.danger_tint_bg;
             break;
         default: // Dark
             theme.name = "dark";
@@ -960,6 +975,7 @@ constexpr int kFoldShownLines = 200;
     const CodeHighlightOptions& opts, const HighlightResult& highlighted) {
 
     SyntaxTheme theme = opts.theme.value_or(SyntaxTheme{});
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     int total_lines = static_cast<int>(highlighted.lines.size());
     int gutter_width = (total_lines > 0)
@@ -987,7 +1003,7 @@ constexpr int kFoldShownLines = 200;
     }
 
     if (lines.empty()) {
-        lines.push_back(text("  (empty)") | dim);
+        lines.push_back(text("  (empty)") | color(theme.comment));
     }
 
     // Fold notice
@@ -997,7 +1013,7 @@ constexpr int kFoldShownLines = 200;
             filler(),
             text(std::format("Showing first {} of {} lines… ",
                              kFoldShownLines, total_lines))
-               | color(loom::ui::design::theme::current_theme().palette->warning) | dim,
+               | color(pal.warning),
             text("[Expand]") | color(loom::ui::design::theme::current_theme().palette->info) | bold,
             filler(),
             text(" ") | dim,
@@ -1006,11 +1022,11 @@ constexpr int kFoldShownLines = 200;
 
     // Status bar
     auto status = hbox({
-        text(" " + highlighted.language_detected) | dim | color(loom::ui::design::theme::current_theme().palette->info),
+        text(" " + highlighted.language_detected) | color(pal.muted),
         text(std::format("  {}/{} lines",
-                         std::min(upper, total_lines), total_lines)) | dim,
+                         std::min(upper, total_lines), total_lines)) | color(pal.muted),
         filler(),
-        text("[j/k] scroll [q] close") | dim,
+        text("[j/k] scroll [q] close") | color(pal.muted),
         text(" "),
     });
 

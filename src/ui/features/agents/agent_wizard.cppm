@@ -221,13 +221,16 @@ inline std::vector<SelectOption> canonical_role_options() {
             else                draft->avatar_color = kPalette[*color_idx];
 
             // --- Name row ---
+            const auto field_background = loom::ui::design::theme::current_theme().variant
+                    == loom::ui::design::theme::ThemeVariant::Monochrome
+                ? pal.message_actions_background : pal.surface_tint_2;
             auto name_row = hbox({
                 text(" Name:        ") | color(pal.info) | bold,
                 hbox({
                     text(" " + draft->name + " ")
                         | bgcolor(draft->name.empty()
                                       ? pal.danger_tint_bg
-                                      : pal.surface_tint_2),
+                                      : field_background),
                 }) | borderLight
                   | color(draft->name.empty() ? pal.danger : pal.info) | flex,
                 draft->name.empty() ? text(" required!") | color(pal.danger) : text(""),
@@ -239,14 +242,14 @@ inline std::vector<SelectOption> canonical_role_options() {
                 text(" " + (draft->description.empty()
                                 ? std::string("(press Tab then type)")
                                 : draft->description) + " ")
-                    | dim | borderLight | flex,
+                    | color(pal.muted) | borderLight | flex,
             });
 
             // --- Role tags preview ---
             auto tags_preview = hbox({
                 text(" Roles:       ") | color(pal.info) | bold,
                 RoleTags(draft->role_tags, 6),
-                draft->role_tags.empty() ? text(" (select below)") | dim : text(""),
+                draft->role_tags.empty() ? text(" (select below)") | color(pal.muted) : text(""),
             });
 
             // --- Color picker (ASCII palette) ---
@@ -260,7 +263,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                     hbox({
                         text("[") | dim,
                         text(glyph) | color(c),
-                        text("]auto") | dim,
+                        text("]auto") | color(pal.muted),
                     })
                 );
             }
@@ -305,14 +308,14 @@ inline std::vector<SelectOption> canonical_role_options() {
                 tags_preview,
                 text(""),
                 color_row,
-                text("  hint: press [←/→] to switch palette slot") | dim,
+                text("  hint: press [←/→] to switch palette slot") | color(pal.muted),
                 text(""),
                 preview,
                 separator() | dim,
                 text(" Role picker (multi-select — Space toggles, / to search):")
                     | bold | color(pal.primary),
                 roles_comp->Render() | borderLight | flex,
-            });
+            }) | color(pal.text);
         }) | CatchEvent([color_idx](Event event) -> bool {
             // Color swatch navigation via Alt+Left/Right or just arrow keys
             // when focus is not in the text inputs (best-effort: handle h/l).
@@ -406,22 +409,23 @@ inline std::vector<SelectOption> canonical_role_options() {
                 );
                 sel_parts.push_back(text(" "));
             }
-            if (sel_parts.empty()) sel_parts.push_back(text("(none selected)") | dim);
+            if (sel_parts.empty()) sel_parts.push_back(text("(none selected)") | color(pal.muted));
 
             // --- Path summary ---
             auto path_col = [](const std::string& title, Color c,
                                const std::vector<std::string>& rows) -> Element {
+                const auto& pal = *loom::ui::design::theme::current_theme().palette;
                 Elements els = {
                     hbox({text(" " + title + " ") | bold | color(c)}),
                 };
-                if (rows.empty()) els.push_back(text("  (empty)") | dim);
+                if (rows.empty()) els.push_back(text("  (empty)") | color(pal.muted));
                 else {
                     int shown = std::min(4, static_cast<int>(rows.size()));
                     for (int i = 0; i < shown; ++i)
                         els.push_back(text("  " + rows[i]) | color(c));
                     int rest = static_cast<int>(rows.size()) - shown;
                     if (rest > 0)
-                        els.push_back(text(std::format("  ... +{} more", rest)) | dim);
+                        els.push_back(text(std::format("  ... +{} more", rest)) | color(pal.muted));
                 }
                 return vbox(std::move(els)) | borderLight | color(c);
             };
@@ -461,7 +465,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                     text(" "),
                     path_col("Deny",   pal.danger,   draft->path_denylist)  | flex,
                 }),
-            });
+            }) | color(pal.text);
         });
 }
 
@@ -513,7 +517,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                 model_comp->Render() | borderLight | size(HEIGHT, LESS_THAN, 8) | flex,
                 text(""),
                 hbox({
-                    text("  Selected: ") | dim,
+                    text("  Selected: ") | color(pal.muted),
                     text(current) | color(pal.warning) | bold,
                 }),
             });
@@ -539,7 +543,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                     text(bar) | color(tcolor),
                     text(std::format(" {:.2f} ", draft->temperature)) | bold,
                 }),
-                text("  hint: [+] / [-] to adjust (0.0 = deterministic, 2.0 = wild)") | dim,
+                text("  hint: [+] / [-] to adjust (0.0 = deterministic, 2.0 = wild)") | color(pal.muted),
             });
 
             // System prompt block (code-style).
@@ -552,7 +556,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                         | bgcolor(pal.surface_tint_3)
                         | size(HEIGHT, LESS_THAN, 10) | flex | borderLight,
                 }),
-                text(std::format("  {} chars", draft->system_prompt.size())) | dim,
+                text(std::format("  {} chars", draft->system_prompt.size())) | color(pal.muted),
             });
 
             return vbox({
@@ -564,7 +568,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                 temp_row,
                 text(""),
                 prompt_view,
-            });
+            }) | color(pal.text);
         }) | CatchEvent([temp](Event event) -> bool {
             if (event == Event::Character('+') || event == Event::Character('=')) {
                 *temp = std::min(2.0, *temp + 0.1);
@@ -602,7 +606,8 @@ inline std::vector<SelectOption> canonical_role_options() {
             std::string mark = on ? std::string(loom::ui::design::figures::kBullet) + " " : std::string(loom::ui::design::figures::kEffortLow) + " ";
             auto t = hbox({
                 text(mark) | color(c),
-                text(std::string(permission_label(m))) | (on ? bold : dim),
+                text(std::string(permission_label(m))) | color(on ? c : pal.muted)
+                    | (on ? bold : nothing),
             });
             if (on) t = t | borderLight | color(c);
             return t;
@@ -618,49 +623,54 @@ inline std::vector<SelectOption> canonical_role_options() {
                 text("  "),
                 pill(PermissionMode::Deny,  pal.danger)    | flex,
             }),
-            text("  hint: [1] Ask  [2] Allow  [3] Deny") | dim,
+            text("  hint: [1] Ask  [2] Allow  [3] Deny") | color(pal.muted),
         });
 
         // --- Confirm checkbox ---
         auto confirm_row = hbox({
             text(*confirmed ? "[✓] " : "[ ] ") | color(pal.success) | bold,
             text("I have reviewed this agent configuration and I am ready to ")
-                | dim,
+                | color(pal.muted),
             text(draft->is_edit_mode ? "save changes." : "create this agent.")
-                | (*confirmed ? color(pal.success) | bold : dim),
+                | (*confirmed ? color(pal.success) | bold : color(pal.muted)),
         });
 
         // --- Summary block ---
         Elements summary_rows = {
-            hbox({text(" Name:       ") | dim,
+            hbox({text(" Name:       ") | color(pal.muted),
                   text(draft->name.empty() ? "(missing!)" : draft->name) | bold
                       | color(draft->name.empty() ? pal.danger : pal.text)}),
-            hbox({text(" Description:") | dim,
+            hbox({text(" Description:") | color(pal.muted),
                   text(draft->description.empty() ? std::string("(none)") : draft->description)}),
-            hbox({text(" Roles:      ") | dim,
+            hbox({text(" Roles:      ") | color(pal.muted),
                   RoleTags(draft->role_tags, 5)}),
-            hbox({text(" Tools:      ") | dim,
+            hbox({text(" Tools:      ") | color(pal.muted),
                   text(std::format("{} selected", draft->selected_tools.size()))
                       | color(pal.success)}),
-            hbox({text(" Model:      ") | dim,
+            hbox({text(" Model:      ") | color(pal.muted),
                   text(draft->model) | color(pal.warning)}),
-            hbox({text(" Temp:       ") | dim,
+            hbox({text(" Temp:       ") | color(pal.muted),
                   text(std::format("{:.2f}", draft->temperature))}),
-            hbox({text(" Permission: ") | dim,
+            hbox({text(" Permission: ") | color(pal.muted),
                   text(std::string(permission_label(draft->default_permission)))
                       | color(pal.info)}),
-            hbox({text(" Paths:      ") | dim,
+            hbox({text(" Paths:      ") | color(pal.muted),
                   text(std::format("{} allow · {} deny",
                                    draft->path_allowlist.size(),
                                    draft->path_denylist.size()))}),
-            hbox({text(" Prompt:     ") | dim,
-                  text(std::format("{} chars", draft->system_prompt.size())) | dim}),
+            hbox({text(" Prompt:     ") | color(pal.muted),
+                  text(std::format("{} chars", draft->system_prompt.size())) | color(pal.muted)}),
         };
         auto summary = vbox({
             text(" Configuration summary") | bold | color(pal.info),
             separator() | color(pal.info),
             vbox(std::move(summary_rows)),
         }) | borderLight;
+
+        // Named ANSI status indices may equal their tint backgrounds.
+        const auto variant = loom::ui::design::theme::current_theme().variant;
+        const bool ansi = variant == loom::ui::design::theme::ThemeVariant::LightAnsi
+                       || variant == loom::ui::design::theme::ThemeVariant::DarkAnsi;
 
         // --- "Ready?" banner ---
         bool ready = !draft->name.empty() && draft->confirmed;
@@ -672,7 +682,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                          ? "Ready to save. Press Enter → update agent registry."
                          : "Ready to create. Press Enter → write to agent registry.")
                     | color(pal.success) | bold,
-            }) | bgcolor(pal.success_tint_bg) | borderLight | color(pal.success);
+            }) | bgcolor(ansi ? pal.background : pal.success_tint_bg) | borderLight | color(pal.success);
         } else {
             banner = hbox({
                 text(" ! ") | color(pal.warning) | bold,
@@ -683,7 +693,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                           ? "Tick the confirmation box to proceed."
                           : ""))
                     | color(pal.warning),
-            }) | bgcolor(pal.warning_tint_bg) | borderLight | color(pal.warning);
+            }) | bgcolor(ansi ? pal.background : pal.warning_tint_bg) | borderLight | color(pal.warning);
         }
 
         return vbox({
@@ -698,8 +708,8 @@ inline std::vector<SelectOption> canonical_role_options() {
             text(""),
             banner,
             text(""),
-            text(" hint: [Space] / [c] toggle confirm  [1..3] permission mode") | dim,
-        });
+            text(" hint: [Space] / [c] toggle confirm  [1..3] permission mode") | color(pal.muted),
+        }) | color(pal.text);
     }) | CatchEvent([perm, confirmed](Event event) -> bool {
         if (event == Event::Character('1')) { *perm = 0; return true; }
         if (event == Event::Character('2')) { *perm = 1; return true; }

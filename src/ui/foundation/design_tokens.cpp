@@ -166,9 +166,9 @@ const Palette& light() noexcept {
     static const Palette p = {
     .primary             = ftxui::Color::RGB(160,  70,  42),
     .primary_shimmer     = ftxui::Color::RGB(168,  80,  51),
-    // (clr-light-palette-17-p1).  `info` carries the permission/suggestion
-    // accent = rgb(87,105,247) medium blue.
-    .info                = ftxui::Color::RGB( 87, 105, 247),
+    // Information stays blue and readable on canvas and tinted surfaces.
+    // Permission and suggestion retain their independent semantic values.
+    .info                = ftxui::Color::RGB( 73,  88, 215),
     .success             = ftxui::Color::RGB( 44, 122,  57),
     .warning             = ftxui::Color::RGB(153,  92,   0),
     .danger              = ftxui::Color::RGB(171,  43,  63),
@@ -439,7 +439,7 @@ const Palette& light_daltonized() noexcept {
     static const Palette p = {
     .primary             = ftxui::Color::RGB(153,  92,   0),
     .primary_shimmer     = ftxui::Color::RGB(151, 101,  35),
-    .info                = ftxui::Color::RGB( 51, 102, 255),  // permission/suggestion
+    .info                = ftxui::Color::RGB( 45,  90, 225),
     .success             = ftxui::Color::RGB(  0, 102, 153),  // blue, not green
     .warning             = ftxui::Color::RGB(153,  92,   0),
     .danger              = ftxui::Color::RGB(204,   0,   0),  // pure red (error)

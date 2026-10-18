@@ -370,7 +370,7 @@ enum class PathScope : std::uint8_t {
 /// Render a small scope badge, e.g. `[R]` or `[W]`.
 [[nodiscard]] inline Element PathScopeBadge(PathScope scope) {
     return text(std::format("[{}]", PathScopeLabel(scope)))
-           | color(PathScopeColor(scope)) | dim;
+           | color(PathScopeColor(scope));
 }
 
 // ============================================================

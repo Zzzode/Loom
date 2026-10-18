@@ -188,6 +188,7 @@ struct StatusDotOptions {
 /// spinner_animations.cppm).
 [[nodiscard]] inline Element StatusDot(const StatusDotOptions& opts) {
     Color c = status_color(opts.status);
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     std::string glyph;
 
     switch (opts.status) {
@@ -205,8 +206,8 @@ struct StatusDotOptions {
     auto dot = text(" " + glyph + " ") | color(c);
 
     if (opts.with_label) {
-        auto label = text(std::string(status_label(opts.status))) | color(c);
-        if (opts.status == AgentStatus::Disabled) label = label | dim | strikethrough;
+        auto label = text(std::string(status_label(opts.status))) | color(opts.status == AgentStatus::Errored ? pal.danger : pal.muted);
+        if (opts.status == AgentStatus::Disabled) label = label | strikethrough;
         return hbox({dot, label});
     }
     return dot;
@@ -218,7 +219,7 @@ struct StatusDotOptions {
 
 /// Render a horizontal row of role-tag chips (e.g. "researcher", "coder",
 /// "reviewer"). When there are more than `max_visible` tags, the extras are
-/// replaced with a "+N more" dimmed summary chip.
+/// replaced with a readable "+N more" secondary summary chip.
 [[nodiscard]] inline Element RoleTags(
     const std::vector<std::string>& tags,
     int max_visible = 4)
@@ -232,7 +233,7 @@ struct StatusDotOptions {
         chips.push_back(
             hbox({
                 text(" "),
-                text(tags[i]) | color(pal.info) | dim,
+                text(tags[i]) | color(pal.info),
                 text(" "),
             }) | borderLight | color(pal.info)
         );
@@ -243,7 +244,7 @@ struct StatusDotOptions {
         int extra = count - max_visible;
         chips.push_back(text(" "));
         chips.push_back(
-            text(std::format(" +{} more ", extra)) | dim | color(pal.muted)
+            text(std::format(" +{} more ", extra)) | color(pal.muted)
         );
     }
 
@@ -268,14 +269,14 @@ struct RunStats {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements parts;
 
-    parts.push_back(text(std::format("{} ", stats.run_count)) | bold);
-    parts.push_back(text("runs") | dim);
+    parts.push_back(text(std::format("{} ", stats.run_count)) | color(pal.text) | bold);
+    parts.push_back(text("runs") | color(pal.muted));
 
     if (stats.running_count > 0) {
         parts.push_back(text(" · ") | dim);
         parts.push_back(text(std::format("{} ", stats.running_count))
-            | color(pal.success) | bold);
-        parts.push_back(text("running") | dim | color(pal.success));
+            | color(pal.text) | bold);
+        parts.push_back(text("running") | color(pal.muted));
     }
 
     parts.push_back(text(" · ") | dim);
@@ -291,7 +292,7 @@ struct RunStats {
     } else {
         tokens_str = std::format("{}", stats.total_tokens);
     }
-    parts.push_back(text(std::format("{} tokens", tokens_str)) | dim);
+    parts.push_back(text(std::format("{} tokens", tokens_str)) | color(pal.muted));
 
     return hbox(std::move(parts));
 }
@@ -332,11 +333,11 @@ struct ToolChipsOptions {
     if (count > visible) {
         int hidden = count - visible;
         chips.push_back(
-            text(std::format(" +{} tools ", hidden)) | dim | color(pal.muted)
+            text(std::format(" +{} tools ", hidden)) | color(pal.muted)
         );
     }
 
-    if (chips.empty()) return text("(no tools)") | dim;
+    if (chips.empty()) return text("(no tools)") | color(pal.muted);
 
     // Wrap chips into multiple rows if they exceed ~80 columns (best effort).
     // FTXUI's flex-wrap isn't available, so we render as hbox wrapped in a
@@ -394,7 +395,7 @@ struct StepTimelineOptions {
                 text(" ⓘ "),
                 text(std::format(
                     "Showing latest {} of {} steps. Press [v] to view all.",
-                    kLatestWindow, total)) | dim | color(pal.info),
+                    kLatestWindow, total)) | color(pal.info),
             })
         );
         rows.push_back(separator() | dim);
@@ -403,6 +404,8 @@ struct StepTimelineOptions {
     for (int i = start_idx; i < total; ++i) {
         const auto& step = opts.steps[i];
         Color c = status_color(step.status);
+        const bool historical = step.status == AgentStatus::Idle
+                             || step.status == AgentStatus::Disabled;
 
         // Left column: pipe + status dot + index.
         std::string dot = (step.status == AgentStatus::Running) ? std::string(loom::ui::design::figures::kEffortMedium) : std::string(loom::ui::design::figures::kBullet);
@@ -412,7 +415,8 @@ struct StepTimelineOptions {
         });
 
         // Index (right-aligned, 3 chars).
-        auto idx = text(std::format("{:>3}. ", step.index)) | dim | color(c);
+        auto idx = text(std::format("{:>3}. ", step.index)) | color(pal.muted);
+        if (historical) idx = idx | dim;
 
         // Tool icon + name.
         std::string icon = step.icon.empty() ? "  " : (step.icon + " ");
@@ -430,11 +434,13 @@ struct StepTimelineOptions {
             std::string dur = (ms >= 1000.0)
                 ? std::format("{:.1f}s", ms / 1000.0)
                 : std::format("{:.0f}ms", ms);
-            tail.push_back(text(std::format(" ({})", dur)) | dim);
+            auto duration = text(std::format(" ({})", dur)) | color(pal.muted);
+            if (historical) duration = duration | dim;
+            tail.push_back(std::move(duration));
         }
         if (!step.status_text.empty() && step.status_text != "success") {
             tail.push_back(text(std::format(" {}", step.status_text))
-                | color(c));
+                | color(step.status == AgentStatus::Errored ? pal.danger : pal.muted));
         }
 
         auto head = hbox({
@@ -453,7 +459,7 @@ struct StepTimelineOptions {
             for (auto& ln : lines) {
                 rows.push_back(hbox({
                     text(" │    ") | dim,
-                    text(ln) | color(pal.muted) | dim,
+                    text(ln) | color(pal.muted) | (historical ? dim : nothing),
                 }));
             }
             if (truncate) {
@@ -462,14 +468,14 @@ struct StepTimelineOptions {
                     text(std::format(" ... +{} chars (click to expand)",
                                      step.output_preview.size()
                                          - opts.truncate_preview_chars))
-                        | dim | color(pal.muted),
+                        | color(pal.muted),
                 }));
             }
         }
     }
 
     if (rows.empty()) {
-        return text("(no steps recorded yet)") | dim;
+        return text("(no steps recorded yet)") | color(pal.muted);
     }
 
     return vbox(std::move(rows)) | vscroll_indicator | yframe | flex;

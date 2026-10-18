@@ -172,7 +172,7 @@ namespace detail {
 [[nodiscard]] inline Element Chip(std::string_view label, Color c = loom::ui::design::theme::current_theme().palette->info) {
     return hbox({
         text(" "),
-        text(std::string{label}) | color(c) | dim,
+        text(std::string{label}) | color(c),
         text(" "),
     }) | borderLight | size(WIDTH, EQUAL, (int)label.size() + 2);
 }
@@ -181,7 +181,7 @@ namespace detail {
 [[nodiscard]] inline Element StatusBadge(std::string_view label, Color c) {
     return hbox({
         text("● ") | color(c),
-        text(std::string{label}) | color(c) | dim,
+        text(std::string{label}) | color(c),
     });
 }
 
@@ -225,7 +225,7 @@ namespace detail {
         hbox({
             text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} + "  Plugin Command Help ")) | bold | color(pal.info),
             filler(),
-            text("Esc to go back") | dim,
+            text("Esc to go back") | color(pal.muted),
         }),
         separator(),
         paragraph(std::string{ui::k_plugin_help_text}) | color(pal.muted),
@@ -247,19 +247,19 @@ namespace detail {
         filler(),
     };
     if (row.scope) {
-        parts.push_back(text("[" + *row.scope + "] ") | dim | color(pal.info));
+        parts.push_back(text("[" + *row.scope + "] ") | color(pal.muted));
     }
     auto line = hbox(std::move(parts));
     if (selected) line = line | bgcolor(pal.danger_tint_bg);
 
     Elements sub{line};
     if (!row.message.empty()) {
-        sub.push_back(paragraph("   " + row.message) | dim | color(pal.muted));
+        sub.push_back(paragraph("   " + row.message) | color(pal.muted));
     }
     if (row.guidance) {
         sub.push_back(hbox({
             text(("   " + std::string{loom::ui::design::figures::kInfo} + " ")),
-            paragraph(*row.guidance) | dim | color(pal.warning),
+            paragraph(*row.guidance) | color(pal.warning),
         }));
     }
     return vbox(std::move(sub));
@@ -273,7 +273,7 @@ namespace detail {
     Elements items;
     if (rows.empty()) {
         items.push_back(text((" " + std::string{loom::ui::design::figures::kTick} + "  No errors to report. Everything looks good!"))
-                        | color(pal.success) | dim | center);
+                        | color(pal.success) | center);
     } else {
         for (int i = 0; i < (int)rows.size(); ++i) {
             items.push_back(RenderErrorRow(rows[i], i == selected));
@@ -285,12 +285,12 @@ namespace detail {
         hbox({
             text(" ⚠  Errors & Warnings ") | bold | color(pal.danger),
             filler(),
-            text(std::format("{} item{}", (int)rows.size(), rows.size() == 1 ? "" : "s")) | dim,
+            text(std::format("{} item{}", (int)rows.size(), rows.size() == 1 ? "" : "s")) | color(pal.muted),
         }),
         separator(),
         vbox(std::move(items)) | vscroll_indicator | yframe | flex,
         separator(),
-        text(" ↑/↓ navigate  ⏎ act  Esc back") | dim,
+        text(" ↑/↓ navigate  ⏎ act  Esc back") | color(pal.muted),
     });
 }
 
@@ -305,7 +305,7 @@ namespace detail {
     body.push_back(hbox({
         text((" " + std::string{loom::ui::design::figures::kTick} + "  Manifest Validation ")) | bold | color(ok ? pal.success : pal.danger),
         filler(),
-        path ? text(*path) | color(pal.info) | underlined : text("(no path)") | dim,
+        path ? text(*path) | color(pal.info) | underlined : text("(no path)") | color(pal.muted),
     }));
     body.push_back(separator());
 
@@ -325,13 +325,13 @@ namespace detail {
     for (const auto& m : messages) {
         msgs.push_back(hbox({
             text("    • ") | dim,
-            paragraph(m) | (ok ? color(pal.muted) : color(pal.danger) | dim),
+            paragraph(m) | (ok ? color(pal.muted) : color(pal.danger)),
         }));
     }
     body.push_back(vbox(std::move(msgs)) | borderEmpty);
 
     body.push_back(separator());
-    body.push_back(text(" Esc back to menu") | dim);
+    body.push_back(text(" Esc back to menu") | color(pal.muted));
     return vbox(std::move(body));
 }
 
@@ -350,7 +350,7 @@ namespace detail {
         hbox({
             text((" " + std::string{loom::ui::design::figures::kPointerSmall} + "  Add Marketplace ")) | bold | color(pal.info),
             filler(),
-            text("Esc to cancel") | dim,
+            text("Esc to cancel") | color(pal.muted),
         }),
         separator(),
         text("") | size(HEIGHT, EQUAL, 1),
@@ -358,20 +358,20 @@ namespace detail {
             text("  Marketplace URL or path: ") | bold,
             text(std::string{current_value.empty() ? "(type here)" : current_value})
                 | color(c),
-            text("│") | blink,
+            text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
         }) | borderLight | color(value_is_valid ? pal.success : pal.muted),
         text("") | size(HEIGHT, EQUAL, 1),
         paragraph(std::string{validation_hint.empty()
             ? "Paste a marketplace.json URL, a local directory path, or a "
               "GitHub repo URL (owner/repo)."
-            : std::string{validation_hint}}) | dim,
+            : std::string{validation_hint}}) | color(pal.muted),
         text(""),
         hbox({
             detail::Chip("file:", pal.info), text(" "),
             detail::Chip("http(s)://", pal.success), text(" "),
             detail::Chip("github:owner/repo", pal.info), text(" "),
             detail::Chip("local path", pal.primary),
-        }) | dim,
+        }) | color(pal.muted),
     });
 }
 
@@ -386,12 +386,12 @@ namespace detail {
     return vbox({
         text("") | size(HEIGHT, EQUAL, 2),
         hbox({filler(),
-            text((" " + std::string{loom::ui::design::figures::kInfo} + " ")) | color(pal.warning) | dim,
-            text(reason.value_or("No plugins match your filters.")) | dim,
+            text((" " + std::string{loom::ui::design::figures::kInfo} + " ")) | color(pal.warning),
+            text(reason.value_or("No plugins match your filters.")) | color(pal.muted),
             filler(),
         }),
         hbox({filler(),
-            text(" Try removing filters or adding a marketplace. ") | dim,
+            text(" Try removing filters or adding a marketplace. ") | color(pal.muted),
             filler(),
         }),
     }) | flex;
@@ -419,7 +419,7 @@ namespace detail {
         const bool active = (id == active_tab);
         auto bit = text(" " + std::string{label} + " ");
         if (active) bit = bit | bold | bgcolor(pal.info_tint_bg) | color(pal.info);
-        else        bit = bit | dim;
+        else        bit = bit | color(pal.muted);
         tab_bits.push_back(std::move(bit));
     }
 

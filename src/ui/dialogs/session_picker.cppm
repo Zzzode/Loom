@@ -124,7 +124,7 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
         list_els.push_back(
             hbox({
                 text("  "),
-                text("No sessions found") | dim,
+                text("No sessions found") | color(pal.muted),
             })
         );
     } else {
@@ -145,7 +145,7 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
             auto meta = std::format("{}  ·  {} msgs  ·  {}",
                 s.age_string, s.message_count, s.cwd);
 
-            Elements row_els = { prefix, title_el, filler(), text(meta) | dim };
+            Elements row_els = { prefix, title_el, filler(), text(meta) | color(pal.muted) };
 
             auto row = hbox(std::move(row_els));
             if (is_selected) {
@@ -159,7 +159,7 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
             list_els.insert(list_els.begin(),
                 hbox({
                     text("  ↑ "),
-                    text(std::to_string(start) + " more") | dim,
+                    text(std::to_string(start) + " more") | color(pal.muted),
                     filler(),
                 })
             );
@@ -169,7 +169,7 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
             list_els.push_back(
                 hbox({
                     text("  ↓ "),
-                    text(std::to_string(remaining) + " more") | dim,
+                    text(std::to_string(remaining) + " more") | color(pal.muted),
                     filler(),
                 })
             );
@@ -180,14 +180,14 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
 
     // ---- Search input row ----
     auto query_display = p.query.empty()
-        ? text("Type to search sessions...") | dim
+        ? text("Type to search sessions...") | color(pal.muted)
         : text(p.query) | bold;
 
     auto search_row = hbox({
         text("❯ ") | color(pal.info),
         query_display,
         filler(),
-        text(std::to_string(count) + " sessions") | dim,
+        text(std::to_string(count) + " sessions") | color(pal.muted),
     });
 
     // ---- Assemble full content (search + divider + list) ----
@@ -204,7 +204,7 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
     props.title = "Resume Session";
     props.subtitle = "Select a conversation to resume";
     props.style = dframe::FrameStyle::Permission;
-    props.content = full_content;
+    props.content = full_content | color(pal.text);
     props.inner_padding_x = 1;
     props.inner_padding_y = 1;
     props.full_border = true;

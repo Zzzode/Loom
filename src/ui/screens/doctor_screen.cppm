@@ -797,18 +797,18 @@ RunAllChecks(const DoctorContext& ctx) {
             text("Doctor  —  ") | bold | color(loom::ui::design::theme::current_theme().palette->text),
             text("Loom installation self-check") | color(loom::ui::design::theme::current_theme().palette->info),
             filler(),
-            text(started ? "  [running]" : "  [idle]") | dim | color(started ? loom::ui::design::theme::current_theme().palette->info : palette.muted),
+            text(started ? "  [running]" : "  [idle]") | color(started ? loom::ui::design::theme::current_theme().palette->info : palette.muted),
         }),
         separator(),
-        hbox({ text("  Version:      ") | dim, text(v.current_version)        | color(loom::ui::design::theme::current_theme().palette->info) }),
-        hbox({ text("  Build type:   ") | dim, text(v.installation_type.empty() ? "native" : v.installation_type) | color(loom::ui::design::theme::current_theme().palette->info) }),
-        hbox({ text("  Invoked as:   ") | dim, text(v.invoked_binary.empty()    ? "loom" : v.invoked_binary)      | dim }),
-        hbox({ text("  Install path: ") | dim, text(v.installation_path)       | dim }),
+        hbox({ text("  Version:      ") | color(palette.muted), text(v.current_version)        | color(loom::ui::design::theme::current_theme().palette->info) }),
+        hbox({ text("  Build type:   ") | color(palette.muted), text(v.installation_type.empty() ? "native" : v.installation_type) | color(loom::ui::design::theme::current_theme().palette->info) }),
+        hbox({ text("  Invoked as:   ") | color(palette.muted), text(v.invoked_binary.empty()    ? "loom" : v.invoked_binary) | color(palette.muted) }),
+        hbox({ text("  Install path: ") | color(palette.muted), text(v.installation_path) | color(palette.muted) }),
         v.package_manager
-            ? hbox({ text("  Pkg manager:  ") | dim, text(*v.package_manager)     | color(loom::ui::design::theme::current_theme().palette->warning) })
+            ? hbox({ text("  Pkg manager:  ") | color(palette.muted), text(*v.package_manager)     | color(loom::ui::design::theme::current_theme().palette->warning) })
             : text(""),
         v.config_install_method
-            ? hbox({ text("  Installer:    ") | dim, text(*v.config_install_method) | color(palette.muted) })
+            ? hbox({ text("  Installer:    ") | color(palette.muted), text(*v.config_install_method) | color(palette.muted) })
             : text(""),
     };
     return vbox(std::move(lines));
@@ -844,7 +844,7 @@ RunAllChecks(const DoctorContext& ctx) {
         text(" "),
         text(std::format("{:>3}%", pct)) | bold | color(loom::ui::design::theme::current_theme().palette->text),
         filler(),
-        text(std::format(" {}/{} ", completed_count, total)) | dim,
+        text(std::format(" {}/{} ", completed_count, total)) | color(loom::ui::design::theme::current_theme().palette->muted),
     }));
 
     lines.push_back(text(""));
@@ -858,7 +858,7 @@ RunAllChecks(const DoctorContext& ctx) {
                 text(" "), text(glyph) | color(col), text(" "),
                 text(def.name) | color(loom::ui::design::theme::current_theme().palette->text),
                 filler(),
-                text(res.message) | dim,
+                text(res.message) | color(severity_display(res.severity).second),
             }));
         } else if (static_cast<CheckId>(i) == current) {
             lines.push_back(hbox({
@@ -872,9 +872,9 @@ RunAllChecks(const DoctorContext& ctx) {
         } else {
             lines.push_back(hbox({
                 text(" "), text("·") | dim, text(" "),
-                text(def.name) | dim,
+                text(def.name) | color(loom::ui::design::theme::current_theme().palette->muted),
                 filler(),
-                text("queued") | dim,
+                text("queued") | color(loom::ui::design::theme::current_theme().palette->muted),
             }));
         }
     }
@@ -894,7 +894,7 @@ RunAllChecks(const DoctorContext& ctx) {
     lines.push_back(hbox({
         text(" Results ") | bold | color(loom::ui::design::theme::current_theme().palette->info),
         filler(),
-        text("↑/↓ navigate  [Space] expand   [Enter] proceed to summary ") | dim,
+        text("↑/↓ navigate  [Space] expand   [Enter] proceed to summary ") | color(palette.muted),
     }));
     lines.push_back(separator());
 
@@ -922,7 +922,7 @@ RunAllChecks(const DoctorContext& ctx) {
             text(def.name) | bold | color(loom::ui::design::theme::current_theme().palette->text),
             filler(),
             text(std::format("[{}]", severity_label(res.severity))) | color(col),
-            text(std::format("  {:>4}ms", res.elapsed.count())) | dim,
+            text(std::format("  {:>4}ms", res.elapsed.count())) | color(palette.muted),
         }));
 
         // Inline one-liner
@@ -946,7 +946,7 @@ RunAllChecks(const DoctorContext& ctx) {
                     auto piece = res.detail.substr(start, nl == std::string::npos ? std::string::npos : nl - start);
                     lines.push_back(hbox({
                         text("     │ ") | dim | color(loom::ui::design::theme::current_theme().palette->info),
-                        text(piece) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
+                        text(piece) | color(loom::ui::design::theme::current_theme().palette->muted),
                     }));
                     if (nl == std::string::npos) break;
                     start = nl + 1;
@@ -976,11 +976,11 @@ RunAllChecks(const DoctorContext& ctx) {
             auto [g, col] = severity_display(n.severity);
             lines.push_back(hbox({
                 text(" "), text(g) | color(col), text(" "),
-                text("[" + n.category + "] ") | dim,
+                text("[" + n.category + "] ") | color(palette.muted),
                 text(n.message) | color(col),
             }));
             for (auto& d : n.details) {
-                lines.push_back(hbox({ text("     └ ") | dim, text(d) | dim }));
+                lines.push_back(hbox({ text("     └ ") | dim, text(d) | color(palette.muted) }));
             }
         }
     }
@@ -1016,7 +1016,7 @@ struct SummaryUIState {
         text(s.score >= 80 ? "HEALTHY" : s.score >= 50 ? "NEEDS ATTENTION" : "UNHEALTHY") | bold | color(sc),
     }));
     lines.push_back(text(""));
-    lines.push_back(hbox({ text(" "), RenderScoreGauge(s), text(" "), text(std::format(" {} checks", s.total)) | dim }));
+    lines.push_back(hbox({ text(" "), RenderScoreGauge(s), text(" "), text(std::format(" {} checks", s.total)) | color(palette.muted) }));
     lines.push_back(text(""));
 
     // Breakdown row
@@ -1035,8 +1035,8 @@ struct SummaryUIState {
     if (model.locks.enabled) {
         lines.push_back(text(""));
         lines.push_back(hbox({
-            text("  PID locks: ") | dim,
-            text(std::to_string(model.locks.lock_count) + " active") | dim,
+            text("  PID locks: ") | color(palette.muted),
+            text(std::to_string(model.locks.lock_count) + " active") | color(palette.muted),
             model.locks.stale_locks_cleaned > 0
                 ? hbox({ text(std::format(", {} stale cleaned", model.locks.stale_locks_cleaned)) | color(loom::ui::design::theme::current_theme().palette->success) })
                 : text(""),
@@ -1049,7 +1049,7 @@ struct SummaryUIState {
         lines.push_back(hbox({
             text(" " + std::string{loom::ui::design::figures::kSquareSmallFilled} + "  Fix-all progress ") | bold | color(loom::ui::design::theme::current_theme().palette->info),
             filler(),
-            text(std::format("  step {}/{} ", ui.fix_step, ui.fix_log_lines.size() + 0)) | dim,
+            text(std::format("  step {}/{} ", ui.fix_step, ui.fix_log_lines.size() + 0)) | color(palette.muted),
         }));
         for (std::size_t i = 0; i < ui.fix_log_lines.size(); ++i) {
             const bool current = i + 1 == ui.fix_step;
@@ -1085,7 +1085,7 @@ struct SummaryUIState {
         text("  "),
         btn(2, "Back to REPL", loom::ui::design::theme::current_theme().palette->success),
         filler(),
-        text(" ←/→ navigate  [Enter] activate ") | dim,
+        text(" ←/→ navigate  [Enter] activate ") | color(palette.muted),
     }));
 
     return vbox(std::move(lines));
@@ -1189,7 +1189,7 @@ namespace detail {
                     text("  Preparing diagnostics suite (13 checks, 5 categories)…") | color(loom::ui::design::theme::current_theme().palette->info),
                 }),
                 text(""),
-                hbox({ text(" Press Enter to skip the wait  ·  Esc closes Doctor") | dim }),
+                hbox({ text(" Press Enter to skip the wait  ·  Esc closes Doctor") | color(loom::ui::design::theme::current_theme().palette->muted) }),
             });
             break;
         case ScreenState::Running:

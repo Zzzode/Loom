@@ -140,7 +140,7 @@ namespace detail {
     if (selected) row = row | bgcolor(pal.surface_tint_3);
     Elements out{std::move(row)};
     if (!hint.empty()) {
-        out.push_back(paragraph("   " + std::string{hint}) | dim);
+        out.push_back(paragraph("   " + std::string{hint}) | color(pal.muted));
     }
     return vbox(std::move(out));
 }
@@ -152,8 +152,8 @@ namespace detail {
     for (unsigned i = 0; i < 4; ++i) {
         const bool sel = (i == (unsigned)active);
         bits.push_back(text(" " + std::string{k_settings_tab_names[i]} + " ")
-            | (sel ? (bold | color(pal.info) | bgcolor(pal.surface_tint_5))
-                   : dim));
+            | (sel ? (bold | color(pal.info) | bgcolor(pal.message_actions_background))
+                   : color(pal.muted)));
         if (i + 1 < 4) bits.push_back(text("│") | dim);
     }
     return hbox(std::move(bits));
@@ -171,7 +171,7 @@ namespace detail {
         hbox({
             text(" Global Plugin Settings ") | bold | color(pal.info),
             filler(),
-            text("Applies to all plugins") | dim,
+            text("Applies to all plugins") | color(pal.muted),
         }),
         separator(),
         text(""),
@@ -187,7 +187,7 @@ namespace detail {
             filler(),
             text(" [" + g.default_install_scope + "] ") | bold | color(pal.warning),
         }) | (selected_row == 1 ? bgcolor(pal.warning_tint_bg) : nothing),
-        paragraph("   New plugin installations use this scope unless overridden.") | dim,
+        paragraph("   New plugin installations use this scope unless overridden.") | color(pal.muted),
         separator() | dim,
         BoolToggleRow("Allow unverified plugins",
             "Install plugins that are not signed or verified by a trusted marketplace.",
@@ -208,8 +208,8 @@ namespace detail {
             text("⏎") | bold | color(pal.info), text(" save  "),
             text("Esc") | bold | color(pal.info), text(" close"),
             filler(),
-            text("[Ctrl+S] save all") | dim,
-        }) | dim,
+            text("[Ctrl+S] save all") | color(pal.muted),
+        }) | color(pal.muted),
     });
 }
 
@@ -232,11 +232,11 @@ namespace detail {
              | color(selected ? pal.text : pal.muted),
         filler(),
         au_dot,
-        text(p.auto_update ? "auto-update" : "manual-only") | dim,
+        text(p.auto_update ? "auto-update" : "manual-only") | color(pal.muted),
         text("  "),
-        text("[" + std::to_string(p.options.size()) + " opt]") | dim,
+        text("[" + std::to_string(p.options.size()) + " opt]") | color(pal.muted),
         text(" "),
-        text("[" + std::to_string(p.keybindings.size()) + " key]") | dim,
+        text("[" + std::to_string(p.keybindings.size()) + " key]") | color(pal.muted),
     });
     if (selected) row = row | bgcolor(pal.info_tint_bg);
     return row;
@@ -253,22 +253,22 @@ namespace detail {
         text(" Per-Plugin Toggles ") | bold | color(pal.primary),
         filler(),
         text(std::format("{} plugin{} installed",
-                         all.size(), all.size() == 1 ? "" : "s")) | dim,
+                         all.size(), all.size() == 1 ? "" : "s")) | color(pal.muted),
     }));
     rows.push_back(separator());
     rows.push_back(hbox({
         text(" ") | dim,
-        text("Status") | dim | size(WIDTH, EQUAL, 8),
-        text("Plugin") | dim,
+        text("Status") | color(pal.muted) | size(WIDTH, EQUAL, 8),
+        text("Plugin") | color(pal.muted),
         filler(),
-        text("Updates") | dim | size(WIDTH, EQUAL, 14),
-        text("Opts") | dim | size(WIDTH, EQUAL, 6),
-        text("Keys") | dim | size(WIDTH, EQUAL, 6),
+        text("Updates") | color(pal.muted) | size(WIDTH, EQUAL, 14),
+        text("Opts") | color(pal.muted) | size(WIDTH, EQUAL, 6),
+        text("Keys") | color(pal.muted) | size(WIDTH, EQUAL, 6),
     }));
     rows.push_back(separator() | dim);
 
     if (all.empty()) {
-        rows.push_back(text("  No plugins installed yet.") | dim | center);
+        rows.push_back(text("  No plugins installed yet.") | color(pal.muted) | center);
     } else {
         for (int i = 0; i < (int)all.size(); ++i) {
             const bool is_target =
@@ -284,7 +284,7 @@ namespace detail {
         text("Space") | bold | color(pal.info), text(" toggle enable  "),
         text("U") | bold | color(pal.info), text(" toggle auto-update  "),
         text("→") | bold | color(pal.info), text(" go to options/keys"),
-    }) | dim);
+    }) | color(pal.muted));
     return vbox(std::move(rows));
 }
 
@@ -305,7 +305,7 @@ namespace detail {
         text(opt.name) | bold
              | color(selected ? pal.text : pal.muted),
         opt.required ? text(" *") | color(pal.danger) : text(""),
-        text(" [" + opt.type_hint + "]") | dim,
+        text(" [" + opt.type_hint + "]") | color(pal.muted),
         filler(),
         text(display_value) | color(selected ? pal.text : pal.info),
     });
@@ -322,12 +322,12 @@ namespace detail {
         text(" Plugin Options ") | bold | color(pal.info),
         filler(),
         focused ? text(focused->plugin_id) | color(pal.info) | underlined
-                : text("(select a plugin first)") | dim,
+                : text("(select a plugin first)") | color(pal.muted),
     }));
     rows.push_back(separator());
 
     if (!focused || focused->options.empty()) {
-        rows.push_back(text("  No options to configure.") | dim | center);
+        rows.push_back(text("  No options to configure.") | color(pal.muted) | center);
     } else {
         // Pending config steps banner
         if (!focused->pending_steps.empty()) {
@@ -339,7 +339,7 @@ namespace detail {
                                      focused->pending_steps.size() == 1 ? "" : "s"))
                         | bold | color(pal.warning),
                 }),
-                paragraph("   These options are required.  Fill them in to enable the plugin.") | dim,
+                paragraph("   These options are required.  Fill them in to enable the plugin.") | color(pal.muted),
             }) | borderLight | color(pal.warning));
             rows.push_back(text(""));
         }
@@ -356,7 +356,7 @@ namespace detail {
         text(" ↑↓/j/k") | bold | color(pal.info), text(" navigate  "),
         text("⏎") | bold | color(pal.info), text(" edit value  "),
         text("←") | bold | color(pal.info), text(" back to plugins list"),
-    }) | dim);
+    }) | color(pal.muted));
     return vbox(std::move(rows));
 }
 
@@ -366,7 +366,6 @@ namespace detail {
     const KeybindingEntry& kb, bool selected)
 {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    auto scope_c = kb.scope == "global" ? pal.info : pal.primary;
     auto row = hbox({
         text(selected ? std::string(loom::ui::design::figures::kPointerSmall) + " " : "  ") | color(pal.info),
         text(kb.enabled ? std::string(loom::ui::design::figures::kBullet) + " " : std::string(loom::ui::design::figures::kEffortLow) + " ")
@@ -376,7 +375,7 @@ namespace detail {
         filler(),
         text("[" + kb.hotkey + "]") | bold | color(pal.info),
         text(" "),
-        text(kb.scope) | dim | color(scope_c),
+        text(kb.scope) | color(pal.muted),
     });
     if (selected) row = row | bgcolor(pal.info_tint_bg);
     return row;
@@ -392,13 +391,13 @@ namespace detail {
         text(" Keybindings Editor ") | bold | color(pal.info),
         filler(),
         focused ? text(focused->plugin_id) | color(pal.info) | underlined
-                : text("(select a plugin first)") | dim,
+                : text("(select a plugin first)") | color(pal.muted),
     }));
     rows.push_back(separator());
 
     if (!focused || focused->keybindings.empty()) {
         rows.push_back(text("  No keybindings yet.  Press [A] to add one.")
-                        | dim | center);
+                        | color(pal.muted) | center);
     } else {
         for (int i = 0; i < (int)focused->keybindings.size(); ++i) {
             rows.push_back(RenderKeybindingRow(focused->keybindings[i],
@@ -413,12 +412,12 @@ namespace detail {
         rows.push_back(separator());
         rows.push_back(text(" New keybinding:") | bold | color(pal.info));
         rows.push_back(hbox({
-            text("  name: ") | dim,
+            text("  name: ") | color(pal.muted),
             text(std::string{new_name.empty() ? "(type name)" : std::string{new_name}})
                  | color(new_name.empty() ? pal.muted : pal.text),
             text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(pal.info),
             filler(),
-            text("hotkey: ") | dim,
+            text("hotkey: ") | color(pal.muted),
             text(std::string{new_hotkey.empty() ? "(press key combo)"
                                                : std::string{new_hotkey}})
                  | color(new_hotkey.empty() ? pal.muted : pal.info) | bold,
@@ -432,7 +431,7 @@ namespace detail {
         text("R") | bold | color(pal.info), text("emove  "),
         text("Space") | bold | color(pal.info), text(" enable/disable  "),
         text("⏎") | bold | color(pal.info), text(" edit hotkey"),
-    }) | dim);
+    }) | color(pal.muted));
     return vbox(std::move(rows));
 }
 

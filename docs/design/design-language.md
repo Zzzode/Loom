@@ -185,6 +185,22 @@ centralized four-frame bridge connection indicator is an explicit exception.
 These rules do not introduce a render ticker
 or an animation framework, and do not change StatusLine defaults.
 
+The application root also normalizes blinking native cursor shapes to their
+steady equivalents when reduced motion is enabled. Cursor coordinates, focus,
+hidden-cursor ownership, input bytes and progress updates remain unchanged.
+Low-level manual caret drawing observes the same setting without requiring a
+separate caller tick.
+
+Explicitly named code/diff themes own readable foreground/background pairs;
+their filled surface follows the named palette even when the UI uses the
+opposite light/dark theme. Default code blocks and default/custom diff context
+remain transparent. Ordinary operational instructions, notification feedback
+and error guidance use readable ink without terminal-dependent dim.
+
+The follow-up scope, evidence and exclusions are recorded in
+[the accessibility audit](accessibility-audit.md). Automatic terminal theme
+selection remains a separate [RFC 0019](../rfcs/0019-terminal-background-auto-theme.md).
+
 Implementation scope and measurable acceptance criteria are recorded in
 [RFC 0013](../rfcs/0013-readable-bounded-brand-ui.md) and
 [RFC 0015](../rfcs/0015-state-led-attention-and-hierarchy.md).

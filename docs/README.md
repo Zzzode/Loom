@@ -49,6 +49,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`design/dialog-system.md`](design/dialog-system.md) | Dialog framework architecture: queue, priority arbitration, two modes, migration. |
 | [`design/why-no-di.md`](design/why-no-di.md) | ADR #1: why this tree does not use a runtime DI container. |
 | [`design/design-language.md`](design/design-language.md) | Terminal hierarchy, readable tokens, activity height, brand/status identities and motion boundaries. |
+| [`design/accessibility-audit.md`](design/accessibility-audit.md) | Reduced-motion coverage and remaining text/surface contrast repairs, native regression evidence and limits. |
 
 ### Decision registers (`decisions/`)
 

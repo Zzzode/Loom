@@ -13,6 +13,18 @@ is dropped.
 **Excluded.** Pure file/line pointers with no stated reason, and ordinary
 validation text ("must not be empty").
 
+**Accessibility repair boundary (2026-10-16).** Global reduced-motion gates
+belong to the renderer that draws the changing glyph/blink, including low-level
+input-area drawing; they must not freeze progress, status, elapsed time or input
+state. Explicit named syntax/diff palettes own matching filled backgrounds as
+well as foregrounds. Default Markdown and default/custom diff context remain
+transparent and inherit the caller's surface. `DiffSyntaxTheme::context_bg` is
+optional for that reason; its hunk foreground/background pair is stored together
+instead of mixing a named foreground with the current UI theme's tint. These
+are internal UI contracts, not configuration or protocol changes. See
+`docs/design/accessibility-audit.md`; automatic terminal detection is a separate,
+documentation-only RFC 0019 proposal.
+
 ---
 
 **Path convention.** Paths are written relative to the repository root as of

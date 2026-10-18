@@ -1056,3 +1056,91 @@ this commit-only follow-up does not claim a new external-endpoint run. The nativ
 full suites include the public PTY workflows. Windows/Linux, ASan, hosted CI and
 PSS remain unverified. Structured event delivery retains its documented best-
 effort crash semantics. No REA is used.
+
+
+## Deterministic background sleep cancellation (2026-10-19)
+
+The earlier first-pass failure did not retain its terminal error, so its exact
+cancellation phase cannot be recovered. A controlled native GTest experiment
+now demonstrates the test defect without relying on retries: a synchronous
+Store observer pauses the worker immediately after publishing its assistant
+transcript, before the pre-tool cancellation checkpoint. TaskStop succeeds;
+releasing the worker produces `cancelled before executing tool sleep`. The old
+predicates nevertheless fail all three assertions, including a 5883 ms latency
+measurement, because they poll for the conjunction of Cancelled and the different
+`while executing tool sleep` reason. The latency includes the exhausted polling
+loop and does not establish a slow cancellation operation. Raw red XML, output
+and the controlled old-predicate source remain in
+`build/agent-cancel-validation-20261019/`.
+
+The owning fix is test-local. Existing synchronous Store observers and the live
+permission callback establish two deterministic phases: cancellation before sleep
+dispatch, and pending cancellation at the sleep handoff after the pre-dispatch
+checkpoint. The latter is explicitly named AtSleepToolHandoff; it does not claim
+that a condition-variable wait has begun. A promise observes the first terminal
+record and its steady-clock timestamp independently of its error text. State,
+phase and latency are asserted separately, and TaskOutput must preserve the stopped
+status and phase. Both cases forbid a second model request. Cleanup releases gates,
+unsubscribes, cancels and joins workers before destroying captured state or removing
+runtime data, including fatal-assertion paths. No arbitrary 30 ms sleep or enlarged
+latency threshold remains.
+
+This replaces one misleading DuringSleepToolExecution test with two explicit
+phase regressions: one intentional registration rename and one added case. No
+production module, shared test hook, API, configuration, persisted data or wire
+contract changes. Actual in-flight cancellation is separately checked in the real
+native PTY by sampling the worker stack through AgentTool and the Sleep/AbortSignal
+condition-variable wait, then issuing Stop through the instance details UI and
+checking first terminal observation, task output and model request count. A watcher
+thread's 5 ms sleep is not evidence of the tool's wait. Independent diagnosis:
+`agent:/root/urlwrap_cancellation_failure_audit`; source/final review:
+`agent:/root/settings_wordwrap_review`. Debug/Release complete-suite and real-PTY
+results will be appended after execution. No commit or push is part of this task.
+
+
+Final frozen cancellation validation:
+
+| Preset | Build seconds | Focused passed | Registered | Passed | Skipped | Disabled | Failed | Full seconds |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Debug | 9.84 | 16/16 | 3004 | 2979 | 23 | 2 | 0 | 502.78 |
+| Release | 17.34 | 16/16 | 3004 | 2979 | 23 | 2 | 0 | 432.48 |
+
+These are fresh default-preset builds with -Werror and complete unfiltered serial
+CTest executions on the final deadline-corrected input. Both full first passes
+succeed without retries; the deliberately failing controlled old-predicate red
+experiment remains separate. Every complete XML test name appears exactly once
+and matches registration, including the intentional two-addition/one-removal
+rename. The earlier successful pre-review builds remain separately archived;
+they are not substituted for these final executions. Graph/core8/UI9/store/TLL,
+inline-definition, theme and RFC lint pass.
+
+The native Debug PTY uses the frozen binary SHA-256
+`1e8d7d98d62d8f18f2eb80cc83789b9b4035211acca5354f22ae8590c1cd2803`.
+A controlled loopback SSE endpoint launches a real 300-second sleep. macOS sample
+shows the worker in AgentTool, execute_agent_sleep_tool, SleepTool::execute,
+AbortSignal::wait_for and its condition-variable wait; the watcher is separate.
+The user-facing instance detail Stop key produces Cancelled with the exact
+`while executing tool sleep` reason. First persisted terminal observation follows
+the input-write timestamp by 28.816 ms with 5 ms sampling. This wall-clock
+observation is not a monotonic performance benchmark; native regressions separately
+use the stop-relative steady-clock deadline. Screens show running/Stop, cancelled
+with its reason/Continue, and the ended instance in History. Exactly one worker
+model request occurs, with no continuation request over 249.571 seconds after Stop.
+The parent only spawns the worker and completes. No external provider run is claimed.
+
+The native child exits 0 after Ctrl+D; owned servers are terminated and reaped,
+staged dummy settings are removed, and original user settings retain hash/mode/mtime.
+Input preservation covers 2697 Git-visible files and 218 executable hashes in the
+primary and attached cached checkout. Unowned bytes/modes and tracked symlink
+targets remain unchanged. Product/test/executable bytes stay frozen through full
+execution; only this result-only documentation append receives a final controlled
+hash. A stat-versus-lstat evidence-checker mismatch was corrected consistently
+with the before snapshot and separately recorded, without changing any input.
+Final independent evidence verdict is retained in the source-review report.
+
+The historical first-pass terminal error remains unrecoverable, so its precise
+phase is not retrospectively asserted. The test defect is demonstrated by the new
+controlled red experiment and covered by deterministic phase regressions plus an
+actual in-flight terminal run. Other platforms, ASan/TSan, hosted CI and skipped
+live-provider cases remain unverified. No production/shared module or established
+public/persisted/wire contract is modified. Both related files remain uncommitted.

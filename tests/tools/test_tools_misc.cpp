@@ -569,6 +569,25 @@ private:
     std::optional<std::string> last_body_;
 };
 
+// Deterministic scheduling through existing runtime callbacks, not elapsed time.
+struct AgentCancellationGate {
+    std::promise<void> entered;
+    std::future<void> entered_future = entered.get_future();
+    std::promise<void> released;
+    std::shared_future<void> release_future = released.get_future().share();
+    std::atomic_bool arrived{false};
+    std::atomic_bool opened{false};
+
+    void arrive_and_wait() {
+        if (arrived.exchange(true)) return;
+        entered.set_value();
+        release_future.wait();
+    }
+    void open() {
+        if (!opened.exchange(true)) released.set_value();
+    }
+};
+
 class LocalSleepToolUseMessagesServer {
 public:
     LocalSleepToolUseMessagesServer() {
@@ -2442,9 +2461,12 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringModelStream) {
     fs::remove_all(root);
 }
 
-TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringSleepToolExecution) {
-    auto root = fs::temp_directory_path() / "loom_native_agent_sleep_cancel_test";
-    fs::remove_all(root);
+namespace {
+enum class SleepCancellationPhase { BeforeDispatch, AtHandoff };
+
+void CheckBackgroundSleepCancellation(SleepCancellationPhase phase) {
+    auto root = fs::temp_directory_path() / ("loom_native_agent_sleep_cancel_" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(root);
     LocalSleepToolUseMessagesServer server;
     ASSERT_TRUE(server.valid());
@@ -2452,13 +2474,54 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringSleepToolExecution) {
     EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
     EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "sleep-cancel-test-model");
-    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
+    auto& store = loom::tools::agent_runtime::native_agent_store();
+    store.clear_for_testing();
 
     loom::core::ToolRegistry registry;
     loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-    loom::tools::AgentTool tool({}, 0, &registry);
+    auto gate = std::make_shared<AgentCancellationGate>();
+    using Terminal = std::pair<loom::tools::agent_runtime::NativeAgentRecord, std::chrono::steady_clock::time_point>;
+    std::promise<Terminal> terminal;
+    auto terminal_future = terminal.get_future();
+    std::atomic_bool terminal_observed{false};
+    struct Cleanup {
+        loom::tools::agent_runtime::NativeAgentStore& store;
+        std::shared_ptr<AgentCancellationGate> gate;
+        const fs::path& root;
+        std::size_t observer = 0;
+        ~Cleanup() {
+            store.unsubscribe_changed(observer);
+            gate->open();
+            (void)store.request_cancel("sleep-cancel-agent");
+            store.wait_for_background_agents();
+            store.clear_for_testing();
+            std::error_code ec;
+            fs::remove_all(root, ec);
+        }
+    } cleanup{store, gate, root};
+    cleanup.observer = store.subscribe_changed([&store, gate, phase, &terminal, &terminal_observed] {
+        auto record = store.get("sleep-cancel-agent");
+        if (!record) return;
+        using Status = loom::tools::agent_runtime::NativeAgentStatus;
+        if ((record->status == Status::Cancelled || record->status == Status::Failed ||
+             record->status == Status::Completed) && !terminal_observed.exchange(true)) {
+            terminal.set_value({*record, std::chrono::steady_clock::now()});
+        }
+        if (phase == SleepCancellationPhase::BeforeDispatch &&
+            std::ranges::any_of(record->transcript, [](const auto& entry) {
+                return entry.starts_with("assistant:");
+            })) gate->arrive_and_wait();
+    });
+    // The live permission callback runs after the pre-dispatch cancellation
+    // checkpoint. This gate proves handoff admission, not an active sleep wait.
+    loom::tools::AgentTool tool({}, 0, &registry,
+        [gate, phase](std::string_view name, std::string_view, std::string_view) {
+            if (phase == SleepCancellationPhase::AtHandoff && name == "sleep")
+                gate->arrive_and_wait();
+            return loom::tools::agent::AgentLivePermissionCheck{.allowed = true};
+        }, true);
     auto started = tool.execute(loom::core::ToolInput::from_json(R"({
-      "description": "Run async and cancel during sleep",
+      "description": "Run async and cancel at a controlled sleep checkpoint",
       "prompt": "Use sleep until I stop you",
       "name": "sleep-cancel-agent",
       "run_in_background": true
@@ -2466,41 +2529,35 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringSleepToolExecution) {
     ASSERT_TRUE(started.has_value()) << started.error().format();
     ASSERT_FALSE(started->is_error);
     ASSERT_TRUE(server.wait_for_request_count(1));
+    ASSERT_EQ(gate->entered_future.wait_for(std::chrono::seconds(3)), std::future_status::ready)
+        << "Worker did not reach the selected cancellation checkpoint";
 
-    // Wait until agent has parsed the SSE response (assistant transcript entry)
-    // and entered tool execution before issuing cancel.
-    for (int i = 0; i < 500; ++i) {
-        auto rec = loom::tools::agent_runtime::native_agent_store().get("sleep-cancel-agent");
-        if (rec && std::ranges::any_of(rec->transcript, [](const auto& e) {
-            return e.find("assistant:") != std::string::npos;
-        })) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
     const auto stop_started = std::chrono::steady_clock::now();
+    const auto deadline = stop_started + std::chrono::seconds(5);
     auto stopped = registry.execute("task_stop", loom::core::ToolInput::from_json(R"({
       "task_id": "sleep-cancel-agent"
     })"));
     ASSERT_TRUE(stopped.has_value());
     ASSERT_FALSE(stopped->is_error);
+    auto requested = store.get("sleep-cancel-agent");
+    ASSERT_TRUE(requested);
+    EXPECT_TRUE(requested->cancel_requested);
+    gate->open();
 
-    bool observed_sleep_cancel = false;
-    for (int attempt = 0; attempt < 250; ++attempt) {
-        auto record = loom::tools::agent_runtime::native_agent_store().get("sleep-cancel-agent");
-        ASSERT_TRUE(record.has_value());
-        if (record->status == loom::tools::agent_runtime::NativeAgentStatus::Cancelled &&
-            record->error &&
-            record->error->find("while executing tool sleep") != std::string::npos) {
-            observed_sleep_cancel = true;
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    }
-    EXPECT_TRUE(observed_sleep_cancel);
-    EXPECT_LT(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - stop_started).count(),
-        5000);
+    // Observe the first terminal state independently of its cancellation reason.
+    // A wrong phase must fail directly, not consume the latency deadline.
+    ASSERT_EQ(terminal_future.wait_until(deadline), std::future_status::ready)
+        << "Worker did not publish a terminal state after cancellation";
+    const auto [record, finished_at] = terminal_future.get();
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(finished_at - stop_started);
+    SCOPED_TRACE("Actual terminal error: " + record.error.value_or("[none]"));
+    EXPECT_EQ(record.status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+    EXPECT_LT(finished_at, deadline) << "Observed cancellation latency: " << elapsed.count() << " ms";
+    const auto expected_phase = phase == SleepCancellationPhase::BeforeDispatch
+        ? "before executing tool sleep" : "while executing tool sleep";
+    ASSERT_TRUE(record.error);
+    EXPECT_NE(record.error->find(expected_phase), std::string::npos);
+    store.wait_for_background_agents();
     EXPECT_EQ(server.request_count(), 1u);
 
     auto output = registry.execute("task_output", loom::core::ToolInput::from_json(R"({
@@ -2510,10 +2567,16 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringSleepToolExecution) {
     ASSERT_FALSE(output->is_error);
     ASSERT_FALSE(output->content.empty());
     EXPECT_NE(output->content.front().text.find("<status>stopped</status>"), std::string::npos);
-    EXPECT_NE(output->content.front().text.find("while executing tool sleep"), std::string::npos);
+    EXPECT_NE(output->content.front().text.find(expected_phase), std::string::npos);
+}
+} // namespace
 
-    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
-    fs::remove_all(root);
+TEST(Tools, TaskStopCancelsBackgroundAgentBeforeSleepToolDispatch) {
+    CheckBackgroundSleepCancellation(SleepCancellationPhase::BeforeDispatch);
+}
+
+TEST(Tools, TaskStopCancelsBackgroundAgentAtSleepToolHandoff) {
+    CheckBackgroundSleepCancellation(SleepCancellationPhase::AtHandoff);
 }
 
 TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringWebFetchToolExecution) {

@@ -34,3 +34,6 @@ __pycache__/
 conformance.json
 conformance_report.html
 ext.json
+settings.json.lock
+settings.local.json
+settings.local.json.lock

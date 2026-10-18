@@ -223,6 +223,11 @@ private:
         std::make_shared<std::atomic<bool>>(true);
     std::size_t runtime_agents_subscription_ = 0;
     std::string projected_runtime_agent_session_;
+    std::uint64_t runtime_agent_generation_ = 0;
+    std::string agent_instances_dialog_id_;
+    std::string agent_instances_session_;
+    std::shared_ptr<void> agent_instances_state_;
+    std::jthread agent_operation_thread_;
 
     // Ctrl-C double-press ExitHandler moved into AppImpl (:impl partition);
     // access via set_exit_message_impl/reset_exit_handler/handle_ctrl_c.
@@ -772,6 +777,9 @@ public:
     void SubscribeRuntimeAgentChanges();
     void UnsubscribeRuntimeAgentChanges();
     void ProjectRuntimeAgentsToScreenState();
+    void OpenAgentInstances(std::string_view argument);
+    void ContinueAgentInstance(std::string session, std::string id, std::string prompt);
+    void StopAgentInstance(std::string_view session, std::string_view id);
 
     // Leader-side: drain one queued teammate permission_request into the
     // existing ToolPermission dialog (Band3 overlay). Defined in

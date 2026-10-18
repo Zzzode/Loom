@@ -47,7 +47,7 @@ enum class CommandPermission : std::uint8_t {
 /// Maps commands to their required permission levels
 [[nodiscard]] constexpr CommandPermission command_permission(std::string_view name) noexcept {
     if (name == "help" || name == "doctor" || name == "review" || name == "review-remote" ||
-        name == "security-review" || name == "ultrareview" || name == "agents" || name == "btw" ||
+        name == "security-review" || name == "ultrareview" || name == "agents" || name == "subagents" || name == "btw" ||
         name == "advisor" || name == "brief" || name == "color" || name == "ctx-viz" ||
         name == "effort" || name == "env" || name == "fast" || name == "feedback" || name == "files" ||
         name == "heapdump" || name == "hooks" || name == "ide" || name == "issue" || name == "memory" ||

@@ -7,6 +7,124 @@ import std;
 
 namespace loom::tools::agent {
 
+Result<ToolResult> AgentTool::execute(const ToolInput& input) {
+    std::atomic_ref<int>(last_run_turns_).store(0, std::memory_order_relaxed);
+    std::atomic_ref<int>(last_run_tokens_).store(0, std::memory_order_relaxed);
+    auto request = parse_agent_tool_request(input);
+    if (!request) return ToolResult::error(std::format("Invalid Agent input: {}", request.error()));
+
+    if (request->prompt.empty()) {
+        return ToolResult::error("Missing required 'prompt' field");
+    }
+
+    auto plan = build_agent_execution_plan(*request, config_, input.parent_model);
+    if (!plan) return ToolResult::error(plan.error());
+    plan->api_context = input.api_context ? input.api_context : config_.api_context;
+    if (input.parent_session_id) plan->parent_session_id = input.parent_session_id;
+
+    if (!plan->resume_existing && !plan->team_name) {
+        if (auto current_team = loom::utils::get_team_name(); current_team && !current_team->empty()) {
+            plan->team_name = std::move(*current_team);
+        }
+    }
+
+    if (current_session_is_teammate() && plan->team_name && plan->name) {
+        return ToolResult::error(
+            "Teammates cannot spawn other teammates - the team roster is flat. "
+            "To spawn a subagent instead, omit the name parameter.");
+    }
+
+    if (loom::utils::is_in_process_teammate() && plan->team_name && plan->background) {
+        return ToolResult::error(
+            "In-process teammates cannot spawn background agents. "
+            "Use run_in_background=false for synchronous subagents.");
+    }
+
+    if (!agent_type_allowed_by_permission_rules(
+            plan->agent_type,
+            config_.allowed_tools,
+            config_.denied_tools)) {
+        return ToolResult::error(std::format(
+            "Agent type '{}' is not allowed by current Agent tool permission rules",
+            plan->agent_type));
+    }
+
+    // Check recursion depth
+    if (current_depth_ >= config_.max_depth) {
+        return ToolResult::error(std::format(
+            "Agent recursion depth limit reached ({}/{})",
+            current_depth_, config_.max_depth));
+    }
+
+    if (!plan->resume_existing && plan->team_name && plan->name && plan->isolation) {
+        return ToolResult::error("teammate spawn does not support isolation; omit name/team_name to spawn an isolated subagent");
+    }
+
+    if (!plan->resume_existing && plan->team_name && plan->name) {
+        return start_teammate_agent(std::move(*plan));
+    }
+
+    if (!plan->resume_existing && plan->isolation) {
+        if (*plan->isolation == "worktree") {
+            const auto parent_working_dir = plan->working_dir.value_or(fs::current_path().string());
+            auto worktree = create_agent_worktree(*plan);
+            if (!worktree) return ToolResult::error(worktree.error());
+            plan->working_dir = worktree->path.string();
+            plan->worktree_path = worktree->path.string();
+            plan->worktree_branch = worktree->branch;
+            plan->worktree_base_commit = worktree->head_commit;
+            plan->worktree_git_root = worktree->git_root.string();
+            if (plan->fork_context_includes_prompt) {
+                plan->fork_context_messages.push_back(Message::from_text(
+                    "user",
+                    loom::tools::agent_runtime::build_worktree_fork_notice(
+                        parent_working_dir,
+                        worktree->path.string())));
+            } else {
+                plan->system_prompt += std::format(
+                    "\n\nNative worktree isolation:\n"
+                    "- worktree_path: {}\n"
+                    "- worktree_branch: {}\n"
+                    "- base_commit: {}\n"
+                    "Run all filesystem and shell work from this worktree path.",
+                    worktree->path.string(),
+                    worktree->branch,
+                    worktree->head_commit);
+            }
+        } else {
+            return ToolResult::error(std::format("Unsupported isolation mode '{}'", *plan->isolation));
+        }
+    }
+
+    auto& store = loom::tools::agent_runtime::native_agent_store();
+    struct ResumeLease {
+        loom::tools::agent_runtime::NativeAgentStore& store;
+        std::string id;
+        bool held = false;
+        ~ResumeLease() { if (held) store.release_resume(id); }
+    } resume{store, plan->agent_id};
+    if (input.host_agent_resume &&
+        (!plan->resume_existing || !plan->background ||
+         plan->agent_id != input.host_agent_resume->agent_id ||
+         plan->agent_type != input.host_agent_resume->agent_type ||
+         plan->parent_session_id != std::optional<std::string>{input.host_agent_resume->parent_session_id} ||
+         (plan->team_name && !plan->team_name->empty()) || plan->teammate_backend || plan->teammate_task_id || plan->teammate_pane_id ||
+         (plan->parent_agent_id && !plan->parent_agent_id->empty()))) {
+        return ToolResult::error("Host continuation plan cannot redirect the agent target");
+    }
+    if (plan->resume_existing) {
+        auto admitted = store.reserve_resume(plan->agent_id, input.host_agent_resume);
+        if (!admitted) return ToolResult::error(admitted.error());
+        resume.held = true;
+    }
+
+    if (plan->background) {
+        return start_background_agent(std::move(*plan));
+    }
+
+    return run_agent_and_finalize(*plan, std::nullopt, input.is_cancelled);
+}
+
 int AgentTool::last_run_turns() const noexcept {
     return std::atomic_ref<int>(last_run_turns_).load(std::memory_order_relaxed);
 }

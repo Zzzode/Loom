@@ -6,6 +6,7 @@
 
 import std;
 import loom.tools.agent_runtime;
+import loom.types.tool_types;
 
 namespace {
 namespace runtime = loom::tools::agent_runtime;
@@ -237,4 +238,122 @@ TEST(NativeAgentObservers, DestructionJoinsAnOwnedWorkerWithAnAdmittedUnsubscrib
     destruction.get();
     EXPECT_TRUE(callback_finished.load());
     EXPECT_TRUE(worker_finished.load());
+}
+
+TEST(NativeAgentAdmission, ReservationRejectsConcurrentResumeWithoutRecordMutation) {
+    ObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    runtime::NativeAgentRecord record{.agent_id = "reserved", .status = runtime::NativeAgentStatus::Failed};
+    record.error = "retained error";
+    record.transcript = {"retained transcript"};
+    record.notification_delivered = true;
+    store.upsert(record);
+    std::barrier start(3);
+    std::atomic<int> accepted{0};
+    std::atomic<int> attempted{0};
+    auto reserve = [&] {
+        start.arrive_and_wait();
+        const auto result = store.reserve_resume("reserved");
+        if (result) ++accepted;
+        ++attempted;
+        while (attempted.load() != 2) std::this_thread::yield();
+        if (result) store.release_resume("reserved");
+    };
+    std::jthread first(reserve);
+    std::jthread second(reserve);
+    start.arrive_and_wait();
+    first.join();
+    second.join();
+    EXPECT_EQ(accepted.load(), 1);
+    const auto retained = store.get("reserved");
+    ASSERT_TRUE(retained);
+    EXPECT_EQ(retained->error, record.error);
+    EXPECT_EQ(retained->transcript, record.transcript);
+    EXPECT_TRUE(retained->notification_delivered);
+    ASSERT_TRUE(store.reserve_resume("reserved"));
+    store.release_resume("reserved");
+}
+
+TEST(NativeAgentAdmission, TerminalPublicationStillBlocksResumeUntilAllExecutionCleanupEnds) {
+    ObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    std::stop_source owner;
+    store.begin_execution(runtime::NativeAgentRecord{.agent_id = "cleanup"}, owner.get_token());
+    store.begin_execution("cleanup", owner.get_token());
+    store.mark_completed("cleanup", "completed before cleanup");
+    EXPECT_FALSE(store.reserve_resume("cleanup"));
+    store.end_execution("cleanup");
+    EXPECT_FALSE(store.reserve_resume("cleanup"));
+    store.end_execution("cleanup");
+    ASSERT_TRUE(store.reserve_resume("cleanup"));
+    store.release_resume("cleanup");
+}
+
+TEST(NativeAgentOwnership, HostStopRequiresActualSessionAndRegistryOwner) {
+    ObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    std::stop_source owner;
+    std::stop_source foreign;
+    runtime::NativeAgentRecord record{.agent_id = "owned", .status = runtime::NativeAgentStatus::Running};
+    record.parent_session_id = "session";
+    store.upsert(record);
+    EXPECT_FALSE(store.request_owned_cancel("owned", "session", owner.get_token()));
+    EXPECT_FALSE(store.get("owned")->cancel_requested);
+    store.begin_execution("owned", owner.get_token());
+    EXPECT_FALSE(store.request_owned_cancel("owned", "other", owner.get_token()));
+    EXPECT_FALSE(store.request_owned_cancel("owned", "session", foreign.get_token()));
+    EXPECT_FALSE(store.request_owned_cancel("owned", "", owner.get_token()));
+    EXPECT_FALSE(store.get("owned")->cancel_requested);
+    ASSERT_TRUE(store.request_owned_cancel("owned", "session", owner.get_token()));
+    ASSERT_TRUE(store.request_owned_cancel("owned", "session", owner.get_token()));
+    EXPECT_TRUE(store.get("owned")->cancel_requested);
+    EXPECT_EQ(store.get("owned")->status, runtime::NativeAgentStatus::Running);
+    store.finish_agent("owned", std::string("late success"));
+    EXPECT_EQ(store.get("owned")->status, runtime::NativeAgentStatus::Cancelled);
+    EXPECT_FALSE(store.request_owned_cancel("owned", "session", owner.get_token()));
+    store.end_execution("owned");
+}
+
+TEST(NativeAgentAdmission, MailboxDuringTerminalCleanupDoesNotResetResult) {
+    ObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    store.begin_execution(runtime::NativeAgentRecord{.agent_id = "mailbox-cleanup"});
+    store.mark_completed("mailbox-cleanup", "retained result");
+    store.enqueue_resume_message("mailbox-cleanup", "follow-up");
+    auto record = store.get("mailbox-cleanup");
+    ASSERT_TRUE(record);
+    EXPECT_EQ(record->status, runtime::NativeAgentStatus::Completed);
+    EXPECT_EQ(record->output, "retained result");
+    EXPECT_EQ(record->pending_messages, std::vector<std::string>{"follow-up"});
+    store.end_execution("mailbox-cleanup");
+    ASSERT_TRUE(store.reserve_resume("mailbox-cleanup"));
+    store.enqueue_resume_message("mailbox-cleanup", "second follow-up");
+    EXPECT_EQ(store.get("mailbox-cleanup")->output, "retained result");
+    store.release_resume("mailbox-cleanup");
+}
+
+TEST(NativeAgentAdmission, HostConstraintRechecksOwnerAndIdentityUnderReservationMutex) {
+    ObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    runtime::NativeAgentRecord record{.agent_id = "host-target", .agent_type = "general-purpose",
+        .status = runtime::NativeAgentStatus::Failed};
+    record.parent_session_id = "owner";
+    record.transcript = {"retained context"};
+    store.upsert(record);
+    const loom::core::HostAgentResumeConstraint expected{"host-target", "general-purpose", "owner"};
+    record.parent_session_id = "foreign";
+    store.upsert(record);
+    EXPECT_FALSE(store.reserve_resume("host-target", expected));
+    record.parent_session_id = "owner";
+    record.agent_type = "other-type";
+    store.upsert(record);
+    EXPECT_FALSE(store.reserve_resume("host-target", expected));
+    record.agent_type = "general-purpose";
+    record.teammate_pane_id = "";
+    store.upsert(record);
+    EXPECT_FALSE(store.reserve_resume("host-target", expected));
+    record.teammate_pane_id.reset();
+    store.upsert(record);
+    ASSERT_TRUE(store.reserve_resume("host-target", expected));
+    store.release_resume("host-target");
 }

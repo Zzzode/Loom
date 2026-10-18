@@ -500,7 +500,8 @@ TEST(ChromeBudget, OneActivityRowKeepsRunningAgentsAheadOfCompletedTasks) {
             state.todo_store.completed_collapsed = collapsed;
             const auto screen = paint_repl(state, 40, 24);
             const auto text = visible(screen);
-            EXPECT_NE(text.find("Agent Teams · 2 agents running"), std::string::npos);
+            EXPECT_NE(text.find("Agent Teams 2 running"), std::string::npos);
+            EXPECT_NE(text.find("instances"), std::string::npos);
             EXPECT_EQ(text.find("Tasks"), std::string::npos);
             EXPECT_EQ(text.find("hidden"), std::string::npos);
             EXPECT_NE(text.find(working ? "Working" : "Background agents running"), std::string::npos);

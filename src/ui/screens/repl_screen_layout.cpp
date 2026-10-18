@@ -88,6 +88,7 @@ using namespace ftxui;
     // Dismiss callback for API error cards (ESC / q).
     std::function<void()> on_dismiss_error,
     std::function<void()> on_continue) {
+    s.task_view_store.activity_hit_targets = {};
     s.messages_store.continue_action_box = {.x_min = 0, .x_max = -1, .y_min = 0, .y_max = -1};
     // Probe terminal size once per frame for adaptive layout (fix #11).
     auto [term_cols, term_rows] = loom::ui::ink_utils::query_terminal_size();
@@ -576,7 +577,8 @@ using namespace ftxui;
             activity.push_back(agents::runtime::RenderRuntimeAgentActivity(
                 s.task_view_store.runtime_agents, s.todo_store.items,
                 s.task_view_store.live_teammates, term_cols, activity_budget,
-                s.todo_store.completed_collapsed, response_prefix));
+                s.todo_store.completed_collapsed, response_prefix,
+                &s.task_view_store.activity_hit_targets));
         }
         L.insert(L.begin() + static_cast<std::ptrdiff_t>(activity_position),
                  activity.begin(), activity.end());

@@ -72,6 +72,7 @@ enum class DialogType : std::uint16_t {
     // -- modal slot (full-width dbox overlay, ▔ divider) --
     SettingsPanel,          ///< /settings panel
     TasksView,              ///< /tasks panel
+    AgentInstances,         ///< /subagents runtime browser
     TeamsView,              ///< /teams panel
     HelpView,               ///< /help panel
     QuickOpen,              ///< /quick-open
@@ -128,6 +129,7 @@ enum class DialogType : std::uint16_t {
         case DialogType::DesktopUpsell:            return "desktop-upsell";
         case DialogType::SettingsPanel:            return "settings-panel";
         case DialogType::TasksView:                return "tasks-view";
+        case DialogType::AgentInstances:           return "agent-instances";
         case DialogType::TeamsView:                return "teams-view";
         case DialogType::HelpView:                 return "help-view";
         case DialogType::QuickOpen:                return "quick-open";
@@ -198,6 +200,7 @@ enum class DialogSlot : std::uint8_t {
 
         case DialogType::SettingsPanel:
         case DialogType::TasksView:
+        case DialogType::AgentInstances:
         case DialogType::TeamsView:
         case DialogType::HelpView:
         case DialogType::QuickOpen:
@@ -775,6 +778,14 @@ struct HooksDialogPayload {
     std::function<void()> on_close;
 };
 
+/// State-held runtime instance browser; the feature has no dialog dependency.
+struct AgentInstancesPayload {
+    std::string id;
+    std::shared_ptr<void> component;
+    std::function<void(int, int)> on_resize;
+    std::function<void()> on_close;
+};
+
 /// Payload for the status bar segment toggle dialog (modal).
 /// Carries a type-erased component handle so the dialog-system module
 /// does not depend on the statusline dialog implementation.  Renderers
@@ -844,6 +855,7 @@ using DialogPayloadVariant = std::variant<
     CreateAgentWizardPayload,
     EditAgentWizardPayload,
     HooksDialogPayload,
+    AgentInstancesPayload,
     DoctorDialogPayload,
     StatuslineDialogPayload,
     SessionPickerPayload
@@ -943,6 +955,8 @@ using DialogPayloadVariant = std::variant<
             return DialogType::EditAgentWizard;
         } else if constexpr (std::is_same_v<T, HooksDialogPayload>) {
             return DialogType::HooksConfig;
+        } else if constexpr (std::is_same_v<T, AgentInstancesPayload>) {
+            return DialogType::AgentInstances;
         } else if constexpr (std::is_same_v<T, DoctorDialogPayload>) {
             return DialogType::Doctor;
         } else if constexpr (std::is_same_v<T, StatuslineDialogPayload>) {

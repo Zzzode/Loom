@@ -70,6 +70,32 @@ namespace dialog_queue_render {
 
 namespace dsys = dsys_fw;
 
+namespace {
+bool instance_permission_pending(ReplScreenState& s) {
+    const auto actionable = [&](const auto& ref) {
+        if (!ref) return false;
+        const auto& payload = ref->get();
+        if (!s.dialog_store.dialog_renderers.has_renderer_and_handler(dsys::type_of(payload)))
+            return false;
+        return std::visit([](const auto& request) {
+            using T = std::decay_t<decltype(request)>;
+            if constexpr (std::is_same_v<T, dsys::ToolPermissionPayload> ||
+                          std::is_same_v<T, dsys::SandboxPermissionPayload> ||
+                          std::is_same_v<T, dsys::WorkerSandboxPermissionPayload>)
+                return static_cast<bool>(request.on_response);
+            return false;
+        }, payload);
+    };
+    return actionable(s.dialog_store.dialog_queue.peek_overlay_mut()) ||
+        actionable(s.dialog_store.dialog_queue.peek_bottom_mut(false, true));
+}
+void yield_instance_to_permission(ReplScreenState& s) {
+    auto top = s.dialog_store.dialog_queue.peek_modal_mut();
+    if (top && std::holds_alternative<dsys::AgentInstancesPayload>(top->get()) &&
+        instance_permission_pending(s)) s.dialog_store.dialog_queue.pop_modal();
+}
+} // namespace
+
 /// Build the render-time width/height context for the registry.
 /// When `is_modal` is true, the context's `modal_available_cols/rows`
 /// are populated using the same formula so modal renderers can size
@@ -192,6 +218,7 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
                                       bool allow_dialogs_with_animation) {
     namespace dsys = dsys_fw;
 
+    yield_instance_to_permission(s);
     // Standalone always takes every event.
     {
         auto peek = s.dialog_store.dialog_queue.peek_standalone_mut();
@@ -276,6 +303,7 @@ bool actionable_permission(ReplScreenState& s, dsys::DialogPayloadVariant& paylo
 
 PreparedDialogLayers PrepareDialogLayers(
     ReplScreenState& s, bool typing, bool allow_animation, int w, int h) {
+    yield_instance_to_permission(s);
     PreparedDialogLayers prepared;
     // Preserve renderer execution order, including lazy payload initialization.
     prepared.bottom = RenderBottomDialog(s, typing, allow_animation, w, h);

@@ -32,15 +32,21 @@ void AppAdapter::UnsubscribeRuntimeAgentChanges() {
 }
 
 void AppAdapter::ProjectRuntimeAgentsToScreenState() {
+    if (agent_instances_session_ != current_session_id_) {
+        screen_state_->dialog_store.dialog_queue.remove(agent_instances_dialog_id_);
+        agent_instances_dialog_id_.clear();
+        agent_instances_state_.reset();
+        agent_instances_session_ = current_session_id_;
+    }
     const bool changed = runtime_agents_dirty_->exchange(false, std::memory_order_acq_rel);
     if (!changed && projected_runtime_agent_session_ == current_session_id_) return;
+    ++runtime_agent_generation_;
     namespace native = loom::tools::agent_runtime;
     namespace display = loom::ui::agents::runtime;
     auto records = native::native_agent_store().list();
     std::erase_if(records, [&](const native::NativeAgentRecord& record) {
         return !record.parent_session_id || *record.parent_session_id != current_session_id_ ||
-            (record.team_name && !record.team_name->empty()) ||
-            record.teammate_backend || record.teammate_task_id || record.teammate_pane_id;
+            native::is_team_agent_record(record);
     });
     auto active = [](native::NativeAgentStatus status) {
         return status == native::NativeAgentStatus::Queued || status == native::NativeAgentStatus::Running;

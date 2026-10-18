@@ -260,6 +260,7 @@ gtest_discover_tests(test_ui_theme_conformance
 # RFC 0021: ordinary runtime instances, session projection and bounded chrome.
 add_executable(test_runtime_agents
     test_runtime_agent_activity.cpp
+    test_instance_browser.cpp
     test_app_runtime_agents.cpp
     ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_runtime_agents ${_ui_test_libs})

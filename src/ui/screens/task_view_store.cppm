@@ -62,6 +62,7 @@ struct TaskViewStore {
     // Ordinary instances belonging to the current root session. Definition
     // cards and team membership retain their separate existing projections.
     std::vector<agents::runtime::Instance> runtime_agents;
+    agents::runtime::ActivityHitTargets activity_hit_targets;
     // Selection cursor for the TeamsView modal (TeamsViewPayload.selected_index
     // mirrors this when the dialog is open).
     int teams_overview_selected_index = 0;

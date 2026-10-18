@@ -35,7 +35,7 @@ gtest_discover_tests(test_fix_query_engine DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVE
 
 
 # B2: loom.hooks.execution wired into QueryEngine tool-call dispatch
-add_executable(test_fix_hooks_integration test_fix_hooks_integration.cpp)
+add_executable(test_fix_hooks_integration test_fix_hooks_integration.cpp test_agent_controls.cpp)
 target_link_libraries(test_fix_hooks_integration
     PRIVATE
         loom_core

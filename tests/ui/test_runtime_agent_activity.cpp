@@ -144,7 +144,7 @@ TEST(RuntimeAgentActivity, TinyBudgetsChooseGroupStatePriorityThenRenderCanonica
     workers[0].status = runtime::Status::Queued;
     members[0].status = "unknown";
     one = strip_ansi(paint(runtime::RenderRuntimeAgentActivity(workers, tasks, members, 100, 1), 100, 1).ToString());
-    EXPECT_NE(one.find("Agent Teams · 1 agent attention"), std::string::npos);
+    EXPECT_NE(one.find("Agent Teams · 1 agent unknown"), std::string::npos);
     members[0].status = "idle";
     one = strip_ansi(paint(runtime::RenderRuntimeAgentActivity(workers, tasks, members, 100, 1), 100, 1).ToString());
     EXPECT_NE(one.find("Subagents 1 queued"), std::string::npos);
@@ -198,11 +198,11 @@ TEST(RuntimeAgentActivity, RunningRoundsPrecedeAttentionQueuedAndPendingWithoutM
         const auto text = strip_ansi(paint(runtime::RenderRuntimeAgentActivity(workers, tasks, members, 120, budget), 120, budget).ToString());
         EXPECT_EQ(text.find("runtime-3") != std::string::npos, budget >= 4);
         EXPECT_EQ(text.find("@team-1") != std::string::npos, budget >= 5);
-        EXPECT_EQ(text.find("runtime-1") != std::string::npos, budget >= 6);
-        EXPECT_EQ(text.find("@team-0") != std::string::npos, budget >= 7);
-        EXPECT_EQ(text.find("runtime-0") != std::string::npos, budget >= 8);
-        EXPECT_EQ(text.find("todo-0") != std::string::npos, budget >= 9);
-        EXPECT_EQ(text.find("todo-1") != std::string::npos, budget >= 10);
+        EXPECT_EQ(text.find("runtime-1"), std::string::npos);
+        EXPECT_EQ(text.find("@team-0") != std::string::npos, budget >= 6);
+        EXPECT_EQ(text.find("runtime-0") != std::string::npos, budget >= 7);
+        EXPECT_EQ(text.find("todo-0") != std::string::npos, budget >= 8);
+        EXPECT_EQ(text.find("todo-1") != std::string::npos, budget >= 9);
         EXPECT_EQ(text.find("runtime-2"), std::string::npos);
         EXPECT_LT(text.find("Tasks"), text.find("Subagents"));
         EXPECT_LT(text.find("Subagents"), text.find("Agent Teams"));
@@ -230,11 +230,11 @@ TEST(RuntimeAgentActivity, EachAgentGroupCountsOnlyItsOwnCurrentWorkAndFoldsItsH
     members[0].status = "idle";
     members[1].status = "unknown";
     const auto text = strip_ansi(paint(runtime::RenderRuntimeAgentActivity(workers, {}, members, 120, 8), 120, 8).ToString());
-    EXPECT_NE(text.find("Subagents 1 running · 1 attention"), std::string::npos);
-    EXPECT_NE(text.find("Agent Teams · 1 agent running · 1 agent attention"), std::string::npos);
+    EXPECT_NE(text.find("Subagents 1 running · 3 ended · 1 failed"), std::string::npos);
+    EXPECT_NE(text.find("Agent Teams · 1 agent running · 1 agent unknown"), std::string::npos);
     for (const auto hidden : {"completed", "cancelled", "idle", "runtime-0", "runtime-1", "@team-0"})
         EXPECT_EQ(text.find(hidden), std::string::npos);
-    EXPECT_NE(row_containing(text, "runtime-2").find("failed"), std::string_view::npos);
+    EXPECT_EQ(text.find("runtime-2"), std::string::npos);
     EXPECT_NE(row_containing(text, "runtime-3").find("running"), std::string_view::npos);
 }
 
@@ -251,7 +251,7 @@ TEST(RuntimeAgentActivity, FullyFoldedGroupsUseThreeHeadersAndPreserveCompletion
         EXPECT_EQ(required_rows(element), std::min(3, budget));
         const auto text = strip_ansi(paint(element, 100, 3).ToString());
         EXPECT_EQ(text.find("✓ Tasks 2/2 completed") != std::string::npos, budget >= 1);
-        EXPECT_EQ(text.find("Subagents 1 completed · 1 cancelled") != std::string::npos, budget >= 2);
+        EXPECT_EQ(text.find("Subagents 2 ended · /subagents") != std::string::npos, budget >= 2);
         EXPECT_EQ(text.find("Agent Teams · 1 agent idle") != std::string::npos, budget >= 3);
         EXPECT_EQ(text.find("todo-"), std::string::npos);
         EXPECT_EQ(text.find("runtime-"), std::string::npos);
@@ -302,8 +302,10 @@ TEST(RuntimeAgentActivity, LifecycleStatusRemainsExplicitInItsGroupWithoutPercen
         auto workers = agents(1);
         workers[0].status = status;
         const auto text = strip_ansi(paint(runtime::RenderRuntimeAgentActivity(workers, {}, {}, 100, 2), 100, 2).ToString());
-        EXPECT_NE(text.find(status == runtime::Status::Failed ? "attention" : runtime::status_name(status)), std::string::npos);
-        EXPECT_EQ(text.find("runtime-0") != std::string::npos, runtime::is_active(status) || status == runtime::Status::Failed);
+        EXPECT_NE(text.find(runtime::is_active(status) ? runtime::status_name(status) : status == runtime::Status::Failed ? "failed" : "ended"), std::string::npos);
+        EXPECT_EQ(text.find("runtime-0") != std::string::npos, runtime::is_active(status));
+        EXPECT_NE(text.find("/subagents"), std::string::npos);
+        EXPECT_EQ(text.find("attention"), std::string::npos);
         EXPECT_EQ(text.find('%'), std::string::npos);
     }
 }
@@ -387,7 +389,7 @@ TEST(RuntimeAgentActivity, TeamOnlyRunningStatusDisappearsAfterLastCompletion) {
     state.task_view_store.live_teammates[0].status = "idle";
     const auto completed = paint_repl(state);
     EXPECT_EQ(row_of(completed, "Background agents"), -1);
-    EXPECT_GE(row_of(completed, "Subagents 1 completed"), 0);
+    EXPECT_GE(row_of(completed, "Subagents 1 ended"), 0);
     EXPECT_GE(row_of(completed, "Agent Teams · 1 agent idle"), 0);
     state.task_view_store.runtime_agents.clear();
     state.task_view_store.live_teammates[0].status = "running";
@@ -419,8 +421,8 @@ TEST(RuntimeAgentActivity, NonBackgroundOrdinaryAndAttentionAloneDoNotInventBack
     state.task_view_store.live_teammates = teams(1);
     state.task_view_store.live_teammates[0].status = "unknown";
     EXPECT_EQ(row_of(paint_repl(state), "Background agents"), -1);
-    EXPECT_GE(row_of(paint_repl(state), "Subagents 1 attention"), 0);
-    EXPECT_GE(row_of(paint_repl(state), "Agent Teams · 1 agent attention"), 0);
+    EXPECT_GE(row_of(paint_repl(state), "Subagents 1 ended · 1 failed"), 0);
+    EXPECT_GE(row_of(paint_repl(state), "Agent Teams · 1 agent unknown"), 0);
 }
 
 TEST(RuntimeAgentActivity, ModalAndCurrentErrorSuppressBackgroundWorkEmphasis) {
@@ -557,5 +559,39 @@ TEST(RuntimeAgentActivity, ShortAndNarrowReplKeepsBackgroundStatusEditorFooterAn
         EXPECT_LT(cursor.x, dimensions.first);
         EXPECT_GE(cursor.y, 0);
         EXPECT_LT(cursor.y, dimensions.second);
+    }
+}
+
+TEST(RuntimeAgentActivity, FailedRowsFoldAndHistoryHeadingHitTargetsResetForOmittedFrames) {
+    auto workers = agents(2);
+    workers[0].status = runtime::Status::Failed;
+    workers[1].status = runtime::Status::Completed;
+    runtime::ActivityHitTargets hits;
+    auto element = runtime::RenderRuntimeAgentActivity(workers, {}, teams(1), 60, 4, false, {}, &hits);
+    const auto screen = paint(element, 60, 4);
+    const auto text = strip_ansi(screen.ToString());
+    EXPECT_TRUE(hits.subagents_valid);
+    EXPECT_TRUE(hits.teams_valid);
+    EXPECT_TRUE(hits.subagents.Contain(1, 0));
+    EXPECT_NE(text.find("2 ended · 1 failed · /subagents"), std::string::npos);
+    EXPECT_EQ(text.find("runtime-"), std::string::npos);
+    EXPECT_EQ(text.find("attention"), std::string::npos);
+    (void)runtime::RenderRuntimeAgentActivity(workers, {}, {}, 60, 0, false, {}, &hits);
+    EXPECT_FALSE(hits.subagents_valid);
+    EXPECT_FALSE(hits.teams_valid);
+}
+
+TEST(RuntimeAgentActivity, NarrowHistoryHeadingKeepsCountAndEntryWithoutExpandingFailures) {
+    auto workers = agents(2);
+    workers[0].status = runtime::Status::Failed;
+    workers[1].status = runtime::Status::Cancelled;
+    for (const int columns : {40, 60, 120}) {
+        auto element = runtime::RenderRuntimeAgentActivity(workers, {}, {}, columns, 12);
+        EXPECT_EQ(required_rows(element), 1);
+        const auto text = strip_ansi(paint(element, columns, 1).ToString());
+        EXPECT_NE(text.find("2 ended"), std::string::npos);
+        EXPECT_NE(text.find("1 failed"), std::string::npos);
+        EXPECT_NE(text.find("/subagents"), std::string::npos);
+        EXPECT_EQ(text.find("runtime-"), std::string::npos);
     }
 }

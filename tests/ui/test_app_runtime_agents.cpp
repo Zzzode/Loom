@@ -3,11 +3,16 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <gtest/gtest.h>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/screen.hpp>
 
 import std;
 import loom.ui.app.app;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.task_view_store;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.triggers;
+import loom.ui.screens.repl_screen;
 import loom.ui.features.agents.runtime_agents;
 import loom.query.query_engine;
 import loom.tools.tool;
@@ -271,4 +276,217 @@ TEST_F(AppRuntimeAgents, LateAdmittedCallbackPassesDirtyGuardButClosedSharedQueu
     dispatch([captured] { ++*captured; });
     EXPECT_EQ(captured.use_count(), 1) << "Post-close dispatch must not retain a queued action";
     EXPECT_EQ(*captured, 0);
+}
+
+
+TEST_F(AppRuntimeAgents, InstanceBrowserOpensWhileBusyAndNeverConsumesNotification) {
+    auto owned = record("owned-ended", native::NativeAgentStatus::Failed);
+    owned.error = "Visible failure reason";
+    owned.transcript = {"Completed tool evidence"};
+    auto foreign = owned;
+    foreign.agent_id = "foreign-ended";
+    foreign.error = "Foreign private reason";
+    foreign.parent_session_id = "another-session";
+    auto& store = native::native_agent_store();
+    store.upsert(owned);
+    store.upsert(foreign);
+    drain();
+    const auto before = engine->get_conversation().size();
+    ui::test_seams(app).set_query_running_for_testing(true);
+    ui::test_seams(app).handle_submit_for_testing("/subagents history");
+    auto state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    auto modal = state->dialog_store.dialog_queue.peek_modal_mut();
+    ASSERT_TRUE(modal);
+    EXPECT_EQ(loom::ui::dialogs::system::type_of(modal->get()), loom::ui::dialogs::system::DialogType::AgentInstances);
+    auto& payload = std::get<loom::ui::dialogs::system::AgentInstancesPayload>(modal->get());
+    payload.on_resize(60, 22);
+    auto component = *std::static_pointer_cast<ftxui::Component>(payload.component);
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(22));
+    ftxui::Render(screen, component->Render());
+    EXPECT_NE(screen.ToString().find("owned-ended"), std::string::npos);
+    EXPECT_EQ(screen.ToString().find("foreign-ended"), std::string::npos);
+    component->OnEvent(ftxui::Event::Return);
+    screen.Clear();
+    ftxui::Render(screen, component->Render());
+    EXPECT_NE(screen.ToString().find("Visible failure reason"), std::string::npos);
+    component->OnEvent(ftxui::Event::Escape);
+    component->OnEvent(ftxui::Event::Escape);
+    EXPECT_FALSE(state->dialog_store.dialog_queue.has_modal());
+    EXPECT_FALSE(store.get(owned.agent_id)->notification_delivered);
+    EXPECT_EQ(engine->get_conversation().size(), before);
+    ui::test_seams(app).set_query_running_for_testing(false);
+}
+
+TEST_F(AppRuntimeAgents, InstanceBrowserRefusesOtherSessionId) {
+    auto item = record("foreign-detail", native::NativeAgentStatus::Failed);
+    item.parent_session_id = "different-owner";
+    native::native_agent_store().upsert(item);
+    ui::test_seams(app).handle_submit_for_testing("/subagents foreign-detail");
+    EXPECT_FALSE(ui::test_seams(app).screen_state_for_testing()->dialog_store.dialog_queue.has_modal());
+}
+
+TEST_F(AppRuntimeAgents, InstanceBrowserYieldsToPendingAndNewPermission) {
+    namespace ds = loom::ui::dialogs::system;
+    namespace dr = loom::ui::repl_screen::dialog_queue_render;
+    auto state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    int responses = 0;
+    auto permission = [&] {
+        ds::ToolPermissionPayload p;
+        p.id = "original-parent-permission";
+        p.tool_name = "Bash";
+        p.description = "Original parent permission";
+        p.on_response = [&](ds::ToolPermissionPayload::Decision, bool) { ++responses; };
+        return p;
+    };
+    auto permission_id = state->dialog_store.dialog_queue.push(permission());
+    ui::test_seams(app).handle_submit_for_testing("/subagents");
+    EXPECT_FALSE(state->dialog_store.dialog_queue.has_modal());
+    state->dialog_store.dialog_queue.remove(permission_id);
+    ui::test_seams(app).handle_submit_for_testing("/subagents");
+    ASSERT_TRUE(state->dialog_store.dialog_queue.has_modal());
+    permission_id = state->dialog_store.dialog_queue.push(permission());
+    auto prepared = dr::PrepareDialogLayers(*state, false, true, 60, 24);
+    EXPECT_FALSE(state->dialog_store.dialog_queue.has_modal());
+    EXPECT_TRUE(prepared.awaiting_permission);
+    EXPECT_TRUE(dr::DispatchDialogQueueEvents(*state, ftxui::Event::Character('y'), false, true));
+    EXPECT_EQ(responses, 1);
+    state->dialog_store.dialog_queue.remove(permission_id);
+    ui::test_seams(app).handle_submit_for_testing("/subagents");
+    EXPECT_TRUE(state->dialog_store.dialog_queue.has_modal());
+}
+
+TEST_F(AppRuntimeAgents, InstanceBrowserTeamCategoryDoesNotDuplicateOrdinaryOrPaneRecords) {
+    auto team = record("native-team", native::NativeAgentStatus::Running, true);
+    team.team_name = "research";
+    team.teammate_backend = "in-process";
+    native::native_agent_store().upsert(team);
+    native::native_agent_store().upsert(record("ordinary-only", native::NativeAgentStatus::Running));
+    drain();
+    ui::test_seams(app).handle_submit_for_testing("/subagents team");
+    auto state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    auto modal = state->dialog_store.dialog_queue.peek_modal_mut();
+    ASSERT_TRUE(modal);
+    auto& payload = std::get<loom::ui::dialogs::system::AgentInstancesPayload>(modal->get());
+    payload.on_resize(60, 22);
+    auto component = *std::static_pointer_cast<ftxui::Component>(payload.component);
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(22));
+    ftxui::Render(screen, component->Render());
+    EXPECT_NE(screen.ToString().find("native-team"), std::string::npos);
+    EXPECT_EQ(screen.ToString().find("ordinary-only"), std::string::npos);
+    ASSERT_EQ(instances().size(), 1u);
+    EXPECT_EQ(instances().front().agent_id, "ordinary-only");
+}
+
+
+TEST_F(AppRuntimeAgents, InstanceModalConsumesTypingAndEmptyEnterWithoutSubmittingDraft) {
+    const auto before = engine->get_conversation().size();
+    ui::test_seams(app).set_input_text_for_testing("Keep this private draft");
+    ui::test_seams(app).handle_submit_for_testing("/subagents");
+    ASSERT_TRUE(ui::test_seams(app).screen_state_for_testing()->dialog_store.dialog_queue.has_modal());
+    app->OnEvent(ftxui::Event::Character('x'));
+    app->OnEvent(ftxui::Event::Return);
+    EXPECT_EQ(ui::test_seams(app).input_text_for_testing(), "Keep this private draft");
+    EXPECT_FALSE(ui::test_seams(app).is_query_running_for_testing());
+    EXPECT_EQ(engine->get_conversation().size(), before);
+}
+
+
+TEST_F(AppRuntimeAgents, InstanceModalPreservesGlobalInterruptWhileParentIsBusy) {
+    ui::test_seams(app).set_query_running_for_testing(true);
+    ui::test_seams(app).handle_submit_for_testing("/subagents");
+    app->OnEvent(ftxui::Event::Character('\x03'));
+    EXPECT_EQ(ui::test_seams(app).screen_state_for_testing()->task_view_store.spinner_tip, "Cancelling...");
+    EXPECT_TRUE(ui::test_seams(app).screen_state_for_testing()->dialog_store.dialog_queue.has_modal());
+    ui::test_seams(app).set_query_running_for_testing(false);
+}
+
+TEST_F(AppRuntimeAgents, InstanceBrowserYieldsToBothSandboxPermissionKinds) {
+    namespace ds = loom::ui::dialogs::system;
+    namespace dr = loom::ui::repl_screen::dialog_queue_render;
+    auto state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    ds::SandboxPermissionPayload sandbox;
+    sandbox.id = "sandbox-original";
+    sandbox.host_pattern = "localhost";
+    sandbox.on_response = [](bool, bool) {};
+    // This legacy payload has no default App renderer. Exercise preemption
+    // only after a client makes it actionable, matching the production guard.
+    state->dialog_store.dialog_renderers.register_dialog(ds::DialogType::WorkerSandboxPermission,
+        [](ds::DialogPayloadVariant&, const ds::DialogRenderContext&) { return ftxui::text("Worker permission"); },
+        [](ds::DialogPayloadVariant& payload, const ftxui::Event& event) {
+            auto* request = std::get_if<ds::WorkerSandboxPermissionPayload>(&payload);
+            if (request && request->on_response && event == ftxui::Event::Character('y')) {
+                request->on_response(true, false);
+                return true;
+            }
+            return false;
+        });
+    ds::WorkerSandboxPermissionPayload worker;
+    worker.id = "worker-sandbox-original";
+    worker.worker_id = "owned";
+    worker.on_response = [](bool, bool) {};
+    for (const auto& payload : std::vector<ds::DialogPayloadVariant>{sandbox, worker}) {
+        const auto permission = state->dialog_store.dialog_queue.push(payload);
+        ui::test_seams(app).handle_submit_for_testing("/subagents");
+        EXPECT_FALSE(state->dialog_store.dialog_queue.has_modal());
+        state->dialog_store.dialog_queue.remove(permission);
+        ui::test_seams(app).handle_submit_for_testing("/subagents");
+        ASSERT_TRUE(state->dialog_store.dialog_queue.has_modal());
+        const auto arriving = state->dialog_store.dialog_queue.push(payload);
+        auto prepared = dr::PrepareDialogLayers(*state, false, true, 60, 24);
+        EXPECT_FALSE(state->dialog_store.dialog_queue.has_modal());
+        EXPECT_TRUE(prepared.awaiting_permission);
+        state->dialog_store.dialog_queue.remove(arriving);
+    }
+}
+
+
+TEST_F(AppRuntimeAgents, ExplicitInstanceEntryOpensActiveAfterPreviouslyViewingHistory) {
+    native::native_agent_store().upsert(record("active-view", native::NativeAgentStatus::Running));
+    native::native_agent_store().upsert(record("ended-view", native::NativeAgentStatus::Failed));
+    drain();
+    ui::test_seams(app).handle_submit_for_testing("/subagents history");
+    ui::test_seams(app).handle_submit_for_testing("/subagents");
+    auto state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    auto modal = state->dialog_store.dialog_queue.peek_modal_mut();
+    ASSERT_TRUE(modal);
+    auto& payload = std::get<loom::ui::dialogs::system::AgentInstancesPayload>(modal->get());
+    payload.on_resize(60, 22);
+    auto component = *std::static_pointer_cast<ftxui::Component>(payload.component);
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(22));
+    ftxui::Render(screen, component->Render());
+    EXPECT_NE(screen.ToString().find("Subagents · Active"), std::string::npos);
+    EXPECT_NE(screen.ToString().find("active-view"), std::string::npos);
+    EXPECT_EQ(screen.ToString().find("ended-view"), std::string::npos);
+}
+
+TEST_F(AppRuntimeAgents, StopAcknowledgementDoesNotPromiseCleanupIsStillRunning) {
+    auto& store = native::native_agent_store();
+    store.begin_execution(record("stop-ack", native::NativeAgentStatus::Running), tools.background_stop_token());
+    ui::test_seams(app).handle_submit_for_testing("/subagents stop-ack");
+    auto state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    auto modal = state->dialog_store.dialog_queue.peek_modal_mut();
+    ASSERT_TRUE(modal);
+    auto& payload = std::get<loom::ui::dialogs::system::AgentInstancesPayload>(modal->get());
+    auto component = *std::static_pointer_cast<ftxui::Component>(payload.component);
+    component->OnEvent(ftxui::Event::Character('s'));
+    EXPECT_EQ(state->footer_dynamic_text, "Cancellation requested");
+    EXPECT_TRUE(store.get("stop-ack")->cancel_requested);
+    EXPECT_EQ(store.get("stop-ack")->status, native::NativeAgentStatus::Running);
+    store.end_execution("stop-ack");
+}
+
+
+TEST_F(AppRuntimeAgents, InstanceModalCoversTranscriptFragmentsAtBothHorizontalEdges) {
+    namespace dr = loom::ui::repl_screen::dialog_queue_render;
+    ui::test_seams(app).handle_submit_for_testing("/subagents");
+    auto state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    for (const int columns : {40, 60, 120}) {
+        auto prepared = dr::PrepareDialogLayers(*state, false, true, columns, 28);
+        ftxui::Elements background;
+        for (int row = 0; row < 28; ++row) background.push_back(ftxui::text(std::string(columns, 'Z')));
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns), ftxui::Dimension::Fixed(28));
+        ftxui::Render(screen, dr::LayerAllDialogs(ftxui::vbox(std::move(background)), std::move(prepared)));
+        for (int x = 0; x < columns; ++x)
+            EXPECT_NE(screen.PixelAt(x, 4).character, "Z") << "columns=" << columns << " x=" << x;
+    }
 }

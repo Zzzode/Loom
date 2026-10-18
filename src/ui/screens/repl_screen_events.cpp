@@ -379,6 +379,17 @@ bool HasOuterFocusOwner(ReplMode mode) {
                 JumpTranscriptToBottom(*state);
                 return true;
             }
+            const auto& targets = state->task_view_store.activity_hit_targets;
+            if (cb->enqueue_slash_command && targets.subagents_valid &&
+                targets.subagents.Contain(ev.mouse().x, ev.mouse().y)) {
+                cb->enqueue_slash_command("/subagents");
+                return true;
+            }
+            if (cb->enqueue_slash_command && targets.teams_valid &&
+                targets.teams.Contain(ev.mouse().x, ev.mouse().y)) {
+                cb->enqueue_slash_command("/subagents team");
+                return true;
+            }
             auto key = state->messages_store.row_click_tracker.hit_test(
                 ev.mouse().x, ev.mouse().y);
             if (key) {

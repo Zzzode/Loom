@@ -117,6 +117,8 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         screen_state_->dialog_store.dialog_renderers);
     loom::ui::app_dialogs::register_hooks_dialog_renderer(
         screen_state_->dialog_store.dialog_renderers);
+    loom::ui::app_dialogs::register_agent_instances_dialog_renderer(
+        screen_state_->dialog_store.dialog_renderers);
     loom::ui::app_dialogs::register_teams_dialog_renderer(
         screen_state_->dialog_store.dialog_renderers);
     // RFC 0002 F2 row 6: register the feature-dialog factories (agent
@@ -302,6 +304,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // P2 gap api-error-retry: Clear-session button.
     cbs.on_clear_session = [this]() {
+        if (query_running_.load()) return;
         static_cast<loom::core::QueryEngine*>(engine_raw())->clear_conversation();
         local_command_messages_.clear();
         screen_state_->messages_store.divider_index.reset();

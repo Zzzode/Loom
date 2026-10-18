@@ -69,38 +69,44 @@ std::string task_summary(const std::vector<todos::TodoDisplayItem>& items, bool 
         static_cast<std::size_t>(done) == items.size() ? "completed" : "done");
 }
 
-std::string subagent_summary(const std::vector<Instance>& instances) {
+std::string subagent_summary(const std::vector<Instance>& instances, int columns) {
     const auto count = [&](Status status) {
         return std::ranges::count_if(instances, [status](const auto& item) { return item.status == status; });
     };
+    const auto active = count(Status::Running) + count(Status::Queued);
+    const auto failed = count(Status::Failed);
+    const auto ended = static_cast<std::ptrdiff_t>(instances.size()) - active;
     std::string label = "Subagents";
-    const auto append = [&](auto amount, std::string_view state) {
-        if (amount != 0) label += std::format("{}{} {}", label == "Subagents" ? " " : " · ", amount, state);
-    };
-    if (count(Status::Running) != 0 || count(Status::Failed) != 0 || count(Status::Queued) != 0) {
-        append(count(Status::Running), "running");
-        append(count(Status::Failed), "attention");
-        append(count(Status::Queued), "queued");
-    } else {
-        append(count(Status::Completed), "completed");
-        append(count(Status::Cancelled), "cancelled");
-    }
-    return label;
+    if (count(Status::Running) != 0) label += std::format(" {} running", count(Status::Running));
+    if (count(Status::Queued) != 0) label += std::format("{}{} queued", active == count(Status::Queued) ? " " : " · ", count(Status::Queued));
+    if (ended != 0) label += std::format("{}{} ended", active == 0 ? " " : " · ", ended);
+    if (failed != 0) label += std::format(" · {} failed", failed);
+    const std::string hint = " · /subagents";
+    if (string_width(label + hint) <= columns) return label + hint;
+    if (active != 0) label = std::format("Subagents {} active", active);
+    else label = std::format("Subagents {} ended", ended);
+    if (failed != 0 && string_width(label + std::format(", {} failed", failed) + hint) <= columns)
+        label += std::format(", {} failed", failed);
+    return label + hint;
 }
 
-std::string team_summary(const std::vector<teams::live::LiveTeammate>& teammates) {
+std::string team_summary(const std::vector<teams::live::LiveTeammate>& teammates, int columns) {
     const auto running = std::ranges::count_if(teammates, [](const auto& item) { return item.status == "running"; });
     const auto idle = std::ranges::count_if(teammates, [](const auto& item) { return item.status == "idle"; });
-    const auto attention = static_cast<std::ptrdiff_t>(teammates.size()) - running - idle;
+    const auto unknown = static_cast<std::ptrdiff_t>(teammates.size()) - running - idle;
     std::string label = "Agent Teams";
     const auto append = [&](auto amount, std::string_view state) {
         if (amount != 0) label += std::format(" · {} agent{} {}", amount, amount == 1 ? "" : "s", state);
     };
-    if (running != 0 || attention != 0) {
+    if (running != 0 || unknown != 0) {
         append(running, "running");
-        append(attention, "attention");
+        append(unknown, "unknown");
     } else append(idle, "idle");
-    return label;
+    if (string_width(label + " · instances") <= columns) return label + " · instances";
+    if (running != 0) label = std::format("Agent Teams {} running", running);
+    else if (unknown != 0) label = std::format("Agent Teams {} unknown", unknown);
+    else label = std::format("Agent Teams {} idle", idle);
+    return label + " · instances";
 }
 
 std::string fitting_prefix(std::string_view raw, int columns) {
@@ -146,7 +152,8 @@ Element RenderRuntimeAgentActivity(
     const std::vector<Instance>& instances,
     const std::vector<todos::TodoDisplayItem>& todo_items,
     const std::vector<teams::live::LiveTeammate>& teammates,
-    int columns, int budget, bool todos_collapsed, std::string_view response_prefix) {
+    int columns, int budget, bool todos_collapsed, std::string_view response_prefix, ActivityHitTargets* hit_targets) {
+    if (hit_targets) { hit_targets->subagents_valid = false; hit_targets->teams_valid = false; }
     if (budget <= 0) return vbox({});
     columns = std::max(0, columns);
     const std::array<bool, 3> present{!todo_items.empty(), !instances.empty(), !teammates.empty()};
@@ -154,7 +161,7 @@ Element RenderRuntimeAgentActivity(
     const bool completed_tasks = !todo_items.empty() && std::ranges::all_of(todo_items, [](const auto& item) {
         return item.status == todos::TodoDisplayItem::Status::Completed;
     });
-    // Priorities are running, attention, queued, pending, completion grace.
+    // Priorities are running, unknown team state, queued, pending, folded history.
     // Each array entry remains an index into its original state-owned group.
     std::array<std::array<std::vector<std::size_t>, 3>, 5> candidates;
     std::array<int, 3> priority{4, 4, 4};
@@ -172,7 +179,7 @@ Element RenderRuntimeAgentActivity(
     }
     for (std::size_t i = 0; i < instances.size(); ++i) {
         const auto status = instances[i].status;
-        const int rank = status == Status::Running ? 0 : status == Status::Failed ? 1 : status == Status::Queued ? 2 : 4;
+        const int rank = status == Status::Running ? 0 : status == Status::Queued ? 2 : 4;
         priority[1] = std::min(priority[1], rank);
         if (rank < 4) candidates[static_cast<std::size_t>(rank)][1].push_back(i);
     }
@@ -211,10 +218,17 @@ Element RenderRuntimeAgentActivity(
         if (!selected[group]) continue;
         const auto heading_prefix = rows.empty() ? std::string(response_prefix) : std::string(envelope, ' ');
         const auto label = group == 0 ? task_summary(todo_items, todos_collapsed)
-            : group == 1 ? subagent_summary(instances) : team_summary(teammates);
-        rows.push_back(hbox({text(fitting_prefix(heading_prefix, columns)) | color(design::theme::current_theme().palette->muted),
-            summary_row(label, heading_columns)})
-            | size(WIDTH, EQUAL, columns));
+            : group == 1 ? subagent_summary(instances, heading_columns) : team_summary(teammates, heading_columns);
+        auto heading = hbox({text(fitting_prefix(heading_prefix, columns)) | color(design::theme::current_theme().palette->muted),
+            summary_row(label, heading_columns)}) | size(WIDTH, EQUAL, columns);
+        if (hit_targets && columns > 0 && group == 1) {
+            heading = heading | reflect(hit_targets->subagents);
+            hit_targets->subagents_valid = true;
+        } else if (hit_targets && columns > 0 && group == 2) {
+            heading = heading | reflect(hit_targets->teams);
+            hit_targets->teams_valid = true;
+        }
+        rows.push_back(std::move(heading));
         for (const auto index : details[group]) {
             Element item;
             if (group == 0) {

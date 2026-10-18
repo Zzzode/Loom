@@ -104,7 +104,9 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
 
 [[nodiscard]] ToolResultMessage QueryEngine::execute_single_tool(
     const ToolUseBlock& tool_use,
-    const QueryOptions& options) {
+    const QueryOptions& options,
+    const std::function<std::string(std::string_view)>& validate_host_input,
+    const std::optional<HostAgentResumeConstraint>& host_resume) {
     if (!is_tool_enabled_for_query(tool_use.name, options)) {
         return make_tool_error_result(
             tool_use,
@@ -126,6 +128,12 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         return make_tool_error_result(
             tool_use,
             permission.message.value_or(std::format("Permission denied for tool: {}", tool_use.name)));
+    }
+
+    if (validate_host_input) {
+        if (auto reason = validate_host_input(effective_input_json); !reason.empty()) {
+            return make_tool_error_result(tool_use, std::move(reason));
+        }
     }
 
     // Emit pre-tool-use hook and check for blocking hooks
@@ -215,11 +223,18 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         }
     }
 
+    if (validate_host_input) {
+        if (auto reason = validate_host_input(effective_input_json); !reason.empty()) {
+            return make_tool_error_result(tool_use, std::move(reason));
+        }
+    }
+
     // Execute via registry
     auto input = ToolInput::from_json(effective_input_json);
     input.parent_model = config_.model_params.model;
     input.api_context = api_execution_context();
     input.parent_session_id = session_id_.str();
+    input.host_agent_resume = host_resume;
     input.is_cancelled = [this, shutdown = tool_registry_->background_stop_token()] {
         return shutdown.stop_requested() || should_abort();
     };

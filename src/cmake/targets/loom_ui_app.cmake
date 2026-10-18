@@ -51,6 +51,7 @@ target_sources(loom_ui_app PRIVATE
     ui/app/app_constructor.cpp
     ui/app/app_handle_submit.cpp
     ui/app/app_agent_menu.cpp
+    ui/app/app_agent_instances.cpp
     ui/app/app_agent_projection.cpp
     ui/app/app_prompt_suggestion_wiring.cpp
     ui/app/app_dialog_registration_default.cpp
@@ -58,6 +59,7 @@ target_sources(loom_ui_app PRIVATE
     ui/app/app_dialog_registration_bottom.cpp
     ui/app/app_dialog_registration_all.cpp
     ui/app/app_dialog_registration_hooks.cpp
+    ui/app/app_dialog_registration_agent_instances.cpp
     ui/app/app_dialog_registration_teams.cpp
     # Module implementation unit for loom.ui.app.app_dialog_registration
     # (RFC 0002 F2 row 6): the feature-dialog factory registration (agent

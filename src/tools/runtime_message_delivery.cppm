@@ -496,13 +496,15 @@ build_structured_send_message_payload(
     auto started = registry->execute("Agent", input);
     if (!started) {
         auto error = "background resume failed: " + started.error().message;
-        agent_runtime::native_agent_store().mark_failed(record.agent_id, error);
+        // Launch rejection must not overwrite a worker that won admission.
+        // Executions publish their own terminal state through the finalizer.
         return error;
     }
     auto text = runtime_tool_result_text(*started);
     if (started->is_error) {
         auto error = "background resume failed: " + text;
-        agent_runtime::native_agent_store().mark_failed(record.agent_id, error);
+        // Launch rejection must not overwrite a worker that won admission.
+        // Executions publish their own terminal state through the finalizer.
         return error;
     }
     return "background resume started";

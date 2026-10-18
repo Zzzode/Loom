@@ -8,6 +8,7 @@ import std;
 
 import loom.serdes.json;
 import loom.types.types;
+import loom.types.tool_types;
 // loom.teams.team_helpers is no longer named by any declaration in this
 // interface (its only caller, has_teammate_identity, moved to
 // agent_runtime_builtin_impl.cpp), but removing this import makes
@@ -124,6 +125,8 @@ struct NativeAgentRecord {
     bool notification_delivered = false;
     bool worktree_cleanup_performed = false;
 };
+
+[[nodiscard]] bool is_team_agent_record(const NativeAgentRecord& record) noexcept;
 
 // One completion has independent user-facing facts and model-facing context.
 struct PendingTaskEvent {
@@ -712,6 +715,18 @@ public:
     void begin_execution(NativeAgentRecord record, std::stop_token owner = {});
     void end_execution(std::string_view agent_id);
 
+    /// Reserve resumed IDs before record mutation or startup hooks.
+    [[nodiscard]] std::expected<void, std::string> reserve_resume(
+        std::string_view agent_id,
+        const std::optional<loom::core::HostAgentResumeConstraint>& host = std::nullopt);
+    void release_resume(std::string_view agent_id) noexcept;
+    [[nodiscard]] std::string resume_unavailable_reason(std::string_view agent_id) const;
+    [[nodiscard]] std::string owned_stop_unavailable_reason(
+        std::string_view agent_id, std::string_view session_id, std::stop_token owner) const;
+    [[nodiscard]] std::expected<void, std::string> request_owned_cancel(
+        std::string_view agent_id, std::string_view session_id, std::stop_token owner);
+
+
     /// Drain workers from a host thread without holding the record lock needed by cleanup.
     /// Calling this from one of this store's workers throws std::logic_error.
     void wait_for_background_agents();
@@ -826,6 +841,7 @@ private:
         std::stop_token owner;
     };
     std::unordered_map<std::string, ActiveExecution> active_executions_;
+    std::unordered_set<std::string> resume_reservations_;
     struct BackgroundWorker {
         std::stop_token owner;
         std::shared_ptr<std::atomic<bool>> finished;

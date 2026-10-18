@@ -25,6 +25,7 @@ target_sources(loom_query
         query/query_engine_wire.cpp
         query/query_engine_json.cpp
         query/query_engine_tools.cpp
+        query/query_engine_agent_controls.cpp
         query/query_engine_conversation.cpp
         query/query_engine_compaction.cpp
         query/query_engine_util.cpp

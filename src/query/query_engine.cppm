@@ -463,6 +463,13 @@ public:
     /// New turns will append to this session's messages.jsonl file.
     void set_session_id(std::string id);
 
+    [[nodiscard]] Result<std::string> continue_agent_instance(
+        std::string_view id, std::string_view prompt);
+    [[nodiscard]] VoidResult stop_agent_instance(std::string_view id);
+    [[nodiscard]] std::string agent_continue_unavailable_reason(std::string_view id) const;
+    [[nodiscard]] std::string agent_stop_unavailable_reason(std::string_view id) const;
+
+
     /// Get the sessions directory (nullopt if persistence is disabled).
     /// Body in query_engine_conversation.cpp (inline-def ratchet).
     [[nodiscard]] std::optional<std::filesystem::path> sessions_dir() const noexcept;
@@ -769,7 +776,9 @@ private:
     /// Execute a single tool and return the result message
     [[nodiscard]] ToolResultMessage execute_single_tool(
         const ToolUseBlock& tool_use,
-        const QueryOptions& options);
+        const QueryOptions& options,
+        const std::function<std::string(std::string_view)>& validate_host_input = {},
+        const std::optional<HostAgentResumeConstraint>& host_resume = std::nullopt);
 
     /// Check if tool execution is allowed by the permission policy
     [[nodiscard]] ToolPermissionCheck check_tool_permission(std::string_view tool_name,

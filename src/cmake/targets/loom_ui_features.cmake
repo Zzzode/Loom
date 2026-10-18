@@ -17,6 +17,7 @@ target_sources(loom_ui_features
         ui/features/agents/agent_shared_widgets.cppm
         ui/features/agents/agent_wizard.cppm
         ui/features/agents/runtime_agents.cppm
+        ui/features/agents/instance_browser.cppm
         ui/features/grove.cppm
         ui/features/hooks_ui.cppm
         ui/features/plugins/plugin_install_flow.cppm
@@ -26,7 +27,9 @@ target_sources(loom_ui_features
         ui/features/teams/live_teammates.cppm
         ui/features/todos/todo_panel.cppm
 )
-target_sources(loom_ui_features PRIVATE ui/features/agents/runtime_agents.cpp)
+target_sources(loom_ui_features PRIVATE
+    ui/features/agents/runtime_agents.cpp
+    ui/features/agents/instance_browser.cpp)
 # loom.ui.foundation.* (design_tokens / theme_provider / component_primitives /
 # feature_dialog_protocol) and loom.ui.widgets.* (spinner_animations /
 # custom_select). External deps: loom.tools.agent_color_manager,

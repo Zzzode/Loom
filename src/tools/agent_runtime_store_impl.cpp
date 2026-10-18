@@ -18,6 +18,12 @@ namespace {
 thread_local NativeAgentStore* executing_background_store = nullptr;
 }
 
+bool is_team_agent_record(const NativeAgentRecord& record) noexcept {
+    return (record.team_name && !record.team_name->empty()) ||
+        record.teammate_backend.has_value() || record.teammate_task_id.has_value() ||
+        record.teammate_pane_id.has_value();
+}
+
 std::size_t NativeAgentStore::subscribe_changed(std::function<void()> callback) {
     auto observer = std::make_shared<ChangeObserver>();
     observer->callback = std::move(callback);
@@ -127,6 +133,90 @@ void NativeAgentStore::end_execution(std::string_view agent_id) {
         }
     }
     notify_changed();
+}
+
+std::expected<void, std::string> NativeAgentStore::reserve_resume(
+    std::string_view agent_id, const std::optional<loom::core::HostAgentResumeConstraint>& host) {
+    std::scoped_lock lock(mutex_);
+    const auto id = std::string(agent_id);
+    if (!records_.contains(id)) {
+        auto loaded = load_native_agent_record(agent_id);
+        if (!loaded) return std::unexpected("Agent not found: " + id);
+        records_.emplace(id, std::move(*loaded));
+    }
+    if (active_executions_.contains(id) || resume_reservations_.contains(id)) {
+        return std::unexpected("Agent execution is still active or starting");
+    }
+    if (host) {
+        const auto& record = records_.at(id);
+        if (host->agent_id != id || host->agent_type != record.agent_type ||
+            host->parent_session_id.empty() || !record.parent_session_id ||
+            *record.parent_session_id != host->parent_session_id ||
+            is_team_agent_record(record) ||
+            (record.parent_agent_id && !record.parent_agent_id->empty()) ||
+            record.status == NativeAgentStatus::Queued || record.status == NativeAgentStatus::Running ||
+            (record.sidechain_entries.empty() && record.transcript.empty())) {
+            return std::unexpected("Agent identity or continuation eligibility changed before admission");
+        }
+    }
+    resume_reservations_.insert(id);
+    return {};
+}
+
+void NativeAgentStore::release_resume(std::string_view agent_id) noexcept {
+    std::scoped_lock lock(mutex_);
+    resume_reservations_.erase(std::string(agent_id));
+}
+
+std::string NativeAgentStore::resume_unavailable_reason(std::string_view agent_id) const {
+    std::scoped_lock lock(mutex_);
+    const auto id = std::string(agent_id);
+    if (active_executions_.contains(id) || resume_reservations_.contains(id)) {
+        return "Agent execution is still active or starting";
+    }
+    return {};
+}
+
+std::string NativeAgentStore::owned_stop_unavailable_reason(
+    std::string_view agent_id, std::string_view session_id, std::stop_token owner) const {
+    std::scoped_lock lock(mutex_);
+    const auto id = std::string(agent_id);
+    const auto record = records_.find(id);
+    if (session_id.empty() || record == records_.end() ||
+        !record->second.parent_session_id || *record->second.parent_session_id != session_id) {
+        return "Agent does not belong to this session";
+    }
+    const auto active = active_executions_.find(id);
+    if (!owner.stop_possible() || active == active_executions_.end() || active->second.owner != owner) {
+        return "No active execution owned by this process";
+    }
+    if (record->second.status != NativeAgentStatus::Queued &&
+        record->second.status != NativeAgentStatus::Running) return "Agent execution is finishing";
+    return {};
+}
+
+std::expected<void, std::string> NativeAgentStore::request_owned_cancel(
+    std::string_view agent_id, std::string_view session_id, std::stop_token owner) {
+    {
+        std::scoped_lock lock(mutex_);
+        const auto id = std::string(agent_id);
+        auto record = records_.find(id);
+        if (session_id.empty() || record == records_.end() ||
+            !record->second.parent_session_id || *record->second.parent_session_id != session_id) {
+            return std::unexpected("Agent does not belong to this session");
+        }
+        const auto active = active_executions_.find(id);
+        if (!owner.stop_possible() || active == active_executions_.end() || active->second.owner != owner) {
+            return std::unexpected("No active execution owned by this process");
+        }
+        if (record->second.status != NativeAgentStatus::Queued &&
+            record->second.status != NativeAgentStatus::Running) return std::unexpected("Agent execution is finishing");
+        record->second.cancel_requested = true;
+        record->second.updated_at = std::chrono::system_clock::now();
+        (void)persist_native_agent_record(record->second);
+    }
+    notify_changed();
+    return {};
 }
 
 void NativeAgentStore::run_background_agent(std::string agent_id,
@@ -456,7 +546,8 @@ void NativeAgentStore::enqueue_resume_message(std::string_view agent_id, std::st
                 record.status == NativeAgentStatus::Failed ||
                 record.status == NativeAgentStatus::Cancelled;
             record.pending_messages.push_back(std::move(message));
-            if (!was_terminal) return;
+            if (!was_terminal || active_executions_.contains(record.agent_id) ||
+                resume_reservations_.contains(record.agent_id)) return;
 
             record.status = NativeAgentStatus::Queued;
             record.output = std::nullopt;

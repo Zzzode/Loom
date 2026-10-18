@@ -17,7 +17,6 @@ import loom.tools.tool;
 import loom.serdes.json;
 import loom.tools.agent_runtime;
 import loom.tools.agent_constants;
-import loom.tools.agent_display;
 import loom.tools.bash;
 import loom.tools.todo_write;
 import loom.tools.send_message;
@@ -322,101 +321,7 @@ public:
     [[nodiscard]] int last_run_turns() const noexcept;
     [[nodiscard]] int last_run_tokens() const noexcept;
 
-    [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
-        std::atomic_ref<int>(last_run_turns_).store(0, std::memory_order_relaxed);
-        std::atomic_ref<int>(last_run_tokens_).store(0, std::memory_order_relaxed);
-        auto request = parse_agent_tool_request(input);
-        if (!request) return ToolResult::error(std::format("Invalid Agent input: {}", request.error()));
-
-        if (request->prompt.empty()) {
-            return ToolResult::error("Missing required 'prompt' field");
-        }
-
-        auto plan = build_agent_execution_plan(*request, config_, input.parent_model);
-        if (!plan) return ToolResult::error(plan.error());
-        plan->api_context = input.api_context ? input.api_context : config_.api_context;
-        if (input.parent_session_id) plan->parent_session_id = input.parent_session_id;
-
-        if (!plan->team_name) {
-            if (auto current_team = loom::utils::get_team_name(); current_team && !current_team->empty()) {
-                plan->team_name = std::move(*current_team);
-            }
-        }
-
-        if (current_session_is_teammate() && plan->team_name && plan->name) {
-            return ToolResult::error(
-                "Teammates cannot spawn other teammates - the team roster is flat. "
-                "To spawn a subagent instead, omit the name parameter.");
-        }
-
-        if (loom::utils::is_in_process_teammate() && plan->team_name && plan->background) {
-            return ToolResult::error(
-                "In-process teammates cannot spawn background agents. "
-                "Use run_in_background=false for synchronous subagents.");
-        }
-
-        if (!agent_type_allowed_by_permission_rules(
-                plan->agent_type,
-                config_.allowed_tools,
-                config_.denied_tools)) {
-            return ToolResult::error(std::format(
-                "Agent type '{}' is not allowed by current Agent tool permission rules",
-                plan->agent_type));
-        }
-        
-        // Check recursion depth
-        if (current_depth_ >= config_.max_depth) {
-            return ToolResult::error(std::format(
-                "Agent recursion depth limit reached ({}/{})", 
-                current_depth_, config_.max_depth));
-        }
-
-        if (!plan->resume_existing && plan->team_name && plan->name && plan->isolation) {
-            return ToolResult::error("teammate spawn does not support isolation; omit name/team_name to spawn an isolated subagent");
-        }
-
-        if (!plan->resume_existing && plan->team_name && plan->name) {
-            return start_teammate_agent(std::move(*plan));
-        }
-
-        if (!plan->resume_existing && plan->isolation) {
-            if (*plan->isolation == "worktree") {
-                const auto parent_working_dir = plan->working_dir.value_or(fs::current_path().string());
-                auto worktree = create_agent_worktree(*plan);
-                if (!worktree) return ToolResult::error(worktree.error());
-                plan->working_dir = worktree->path.string();
-                plan->worktree_path = worktree->path.string();
-                plan->worktree_branch = worktree->branch;
-                plan->worktree_base_commit = worktree->head_commit;
-                plan->worktree_git_root = worktree->git_root.string();
-                if (plan->fork_context_includes_prompt) {
-                    plan->fork_context_messages.push_back(Message::from_text(
-                        "user",
-                        loom::tools::agent_runtime::build_worktree_fork_notice(
-                            parent_working_dir,
-                            worktree->path.string())));
-                } else {
-                    plan->system_prompt += std::format(
-                        "\n\nNative worktree isolation:\n"
-                        "- worktree_path: {}\n"
-                        "- worktree_branch: {}\n"
-                        "- base_commit: {}\n"
-                        "Run all filesystem and shell work from this worktree path.",
-                        worktree->path.string(),
-                        worktree->branch,
-                        worktree->head_commit);
-                }
-            } else {
-                return ToolResult::error(std::format("Unsupported isolation mode '{}'", *plan->isolation));
-            }
-        }
-
-        if (plan->background) {
-            return start_background_agent(std::move(*plan));
-        }
-        
-        return run_agent_and_finalize(*plan, std::nullopt, input.is_cancelled);
-    }
+    [[nodiscard]] Result<ToolResult> execute(const ToolInput& input);
 
 private:
     [[nodiscard]] Result<ToolResult> start_teammate_agent(AgentExecutionPlan plan) {

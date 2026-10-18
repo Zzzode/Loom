@@ -14,6 +14,7 @@ import loom.commands.doctor;
 import loom.commands.clear;
 import loom.commands.add_dir;
 import loom.commands.agents;
+import loom.commands.subagents;
 import loom.commands.btw;
 import loom.commands.advisor;
 import loom.commands.bridge_kick;
@@ -34,6 +35,7 @@ void register_group_a_commands(CommandRegistry& registry) {
     registry.register_command<ClearCommand>();
     registry.register_command<AddDirCommand>();
     registry.register_command<AgentsCommand>();
+    registry.register_command<SubagentsCommand>();
     registry.register_command<BtwCommand>();
     registry.register_command<AdvisorCommand>();
     registry.register_command<BridgeKickCommand>();

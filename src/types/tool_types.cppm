@@ -24,6 +24,14 @@ struct ApiExecutionContext {
     std::chrono::milliseconds timeout{120000};
 };
 
+/// Host-only immutable target checked atomically during resume admission.
+/// Never encoded in model JSON or persisted runtime records.
+struct HostAgentResumeConstraint {
+    std::string agent_id;
+    std::string agent_type;
+    std::string parent_session_id;
+};
+
 /// JSON-based tool input wrapping raw parameter data
 struct ToolInput {
     std::string raw_json;   // Raw JSON string of parameters
@@ -35,6 +43,7 @@ struct ToolInput {
     std::shared_ptr<const ApiExecutionContext> api_context = {};
     // Root session ownership for native subagent instances; never model input.
     std::optional<std::string> parent_session_id = std::nullopt;
+    std::optional<HostAgentResumeConstraint> host_agent_resume = std::nullopt;
 
     /// Get the raw JSON as string view
     [[nodiscard]] std::string_view json() const noexcept { return raw_json; }

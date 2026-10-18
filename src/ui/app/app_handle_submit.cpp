@@ -563,6 +563,10 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
         if (on_exit_) on_exit_();
         return;
     }
+    if (normalized == "/subagents" || normalized.starts_with("/subagents ")) {
+        OpenAgentInstances(normalized.size() > 10 ? normalized.substr(11) : std::string_view{});
+        return;
+    }
     if (query_running_.load()) return;
     if (normalized == "/clear") {
         static_cast<loom::core::QueryEngine*>(engine_raw())->clear_conversation();

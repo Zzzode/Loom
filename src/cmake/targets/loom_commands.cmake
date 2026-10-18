@@ -6,6 +6,7 @@ target_sources(loom_commands
         commands/ant_trace.cppm
         commands/advisor.cppm
         commands/agents.cppm
+        commands/subagents.cppm
         commands/autofix_pr.cppm
         commands/backfill_sessions.cppm
         commands/branch.cppm
@@ -133,3 +134,5 @@ target_link_libraries(loom_commands
         loom_session
         loom_vim
 )
+
+target_sources(loom_commands PRIVATE commands/subagents.cpp)

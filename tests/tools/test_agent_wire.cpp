@@ -940,3 +940,103 @@ TEST(AgentWire, BackgroundLaunchSuccessDoesNotMeanFinalTaskOutput) {
     EXPECT_NE(result_text(*failed).find("[failed]"), std::string::npos);
     EXPECT_NE(result_text(*failed).find("final error must be inspected"), std::string::npos);
 }
+
+TEST(AgentWire, DuplicateResumeCannotResetActiveContextOrNotification) {
+    AgentWireSandbox sandbox;
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool released = false;
+    struct Release {
+        std::mutex& mutex;
+        std::condition_variable& cv;
+        bool& released;
+        ~Release() { { std::lock_guard lock(mutex); released = true; } cv.notify_all(); }
+    } release{mutex, cv, released};
+    AgentWireServer server([&](const auto&, auto& response, std::size_t index) {
+        if (index > 0) {
+            std::unique_lock lock(mutex);
+            cv.wait_for(lock, std::chrono::seconds(3), [&] { return released; });
+        }
+        response.set_content(openai_text(index == 0 ? "retained result" : "second result"), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    config.api_context = agent_wire_context(server);
+    loom::tools::AgentTool tool(config, 0, &registry);
+    auto input = agent_wire_input("exclusive-resume", true);
+    input.parent_session_id = "owner";
+    ASSERT_TRUE(tool.execute(input));
+    runtime::native_agent_store().wait_for_background_agents();
+    EXPECT_EQ(runtime::native_agent_store().take_pending_task_events("owner").size(), 1u);
+    auto resume = loom::core::ToolInput::from_json(
+        R"({"prompt":"Continue retained work","agent_id":"exclusive-resume","resume_existing":true,"run_in_background":true})");
+    resume.parent_session_id = "owner";
+    const auto original = runtime::native_agent_store().get("exclusive-resume");
+    ASSERT_TRUE(original);
+    resume.host_agent_resume = loom::core::HostAgentResumeConstraint{
+        "exclusive-resume", original->agent_type, "owner"};
+    const auto reject_without_effects = [&](const loom::core::ToolInput& attempt) {
+        const auto before = runtime::native_agent_store().get("exclusive-resume");
+        const auto denied = tool.execute(attempt);
+        ASSERT_TRUE(denied);
+        EXPECT_TRUE(denied->is_error);
+        const auto after = runtime::native_agent_store().get("exclusive-resume");
+        ASSERT_TRUE(before && after);
+        EXPECT_EQ(before->status, after->status);
+        EXPECT_EQ(before->updated_at, after->updated_at);
+        EXPECT_EQ(before->output, after->output);
+        EXPECT_EQ(before->error, after->error);
+        EXPECT_EQ(before->sidechain_entries, after->sidechain_entries);
+        EXPECT_EQ(before->transcript, after->transcript);
+        EXPECT_EQ(before->pending_messages, after->pending_messages);
+        EXPECT_EQ(before->notification_delivered, after->notification_delivered);
+        EXPECT_EQ(before->parent_session_id, after->parent_session_id);
+        EXPECT_EQ(before->teammate_backend, after->teammate_backend);
+        EXPECT_EQ(server.bodies().size(), 1u);
+    };
+    auto redirected = resume;
+    redirected.raw_json = R"({"prompt":"Redirect retained work","agent_id":"foreign-resume","resume_existing":true,"run_in_background":true})";
+    reject_without_effects(redirected);
+    EXPECT_FALSE(runtime::native_agent_store().get("foreign-resume"));
+    auto foreign = *original;
+    foreign.parent_session_id = "other-owner";
+    runtime::native_agent_store().upsert(foreign);
+    reject_without_effects(resume);
+    runtime::native_agent_store().upsert(*original);
+    auto team = *original;
+    team.teammate_backend = "in-process";
+    runtime::native_agent_store().upsert(team);
+    reject_without_effects(resume);
+    runtime::native_agent_store().upsert(*original);
+    auto accepted = tool.execute(resume);
+    ASSERT_TRUE(accepted && !accepted->is_error);
+    ASSERT_TRUE(server.wait_for_requests(2));
+    const auto before = runtime::native_agent_store().get("exclusive-resume");
+    auto rejected = tool.execute(resume);
+    ASSERT_TRUE(rejected);
+    EXPECT_TRUE(rejected->is_error);
+    const auto after = runtime::native_agent_store().get("exclusive-resume");
+    ASSERT_TRUE(before && after);
+    EXPECT_EQ(before->sidechain_entries, after->sidechain_entries);
+    EXPECT_EQ(before->transcript, after->transcript);
+    EXPECT_EQ(before->notification_delivered, after->notification_delivered);
+    EXPECT_EQ(server.bodies().size(), 2u);
+    { std::lock_guard lock(mutex); released = true; }
+    cv.notify_all();
+    runtime::native_agent_store().wait_for_background_agents();
+    const auto second_events = runtime::native_agent_store().take_pending_task_events("owner");
+    ASSERT_EQ(second_events.size(), 1u);
+    EXPECT_EQ(second_events.front().event.task_id, "exclusive-resume");
+    EXPECT_EQ(second_events.front().event.parent_session_id, "owner");
+    EXPECT_EQ(second_events.front().event.kind, loom::core::TaskEventKind::Subagent);
+    EXPECT_EQ(second_events.front().event.status, loom::core::TaskEventStatus::Completed);
+    EXPECT_TRUE(runtime::native_agent_store().take_pending_task_events("owner").empty());
+    const auto completed = runtime::native_agent_store().get("exclusive-resume");
+    ASSERT_TRUE(completed);
+    EXPECT_EQ(completed->agent_id, original->agent_id);
+    EXPECT_GT(completed->sidechain_entries.size(), original->sidechain_entries.size());
+    const auto bodies = server.bodies();
+    ASSERT_EQ(bodies.size(), 2u);
+    EXPECT_NE(bodies.back().find("retained result"), std::string::npos);
+}

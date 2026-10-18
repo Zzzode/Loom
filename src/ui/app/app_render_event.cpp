@@ -155,6 +155,7 @@ void AppAdapter::StopBackgroundWorkers() {
         static_cast<loom::core::QueryEngine*>(engine_raw())->abort();
     }
     if (query_thread_.joinable()) query_thread_.request_stop();
+    if (agent_operation_thread_.joinable()) agent_operation_thread_.request_stop();
     if (spinner_thread_.joinable()) spinner_thread_.request_stop();
     if (bash_thread_.joinable()) bash_thread_.request_stop();
     // A foreground Agent polls its registry owner, independently of query
@@ -169,6 +170,7 @@ void AppAdapter::StopBackgroundWorkers() {
     if (leader_inbox_thread_.joinable()) leader_inbox_thread_.join();
     if (teammate_.inbox_thread().joinable()) teammate_.inbox_thread().join();
     if (query_thread_.joinable()) query_thread_.join();
+    if (agent_operation_thread_.joinable()) agent_operation_thread_.join();
     if (auto* engine = static_cast<loom::core::QueryEngine*>(engine_raw())) {
         engine->shutdown_tools();
     }

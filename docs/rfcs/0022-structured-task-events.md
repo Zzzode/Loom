@@ -429,3 +429,37 @@ No commit, push or REA is used.
 | 2026-10-17 | B | Graduation started on frozen source | uncommitted | Default Ninja dual-preset builds, serial full CTest and real PTY evidence pending; no production behavior changes after this point |
 | 2026-10-17 | B | Graduation approved; RFC implemented locally, uncommitted | uncommitted | agent:/root/independent_review independently verified source and owned-doc hashes, scope/preservation, complete dual-preset XML, graph/inline/RFC lint and final Release PTY; agent:/root/notification_research independently approved runtime evidence; 2876 passed/23 skipped/2 disabled/0 failed in each preset; no unresolved material findings |
 | 2026-10-17 | B | Commit-scope verification and source commit recorded after user authorization | cffc8498 | Selected submission excludes unrelated accessibility work; fresh Debug/Release each 2842 registered, 2817 passed, 23 skipped, 2 disabled, 0 failed; 2586 source inputs frozen; logical commit review approved by agent:/root/independent_review; no new implementation changes |
+
+## Interactive-view ownership extension (RFC 0024)
+
+A selected child conversation is a UI view keyed by root session and agent ID.
+It does not replace the root QueryEngine session ID or the TaskEvent's owning
+parent_session_id. Navigation, child message projection/input and targeted Stop
+must never drain pending parent events or infer origin from XML. Root processing
+continues to own notification delivery even while a child is visible; resulting
+root messages must not enter that child's transcript. Existing provenance,
+wire exclusion and repeated same-ID terminal semantics remain unchanged.
+RFC 0024 adds native regressions for these boundaries without new persisted
+TaskEvent fields or a new notification protocol.
+
+| Date | Phase | Event | Commit / PR | Evidence (metrics, test totals) |
+|---|---|---|---|---|
+| 2026-10-18 | — | Specified visible-view versus event-owner invariant for RFC 0024 | Uncommitted | No protocol or lifecycle status change; implementation evidence remains above |
+
+| 2026-10-18 | — | RFC 0024 view/event-owner extension graduated locally | Uncommitted | Host Continue retained root history hashes at 16 and 21 lines; viewing/input did not consume notifications; real root wire excludes local metadata, native child wire tested separately; original provenance format/history preserved; complete Debug/Release zero failures |
+
+### Authorized commit assembly (2026-10-18)
+
+The user subsequently authorized logical commits and push for RFCs 0021-0024
+and interactive Subagent/Team Agent sessions. This authorization replaces the
+earlier task-specific no-commit restriction; historical review/graduation rows
+above remain unchanged. The implementation commits are `4ca7c024` (RFC 0023
+instance browser and controls), `5c822b42` (stable Skills subscription lifetime)
+and `daebff79` (RFC 0024 interactive sessions). Design records are in `803dc893`.
+
+Commit assembly reuses the independently approved frozen implementation evidence:
+complete Debug and Release suites each registered 2923 tests, with 2898 passed,
+23 skipped, 2 disabled and zero failed. These suites were not rerun for commit
+assembly. Previously recorded failures and platform/runtime limitations remain
+applicable. The final source matches the tested selected checkout; unrelated
+working changes are excluded and preserved. Normal Git hooks remain enabled.

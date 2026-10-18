@@ -982,3 +982,36 @@ push or release was made.
 |---|---|---|---|---|
 | 2026-10-17 | F | Independent final graduation APPROVED by agent:/root/independent_review; Phase F done and RFC implemented | uncommitted | Each complete serial preset: 2810 registered, 2785 passed, 23 skipped, 2 disabled, 0 failed; Debug 473.20s, Release 409.95s; focused 83/83 each; 2590 source/214 executables zero drift; four real Bash commands overlap 84.933393s; three hierarchical PTY frames; 85 unrelated dirty files preserved |
 | 2026-10-17 | F | Commit-scope verification and source commit recorded after user authorization | eacf613b | Selected submission excludes unrelated accessibility work; fresh Debug/Release each 2842 registered, 2817 passed, 23 skipped, 2 disabled, 0 failed; 2586 source inputs frozen; logical commit review approved by agent:/root/independent_review; no new implementation changes |
+
+## Interactive-session extension (RFC 0024)
+
+RFC 0024 implements the interaction layer for both ordinary Subagents and
+native Team Agents. With its phase A graduated, selection and Enter open the
+matching interactive conversation; Details is a secondary action. This does
+not merge Tasks, Subagents or Agent Teams, change their indented hierarchy or
+activity priority, or change proactive delegation policy. Historical phase
+contracts and evidence above describe the implemented versions at those dates;
+RFC 0023 already supersedes failed-row occupancy/attention rules. RFC 0024 adds
+conversation navigation while preserving those folded failure/history rules.
+
+| Date | Phase | Event | Commit / PR | Evidence (metrics, test totals) |
+|---|---|---|---|---|
+| 2026-10-18 | — | Documented proposed interactive-session extension in RFC 0024 | Uncommitted | Existing implementation remains implemented; new navigation requires RFC 0024 design/PRR gates and phase graduation |
+
+| 2026-10-18 | — | RFC 0024 interactive-session extension graduated locally | Uncommitted | Independent design/PRR and final graduation APPROVED; Enter now opens the target conversation, i retains Details; categories/priority preserved; complete Debug/Release each 2923 registered, zero failures; see RFC 0024 for exact totals and limitations |
+
+### Authorized commit assembly (2026-10-18)
+
+The user subsequently authorized logical commits and push for RFCs 0021-0024
+and interactive Subagent/Team Agent sessions. This authorization replaces the
+earlier task-specific no-commit restriction; historical review/graduation rows
+above remain unchanged. The implementation commits are `4ca7c024` (RFC 0023
+instance browser and controls), `5c822b42` (stable Skills subscription lifetime)
+and `daebff79` (RFC 0024 interactive sessions). Design records are in `803dc893`.
+
+Commit assembly reuses the independently approved frozen implementation evidence:
+complete Debug and Release suites each registered 2923 tests, with 2898 passed,
+23 skipped, 2 disabled and zero failed. These suites were not rerun for commit
+assembly. Previously recorded failures and platform/runtime limitations remain
+applicable. The final source matches the tested selected checkout; unrelated
+working changes are excluded and preserved. Normal Git hooks remain enabled.

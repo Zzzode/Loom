@@ -31,6 +31,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 
 | File | What |
 |---|---|
+| [`user/agent-instances.md`](user/agent-instances.md) | Runtime instance lists, failure history, bounded details and owned Continue/Stop controls. |
 | [`user/terminal-status.md`](user/terminal-status.md) | Automatic OSC 7501 capability detection, editable question answers, activity and decision status, result retention and exit behavior. |
 
 ### Developer guides (`dev/`)
@@ -80,6 +81,8 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0020-completed-task-history.md`](rfcs/0020-completed-task-history.md) | **Implemented.** Completed task feedback, timed collapse and retained message history. |
 | [`rfcs/0021-subagent-visibility-and-delegation.md`](rfcs/0021-subagent-visibility-and-delegation.md) | **Implemented.** Session-scoped subagent status and proportional proactive research delegation. |
 | [`rfcs/0022-structured-task-events.md`](rfcs/0022-structured-task-events.md) | **Implemented.** Typed session-owned task events with separate model context and user notifications. |
+| [`rfcs/0023-agent-instance-browser-and-controls.md`](rfcs/0023-agent-instance-browser-and-controls.md) | **Implemented.** Session-scoped runtime instance lists, bounded details and host Continue/Stop controls. |
+| [`rfcs/0024-interactive-agent-sessions.md`](rfcs/0024-interactive-agent-sessions.md) | **Implemented.** Interactive native Subagent and Team Agent conversations, input routing and targeted lifecycle controls. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

@@ -508,3 +508,19 @@ addendum does not substitute the earlier evidence for those new gates.
 | 2026-10-18 | — | Documented selective interactive-session extension under RFC 0024 | Uncommitted | Original A/B/C completion and evidence preserved; RFC 0024 initially provisional |
 
 | 2026-10-18 | — | RFC 0024 interactive extension graduated locally without rewriting earlier A/B/C history | Uncommitted | Independent source/UI/runtime/graduation APPROVED; ordinary and native Team conversations, running queue and same-ID text continuation verified; failure/history/Details and exact owner filtering retained; complete Debug/Release each 2923 registered, zero failed |
+
+### Authorized commit assembly (2026-10-18)
+
+The user subsequently authorized logical commits and push for RFCs 0021-0024
+and interactive Subagent/Team Agent sessions. This authorization replaces the
+earlier task-specific no-commit restriction; historical review/graduation rows
+above remain unchanged. The implementation commits are `4ca7c024` (RFC 0023
+instance browser and controls), `5c822b42` (stable Skills subscription lifetime)
+and `daebff79` (RFC 0024 interactive sessions). Design records are in `803dc893`.
+
+Commit assembly reuses the independently approved frozen implementation evidence:
+complete Debug and Release suites each registered 2923 tests, with 2898 passed,
+23 skipped, 2 disabled and zero failed. These suites were not rerun for commit
+assembly. Previously recorded failures and platform/runtime limitations remain
+applicable. The final source matches the tested selected checkout; unrelated
+working changes are excluded and preserved. Normal Git hooks remain enabled.

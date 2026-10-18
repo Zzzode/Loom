@@ -2782,6 +2782,55 @@ promoted to the repository root in the same series of commits, so
 
 ### C.1 — Tag formats and string protocols shared across modules
 
+- **Instance controls and visibility (RFC 0023).** `/subagents` is the local
+  instance browser; `/agents` remains definitions and `/tasks` remains the
+  existing scheduler. App filters exact nonempty parent_session_id and uses
+  native is_team_agent_record for ordinary/team classification. Pane-only
+  teammates retain the overview; Idle/Unknown never become terminal failures.
+  Dialog type/name/slot/payload/registration change together. The browser owns
+  input, yields to permissions and refreshes bounded snapshots on native events.
+  Host Continue goes through QueryEngine permission and user hooks; both payload
+  rewrite points revalidate immutable target fields. An internal typed ToolInput
+  constraint is checked again during Store admission, never serialized. Every
+  AgentTool resume reserves the ID before record mutation/startup hooks; active
+  ownership registers before reservation release. Internal begin/end counts are
+  execution references, not admissions. Host Stop atomically checks current
+  session, registry token and actual active execution, then requests cancellation;
+  finalizers publish terminal state. Terminal folding and read-only history do
+  not mutate notification_delivered or root model history.
+
+- **Interactive Agent views (RFC 0024).** The selected `(root session, agent ID)`
+  is a UI view, never a replacement QueryEngine/session identity. App retains
+  separate held root/child screens, drafts and transcript caches. Browser Enter
+  opens the child conversation; `i` retains instance Details. Direct child input,
+  cancellation and commands capture the exact target; rejected input stays in
+  its draft. Child structured history uses full sidechain entries rather than
+  the model-resume filter and never infers TaskEvent origin from XML. Root
+  notification draining and asynchronous paste completion retain root ownership.
+  Native running input uses atomic Store acceptance at startup/end-turn/cleanup;
+  retained pending input precedes newer continuation text. Host continuation
+  preserves native Team identity, existing membership and policy/hook constraints.
+  Fresh ordinary children do not inherit a leader team as their role; named or
+  exact-roster launches retain team identity and existing caller spawn limits.
+  Initial structured messages and diagnostics commit atomically in the Store;
+  redundant team startup diagnostics must not become legacy User context.
+  Child views use individual cards, since Main's compressed-chain busy state
+  cannot represent independently accepting native workers or queued guidance.
+  Live text is transient bounded UTF-8 and excluded from persisted/wire formats.
+  Native tool-result errors flow through ContentBlock, sidechain codec, Messages
+  serializer and OpenAI adapter together: optional `is_error` is written only
+  when true, old missing fields read false. The shared history reader preserves
+  all result IDs in a batch and keeps single-result/document compatibility;
+  cancellation must not relabel earlier successful calls or infer errors from
+  text. Existing histories with missing error signals are not rewritten.
+  Tool-permission and MCP-elicitation callbacks carry request tokens and exact
+  dialog IDs; selected views never choose the response recipient. Serial request
+  ownership rejects late callbacks and sticky shutdown wakes queued callers.
+  Dynamic-skill subscriptions retain stable slot indices under the Skills
+  owner's mutex. Its callback vector only appends and clears slots; erasing,
+  compacting or reusing slots would invalidate unsubscribe identity. Never retain
+  vector iterators across subscription growth or bypass App teardown to hide it.
+
 - **Structured task provenance (RFC 0022).** `loom.types.message_origin` owns
   HumanInput / LegacyHistory / TaskEvent values; `message_origin_json` owns
   the versioned local metadata codec and UTF-8/size validation. Session JSONL,

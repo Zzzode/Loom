@@ -536,7 +536,8 @@ unverified. Detailed build waves and exact registrations are retained in
 Independent overall graduation review by `agent:/root/interactive_prr_review`
 APPROVED A, then B, then C after both complete XML reports and final live audit.
 `agent:/root/interactive_design_review` independently approved UI/source and
-40/60/112-column live evidence. RFC 0024 is implemented locally, uncommitted.
+40/60/112-column live evidence. RFC 0024 is implemented; see the authorized
+commit assembly record below.
 
 Canonical full suites used the original default TMPDIR, Debug then Release,
 unfiltered `ctest --preset <preset> -j1`: each registered 2923 tests, with 2898
@@ -552,7 +553,8 @@ post-suite drift. The real PTY used that same Release SHA
 `70654cfa7a53662841fe742cd9d371e5e5935940a4c2642ff3c49756021b123e`.
 Graph checks covered 642 modules / 813 units with no new module cycle, upward
 edge or dead import; core8/ui9/store/TLL and inline gates passed. RFC lint passed
-24/24. HEAD remains unchanged and the index empty; no commit/push or REA.
+24/24. At local graduation, HEAD remained unchanged and the index was empty;
+that validation used no commit/push or REA.
 All unrelated initial work is retained. One unowned `.gitignore` delta appeared
 in the shared session with unestablished provenance; it was preserved and excluded
 from the verification checkout. Detailed hashes, complete results and failure
@@ -625,3 +627,19 @@ and unavailable instrumentation listed above remain explicit.
 | 2026-10-18 | A | Scoped conversation views graduated after independent UI review | Uncommitted | agent:/root/interactive_design_review APPROVED; native final suites, actual Enter/return, Main draft, per-call outcomes, failure Details and 40/60/112-column screenshots |
 | 2026-10-18 | B | Direct native interaction graduated after independent runtime/live review | Uncommitted | agent:/root/interactive_prr_review APPROVED; exact-once queue, Team-only process cancellation, same-ID prefixes 3 to 7, root 16 to 16 / 21 to 21, original member retained and total 150; parent timeout and root-only wire limits disclosed |
 | 2026-10-18 | C | Overall graduation approved; implemented locally, uncommitted | Uncommitted | agent:/root/interactive_prr_review APPROVED A then B then C; each complete canonical preset 2923 registered / 2898 passed / 23 skipped / 2 disabled / 0 failed, 500.87 s Debug / 428.79 s Release; focused14 9/9 each; +49 names / zero deletion; 53 source/test inputs and 218 executables zero drift; graph/inline/RFC24/24 and live SHA matched; no commit/push |
+
+### Authorized commit assembly (2026-10-18)
+
+The user subsequently authorized logical commits and push for RFCs 0021-0024
+and interactive Subagent/Team Agent sessions. This authorization replaces the
+earlier task-specific no-commit restriction; historical review/graduation rows
+above remain unchanged. The implementation commits are `4ca7c024` (RFC 0023
+instance browser and controls), `5c822b42` (stable Skills subscription lifetime)
+and `daebff79` (RFC 0024 interactive sessions). Design records are in `803dc893`.
+
+Commit assembly reuses the independently approved frozen implementation evidence:
+complete Debug and Release suites each registered 2923 tests, with 2898 passed,
+23 skipped, 2 disabled and zero failed. These suites were not rerun for commit
+assembly. Previously recorded failures and platform/runtime limitations remain
+applicable. The final source matches the tested selected checkout; unrelated
+working changes are excluded and preserved. Normal Git hooks remain enabled.

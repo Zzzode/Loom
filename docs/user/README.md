@@ -21,6 +21,8 @@ Guides will be extracted here incrementally.
 - [Terminal program status](terminal-status.md): automatic OSC 7501 detection,
   activity and decision status, result retention and exit behavior.
 
+- [Agent instances](agent-instances.md): current-session activity, details, history and Continue/Stop.
+
 ## Naming convention
 
 `kebab-case.md` — e.g. `getting-started.md`, `settings-reference.md`.

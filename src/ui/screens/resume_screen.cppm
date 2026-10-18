@@ -643,7 +643,7 @@ struct RowViewState {
         query.empty()
             ? text("Search sessions...") | dim
             : text(std::string{query}) | color(palette.text),
-        text("│") | (search_focused ? blink : nothing),
+        text("│") | (search_focused && !loom::ui::design::theme::current_theme().a11y.reduced_motion ? blink : nothing),
     }) | borderLight | flex;
 
     // Sort dropdown label
@@ -969,7 +969,7 @@ struct RoleBadge {
     body.push_back(hbox({
         text("  ") | dim,
         text(shown) | (draft.empty() ? dim : color(palette.success)),
-        text("│") | blink | color(palette.info),
+        text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(palette.info),
     }) | borderLight);
 
     if (has_error) {

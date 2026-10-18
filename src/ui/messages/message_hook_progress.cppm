@@ -127,8 +127,10 @@ class HookProgressComponent : public ComponentBase {
         auto s = Summarize(hooks_);
 
         // Header: animated spinner + title + percentage
-        const std::string spin_char{loom::ui::design::figures::spinner_frame_glyph(
-            static_cast<int>(tick_count_ % loom::ui::design::figures::kSpinnerFrameCount))};
+        const std::string spin_char{loom::ui::design::theme::current_theme().a11y.reduced_motion
+            ? loom::ui::design::figures::kBullet
+            : loom::ui::design::figures::spinner_frame_glyph(
+                static_cast<int>(tick_count_ % loom::ui::design::figures::kSpinnerFrameCount))};
 
         // Progress bar: length = 20 chars
         constexpr int kBarWidth = 20;
@@ -151,7 +153,7 @@ class HookProgressComponent : public ComponentBase {
                                  ? dismiss_btn_->Render()
                                  : text("");
         auto header = hbox({
-            text(spin_char + " ") | color(accent) | blink,
+            text(spin_char + " ") | color(accent) | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
             text("Running hooks") | bold,
             text(std::format("  {:>3.0f}%", s.percent)) | bold | color(accent),
             text("  " + bar) | color(accent),

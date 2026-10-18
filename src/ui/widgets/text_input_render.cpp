@@ -271,14 +271,16 @@ bool TextInputImpl::move_visual_row(int direction) {
 }
 
 Element TextInputImpl::RenderInputArea() {
-    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    const auto& theme = loom::ui::design::theme::current_theme();
+    const auto& pal = *theme.palette;
+    const bool cursor_visible = blink_visible_ || theme.a11y.reduced_motion;
     const auto layout = input_layout(text_, cursor_, options_);
     if (text_.empty()) {
         namespace ph = loom::ui::placeholder;
         const auto placeholder = fit_display_text(options_.placeholder, layout.text_width);
         auto rendered = ph::RenderPlaceholder(
             placeholder.empty() ? std::nullopt : std::optional<std::string_view>(placeholder),
-            "", blink_visible_, blink_visible_, options_.terminal_focus,
+            "", cursor_visible, cursor_visible, options_.terminal_focus,
             options_.prefix, options_.prefix_color.value_or(pal.prompt_border));
         if (rendered.element) return *std::move(rendered.element);
         return hbox({ftxui::text(options_.prefix) |
@@ -331,7 +333,7 @@ Element TextInputImpl::RenderInputArea() {
             if (pos < sel_end && next > sel_begin && has_selection()) {
                 paint = Paint::Selection;
             } else if ((pos >= cursor_ && pos < chip_end) ||
-                       (pos == cursor_ && blink_visible_)) {
+                       (pos == cursor_ && cursor_visible)) {
                 paint = Paint::Caret;
             }
             if (paint != previous) { flush(); previous = paint; }
@@ -344,7 +346,7 @@ Element TextInputImpl::RenderInputArea() {
         const bool cursor_at_end = index == layout.cursor_row && cursor_ == row.end;
         if (cursor_at_end && !has_selection() && used < layout.text_width) {
             parts.push_back(ftxui::text(" ") |
-                (blink_visible_ ? inverted : nothing) | color(pal.text));
+                (cursor_visible ? inverted : nothing) | color(pal.text));
             ++used;
         }
         auto append_hint = [&](const std::string& value, Color hint_color) {

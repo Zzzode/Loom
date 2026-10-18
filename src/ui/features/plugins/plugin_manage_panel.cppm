@@ -124,7 +124,7 @@ namespace detail {
         text(std::string{search_text.empty() ? "Search installed plugins… (press /)"
                                              : search_text})
              | color(search_text.empty() ? pal.muted : pal.text),
-        text("│") | blink | (search_text.empty() ? dim : color(pal.info)),
+        text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | (search_text.empty() ? dim : color(pal.info)),
         filler(),
         text("Filter:") | dim,
         text(" " + std::string{filter_label} + " ") | color(pal.info) | borderLight | dim,

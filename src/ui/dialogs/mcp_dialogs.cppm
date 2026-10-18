@@ -463,6 +463,8 @@ namespace ElicitFocus {
 // ============================================================
 
 [[nodiscard]] inline std::string BrailleSpinnerFrame(std::uint64_t tick) {
+    if (loom::ui::design::theme::current_theme().a11y.reduced_motion)
+        return std::string(loom::ui::design::figures::kBullet);
     return std::string{loom::ui::design::figures::kSpinnerFrames[
         tick % loom::ui::design::figures::kSpinnerFrameCount]};
 }

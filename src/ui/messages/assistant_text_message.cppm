@@ -287,7 +287,7 @@ class AssistantTextMessageComponent : public ComponentBase {
                              | dim | color(pal.muted));
 
         if (data_.is_streaming) {
-            header.push_back(text(" ▍") | blink | color(pal.info));
+            header.push_back(text(" ▍") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(pal.info));
         }
 
         auto header_line = hbox(std::move(header));

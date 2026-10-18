@@ -679,6 +679,7 @@ struct FaithfulToolUseData {
         // 5 frames off.
         const bool blink_off =
             data.should_animate && is_unresolved &&
+            !loom::ui::design::theme::current_theme().a11y.reduced_motion &&
             (data.spinner_frame % 10 >= 5);  // 500ms on / 500ms off
 
         if (blink_off) {

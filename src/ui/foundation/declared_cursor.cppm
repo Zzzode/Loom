@@ -27,6 +27,8 @@ export module loom.ui.foundation.declared_cursor;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 export namespace loom::ui::common::declared_cursor {
 using namespace ftxui;
 
@@ -64,6 +66,18 @@ public:
             Screen::Cursor::Shape::Hidden,
         });
         Node::Render(screen);
+        // Native FTXUI inputs set cursor shape separately from pixel blink.
+        // Apply accessibility after the focused descendant has chosen its
+        // position/shape; preserve Hidden and every steady cursor unchanged.
+        if (!loom::ui::design::theme::current_theme().a11y.reduced_motion) return;
+        auto cursor = screen.cursor();
+        switch (cursor.shape) {
+            case Screen::Cursor::BlockBlinking: cursor.shape = Screen::Cursor::Block; break;
+            case Screen::Cursor::UnderlineBlinking: cursor.shape = Screen::Cursor::Underline; break;
+            case Screen::Cursor::BarBlinking: cursor.shape = Screen::Cursor::Bar; break;
+            default: return;
+        }
+        screen.SetCursor(cursor);
     }
 };
 

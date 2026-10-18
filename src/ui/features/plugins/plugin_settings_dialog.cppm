@@ -416,7 +416,7 @@ namespace detail {
             text("  name: ") | dim,
             text(std::string{new_name.empty() ? "(type name)" : std::string{new_name}})
                  | color(new_name.empty() ? pal.muted : pal.text),
-            text("│") | blink | color(pal.info),
+            text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(pal.info),
             filler(),
             text("hotkey: ") | dim,
             text(std::string{new_hotkey.empty() ? "(press key combo)"

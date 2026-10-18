@@ -651,7 +651,7 @@ inline void SelectorState_rebuild_project_cursor(SelectorState& /*s*/) {
         s.search.empty()
             ? text("Search…") | dim
             : text(s.search) | color(loom::ui::design::theme::current_theme().palette->text),
-        text(sf ? "│" : " ") | (sf ? blink : nothing),
+        text(sf ? "│" : " ") | (sf && !loom::ui::design::theme::current_theme().a11y.reduced_motion ? blink : nothing),
     }) | borderLight | size(WIDTH, EQUAL, 26));
 
     items.push_back(text(""));
@@ -832,7 +832,7 @@ struct ChipDef {
         cards.push_back(separatorLight());
         if (s.remote_loading) {
             cards.push_back(hbox({
-                text(" ⠋ ") | blink | color(loom::ui::design::theme::current_theme().palette->info),
+                text(" ⠋ ") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(loom::ui::design::theme::current_theme().palette->info),
                 text(std::format(" Loading more… ({} fetched so far) ",
                                  s.remote_fetched))
                     | color(loom::ui::design::theme::current_theme().palette->info),
@@ -1159,7 +1159,7 @@ struct ChipDef {
         text((" " + std::string{loom::ui::design::figures::kSquareSmall} + " ")) | dim,
         text(s.import_path.empty() ? std::string{"(enter path)"} : s.import_path)
             | color(s.import_error ? loom::ui::design::theme::current_theme().palette->danger : loom::ui::design::theme::current_theme().palette->text),
-        text("│") | blink | color(loom::ui::design::theme::current_theme().palette->info),
+        text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(loom::ui::design::theme::current_theme().palette->info),
     });
     if (s.import_error) field = field | borderStyled(loom::ui::design::theme::current_theme().palette->danger)
                                        | bgcolor(loom::ui::design::theme::current_theme().palette->danger_tint_bg);

@@ -250,7 +250,7 @@ namespace detail {
         text("  " + label) | bold | color(pal.muted),
         text(value.empty() ? placeholder : value)
              | color(value.empty() ? pal.muted : pal.text),
-        text("│") | blink | color(pal.info),
+        text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(pal.info),
     }) | borderLight);
 
     if (sel_enum == InstallSource::GitRepo && !data.git_ref.empty()) {

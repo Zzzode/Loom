@@ -114,8 +114,8 @@ enum class CardSize {
 
     switch (status) {
         case AgentStatus::Running:
-            glyph = std::string(loom::ui::components::kDotsAnimation[
-                frame % loom::ui::components::kDotsAnimation.size()]);
+            glyph = std::string(loom::ui::components::get_spinner_frame(
+                loom::ui::components::kDotsAnimation, frame));
             break;
         case AgentStatus::Idle:      glyph = std::string(loom::ui::design::figures::kBullet); break;
         case AgentStatus::Scheduled: glyph = std::string(loom::ui::design::figures::kBullet); break;

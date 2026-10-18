@@ -205,7 +205,7 @@ struct VimInputOptions {
                 if (state.vim.mode == VimMode::Normal || is_visual) {
                     text_parts.push_back(text(ch) | inverted | bold);
                 } else {
-                    text_parts.push_back(text("|") | color(loom::ui::design::theme::current_theme().palette->info) | blink);
+                    text_parts.push_back(text("|") | color(loom::ui::design::theme::current_theme().palette->info) | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink));
                     text_parts.push_back(text(ch));
                 }
             } else {
@@ -213,7 +213,7 @@ struct VimInputOptions {
                 if (state.vim.mode == VimMode::Normal || is_visual) {
                     text_parts.push_back(text(" ") | inverted);
                 } else {
-                    text_parts.push_back(text("|") | color(loom::ui::design::theme::current_theme().palette->info) | blink);
+                    text_parts.push_back(text("|") | color(loom::ui::design::theme::current_theme().palette->info) | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink));
                 }
             }
         } else if (i < len) {
@@ -229,7 +229,7 @@ struct VimInputOptions {
     auto input_line = hbox(text_parts);
     if (state.text.empty() && state.vim.mode == VimMode::Insert) {
         input_line = hbox({
-            text("|") | color(loom::ui::design::theme::current_theme().palette->info) | blink,
+            text("|") | color(loom::ui::design::theme::current_theme().palette->info) | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
             text("Type your message...") | dim,
         });
     }
@@ -259,7 +259,7 @@ struct VimInputOptions {
             hbox({
                 text(":") | color(loom::ui::design::theme::current_theme().palette->warning) | bold,
                 text(state.command_line),
-                text("|") | color(loom::ui::design::theme::current_theme().palette->info) | blink,
+                text("|") | color(loom::ui::design::theme::current_theme().palette->info) | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
             }),
         });
     }

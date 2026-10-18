@@ -192,8 +192,8 @@ struct StatusDotOptions {
 
     switch (opts.status) {
         case AgentStatus::Running: {
-            glyph = std::string(loom::ui::components::kDotsAnimation[
-                opts.spinner_frame % loom::ui::components::kDotsAnimation.size()]);
+            glyph = std::string(loom::ui::components::get_spinner_frame(
+                loom::ui::components::kDotsAnimation, opts.spinner_frame));
             break;
         }
         case AgentStatus::Idle:      glyph = std::string(loom::ui::design::figures::kCircle); break;

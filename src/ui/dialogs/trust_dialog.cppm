@@ -428,7 +428,7 @@ struct DialogState {
             text(" to confirm: ") | dim,
             text(s.yes_input.empty() ? std::string{"(empty)"} : s.yes_input)
                 | color(s.yes_input == tu::kCriticalConfirmWord ? pal.success : pal.danger),
-            text("│") | blink,
+            text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
         }));
         parts.push_back(text(
             " (Esc / Cancel aborts. Typing anything other than YES is rejected.)") | dim);

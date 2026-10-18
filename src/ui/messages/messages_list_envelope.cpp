@@ -175,6 +175,8 @@ auto spinner_glyph(std::size_t frame) -> const char* {
     // spinner_frame_glyph returns a string_view pointing into the inline
     // constexpr kSpinnerFrames array (static storage duration), so .data()
     // is safe to return as a raw const char*.
+    if (loom::ui::design::theme::current_theme().a11y.reduced_motion)
+        return figs::kBullet.data();
     return figs::spinner_frame_glyph(static_cast<int>(frame)).data();
 }
 
@@ -549,7 +551,9 @@ auto render_compressed_chain_row(const VisibleRow& vr,
     if (live && vr.chain_emphasize_work) body = std::move(body) | bold;
     if (is_selected)
         body = std::move(body) | inverted | bgcolor(palette::selected_bg());
-    const bool blink_off = live && (frame_count % 10 >= 5);
+    const bool blink_off = live
+        && !loom::ui::design::theme::current_theme().a11y.reduced_motion
+        && (frame_count % 10 >= 5);
     Element dot = text(blink_off ? " " : "●")
         | color(loom::ui::design::theme::current_theme().palette->muted);
     Element header = hbox({std::move(dot), text(" "), std::move(body),

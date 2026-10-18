@@ -249,6 +249,8 @@ struct DoctorDataModel {
 
 /// Animated spinner glyph by frame index
 [[nodiscard]] inline std::string_view spinner_glyph(unsigned frame) {
+    if (loom::ui::design::theme::current_theme().a11y.reduced_motion)
+        return loom::ui::design::figures::kBullet;
     static constexpr std::array<std::string_view, 10> kSpin =
         {"⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"};
     return kSpin[frame % kSpin.size()];

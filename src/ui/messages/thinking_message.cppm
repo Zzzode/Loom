@@ -271,6 +271,8 @@ inline std::size_t count_lines(const std::string& s) {
 ///   loom::ui::design::figures::kSpinnerFrames (GAP 4: fig-spinner-frame-inconsistency).
 ///   Previously this had only 8 frames (dropping '⠇⠏'), now unified to 10.
 [[nodiscard]] inline std::string thinking_spinner(int frame) {
+    if (loom::ui::design::theme::current_theme().a11y.reduced_motion)
+        return std::string(loom::ui::design::figures::kBullet);
     return std::string(loom::ui::design::figures::spinner_frame_glyph(frame));
 }
 
@@ -323,7 +325,7 @@ inline std::size_t count_lines(const std::string& s) {
         case ThinkingState::Active:
             parts.push_back(text(thinking_spinner(frame) + " ") | color(loom::ui::design::theme::current_theme().palette->info));
             parts.push_back(text("Thinking") | color(loom::ui::design::theme::current_theme().palette->info) | bold);
-            parts.push_back(text("...") | color(loom::ui::design::theme::current_theme().palette->info) | dim | blink);
+            parts.push_back(text("...") | color(loom::ui::design::theme::current_theme().palette->info) | dim | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink));
             break;
         case ThinkingState::Paused:
             parts.push_back(text(std::string(loom::ui::design::figures::kPauseIcon) + " ") | color(loom::ui::design::theme::current_theme().palette->warning));

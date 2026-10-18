@@ -51,6 +51,7 @@ gtest_discover_tests(test_ui_features DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TI
 
 add_executable(test_design_system test_design_readability.cpp test_chrome_budget.cpp test_design_contracts.cpp
     test_attention_hierarchy.cpp
+    test_settings_layout.cpp
     test_reduced_motion.cpp
     test_reduced_motion_cursor.cpp
     test_text_contrast.cpp

@@ -753,7 +753,9 @@ bool AppAdapter::OnEvent(Event event) {
     const bool any_dialog_open =
         screen_state_->dialog_store.dialog_queue.has_standalone()
         || screen_state_->dialog_store.dialog_queue.has_modal()
-        || screen_state_->dialog_store.dialog_queue.has_overlay();
+        || screen_state_->dialog_store.dialog_queue.has_overlay()
+        // Settings owns a held component outside the dialog queue.
+        || screen_state_->mode == loom::ui::repl_screen::ReplMode::SettingsView;
     if (event == Event::Character('\x13') && !query_running_.load()
         && !any_dialog_open) {
         namespace repl = loom::ui::repl_screen;

@@ -9,6 +9,7 @@ module;
 #include <cstdint>
 
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/string.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
@@ -200,6 +201,34 @@ struct SettingsDialogOptions {
 // Individual setting row builder
 // ============================================================
 
+// Wrap by terminal cells after the dialog receives its allocated box. Keep
+// explicit line breaks and full-width glyphs intact, including unbroken URLs.
+[[nodiscard]] Element SettingsText(const std::string& value, int columns = 0);
+
+[[nodiscard]] Element FocusedSetting(Element element);
+
+[[nodiscard]] int ValueColumns(int columns);
+
+// Width is already known here. Pack intact controls into deterministic rows
+// so their full wrapped height is available before scroll-frame measurement.
+[[nodiscard]] Element SettingsFlow(Elements items, int columns, int gap = 2);
+
+// Only Elements are rebuilt during box negotiation. The interactive Component
+// and its working settings retain their identity through terminal resizing.
+class SettingsLayoutNode : public Node {
+  public:
+    explicit SettingsLayoutNode(std::function<Element(int, int)> render);
+    void ComputeRequirement() override;
+    void SetBox(Box box) override;
+    void Check(Status* status) override;
+  private:
+    std::function<Element(int, int)> render_;
+    int columns_ = 80;
+    int rows_ = 26;
+    int computed_columns_ = 0;
+    int computed_rows_ = 0;
+};
+
 /// Build a standard setting row: label | control | description.
 /// Each row takes label text, a control Element, an optional description
 /// (enabled hint text uses readable secondary ink below the row).
@@ -208,25 +237,26 @@ struct SettingsDialogOptions {
     Element control,
     const std::optional<std::string>& description = std::nullopt,
     bool disabled = false,
-    bool is_modified = false) {
+    bool is_modified = false,
+    int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
-    auto label_el = text(" " + label) | (disabled ? dim : nothing);
+    auto label_el = SettingsText(" " + label, columns > 0 ? columns - 1 : 0)
+        | (disabled ? dim : nothing);
     auto mod_mark = is_modified ? text("*") | color(pal.warning) : text(" ");
-    auto row = hbox({
-        mod_mark,
-        label_el | size(WIDTH, EQUAL, 28) | flex_shrink,
-        std::move(control) | flex,
-        text(" "),
-    });
-
-    Elements result;
-    result.push_back(row);
+    Element row;
+    if (columns > 0 && columns < 52) {
+        row = vbox({hbox({mod_mark, label_el}),
+                    hbox({text("  "), std::move(control) | flex})});
+    } else {
+        row = hbox({mod_mark, label_el | size(WIDTH, EQUAL, 28) | flex_shrink,
+                    std::move(control) | flex, text(" ")});
+    }
+    Elements result{row};
     if (description && !description->empty()) {
-        result.push_back(hbox({
-            text("   ") | dim,
-            text(*description) | color(pal.muted) | (disabled ? dim : nothing),
-        }));
+        result.push_back(hbox({text("   "),
+            SettingsText(*description, columns > 0 ? std::max(1, columns - 3) : 0)
+                | color(pal.muted) | (disabled ? dim : nothing)}));
     }
     return vbox(result);
 }
@@ -284,7 +314,6 @@ struct WorkingSettings {
 
     // MCP
     std::vector<McpServerConfig> mcp_servers;
-    bool auto_start_mcp = true;
 
     // LSP
     bool enable_lsp = true;
@@ -363,17 +392,18 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 // ============================================================
 
 [[nodiscard]] inline Element RenderTabHeader(const std::string& title,
-                                             const std::string& subtitle = {}) {
+                                             const std::string& subtitle = {},
+                                             int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements els;
     els.push_back(hbox({
-        text(" " + title + " ") | bold | color(pal.info),
+        SettingsText(" " + title + " ", columns) | bold | color(pal.info),
         filler(),
     }));
     if (!subtitle.empty()) {
         els.push_back(hbox({
             text(" "),
-            text(subtitle) | color(pal.muted),
+            SettingsText(subtitle, columns > 0 ? columns - 1 : 0) | color(pal.muted),
         }));
     }
     els.push_back(separator());
@@ -382,44 +412,44 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 
 // --- General tab ---
 [[nodiscard]] inline Element RenderGeneralTab(const WorkingSettings& w,
-                                              int focus_row) {
+                                              int focus_row, int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
-    body.push_back(RenderTabHeader("General", "Theme, behaviour & defaults"));
+    body.push_back(RenderTabHeader("General", "Theme, behaviour & defaults", columns));
 
     // Theme dropdown display
     body.push_back(SettingRow(
         "Theme",
-        text(" [" + w.theme + "] ") | color(pal.warning) |
-             (focus_row == 0 ? inverted : nothing),
+        SettingsText(" [" + w.theme + "] ", ValueColumns(columns)) | color(pal.warning) |
+             (focus_row == 0 ? FocusedSetting : nothing),
         "UI color scheme (dark / light / high-contrast / auto)",
-        false, focus_row == -2));
+        false, focus_row == -2, columns));
 
     // Auto mode
     body.push_back(SettingRow(
         "Auto mode",
-        text(w.auto_mode ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.auto_mode ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.auto_mode ? pal.success : pal.muted) |
-             (focus_row == 1 ? inverted : nothing),
+             (focus_row == 1 ? FocusedSetting : nothing),
         "Automatically continue tool-use chains without confirmations",
-        false, focus_row == -2));
+        false, focus_row == -2, columns));
 
     // Effort level
     body.push_back(SettingRow(
         "Effort level",
-        text(" [" + w.effort_level + "] ") | color(pal.warning) |
-             (focus_row == 2 ? inverted : nothing),
+        SettingsText(" [" + w.effort_level + "] ", ValueColumns(columns)) | color(pal.warning) |
+             (focus_row == 2 ? FocusedSetting : nothing),
         "Reasoning effort: low / medium / high",
-        false, focus_row == -2));
+        false, focus_row == -2, columns));
 
     // Fast mode
     body.push_back(SettingRow(
         "Fast mode",
-        text(w.fast_mode ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.fast_mode ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.fast_mode ? pal.success : pal.muted) |
-             (focus_row == 3 ? inverted : nothing),
+             (focus_row == 3 ? FocusedSetting : nothing),
         "Use the faster (cheaper) model when available",
-        false, focus_row == -2));
+        false, focus_row == -2, columns));
 
     // Temperature (slider display)
     body.push_back(SettingRow(
@@ -427,112 +457,108 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         hbox({
             gauge(w.default_temperature / 2.0) | color(pal.info) |
                 size(WIDTH, EQUAL, 20),
-            text(std::format(" {:.2f} ", w.default_temperature)) |
-                color(pal.info) | (focus_row == 4 ? inverted : nothing),
+            SettingsText(std::format(" {:.2f} ", w.default_temperature), ValueColumns(columns)) |
+                color(pal.info) | (focus_row == 4 ? FocusedSetting : nothing),
         }),
         "Sampling temperature (0 = deterministic, 2 = maximum randomness)",
-        false, focus_row == -2));
+        false, focus_row == -2, columns));
 
     body.push_back(separator());
-    body.push_back(text("  Display options:") | color(pal.muted));
+    body.push_back(SettingsText("  Display options:", ValueColumns(columns)) | color(pal.muted));
     body.push_back(SettingRow(
         "Show thinking",
-        text(w.show_thinking ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.show_thinking ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.show_thinking ? pal.success : pal.muted) |
-             (focus_row == 5 ? inverted : nothing),
+             (focus_row == 5 ? FocusedSetting : nothing),
         "Display thinking blocks in assistant output",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Token usage display",
-        text(w.show_token_usage ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.show_token_usage ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.show_token_usage ? pal.success : pal.muted) |
-             (focus_row == 6 ? inverted : nothing),
+             (focus_row == 6 ? FocusedSetting : nothing),
         "Show token counters after each response",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Compact mode",
-        text(w.compact_mode ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.compact_mode ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.compact_mode ? pal.success : pal.muted) |
-             (focus_row == 7 ? inverted : nothing),
+             (focus_row == 7 ? FocusedSetting : nothing),
         "Minimal output formatting for smaller terminals",
-        false, false));
+        false, false, columns));
 
     return vbox(body);
 }
 
 // --- Model tab ---
 [[nodiscard]] inline Element RenderModelTab(const WorkingSettings& w,
-                                            int focus_row) {
+                                            int focus_row, int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
-    body.push_back(RenderTabHeader("Model", "Default model and generation limits"));
+    body.push_back(RenderTabHeader("Model", "Default model and generation limits", columns));
 
     body.push_back(SettingRow(
         "Default model",
-        hbox({
-            text(" ["),
-            text(w.default_model) | color(pal.info),
-            text("] ▾ ") | dim,
-        }) | (focus_row == 0 ? inverted : nothing),
+        SettingsText(" [" + w.default_model + "] ▾ ", ValueColumns(columns)) | color(pal.info) | (focus_row == 0 ? FocusedSetting : nothing),
         "Model used for new sessions",
-        false, false));
+        false, false, columns));
 
     body.push_back(SettingRow(
         "Max output tokens",
-        text(std::format(" {} ", w.max_output_tokens)) | color(pal.info) |
-             (focus_row == 1 ? inverted : nothing),
+        SettingsText(std::format(" {} ", w.max_output_tokens), ValueColumns(columns)) | color(pal.info) |
+             (focus_row == 1 ? FocusedSetting : nothing),
         "Maximum tokens per assistant turn",
-        false, false));
+        false, false, columns));
 
     body.push_back(SettingRow(
         "Extended thinking",
-        text(w.extended_thinking ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.extended_thinking ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.extended_thinking ? pal.success : pal.muted) |
-             (focus_row == 2 ? inverted : nothing),
+             (focus_row == 2 ? FocusedSetting : nothing),
         "Allocate additional tokens for chain-of-thought reasoning",
-        false, false));
+        false, false, columns));
 
     body.push_back(separator());
     body.push_back(SettingRow(
         "Thinking budget",
-        text(w.thinking_budget
+        SettingsText(w.thinking_budget
             ? std::format(" {} tokens ", *w.thinking_budget)
-            : std::string(" (auto) ")) | color(pal.info) |
-             (focus_row == 3 ? inverted : nothing),
+            : std::string(" (auto) "), ValueColumns(columns)) | color(pal.info) |
+             (focus_row == 3 ? FocusedSetting : nothing),
         "Max tokens allocated for chain-of-thought (blank = automatic)",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Context window size",
-        text(std::format(" {} ", w.context_window_size)) | color(pal.info) |
-             (focus_row == 4 ? inverted : nothing),
+        SettingsText(std::format(" {} ", w.context_window_size), ValueColumns(columns)) | color(pal.info) |
+             (focus_row == 4 ? FocusedSetting : nothing),
         "Maximum context window tokens",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Teammate model",
-        text(w.teammate_model.empty()
+        SettingsText(w.teammate_model.empty()
             ? std::string(" (same as default) ")
-            : " [" + w.teammate_model + "] ") | color(pal.warning) |
-             (focus_row == 5 ? inverted : nothing),
+            : " [" + w.teammate_model + "] ", ValueColumns(columns)) | color(pal.warning) |
+             (focus_row == 5 ? FocusedSetting : nothing),
         "Override model for sub-agent / swarm teammates",
-        false, false));
+        false, false, columns));
     return vbox(body);
 }
 
 // --- API tab ---
 [[nodiscard]] inline Element RenderAPITab(const WorkingSettings& w,
-                                          int focus_row) {
+                                          int focus_row, int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
-    body.push_back(RenderTabHeader("API", "Endpoints, authentication and timeouts"));
+    body.push_back(RenderTabHeader("API", "Endpoints, authentication and timeouts", columns));
 
     // Base URL
     std::string url_display = w.base_url.value_or("(no default — set LOOM_BASE_URL)");
     body.push_back(SettingRow(
         "Base URL",
-        text(" " + url_display + " ") | color(pal.info) |
-             (focus_row == 0 ? inverted : nothing),
+        SettingsText(" " + url_display + " ", ValueColumns(columns)) | color(pal.info) |
+             (focus_row == 0 ? FocusedSetting : nothing),
         "Override the API endpoint (for proxies, self-hosted, etc.)",
-        false, false));
+        false, false, columns));
 
     // API key — masked as ***
     std::string key_display;
@@ -545,203 +571,198 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     }
     body.push_back(SettingRow(
         "API Key",
-        text(" " + key_display + " ") | color(pal.warning) |
-             (focus_row == 1 ? inverted : nothing),
+        SettingsText(" " + key_display + " ", ValueColumns(columns)) | color(pal.warning) |
+             (focus_row == 1 ? FocusedSetting : nothing),
         "Stored in user config. Leave blank to use the environment variable",
-        false, false));
+        false, false, columns));
 
     body.push_back(SettingRow(
         "Timeout (s)",
-        text(std::format(" {} ", w.timeout_seconds)) | color(pal.info) |
-             (focus_row == 2 ? inverted : nothing),
+        SettingsText(std::format(" {} ", w.timeout_seconds), ValueColumns(columns)) | color(pal.info) |
+             (focus_row == 2 ? FocusedSetting : nothing),
         "Per-request timeout in seconds",
-        false, false));
+        false, false, columns));
 
     body.push_back(SettingRow(
         "Verify SSL",
-        text(w.verify_ssl ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.verify_ssl ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.verify_ssl ? pal.success : pal.danger) |
-             (focus_row == 3 ? inverted : nothing),
+             (focus_row == 3 ? FocusedSetting : nothing),
         "Verify server TLS certificates (disable only for dev proxies)",
-        false, false));
+        false, false, columns));
 
     body.push_back(separator());
     body.push_back(SettingRow(
         "HTTP proxy",
-        text(w.proxy.value_or("(none)")) | color(pal.info) |
-             (focus_row == 4 ? inverted : nothing),
+        SettingsText(w.proxy.value_or("(none)"), ValueColumns(columns)) | color(pal.info) |
+             (focus_row == 4 ? FocusedSetting : nothing),
         "HTTPS_PROXY / HTTP_PROXY override (env takes precedence)",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Max retries",
-        text(std::format(" {} ", w.max_retries)) | color(pal.info) |
-             (focus_row == 5 ? inverted : nothing),
+        SettingsText(std::format(" {} ", w.max_retries), ValueColumns(columns)) | color(pal.info) |
+             (focus_row == 5 ? FocusedSetting : nothing),
         "Number of retry attempts per failed request",
-        false, false));
+        false, false, columns));
     return vbox(body);
 }
 
 // --- Permissions tab ---
 [[nodiscard]] inline Element RenderPermissionsTab(const WorkingSettings& w,
-                                                  int focus_row) {
+                                                  int focus_row, int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("Permissions",
-        "Default behaviour when tools request access"));
+        "Default behaviour when tools request access", columns));
 
     body.push_back(SettingRow(
         "Default mode",
-        text(" [" + perm_mode_str(w.default_perm) + "] ") |
-             color(pal.warning) | (focus_row == 0 ? inverted : nothing),
+        SettingsText(" [" + perm_mode_str(w.default_perm) + "] ", ValueColumns(columns)) |
+             color(pal.warning) | (focus_row == 0 ? FocusedSetting : nothing),
         "Ask for confirmation, always allow, or always deny",
-        false, false));
+        false, false, columns));
 
     body.push_back(SettingRow(
         "Allow Bash",
-        text(w.allow_bash ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.allow_bash ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.allow_bash ? pal.success : pal.muted) |
-             (focus_row == 1 ? inverted : nothing),
+             (focus_row == 1 ? FocusedSetting : nothing),
         "Permit shell command execution",
-        false, false));
+        false, false, columns));
 
     body.push_back(SettingRow(
         "Allow file write",
-        text(w.allow_file_write ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.allow_file_write ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.allow_file_write ? pal.success : pal.muted) |
-             (focus_row == 2 ? inverted : nothing),
+             (focus_row == 2 ? FocusedSetting : nothing),
         "Permit file creation and modification",
-        false, false));
+        false, false, columns));
 
     body.push_back(SettingRow(
         "Allow network",
-        text(w.allow_network ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.allow_network ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.allow_network ? pal.success : pal.muted) |
-             (focus_row == 3 ? inverted : nothing),
+             (focus_row == 3 ? FocusedSetting : nothing),
         "Permit outbound HTTP requests (web fetch / search)",
-        false, false));
+        false, false, columns));
 
     body.push_back(separator());
     body.push_back(SettingRow(
         "Allowed paths",
-        text(w.allowed_paths.empty()
+        SettingsText(w.allowed_paths.empty()
             ? std::string(" (all) ")
-            : std::format(" [{} entries] ", w.allowed_paths.size())) |
-             color(pal.info) | (focus_row == 4 ? inverted : nothing),
+            : std::format(" [{} entries] ", w.allowed_paths.size()), ValueColumns(columns)) |
+             color(pal.info) | (focus_row == 4 ? FocusedSetting : nothing),
         "Whitelisted file paths for tool access",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Denied paths",
-        text(w.denied_paths.empty()
+        SettingsText(w.denied_paths.empty()
             ? std::string(" (none) ")
-            : std::format(" [{} entries] ", w.denied_paths.size())) |
-             color(pal.info) | (focus_row == 5 ? inverted : nothing),
+            : std::format(" [{} entries] ", w.denied_paths.size()), ValueColumns(columns)) |
+             color(pal.info) | (focus_row == 5 ? FocusedSetting : nothing),
         "Blacklisted file paths for tool access",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Allowed commands",
-        text(w.allowed_commands.empty()
+        SettingsText(w.allowed_commands.empty()
             ? std::string(" (all) ")
-            : std::format(" [{} entries] ", w.allowed_commands.size())) |
-             color(pal.info) | (focus_row == 6 ? inverted : nothing),
+            : std::format(" [{} entries] ", w.allowed_commands.size()), ValueColumns(columns)) |
+             color(pal.info) | (focus_row == 6 ? FocusedSetting : nothing),
         "Whitelisted shell commands",
-        false, false));
+        false, false, columns));
     return vbox(body);
 }
 
 // --- Tools tab ---
 [[nodiscard]] inline Element RenderToolsTab(const WorkingSettings& w,
-                                            int focus_row) {
+                                            int focus_row, int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
-    body.push_back(RenderTabHeader("Tools", "Enable or disable top-level tools"));
+    body.push_back(RenderTabHeader("Tools", "Enable or disable top-level tools", columns));
 
     body.push_back(SettingRow(
         "Agent / Sub-agent",
-        text(w.enable_agent_tool ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.enable_agent_tool ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.enable_agent_tool ? pal.success : pal.muted) |
-             (focus_row == 0 ? inverted : nothing),
+             (focus_row == 0 ? FocusedSetting : nothing),
         "Allow the assistant to spawn sub-agents for parallel work",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Web fetch",
-        text(w.enable_web_fetch ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.enable_web_fetch ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.enable_web_fetch ? pal.success : pal.muted) |
-             (focus_row == 1 ? inverted : nothing),
+             (focus_row == 1 ? FocusedSetting : nothing),
         "Fetch arbitrary URLs and return their content",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Web search",
-        text(w.enable_web_search ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.enable_web_search ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.enable_web_search ? pal.success : pal.muted) |
-             (focus_row == 2 ? inverted : nothing),
+             (focus_row == 2 ? FocusedSetting : nothing),
         "Run web searches via the configured provider",
-        false, false));
+        false, false, columns));
 
     body.push_back(separator());
     body.push_back(SettingRow(
         "Bash granular controls",
-        text(w.enable_bash_granular ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.enable_bash_granular ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.enable_bash_granular ? pal.success : pal.muted) |
-             (focus_row == 3 ? inverted : nothing),
+             (focus_row == 3 ? FocusedSetting : nothing),
         "Fine-grained per-command permission toggles",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Glob / Grep safety",
-        text(w.enable_glob_grep_safety ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.enable_glob_grep_safety ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.enable_glob_grep_safety ? pal.success : pal.muted) |
-             (focus_row == 4 ? inverted : nothing),
+             (focus_row == 4 ? FocusedSetting : nothing),
         "Restrict search tools to allowed paths only",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Skill loading",
-        text(w.enable_skill_loading ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.enable_skill_loading ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.enable_skill_loading ? pal.success : pal.muted) |
-             (focus_row == 5 ? inverted : nothing),
+             (focus_row == 5 ? FocusedSetting : nothing),
         "Enable the skill system for extensible agent capabilities",
-        false, false));
+        false, false, columns));
     return vbox(body);
 }
 
 // --- MCP tab ---
 [[nodiscard]] inline Element RenderMCPTab(const WorkingSettings& w,
                                           int focus_row,
-                                          int selected_server) {
+                                          int selected_server, int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("MCP",
-        "Model Context Protocol servers (managed by services/mcp)"));
+        "Model Context Protocol servers (managed by services/mcp)", columns));
 
     body.push_back(SettingRow(
-        "Auto-start servers",
-        text(w.auto_start_mcp ? " [ON]  " : " [OFF] ") |
-             color(w.auto_start_mcp ? pal.success : pal.muted) |
-             (focus_row == 0 ? inverted : nothing),
-        "Start configured servers when the REPL launches",
-        false, false));
+        "Server lifecycle",
+        SettingsText(" [managed by runtime] ", ValueColumns(columns)) | color(pal.info) |
+            (focus_row == 0 ? FocusedSetting : nothing),
+        "Use /mcp to configure servers and inspect runtime status",
+        false, false, columns));
 
     // Server list
-    body.push_back(text(""));
-    body.push_back(text(" Configured servers:") | bold);
+    body.push_back(SettingsText("", ValueColumns(columns)));
+    body.push_back(SettingsText(" Configured servers:", ValueColumns(columns)) | bold);
     body.push_back(separator());
     if (w.mcp_servers.empty()) {
-        body.push_back(text("   (none — use /mcp add to configure)") | color(pal.muted));
+        body.push_back(SettingsText("   (none — use /mcp add to configure)", ValueColumns(columns)) | color(pal.muted));
     } else {
         for (std::size_t i = 0; i < w.mcp_servers.size(); ++i) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             const auto& s = w.mcp_servers[i];
             bool sel = (int)i == selected_server;
-            auto name = text(" " + s.name) | (sel ? bold : nothing);
-            auto transport = text(" [" + s.transport + "]") | color(pal.muted);
-            auto cmd = s.command.empty()
-                           ? (s.url.value_or("(remote)"))
-                           : s.command;
-            auto row = hbox({
-                sel ? text("›") | color(pal.info) : text(" "),
-                name | size(WIDTH, EQUAL, 18),
-                transport,
-                text("  "),
-                text(cmd) | color(pal.info),
+            auto cmd = s.command.empty() ? s.url.value_or("(remote)") : s.command;
+            auto row = vbox({
+                SettingsText(std::string(sel ? "› " : "  ") + s.name, columns)
+                    | (sel ? bold : nothing),
+                SettingsText("  [" + s.transport + "]", columns) | color(pal.muted),
+                SettingsText("  " + cmd, columns) | color(pal.info),
             });
+            if (sel) row = row | focus;
             if (sel) {
                 const auto& theme = loom::ui::design::theme::current_theme();
                 // Monochrome info and surface_tint_2 share the white index.
@@ -753,172 +774,164 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         }
     }
 
-    body.push_back(text(""));
-    body.push_back(hbox({
-        text(" [a]") | color(pal.info), text("dd "),
-        text("[r]") | color(pal.info), text("emove "),
-        text("[e]") | color(pal.info), text("dit "),
-    }) | color(pal.muted));
+    body.push_back(SettingsText("", ValueColumns(columns)));
+    body.push_back(SettingsText(" [a] /mcp add   [r] Remove selected", columns) | color(pal.muted));
 
     body.push_back(separator());
-    body.push_back(SettingRow(
-        "Server lifecycle",
-        text(w.auto_start_mcp ? " [auto-managed] " : " [manual] ") |
-             color(pal.info),
-        "MCP servers restart/reconnect automatically when auto-start is ON",
-        false, false));
+    body.push_back(SettingsText(" Servers connect and restart through the MCP runtime", columns)
+        | color(pal.muted));
     return vbox(body);
 }
 
 // --- LSP tab ---
 [[nodiscard]] inline Element RenderLSPTab(const WorkingSettings& w,
-                                          int focus_row) {
+                                          int focus_row, int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
-    body.push_back(RenderTabHeader("LSP", "Language Server Protocol clients"));
+    body.push_back(RenderTabHeader("LSP", "Language Server Protocol clients", columns));
 
     body.push_back(SettingRow(
         "Enable LSP",
-        text(w.enable_lsp ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.enable_lsp ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.enable_lsp ? pal.success : pal.muted) |
-             (focus_row == 0 ? inverted : nothing),
+             (focus_row == 0 ? FocusedSetting : nothing),
         "Start LSP clients for detected project languages",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "LSP timeout (s)",
-        text(std::format(" {} ", w.lsp_timeout)) | color(pal.info) |
-             (focus_row == 1 ? inverted : nothing),
+        SettingsText(std::format(" {} ", w.lsp_timeout), ValueColumns(columns)) | color(pal.info) |
+             (focus_row == 1 ? FocusedSetting : nothing),
         "Per-request timeout for LSP operations",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
-        "LSP instances", text(" (delegates to services/lsp) ") | dim,
+        "LSP instances", SettingsText(" (delegates to services/lsp) ", ValueColumns(columns)) | dim,
         "Running instances shown on the Status tab",
-        false, false));
+        false, false, columns));
 
     body.push_back(separator());
     body.push_back(SettingRow(
         "Per-language LSP config",
-        text(" (delegates to services/lsp registry) ") | color(pal.info),
+        SettingsText(" (delegates to services/lsp registry) ", ValueColumns(columns)) | color(pal.info),
         "Language-specific LSP server configurations managed externally",
-        false, false));
+        false, false, columns));
     return vbox(body);
 }
 
 // --- Bridge tab ---
 [[nodiscard]] inline Element RenderBridgeTab(const WorkingSettings& w,
-                                             int focus_row) {
+                                             int focus_row, int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("Bridge",
-        "IDE / editor bridge (VS Code, JetBrains, etc.)"));
+        "IDE / editor bridge (VS Code, JetBrains, etc.)", columns));
 
     body.push_back(SettingRow(
         "Enable bridge",
-        text(w.enable_bridge ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.enable_bridge ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.enable_bridge ? pal.success : pal.muted) |
-             (focus_row == 0 ? inverted : nothing),
+             (focus_row == 0 ? FocusedSetting : nothing),
         "Listen for incoming editor connections",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Outbound-only mode",
-        text(w.bridge_outbound_only ? " [ON]  " : " [OFF] ") |
+        SettingsText(w.bridge_outbound_only ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.bridge_outbound_only ? pal.success : pal.muted) |
-             (focus_row == 1 ? inverted : nothing),
+             (focus_row == 1 ? FocusedSetting : nothing),
         "Only allow REPL→editor calls (security hardening)",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Listen port",
-        text(std::format(" {} ", w.bridge_port)) | color(pal.info) |
-             (focus_row == 2 ? inverted : nothing),
+        SettingsText(std::format(" {} ", w.bridge_port), ValueColumns(columns)) | color(pal.info) |
+             (focus_row == 2 ? FocusedSetting : nothing),
         "TCP port for the bridge JWT-authenticated server",
-        false, false));
+        false, false, columns));
 
     body.push_back(separator());
     body.push_back(SettingRow(
         "JWT secret",
-        text(w.bridge_jwt_secret.empty()
+        SettingsText(w.bridge_jwt_secret.empty()
             ? std::string(" (auto-generated) ")
-            : std::string(" [configured] ")) | color(pal.warning) |
-             (focus_row == 3 ? inverted : nothing),
+            : std::string(" [configured] "), ValueColumns(columns)) | color(pal.warning) |
+             (focus_row == 3 ? FocusedSetting : nothing),
         "JWT secret for bridge authentication (rotate via CLI)",
-        false, false));
+        false, false, columns));
     body.push_back(SettingRow(
         "Allowed origins",
-        text(w.bridge_allowed_origins.empty()
+        SettingsText(w.bridge_allowed_origins.empty()
             ? std::string(" (any) ")
-            : std::format(" [{} entries] ", w.bridge_allowed_origins.size())) |
-             color(pal.info) | (focus_row == 4 ? inverted : nothing),
+            : std::format(" [{} entries] ", w.bridge_allowed_origins.size()), ValueColumns(columns)) |
+             color(pal.info) | (focus_row == 4 ? FocusedSetting : nothing),
         "CORS origin allowlist for bridge connections",
-        false, false));
+        false, false, columns));
     return vbox(body);
 }
 
-[[nodiscard]] inline Element RenderHooksTab() {
+[[nodiscard]] inline Element RenderHooksTab(int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
-        RenderTabHeader("Hooks", "Lifecycle hook configuration"),
+        RenderTabHeader("Hooks", "Lifecycle hook configuration", columns),
         SettingRow(
             "Configuration",
-            text(" Managed in settings JSON ") | color(pal.info),
+            SettingsText(" Managed in settings JSON ", ValueColumns(columns)) | color(pal.info),
             "Hook matchers and commands are loaded by the native hook registry",
             false,
-            false),
+            false, columns),
         SettingRow(
             "Runtime",
-            text(" PreToolUse / PostToolUse / Stop ") | color(pal.success),
+            SettingsText(" PreToolUse / PostToolUse / Stop ", ValueColumns(columns)) | color(pal.success),
             "Hook execution is reported through the lifecycle hook service",
             false,
-            false),
+            false, columns),
     });
 }
 
-[[nodiscard]] inline Element RenderPrivacyTab() {
+[[nodiscard]] inline Element RenderPrivacyTab(int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
-        RenderTabHeader("Privacy", "Telemetry and data handling"),
+        RenderTabHeader("Privacy", "Telemetry and data handling", columns),
         SettingRow(
             "Telemetry",
-            text(" Uses configured analytics sink ") | color(pal.info),
+            SettingsText(" Uses configured analytics sink ", ValueColumns(columns)) | color(pal.info),
             "Respect environment and managed settings opt-out controls",
             false,
-            false),
+            false, columns),
         SettingRow(
             "Secrets",
-            text(" Redacted in UI and logs ") | color(pal.success),
+            SettingsText(" Redacted in UI and logs ", ValueColumns(columns)) | color(pal.success),
             "API keys and sensitive tokens are never shown as editable sample values",
             false,
-            false),
+            false, columns),
     });
 }
 
-[[nodiscard]] inline Element RenderAboutTab() {
+[[nodiscard]] inline Element RenderAboutTab(int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
-        RenderTabHeader("About", "Loom native"),
+        RenderTabHeader("About", "Loom native", columns),
         SettingRow(
             "Runtime",
-            text(" C++23 modules ") | color(pal.info),
+            SettingsText(" C++23 modules ", ValueColumns(columns)) | color(pal.info),
             "Native CLI implementation with CMake/CTest gates",
             false,
-            false),
+            false, columns),
         SettingRow(
             "Version",
-            text(" 1.0.0 ") | color(pal.warning),
+            SettingsText(" 1.0.0 ", ValueColumns(columns)) | color(pal.warning),
             "Project version from CMakeLists.txt",
             false,
-            false),
+            false, columns),
     });
 }
 
 // --- Status tab (health lights) ---
 [[nodiscard]] inline Element RenderStatusTab(
-    const std::vector<SubsystemHealth>& rows) {
+    const std::vector<SubsystemHealth>& rows, int columns = 0) {
     Elements body;
     body.push_back(RenderTabHeader("Status",
-        "Live health of API, MCP, LSP and bridge subsystems"));
+        "Live health of API, MCP, LSP and bridge subsystems", columns));
 
     if (rows.empty()) {
-        body.push_back(text("  (no diagnostics yet — running checks…)") | color(loom::ui::design::theme::current_theme().palette->muted));
+        body.push_back(SettingsText("  (no diagnostics yet — running checks…)", ValueColumns(columns)) | color(loom::ui::design::theme::current_theme().palette->muted));
         return vbox(body);
     }
 
@@ -927,13 +940,11 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         auto state_label = (r.state == HealthState::OK)       ? "OK"
                          : (r.state == HealthState::Degraded) ? "Degraded"
                                                               : "Down";
-        auto line = hbox({
-            text(" " + icon + " ") | color(col),
-            text(r.name) | bold | size(WIDTH, EQUAL, 18),
-            text(state_label) | color(col) | size(WIDTH, EQUAL, 12),
-            text(format_ts(r.last_check)) | dim | size(WIDTH, EQUAL, 12),
-            text("  "),
-            text(r.message) | dim,
+        auto line = vbox({
+            SettingsText(" " + icon + " " + r.name, columns) | color(col) | bold,
+            SettingsText(std::string("   ") + state_label + "  " + format_ts(r.last_check), columns)
+                | color(col),
+            SettingsText("   " + r.message, columns) | color(loom::ui::design::theme::current_theme().palette->muted),
         });
         body.push_back(line);
     }
@@ -941,18 +952,18 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 }
 
 // --- Usage tab (cards + gauges + table) ---
-[[nodiscard]] inline Element RenderUsageTab(const UsageSnapshot& u) {
+[[nodiscard]] inline Element RenderUsageTab(const UsageSnapshot& u, int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("Usage",
-        "Cost, tokens and request counters (current session)"));
+        "Cost, tokens and request counters (current session)", columns));
 
     // --- 4 summary cards ---
     auto card = [](const std::string& label, const std::string& value,
                    Color c) {
         return vbox({
-            text(" " + label) | dim,
-            text(" " + value) | bold | color(c),
+            SettingsText(" " + label, 20) | dim,
+            SettingsText(" " + value, 20) | bold | color(c),
         }) | border | size(WIDTH, EQUAL, 22);
     };
 
@@ -966,11 +977,11 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         card("Requests",
              std::format("{}", u.total_requests), pal.warning),
     };
-    body.push_back(hbox(std::move(cards)));
-    body.push_back(text(""));
+    body.push_back(SettingsFlow(std::move(cards), columns, 1));
+    body.push_back(SettingsText("", ValueColumns(columns)));
 
     // --- Progress bars (gauge) ---
-    body.push_back(text(" Limits") | bold);
+    body.push_back(SettingsText(" Limits", ValueColumns(columns)) | bold);
     body.push_back(separator());
 
     auto pct_label = [](double p) {
@@ -978,51 +989,40 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     };
 
     body.push_back(hbox({
-        text(" Daily limit ") | size(WIDTH, EQUAL, 16),
+        SettingsText(" Daily limit ", ValueColumns(columns)) | size(WIDTH, EQUAL, 16),
         gauge(std::clamp(u.daily_limit_pct, 0.0, 1.0))
             | color(u.daily_limit_pct > 0.9 ? pal.danger : pal.success)
-            | size(WIDTH, EQUAL, 40),
-        text(" " + pct_label(u.daily_limit_pct) + " ") | dim,
+            | size(WIDTH, EQUAL, columns > 0 ? std::max(1, columns - 23) : 40),
+        SettingsText(" " + pct_label(u.daily_limit_pct) + " ", ValueColumns(columns)) | dim,
     }));
     body.push_back(hbox({
-        text(" Rate limit ") | size(WIDTH, EQUAL, 16),
+        SettingsText(" Rate limit ", ValueColumns(columns)) | size(WIDTH, EQUAL, 16),
         gauge(std::clamp(u.rate_limit_pct, 0.0, 1.0))
             | color(u.rate_limit_pct > 0.9 ? pal.danger : pal.warning)
-            | size(WIDTH, EQUAL, 40),
-        text(" " + pct_label(u.rate_limit_pct) + " ") | dim,
+            | size(WIDTH, EQUAL, columns > 0 ? std::max(1, columns - 23) : 40),
+        SettingsText(" " + pct_label(u.rate_limit_pct) + " ", ValueColumns(columns)) | dim,
     }));
-    body.push_back(text(""));
+    body.push_back(SettingsText("", ValueColumns(columns)));
 
     // --- Per-model table ---
-    body.push_back(text(" Per-model breakdown") | bold);
+    body.push_back(SettingsText(" Per-model breakdown", ValueColumns(columns)) | bold);
     body.push_back(separator());
     if (u.per_model.empty()) {
-        body.push_back(text("  (no requests recorded yet)") | dim);
+        body.push_back(SettingsText("  (no requests recorded yet)", ValueColumns(columns)) | dim);
     } else {
-        // header
-        body.push_back(hbox({
-            text(" Model") | bold | size(WIDTH, EQUAL, 28),
-            text(" Requests") | bold | size(WIDTH, EQUAL, 12),
-            text(" Tokens") | bold | size(WIDTH, EQUAL, 16),
-            text(" Cost") | bold | size(WIDTH, EQUAL, 12),
-        }));
-        body.push_back(separator());
         for (const auto& r : u.per_model) {
-            body.push_back(hbox({
-                text(" " + r.model_name) | size(WIDTH, EQUAL, 28),
-                text(std::format(" {}", r.requests))
-                    | color(pal.warning) | size(WIDTH, EQUAL, 12),
-                text(std::format(" {}↓ {}↑",
-                    r.input_tokens, r.output_tokens))
-                    | color(pal.info) | size(WIDTH, EQUAL, 16),
-                text(std::format(" ${:.4f}", r.cost_usd))
-                    | color(pal.success) | size(WIDTH, EQUAL, 12),
-            }));
+            body.push_back(SettingsText(" " + r.model_name, columns) | bold);
+            body.push_back(SettingsText(std::format(" Requests: {}", r.requests), columns)
+                | color(pal.warning));
+            body.push_back(SettingsText(std::format(" Tokens: {}↓ {}↑", r.input_tokens, r.output_tokens), columns)
+                | color(pal.info));
+            body.push_back(SettingsText(std::format(" Cost: ${:.4f}", r.cost_usd), columns)
+                | color(pal.success));
         }
     }
-    body.push_back(text(""));
+    body.push_back(SettingsText("", ValueColumns(columns)));
     body.push_back(hbox({
-        text(" [r]") | color(pal.info), text("efresh  "),
+        SettingsText(" [r]", ValueColumns(columns)) | color(pal.info), SettingsText("efresh  ", ValueColumns(columns)),
     }) | dim);
 
     return vbox(body);
@@ -1067,51 +1067,33 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 }
 
 [[nodiscard]] inline Element RenderFooter(
-    const ToastState& toast, bool dirty) {
+    const ToastState& toast, bool dirty, int columns = 0,
+    std::array<Box, 3>* action_boxes = nullptr) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-
-    // Text-style buttons (FTXUI Button() not used — keeps dialog rendering
-    // pure-Elements so keyboard dispatch stays in CatchEvent).
-    auto style_btn = [](std::string_view label, Color c, bool enabled = true) {
-        auto el = hbox({text(" ["), text(std::string(label))
-                            | color(c) | bold, text("] ")});
-        if (!enabled) el = el | dim;
-        return el;
+    auto action = [&](std::string label, Color ink, int index, bool enabled = true) {
+        auto element = text(std::move(label)) | color(ink) | bold;
+        if (!enabled) element = element | dim;
+        if (action_boxes) element = element | reflect((*action_boxes)[index]);
+        return element;
     };
-
-    auto save_btn  = style_btn("Save  Ctrl+S", pal.success, dirty);
-    auto reset_btn = style_btn("Reset  Ctrl+R", pal.warning);
-    auto close_btn = style_btn("Close  Esc", pal.danger);
-
-    auto dirty_marker = dirty
-        ? text(" * unsaved changes") | color(pal.warning)
-        : text("");
-
-    Element toast_el = text("");
+    Elements rows{separator(), SettingsFlow({
+        action("Ctrl+S Save", pal.success, 0, dirty),
+        action("Ctrl+R Reset", pal.warning, 1),
+        action("Esc Close", pal.danger, 2),
+    }, columns)};
+    if (dirty) rows.push_back(SettingsText("* unsaved changes", columns) | color(pal.warning));
     if (toast.active()) {
-        toast_el = hbox({
-            text(" "),
-            text(toast.message) | color(toast.semantic_role
-                ? loom::ui::design::tokens::token_by_role(
-                    *loom::ui::design::theme::current_theme().palette, *toast.semantic_role)
-                : (toast.color == Color{} ? pal.success : toast.color)) | bold,
-            filler(),
-        });
+        // Long diagnostics belong to the scrollable document. Keep the action
+        // bar bounded even when a failed write includes an arbitrarily long path.
+        const auto message = columns > 0 && string_width(toast.message) > columns * 2
+            ? std::string("Details below: End / PgDn") : toast.message;
+        rows.push_back(SettingsText(message, columns) | color(toast.semantic_role
+            ? loom::ui::design::tokens::token_by_role(pal, *toast.semantic_role)
+            : (toast.color == Color{} ? pal.success : toast.color)) | bold);
     }
-
-    return vbox({
-        separator(),
-        hbox({
-            save_btn,
-            text(" "),
-            reset_btn,
-            text(" "),
-            close_btn,
-            filler(),
-            dirty_marker,
-        }),
-        toast_el,
-    });
+    rows.push_back(SettingsFlow({text("←→ sections"), text("Tab/↑↓ fields"), text("PgUp/PgDn scroll"), text("Enter change")},
+                           columns) | color(pal.muted));
+    return vbox(std::move(rows));
 }
 
 // ============================================================
@@ -1131,8 +1113,11 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         WorkingSettings defaults;   // pristine snapshot for Reset
         SettingsTabId selected_tab;
         int focus_row = 0;
-        int mcp_selected_server = 0;
-        int mcp_tab_row = 1;        // which row inside MCP tab (0 = toggle, 1+ = list)
+        int manual_line = -1;
+        int document_rows = 1;
+        int focused_line = 0;
+        Box viewport;
+        std::array<Box, 3> action_boxes{{{1, 0, 1, 0}, {1, 0, 1, 0}, {1, 0, 1, 0}}};
         ToastState toast;
         bool dirty = false;
     };
@@ -1155,57 +1140,87 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     auto show_toast = [state](std::string msg, loom::ui::design::tokens::Role role = loom::ui::design::tokens::Role::Success) {
         state->toast.message = std::move(msg);
         state->toast.semantic_role = role;
-        state->toast.until = std::chrono::steady_clock::now()
-                             + std::chrono::seconds(3);
+        state->toast.until = role == loom::ui::design::tokens::Role::Danger
+            ? std::chrono::steady_clock::time_point::max()
+            : std::chrono::steady_clock::now() + std::chrono::seconds(3);
+    };
+
+    auto save = [state, show_toast] {
+        apply_to(state->working, *state->cfg);
+        auto result = state->cfg->save();
+        if (result) {
+            state->dirty = false;
+            state->defaults = state->working;
+            show_toast("✓ Settings saved");
+        } else {
+            show_toast("✗ Save failed: " + result.error().message,
+                       loom::ui::design::tokens::Role::Danger);
+        }
+    };
+    auto reset = [state, show_toast] {
+        state->working = state->defaults;
+        state->dirty = false;
+        state->manual_line = -1;
+        show_toast("↺ Reverted to last saved values");
+    };
+    auto close = [state] {
+        if (state->opts.on_close)
+            state->opts.on_close(state->dirty ? std::optional("Settings closed without saving")
+                                             : std::nullopt,
+                                 CommandResultDisplay::system);
     };
 
     return Renderer([state] {
+        return std::make_shared<SettingsLayoutNode>([state](int allocated_columns, int /*rows*/) -> Element {
+        const bool compact = allocated_columns < 72;
+        const int panel_columns = std::max(1, allocated_columns - (compact ? 2 : 22));
+        const int columns = panel_columns;
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         Element content;
         switch (state->selected_tab) {
             case SettingsTabId::General:
-                content = RenderGeneralTab(state->working, state->focus_row);
+                content = RenderGeneralTab(state->working, state->focus_row, columns);
                 break;
             case SettingsTabId::Model:
-                content = RenderModelTab(state->working, state->focus_row);
+                content = RenderModelTab(state->working, state->focus_row, columns);
                 break;
             case SettingsTabId::API:
-                content = RenderAPITab(state->working, state->focus_row);
+                content = RenderAPITab(state->working, state->focus_row, columns);
                 break;
             case SettingsTabId::Permissions:
-                content = RenderPermissionsTab(state->working, state->focus_row);
+                content = RenderPermissionsTab(state->working, state->focus_row, columns);
                 break;
             case SettingsTabId::Tools:
-                content = RenderToolsTab(state->working, state->focus_row);
+                content = RenderToolsTab(state->working, state->focus_row, columns);
                 break;
             case SettingsTabId::MCP:
                 content = RenderMCPTab(state->working, state->focus_row,
-                                       state->mcp_selected_server);
+                                       state->focus_row - 1, columns);
                 break;
             case SettingsTabId::LSP:
-                content = RenderLSPTab(state->working, state->focus_row);
+                content = RenderLSPTab(state->working, state->focus_row, columns);
                 break;
             case SettingsTabId::Bridge:
-                content = RenderBridgeTab(state->working, state->focus_row);
+                content = RenderBridgeTab(state->working, state->focus_row, columns);
                 break;
             case SettingsTabId::Hooks:
-                content = RenderHooksTab();
+                content = RenderHooksTab(columns);
                 break;
             case SettingsTabId::Privacy:
-                content = RenderPrivacyTab();
+                content = RenderPrivacyTab(columns);
                 break;
             case SettingsTabId::About:
-                content = RenderAboutTab();
+                content = RenderAboutTab(columns);
                 break;
             case SettingsTabId::Status:
-                content = RenderStatusTab(state->opts.status_rows);
+                content = RenderStatusTab(state->opts.status_rows, columns);
                 break;
             case SettingsTabId::Usage: {
                 UsageSnapshot snap;
                 if (state->opts.refresh_usage) {
                     state->opts.refresh_usage(snap);
                 }
-                content = RenderUsageTab(snap);
+                content = RenderUsageTab(snap, columns);
                 break;
             }
             case SettingsTabId::_COUNT:
@@ -1213,44 +1228,85 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                 break;
         }
 
-        auto sidebar = RenderSidebar(state->selected_tab);
+        if (state->toast.active() && string_width(state->toast.message) > columns * 2) {
+            content = vbox({content, separator(),
+                SettingsText(state->toast.message, columns) | color(state->toast.semantic_role
+                    ? loom::ui::design::tokens::token_by_role(pal, *state->toast.semantic_role)
+                    : pal.success)});
+        }
+        content->ComputeRequirement();
+        state->document_rows = std::max(1, content->requirement().min_y);
+        state->focused_line = content->requirement().selected_box.y_min;
+        if (state->manual_line >= 0) {
+            // Layout negotiation may visit a wider provisional box first.
+            // Clamp only the rendered focus, never the user's scroll position.
+            content = content | focusPosition(0,
+                std::clamp(state->manual_line, 0, state->document_rows - 1));
+        }
         auto body = vbox({
-            content | yframe | flex,
-            RenderFooter(state->toast, state->dirty),
+            content | yframe | reflect(state->viewport) | yflex,
+            RenderFooter(state->toast, state->dirty, panel_columns, &state->action_boxes),
         });
-
-        return window(
-            text(" Settings ") | bold | color(pal.primary),
-            hbox({sidebar, body | flex})
-        ) | color(pal.primary) | bgcolor(pal.background) | clear_under;
-    }) | CatchEvent([state, toggle, mark, show_toast](Event event) -> bool {
-
-        // --- Global hotkeys ---
-        // Save
-        if (is_ctrl_key(event, 's')) {
-            apply_to(state->working, *state->cfg);
-            auto res = state->cfg->save();
-            if (res) {
-                state->dirty = false;
-                state->defaults = state->working;
-                show_toast("✓ Settings saved");
-            } else {
-                show_toast("✗ Save failed: " + res.error().message,
-                           loom::ui::design::tokens::Role::Danger);
+        Element panel = body;
+        if (compact) {
+            panel = vbox({text(std::format(" {}  {}/{}", tab_label(state->selected_tab),
+                                static_cast<int>(state->selected_tab) + 1,
+                                static_cast<int>(SettingsTabId::_COUNT))) | bold,
+                          separator(), body | flex});
+        } else {
+            panel = hbox({RenderSidebar(state->selected_tab), body | flex});
+        }
+        return window(text(" Settings ") | bold | color(pal.primary), panel)
+            | color(pal.primary) | bgcolor(pal.background) | clear_under;
+        });
+    }) | CatchEvent([state, toggle, mark, show_toast, save, reset, close](Event event) -> bool {
+        if (is_ctrl_key(event, 's')) { save(); return true; }
+        if (is_ctrl_key(event, 'r')) { reset(); return true; }
+        if (event == Event::Escape) { close(); return true; }
+        if (event.is_mouse() && event.mouse().button == Mouse::Left &&
+            event.mouse().motion == Mouse::Pressed) {
+            const auto& mouse = event.mouse();
+            for (int index = 0; index < 3; ++index) {
+                if (!state->action_boxes[index].Contain(mouse.x, mouse.y)) continue;
+                if (index == 0 && state->dirty) save();
+                if (index == 1) reset();
+                if (index == 2) close();
+                return true;
             }
+        }
+        const auto row_count = [&] {
+            switch (state->selected_tab) {
+                case SettingsTabId::General: return 8;
+                case SettingsTabId::Model: return 6;
+                case SettingsTabId::API: return 6;
+                case SettingsTabId::Permissions: return 7;
+                case SettingsTabId::Tools: return 6;
+                case SettingsTabId::MCP: return 1 + static_cast<int>(state->working.mcp_servers.size());
+                case SettingsTabId::LSP: return 2;
+                case SettingsTabId::Bridge: return 5;
+                default: return 0;
+            }
+        }();
+        const int page = std::max(1, state->viewport.y_max - state->viewport.y_min);
+        if (event == Event::PageUp || event == Event::PageDown ||
+            event == Event::Home || event == Event::End ||
+            (row_count == 0 && (event == Event::ArrowUp || event == Event::ArrowDown))) {
+            int line = state->manual_line < 0 ? state->focused_line : state->manual_line;
+            if (event == Event::Home) line = 0;
+            else if (event == Event::End) line = state->document_rows - 1;
+            else if (event == Event::PageUp) line -= page;
+            else if (event == Event::PageDown) line += page;
+            else if (event == Event::ArrowUp) --line;
+            else ++line;
+            state->manual_line = std::clamp(line, 0, state->document_rows - 1);
             return true;
         }
-
-        // Close
-        if (event == Event::Escape) {
-            if (state->opts.on_close) {
-                state->opts.on_close(
-                    state->dirty ? std::optional("Settings closed without saving")
-                                 : std::nullopt,
-                    CommandResultDisplay::system);
-            }
-            return true;
-        }
+        // Field actions restore focus following; explicit document scrolling
+        // remains stable until a selection or section actually changes.
+        if (event == Event::Tab || event == Event::TabReverse ||
+            event == Event::ArrowLeft || event == Event::ArrowRight ||
+            event == Event::ArrowUp || event == Event::ArrowDown || event.is_character() ||
+            event == Event::Return) state->manual_line = -1;
 
         // --- Tab cycling (1..9/0 hotkeys + Ctrl+Tab) ---
         if (event.is_character()) {
@@ -1275,7 +1331,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                 state->focus_row = 0;
                 return true;
             }
-            if (ch == 'a' || ch == 'A') {
+            if ((ch == 'a' || ch == 'A') && state->selected_tab != SettingsTabId::MCP) {
                 state->selected_tab = SettingsTabId::About;
                 state->focus_row = 0;
                 return true;
@@ -1289,21 +1345,18 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
             return true;
         }
 
-        // --- Sidebar navigation: up/down when focus is on sidebar row 0 ---
-        // (Tab key cycles focus between sidebar and content rows.)
+        // Cycle the actual fields of the current section.
         if (event == Event::Tab) {
-            state->focus_row = (state->focus_row + 1) % 8;
+            state->focus_row = (state->focus_row + 1) % std::max(1, row_count);
             return true;
         }
         if (event == Event::TabReverse) {
-            state->focus_row = (state->focus_row + 7) % 8;
+            state->focus_row = (state->focus_row + std::max(1, row_count) - 1) % std::max(1, row_count);
             return true;
         }
 
-        // --- Up/Down changes sidebar tab OR row inside current tab ---
-        // Shift+Up / Shift+Down change sidebar. Plain Up/Down changes row.
-        // Simplified: if focus_row is 0 (sidebar-style) we cycle tabs,
-        // else we cycle a row index within the tab.
+        // Move between fields, continuing to adjacent sections at the ends.
+        // Read-only sections use document scrolling above instead.
         if (event == Event::ArrowUp || event == Event::Character('k')) {
             if (state->focus_row <= 0) {
                 // cycle tabs up
@@ -1317,7 +1370,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
             return true;
         }
         if (event == Event::ArrowDown || event == Event::Character('j')) {
-            if (state->focus_row >= 7) {
+            if (state->focus_row >= row_count - 1) {
                 // cycle tabs down
                 auto cur = static_cast<int>(state->selected_tab);
                 cur = (cur + 1) % static_cast<int>(SettingsTabId::_COUNT);
@@ -1335,12 +1388,14 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
             cur = (cur + static_cast<int>(SettingsTabId::_COUNT) - 1)
                   % static_cast<int>(SettingsTabId::_COUNT);
             state->selected_tab = static_cast<SettingsTabId>(cur);
+            state->focus_row = 0;
             return true;
         }
         if (event == Event::ArrowRight) {
             auto cur = static_cast<int>(state->selected_tab);
             cur = (cur + 1) % static_cast<int>(SettingsTabId::_COUNT);
             state->selected_tab = static_cast<SettingsTabId>(cur);
+            state->focus_row = 0;
             return true;
         }
 
@@ -1486,8 +1541,9 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                     if (row == 5) { toggle(w.enable_skill_loading); return true; }
                     break;
                 case SettingsTabId::MCP:
-                    if (state->mcp_tab_row == 0) {
-                        toggle(w.auto_start_mcp); return true;
+                    if (row == 0) {
+                        show_toast("Use /mcp for server lifecycle and status");
+                        return true;
                     }
                     break;
                 case SettingsTabId::LSP:
@@ -1518,26 +1574,18 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                 return true;
             }
             if (event == Event::Character('r')) {
-                if (!state->working.mcp_servers.empty()) {
-                    int idx = std::clamp(state->mcp_selected_server, 0,
+                if (state->focus_row > 0 && !state->working.mcp_servers.empty()) {
+                    int idx = std::clamp(state->focus_row - 1, 0,
                         (int)state->working.mcp_servers.size() - 1);
                     state->working.mcp_servers.erase(
                         state->working.mcp_servers.begin() + idx);
-                    state->mcp_selected_server = std::max(0,
-                        state->mcp_selected_server - 1);
+                    state->focus_row = std::min(state->focus_row,
+                        static_cast<int>(state->working.mcp_servers.size()));
                     mark();
                     show_toast("− MCP server removed");
                     return true;
                 }
             }
-        }
-
-        // Reset
-        if (is_ctrl_key(event, 'r')) {
-            state->working = state->defaults;
-            state->dirty = false;
-            show_toast("↺ Reverted to last saved values");
-            return true;
         }
 
         return false;

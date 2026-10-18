@@ -18,6 +18,7 @@
 
 import std;
 import loom.ui.app.app;
+import loom.config.config;
 import loom.ui.app.paste_coordinator;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
@@ -87,6 +88,77 @@ struct TempDirGuard {
     TempDirGuard(const TempDirGuard&) = delete;
     TempDirGuard& operator=(const TempDirGuard&) = delete;
 };
+
+// App-level settings shortcuts reach a default ConfigManager, whose project
+// save also discovers Git from cwd. Isolate that path as well as user config,
+// history and status commands so this public workflow cannot touch the repo.
+struct AppShortcutSandbox {
+    fs::path previous = fs::current_path();
+    fs::path root;
+    ScopedEnvVar home{"HOME"};
+    ScopedEnvVar user_config{"LOOM_CONFIG_DIR"};
+    ScopedEnvVar history{"LOOM_HISTORY_FILE"};
+    ScopedEnvVar status_command{"LOOM_STATUS_LINE_COMMAND"};
+    ScopedEnvVar status_enabled{"LOOM_STATUS_LINE_ENABLED"};
+    ScopedEnvVar status_padding{"LOOM_STATUS_LINE_PADDING"};
+
+    AppShortcutSandbox() {
+        std::vector<fs::path> candidates;
+        for (const char* variable : {"XDG_RUNTIME_DIR", "TMPDIR"})
+            if (const char* value = std::getenv(variable); value && *value)
+                candidates.emplace_back(value);
+        candidates.push_back(fs::temp_directory_path());
+        candidates.emplace_back("/dev/shm");
+        std::optional<fs::path> base;
+        for (const auto& candidate : candidates) {
+            std::error_code error;
+            const auto canonical = fs::canonical(candidate, error);
+            if (error || !fs::is_directory(canonical, error) || error) continue;
+            bool clean = true;
+            for (auto current = canonical; ; current = current.parent_path()) {
+                if (fs::exists(current / ".git", error) || error) { clean = false; break; }
+                if (current == current.parent_path()) break;
+            }
+            if (clean) { base = canonical; break; }
+        }
+        if (!base) throw std::runtime_error("App shortcut tests require a Git-ancestry-clean temporary base");
+        for (int attempt = 0; attempt < 64; ++attempt) {
+            root = *base / std::format("loom-app-shortcuts-{}-{}",
+                std::chrono::steady_clock::now().time_since_epoch().count(), std::random_device{}());
+            if (fs::create_directory(root)) break;
+            root.clear();
+        }
+        if (root.empty()) throw std::runtime_error("Could not allocate app shortcut sandbox");
+        fs::create_directories(root / "home");
+        fs::create_directories(root / "user");
+        fs::create_directories(root / "project" / ".loom");
+        home.set((root / "home").string());
+        user_config.set((root / "user").string());
+        history.set((root / "history.jsonl").string());
+        std::ofstream(root / "user" / "settings.json") << "{}";
+        std::ofstream(settings_file()) << R"({"compactMode":false,"preservedShortcut":"opaque"})";
+        fs::current_path(root / "project");
+    }
+    fs::path settings_file() const { return root / "project" / ".loom" / "settings.json"; }
+    AppShortcutSandbox(const AppShortcutSandbox&) = delete;
+    AppShortcutSandbox& operator=(const AppShortcutSandbox&) = delete;
+    ~AppShortcutSandbox() {
+        std::error_code error;
+        fs::current_path(previous, error);
+        if (error) { ADD_FAILURE() << "Restore app shortcut cwd: " << error.message(); return; }
+        fs::remove_all(root, error);
+        if (error) ADD_FAILURE() << "Remove app shortcut sandbox: " << error.message();
+    }
+};
+
+std::string PaintShortcutApp(const std::shared_ptr<loom::ui::AppAdapter>& app) {
+    auto screen = ftxui::Screen::Create(
+        ftxui::Dimension::Fixed(40), ftxui::Dimension::Fixed(28));
+    ftxui::Render(screen, app->Render());
+    screen.Clear();
+    ftxui::Render(screen, app->Render());
+    return strip_ansi(screen.ToString());
+}
 }
 
 
@@ -3697,4 +3769,67 @@ TEST_F(AppThreadBoundary, TypedAndHumanNotificationsRetainOriginAcrossRestoreCom
         EXPECT_TRUE(test_seams(app).screen_state_for_testing()->messages_store.messages.empty());
     }
     test_seams(app).set_query_running_for_testing(false);
+}
+
+
+TEST(AppRuntime, SettingsCtrlSSavesThroughRootWithoutStashingPrompt) {
+    AppShortcutSandbox sandbox;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.model_params.model = "test-model";
+    config.context_window.auto_compact = false;
+    config.cwd = fs::current_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, sandbox.root / "sessions", [] {});
+    constexpr std::string_view draft = "retain-draft";
+    for (char character : draft)
+        ASSERT_TRUE(app->OnEvent(ftxui::Event::Character(character)));
+    ASSERT_NE(PaintShortcutApp(app).find(draft), std::string::npos);
+    app->HandleCommand("/settings");
+    ASSERT_NE(PaintShortcutApp(app).find("Settings"), std::string::npos);
+    for (int field = 0; field < 7; ++field)
+        ASSERT_TRUE(app->OnEvent(ftxui::Event::Tab));
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::Return));
+    const auto edited = PaintShortcutApp(app);
+    EXPECT_NE(edited.find("Compact mode"), std::string::npos) << edited;
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::Character('\x13')));
+    loom::core::ConfigManager saved(sandbox.settings_file());
+    ASSERT_TRUE(saved.load(loom::core::LoadOptions{.quiet = true}));
+    EXPECT_TRUE(saved.settings().display.compact_mode)
+        << "Root AppAdapter must deliver Ctrl+S to the held Settings component";
+    std::ifstream stream(sandbox.settings_file());
+    const std::string persisted{std::istreambuf_iterator<char>(stream), {}};
+    EXPECT_NE(persisted.find("preservedShortcut"), std::string::npos);
+    EXPECT_NE(persisted.find("opaque"), std::string::npos);
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::Escape));
+    const auto closed = PaintShortcutApp(app);
+    EXPECT_NE(closed.find(draft), std::string::npos) << closed;
+    EXPECT_EQ(closed.find("Stashed"), std::string::npos) << closed;
+}
+
+TEST(AppRuntime, NormalCtrlSStillStashesAndRestoresPrompt) {
+    AppShortcutSandbox sandbox;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.model_params.model = "test-model";
+    config.context_window.auto_compact = false;
+    config.cwd = fs::current_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, sandbox.root / "sessions", [] {});
+    constexpr std::string_view draft = "normal-draft";
+    for (char character : draft)
+        ASSERT_TRUE(app->OnEvent(ftxui::Event::Character(character)));
+    ASSERT_NE(PaintShortcutApp(app).find(draft), std::string::npos);
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::Character('\x13')));
+    const auto stashed = PaintShortcutApp(app);
+    EXPECT_NE(stashed.find("Stashed"), std::string::npos) << stashed;
+    EXPECT_EQ(stashed.find(draft), std::string::npos) << stashed;
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::Character('\x13')));
+    const auto restored = PaintShortcutApp(app);
+    EXPECT_NE(restored.find(draft), std::string::npos) << restored;
+    EXPECT_EQ(restored.find("Stashed"), std::string::npos) << restored;
 }

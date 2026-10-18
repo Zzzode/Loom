@@ -335,3 +335,107 @@ Final independent graduation: **APPROVED** by
 `agent:/root/a11y_readiness_review`; no unresolved material findings. The
 previously approved four-part series may be committed and pushed with normal
 Git hooks, while preserving `.gitignore` and the stated validation limits.
+
+
+### Follow-up: Settings at forty columns (2026-10-18)
+
+The preceding forty-column Settings limitation is addressed by a local bug fix
+in `loom.ui.dialogs.settings_dialog`. The dialog negotiates its allocated FTXUI
+box; below 72 columns a section/index navigator replaces the fixed sidebar.
+Labels, controls, descriptions and long UTF-8 values wrap by terminal cells.
+Usage cards and action groups pack into complete rows before scroll-height
+measurement. The document uses the full allocated content width, follows selected
+fields, and offers independent PageUp/PageDown/Home/End reading. Save/Reset/Close
+and navigation hints stay outside the scroll area; reflected action bounds
+support mouse activation through the same keyboard callbacks. Draft and focus
+state survive resizing. No global terminal-size query, render ticker, shared UI
+abstraction, configuration key or persisted/public contract is introduced.
+
+MCP navigation now distinguishes lifecycle help from selected servers. Lifecycle
+management is explicitly delegated to `/mcp`: the old draft-only Auto-start
+boolean had no configuration reader/writer and is no longer offered as a saved
+setting. Enter opens lifecycle guidance without marking a draft dirty; removal
+targets the highlighted entry, and `a` displays
+the existing `/mcp add` delegation instead of being intercepted by About.
+Failed-save diagnostics remain available until another notification, with long
+details in the document and a bounded footer reading hint.
+
+Independent design/source review: `agent:/root/settings_narrow_review`.
+Independent native regression author: `agent:/root/settings_narrow_tests`.
+The baseline reproduced eight failures in nine tests. Twelve strengthened native
+`SettingsLayout.*` regressions now cover seven themes, all thirteen sections,
+40x18/28, held-component resizing, complete long-value chunks, field focus,
+hermetic writes/unknown-key preservation, footer mouse actions, exact MCP
+selection, permission-list focus and long failed-save diagnostics. Review findings about iterative
+layout lifetime, scrollbar background clearing and transient error lifetime
+were resolved. A provisional wider layout must never mutate the user's scroll
+position; its regression includes the final Usage cost and error-path tail.
+
+Current validation artifacts and terminal captures are retained in
+`build/settings-narrow-validation-20261018/`. Final dual-preset and live
+acceptance results are recorded with that evidence bundle.
+
+
+Real keyboard acceptance uncovered an App-level shortcut priority defect that
+pure Settings component tests could not observe. The global Ctrl+S prompt
+stash checked queued dialogs only; SettingsView uses a held component outside
+that queue. Actual PTY input hex13 arrived with XON/XOFF disabled, but the App
+returned before forwarding to Settings. The minimal App-local exclusion now
+includes SettingsView. Two public AppAdapter workflow regressions exercise
+project-file saving with unknown-key preservation and prompt retention, and
+unchanged Normal stash/pop. The old App fails the Settings case while passing
+Normal; this is a required cross-module root-cause fix, with no new public or
+persisted contract. Final acceptance requires a fresh freeze and both complete
+suites after this correction; earlier 2995-case results are intermediate.
+
+
+Final follow-up validation on the corrected App route:
+
+| Preset | Registered | Passed | Skipped | Disabled | Failed | Wall seconds |
+|---|---:|---:|---:|---:|---:|---:|
+| Debug | 2997 | 2972 | 23 | 2 | 0 | 539.37 |
+| Release | 2997 | 2972 | 23 | 2 | 0 | 435.95 |
+
+These fresh unfiltered default-environment `ctest --preset <preset> -j1`
+runs retain all 2983 baseline names and add fourteen, with no duplicates or
+removed names. Final default-preset builds pass with `-Werror`; 77 focused
+regressions pass in each preset. Graph/core8/UI9/store/TLL, inline-definition,
+theme and RFC checks pass. The frozen input set covers 2697 Git-visible files
+and 218 executed binary hashes; only this final documentation append is allowed
+a separately recorded post-test hash. Eight owned files match between primary
+and the isolated checkout. The original unowned `.gitignore` and user settings
+retain their recorded content and permissions; user settings also retain mtime.
+
+The final native Release SHA-256 is
+`e7c172c03d888f2049e4619f80861c9aafe15c491671e15b69d4fb9e3735ed0e`.
+Actual PTY input and fixture project files prove Ctrl+S saves, Ctrl+R restores,
+and the visible Save mouse action persists its value at 40x18. Captures show
+complete fixed action/navigation rows in light and dark themes, API Home/End
+including the long endpoint tail and final field at 40x28, and held selection
+with restored sidebar at 80x34. Dark MCP `a` delegates to `/mcp add`; lifecycle
+Enter-help/no-dirty is verified by the focused native component regression.
+Both CLI processes exit 0; owned staged configs and servers are removed.
+xterm renders the native PTY stream, without REA, synthetic product UI or a
+provider endpoint call. Current screenshots use dummy configuration only.
+
+Earlier attempts remain explicit: the pre-App-correction 2995-case Release
+full had one scroll-copy failure; an unchanged isolated retry passed. The
+complete selected text existed in its OSC52 fallback, but the specific native
+clipboard backend failure cause was not logged. This is not a proven Settings
+regression or a proven timeout. That intermediate first-run failure is retained
+separately from both final zero-failure full suites. Initial red layout tests,
+interim contrast/opacity regressions and the corrected fixture-isolation failure
+also remain in the evidence bundle. No failed run is relabeled as first-pass
+success.
+
+Independent source/design review is recorded by
+`agent:/root/settings_narrow_review`; final readiness and evidence review by
+`agent:/root/settings_narrow_readiness`. Detailed reports, raw PTY records,
+input hex logs, screenshot metadata, full XML and preservation audit live in
+`build/settings-narrow-validation-20261018/`. Cell wrapping may split English
+words; all cells remain accessible. Physical/custom/translucent palettes,
+ASan/TSan, Linux/Windows, hosted CI timing and the skipped live-provider tests
+remain unverified. No new public configuration, persisted format, CLI option
+or wire contract is introduced. The App event-entry guard is the necessary
+shared routing correction described above. These eight follow-up files remain
+uncommitted; no push was performed.

@@ -99,6 +99,14 @@ Screen Paint(const Component& component, int columns = 40, int rows = 18) {
     Render(screen, component->Render());
     return screen;
 }
+Screen PaintText(const std::string& value, int columns) {
+    auto element = settings::SettingsText(value, columns);
+    element->ComputeRequirement();
+    auto screen = Screen::Create(Dimension::Fixed(columns),
+                                 Dimension::Fixed(element->requirement().min_y));
+    Render(screen, element);
+    return screen;
+}
 std::optional<std::pair<int, int>> Find(const Screen& screen, std::string_view word) {
     for (int y = 0; y < screen.dimy(); ++y)
         for (int x = 0; x + static_cast<int>(word.size()) <= screen.dimx(); ++x) {
@@ -242,6 +250,59 @@ TEST(SettingsLayout, FocusRevealsLastGeneralFieldWithoutLosingActions) {
     EXPECT_TRUE(component->OnEvent(Event::Return));
     EXPECT_TRUE(component->OnEvent(Control('s')));
     EXPECT_TRUE(config.settings().display.compact_mode);
+}
+
+TEST(SettingsLayout, ProseKeepsWholeEnglishWordsAtFortyColumns) {
+    TempSettings temp;
+    loom::core::ConfigManager config(temp.file);
+    auto component = settings::MakeSettingsDialog(config);
+    FocusLastGeneral(component);
+    const auto screen = Paint(component);
+    FooterVisible(screen);
+    // Check physical rows: joining row ink would hide a split word.
+    for (auto word : {"Minimal", "output", "formatting", "smaller", "terminals"})
+        EXPECT_TRUE(Find(screen, word)) << word << '\n' << screen.ToString();
+
+    const auto prose = PaintText(
+        "Automatically continue tool-use chains without confirmation", 40);
+    for (auto word : {"Automatically", "continue", "tool-use", "chains", "without", "confirmation"})
+        EXPECT_TRUE(Find(prose, word)) << word << '\n' << prose.ToString();
+}
+
+TEST(SettingsLayout, WordWrapPreservesHardLinesIndentationAndUtf8) {
+    const auto screen = PaintText("  alpha beta\n\ncafe\u0301 中文 settings\n", 12);
+    ASSERT_EQ(screen.dimy(), 5) << screen.ToString();
+    EXPECT_EQ(Find(screen, "alpha beta"), (std::pair{2, 0}));
+    for (int x = 0; x < screen.dimx(); ++x) {
+        EXPECT_EQ(screen.PixelAt(x, 1).character, " ");
+        EXPECT_EQ(screen.PixelAt(x, 4).character, " ");
+    }
+    EXPECT_EQ(screen.PixelAt(3, 2).character, "e\u0301");
+    EXPECT_EQ(screen.PixelAt(5, 2).character, "中");
+    EXPECT_EQ(screen.PixelAt(7, 2).character, "文");
+    EXPECT_EQ(Find(screen, "settings"), (std::pair{0, 3}));
+
+    const auto mixed = PaintText("中文smaller terminals", 10);
+    EXPECT_TRUE(Find(mixed, "smaller")) << mixed.ToString();
+    EXPECT_TRUE(Find(mixed, "terminals")) << mixed.ToString();
+    EXPECT_EQ(PaintText("", 40).dimy(), 1);
+    EXPECT_EQ(PaintText("\n\n", 40).dimy(), 3);
+}
+
+TEST(SettingsLayout, OverlongUrlRemainsLosslessAcrossPhysicalRows) {
+    const std::string endpoint = "https://example.invalid/" + Join(UniqueChunks("URL")) +
+        "/路径?query=value%2Fother&last=URLTAIL";
+    for (int columns : {7, 40}) {
+        SCOPED_TRACE(columns);
+        const auto screen = PaintText(endpoint, columns);
+        std::string recovered;
+        for (int y = 0; y < screen.dimy(); ++y)
+            for (int x = 0; x < screen.dimx(); ++x) {
+                const auto& glyph = screen.PixelAt(x, y).character;
+                if (glyph != " ") recovered += glyph;
+            }
+        EXPECT_EQ(recovered, endpoint) << screen.ToString();
+    }
 }
 
 TEST(SettingsLayout, HeldComponentPreservesSelectionAndDraftAcrossResize) {

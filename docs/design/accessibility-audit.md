@@ -439,3 +439,56 @@ remain unverified. No new public configuration, persisted format, CLI option
 or wire contract is introduced. The App event-entry guard is the necessary
 shared routing correction described above. These eight follow-up files remain
 uncommitted; no push was performed.
+
+
+### Follow-up: word-aware Settings text (2026-10-18)
+
+The remaining forty-column English-word split is corrected inside the existing
+SettingsText implementation unit. Greedy runs prefer ASCII-space word boundaries,
+with wide glyphs providing CJK break points. Only a token wider than the allocated
+line falls back to terminal-cell splitting, so long URLs, paths and hashes remain
+fully readable. Combining glyphs, explicit hard lines, blank/trailing lines and
+fitting initial indentation are retained; separating spaces are replaced by an
+inserted soft break. Configuration values are never modified by display wrapping.
+The pinned FTXUI paragraph helper was considered but uses space-split flex layout
+without the required explicit-line/oversized-token behavior. No shared abstraction,
+module interface, configuration, persisted data or public contract is changed.
+
+Three native SettingsLayout regressions check complete words on physical Screen
+rows, mixed-width/combining glyphs and hard lines, and exact long-URL reconstruction
+at seven and forty cells. The old wrapper fails two of these three cases while
+retaining URL completeness. Existing section/focus/footer/write/opacity/contrast
+regressions remain required. Independent source reviewer:
+`agent:/root/settings_wordwrap_review`. Current source review is approved; final
+build, full-suite and native terminal evidence is recorded in
+`build/settings-wordwrap-validation-20261018/` before graduation. No commit or push
+is part of this follow-up request.
+
+
+Final word-wrap validation:
+
+| Preset | Registered | Passed | Skipped | Disabled | Failed | Wall seconds |
+|---|---:|---:|---:|---:|---:|---:|
+| Debug | 3000 | 2975 | 23 | 2 | 0 | 557.40 |
+| Release | 3000 | 2975 | 23 | 2 | 0 | 470.36 |
+
+Both are fresh, unfiltered serial default-environment runs. Complete XML names
+match registration exactly; all 2997 baseline tests and the three additions
+remain, with no omissions or duplicates. Default Debug/Release builds and all
+80 focused cases per preset pass with -Werror; graph/core8/UI9/store/TLL,
+inline-definition, theme and RFC lint pass. The frozen inputs cover 2697
+Git-visible files and 218 executable hashes. This result-only documentation
+append is separately hashed after execution; no product/test/binary changed.
+
+Real native Release PTY frames show complete English prose in light/dark
+40x18, an intact fixed footer, actual Ctrl+S persistence, full URL including
+ENDPOINT-TAIL at 40x28, document End access, and an 80-column sidebar restored
+through the held component. xterm displays the native PTY stream without REA;
+fixtures use dummy configuration and no provider endpoint. Both sessions exit
+0, owned staged configuration and servers are removed, and original user
+settings retain hash/mode/mtime. URI path segments can still split inside one
+oversized URL; no segment-atomic policy is claimed. General Unicode line-break
+rules, other platforms, custom physical palettes, ASan/TSan and skipped live
+provider cases remain outside this acceptance. All follow-up changes remain
+uncommitted; final independent evidence verdict is recorded in
+`build/settings-wordwrap-validation-20261018/source-review.md`.

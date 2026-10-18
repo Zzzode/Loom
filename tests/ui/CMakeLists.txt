@@ -262,6 +262,7 @@ add_executable(test_runtime_agents
     test_runtime_agent_activity.cpp
     test_instance_browser.cpp
     test_app_runtime_agents.cpp
+    test_permission_coordinator.cpp
     ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_runtime_agents ${_ui_test_libs})
 gtest_discover_tests(test_runtime_agents DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

@@ -7,7 +7,11 @@
 
 import std;
 import loom.orchestration.agent;
+import loom.query.query_engine;
 import loom.tools.agent_runtime;
+import loom.tools.team;
+import loom.teams.team_helpers;
+import loom.tasks.support;
 import loom.tools.tool;
 import loom.tools.runtime_registry;
 import loom.services.api.streaming;
@@ -531,6 +535,7 @@ TEST_P(AgentWireCancellationResume, CancelledToolBatchRetainsMatchedResultsForRe
     ASSERT_TRUE(record);
     ASSERT_EQ(record->status, runtime::NativeAgentStatus::Cancelled);
     std::map<std::string, std::string> saved_results;
+    std::map<std::string, bool> saved_errors;
     for (const auto& entry : record->sidechain_entries) {
         const auto parsed = json::parse(entry);
         ASSERT_TRUE(parsed);
@@ -541,12 +546,17 @@ TEST_P(AgentWireCancellationResume, CancelledToolBatchRetainsMatchedResultsForRe
                 if (part.get("type").as_str() == "text") text += part.get("text").as_str();
             });
             saved_results.emplace(block.get("tool_use_id").as_str(), std::move(text));
+            const auto error = block.get("is_error");
+            saved_errors.emplace(block.get("tool_use_id").as_str(), error.is_bool() && error.as_bool());
+            if (block.get("tool_use_id").as_str() == "cancel_batch_completed") EXPECT_FALSE(error.valid());
         });
     }
     ASSERT_EQ(saved_results.size(), 3u);
     ASSERT_TRUE(saved_results.contains("cancel_batch_completed"));
     ASSERT_TRUE(saved_results.contains("cancel_batch_interrupted"));
     ASSERT_TRUE(saved_results.contains("cancel_batch_unexecuted"));
+    EXPECT_EQ(saved_errors, (std::map<std::string, bool>{
+        {"cancel_batch_completed", false}, {"cancel_batch_interrupted", true}, {"cancel_batch_unexecuted", true}}));
     EXPECT_EQ(saved_results.at("cancel_batch_completed"), "recorded");
     EXPECT_NE(saved_results.at("cancel_batch_interrupted").find("cancelled"), std::string::npos);
     EXPECT_NE(saved_results.at("cancel_batch_interrupted").find("side effects"), std::string::npos);
@@ -563,6 +573,7 @@ TEST_P(AgentWireCancellationResume, CancelledToolBatchRetainsMatchedResultsForRe
     ASSERT_TRUE(parsed);
     std::set<std::string> call_ids;
     std::map<std::string, std::string> resumed_results;
+    std::map<std::string, bool> resumed_errors;
     parsed->root().get("messages").iter([&](json::JsonVal message) {
         if (protocol == "messages") {
             message.get("content").iter([&](json::JsonVal block) {
@@ -576,6 +587,9 @@ TEST_P(AgentWireCancellationResume, CancelledToolBatchRetainsMatchedResultsForRe
                         if (part.get("type").as_str() == "text") text += part.get("text").as_str();
                     });
                     resumed_results.emplace(block.get("tool_use_id").as_str(), std::move(text));
+                    const auto error = block.get("is_error");
+                    resumed_errors.emplace(block.get("tool_use_id").as_str(), error.is_bool() && error.as_bool());
+                    if (block.get("tool_use_id").as_str() == "cancel_batch_completed") EXPECT_FALSE(error.valid());
                 }
             });
         } else if (message.get("role").as_str() == "assistant") {
@@ -588,7 +602,12 @@ TEST_P(AgentWireCancellationResume, CancelledToolBatchRetainsMatchedResultsForRe
     });
     EXPECT_EQ(call_ids, (std::set<std::string>{
         "cancel_batch_completed", "cancel_batch_interrupted", "cancel_batch_unexecuted"}));
-    EXPECT_EQ(resumed_results, saved_results);
+    auto expected_results = saved_results;
+    if (protocol == "messages") EXPECT_EQ(resumed_errors, saved_errors);
+    else for (auto& [id, text] : expected_results) {
+        if (saved_errors.at(id)) text = "[tool_error] " + text;
+    }
+    EXPECT_EQ(resumed_results, expected_results);
     EXPECT_NE(bodies[1].find("Continue without repeating completed or cancelled work"), std::string::npos);
     EXPECT_EQ(completed_probe->inputs, (std::vector<std::string>{R"({"value":"completed first"})"}));
     EXPECT_EQ(interrupted_probe->calls.load(), 1);
@@ -975,7 +994,7 @@ TEST(AgentWire, DuplicateResumeCannotResetActiveContextOrNotification) {
     const auto original = runtime::native_agent_store().get("exclusive-resume");
     ASSERT_TRUE(original);
     resume.host_agent_resume = loom::core::HostAgentResumeConstraint{
-        "exclusive-resume", original->agent_type, "owner"};
+        "exclusive-resume", original->agent_type, "owner", original->cwd};
     const auto reject_without_effects = [&](const loom::core::ToolInput& attempt) {
         const auto before = runtime::native_agent_store().get("exclusive-resume");
         const auto denied = tool.execute(attempt);
@@ -1039,4 +1058,664 @@ TEST(AgentWire, DuplicateResumeCannotResetActiveContextOrNotification) {
     const auto bodies = server.bodies();
     ASSERT_EQ(bodies.size(), 2u);
     EXPECT_NE(bodies.back().find("retained result"), std::string::npos);
+}
+
+TEST(AgentWire, AcceptedBudgetPendingInputPrecedesNewContinuationExactlyOnce) {
+    AgentWireSandbox sandbox;
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool released = false;
+    struct Release {
+        std::mutex& mutex;
+        std::condition_variable& cv;
+        bool& released;
+        ~Release() { { std::lock_guard lock(mutex); released = true; } cv.notify_all(); }
+    };
+    AgentWireServer server([&](const auto&, auto& response, std::size_t index) {
+        if (index == 0) {
+            std::unique_lock lock(mutex);
+            cv.wait(lock, [&] { return released; });
+        }
+        response.set_content(openai_text(index == 0 ? "first turn ended" : "queued guidance processed"), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    config.max_turns = 1;
+    config.api_context = agent_wire_context(server);
+    loom::tools::AgentTool tool(config, 0, &registry);
+    Release release{mutex, cv, released};
+    auto input = agent_wire_input("fifo-worker", true);
+    input.parent_session_id = "owner";
+    ASSERT_TRUE(tool.execute(input));
+    ASSERT_TRUE(server.wait_for_requests(1));
+    auto& store = runtime::native_agent_store();
+    ASSERT_TRUE(store.enqueue_owned_message("fifo-worker", "owner", registry.background_stop_token(), "pending-A-unique"));
+    ASSERT_TRUE(store.enqueue_owned_message("fifo-worker", "owner", registry.background_stop_token(), "pending-B-unique"));
+    { std::lock_guard lock(mutex); released = true; }
+    cv.notify_all();
+    store.wait_for_background_agents();
+    auto failed = store.get("fifo-worker");
+    ASSERT_TRUE(failed);
+    EXPECT_EQ(failed->status, runtime::NativeAgentStatus::Failed);
+    EXPECT_EQ(failed->pending_messages, (std::vector<std::string>{"pending-A-unique", "pending-B-unique"}));
+    EXPECT_FALSE(store.enqueue_owned_message("fifo-worker", "owner", registry.background_stop_token(), "ended input"));
+    auto resume = loom::core::ToolInput::from_json(
+        R"({"agent_id":"fifo-worker","resume_existing":true,"run_in_background":true,"prompt":"continuation-C-unique"})");
+    resume.parent_session_id = "owner";
+    ASSERT_TRUE(tool.execute(resume));
+    store.wait_for_background_agents();
+    const auto record = store.get("fifo-worker");
+    ASSERT_TRUE(record);
+    EXPECT_EQ(record->status, runtime::NativeAgentStatus::Completed);
+    EXPECT_TRUE(record->pending_messages.empty());
+    const auto bodies = server.bodies();
+    ASSERT_EQ(bodies.size(), 2u);
+    const auto& request = bodies.back();
+    const auto a = request.find("pending-A-unique");
+    const auto b = request.find("pending-B-unique");
+    const auto c = request.find("continuation-C-unique");
+    ASSERT_NE(a, std::string::npos);
+    ASSERT_NE(b, std::string::npos);
+    ASSERT_NE(c, std::string::npos);
+    EXPECT_LT(a, b);
+    EXPECT_LT(b, c);
+    for (const auto* text : {"pending-A-unique", "pending-B-unique", "continuation-C-unique"}) {
+        const auto first = request.find(text);
+        EXPECT_EQ(request.find(text, first + std::string_view(text).size()), std::string::npos);
+        std::vector<std::size_t> found;
+        for (std::size_t i = 0; i < record->sidechain_entries.size(); ++i) {
+            if (record->sidechain_entries[i].find(text) != std::string::npos) found.push_back(i);
+        }
+        EXPECT_EQ(found.size(), 1u) << text;
+    }
+}
+
+TEST(AgentWire, HostNativeTeamResumePreservesMemberAndTerminalResultRoute) {
+    AgentWireSandbox sandbox;
+    AgentWireEnv team_path("LOOM_TEAM_RUNTIME_DIR", (sandbox.path / "teams").string());
+    auto& teams = loom::tools::global_team_store();
+    teams.clear_for_testing();
+    struct ClearTeams { ~ClearTeams() { loom::tools::global_team_store().clear_for_testing(); } } clear_teams;
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool released = false;
+    struct Release {
+        std::mutex& mutex;
+        std::condition_variable& cv;
+        bool& released;
+        ~Release() { { std::lock_guard lock(mutex); released = true; } cv.notify_all(); }
+    };
+    AgentWireServer server([&](const auto&, auto& response, std::size_t index) {
+        if (index >= 1) {
+            std::unique_lock lock(mutex);
+            cv.wait(lock, [&] { return released; });
+        }
+        response.set_content(openai_text(index == 0 ? "old retained answer" : index == 1 ? "sibling completed" : "team continuation answer"), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    config.api_context = agent_wire_context(server);
+    loom::tools::AgentTool tool(config, 0, &registry);
+    Release release{mutex, cv, released};
+    auto input = agent_wire_input("team-member", true);
+    input.parent_session_id = "owner";
+    ASSERT_TRUE(tool.execute(input));
+    auto& store = runtime::native_agent_store();
+    store.wait_for_background_agents();
+    auto record = *store.get("team-member");
+    record.team_name = "existing-team";
+    record.name = "same-name";
+    record.teammate_backend = "in-process";
+    record.teammate_task_id = "original-backend-task";
+    store.upsert(record);
+    ASSERT_TRUE(teams.create("existing-team", "existing-team", {
+        loom::tools::TeamMember{.agent_id = "team-member", .status = loom::tools::MemberStatus::Done,
+            .current_task = "retained-assignment"},
+        loom::tools::TeamMember{.agent_id = "team-sibling", .status = loom::tools::MemberStatus::Working}}));
+    auto sibling = runtime::make_native_agent_record("team-sibling", record.agent_type);
+    sibling.parent_session_id = "owner";
+    sibling.team_name = record.team_name;
+    sibling.teammate_backend = "in-process";
+    sibling.cwd = record.cwd;
+    sibling.status = runtime::NativeAgentStatus::Completed;
+    sibling.transcript = {"user: original sibling assignment"};
+    store.upsert(sibling);
+    auto sibling_input = loom::core::ToolInput::from_json(
+        R"({"agent_id":"team-sibling","resume_existing":true,"run_in_background":true,"prompt":"finish sibling work"})");
+    sibling_input.parent_session_id = "owner";
+    ASSERT_TRUE(tool.execute(sibling_input));
+    ASSERT_TRUE(server.wait_for_requests(2));
+    auto resume = loom::core::ToolInput::from_json(
+        R"({"agent_id":"team-member","resume_existing":true,"run_in_background":true,"prompt":"continue same team member"})");
+    resume.parent_session_id = "owner";
+    resume.host_agent_resume = loom::core::HostAgentResumeConstraint{
+        record.agent_id, record.agent_type, "owner", record.cwd, record.team_name,
+        record.name, record.teammate_backend, record.teammate_task_id, record.teammate_pane_id};
+    const auto started = tool.execute(resume);
+    ASSERT_TRUE(started && !started->is_error) << (started ? result_text(*started) : started.error().format());
+    ASSERT_TRUE(server.wait_for_requests(3));
+    const auto running = teams.get("existing-team");
+    ASSERT_TRUE(running);
+    ASSERT_EQ(running->members.size(), 2u);
+    EXPECT_EQ(running->members.front().status, loom::tools::MemberStatus::Working);
+    EXPECT_EQ(running->members.front().current_task, "retained-assignment");
+    { std::lock_guard lock(mutex); released = true; }
+    cv.notify_all();
+    store.wait_for_background_agents();
+    const auto completed = store.get("team-member");
+    ASSERT_TRUE(completed);
+    EXPECT_EQ(completed->status, runtime::NativeAgentStatus::Completed);
+    EXPECT_EQ(completed->team_name, record.team_name);
+    EXPECT_EQ(completed->teammate_backend, record.teammate_backend);
+    EXPECT_EQ(completed->teammate_task_id, record.teammate_task_id);
+    const auto finished_team = teams.get("existing-team");
+    ASSERT_TRUE(finished_team);
+    ASSERT_EQ(finished_team->members.size(), 2u);
+    EXPECT_EQ(finished_team->members.front().agent_id, "team-member");
+    EXPECT_EQ(finished_team->members.front().status, loom::tools::MemberStatus::Done);
+    EXPECT_EQ(finished_team->members.front().last_result, "team continuation answer");
+    EXPECT_EQ(finished_team->members.back().agent_id, "team-sibling");
+    EXPECT_EQ(finished_team->members.back().status, loom::tools::MemberStatus::Done);
+    EXPECT_EQ(finished_team->members.back().last_result, "sibling completed");
+    EXPECT_NE(server.bodies().back().find("old retained answer"), std::string::npos);
+    auto removed = teams.remove("existing-team");
+    ASSERT_TRUE(removed);
+    const auto denied = tool.execute(resume);
+    ASSERT_TRUE(denied);
+    EXPECT_TRUE(denied->is_error);
+    EXPECT_EQ(server.bodies().size(), 3u);
+}
+
+namespace {
+loom::tools::RuntimeToolOptions registry_wire_options(const AgentWireServer& server) {
+    loom::tools::RuntimeToolOptions options;
+    options.permission_check = [](std::string_view, std::string_view, std::string_view) {
+        return loom::tools::AgentLivePermissionCheck{};
+    };
+    options.permission_hook_valid_for_background = true;
+    options.agent_tool_factory = loom::tools::make_agent_tool;
+    options.default_model = "wire-model";
+    options.api_context = agent_wire_context(server);
+    return options;
+}
+
+std::set<std::string> request_tool_names(std::string_view body) {
+    std::set<std::string> names;
+    const auto parsed = json::parse(body);
+    if (!parsed) return names;
+    parsed->root().get("tools").iter([&](json::JsonVal tool) {
+        names.emplace(tool.get("function").get_string("name"));
+    });
+    return names;
+}
+
+std::size_t sidechain_prompt_count(const std::vector<std::string>& entries, std::string_view prompt) {
+    std::size_t count = 0;
+    for (const auto& entry : entries) {
+        const auto parsed = json::parse(entry);
+        if (!parsed) continue;
+        const auto message = parsed->root().get("message");
+        if (message.get_string("role") == "user" &&
+            runtime::json_text_from_content(message.get("content")) == prompt) ++count;
+    }
+    return count;
+}
+
+std::size_t request_prompt_count(std::string_view body, std::string_view prompt) {
+    std::size_t count = 0;
+    const auto parsed = json::parse(body);
+    if (!parsed) return count;
+    parsed->root().get("messages").iter([&](json::JsonVal message) {
+        if (message.get_string("role") == "user" &&
+            runtime::json_text_from_content(message.get("content")) == prompt) ++count;
+    });
+    return count;
+}
+}
+
+TEST(AgentWire, FreshBackgroundPromptHasOneStructuredSidechainEntryAcrossObserverReload) {
+    AgentWireSandbox sandbox;
+    AgentWireEnv team_name("LOOM_TEAM_NAME", "");
+    AgentWireServer server([](const auto&, auto& response, std::size_t) {
+        response.set_content(openai_text("single prompt complete"), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    loom::tools::register_runtime_tools(registry, registry_wire_options(server));
+    auto& store = runtime::native_agent_store();
+    for (const bool observe : {false, true}) {
+        SCOPED_TRACE(observe ? "observer reload" : "no observer");
+        const auto observer = observe ? store.subscribe_changed([&] { (void)store.list(); }) : 0;
+        struct Unsubscribe {
+            runtime::NativeAgentStore& store;
+            std::size_t token;
+            ~Unsubscribe() { if (token) store.unsubscribe_changed(token); }
+        } unsubscribe{store, observer};
+        const std::string id = observe ? "single-prompt-observed" : "single-prompt-unobserved";
+        constexpr std::string_view prompt = "one ordinary initial prompt";
+        auto input = loom::core::ToolInput::from_json(std::format(
+            R"({{"agent_id":"{}","run_in_background":true,"prompt":"one ordinary initial prompt"}})", id));
+        input.parent_session_id = "owner";
+        const auto launched = registry.execute("Agent", input);
+        ASSERT_TRUE(launched && !launched->is_error);
+        store.wait_for_background_agents();
+        const auto record = store.get(id);
+        ASSERT_TRUE(record && record->sidechain_jsonl_path);
+        EXPECT_EQ(sidechain_prompt_count(record->sidechain_entries, prompt), 1u);
+        EXPECT_EQ(sidechain_prompt_count(runtime::read_sidechain_jsonl_entries(*record->sidechain_jsonl_path), prompt), 1u);
+        EXPECT_EQ(std::ranges::count(record->transcript, "user: " + std::string(prompt)), 1);
+        const auto disk = runtime::load_native_agent_record(id);
+        ASSERT_TRUE(disk);
+        EXPECT_EQ(std::ranges::count(disk->transcript, "user: " + std::string(prompt)), 1);
+        const auto bodies = server.bodies();
+        ASSERT_EQ(bodies.size(), observe ? 2u : 1u);
+        EXPECT_EQ(request_prompt_count(bodies.back(), prompt), 1u);
+    }
+}
+
+TEST(AgentWire, RegistryNativeTeamSupportsQueueHostResumeStopWithoutPolicyExpansion) {
+    AgentWireSandbox sandbox;
+    AgentWireEnv team_path("LOOM_TEAM_RUNTIME_DIR", (sandbox.path / "teams").string());
+    AgentWireEnv team_name("LOOM_TEAM_NAME", "registry-native-team");
+    AgentWireEnv credentials("LOOM_API_KEY", "test-key");
+    AgentWireEnv nested("LOOM_ENABLE_NESTED_AGENTS", "1");
+    AgentWireEnv backend("LOOM_TEAMMATE_BACKEND", "in-process");
+    auto& teams = loom::tools::global_team_store();
+    teams.clear_for_testing();
+    struct ClearTeams { ~ClearTeams() { loom::tools::global_team_store().clear_for_testing(); } } clear_teams;
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool release_fresh = false;
+    bool release_resume = false;
+    AgentWireServer server([&](const auto&, auto& response, std::size_t index) {
+        if (index == 1 || index == 3) {
+            std::unique_lock lock(mutex);
+            cv.wait(lock, [&] { return index == 1 ? release_fresh : release_resume; });
+        }
+        response.set_content(openai_text("registry native response " + std::to_string(index)), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    loom::tools::register_runtime_tools(registry, registry_wire_options(server));
+    loom::core::QueryEngineConfig config;
+    config.model_params.model = "wire-model";
+    config.api_key = "session-key";
+    config.auth_token = "session-token";
+    config.base_url = server.url();
+    config.wire_api = "openai";
+    config.cwd = sandbox.path.string();
+    config.context_window.auto_compact = false;
+    loom::core::QueryEngine engine(config, registry);
+    engine.set_session_id("owner");
+    struct Release {
+        std::mutex& mutex;
+        std::condition_variable& cv;
+        bool& fresh;
+        bool& resumed;
+        ~Release() { { std::lock_guard lock(mutex); fresh = true; resumed = true; } cv.notify_all(); }
+    } release{mutex, cv, release_fresh, release_resume};
+    auto& store = runtime::native_agent_store();
+    const auto observer = store.subscribe_changed([&] { (void)store.list(); });
+    struct Unsubscribe {
+        runtime::NativeAgentStore& store;
+        std::size_t token;
+        ~Unsubscribe() { store.unsubscribe_changed(token); }
+    } unsubscribe{store, observer};
+    auto baseline = loom::core::ToolInput::from_json(std::format(
+        R"({{"agent_id":"async-baseline","run_in_background":true,"prompt":"baseline","cwd":"{}"}})", sandbox.path.string()));
+    baseline.parent_session_id = "owner";
+    ASSERT_TRUE(registry.execute("Agent", baseline));
+    store.wait_for_background_agents();
+    auto launch = loom::core::ToolInput::from_json(std::format(
+        R"({{"team_id":"registry-team","team_name":"registry-native-team","start_native_agents":true,"cwd":"{}","members":[{{"agent_id":"registry-member","prompt":"one team initial prompt","subagent_type":"general-purpose"}}]}})", sandbox.path.string()));
+    launch.parent_session_id = "owner";
+    const auto launched = registry.execute("team_create", launch);
+    ASSERT_TRUE(launched && !launched->is_error) << (launched ? result_text(*launched) : launched.error().format());
+    ASSERT_TRUE(server.wait_for_requests(2));
+    const auto running = store.get("registry-member");
+    ASSERT_TRUE(running);
+    EXPECT_EQ(running->teammate_backend, "in-process");
+    EXPECT_EQ(running->parent_session_id, "owner");
+    EXPECT_FALSE(running->name);
+    EXPECT_EQ(teams.get("registry-team")->members.size(), 1u);
+    const auto root_before = engine.get_conversation().size();
+    const auto queued = engine.send_agent_instance_message("registry-member", "queued registry guidance");
+    ASSERT_TRUE(queued) << queued.error().format();
+    EXPECT_NE(queued->find("queued"), std::string::npos);
+    EXPECT_EQ(store.get("registry-member")->pending_messages, (std::vector<std::string>{"queued registry guidance"}));
+    EXPECT_FALSE(store.get("registry-member")->notification_delivered);
+    { std::lock_guard lock(mutex); release_fresh = true; }
+    cv.notify_all();
+    store.wait_for_background_agents();
+    const auto completed = store.get("registry-member");
+    ASSERT_TRUE(completed && completed->sidechain_jsonl_path);
+    EXPECT_EQ(completed->status, runtime::NativeAgentStatus::Completed);
+    EXPECT_EQ(sidechain_prompt_count(completed->sidechain_entries, "one team initial prompt"), 1u);
+    EXPECT_EQ(sidechain_prompt_count(runtime::read_sidechain_jsonl_entries(*completed->sidechain_jsonl_path), "one team initial prompt"), 1u);
+    EXPECT_EQ(std::ranges::count(completed->transcript, "user: one team initial prompt"), 1);
+    const auto expect_no_startup_diagnostic = [](const runtime::NativeAgentRecord& snapshot) {
+        constexpr std::string_view diagnostic = "started by team_create";
+        const auto check_lines = [&](const std::vector<std::string>& lines) {
+            for (const auto& line : lines) EXPECT_EQ(line.find(diagnostic), std::string::npos);
+        };
+        check_lines(snapshot.transcript);
+        check_lines(snapshot.sidechain_entries);
+        const auto persisted = runtime::load_native_agent_record(snapshot.agent_id);
+        ASSERT_TRUE(persisted);
+        check_lines(persisted->transcript);
+        check_lines(persisted->sidechain_entries);
+        ASSERT_TRUE(snapshot.sidechain_jsonl_path && snapshot.transcript_path);
+        check_lines(runtime::read_sidechain_jsonl_entries(*snapshot.sidechain_jsonl_path));
+        check_lines(runtime::read_transcript_lines(*snapshot.transcript_path));
+        std::ifstream record_file(runtime::agent_record_path(snapshot.agent_id));
+        ASSERT_TRUE(record_file);
+        const std::string record_json((std::istreambuf_iterator<char>(record_file)), std::istreambuf_iterator<char>());
+        EXPECT_EQ(record_json.find(diagnostic), std::string::npos);
+    };
+    expect_no_startup_diagnostic(*completed);
+    const auto continued = engine.send_agent_instance_message("registry-member", "explicit registry continuation");
+    ASSERT_TRUE(continued) << continued.error().format();
+    ASSERT_TRUE(server.wait_for_requests(4));
+    const auto resumed = store.get("registry-member");
+    ASSERT_TRUE(resumed);
+    EXPECT_EQ(resumed->agent_id, completed->agent_id);
+    EXPECT_EQ(resumed->created_at, completed->created_at);
+    EXPECT_EQ(resumed->teammate_backend, "in-process");
+    EXPECT_EQ(resumed->parent_session_id, "owner");
+    expect_no_startup_diagnostic(*resumed);
+    EXPECT_EQ(teams.get("registry-team")->members.size(), 1u);
+    EXPECT_EQ(teams.get("registry-team")->members.front().status, loom::tools::MemberStatus::Working);
+    ASSERT_TRUE(engine.stop_agent_instance("registry-member"));
+    auto drained = std::async(std::launch::async, [&] { store.wait_for_background_agents(); });
+    const auto drained_status = drained.wait_for(std::chrono::seconds(2));
+    { std::lock_guard lock(mutex); release_resume = true; }
+    cv.notify_all();
+    drained.get();
+    EXPECT_EQ(drained_status, std::future_status::ready);
+    EXPECT_EQ(store.get("registry-member")->status, runtime::NativeAgentStatus::Cancelled);
+    EXPECT_FALSE(store.get("registry-member")->notification_delivered);
+    EXPECT_EQ(teams.get("registry-team")->members.front().status, loom::tools::MemberStatus::Error);
+    EXPECT_EQ(engine.get_conversation().size(), root_before);
+    auto bodies = server.bodies();
+    ASSERT_EQ(bodies.size(), 4u);
+    const auto original_tools = request_tool_names(bodies.front());
+    ASSERT_FALSE(original_tools.empty());
+    EXPECT_EQ(request_tool_names(bodies[1]), original_tools);
+    EXPECT_EQ(request_tool_names(bodies[2]), original_tools);
+    EXPECT_EQ(request_tool_names(bodies[3]), original_tools);
+    EXPECT_FALSE(original_tools.contains("Agent"));
+    EXPECT_FALSE(original_tools.contains("ask_user_question"));
+    EXPECT_FALSE(original_tools.contains("send_message"));
+    EXPECT_FALSE(original_tools.contains("task_create"));
+    EXPECT_EQ(request_prompt_count(bodies[1], "one team initial prompt"), 1u);
+    for (std::size_t i = 1; i < bodies.size(); ++i) {
+        EXPECT_EQ(bodies[i].find("started by team_create"), std::string::npos);
+    }
+    EXPECT_EQ(request_prompt_count(bodies[3], "one team initial prompt"), 1u);
+    auto named = loom::core::ToolInput::from_json(std::format(
+        R"({{"team_name":"registry-native-team","name":"named-member","run_in_background":true,"prompt":"named teammate policy","cwd":"{}"}})", sandbox.path.string()));
+    named.parent_session_id = "owner";
+    const auto named_launch = registry.execute("Agent", named);
+    ASSERT_TRUE(named_launch && !named_launch->is_error);
+    store.wait_for_background_agents();
+    bodies = server.bodies();
+    ASSERT_EQ(bodies.size(), 5u);
+    const auto named_tools = request_tool_names(bodies.back());
+    EXPECT_TRUE(named_tools.contains("Agent"));
+    EXPECT_TRUE(named_tools.contains("send_message"));
+    EXPECT_TRUE(named_tools.contains("task_create"));
+    EXPECT_FALSE(named_tools.contains("ask_user_question"));
+    for (const auto& name : named_tools) {
+        std::string normalized;
+        for (const auto ch : name) {
+            if (ch != '_') normalized += ch >= 'A' && ch <= 'Z' ? char(ch + ('a' - 'A')) : ch;
+        }
+        EXPECT_FALSE(normalized.starts_with("askuser"));
+    }
+}
+
+TEST(AgentWire, RegistryDoesNotInferNativeBackendForUnrosteredOrRetainedExternalWorkers) {
+    AgentWireSandbox sandbox;
+    AgentWireEnv team_path("LOOM_TEAM_RUNTIME_DIR", (sandbox.path / "teams").string());
+    AgentWireEnv team_name("LOOM_TEAM_NAME", "untrusted-team");
+    auto& teams = loom::tools::global_team_store();
+    teams.clear_for_testing();
+    struct ClearTeams { ~ClearTeams() { loom::tools::global_team_store().clear_for_testing(); } } clear_teams;
+    AgentWireServer server([](const auto&, auto& response, std::size_t) {
+        response.set_content(openai_text("retained worker response"), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    loom::tools::register_runtime_tools(registry, registry_wire_options(server));
+    auto team_input = loom::core::ToolInput::from_json(R"({"team_id":"untrusted-team","team_name":"untrusted-team","members":[]})");
+    ASSERT_TRUE(registry.execute("team_create", team_input));
+    auto orphan = loom::core::ToolInput::from_json(
+        R"({"agent_id":"unrostered-child","run_in_background":true,"team_name":"untrusted-team","prompt":"explicit team without membership"})");
+    orphan.parent_session_id = "owner";
+    ASSERT_TRUE(registry.execute("Agent", orphan));
+    auto& store = runtime::native_agent_store();
+    store.wait_for_background_agents();
+    const auto unrostered = store.get("unrostered-child");
+    ASSERT_TRUE(unrostered);
+    EXPECT_EQ(unrostered->team_name, "untrusted-team");
+    EXPECT_FALSE(unrostered->teammate_backend);
+    EXPECT_TRUE(teams.get("untrusted-team")->members.empty());
+    for (const auto* id : {"unknown", "external-backend", "external-pane", "external-task"}) {
+        ASSERT_TRUE(teams.add_member("untrusted-team", loom::tools::TeamMember{.agent_id = id}));
+        auto record = runtime::make_native_agent_record(id, "general-purpose");
+        record.parent_session_id = "owner";
+        record.team_name = "untrusted-team";
+        record.status = runtime::NativeAgentStatus::Completed;
+        record.transcript = {"user: retained worker context"};
+        if (std::string_view(id) == "external-backend") record.teammate_backend = "tmux";
+        if (std::string_view(id) == "external-pane") record.teammate_pane_id = "foreign-pane";
+        if (std::string_view(id) == "external-task") record.teammate_task_id = "foreign-task";
+        store.upsert(record);
+        store.clear_for_testing();
+        auto resume = loom::core::ToolInput::from_json(std::format(
+            R"({{"agent_id":"{}","resume_existing":true,"run_in_background":true,"prompt":"explicit retained resume"}})", id));
+        resume.parent_session_id = "owner";
+        const auto started = registry.execute("Agent", resume);
+        ASSERT_TRUE(started && !started->is_error);
+        store.wait_for_background_agents();
+        const auto after = store.get(id);
+        ASSERT_TRUE(after);
+        EXPECT_EQ(after->teammate_backend, record.teammate_backend);
+        EXPECT_EQ(after->teammate_pane_id, record.teammate_pane_id);
+        EXPECT_EQ(after->teammate_task_id, record.teammate_task_id);
+        EXPECT_EQ(after->parent_session_id, "owner");
+    }
+}
+
+TEST(AgentWire, PlainSubagentAfterRegistryTeamCreationKeepsOrdinaryIdentityAndControls) {
+    AgentWireSandbox sandbox;
+    AgentWireEnv team_path("LOOM_TEAM_RUNTIME_DIR", (sandbox.path / "teams").string());
+    AgentWireEnv team_name("LOOM_TEAM_NAME", "");
+    ::unsetenv("LOOM_TEAM_NAME");
+    AgentWireEnv credentials("LOOM_API_KEY", "test-key");
+    AgentWireEnv nested("LOOM_ENABLE_NESTED_AGENTS", "1");
+    const auto previous_leader = loom::utils::get_leader_team_name();
+    struct RestoreLeader {
+        std::string previous;
+        ~RestoreLeader() { loom::utils::set_leader_team_name(previous); }
+    } restore_leader{previous_leader};
+    auto& teams = loom::tools::global_team_store();
+    teams.clear_for_testing();
+    struct ClearTeams { ~ClearTeams() { loom::tools::global_team_store().clear_for_testing(); } } clear_teams;
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool released = false;
+    AgentWireServer server([&](const auto&, auto& response, std::size_t index) {
+        if (index == 1) {
+            std::unique_lock lock(mutex);
+            cv.wait(lock, [&] { return released; });
+        }
+        response.set_content(openai_text("post-team response " + std::to_string(index)), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    loom::tools::register_runtime_tools(registry, registry_wire_options(server));
+    loom::core::QueryEngineConfig config;
+    config.model_params.model = "wire-model";
+    config.api_key = "session-key";
+    config.auth_token = "session-token";
+    config.base_url = server.url();
+    config.wire_api = "openai";
+    config.cwd = sandbox.path.string();
+    config.context_window.auto_compact = false;
+    loom::core::QueryEngine engine(config, registry);
+    engine.set_session_id("owner");
+    struct Release {
+        std::mutex& mutex;
+        std::condition_variable& cv;
+        bool& released;
+        ~Release() { { std::lock_guard lock(mutex); released = true; } cv.notify_all(); }
+    } release{mutex, cv, released};
+    auto create = loom::core::ToolInput::from_json(std::format(
+        R"({{"team_id":"team-before-ordinary","team_name":"team-before-ordinary","start_native_agents":true,"cwd":"{}","members":[{{"agent_id":"actual-team-member","prompt":"original member work","subagent_type":"general-purpose"}}]}})", sandbox.path.string()));
+    create.parent_session_id = "owner";
+    const auto created = registry.execute("team_create", create);
+    ASSERT_TRUE(created && !created->is_error);
+    auto& store = runtime::native_agent_store();
+    store.wait_for_background_agents();
+    ASSERT_NE(std::getenv("LOOM_TEAM_NAME"), nullptr);
+    EXPECT_EQ(std::string(std::getenv("LOOM_TEAM_NAME")), "team-before-ordinary");
+    const auto team_before = teams.get("team-before-ordinary");
+    ASSERT_TRUE(team_before);
+    ASSERT_EQ(team_before->members.size(), 1u);
+    EXPECT_EQ(team_before->members.front().status, loom::tools::MemberStatus::Done);
+    auto ordinary = loom::core::ToolInput::from_json(std::format(
+        R"({{"agent_id":"ordinary-after-team","run_in_background":true,"prompt":"independent ordinary work","cwd":"{}"}})", sandbox.path.string()));
+    ordinary.parent_session_id = "owner";
+    const auto started = registry.execute("Agent", ordinary);
+    ASSERT_TRUE(started && !started->is_error);
+    ASSERT_TRUE(server.wait_for_requests(2));
+    const auto active = store.get("ordinary-after-team");
+    ASSERT_TRUE(active);
+    EXPECT_FALSE(active->team_name);
+    EXPECT_FALSE(active->teammate_backend);
+    EXPECT_FALSE(runtime::is_team_agent_record(*active));
+    EXPECT_EQ(active->parent_session_id, "owner");
+    const auto root_before = engine.get_conversation().size();
+    const auto queued = engine.send_agent_instance_message("ordinary-after-team", "ordinary guidance");
+    ASSERT_TRUE(queued) << queued.error().format();
+    EXPECT_NE(queued->find("queued"), std::string::npos);
+    { std::lock_guard lock(mutex); released = true; }
+    cv.notify_all();
+    store.wait_for_background_agents();
+    const auto ended = store.get("ordinary-after-team");
+    ASSERT_TRUE(ended);
+    EXPECT_EQ(ended->status, runtime::NativeAgentStatus::Completed);
+    const auto resumed = engine.send_agent_instance_message("ordinary-after-team", "ordinary same-ID continuation");
+    ASSERT_TRUE(resumed) << resumed.error().format();
+    store.wait_for_background_agents();
+    const auto continued = store.get("ordinary-after-team");
+    ASSERT_TRUE(continued);
+    EXPECT_EQ(continued->status, runtime::NativeAgentStatus::Completed);
+    EXPECT_EQ(continued->agent_id, ended->agent_id);
+    EXPECT_EQ(continued->created_at, ended->created_at);
+    EXPECT_FALSE(continued->team_name);
+    EXPECT_FALSE(continued->teammate_backend);
+    EXPECT_EQ(engine.get_conversation().size(), root_before);
+    const auto team_after = teams.get("team-before-ordinary");
+    ASSERT_TRUE(team_after);
+    ASSERT_EQ(team_after->members.size(), 1u);
+    EXPECT_EQ(team_after->members.front().agent_id, team_before->members.front().agent_id);
+    EXPECT_EQ(team_after->members.front().status, team_before->members.front().status);
+    EXPECT_EQ(team_after->members.front().last_result, team_before->members.front().last_result);
+    const auto bodies = server.bodies();
+    ASSERT_EQ(bodies.size(), 4u);
+    const auto tools = request_tool_names(bodies.front());
+    ASSERT_FALSE(tools.empty());
+    for (std::size_t i = 1; i < bodies.size(); ++i) EXPECT_EQ(request_tool_names(bodies[i]), tools);
+    const auto empty_name = registry.execute("Agent", loom::core::ToolInput::from_json(
+        R"({"prompt":"invalid named request","name":""})"));
+    ASSERT_TRUE(empty_name);
+    EXPECT_TRUE(empty_name->is_error);
+    EXPECT_NE(result_text(*empty_name).find("teammate spawn requires team_name and name"), std::string::npos);
+    const auto context = loom::utils::create_teammate_context(
+        "actual-team-member", "member", "team-before-ordinary", "owner", false, std::nullopt);
+    const auto denied = loom::utils::run_with_teammate_context(context, [&] {
+        return registry.execute("Agent", loom::core::ToolInput::from_json(
+            R"({"agent_id":"forbidden-nested-background","prompt":"must not bypass scope guard","run_in_background":true})"));
+    });
+    ASSERT_TRUE(denied);
+    EXPECT_TRUE(denied->is_error);
+    EXPECT_NE(result_text(*denied).find("In-process teammates cannot spawn background agents"), std::string::npos);
+    EXPECT_FALSE(store.get("forbidden-nested-background"));
+    EXPECT_EQ(server.bodies().size(), 4u);
+}
+
+TEST_P(AgentWireCancellationResume, NormalToolFailureRetainsTypedErrorInSidechainAndNextRequest) {
+    const std::string_view protocol = GetParam();
+    AgentWireSandbox sandbox;
+    AgentWireServer server([protocol](const auto&, auto& response, std::size_t index) {
+        if (index != 0) {
+            response.set_content(protocol == "messages" ? messages_text("finished after error") :
+                                 openai_text("finished after error"), "text/event-stream");
+        } else if (protocol == "messages") {
+            response.set_content(
+                "event: message_start\ndata: {\"message\":{\"id\":\"failure\",\"role\":\"assistant\",\"content\":[]}}\n\n"
+                "event: content_block_start\ndata: {\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"normal-failure\",\"name\":\"FailingProbe\",\"input\":{}}}\n\n"
+                "event: content_block_delta\ndata: {\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{}\"}}\n\n"
+                "event: content_block_stop\ndata: {\"index\":0}\n\n"
+                "event: message_delta\ndata: {\"delta\":{\"stop_reason\":\"tool_use\"}}\n\n"
+                "event: message_stop\ndata: {}\n\n", "text/event-stream");
+        } else {
+            response.set_content(openai_frame(
+                R"({"choices":[{"delta":{"tool_calls":[{"index":0,"id":"normal-failure","function":{"name":"FailingProbe","arguments":"{}"}}]},"finish_reason":"tool_calls"}]})") +
+                openai_frame("[DONE]"), "text/event-stream");
+        }
+    });
+    class FailingProbe final : public loom::core::ITool {
+        loom::core::ToolDefinition definition_{.name = "FailingProbe", .permission = loom::core::ToolPermission::ReadOnly};
+    public:
+        const loom::core::ToolDefinition& definition() const override { return definition_; }
+        bool check_permission(const loom::core::ToolInput&) const override { return true; }
+        loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+            return loom::core::ToolResult::error("controlled execution failure");
+        }
+    };
+    loom::core::ToolRegistry registry;
+    registry.register_tool(std::make_unique<FailingProbe>());
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    auto context = std::make_shared<loom::core::ApiExecutionContext>(*agent_wire_context(server));
+    context->wire_api = protocol;
+    config.api_context = context;
+    loom::tools::AgentTool tool(config, 0, &registry);
+    const auto result = tool.execute(agent_wire_input("normal-failed-tool"));
+    ASSERT_TRUE(result && !result->is_error);
+    const auto disk = runtime::load_native_agent_record("normal-failed-tool");
+    ASSERT_TRUE(disk);
+    EXPECT_EQ(disk->status, runtime::NativeAgentStatus::Completed);
+    int saved = 0;
+    for (const auto& entry : disk->sidechain_entries) {
+        const auto parsed = json::parse(entry);
+        ASSERT_TRUE(parsed);
+        parsed->root().get("message").get("content").iter([&](json::JsonVal block) {
+            if (block.get_string("tool_use_id") != "normal-failure") return;
+            ++saved;
+            EXPECT_TRUE(block.get("is_error").is_bool());
+            EXPECT_TRUE(block.get("is_error").as_bool());
+        });
+    }
+    EXPECT_EQ(saved, 1);
+    const auto requests = server.bodies();
+    ASSERT_EQ(requests.size(), 2u);
+    const auto next = json::parse(requests.back());
+    ASSERT_TRUE(next);
+    int sent = 0;
+    next->root().get("messages").iter([&](json::JsonVal message) {
+        if (protocol == "messages") message.get("content").iter([&](json::JsonVal block) {
+            if (block.get_string("type") != "tool_result" || block.get_string("tool_use_id") != "normal-failure") return;
+            ++sent;
+            EXPECT_TRUE(block.get("is_error").is_bool());
+            EXPECT_TRUE(block.get("is_error").as_bool());
+            EXPECT_EQ(block.get_string("content"), "controlled execution failure");
+        });
+        else if (message.get_string("role") == "tool" && message.get_string("tool_call_id") == "normal-failure") {
+            ++sent;
+            EXPECT_EQ(message.get_string("content"), "[tool_error] controlled execution failure");
+        }
+    });
+    EXPECT_EQ(sent, 1);
 }

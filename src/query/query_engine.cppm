@@ -465,6 +465,11 @@ public:
 
     [[nodiscard]] Result<std::string> continue_agent_instance(
         std::string_view id, std::string_view prompt);
+    // Ended launches share normal engine policy state and require caller serialization.
+    // Running delivery only accesses the scoped native mailbox.
+    [[nodiscard]] Result<std::string> send_agent_instance_message(
+        std::string_view id, std::string_view prompt);
+    [[nodiscard]] std::string agent_message_unavailable_reason(std::string_view id) const;
     [[nodiscard]] VoidResult stop_agent_instance(std::string_view id);
     [[nodiscard]] std::string agent_continue_unavailable_reason(std::string_view id) const;
     [[nodiscard]] std::string agent_stop_unavailable_reason(std::string_view id) const;

@@ -94,6 +94,8 @@ void AppAdapter::OpenAgentInstances(std::string_view argument) {
         state->selected_id = record->agent_id;
         state->team = native::is_team_agent_record(*record);
         state->history = !agents::runtime::is_active(instance_entry(*record).status);
+        OpenAgentConversation(current_session_id_, record->agent_id);
+        return;
     }
     const auto session = current_session_id_;
     auto cache = std::make_shared<InstanceSnapshotCache>();
@@ -151,6 +153,7 @@ void AppAdapter::OpenAgentInstances(std::string_view argument) {
         ContinueAgentInstance(session, std::move(id), std::move(prompt));
     };
     options.on_stop = [this, session](std::string id) { StopAgentInstance(session, id); };
+    options.on_open = [this, session](std::string id) { OpenAgentConversation(session, std::move(id)); };
     options.on_close = [this] {
         screen_state_->dialog_store.dialog_queue.remove(agent_instances_dialog_id_);
         agent_instances_dialog_id_.clear();
@@ -215,6 +218,9 @@ void AppAdapter::StopAgentInstance(std::string_view session, std::string_view id
         screen_state_->footer_dynamic_text = result.error().format();
         screen_state_->footer_dynamic_color = "error";
     } else screen_state_->footer_dynamic_text = "Cancellation requested";
+    const auto child = agent_conversation_views_.find(std::string(id));
+    if (child != agent_conversation_views_.end())
+        child->second.state->footer_dynamic_text = screen_state_->footer_dynamic_text;
     runtime_agents_dirty_->store(true);
     PostRenderEvent();
 }

@@ -67,18 +67,18 @@ namespace json = loom::utils::json;
     // the live teammate projection / pane observer / leader permission
     // inbox never activate because get_team_name() stays empty.
     if (std::getenv("LOOM_TEAM_NAME") == nullptr &&
-        !(*result)->name.empty()) {
-        ::setenv("LOOM_TEAM_NAME", (*result)->name.c_str(), 1);
+        !result->name.empty()) {
+        ::setenv("LOOM_TEAM_NAME", result->name.c_str(), 1);
         // task-list resolution also tracks the leader team.
-        loom::utils::set_leader_team_name((*result)->name);
+        loom::utils::set_leader_team_name(result->name);
     }
     std::unordered_map<std::string, std::string> member_start_prompts;
-    for (const auto& member : (*result)->members) {
+    for (const auto& member : result->members) {
         MessageRouter::instance().register_agent(member.agent_id);
         loom::tools::agent_runtime::NativeAgentRecord record;
         record.agent_id = member.agent_id;
         record.agent_type = std::string(member_role_name(member.role));
-        record.team_name = (*result)->name;
+        record.team_name = result->name;
         record.parent_session_id = input.parent_session_id;
         record.background = true;
         record.status = loom::tools::agent_runtime::NativeAgentStatus::Queued;
@@ -89,13 +89,13 @@ namespace json = loom::utils::json;
         auto task_id = task.id;
         auto task_description = task.description;
         auto assigned_to = task.assigned_to;
-        auto added = global_team_store().add_task((*result)->id, std::move(task));
+        auto added = global_team_store().add_task(result->id, std::move(task));
         if (!added) return ToolResult::error(std::string(format_error(added.error())));
         if (assigned_to && !assigned_to->empty()) {
-            auto assigned = global_team_store().assign_task((*result)->id, task_id, *assigned_to);
+            auto assigned = global_team_store().assign_task(result->id, task_id, *assigned_to);
             if (!assigned) return ToolResult::error(std::string(format_error(assigned.error())));
             auto assignment_message =
-                detail::format_team_task_assignment_message((*result)->name, task_id, task_description);
+                detail::format_team_task_assignment_message(result->name, task_id, task_description);
             member_start_prompts[*assigned_to] = assignment_message;
             if (!start_native_agents) {
                 loom::tools::agent_runtime::native_agent_store().mark_running(*assigned_to);
@@ -109,17 +109,17 @@ namespace json = loom::utils::json;
             ++task_assignments_enqueued;
         }
     }
-    auto created_team = global_team_store().get((*result)->id);
+    auto created_team = global_team_store().get(result->id);
     if (!created_team) return ToolResult::error(std::string(format_error(created_team.error())));
     auto artifacts = detail::ensure_team_runtime_artifacts(
-        (*created_team)->name,
-        std::span<const TeamMember>((*created_team)->members.data(), (*created_team)->members.size()),
-        std::span<const SharedTaskItem>((*created_team)->task_list.data(), (*created_team)->task_list.size()),
-        **created_team);
+        created_team->name,
+        std::span<const TeamMember>(created_team->members.data(), created_team->members.size()),
+        std::span<const SharedTaskItem>(created_team->task_list.data(), created_team->task_list.size()),
+        *created_team);
     if (!artifacts) return ToolResult::error(artifacts.error());
     std::size_t native_agents_started = 0;
     if (start_native_agents) {
-        for (const auto& member : (*created_team)->members) {
+        for (const auto& member : created_team->members) {
             auto options_it = member_start_options.find(member.agent_id);
             const auto* options = options_it == member_start_options.end() ? nullptr : &options_it->second;
             auto prompt = options && options->prompt && !options->prompt->empty()
@@ -130,11 +130,11 @@ namespace json = loom::utils::json;
                     return std::format(
                         "You are teammate {} on team {}. Coordinate with the team lead and wait for assigned work.",
                         member.agent_id,
-                        (*created_team)->name);
+                        created_team->name);
                 }();
             auto agent_input = ToolInput::from_json(detail::build_team_member_agent_start_input_json(
                 member,
-                (*created_team)->name,
+                created_team->name,
                 prompt,
                 options,
                 default_cwd,
@@ -146,31 +146,28 @@ namespace json = loom::utils::json;
             auto started = registry->execute("Agent", agent_input);
             if (!started) {
                 auto error = "failed to start team member " + member.agent_id + ": " + started.error().message;
-                (void)global_team_store().update_member_status((*created_team)->id, member.agent_id, MemberStatus::Error, error);
+                (void)global_team_store().update_member_status(created_team->id, member.agent_id, MemberStatus::Error, error);
                 return ToolResult::error(error);
             }
             if (started->is_error) {
                 auto error = "failed to start team member " + member.agent_id + ": " + detail::runtime_tool_result_text(*started);
-                (void)global_team_store().update_member_status((*created_team)->id, member.agent_id, MemberStatus::Error, error);
+                (void)global_team_store().update_member_status(created_team->id, member.agent_id, MemberStatus::Error, error);
                 return ToolResult::error(error);
             }
-            loom::tools::agent_runtime::native_agent_store().append_transcript(
-                member.agent_id,
-                std::format("system: started by team_create for team {}", (*created_team)->name));
             ++native_agents_started;
         }
-        if (auto refreshed_team = global_team_store().get((*created_team)->id)) {
+        if (auto refreshed_team = global_team_store().get(created_team->id)) {
             auto native_records = detail::collect_team_native_agents(
-                (*refreshed_team)->id,
-                (*refreshed_team)->name,
-                std::span<const TeamMember>((*refreshed_team)->members.data(), (*refreshed_team)->members.size()));
+                refreshed_team->id,
+                refreshed_team->name,
+                std::span<const TeamMember>(refreshed_team->members.data(), refreshed_team->members.size()));
             auto runtime_states = detail::team_config_runtime_states_from_native_records(
                 std::span<const loom::tools::agent_runtime::NativeAgentRecord>(
                     native_records.data(),
                     native_records.size()));
             artifacts->team_config_written = detail::write_team_config_file(
                 artifacts->team_file_path,
-                **refreshed_team,
+                *refreshed_team,
                 runtime_states);
             if (!artifacts->team_config_written) {
                 return ToolResult::error("failed to refresh team config after starting native agents");
@@ -178,12 +175,12 @@ namespace json = loom::utils::json;
         }
     }
     json::JsonBuilder b;
-    b.str("team_name", (*result)->name);
+    b.str("team_name", result->name);
     b.str("team_file_path", artifacts->team_file_path.string());
-    b.str("lead_agent_id", detail::team_lead_agent_id((*result)->name));
-    b.str("team_id", (*result)->id);
+    b.str("lead_agent_id", detail::team_lead_agent_id(result->name));
+    b.str("team_id", result->id);
     b.str("team_dir", artifacts->team_dir.string());
-    b.size("members", (*result)->members.size());
+    b.size("members", result->members.size());
     b.size("tasks", tasks.size());
     b.size("member_inboxes_initialized", artifacts->inboxes_initialized);
     b.size("task_assignments_enqueued", task_assignments_enqueued);
@@ -199,9 +196,9 @@ namespace json = loom::utils::json;
     if (!team) return ToolResult::error("team_delete requires team_id");
     auto resolved = global_team_store().get_by_id_or_name(*team);
     if (!resolved) return ToolResult::error(std::string(format_error(resolved.error())));
-    const auto team_id = (*resolved)->id;
-    const auto team_name = (*resolved)->name;
-    const auto members = (*resolved)->members;
+    const auto team_id = resolved->id;
+    const auto team_name = resolved->name;
+    const auto members = resolved->members;
     auto native_records = detail::collect_team_native_agents(
         team_id,
         team_name,

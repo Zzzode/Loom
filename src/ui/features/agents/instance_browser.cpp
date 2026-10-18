@@ -167,8 +167,8 @@ public:
                 rows.push_back(row | reflect(row_boxes_[i]));
             }
             rows.push_back(filler());
-            rows.push_back(text(clipped("↑↓ select · Enter details · Tab history", width_)) | color(palette.muted));
-            rows.push_back(text(clipped("←→ Subagents / Team Agents · Esc close", width_)) | color(palette.muted));
+            rows.push_back(text(clipped("↑↓ select · Enter session · i details", width_)) | color(palette.muted));
+            rows.push_back(text(clipped("←→ category · Tab history · Esc close", width_)) | color(palette.muted));
         } else {
             const auto detail = get_detail();
             if (!detail) {
@@ -268,12 +268,18 @@ public:
             }
             return true;
         }
-        if (event == Event::Return && !entries.empty()) { detail_open_ = true; scroll_ = 0; return true; }
+        if (event == Event::Character('i') && !entries.empty()) { detail_open_ = true; scroll_ = 0; return true; }
+        if (event == Event::Return && !entries.empty()) {
+            if (options_.on_open) options_.on_open(state().selected_id);
+            else { detail_open_ = true; scroll_ = 0; }
+            return true;
+        }
         if (event.is_mouse() && event.mouse().button == Mouse::Left && event.mouse().motion == Mouse::Released) {
             for (std::size_t i = 0; i < row_boxes_.size(); ++i)
                 if (row_boxes_[i].Contain(event.mouse().x, event.mouse().y)
                     && std::ranges::find(entries, row_ids_[i], &Entry::id) != entries.end()) {
                     state().selected_id = row_ids_[i];
+                    if (options_.on_open) { options_.on_open(state().selected_id); return true; }
                     detail_open_ = true;
                     scroll_ = 0;
                     return true;

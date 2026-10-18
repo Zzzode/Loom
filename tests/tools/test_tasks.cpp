@@ -264,11 +264,11 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
 
     auto team = loom::tools::global_team_store().get_by_id_or_name("migration-team");
     ASSERT_TRUE(team);
-    ASSERT_EQ((*team)->members.size(), 2u);
-    auto member = std::ranges::find_if((*team)->members, [](const auto& candidate) {
+    ASSERT_EQ(team->members.size(), 2u);
+    auto member = std::ranges::find_if(team->members, [](const auto& candidate) {
         return candidate.agent_id == "reviewer-two-2@migration-team";
     });
-    ASSERT_NE(member, (*team)->members.end());
+    ASSERT_NE(member, team->members.end());
     EXPECT_EQ(member->role, loom::tools::MemberRole::Reviewer);
     EXPECT_EQ(member->status, loom::tools::MemberStatus::Working);
 

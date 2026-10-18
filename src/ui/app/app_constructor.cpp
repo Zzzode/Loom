@@ -232,14 +232,11 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         acsrc::append_prompt_history(text, current_session_id_,
                                      screen_state_->cwd);
     };
-    cbs.on_permission_response = [this](bool allowed, std::optional<bool> always) {
-        if (always && *always && screen_state_->permission_store.permission_request) {
-            permission_->add_always_allowed(
-                screen_state_->permission_store.permission_request->tool_name);
-        }
+    cbs.on_permission_response = [this](bool /*allowed*/, std::optional<bool> /*always*/) {
+        // Legacy trust/sandbox panels have no native request token. Their
+        // callbacks must never answer a tool overlay belonging to another view.
         screen_state_->permission_store.permission_request.reset();
         screen_state_->mode = repl::ReplMode::Normal;
-        permission_->resolve_permission(allowed);
     };
     cbs.on_dialog_action = [this](repl::ReplMode mode, int action) {
         if (mode == repl::ReplMode::CostThreshold) {
@@ -372,23 +369,32 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         [this, dispatch = ui_dispatcher(), permission = permission_](const loom::services::mcp::ElicitationRequest& req)
             -> std::expected<std::map<std::string, std::string>, std::string>
         {
-            permission->reset_elicitation_response();
-            dispatch([this, permission, req] {
-                dtrig::PushElicitation(
-                    screen_state_->dialog_store.dialog_queue,
-                    req.server_name,
-                    /*request_id=*/0,
-                    req.message,
-                    [permission](bool approve) {
-                        permission->resolve_elicitation(approve);
-                    });
+            const auto token = permission->begin_elicitation_request();
+            if (token == 0) {
+                return std::unexpected(std::string{"Application is shutting down"});
+            }
+            const auto dialog_id = std::format("elicitation-{}", token);
+            dispatch([this, permission, req, token, dialog_id] {
+                if (!permission->elicitation_request_current(token)) return;
+                dsys::ElicitationPayload payload;
+                payload.id = dialog_id;
+                payload.server_name = req.server_name;
+                payload.request_id = token;
+                payload.request_description = req.message;
+                payload.on_response = [permission, token](bool approve) {
+                    (void)permission->resolve_elicitation(token, approve);
+                };
+                payload.on_cancel = [permission, token] {
+                    (void)permission->resolve_elicitation(token, false);
+                };
+                screen_state_->dialog_store.PushDialog(std::move(payload));
             });
 
-            bool approved = permission->wait_elicitation_response();
-
-            dispatch([this] {
-                screen_state_->dialog_store.PopBottom(
-                    /*is_prompt_input_active=*/false);
+            const bool approved = permission->wait_elicitation_response(token);
+            dispatch([this, permission, token, dialog_id] {
+                if (!permission->elicitation_request_current(token)) return;
+                screen_state_->dialog_store.RemoveDialog(dialog_id);
+                permission->finish_elicitation_request(token);
             });
 
             if (approved) {

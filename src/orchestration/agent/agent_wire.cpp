@@ -30,6 +30,7 @@ namespace wire = loom::query::wire;
             loom::core::ToolResultBlock value;
             value.tool_use_id.value = block.tool_use_id;
             value.content = block.text;
+            value.is_error = block.is_error;
             return value;
         }
         case api::ContentBlockType::Image: {

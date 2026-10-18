@@ -122,6 +122,12 @@ struct ReplScreenState {
     // Render-only editor core is retained across frames; screen state owns it.
     mutable std::shared_ptr<::ui::components::TextInputImpl> prompt_render_input;
     ReplMode mode = ReplMode::Normal;
+    // Optional target identity, composed within the measured pinned header.
+    std::string conversation_breadcrumb;
+    std::string conversation_return_hint;
+    // App sets this only while a retained child view yields to its original
+    // actionable application dialog. It never changes Main's editor state.
+    bool prioritize_actionable_dialogs = false;
     // RFC 0002 F3: prompt-input state (input mode, stashed prompt,
     // placeholder cascade inputs, teammate prefix color) lives in
     // loom.ui.screens.prompt_store (PromptStore).
@@ -163,8 +169,8 @@ struct ReplScreenState {
     /// mode (transcript:toggleShowAll shortcut, Transcript context).
     bool show_all_in_transcript = false;
 
-    /// Test-only: when true, messages list skips chain compression (Step 2.5).
-    /// Production code always leaves this false.
+    /// Skip chain compression for independent native Agent views and tests.
+    /// Main keeps its default compressed response presentation.
     bool disable_chain_compression = false;
 
     /// Production: true while a query is actively streaming.  Synced from
@@ -356,6 +362,8 @@ struct ReplScreenState {
 /// Engine-facing callbacks (ReplScreen external prop callbacks).
 struct ReplScreenCallbacks {
     std::function<void(const std::string&, InputMode)> on_submit;
+    // A rejected view-local submission retains its editor text and history.
+    std::function<bool(const std::string&, InputMode)> on_submit_checked;
     std::function<void()> on_interrupt;                 // Ctrl+C
     std::function<void()> on_exit;                      // Ctrl+D or /exit
     /// 'ctrl+l':'app:redraw'

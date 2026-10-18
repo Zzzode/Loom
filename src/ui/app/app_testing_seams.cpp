@@ -567,3 +567,11 @@ AppTestingSeams test_seams(AppAdapter* app) {
 }
 
 } // namespace loom::ui
+
+namespace loom::ui {
+std::shared_ptr<repl::ReplScreenState> AppTestingSeams::agent_conversation_state_for_testing() const {
+    const auto found = app->agent_conversation_views_.find(app->active_agent_conversation_);
+    return found == app->agent_conversation_views_.end() ? nullptr : found->second.state;
+}
+std::string AppTestingSeams::active_agent_conversation_for_testing() const { return app->active_agent_conversation_; }
+} // namespace loom::ui

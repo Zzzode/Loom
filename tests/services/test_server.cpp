@@ -1713,12 +1713,12 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
 
     auto team = loom::tools::global_team_store().get("direct-team-id");
     ASSERT_TRUE(team.has_value()) << std::string(loom::tools::format_error(team.error()));
-    EXPECT_EQ((*team)->name, "Direct Team");
-    ASSERT_EQ((*team)->members.size(), 2u);
-    ASSERT_EQ((*team)->task_list.size(), 1u);
-    EXPECT_EQ((*team)->task_list.front().id, "direct-task");
-    ASSERT_TRUE((*team)->task_list.front().assigned_to.has_value());
-    EXPECT_EQ(*(*team)->task_list.front().assigned_to, "reviewer-one");
+    EXPECT_EQ(team->name, "Direct Team");
+    ASSERT_EQ(team->members.size(), 2u);
+    ASSERT_EQ(team->task_list.size(), 1u);
+    EXPECT_EQ(team->task_list.front().id, "direct-task");
+    ASSERT_TRUE(team->task_list.front().assigned_to.has_value());
+    EXPECT_EQ(*team->task_list.front().assigned_to, "reviewer-one");
 
     const auto team_dir = root / "teams" / "direct-team";
     EXPECT_TRUE(fs::exists(root / "teams" / "direct-team-id.json"));

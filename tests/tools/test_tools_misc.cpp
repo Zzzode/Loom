@@ -3196,13 +3196,13 @@ TEST(Tools, RuntimeTeamCreateRegistersMembersAndSharedTasks) {
 
     auto team = loom::tools::global_team_store().get("runtime-team-members");
     ASSERT_TRUE(team.has_value()) << std::string(loom::tools::format_error(team.error()));
-    ASSERT_EQ((*team)->task_list.size(), 1u);
-    ASSERT_TRUE((*team)->task_list.front().assigned_to.has_value());
-    EXPECT_EQ(*(*team)->task_list.front().assigned_to, "team-researcher");
-    auto member = std::ranges::find_if((*team)->members, [](const auto& candidate) {
+    ASSERT_EQ(team->task_list.size(), 1u);
+    ASSERT_TRUE(team->task_list.front().assigned_to.has_value());
+    EXPECT_EQ(*team->task_list.front().assigned_to, "team-researcher");
+    auto member = std::ranges::find_if(team->members, [](const auto& candidate) {
         return candidate.agent_id == "team-researcher";
     });
-    ASSERT_NE(member, (*team)->members.end());
+    ASSERT_NE(member, team->members.end());
     EXPECT_EQ(member->status, loom::tools::MemberStatus::Working);
     ASSERT_TRUE(member->current_task.has_value());
     EXPECT_EQ(*member->current_task, "task-1");
@@ -3235,12 +3235,12 @@ TEST(Tools, RuntimeTeamCreateRegistersMembersAndSharedTasks) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     auto restored_team = loom::tools::global_team_store().get("runtime-team-members");
     ASSERT_TRUE(restored_team.has_value()) << std::string(loom::tools::format_error(restored_team.error()));
-    ASSERT_EQ((*restored_team)->task_list.size(), 1u);
-    EXPECT_EQ((*restored_team)->task_list.front().id, "task-1");
-    auto restored_member = std::ranges::find_if((*restored_team)->members, [](const auto& candidate) {
+    ASSERT_EQ(restored_team->task_list.size(), 1u);
+    EXPECT_EQ(restored_team->task_list.front().id, "task-1");
+    auto restored_member = std::ranges::find_if(restored_team->members, [](const auto& candidate) {
         return candidate.agent_id == "team-researcher";
     });
-    ASSERT_NE(restored_member, (*restored_team)->members.end());
+    ASSERT_NE(restored_member, restored_team->members.end());
     EXPECT_EQ(restored_member->status, loom::tools::MemberStatus::Working);
     auto restored_researcher = loom::tools::agent_runtime::native_agent_store().get("team-researcher");
     ASSERT_TRUE(restored_researcher.has_value());
@@ -3319,6 +3319,7 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
     ASSERT_TRUE(planner.has_value());
     ASSERT_TRUE(planner->team_name.has_value());
     EXPECT_EQ(*planner->team_name, "Native Start Team");
+    EXPECT_EQ(planner->teammate_backend, "in-process");
     ASSERT_TRUE(planner->output_file_path.has_value());
     EXPECT_TRUE(fs::is_symlink(*planner->output_file_path));
     EXPECT_TRUE(std::ranges::any_of(planner->transcript, [](const auto& line) {
@@ -3327,6 +3328,7 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
 
     auto reviewer = loom::tools::agent_runtime::native_agent_store().get("reviewer@native-start-team");
     ASSERT_TRUE(reviewer.has_value());
+    EXPECT_EQ(reviewer->teammate_backend, "in-process");
     EXPECT_TRUE(std::ranges::any_of(reviewer->transcript, [](const auto& line) {
         return line.find("[Team task review-task assigned by Native Start Team]") != std::string::npos;
     }));
@@ -3348,10 +3350,10 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
         while (std::chrono::steady_clock::now() < deadline) {
             auto team = loom::tools::global_team_store().get("native-start-team-id");
             if (team) {
-                auto member = std::ranges::find_if((*team)->members, [&](const auto& candidate) {
+                auto member = std::ranges::find_if(team->members, [&](const auto& candidate) {
                     return candidate.agent_id == member_id;
                 });
-                if (member != (*team)->members.end() &&
+                if (member != team->members.end() &&
                     member->status == loom::tools::MemberStatus::Done &&
                     member->last_result &&
                     member->last_result->find("late stream response") != std::string::npos) {
@@ -3507,7 +3509,7 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
     ASSERT_TRUE(inbox->front().summary.has_value());
     EXPECT_EQ(*inbox->front().summary, "restart resume follow-up");
 
-    auto team = [&]() -> std::expected<loom::tools::Team*, loom::tools::TeamError> {
+    auto team = [&]() -> std::expected<loom::tools::Team, loom::tools::TeamError> {
         for (int i = 0; i < 50; ++i) {
             auto t = loom::tools::global_team_store().get("restart-resume-team-id");
             if (t.has_value()) return t;
@@ -3516,10 +3518,10 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
         return loom::tools::global_team_store().get("restart-resume-team-id");
     }();
     ASSERT_TRUE(team.has_value()) << std::string(loom::tools::format_error(team.error()));
-    auto member = std::ranges::find_if((*team)->members, [](const auto& candidate) {
+    auto member = std::ranges::find_if(team->members, [](const auto& candidate) {
         return candidate.agent_id == "reviewer@restart-resume-team";
     });
-    ASSERT_NE(member, (*team)->members.end());
+    ASSERT_NE(member, team->members.end());
     EXPECT_EQ(member->status, loom::tools::MemberStatus::Done);
     ASSERT_TRUE(member->last_result.has_value());
     EXPECT_NE(member->last_result->find("late stream response"), std::string::npos);
@@ -3712,11 +3714,11 @@ TEST(Tools, StandaloneTeamCreateAndDeleteDelegateToRuntimeTeamStore) {
 
     auto team = loom::tools::global_team_store().get("standalone-team-id");
     ASSERT_TRUE(team.has_value()) << std::string(loom::tools::format_error(team.error()));
-    ASSERT_EQ((*team)->members.size(), 1u);
-    EXPECT_EQ((*team)->members.front().agent_id, "standalone-worker");
-    ASSERT_EQ((*team)->task_list.size(), 1u);
-    ASSERT_TRUE((*team)->task_list.front().assigned_to.has_value());
-    EXPECT_EQ(*(*team)->task_list.front().assigned_to, "standalone-worker");
+    ASSERT_EQ(team->members.size(), 1u);
+    EXPECT_EQ(team->members.front().agent_id, "standalone-worker");
+    ASSERT_EQ(team->task_list.size(), 1u);
+    ASSERT_TRUE(team->task_list.front().assigned_to.has_value());
+    EXPECT_EQ(*team->task_list.front().assigned_to, "standalone-worker");
 
     loom::tools::team_delete::TeamDeleteTool delete_tool;
     auto deleted = delete_tool.execute(loom::core::ToolInput::from_json(R"({
@@ -3910,11 +3912,11 @@ TEST(Tools, TeamStoreUpdatesMemberStatusAndPersists) {
     loom::tools::global_team_store().clear_for_testing();
     auto restored = loom::tools::global_team_store().get("status-team");
     ASSERT_TRUE(restored.has_value()) << std::string(loom::tools::format_error(restored.error()));
-    ASSERT_EQ((*restored)->members.size(), 1u);
-    EXPECT_EQ((*restored)->members.front().status, loom::tools::MemberStatus::Done);
-    EXPECT_FALSE((*restored)->members.front().current_task.has_value());
-    ASSERT_TRUE((*restored)->members.front().last_result.has_value());
-    EXPECT_EQ(*(*restored)->members.front().last_result, "review complete");
+    ASSERT_EQ(restored->members.size(), 1u);
+    EXPECT_EQ(restored->members.front().status, loom::tools::MemberStatus::Done);
+    EXPECT_FALSE(restored->members.front().current_task.has_value());
+    ASSERT_TRUE(restored->members.front().last_result.has_value());
+    EXPECT_EQ(*restored->members.front().last_result, "review complete");
 
     auto missing = loom::tools::global_team_store().update_member_status(
         "status-team",

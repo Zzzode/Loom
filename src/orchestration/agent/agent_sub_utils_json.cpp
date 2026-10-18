@@ -468,6 +468,10 @@ void append_json_optional_string_field(
             case ContentBlockType::ToolResult:
                 append_string_field("type", "tool_result", first_field);
                 append_string_field("tool_use_id", block.tool_use_id, first_field);
+                if (block.is_error) {
+                    append_field_prefix("is_error", first_field);
+                    out += "true";
+                }
                 append_field_prefix("content", first_field);
                 out += R"([{"type":"text","text":")";
                 out += json_escape_string(block.text);
@@ -561,6 +565,7 @@ void append_json_optional_string_field(
             .type = ContentBlockType::ToolResult,
             .text = text_from_json_content(block.get("content")),
             .tool_use_id = json_string_member(block, "tool_use_id"),
+            .is_error = block.get("is_error").is_bool() && block.get("is_error").as_bool(),
         };
     }
     if (type == "thinking") {

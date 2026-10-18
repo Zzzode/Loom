@@ -217,6 +217,12 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
                                       bool is_prompt_input_active,
                                       bool allow_dialogs_with_animation) {
     namespace dsys = dsys_fw;
+    // Only the App-owned child-view handoff overrides suppression. Main's
+    // real typing/animation state remains intact for the return path.
+    if (s.prioritize_actionable_dialogs) {
+        is_prompt_input_active = false;
+        allow_dialogs_with_animation = true;
+    }
 
     yield_instance_to_permission(s);
     // Standalone always takes every event.
@@ -277,7 +283,9 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
             }
         }
     }
-    return false;
+    // An unanswered foreground request owns the input even for keys its
+    // renderer ignores; they must never modify the suspended Main draft.
+    return s.prioritize_actionable_dialogs;
 }
 
 namespace {
@@ -303,6 +311,10 @@ bool actionable_permission(ReplScreenState& s, dsys::DialogPayloadVariant& paylo
 
 PreparedDialogLayers PrepareDialogLayers(
     ReplScreenState& s, bool typing, bool allow_animation, int w, int h) {
+    if (s.prioritize_actionable_dialogs) {
+        typing = false;
+        allow_animation = true;
+    }
     yield_instance_to_permission(s);
     PreparedDialogLayers prepared;
     // Preserve renderer execution order, including lazy payload initialization.

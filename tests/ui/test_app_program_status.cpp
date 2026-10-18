@@ -9,6 +9,7 @@ import std;
 import loom.ui.app.app;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.repl_screen;
+import loom.ui.dialogs.system;
 import loom.query.query_engine;
 import loom.tools.tool;
 import loom.commands.registry;
@@ -131,10 +132,18 @@ TEST_F(AppProgramStatus, HiddenPermissionResolutionRestoresRetainedForegroundErr
             worker.join();
         }
     } cleanup{app, worker};
+    std::string permission_id;
     ASSERT_TRUE(wait_until([&] {
-        return ui::test_seams(app).pending_ui_action_count_for_testing() > 0;
+        (void)app->Render();
+        const auto state = ui::test_seams(app).screen_state_for_testing();
+        const auto overlay = state->dialog_store.dialog_queue.peek_overlay();
+        if (!overlay) return false;
+        const auto* request = std::get_if<loom::ui::dialogs::system::ToolPermissionPayload>(&overlay->get());
+        if (!request || request->tool_name != "Write" ||
+            request->description.find("/tmp/status-only") == std::string::npos) return false;
+        permission_id = request->id;
+        return true;
     }, 2s));
-    (void)app->Render();
     app->OnEvent(ftxui::Event::Custom);
     EXPECT_NE(Last().find("state=blocked"), std::string::npos);
     EXPECT_NE(Last().find("kind=permission"), std::string::npos);
@@ -144,6 +153,15 @@ TEST_F(AppProgramStatus, HiddenPermissionResolutionRestoresRetainedForegroundErr
     app->OnEvent(ftxui::Event::Character('y'));
     ASSERT_EQ(answered.wait_for(2s), std::future_status::ready);
     EXPECT_TRUE(answered.get());
+    // The worker stages exact-request cleanup before returning. Consume that
+    // UI action before asserting the foreground status restored by the event.
+    app->OnEvent(ftxui::Event::Custom);
+    const auto state = ui::test_seams(app).screen_state_for_testing();
+    const auto overlay = state->dialog_store.dialog_queue.peek_overlay();
+    EXPECT_TRUE(!overlay || std::visit([&](const auto& request) {
+        if constexpr (requires { request.id; }) return request.id != permission_id;
+        return true;
+    }, overlay->get()));
     EXPECT_NE(Last().find("state=error"), std::string::npos);
 }
 

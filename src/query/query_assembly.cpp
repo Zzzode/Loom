@@ -95,6 +95,33 @@ namespace fs = std::filesystem;
             .name       = std::string(name_val.as_str()),
             .input_json = std::move(input_json)};
     }
+    if (type == "tool_result") {
+        const auto id = block.get("tool_use_id");
+        if (!id.is_str()) return std::nullopt;
+        loom::core::ToolResultBlock result;
+        result.tool_use_id.value = id.as_str();
+        const auto error = block.get("is_error");
+        result.is_error = error.is_bool() && error.as_bool();
+        const auto content = block.get("content");
+        if (content.is_str()) {
+            result.content = std::string(content.as_str());
+        } else {
+            std::vector<loom::core::ToolResultContentItem> items;
+            if (content.is_arr()) content.iter([&](loom::utils::json::JsonVal item) {
+                const auto item_type = item.get_string("type");
+                if (item_type == "text" && item.get("text").is_str()) {
+                    items.push_back({"text", item.get_string("text"), {}, {}});
+                } else if (item_type == "image") {
+                    const auto source = item.get("source");
+                    if (source.get("media_type").is_str() && source.get("data").is_str()) {
+                        items.push_back({"image", {}, source.get_string("media_type"), source.get_string("data")});
+                    }
+                }
+            });
+            result.content = std::move(items);
+        }
+        return result;
+    }
     if (type == "image" || type == "document") {
         auto src = block.get("source");
         if (!src.is_obj()) return std::nullopt;
@@ -222,7 +249,11 @@ namespace fs = std::filesystem;
 
     // ToolResultMessage is serialized as role="user" with a tool_result
     // object as the first element of the content array.
-    if (role == "user") {
+    std::size_t tool_result_count = 0;
+    content_val.iter([&](loom::utils::json::JsonVal block) {
+        if (block.get_string("type") == "tool_result") ++tool_result_count;
+    });
+    if (role == "user" && tool_result_count == 1) {
         auto first = content_val.at(0);
         if (first.is_obj()) {
             auto ftype = first.get("type");

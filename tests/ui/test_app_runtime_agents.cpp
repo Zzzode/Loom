@@ -15,6 +15,9 @@ import loom.ui.dialogs.triggers;
 import loom.ui.screens.repl_screen;
 import loom.ui.features.agents.runtime_agents;
 import loom.query.query_engine;
+import loom.query.assembly;
+import loom.serdes.json;
+import loom.types.types;
 import loom.tools.tool;
 import loom.tools.agent_runtime;
 import loom.commands.registry;
@@ -305,7 +308,7 @@ TEST_F(AppRuntimeAgents, InstanceBrowserOpensWhileBusyAndNeverConsumesNotificati
     ftxui::Render(screen, component->Render());
     EXPECT_NE(screen.ToString().find("owned-ended"), std::string::npos);
     EXPECT_EQ(screen.ToString().find("foreign-ended"), std::string::npos);
-    component->OnEvent(ftxui::Event::Return);
+    component->OnEvent(ftxui::Event::Character('i'));
     screen.Clear();
     ftxui::Render(screen, component->Render());
     EXPECT_NE(screen.ToString().find("Visible failure reason"), std::string::npos);
@@ -464,11 +467,7 @@ TEST_F(AppRuntimeAgents, StopAcknowledgementDoesNotPromiseCleanupIsStillRunning)
     store.begin_execution(record("stop-ack", native::NativeAgentStatus::Running), tools.background_stop_token());
     ui::test_seams(app).handle_submit_for_testing("/subagents stop-ack");
     auto state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
-    auto modal = state->dialog_store.dialog_queue.peek_modal_mut();
-    ASSERT_TRUE(modal);
-    auto& payload = std::get<loom::ui::dialogs::system::AgentInstancesPayload>(modal->get());
-    auto component = *std::static_pointer_cast<ftxui::Component>(payload.component);
-    component->OnEvent(ftxui::Event::Character('s'));
+    app->OnEvent(ftxui::Event::Character('\x03'));
     EXPECT_EQ(state->footer_dynamic_text, "Cancellation requested");
     EXPECT_TRUE(store.get("stop-ack")->cancel_requested);
     EXPECT_EQ(store.get("stop-ack")->status, native::NativeAgentStatus::Running);
@@ -489,4 +488,448 @@ TEST_F(AppRuntimeAgents, InstanceModalCoversTranscriptFragmentsAtBothHorizontalE
         for (int x = 0; x < columns; ++x)
             EXPECT_NE(screen.PixelAt(x, 4).character, "Z") << "columns=" << columns << " x=" << x;
     }
+}
+
+TEST_F(AppRuntimeAgents, InteractiveConversationRetainsIndependentRootAndChildDraftAndScroll) {
+    auto item = record("interactive-one", native::NativeAgentStatus::Failed);
+    item.sidechain_entries = {R"({"uuid":"interactive-one-source-1","message":{"role":"assistant","content":[{"type":"text","text":"Child answer"}]}})"};
+    native::native_agent_store().upsert(item);
+    auto root_state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    ui::test_seams(app).set_input_text_for_testing("Root private draft");
+    root_state->messages_store.scroll_pinned_to_bottom = false;
+    root_state->messages_store.scroll_offset = 7;
+    const auto root_id = engine->session_id().value;
+    const auto root_history = engine->get_conversation().size();
+    ui::test_seams(app).handle_submit_for_testing("/subagents interactive-one");
+    auto child = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(child);
+    EXPECT_NE(child.get(), root_state.get());
+    app->OnEvent(ftxui::Event::Character("Child private draft"));
+    EXPECT_EQ(child->input_text, "Child private draft");
+    child->messages_store.scroll_pinned_to_bottom = false;
+    child->messages_store.scroll_offset = 3;
+    app->OnEvent(ftxui::Event::Special("\x1b[1;3D"));
+    EXPECT_TRUE(ui::test_seams(app).active_agent_conversation_for_testing().empty());
+    EXPECT_EQ(root_state->input_text, "Root private draft");
+    EXPECT_FALSE(root_state->messages_store.scroll_pinned_to_bottom);
+    EXPECT_EQ(root_state->messages_store.scroll_offset, 7);
+    ui::test_seams(app).handle_submit_for_testing("/subagents interactive-one");
+    EXPECT_EQ(ui::test_seams(app).agent_conversation_state_for_testing(), child);
+    EXPECT_EQ(child->input_text, "Child private draft");
+    EXPECT_EQ(child->messages_store.scroll_offset, 3);
+    EXPECT_EQ(engine->session_id().value, root_id);
+    EXPECT_EQ(engine->get_conversation().size(), root_history);
+    EXPECT_FALSE(native::native_agent_store().get(item.agent_id)->notification_delivered);
+}
+
+TEST_F(AppRuntimeAgents, InteractiveUnsupportedCommandsAndShellKeepDraftAndNeverReachRoot) {
+    native::native_agent_store().upsert(record("command-target", native::NativeAgentStatus::Failed));
+    ui::test_seams(app).handle_submit_for_testing("/subagents command-target");
+    auto child = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(child);
+    const auto root_history = engine->get_conversation().size();
+    for (const auto& text : {"/clear", "/model anything", "/resume other", "!printf unsafe"}) {
+        loom::ui::repl_screen::set_prompt_input_text(child, text, std::string_view(text).size());
+        app->OnEvent(ftxui::Event::Return);
+        EXPECT_EQ(child->input_text, text);
+        ASSERT_TRUE(child->footer_dynamic_text.has_value());
+        EXPECT_FALSE(child->footer_dynamic_text->empty());
+        EXPECT_EQ(engine->get_conversation().size(), root_history);
+        EXPECT_FALSE(ui::test_seams(app).is_query_running_for_testing());
+    }
+    child->prompt_store.input_mode = loom::ui::repl_screen::InputMode::Normal;
+    loom::ui::repl_screen::set_prompt_input_text(child, "/back", 5);
+    app->OnEvent(ftxui::Event::Return);
+    EXPECT_TRUE(ui::test_seams(app).active_agent_conversation_for_testing().empty());
+}
+
+TEST_F(AppRuntimeAgents, InteractiveParentBusyRejectionRetainsTextAndTargetedInterruptLeavesParentAlone) {
+    auto& store = native::native_agent_store();
+    store.upsert(record("ended-child", native::NativeAgentStatus::Failed));
+    ui::test_seams(app).set_query_running_for_testing(true);
+    ui::test_seams(app).handle_submit_for_testing("/subagents ended-child");
+    auto child = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(child);
+    app->OnEvent(ftxui::Event::Character("Continue this child"));
+    app->OnEvent(ftxui::Event::Return);
+    EXPECT_EQ(child->input_text, "Continue this child");
+    ASSERT_TRUE(child->footer_dynamic_text.has_value());
+    EXPECT_NE(child->footer_dynamic_text->find("parent operation"), std::string::npos);
+    store.begin_execution(record("running-child", native::NativeAgentStatus::Running), tools.background_stop_token());
+    ui::test_seams(app).handle_submit_for_testing("/subagents running-child");
+    app->OnEvent(ftxui::Event::Character('\x03'));
+    EXPECT_TRUE(store.get("running-child")->cancel_requested);
+    EXPECT_TRUE(ui::test_seams(app).is_query_running_for_testing());
+    EXPECT_NE(ui::test_seams(app).screen_state_for_testing()->task_view_store.spinner_tip, "Cancelling...");
+    EXPECT_EQ(store.get("running-child")->status, native::NativeAgentStatus::Running);
+    store.end_execution("running-child");
+    ui::test_seams(app).set_query_running_for_testing(false);
+}
+
+TEST_F(AppRuntimeAgents, InteractiveProjectionPreservesUnresolvedToolAndDistinctSourceIdentityAndHumanXml) {
+    auto item = record("long-agent-identity-shared-prefix", native::NativeAgentStatus::Running);
+    item.sidechain_entries = {
+        R"({"uuid":"long-agent-identity-shared-prefix-1","message":{"role":"assistant","content":[{"type":"thinking","thinking":"Reasoning"},{"type":"tool_use","id":"unresolved-tool","name":"Bash","input":{"command":"echo retained"}}]}})",
+        R"({"uuid":"long-agent-identity-shared-prefix-2","message":{"role":"assistant","content":[{"type":"text","text":"Separate answer"}]}})",
+        R"({"uuid":"long-agent-identity-shared-prefix-3","message":{"role":"user","content":[{"type":"text","text":"<task_notification><task_id>human-example</task_id><status>completed</status></task_notification>"}]}})"};
+    native::native_agent_store().upsert(item);
+    ui::test_seams(app).handle_submit_for_testing("/subagents " + item.agent_id);
+    auto child = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(child);
+    const auto& rows = child->messages_store.messages;
+    auto tool = std::ranges::find_if(rows, [](const auto& row) { return row.is_tool_use; });
+    ASSERT_NE(tool, rows.end());
+    EXPECT_EQ(tool->tool_use_id, "unresolved-tool");
+    EXPECT_EQ(tool->tool_status, "running");
+    auto answer = std::ranges::find_if(rows, [](const auto& row) { return row.content_preview.find("Separate answer") != std::string::npos; });
+    ASSERT_NE(answer, rows.end());
+    EXPECT_EQ(tool->id.size(), 24u);
+    EXPECT_NE(tool->id, answer->id);
+    auto human = std::ranges::find_if(rows, [](const auto& row) { return row.role == "user"; });
+    ASSERT_NE(human, rows.end());
+    EXPECT_NE(human->content_preview.find("<task_notification>"), std::string::npos);
+    EXPECT_FALSE(native::native_agent_store().get(item.agent_id)->notification_delivered);
+}
+
+TEST_F(AppRuntimeAgents, InteractiveToolCardsNeverReportUnresolvedWorkAsFinished) {
+    auto item = record("live-tool-child", native::NativeAgentStatus::Running, true);
+    item.sidechain_entries = {
+        R"({"uuid":"live-prompt","message":{"role":"user","content":[{"type":"text","text":"Run the retained tool"}]}})",
+        R"({"uuid":"live-call","message":{"role":"assistant","content":[{"type":"tool_use","id":"live-tool","name":"Bash","input":{"command":"sleep 120"}}]}})"};
+    auto& store = native::native_agent_store();
+    store.upsert(item);
+    ui::test_seams(app).handle_submit_for_testing("/subagents live-tool-child");
+    auto child = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(child);
+    app->OnEvent(ftxui::Event::Character("Editable child draft"));
+    for (const bool queued : {false, true}) {
+        item.pending_messages = queued ? std::vector<std::string>{"Queued guidance"}
+                                       : std::vector<std::string>{};
+        store.upsert(item);
+        drain();
+        for (const int columns : {40, 60, 112}) {
+            AgentUiEnv term_columns("COLUMNS", std::to_string(columns));
+            AgentUiEnv term_lines("LINES", "28");
+            AgentUiEnv fullscreen("LOOM_NO_FLICKER", "1");
+            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns), ftxui::Dimension::Fixed(28));
+            ftxui::Render(screen, app->Render());
+            const auto text = screen.ToString();
+            EXPECT_NE(text.find("Bash"), std::string::npos);
+            EXPECT_EQ(text.find("Worked"), std::string::npos);
+            if (queued) EXPECT_NE(text.find("[Queued]"), std::string::npos);
+            EXPECT_EQ(child->input_text, "Editable child draft");
+            EXPECT_FALSE(child->query_running);
+            const auto& messages = child->messages_store.messages;
+            const auto tool = std::ranges::find_if(messages, [](const auto& row) { return row.is_tool_use; });
+            ASSERT_NE(tool, messages.end());
+            EXPECT_EQ(tool->tool_status, "running");
+        }
+    }
+    item.pending_messages.clear();
+    item.status = native::NativeAgentStatus::Completed;
+    item.sidechain_entries.push_back(
+        R"({"uuid":"live-result","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"live-tool","content":"Completed output"}]}})");
+    store.upsert(item);
+    drain();
+    const auto& messages = child->messages_store.messages;
+    const auto tool = std::ranges::find_if(messages, [](const auto& row) { return row.is_tool_use; });
+    ASSERT_NE(tool, messages.end());
+    EXPECT_EQ(tool->tool_status, "success");
+    auto completed = ftxui::Screen::Create(ftxui::Dimension::Fixed(112), ftxui::Dimension::Fixed(28));
+    ftxui::Render(completed, app->Render());
+    EXPECT_NE(completed.ToString().find("completed"), std::string::npos);
+    EXPECT_NE(completed.ToString().find("Bash"), std::string::npos);
+    app->OnEvent(ftxui::Event::Special("\x1b[1;3D"));
+    EXPECT_TRUE(ui::test_seams(app).active_agent_conversation_for_testing().empty());
+    EXPECT_FALSE(ui::test_seams(app).screen_state_for_testing()->disable_chain_compression);
+}
+
+TEST_F(AppRuntimeAgents, InteractivePermissionAndQuestionPreemptWithoutLosingChildDraft) {
+    namespace ds = loom::ui::dialogs::system;
+    auto item = record("permission-child", native::NativeAgentStatus::Failed);
+    native::native_agent_store().upsert(item);
+    ui::test_seams(app).handle_submit_for_testing("/subagents permission-child");
+    auto child = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(child);
+    app->OnEvent(ftxui::Event::Character("Retain child draft"));
+    auto root_state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    int original_responses = 0;
+    ds::ToolPermissionPayload permission;
+    permission.id = "immutable-original-request";
+    permission.tool_name = "Bash";
+    permission.on_response = [&](ds::ToolPermissionPayload::Decision, bool) { ++original_responses; };
+    root_state->dialog_store.dialog_queue.push(permission);
+    app->OnEvent(ftxui::Event::Character('y'));
+    EXPECT_EQ(original_responses, 1);
+    EXPECT_EQ(child->input_text, "Retain child draft");
+    EXPECT_EQ(ui::test_seams(app).active_agent_conversation_for_testing(), item.agent_id);
+    root_state->dialog_store.dialog_queue.remove(permission.id);
+    ds::PromptDialogPayload question;
+    question.id = "original-question";
+    question.on_response = [](std::optional<std::string>) {};
+    root_state->dialog_store.dialog_queue.push(question);
+    app->OnEvent(ftxui::Event::Character('x'));
+    EXPECT_EQ(child->input_text, "Retain child draft");
+    root_state->dialog_store.dialog_queue.remove(question.id);
+    app->OnEvent(ftxui::Event::Character('z'));
+    EXPECT_EQ(child->input_text, "Retain child draftz");
+}
+
+TEST_F(AppRuntimeAgents, InteractiveOrdinaryAndTeamViewsRenderAt40And60And112Columns) {
+    for (const bool team : {false, true}) {
+        auto item = record(team ? "team-conversation" : "ordinary-conversation", native::NativeAgentStatus::Failed);
+        if (team) { item.team_name = "research"; item.teammate_backend = "in-process"; }
+        item.sidechain_entries = {R"({"uuid":"width-source","message":{"role":"assistant","content":[{"type":"text","text":"Actual retained conversation answer"}]}})"};
+        native::native_agent_store().upsert(item);
+        ui::test_seams(app).handle_submit_for_testing("/subagents " + item.agent_id);
+        auto child = ui::test_seams(app).agent_conversation_state_for_testing();
+        ASSERT_TRUE(child);
+        app->OnEvent(ftxui::Event::Character("Child editor text"));
+        for (const int columns : {40, 60, 112}) for (const int rows : {14, 28}) {
+            AgentUiEnv term_columns("COLUMNS", std::to_string(columns));
+            AgentUiEnv term_lines("LINES", std::to_string(rows));
+            AgentUiEnv fullscreen("LOOM_NO_FLICKER", "1");
+            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns), ftxui::Dimension::Fixed(rows));
+            ftxui::Render(screen, app->Render());
+            EXPECT_NE(screen.ToString().find(team ? "Team Agent" : "Subagent"), std::string::npos);
+            EXPECT_NE(screen.ToString().find("failed"), std::string::npos);
+            EXPECT_NE(screen.ToString().find("Child editor text"), std::string::npos);
+            EXPECT_NE(screen.ToString().find("Ctrl-C Stop"), std::string::npos);
+            EXPECT_EQ(child->input_text, "Child editor text");
+            EXPECT_EQ(child->chrome_store.status_bar.cost_usd, std::nullopt);
+            const auto caret = screen.cursor();
+            ASSERT_GE(caret.x, 0);
+            ASSERT_LT(caret.x, columns);
+            ASSERT_GE(caret.y, 0);
+            ASSERT_LT(caret.y, rows);
+            EXPECT_TRUE(screen.PixelAt(caret.x, caret.y).inverted);
+        }
+        app->OnEvent(ftxui::Event::Special("\x1b[1;3D"));
+    }
+}
+
+TEST_F(AppRuntimeAgents, InteractiveResultReconciliationStaysWithinTheSelectedChild) {
+    auto first = record("result-child-first", native::NativeAgentStatus::Running);
+    first.sidechain_entries = {
+        R"({"uuid":"first-call","message":{"role":"assistant","content":[{"type":"tool_use","id":"shared-call-id","name":"Bash","input":{"command":"first"}}]}})",
+        R"({"uuid":"first-result","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"shared-call-id","is_error":true,"content":"failed first"}]}})"};
+    auto second = record("result-child-second", native::NativeAgentStatus::Running);
+    second.sidechain_entries = {R"({"uuid":"second-call","message":{"role":"assistant","content":[{"type":"tool_use","id":"shared-call-id","name":"Bash","input":{"command":"second"}}]}})"};
+    native::native_agent_store().upsert(first);
+    native::native_agent_store().upsert(second);
+    ui::test_seams(app).handle_submit_for_testing("/subagents result-child-first");
+    auto first_state = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(first_state);
+    auto call = std::ranges::find_if(first_state->messages_store.messages, [](const auto& row) { return row.is_tool_use; });
+    ASSERT_NE(call, first_state->messages_store.messages.end());
+    EXPECT_EQ(call->tool_status, "error");
+    ui::test_seams(app).handle_submit_for_testing("/subagents result-child-second");
+    auto second_state = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(second_state);
+    call = std::ranges::find_if(second_state->messages_store.messages, [](const auto& row) { return row.is_tool_use; });
+    ASSERT_NE(call, second_state->messages_store.messages.end());
+    EXPECT_EQ(call->tool_status, "running");
+    EXPECT_EQ(first_state->messages_store.messages.front().tool_status, "error");
+}
+
+TEST_F(AppRuntimeAgents, RootCommitsWhileChildVisibleNeverReplaceChildProjectionOrConsumeNotification) {
+    auto item = record("notification-child", native::NativeAgentStatus::Failed);
+    item.sidechain_entries = {R"({"uuid":"child-only-row","message":{"role":"assistant","content":[{"type":"text","text":"Private child row"}]}})"};
+    native::native_agent_store().upsert(item);
+    ui::test_seams(app).handle_submit_for_testing("/subagents notification-child");
+    auto child = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(child);
+    loom::core::AssistantMessage root_message;
+    root_message.id.value = "root-new-commit";
+    root_message.timestamp = std::chrono::system_clock::now();
+    root_message.content.push_back(loom::core::TextBlock{"Root-only result while child visible"});
+    engine->append_message_for_testing(loom::core::Message{root_message});
+    ui::test_seams(app).set_query_running_for_testing(true);
+    ui::test_seams(app).notify_conversation_changed_for_testing();
+    (void)app->Render();
+    EXPECT_TRUE(std::ranges::any_of(child->messages_store.messages, [](const auto& row) { return row.content_preview == "Private child row"; }));
+    EXPECT_FALSE(std::ranges::any_of(child->messages_store.messages, [](const auto& row) { return row.content_preview.find("Root-only result") != std::string::npos; }));
+    const auto root_state = ui::test_seams(app).screen_state_for_testing();
+    EXPECT_TRUE(std::ranges::any_of(root_state->messages_store.messages, [](const auto& row) { return row.content_preview.find("Root-only result") != std::string::npos; }));
+    EXPECT_FALSE(native::native_agent_store().get(item.agent_id)->notification_delivered);
+    ui::test_seams(app).set_query_running_for_testing(false);
+}
+
+TEST_F(AppRuntimeAgents, ChildForegroundApprovalsOverrideOnlySuppressionAndRetainBothActiveDrafts) {
+    namespace ds = loom::ui::dialogs::system;
+    native::native_agent_store().upsert(record("active-draft-child", native::NativeAgentStatus::Failed));
+    auto root_state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    loom::ui::repl_screen::set_prompt_input_text(root_state, "Main draft must stay intact", 7);
+    root_state->is_prompt_input_active = true;
+    root_state->is_tool_animation_active = true;
+    ui::test_seams(app).handle_submit_for_testing("/subagents active-draft-child");
+    auto child = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(child);
+    app->OnEvent(ftxui::Event::Character("Child draft must stay intact"));
+    const auto child_cursor = child->input_cursor;
+    AgentUiEnv columns("COLUMNS", "60");
+    AgentUiEnv lines("LINES", "28");
+    AgentUiEnv fullscreen("LOOM_NO_FLICKER", "1");
+    int permission_responses = 0;
+    int elicitation_responses = 0;
+    std::optional<std::string> question_answer;
+    for (const int kind : {0, 1, 2}) {
+        const std::string marker = kind == 0 ? "TARGET-APPROVAL" : kind == 1 ? "TARGET-ELICITATION" : "TARGET-QUESTION";
+        const auto id = "original-actionable-" + std::to_string(kind);
+        if (kind == 0) {
+            ds::ToolPermissionPayload permission;
+            permission.id = id;
+            permission.tool_name = "Bash";
+            permission.description = marker;
+            permission.on_response = [&](ds::ToolPermissionPayload::Decision decision, bool) {
+                if (decision == ds::ToolPermissionPayload::Decision::AllowOnce) ++permission_responses;
+            };
+            root_state->dialog_store.dialog_queue.push(std::move(permission));
+        } else if (kind == 1) {
+            ds::ElicitationPayload elicitation;
+            elicitation.id = id;
+            elicitation.server_name = "original-server";
+            elicitation.request_description = marker;
+            elicitation.on_response = [&](bool allowed) { if (allowed) ++elicitation_responses; };
+            root_state->dialog_store.dialog_queue.push(std::move(elicitation));
+        } else {
+            ds::PromptDialogPayload question;
+            question.id = id;
+            question.title = "Original question";
+            question.prompt_text = marker;
+            question.on_response = [&](std::optional<std::string> answer) { question_answer = std::move(answer); };
+            root_state->dialog_store.dialog_queue.push(std::move(question));
+        }
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(28));
+        ftxui::Render(screen, app->Render());
+        EXPECT_NE(screen.ToString().find(marker), std::string::npos) << "kind=" << kind;
+        EXPECT_TRUE(root_state->prioritize_actionable_dialogs);
+        if (kind != 2) {
+            // Ignored keys belong to the foreground request, never Main's editor.
+            app->OnEvent(ftxui::Event::Character('x'));
+            app->OnEvent(ftxui::Event::Character('y'));
+        } else {
+            app->OnEvent(ftxui::Event::Character("original answer"));
+            app->OnEvent(ftxui::Event::Return);
+        }
+        EXPECT_EQ(root_state->input_text, "Main draft must stay intact");
+        EXPECT_EQ(root_state->input_cursor, 7u);
+        EXPECT_TRUE(root_state->is_prompt_input_active);
+        EXPECT_TRUE(root_state->is_tool_animation_active);
+        EXPECT_EQ(child->input_text, "Child draft must stay intact");
+        EXPECT_EQ(child->input_cursor, child_cursor);
+        EXPECT_EQ(ui::test_seams(app).active_agent_conversation_for_testing(), "active-draft-child");
+        root_state->dialog_store.dialog_queue.remove(id);
+        app->OnEvent(ftxui::Event::Custom);
+        EXPECT_FALSE(root_state->prioritize_actionable_dialogs);
+    }
+    EXPECT_EQ(permission_responses, 1);
+    EXPECT_EQ(elicitation_responses, 1);
+    EXPECT_EQ(question_answer, "original answer");
+}
+
+TEST_F(AppRuntimeAgents, MainOnlyApprovalSuppressionRemainsUnchangedAfterReturningFromChild) {
+    namespace ds = loom::ui::dialogs::system;
+    native::native_agent_store().upsert(record("return-before-main-prompt", native::NativeAgentStatus::Failed));
+    ui::test_seams(app).handle_submit_for_testing("/subagents return-before-main-prompt");
+    app->OnEvent(ftxui::Event::Special("\x1b[1;3D"));
+    auto root_state = std::const_pointer_cast<loom::ui::repl_screen::ReplScreenState>(ui::test_seams(app).screen_state_for_testing());
+    loom::ui::repl_screen::set_prompt_input_text(root_state, "Main active draft", 17);
+    root_state->is_prompt_input_active = true;
+    int responses = 0;
+    ds::ElicitationPayload elicitation;
+    elicitation.id = "ordinary-main-elicitation";
+    elicitation.server_name = "server";
+    elicitation.request_description = "MAIN-SUPPRESSED-REQUEST";
+    elicitation.on_response = [&](bool) { ++responses; };
+    root_state->dialog_store.dialog_queue.push(std::move(elicitation));
+    AgentUiEnv columns("COLUMNS", "60");
+    AgentUiEnv lines("LINES", "28");
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(28));
+    ftxui::Render(screen, app->Render());
+    EXPECT_FALSE(root_state->prioritize_actionable_dialogs);
+    EXPECT_EQ(screen.ToString().find("MAIN-SUPPRESSED-REQUEST"), std::string::npos);
+    app->OnEvent(ftxui::Event::Character('x'));
+    EXPECT_EQ(root_state->input_text, "Main active draftx");
+    EXPECT_EQ(responses, 0);
+    root_state->dialog_store.dialog_queue.remove("ordinary-main-elicitation");
+}
+
+TEST_F(AppRuntimeAgents, CancelledBatchKeepsPriorSuccessAndPerCallErrorsWithMixedContent) {
+    auto item = record("mixed-cancelled-batch", native::NativeAgentStatus::Cancelled);
+    item.sidechain_entries = {
+        R"({"uuid":"batch-calls","message":{"role":"assistant","content":[{"type":"tool_use","id":"completed-call","name":"Bash","input":{"command":"echo done"}},{"type":"tool_use","id":"cancelled-call","name":"Bash","input":{"command":"sleep 60"}},{"type":"tool_use","id":"unexecuted-call","name":"Bash","input":{"command":"echo never"}}]}})",
+        R"({"uuid":"batch-results","message":{"role":"user","content":[{"type":"text","text":"Before result batch"},{"type":"tool_result","tool_use_id":"completed-call","content":[{"type":"text","text":"completed output"},{"type":"image","source":{"type":"base64","media_type":"image/png","data":"aW1hZ2U="}}]},{"type":"text","text":"Between results"},{"type":"tool_result","tool_use_id":"cancelled-call","is_error":true,"content":"cancelled during execution"},{"type":"tool_result","tool_use_id":"unexecuted-call","is_error":true,"content":"not executed"},{"type":"image","source":{"type":"base64","media_type":"image/png","data":"dGFpbA=="}},{"type":"text","text":"After result batch"}]}})"};
+    native::native_agent_store().upsert(item);
+    ui::test_seams(app).handle_submit_for_testing("/subagents mixed-cancelled-batch");
+    const auto child = ui::test_seams(app).agent_conversation_state_for_testing();
+    ASSERT_TRUE(child);
+    const auto& rows = child->messages_store.messages;
+    for (const auto& [id, status] : std::array<std::pair<std::string_view, std::string_view>, 3>{{
+            {"completed-call", "success"}, {"cancelled-call", "error"}, {"unexecuted-call", "error"}}}) {
+        const auto call = std::ranges::find_if(rows, [&](const auto& row) {
+            return row.is_tool_use && row.tool_use_id == id;
+        });
+        ASSERT_NE(call, rows.end()) << id;
+        EXPECT_EQ(call->tool_status, status) << id;
+        const auto result = std::ranges::find_if(rows, [&](const auto& row) {
+            return row.role == "tool" && row.tool_use_id == id;
+        });
+        ASSERT_NE(result, rows.end()) << id;
+        EXPECT_EQ(result->tool_status, status) << id;
+        EXPECT_EQ(result->is_error, status == "error") << id;
+    }
+    const auto completed = std::ranges::find_if(rows, [](const auto& row) {
+        return row.role == "tool" && row.tool_use_id == "completed-call";
+    });
+    ASSERT_NE(completed, rows.end());
+    ASSERT_TRUE(completed->tool_result_content_items);
+    ASSERT_EQ(completed->tool_result_content_items->size(), 2u);
+    EXPECT_EQ(completed->tool_result_content_items->back().media_type, "image/png");
+    EXPECT_EQ(completed->tool_result_content_items->back().data, "aW1hZ2U=");
+    std::vector<std::string> user_text;
+    for (const auto& row : rows) if (row.role == "user" && !row.is_image) user_text.push_back(row.content_preview);
+    EXPECT_EQ(user_text, (std::vector<std::string>{"Before result batch", "Between results", "After result batch"}));
+    EXPECT_TRUE(std::ranges::any_of(rows, [](const auto& row) {
+        return row.role == "user" && row.is_image && row.image_block && row.image_block->data == "dGFpbA==";
+    }));
+}
+
+TEST(AppAgentResultCodec, SingleAndBatchedResultsPreserveTypedOutcomesAndDocumentContent) {
+    auto parsed = loom::utils::json::parse(R"({"role":"user","content":[{"type":"tool_result","tool_use_id":"one","is_error":true,"content":[{"type":"text","text":"failed output"},{"type":"image","source":{"type":"base64","media_type":"image/png","data":"aW1hZ2U="}}]},{"type":"document","source":{"type":"base64","media_type":"application/pdf","data":"cGRm"}}]})");
+    ASSERT_TRUE(parsed);
+    const auto restored = loom::query::parse_session_message_value(parsed->root());
+    ASSERT_TRUE(restored);
+    const auto* single = std::get_if<loom::core::ToolResultMessage>(&*restored);
+    ASSERT_NE(single, nullptr);
+    EXPECT_TRUE(single->is_error);
+    ASSERT_EQ(single->content.size(), 3u);
+    EXPECT_EQ(std::get<loom::core::TextBlock>(single->content[0]).text, "failed output");
+    EXPECT_EQ(std::get<loom::core::ImageBlock>(single->content[1]).data, "aW1hZ2U=");
+    EXPECT_EQ(std::get<loom::core::DocumentBlock>(single->content[2]).data, "cGRm");
+    parsed = loom::utils::json::parse(R"({"role":"user","content":[{"type":"tool_result","tool_use_id":"legacy","content":"old successful result"}]})");
+    ASSERT_TRUE(parsed);
+    const auto legacy = loom::query::parse_session_message_value(parsed->root());
+    ASSERT_TRUE(legacy);
+    ASSERT_TRUE(std::holds_alternative<loom::core::ToolResultMessage>(*legacy));
+    EXPECT_FALSE(std::get<loom::core::ToolResultMessage>(*legacy).is_error);
+    parsed = loom::utils::json::parse(R"({"role":"user","content":[{"type":"tool_result","tool_use_id":"first-success","content":[{"type":"text","text":"kept success"},{"type":"image","source":{"type":"base64","media_type":"image/png","data":"cGlj"}}]},{"type":"document","source":{"type":"base64","media_type":"application/pdf","data":"YmF0Y2g="}},{"type":"tool_result","tool_use_id":"second-error","is_error":true,"content":"kept error"}]})");
+    ASSERT_TRUE(parsed);
+    const auto batch = loom::query::parse_session_message_value(parsed->root());
+    ASSERT_TRUE(batch);
+    const auto* user = std::get_if<loom::core::UserMessage>(&*batch);
+    ASSERT_NE(user, nullptr);
+    ASSERT_EQ(user->content.size(), 3u);
+    const auto& first = std::get<loom::core::ToolResultBlock>(user->content[0]);
+    EXPECT_EQ(first.tool_use_id.value, "first-success");
+    EXPECT_FALSE(first.is_error);
+    const auto& items = std::get<std::vector<loom::core::ToolResultContentItem>>(first.content);
+    ASSERT_EQ(items.size(), 2u);
+    EXPECT_EQ(items.front().text, "kept success");
+    EXPECT_EQ(items.back().data, "cGlj");
+    EXPECT_EQ(std::get<loom::core::DocumentBlock>(user->content[1]).data, "YmF0Y2g=");
+    const auto& second = std::get<loom::core::ToolResultBlock>(user->content[2]);
+    EXPECT_EQ(second.tool_use_id.value, "second-error");
+    EXPECT_TRUE(second.is_error);
+    EXPECT_EQ(std::get<std::string>(second.content), "kept error");
 }

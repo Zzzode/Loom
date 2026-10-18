@@ -443,12 +443,13 @@ bool HasOuterFocusOwner(ReplMode mode) {
                 state->autocomplete_suggestions[static_cast<std::size_t>(selected)]
                     .submit_on_return;
             auto accepted = accept_selected_prompt_suggestion(state);
-            if (submit && accepted && cb->on_submit) {
+            if (submit && accepted && (cb->on_submit || cb->on_submit_checked)) {
                 // Strip '!' mode prefix from accepted value before engine.
                 namespace figs = loom::ui::design::figures;
                 std::string submit_text =
                     std::string(figs::strip_mode_prefix(*accepted));
-                cb->on_submit(submit_text, state->prompt_store.input_mode);
+                if (cb->on_submit_checked && !cb->on_submit_checked(submit_text, state->prompt_store.input_mode)) return true;
+                if (cb->on_submit) cb->on_submit(submit_text, state->prompt_store.input_mode);
                 // History stores the mode-prefixed form for round-trip
                 // mode detection on recall.  If the user toggled bash via
                 // bare '!' (input_text has NO '!'), prepend it.  If the
@@ -487,6 +488,7 @@ bool HasOuterFocusOwner(ReplMode mode) {
             namespace figs = loom::ui::design::figures;
             std::string submit_text =
                 std::string(figs::strip_mode_prefix(state->input_text));
+            if (cb->on_submit_checked && !cb->on_submit_checked(submit_text, state->prompt_store.input_mode)) return true;
             if (cb->on_submit) cb->on_submit(submit_text, state->prompt_store.input_mode);
             // History stores the mode-prefixed form for round-trip
             // mode detection on arrow-up recall.  If the user toggled

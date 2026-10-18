@@ -92,6 +92,7 @@ target_sources(loom_tools
     PRIVATE
         tools/grep_tool.cpp
         tools/runtime_registry_json.cpp
+    tools/team_tool.cpp
         tools/runtime_registry_executors.cpp
         tools/runtime_registry_native_agents.cpp
         tools/runtime_registry_skills.cpp

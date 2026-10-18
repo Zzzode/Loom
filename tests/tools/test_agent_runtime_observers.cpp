@@ -6,6 +6,7 @@
 
 import std;
 import loom.tools.agent_runtime;
+import loom.tools.team;
 import loom.types.tool_types;
 
 namespace {
@@ -356,4 +357,280 @@ TEST(NativeAgentAdmission, HostConstraintRechecksOwnerAndIdentityUnderReservatio
     store.upsert(record);
     ASSERT_TRUE(store.reserve_resume("host-target", expected));
     store.release_resume("host-target");
+}
+
+TEST(NativeAgentInput, StartupAndFinalizationHaveAtomicAdmissionBoundaries) {
+    ObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    std::stop_source owner;
+    auto record = runtime::make_native_agent_record("interactive", "general-purpose");
+    record.parent_session_id = "owner";
+    store.begin_execution(record, owner.get_token());
+    EXPECT_FALSE(store.enqueue_owned_message("interactive", "owner", owner.get_token(), "too early"));
+    store.mark_running("interactive");
+    ASSERT_TRUE(store.open_input("interactive"));
+    ASSERT_TRUE(store.enqueue_owned_message("interactive", "owner", owner.get_token(), "accepted"));
+    EXPECT_FALSE(store.close_input_if_idle("interactive"));
+    EXPECT_EQ(store.take_pending_messages("interactive"), (std::vector<std::string>{"accepted"}));
+    EXPECT_TRUE(store.close_input_if_idle("interactive"));
+    EXPECT_FALSE(store.enqueue_owned_message("interactive", "owner", owner.get_token(), "too late"));
+    EXPECT_TRUE(store.get("interactive")->pending_messages.empty());
+    store.finish_agent("interactive", std::string("finished"));
+    store.end_execution("interactive");
+}
+
+TEST(NativeAgentInput, SimultaneousSendAndEndTurnNeverLoseAnAcceptedMessage) {
+    ObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    std::stop_source owner;
+    auto record = runtime::make_native_agent_record("boundary", "general-purpose");
+    record.parent_session_id = "owner";
+    store.begin_execution(record, owner.get_token());
+    store.mark_running("boundary");
+    ASSERT_TRUE(store.open_input("boundary"));
+    std::barrier boundary(2);
+    bool accepted = false;
+    bool closed = false;
+    std::jthread sender([&] {
+        boundary.arrive_and_wait();
+        accepted = store.enqueue_owned_message("boundary", "owner", owner.get_token(), "late input").has_value();
+    });
+    boundary.arrive_and_wait();
+    closed = store.close_input_if_idle("boundary");
+    sender.join();
+    const auto pending = store.get("boundary")->pending_messages;
+    EXPECT_EQ(accepted, !closed);
+    EXPECT_EQ(pending.size(), accepted ? 1u : 0u);
+    if (accepted) EXPECT_EQ(pending.front(), "late input");
+    store.close_input("boundary");
+    store.end_execution("boundary");
+}
+
+TEST(NativeAgentInput, RegistrySessionAndCancellationScopeAreRecheckedBeforeEnqueue) {
+    ObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    std::stop_source owner, sibling;
+    auto record = runtime::make_native_agent_record("target", "general-purpose");
+    record.parent_session_id = "owner";
+    store.begin_execution(record, owner.get_token());
+    store.mark_running("target");
+    ASSERT_TRUE(store.open_input("target"));
+    EXPECT_FALSE(store.enqueue_owned_message("target", "other-session", owner.get_token(), "foreign"));
+    EXPECT_FALSE(store.enqueue_owned_message("target", "owner", sibling.get_token(), "foreign registry"));
+    ASSERT_TRUE(store.enqueue_owned_message("target", "owner", owner.get_token(), "kept"));
+    ASSERT_TRUE(store.request_owned_cancel("target", "owner", owner.get_token()));
+    EXPECT_FALSE(store.enqueue_owned_message("target", "owner", owner.get_token(), "cancelled"));
+    EXPECT_EQ(store.get("target")->pending_messages, (std::vector<std::string>{"kept"}));
+    store.finish_agent("target", std::unexpected(std::string("cancelled")));
+    store.end_execution("target");
+}
+
+TEST(NativeAgentLiveText, BoundedUtf8TailIsTransientAndSurvivesDiskRefresh) {
+    ObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    store.upsert(runtime::make_native_agent_record("live", "general-purpose"));
+    std::string text;
+    for (int i = 0; i < 30000; ++i) text += "界";
+    store.append_live_text("live", text);
+    const auto current = store.get("live")->live_text;
+    EXPECT_LE(current.size(), 64u * 1024u);
+    EXPECT_TRUE(current.starts_with("[Earlier live output truncated]\n"));
+    const auto tail = current.substr(current.find('\n') + 1);
+    EXPECT_EQ(tail.size() % 3, 0u);
+    EXPECT_TRUE(tail.ends_with("界"));
+    ASSERT_EQ(store.list().size(), 1u);
+    EXPECT_EQ(store.get("live")->live_text, current);
+    EXPECT_TRUE(runtime::load_native_agent_record("live")->live_text.empty());
+    (void)store.take_pending_task_events("owner");
+    EXPECT_EQ(store.get("live")->live_text, current);
+    store.append_sidechain_message("live", "assistant", R"([{"type":"text","text":"committed"}])", "committed");
+    EXPECT_TRUE(store.get("live")->live_text.empty());
+}
+
+TEST(NativeAgentInput, ResumeStartupMergesTheLatestRetainedMailboxUnderLock) {
+    ObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    auto record = runtime::make_native_agent_record("resume-mailbox", "general-purpose");
+    record.status = runtime::NativeAgentStatus::Failed;
+    record.pending_messages = {"A"};
+    store.upsert(record);
+    ASSERT_TRUE(store.reserve_resume("resume-mailbox"));
+    std::barrier boundary(2);
+    std::jthread startup([&] {
+        const auto stale = *store.get("resume-mailbox");
+        boundary.arrive_and_wait();
+        boundary.arrive_and_wait();
+        store.upsert(stale);
+    });
+    boundary.arrive_and_wait();
+    store.enqueue_pending_message("resume-mailbox", "B");
+    boundary.arrive_and_wait();
+    startup.join();
+    EXPECT_EQ(store.get("resume-mailbox")->pending_messages, (std::vector<std::string>{"A", "B"}));
+    store.release_resume("resume-mailbox");
+}
+
+namespace {
+struct TeamObserverSandbox {
+    ObserverSandbox runtime;
+    std::optional<std::string> previous;
+    loom::tools::TeamStore store;
+    TeamObserverSandbox() {
+        if (const char* value = std::getenv("LOOM_TEAM_RUNTIME_DIR")) previous = value;
+        ::setenv("LOOM_TEAM_RUNTIME_DIR", (runtime.path / "teams").c_str(), 1);
+    }
+    ~TeamObserverSandbox() {
+        if (previous) ::setenv("LOOM_TEAM_RUNTIME_DIR", previous->c_str(), 1);
+        else ::unsetenv("LOOM_TEAM_RUNTIME_DIR");
+    }
+};
+}
+
+TEST(TeamStoreConcurrency, PublicSnapshotsCannotMutateStoreAndRefreshExplicitly) {
+    TeamObserverSandbox sandbox;
+    auto created = sandbox.store.create("snapshot", "snapshot", {loom::tools::TeamMember{.agent_id = "member"}});
+    ASSERT_TRUE(created);
+    created->members.front().status = loom::tools::MemberStatus::Error;
+    EXPECT_EQ(sandbox.store.get("snapshot")->members.front().status, loom::tools::MemberStatus::Idle);
+    ASSERT_TRUE(sandbox.store.update_member_status("snapshot", "member", loom::tools::MemberStatus::Working));
+    EXPECT_EQ(created->members.front().status, loom::tools::MemberStatus::Error);
+    const auto refreshed = sandbox.store.get_by_id_or_name("snapshot");
+    ASSERT_TRUE(refreshed);
+    EXPECT_EQ(refreshed->members.front().status, loom::tools::MemberStatus::Working);
+    EXPECT_EQ(loom::tools::load_team_record("snapshot")->members.front().status, loom::tools::MemberStatus::Working);
+}
+
+TEST(TeamStoreConcurrency, SiblingStatusWritersAndSnapshotsPreserveBothPersistedResults) {
+    TeamObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    ASSERT_TRUE(store.create("siblings", "siblings", {
+        loom::tools::TeamMember{.agent_id = "A"}, loom::tools::TeamMember{.agent_id = "B"}}));
+    std::barrier start(4);
+    const auto update = [&](const std::string& id) {
+        start.arrive_and_wait();
+        for (int i = 0; i < 24; ++i) {
+            EXPECT_TRUE(store.update_member_status("siblings", id, loom::tools::MemberStatus::Working));
+            EXPECT_TRUE(store.update_member_status("siblings", id, loom::tools::MemberStatus::Done,
+                                                   id + "-" + std::to_string(i)));
+        }
+    };
+    std::jthread first([&] { update("A"); });
+    std::jthread second([&] { update("B"); });
+    std::jthread reader([&] {
+        start.arrive_and_wait();
+        for (int i = 0; i < 48; ++i) {
+            const auto snapshot = store.get_by_id_or_name("siblings");
+            EXPECT_TRUE(snapshot);
+            if (snapshot) EXPECT_EQ(snapshot->members.size(), 2u);
+            const auto persisted = loom::tools::load_team_record("siblings");
+            EXPECT_TRUE(persisted);
+            if (persisted) EXPECT_EQ(persisted->members.size(), 2u);
+        }
+    });
+    start.arrive_and_wait();
+    first.join();
+    second.join();
+    reader.join();
+    const auto snapshot = store.get("siblings");
+    const auto persisted = loom::tools::load_team_record("siblings");
+    ASSERT_TRUE(snapshot && persisted);
+    EXPECT_EQ(snapshot->members.front().last_result, "A-23");
+    EXPECT_EQ(snapshot->members.back().last_result, "B-23");
+    EXPECT_EQ(persisted->members.front().last_result, "A-23");
+    EXPECT_EQ(persisted->members.back().last_result, "B-23");
+}
+
+TEST(TeamStoreConcurrency, RemovedMembershipBetweenSnapshotAndWorkingCannotBeRecreated) {
+    TeamObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    ASSERT_TRUE(store.create("removed", "removed", {loom::tools::TeamMember{.agent_id = "member"}}));
+    std::barrier boundary(2);
+    std::expected<void, loom::tools::TeamError> admitted;
+    std::jthread resume([&] {
+        const auto before = store.get("removed");
+        EXPECT_TRUE(before && before->members.size() == 1u);
+        boundary.arrive_and_wait();
+        boundary.arrive_and_wait();
+        admitted = store.update_member_status("removed", "member", loom::tools::MemberStatus::Working);
+    });
+    boundary.arrive_and_wait();
+    EXPECT_TRUE(store.remove("removed"));
+    EXPECT_TRUE(store.create("removed", "removed", {}));
+    boundary.arrive_and_wait();
+    resume.join();
+    ASSERT_FALSE(admitted);
+    EXPECT_EQ(admitted.error(), loom::tools::TeamError::MemberNotFound);
+    EXPECT_TRUE(store.get("removed")->members.empty());
+}
+
+TEST(TeamStoreConcurrency, ConcurrentAddRemoveLookupKeepsOwnedSnapshotsIndependent) {
+    TeamObserverSandbox sandbox;
+    auto& store = sandbox.store;
+    ASSERT_TRUE(store.create("changing", "changing", {loom::tools::TeamMember{.agent_id = "stable"}}));
+    const auto retained = store.get("changing");
+    std::barrier start(3);
+    std::jthread writer([&] {
+        start.arrive_and_wait();
+        for (int i = 0; i < 24; ++i) {
+            EXPECT_TRUE(store.remove("changing"));
+            EXPECT_TRUE(store.create("changing", "changing", {}));
+            EXPECT_TRUE(store.add_member("changing", loom::tools::TeamMember{.agent_id = "new"}));
+        }
+    });
+    std::jthread reader([&] {
+        start.arrive_and_wait();
+        for (int i = 0; i < 96; ++i) {
+            const auto snapshot = store.get_by_id_or_name("changing");
+            if (snapshot) {
+                EXPECT_LE(snapshot->members.size(), 1u);
+                if (!snapshot->members.empty()) EXPECT_TRUE(snapshot->members.front().agent_id == "stable" ||
+                                                           snapshot->members.front().agent_id == "new");
+            } else EXPECT_EQ(snapshot.error(), loom::tools::TeamError::TeamNotFound);
+        }
+    });
+    start.arrive_and_wait();
+    writer.join();
+    reader.join();
+    ASSERT_TRUE(retained);
+    ASSERT_EQ(retained->members.size(), 1u);
+    EXPECT_EQ(retained->members.front().agent_id, "stable");
+    EXPECT_EQ(store.get("changing")->members.front().agent_id, "new");
+}
+
+TEST(NativeAgentAdmission, RemovedTeamMemberBeforeHostAdmissionPropagatesWithoutStarting) {
+    TeamObserverSandbox sandbox;
+    auto& teams = loom::tools::global_team_store();
+    teams.clear_for_testing();
+    struct ClearTeams { ~ClearTeams() { loom::tools::global_team_store().clear_for_testing(); } } clear_teams;
+    ASSERT_TRUE(teams.create("admission", "admission", {loom::tools::TeamMember{.agent_id = "member"}}));
+    auto& store = sandbox.runtime.store;
+    auto record = runtime::make_native_agent_record("member", "general-purpose");
+    record.parent_session_id = "owner";
+    record.team_name = "admission";
+    record.teammate_backend = "in-process";
+    record.status = runtime::NativeAgentStatus::Failed;
+    record.transcript = {"retained context"};
+    store.upsert(record);
+    const loom::core::HostAgentResumeConstraint target{
+        "member", "general-purpose", "owner", record.cwd, record.team_name,
+        record.name, record.teammate_backend, record.teammate_task_id, record.teammate_pane_id};
+    std::barrier boundary(2);
+    std::expected<void, std::string> admitted;
+    std::jthread caller([&] {
+        const auto observed = teams.get("admission");
+        EXPECT_TRUE(observed && observed->members.size() == 1u);
+        boundary.arrive_and_wait();
+        boundary.arrive_and_wait();
+        admitted = store.reserve_resume("member", target);
+    });
+    boundary.arrive_and_wait();
+    EXPECT_TRUE(teams.remove("admission"));
+    EXPECT_TRUE(teams.create("admission", "admission", {}));
+    boundary.arrive_and_wait();
+    caller.join();
+    ASSERT_FALSE(admitted);
+    EXPECT_NE(admitted.error().find("no longer a member"), std::string::npos);
+    EXPECT_TRUE(store.resume_unavailable_reason("member").empty());
+    EXPECT_EQ(store.get("member")->status, runtime::NativeAgentStatus::Failed);
+    EXPECT_TRUE(teams.get("admission")->members.empty());
 }

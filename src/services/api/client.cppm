@@ -58,6 +58,9 @@ struct ContentBlock {
     // Thinking specific
     std::string thinking{};
     std::string signature{};
+
+    // Tool result execution outcome; absent legacy fields remain successful.
+    bool is_error = false;
 };
 
 // =========================================================================
@@ -414,6 +417,7 @@ private:
                 case ContentBlockType::ToolResult:
                     obj.add("type", doc.string("tool_result"));
                     obj.add("tool_use_id", doc.string(block.tool_use_id));
+                    if (block.is_error) obj.add("is_error", doc.boolean(true));
                     obj.add("content", doc.string(block.text));
                     break;
                 case ContentBlockType::Image: {

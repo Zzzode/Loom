@@ -30,6 +30,12 @@ struct HostAgentResumeConstraint {
     std::string agent_id;
     std::string agent_type;
     std::string parent_session_id;
+    std::optional<std::string> cwd{};
+    std::optional<std::string> team_name{};
+    std::optional<std::string> name{};
+    std::optional<std::string> teammate_backend{};
+    std::optional<std::string> teammate_task_id{};
+    std::optional<std::string> teammate_pane_id{};
 };
 
 /// JSON-based tool input wrapping raw parameter data

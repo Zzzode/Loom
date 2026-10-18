@@ -239,16 +239,18 @@ TEST(PermissionCoordinator, ShutdownStaysCancelledAfterLateResetAndResponse) {
     loom::ui::PermissionCoordinator permission;
     permission.add_always_allowed("Bash");
     permission.abort_all();
-    permission.reset_permission_response();
-    permission.resolve_permission(true);
-    auto tool = std::async(std::launch::async, [&] { return permission.wait_permission_response(); });
+    const auto tool_token = permission.begin_permission_request();
+    EXPECT_EQ(tool_token, 0);
+    EXPECT_FALSE(permission.resolve_permission(tool_token, true));
+    auto tool = std::async(std::launch::async, [&] { return permission.wait_permission_response(tool_token); });
     EXPECT_EQ(tool.wait_for(2s), std::future_status::ready);
     EXPECT_FALSE(tool.get());
     EXPECT_FALSE(permission.is_always_allowed("Bash"));
 
-    permission.reset_elicitation_response();
-    permission.resolve_elicitation(true);
-    auto elicitation = std::async(std::launch::async, [&] { return permission.wait_elicitation_response(); });
+    const auto elicitation_token = permission.begin_elicitation_request();
+    EXPECT_EQ(elicitation_token, 0);
+    EXPECT_FALSE(permission.resolve_elicitation(elicitation_token, true));
+    auto elicitation = std::async(std::launch::async, [&] { return permission.wait_elicitation_response(elicitation_token); });
     EXPECT_EQ(elicitation.wait_for(2s), std::future_status::ready);
     EXPECT_FALSE(elicitation.get());
 

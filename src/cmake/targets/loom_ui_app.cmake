@@ -52,6 +52,8 @@ target_sources(loom_ui_app PRIVATE
     ui/app/app_handle_submit.cpp
     ui/app/app_agent_menu.cpp
     ui/app/app_agent_instances.cpp
+    ui/app/app_agent_conversation.cpp
+    ui/app/permission_coordinator.cpp
     ui/app/app_agent_projection.cpp
     ui/app/app_prompt_suggestion_wiring.cpp
     ui/app/app_dialog_registration_default.cpp

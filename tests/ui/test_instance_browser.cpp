@@ -238,3 +238,22 @@ TEST(InstanceBrowser, ModalClearsUnderlyingTranscriptAndEditorAcrossItsWholeAllo
         EXPECT_EQ(screen.PixelAt(columns - 1, 5).character, " ");
     }
 }
+
+TEST(InstanceBrowser, EnterOpensSelectedConversationAndIStillShowsDetails) {
+    Fixture fixture;
+    fixture.add("first"); fixture.add("second");
+    std::vector<std::string> opened;
+    browser::Options options;
+    options.state = fixture.state;
+    options.list = [&] { return fixture.entries; };
+    options.on_open = [&](std::string id) { opened.push_back(std::move(id)); };
+    auto component = browser::CreateBrowser(std::move(options));
+    (void)fixture.paint(component);
+    component->OnEvent(Event::ArrowDown);
+    component->OnEvent(Event::Return);
+    ASSERT_EQ(opened, std::vector<std::string>{"second"});
+    EXPECT_NE(fixture.paint(component).find("Enter session"), std::string::npos);
+    component->OnEvent(Event::Character('i'));
+    EXPECT_NE(fixture.paint(component).find("Agent instance"), std::string::npos);
+    EXPECT_EQ(opened.size(), 1u);
+}

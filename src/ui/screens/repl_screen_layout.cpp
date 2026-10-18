@@ -212,7 +212,7 @@ using namespace ftxui;
     Elements logo_leading;
     const bool has_real_messages = !s.messages_store.messages.empty();
     const bool has_command_overlay = s.active_local_jsx_command;
-    if (has_real_messages || !has_command_overlay) {
+    if (s.conversation_breadcrumb.empty() && (has_real_messages || !has_command_overlay)) {
         logo_leading.push_back(
             RenderWelcomeHeader(s, spinner_frame, term_cols)
             | size(WIDTH, EQUAL, term_cols));
@@ -303,7 +303,12 @@ using namespace ftxui;
         const std::string model_line = !s.chrome_store.model_display_name.empty()
             ? s.chrome_store.model_display_name
             : s.settings_model;
-        slots.header = logo::render_logo_header_bar(model_line, term_cols);
+        if (s.conversation_breadcrumb.empty()) slots.header = logo::render_logo_header_bar(model_line, term_cols);
+        else {
+            const auto& palette = *design::theme::current_theme().palette;
+            slots.header = vbox({text(s.conversation_breadcrumb) | color(palette.primary) | bold,
+                text(s.conversation_return_hint) | color(palette.muted)}) | size(WIDTH, EQUAL, term_cols);
+        }
     }
 
     if (!s.active_local_jsx_command) {

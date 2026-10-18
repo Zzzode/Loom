@@ -640,3 +640,25 @@ TEST(ApiStreaming, StreamParserAccumulatesTextDeltas) {
 }
 
 // End of file
+
+TEST(ApiClient, ToolResultSerializerEmitsOnlyTrueErrorFlags) {
+    using namespace loom::services::api;
+    EXPECT_FALSE(ContentBlock{}.is_error);
+    CreateMessageRequest request;
+    request.model = "typed-outcome";
+    request.messages.push_back(Message{.role = "user", .content = {
+        ContentBlock{.type = ContentBlockType::ToolResult, .text = "completed", .tool_use_id = "completed"},
+        ContentBlock{.type = ContentBlockType::ToolResult, .text = "failed", .tool_use_id = "failed", .is_error = true},
+        ContentBlock{.type = ContentBlockType::ToolResult, .text = "legacy success", .tool_use_id = "legacy", .is_error = false}}});
+    const auto serialized = RequestSerializer::serialize(request);
+    const auto parsed = loom::utils::json::parse(serialized);
+    ASSERT_TRUE(parsed);
+    const auto blocks = parsed->root().get("messages").at(0).get("content");
+    ASSERT_EQ(blocks.size(), 3u);
+    EXPECT_FALSE(blocks.at(0).get("is_error").valid());
+    EXPECT_TRUE(blocks.at(1).get("is_error").is_bool());
+    EXPECT_TRUE(blocks.at(1).get("is_error").as_bool());
+    EXPECT_FALSE(blocks.at(2).get("is_error").valid());
+    EXPECT_EQ(blocks.at(0).get_string("content"), "completed");
+    EXPECT_EQ(blocks.at(1).get_string("tool_use_id"), "failed");
+}

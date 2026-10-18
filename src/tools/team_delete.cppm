@@ -191,7 +191,7 @@ std::vector<std::string> TeamDeleteTool::get_active_members(const std::string& t
     std::vector<std::string> active;
     auto team = loom::tools::global_team_store().get_by_id_or_name(team_name);
     if (!team) return active;
-    for (const auto& member : (*team)->members) {
+    for (const auto& member : team->members) {
         if (member.role == loom::tools::MemberRole::Leader) continue;
         if (member.status == loom::tools::MemberStatus::Idle ||
             member.status == loom::tools::MemberStatus::Done ||

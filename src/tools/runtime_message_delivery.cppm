@@ -628,7 +628,7 @@ struct DeliveryOutcome {
         auto team = loom::tools::global_team_store().get_by_id_or_name(*team_name);
         if (!team) return std::nullopt;
         const auto target_lower = lower_ascii(target);
-        for (const auto& member : (*team)->members) {
+        for (const auto& member : team->members) {
             const auto member_name = team_agent_name_from_id(member.agent_id);
             if (lower_ascii(member.agent_id) != target_lower && lower_ascii(member_name) != target_lower) {
                 continue;
@@ -636,7 +636,7 @@ struct DeliveryOutcome {
             return MailboxTarget{
                 .agent_id = member.agent_id,
                 .recipient_name = member_name,
-                .team_name = (*team)->name,
+                .team_name = team->name,
             };
         }
         return std::nullopt;
@@ -740,7 +740,7 @@ struct DeliveryOutcome {
 
         std::vector<std::string> recipients;
         const auto sender_lower = lower_ascii(from_agent);
-        for (const auto& member : (*team)->members) {
+        for (const auto& member : team->members) {
             const auto member_name = team_agent_name_from_id(member.agent_id);
             if (lower_ascii(member.agent_id) == sender_lower || lower_ascii(member_name) == sender_lower) {
                 continue;

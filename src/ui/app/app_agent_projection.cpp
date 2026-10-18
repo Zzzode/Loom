@@ -36,6 +36,9 @@ void AppAdapter::ProjectRuntimeAgentsToScreenState() {
         screen_state_->dialog_store.dialog_queue.remove(agent_instances_dialog_id_);
         agent_instances_dialog_id_.clear();
         agent_instances_state_.reset();
+        active_agent_conversation_.clear();
+        screen_state_->prioritize_actionable_dialogs = false;
+        agent_conversation_views_.clear();
         agent_instances_session_ = current_session_id_;
     }
     const bool changed = runtime_agents_dirty_->exchange(false, std::memory_order_acq_rel);

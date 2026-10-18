@@ -32,8 +32,8 @@ import loom.tools.agent_runtime;
 // ── Agent-menu-only imports (moved out of app_autocomplete.cpp) ─────────
 import loom.tools.agent_display;
 import loom.ui.features.agents.agent_cards;
-import loom.ui.dialogs.triggers;
 import loom.ui.dialogs.system;
+import loom.ui.dialogs.triggers;
 import loom.ui.permissions.single_prompt;
 import loom.ui.permissions.permission_computer_use;
 import loom.hooks.cost_hook;
@@ -530,64 +530,73 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
         if (permission->is_always_allowed(tool_name))
             return true;
 
-        permission->reset_permission_response();
-        dispatch([this, permission, tool_name = std::string(tool_name),
-                  tool_args = std::string(tool_args)] {
-            // Computer-use actions get their own panel: approving one hands
-            // the model real screen/mouse/keyboard control, so the concrete
-            // action (click/type/scroll + target) must be shown, not a bare
-            // tool name.
-            auto respond_cb = [this, permission, tool_name](
-                dsys::ToolPermissionPayload::Decision decision,
-                bool /*sandbox*/)
-            {
-                bool allowed =
-                    (decision == dsys::ToolPermissionPayload::Decision::AllowOnce ||
-                     decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow);
-                if (decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow) {
-                    permission->add_always_allowed(tool_name);
+        const auto token = permission->begin_permission_request();
+        if (token == 0) return false;
+        if (permission->is_always_allowed(tool_name)) {
+            permission->finish_permission_request(token);
+            return true;
+        }
+        const auto dialog_id = std::format("tool-permission-{}", token);
+        dispatch([this, permission, token, dialog_id,
+                  tool_name = std::string(tool_name), tool_args = std::string(tool_args)] {
+            if (!permission->permission_request_current(token)) return;
+            dsys::ToolPermissionPayload payload;
+            payload.id = dialog_id;
+            payload.tool_name = tool_name;
+            payload.description = tool_args;
+            payload.can_always_allow = true;
+            payload.initial_sandbox_toggle = false;
+            payload.on_response = [this, permission, token, dialog_id, tool_name](
+                dsys::ToolPermissionPayload::Decision decision, bool /*sandbox*/) {
+                // Removing this exact overlay can destroy the currently invoked
+                // callback. Keep everything needed afterward in local storage.
+                auto* app = this;
+                auto coordinator = permission;
+                const auto request = token;
+                const auto id = dialog_id;
+                const auto tool = tool_name;
+                using Decision = dsys::ToolPermissionPayload::Decision;
+                const bool allowed = decision == Decision::AllowOnce ||
+                                     decision == Decision::AlwaysAllow;
+                if (coordinator->resolve_permission(request, allowed,
+                    decision == Decision::AlwaysAllow ? std::string_view{tool}
+                                                      : std::string_view{})) {
+                    // Reflect the user's decision in this UI event. The worker
+                    // still owns the slot until its dispatched cleanup finishes.
+                    app->screen_state_->dialog_store.RemoveDialog(id);
                 }
-                permission->resolve_permission(allowed);
-                screen_state_->dialog_store.PopOverlay();
             };
-            auto abort_cb = [this, permission] {
-                permission->resolve_permission(false);
-                screen_state_->dialog_store.PopOverlay();
+            payload.on_abort = [this, permission, token, dialog_id] {
+                auto* app = this;
+                auto coordinator = permission;
+                const auto request = token;
+                const auto id = dialog_id;
+                if (coordinator->resolve_permission(request, false)) {
+                    app->screen_state_->dialog_store.RemoveDialog(id);
+                }
             };
-
-            if (auto cu_options =
-                    cperm::options_from_tool_input(tool_args)) {
+            if (auto cu_options = cperm::options_from_tool_input(tool_args)) {
                 namespace sp = loom::ui::permissions::single_prompt;
                 sp::DetailComputerUse detail;
-                detail.action_label =
-                    std::string(cperm::action_description(cu_options->action));
+                detail.action_label = std::string(cperm::action_description(cu_options->action));
                 detail.target_app = cu_options->target_app;
                 detail.coordinates = cu_options->coordinates;
                 detail.text_to_type = cu_options->text_to_type;
-                detail.first_use_in_session =
-                    permission->take_computer_use_first_use();
-                dtrig::PushToolPermissionDetailed(
-                    screen_state_->dialog_store.dialog_queue,
-                    std::string(tool_name),
-                    std::format("Loom wants to control your screen: {}",
-                                cperm::action_description(cu_options->action)),
-                    sp::ActionKind::Execute,
-                    sp::ToolDetail{std::move(detail)},
-                    respond_cb, abort_cb,
-                    /*can_always_allow=*/true);
-                return;
+                detail.first_use_in_session = permission->take_computer_use_first_use();
+                payload.description = std::format("Loom wants to control your screen: {}",
+                    cperm::action_description(cu_options->action));
+                payload.action_kind = sp::ActionKind::Execute;
+                payload.detail = sp::ToolDetail{std::move(detail)};
             }
-
-            dtrig::PushToolPermission(
-                screen_state_->dialog_store.dialog_queue,
-                std::string(tool_name),
-                std::string(tool_args),
-                /*on_response=*/respond_cb,
-                /*on_abort=*/abort_cb,
-                /*can_always_allow=*/true);
-
+            screen_state_->dialog_store.PushDialog(std::move(payload));
         });
-        return permission->wait_permission_response();
+        const bool allowed = permission->wait_permission_response(token);
+        dispatch([this, permission, token, dialog_id] {
+            if (!permission->permission_request_current(token)) return;
+            screen_state_->dialog_store.RemoveDialog(dialog_id);
+            permission->finish_permission_request(token);
+        });
+        return allowed;
     };
 }
 

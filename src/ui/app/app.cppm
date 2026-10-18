@@ -228,6 +228,23 @@ private:
     std::string agent_instances_session_;
     std::shared_ptr<void> agent_instances_state_;
     std::jthread agent_operation_thread_;
+    struct AgentConversationView {
+        std::shared_ptr<repl::ReplScreenState> state;
+        Component component;
+        std::uint64_t generation = std::numeric_limits<std::uint64_t>::max();
+        std::string root_session;
+        std::string id;
+        std::string title;
+    };
+    std::unordered_map<std::string, AgentConversationView> agent_conversation_views_;
+    std::string active_agent_conversation_;
+    void OpenAgentConversation(std::string session, std::string id);
+    void RefreshAgentConversation();
+    [[nodiscard]] bool SubmitAgentConversation(std::string session, std::string id,
+        const std::string& text, repl::InputMode mode);
+    [[nodiscard]] bool RootDialogTakesPriority();
+    [[nodiscard]] Component VisibleConversationComponent();
+    [[nodiscard]] bool HandleAgentConversationEvent(const Event& event);
 
     // Ctrl-C double-press ExitHandler moved into AppImpl (:impl partition);
     // access via set_exit_message_impl/reset_exit_handler/handle_ctrl_c.
@@ -1014,6 +1031,8 @@ struct AppTestingSeams {
 
     // UI-thread-only inspection; workers must never mutate the returned state.
     [[nodiscard]] std::shared_ptr<const repl::ReplScreenState> screen_state_for_testing() const;
+    [[nodiscard]] std::shared_ptr<repl::ReplScreenState> agent_conversation_state_for_testing() const;
+    [[nodiscard]] std::string active_agent_conversation_for_testing() const;
     [[nodiscard]] bool stop_background_workers_for_testing();
     [[nodiscard]] std::size_t pending_ui_action_count_for_testing() const;
     [[nodiscard]] std::function<void()> runtime_agent_change_callback_for_testing();

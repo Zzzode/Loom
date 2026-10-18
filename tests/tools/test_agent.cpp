@@ -3135,10 +3135,10 @@ TEST(Tools, ForegroundAgentFinalizesSuccessFailureAndExceptionAfterOwnedCleanup)
             EXPECT_TRUE(store.take_pending_task_events("notification-session").empty());
             auto completed_team = team_store.get("lifecycle-team");
             ASSERT_TRUE(completed_team.has_value());
-            const auto member = std::ranges::find_if((*completed_team)->members, [&](const auto& candidate) {
+            const auto member = std::ranges::find_if(completed_team->members, [&](const auto& candidate) {
                 return candidate.agent_id == agent_id;
             });
-            ASSERT_NE(member, (*completed_team)->members.end());
+            ASSERT_NE(member, completed_team->members.end());
             EXPECT_EQ(member->status, success ? loom::tools::MemberStatus::Done : loom::tools::MemberStatus::Error);
             EXPECT_EQ(member->last_result, success ? record->output : record->error);
             if (success) {
@@ -4805,10 +4805,10 @@ TEST(Tools, AgentToolSpawnsTeammateWithDeterministicAgentId) {
 
     auto restored_team = loom::tools::global_team_store().get("migration-team");
     ASSERT_TRUE(restored_team.has_value()) << std::string(loom::tools::format_error(restored_team.error()));
-    auto member = std::ranges::find_if((*restored_team)->members, [](const auto& candidate) {
+    auto member = std::ranges::find_if(restored_team->members, [](const auto& candidate) {
         return candidate.agent_id == "reviewer-one@migration-team";
     });
-    ASSERT_NE(member, (*restored_team)->members.end());
+    ASSERT_NE(member, restored_team->members.end());
     EXPECT_EQ(member->role, loom::tools::MemberRole::Worker);
     EXPECT_EQ(member->status, loom::tools::MemberStatus::Working);
 
@@ -4892,10 +4892,10 @@ TEST(Tools, AgentToolSpawnsTeammateWithUniqueNameWhenTeamAlreadyHasMember) {
 
     auto restored_team = loom::tools::global_team_store().get("migration-team");
     ASSERT_TRUE(restored_team.has_value()) << std::string(loom::tools::format_error(restored_team.error()));
-    auto member = std::ranges::find_if((*restored_team)->members, [](const auto& candidate) {
+    auto member = std::ranges::find_if(restored_team->members, [](const auto& candidate) {
         return candidate.agent_id == "reviewer-one-3@migration-team";
     });
-    ASSERT_NE(member, (*restored_team)->members.end());
+    ASSERT_NE(member, restored_team->members.end());
 
     loom::tools::global_team_store().clear_for_testing();
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();

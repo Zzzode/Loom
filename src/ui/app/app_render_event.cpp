@@ -614,7 +614,9 @@ Element AppAdapter::Render() {
     screen_state_->copy_toast_text = text_selection_.copy_feedback;
     // Alternate screens/dialogs may skip RenderMessages entirely.
     screen_state_->messages_store.render_input.chain_update_due.reset();
-    auto el = repl_component_->Render() | dc::cursor_reset();
+    RefreshAgentConversation();
+    auto visible = VisibleConversationComponent();
+    auto el = visible->Render() | dc::cursor_reset();
     const auto chain_due = screen_state_->messages_store.render_input.chain_update_due;
     chain_label_deadline_ms_.store(screen_.load() && query_running_.load() && chain_due
         ? std::chrono::duration_cast<std::chrono::milliseconds>(chain_due->time_since_epoch()).count()
@@ -623,7 +625,7 @@ Element AppAdapter::Render() {
     // the normal render pass.  SelectionHighlightNode (defined in
     // app_text_selection.cpp) follows FTXUI's own `inverted` decorator
     // pattern (render children, then modify pixels in-place).
-    el = ApplySelectionHighlight(std::move(el));
+    if (visible == repl_component_) el = ApplySelectionHighlight(std::move(el));
     return el;
 }
 
@@ -637,6 +639,10 @@ bool AppAdapter::OnEvent(Event event) {
     ProjectRuntimeAgentsToScreenState();
     ConsumePendingResult();
     if (status_control) return true;
+    if (!active_agent_conversation_.empty() && event == Event::Character('\x03')) {
+        StopAgentInstance(current_session_id_, active_agent_conversation_);
+        return true;
+    }
     PrepareProgramStatusInput(event);
     if (event == Event::Return && pending_paste_submission_) return true;
     // Drain any background-thread paste results that completed since the
@@ -689,6 +695,13 @@ bool AppAdapter::OnEvent(Event event) {
         if (running_as_pane_teammate()) {
             if (drain_one_teammate_prompt()) return true;
         }
+    }
+
+    RefreshAgentConversation();
+    if (!active_agent_conversation_.empty()) {
+        if (RootDialogTakesPriority()) return repl_component_->OnEvent(event);
+        (void)HandleAgentConversationEvent(event);
+        return true;
     }
 
     // Clipboard image paste (ctrl+v / cmd+v).
@@ -895,7 +908,7 @@ bool AppAdapter::OnEvent(Event event) {
 }
 
 Component AppAdapter::ActiveChild() {
-    return repl_component_;
+    return VisibleConversationComponent();
 }
 
 }  // namespace loom::ui

@@ -110,6 +110,8 @@ struct NativeAgentRecord {
     std::optional<std::string> output_file_path{};
     std::vector<std::string> sidechain_entries{};
     std::vector<std::string> pending_messages{};
+    // Transient display text, never persisted or sent to the model.
+    std::string live_text{};
     std::optional<std::string> worktree_path{};
     std::optional<std::string> worktree_branch{};
     std::optional<std::string> worktree_base_commit{};
@@ -759,6 +761,18 @@ public:
 
     void append_transcript(std::string_view agent_id, std::string entry);
 
+    // Host input is admitted only after worker initialization and before finalization.
+    [[nodiscard]] std::string owned_message_unavailable_reason(
+        std::string_view agent_id, std::string_view session_id, std::stop_token owner) const;
+    [[nodiscard]] std::expected<void, std::string> enqueue_owned_message(
+        std::string_view agent_id, std::string_view session_id, std::stop_token owner,
+        std::string message);
+    [[nodiscard]] bool open_input(std::string_view agent_id);
+    [[nodiscard]] bool close_input_if_idle(std::string_view agent_id);
+    void close_input(std::string_view agent_id);
+    void append_live_text(std::string_view agent_id, std::string_view text);
+    void clear_live_text(std::string_view agent_id);
+
     void enqueue_pending_message(std::string_view agent_id, std::string message);
 
     void enqueue_resume_message(std::string_view agent_id, std::string message);
@@ -769,7 +783,8 @@ public:
         std::string_view agent_id,
         std::string_view role,
         std::string_view content_json,
-        std::string_view fallback_text = {});
+        std::string_view fallback_text = {},
+        std::optional<std::string_view> transcript_entry = std::nullopt);
 
     void append_sidechain_entry(std::string_view agent_id, std::string entry);
 
@@ -795,6 +810,8 @@ public:
 private:
     void upsert_locked(NativeAgentRecord record);
     void begin_execution_locked(std::string_view agent_id, std::stop_token owner);
+    [[nodiscard]] std::string owned_message_reason_locked(
+        std::string_view agent_id, std::string_view session_id, std::stop_token owner) const;
 
     template <typename Fn>
     void update(std::string_view agent_id, Fn&& fn) {
@@ -839,6 +856,7 @@ private:
     struct ActiveExecution {
         std::size_t count = 0;
         std::stop_token owner;
+        bool accepting_input = false;
     };
     std::unordered_map<std::string, ActiveExecution> active_executions_;
     std::unordered_set<std::string> resume_reservations_;

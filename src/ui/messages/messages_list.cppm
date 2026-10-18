@@ -379,7 +379,7 @@ struct MessagesListInput {
 
     /// When true, skips chain compression (Step 2.5) entirely.  Used by
     /// tests that need to verify individual tool/thinking row rendering.
-    /// Production code always leaves this false.
+    /// Independent native Agent views use individual cards; Main defaults false.
     bool                            disable_chain_compression = false;
 
     /// True while a query is actively streaming.  When set, the last

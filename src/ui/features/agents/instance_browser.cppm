@@ -48,6 +48,7 @@ struct Options {
     std::function<std::optional<Detail>(std::string_view)> detail;
     std::function<void(std::string, std::string)> on_continue;
     std::function<void(std::string)> on_stop;
+    std::function<void(std::string)> on_open;
     std::function<void()> on_close;
 };
 

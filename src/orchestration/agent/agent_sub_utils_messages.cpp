@@ -279,12 +279,13 @@ void apply_resume_content_replacements(
     return messages;
 }
 
-void append_agent_sidechain_message(std::string_view agent_id, const Message& message) {
+void append_agent_sidechain_message(std::string_view agent_id, const Message& message,
+    std::optional<std::string_view> transcript_entry) {
     loom::tools::agent_runtime::native_agent_store().append_sidechain_message(
         agent_id,
         message.role,
         message_content_sidechain_json(message),
-        message_content_text(message));
+        message_content_text(message), transcript_entry);
 }
 
 } // namespace loom::tools::agent::utils

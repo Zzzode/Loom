@@ -792,6 +792,7 @@ AgentToolResultBudgetOutcome apply_agent_tool_result_budget(
 
 [[nodiscard]] std::string message_json_object(const Message& message);
 
-void append_agent_sidechain_message(std::string_view agent_id, const Message& message);
+void append_agent_sidechain_message(std::string_view agent_id, const Message& message,
+    std::optional<std::string_view> transcript_entry = std::nullopt);
 
 } // namespace loom::tools::agent::utils

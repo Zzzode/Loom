@@ -9,6 +9,7 @@ module;
 module loom.tools.agent_runtime;
 
 import std;
+import loom.tools.team;
 
 namespace loom::tools::agent_runtime {
 
@@ -152,11 +153,27 @@ std::expected<void, std::string> NativeAgentStore::reserve_resume(
         if (host->agent_id != id || host->agent_type != record.agent_type ||
             host->parent_session_id.empty() || !record.parent_session_id ||
             *record.parent_session_id != host->parent_session_id ||
-            is_team_agent_record(record) ||
+            host->cwd != record.cwd || host->team_name != record.team_name ||
+            host->name != record.name || host->teammate_backend != record.teammate_backend ||
+            host->teammate_task_id != record.teammate_task_id ||
+            host->teammate_pane_id != record.teammate_pane_id ||
             (record.parent_agent_id && !record.parent_agent_id->empty()) ||
             record.status == NativeAgentStatus::Queued || record.status == NativeAgentStatus::Running ||
             (record.sidechain_entries.empty() && record.transcript.empty())) {
             return std::unexpected("Agent identity or continuation eligibility changed before admission");
+        }
+    }
+    if (host && is_team_agent_record(records_.at(id))) {
+        const auto& record = records_.at(id);
+        if (record.teammate_backend != "in-process" || !record.team_name || record.teammate_pane_id) {
+            return std::unexpected("Only native in-process Team Agents can be continued here");
+        }
+        auto admitted = loom::tools::global_team_store().update_member_status(
+            *record.team_name, id, loom::tools::MemberStatus::Working);
+        if (!admitted) {
+            return std::unexpected(admitted.error() == loom::tools::TeamError::TeamNotFound
+                ? "Agent team is no longer available"
+                : "Agent is no longer a member of its team");
         }
     }
     resume_reservations_.insert(id);
@@ -276,7 +293,9 @@ void NativeAgentStore::finish_agent(
         if (record.status == NativeAgentStatus::Completed ||
             record.status == NativeAgentStatus::Failed ||
             record.status == NativeAgentStatus::Cancelled) return;
+        record.live_text.clear();
         auto active = active_executions_.find(std::string(agent_id));
+        if (active != active_executions_.end()) active->second.accepting_input = false;
         const bool cancelled = record.cancel_requested ||
             (active != active_executions_.end() && active->second.owner.stop_requested());
         record.cancel_requested = cancelled;
@@ -371,6 +390,12 @@ void NativeAgentStore::upsert_locked(NativeAgentRecord record) {
         if (!record.output_file_path) {
             record.output_file_path = agent_output_file_path(record.agent_id).string();
         }
+        // Resume startup must merge the latest mailbox under the admission lock.
+        if (resume_reservations_.contains(record.agent_id)) {
+            if (auto previous = records_.find(record.agent_id); previous != records_.end()) {
+                record.pending_messages = previous->second.pending_messages;
+            }
+        }
         record.updated_at = std::chrono::system_clock::now();
         auto agent_id = record.agent_id;
         auto stored = record;
@@ -399,6 +424,7 @@ std::vector<NativeAgentRecord> NativeAgentStore::list() const {
             // Refresh persisted fields without changing stable instance order.
             if (auto existing = records_.find(agent_id); existing != records_.end()) {
                 record.created_at = existing->second.created_at;
+                record.live_text = existing->second.live_text;
             }
             records_[std::move(agent_id)] = std::move(record);
         }
@@ -503,6 +529,7 @@ std::vector<PendingTaskEvent> NativeAgentStore::take_pending_task_events(
             // Refresh persisted fields without changing stable instance order.
             if (auto existing = records_.find(agent_id); existing != records_.end()) {
                 record.created_at = existing->second.created_at;
+                record.live_text = existing->second.live_text;
             }
             records_[std::move(agent_id)] = std::move(record);
         }
@@ -531,6 +558,109 @@ void NativeAgentStore::append_transcript(std::string_view agent_id, std::string 
         update(agent_id, [&](NativeAgentRecord& record) {
             record.transcript.push_back(std::move(entry));
         });
+}
+
+std::string NativeAgentStore::owned_message_reason_locked(
+    std::string_view agent_id, std::string_view session_id, std::stop_token owner) const {
+    const auto id = std::string(agent_id);
+    const auto record = records_.find(id);
+    if (session_id.empty() || record == records_.end() ||
+        record->second.parent_session_id != std::optional<std::string>{session_id}) {
+        return "Agent does not belong to this session";
+    }
+    if (is_team_agent_record(record->second) &&
+        (record->second.teammate_backend != "in-process" || record->second.teammate_pane_id)) {
+        return "Only native in-process Team Agents accept input here";
+    }
+    const auto active = active_executions_.find(id);
+    if (!owner.stop_possible() || active == active_executions_.end() || active->second.owner != owner) {
+        return "No active execution owned by this process";
+    }
+    if (owner.stop_requested() || record->second.cancel_requested) return "Agent cancellation is pending";
+    if (record->second.status != NativeAgentStatus::Running || !active->second.accepting_input) {
+        return "Agent is starting or finishing; retry after its state changes";
+    }
+    return {};
+}
+
+std::string NativeAgentStore::owned_message_unavailable_reason(
+    std::string_view agent_id, std::string_view session_id, std::stop_token owner) const {
+    std::scoped_lock lock(mutex_);
+    return owned_message_reason_locked(agent_id, session_id, owner);
+}
+
+std::expected<void, std::string> NativeAgentStore::enqueue_owned_message(
+    std::string_view agent_id, std::string_view session_id, std::stop_token owner, std::string message) {
+    if (message.empty()) return std::unexpected("Agent message is empty");
+    {
+        std::scoped_lock lock(mutex_);
+        if (auto reason = owned_message_reason_locked(agent_id, session_id, owner); !reason.empty()) {
+            return std::unexpected(std::move(reason));
+        }
+        auto& record = records_.at(std::string(agent_id));
+        record.pending_messages.push_back(std::move(message));
+        record.updated_at = std::chrono::system_clock::now();
+        (void)persist_native_agent_record(record);
+    }
+    notify_changed();
+    return {};
+}
+
+bool NativeAgentStore::open_input(std::string_view agent_id) {
+    std::scoped_lock lock(mutex_);
+    const auto active = active_executions_.find(std::string(agent_id));
+    const auto record = records_.find(std::string(agent_id));
+    if (active == active_executions_.end() || record == records_.end() ||
+        record->second.status != NativeAgentStatus::Running || record->second.cancel_requested ||
+        active->second.owner.stop_requested()) return false;
+    active->second.accepting_input = true;
+    return true;
+}
+
+bool NativeAgentStore::close_input_if_idle(std::string_view agent_id) {
+    std::scoped_lock lock(mutex_);
+    const auto record = records_.find(std::string(agent_id));
+    if (record != records_.end() && !record->second.pending_messages.empty()) return false;
+    if (auto active = active_executions_.find(std::string(agent_id)); active != active_executions_.end()) {
+        active->second.accepting_input = false;
+    }
+    return true;
+}
+
+void NativeAgentStore::close_input(std::string_view agent_id) {
+    std::scoped_lock lock(mutex_);
+    if (auto active = active_executions_.find(std::string(agent_id)); active != active_executions_.end()) {
+        active->second.accepting_input = false;
+    }
+}
+
+void NativeAgentStore::append_live_text(std::string_view agent_id, std::string_view text) {
+    if (text.empty()) return;
+    {
+        std::scoped_lock lock(mutex_);
+        auto record = records_.find(std::string(agent_id));
+        if (record == records_.end()) return;
+        auto& live = record->second.live_text;
+        live.append(text);
+        constexpr std::size_t limit = 64 * 1024;
+        constexpr std::string_view notice = "[Earlier live output truncated]\n";
+        if (live.size() > limit) {
+            auto start = live.size() - (limit - notice.size());
+            while (start < live.size() && (static_cast<unsigned char>(live[start]) & 0xc0) == 0x80) ++start;
+            live = std::string(notice) + live.substr(start);
+        }
+    }
+    notify_changed();
+}
+
+void NativeAgentStore::clear_live_text(std::string_view agent_id) {
+    {
+        std::scoped_lock lock(mutex_);
+        if (auto record = records_.find(std::string(agent_id)); record != records_.end()) {
+            record->second.live_text.clear();
+        }
+    }
+    notify_changed();
 }
 
 void NativeAgentStore::enqueue_pending_message(std::string_view agent_id, std::string message) {
@@ -572,15 +702,18 @@ void NativeAgentStore::append_sidechain_message(
     std::string_view agent_id,
     std::string_view role,
     std::string_view content_json,
-    std::string_view fallback_text
+    std::string_view fallback_text,
+    std::optional<std::string_view> transcript_entry
 ) {
         update(agent_id, [&](NativeAgentRecord& record) {
+            if (role == "assistant") record.live_text.clear();
             record.sidechain_entries.push_back(make_sidechain_jsonl_entry(
                 record.agent_id,
                 record.sidechain_entries.size(),
                 role,
                 content_json,
                 fallback_text));
+            if (transcript_entry) record.transcript.emplace_back(*transcript_entry);
         });
 }
 

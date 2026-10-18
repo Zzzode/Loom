@@ -492,3 +492,77 @@ rules, other platforms, custom physical palettes, ASan/TSan and skipped live
 provider cases remain outside this acceptance. All follow-up changes remain
 uncommitted; final independent evidence verdict is recorded in
 `build/settings-wordwrap-validation-20261018/source-review.md`.
+
+
+### Follow-up: URL separator-aware Settings wrapping (2026-10-18)
+
+The previously deferred URI-fragment policy is now explicitly requested. Only
+SettingsText changes: a complete non-space run with an ASCII scheme:// prefix
+uses literal `/ ? & = #` boundaries when wider than the allocated row. Greedy
+fragments retain their separators, including consecutive delimiters; a fitting
+core is not split merely because its trailing delimiter requires another row.
+Oversized cores retain the terminal-cell fallback. Valid percent-encoded `%HH`
+units stay together at widths of three or more cells; smaller rows still make
+progress character by character. Nothing is decoded, normalized or inserted
+into the URL value. Ordinary word/CJK/hard-line wrapping remains unchanged.
+No general URL parser, shared abstraction, module interface, configuration key,
+persisted data or public/wire contract is introduced.
+
+Three new native tests inspect physical path/query fragments at 36/40 cells,
+exact reconstruction with UTF-8 and overlong cores, percent-escape edge placement,
+exact-width segments, consecutive separators and one/two-cell progress. The API
+component regression changes a separate timeout field, saves and verifies the
+existing endpoint remains identical in memory and on disk. Save's established
+omission of newly introduced credential-bearing baseUrl values is preserved;
+the test seeds an existing endpoint rather than changing that contract.
+The corrected old-wrapper baseline fails all three wrapping regressions. Earlier
+fixture attempts omitted reload.load() and incorrectly expected generic Save to
+serialize a newly memory-only credential-bearing endpoint. Those attempts remain
+explicit in the evidence bundle and do not justify a configuration change. A
+missing dirty field did not block Ctrl+S: its existing callback always saves. Independent reviewer: `agent:/root/settings_wordwrap_review`.
+Final build/full/native evidence is retained in
+`build/settings-urlwrap-validation-20261018/`; no commit or push is requested.
+
+
+Final separator-aware URL validation:
+
+| Run | Registered | Passed | Skipped | Disabled | Failed | Wall seconds |
+|---|---:|---:|---:|---:|---:|---:|
+| Debug first pass | 3003 | 2977 | 23 | 2 | 1 | 510.63 |
+| Release first pass | 3003 | 2978 | 23 | 2 | 0 | 431.00 |
+| Debug unchanged full repeat | 3003 | 2978 | 23 | 2 | 0 | 502.33 |
+
+All three are complete, unfiltered serial default-environment CTest runs;
+XML names match registration exactly, with no duplicate or omitted tests. The
+Debug first-pass failure is TaskStopCancelsRunningBackgroundAgentDuringSleepToolExecution.
+Its unchanged isolated retry passed 1/1 in 0.47 seconds before the complete
+Debug repeat passed. The first failure is retained separately and is not called
+a clean first pass. Independent read-only cancellation review identifies an
+unsynchronized transcript-versus-tool-entry test barrier, but the logged error
+is insufficient to prove the cause of this occurrence. No Settings dependency
+or execution path was found; no cancellation source or test was modified.
+
+Default Debug/Release builds pass with -Werror; all 83 focused native cases per
+preset pass. Architecture, inline-definition, theme and RFC lint pass. The
+source freeze covers 2697 Git-visible files and 218 executable hashes; unowned
+files retain their individual initial hashes/modes in both checkouts. Product,
+test and executable bytes remain unchanged throughout all full runs and native
+acceptance. This result-only documentation update has a separate controlled hash.
+
+Real native Release PTY frames show complete separator-aligned URLs in light
+40x18 and 40x28, cell fallback for a 90-cell path core in dark 40x28, intact
+footer actions, actual Ctrl+S persistence, document End access, and restoration
+of the held sidebar at 80 columns. Exact visible-row reconstruction retains the
+complete URI, percent escapes and tail markers. The viewer renders native PTY
+bytes without REA; fixtures contain dummy configuration and call no provider.
+Both sessions exit 0, owned viewers/config fixtures are cleaned up, and original
+user settings retain hash/mode/mtime. The Release binary SHA-256 is
+`929ec0b6669a9d18411113861164ce24dcf0d4019a183df636fd159f9db75a80`.
+
+Only scheme:// URI runs use the new separator policy; relative/non-hierarchical
+forms retain prior wrapping. Linux/Windows, custom physical palettes, ASan/TSan,
+hosted-CI timing and skipped provider cases remain unverified. No shared module
+or established public/persisted/wire contract changed. Final independent verdict
+and first-pass/retry evidence are retained in
+`build/settings-urlwrap-validation-20261018/source-review.md` and sibling reports.
+All three related files remain uncommitted; no push is part of this request.

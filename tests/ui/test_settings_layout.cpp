@@ -305,6 +305,72 @@ TEST(SettingsLayout, OverlongUrlRemainsLosslessAcrossPhysicalRows) {
     }
 }
 
+TEST(SettingsLayout, UrlPathAndQueryFragmentsStayWholeOnPhysicalRows) {
+    const std::string endpoint = "https://example.invalid/settings-layout/section-00/section-01"
+        "?mode=preview&filter=value%2Fother#ENDPOINT-TAIL";
+    for (int columns : {36, 40}) {
+        const auto screen = PaintText(endpoint, columns);
+        for (auto fragment : {"https://example.invalid/", "settings-layout/", "section-00/",
+                              "section-01?", "mode=", "preview&", "filter=",
+                              "value%2Fother#", "ENDPOINT-TAIL"})
+            EXPECT_TRUE(Find(screen, fragment)) << columns << ':' << fragment << '\n' << screen.ToString();
+        EXPECT_EQ(Ink(screen), endpoint);
+    }
+    const std::string adjacent = "https://example.invalid//path?&key=value&&empty=#TAIL";
+    EXPECT_EQ(Ink(PaintText(adjacent, 36)), adjacent);
+}
+
+TEST(SettingsLayout, UrlOversizedFragmentsPreserveEscapesUtf8AndExactFitSegments) {
+    const std::string endpoint = "https://example.invalid/" + std::string(35, 'x') +
+        "%2F" + std::string(41, 'y') + "/路径?filter=cafe\u0301&last=URLTAIL#fragment";
+    for (int columns : {7, 36, 40}) {
+        const auto screen = PaintText(endpoint, columns);
+        EXPECT_EQ(Ink(screen), endpoint);
+        EXPECT_TRUE(Find(screen, "%2F")) << screen.ToString();
+        EXPECT_TRUE(Find(screen, "filter=")) << screen.ToString();
+    }
+    // An attached separator must not force a fitting path segment to split.
+    const std::string exact = std::string(36, 'z');
+    const auto screen = PaintText("https://example.invalid/" + exact + "/TAIL", 36);
+    EXPECT_TRUE(Find(screen, exact)) << screen.ToString();
+    EXPECT_EQ(Ink(screen), "https://example.invalid/" + exact + "/TAIL");
+    const std::string escape_at_edge = "https://" + std::string(27, 'h') + "/" +
+        std::string(35, 'q') + "%2F" + std::string(41, 'r');
+    const auto escaped = PaintText(escape_at_edge, 36);
+    EXPECT_TRUE(Find(escaped, "%2F")) << escaped.ToString();
+    EXPECT_EQ(Ink(escaped), escape_at_edge);
+    for (int columns : {1, 2}) {
+        const std::string tiny = "https://x/%2F?a=b#c";
+        EXPECT_EQ(Ink(PaintText(tiny, columns)), tiny);
+    }
+}
+
+TEST(SettingsLayout, ApiUrlSegmentsRemainReadableAndUnchangedAfterSave) {
+    TempSettings temp;
+    loom::core::ConfigManager config(temp.file);
+    const std::string endpoint = "https://example.invalid/settings-layout/section-00/section-01"
+        "?mode=preview&filter=value%2Fother#ENDPOINT-TAIL";
+    // Save preserves existing endpoint leaves; it deliberately does not emit
+    // credential-bearing baseUrl values newly introduced in memory.
+    { std::ofstream stream(temp.file); stream << "{\"baseUrl\":\"" << endpoint << "\"}"; }
+    config.settings_mut().network.base_url = endpoint;
+    settings::SettingsDialogOptions options;
+    options.initial_tab = settings::SettingsTabId::API;
+    auto component = settings::MakeSettingsDialog(config, options);
+    const auto screen = Paint(component, 40, 28);
+    FooterVisible(screen);
+    for (auto fragment : {"settings-layout/", "section-00/", "section-01?", "mode=",
+                          "preview&", "filter=", "value%2Fother#", "ENDPOINT-TAIL"})
+        EXPECT_TRUE(Find(screen, fragment)) << fragment << '\n' << screen.ToString();
+    // Change a separate API field so Save writes the unchanged URL to disk.
+    component->OnEvent(Event::Tab);
+    component->OnEvent(Event::Tab);
+    component->OnEvent(Event::Return);
+    component->OnEvent(Control('s'));
+    EXPECT_EQ(config.settings().network.base_url, endpoint);
+    EXPECT_NE(Read(temp.file).find(endpoint), std::string::npos);
+}
+
 TEST(SettingsLayout, HeldComponentPreservesSelectionAndDraftAcrossResize) {
     TempSettings temp;
     loom::core::ConfigManager config(temp.file);

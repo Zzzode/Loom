@@ -12,6 +12,22 @@ namespace loom::ui::dialogs::settings_dialog {
 
 [[nodiscard]] Element SettingsText(const std::string& value, int columns) {
     if (columns <= 0) return text(value);
+    const auto alpha = [](std::string_view glyph) {
+        return glyph.size() == 1 && ((glyph[0] >= 'a' && glyph[0] <= 'z') ||
+                                     (glyph[0] >= 'A' && glyph[0] <= 'Z'));
+    };
+    const auto scheme_character = [&](std::string_view glyph) {
+        return alpha(glyph) || (glyph.size() == 1 &&
+            ((glyph[0] >= '0' && glyph[0] <= '9') || glyph[0] == '+' ||
+             glyph[0] == '-' || glyph[0] == '.'));
+    };
+    const auto separator = [](std::string_view glyph) {
+        return glyph.size() == 1 && std::string_view("/?&=#").find(glyph[0]) != std::string_view::npos;
+    };
+    const auto hex = [](std::string_view glyph) {
+        return glyph.size() == 1 &&
+            std::string_view("0123456789abcdefABCDEF").find(glyph[0]) != std::string_view::npos;
+    };
     Elements lines;
     std::size_t start = 0;
     do {
@@ -49,6 +65,17 @@ namespace loom::ui::dialogs::settings_dialog {
                     ++last;
                 }
             }
+            // Recognize only a lexical scheme:// prefix, not arbitrary prose.
+            auto colon = first;
+            while (colon < last && scheme_character(glyphs[colon])) ++colon;
+            const bool uri = alpha(glyphs[first]) && colon + 2 < last &&
+                glyphs[colon] == ":" && glyphs[colon + 1] == "/" && glyphs[colon + 2] == "/";
+            if (uri) {
+                while (last < glyphs.size() && glyphs[last] != " ") {
+                    word_cells += string_width(glyphs[last]);
+                    ++last;
+                }
+            }
             if (word_cells <= columns &&
                 cells + static_cast<int>(spaces.size()) + word_cells > columns) {
                 if (!line.empty()) lines.push_back(text(line));
@@ -58,9 +85,45 @@ namespace loom::ui::dialogs::settings_dialog {
             }
             for ([[maybe_unused]] char space : spaces) append(" ");
             spaces.clear();
-            // Oversized tokens (URLs, paths, hashes) still wrap by cells.
-            for (; first < last; ++first)
-                if (!glyphs[first].empty()) append(glyphs[first]);
+            if (uri && word_cells > columns) {
+                while (first < last) {
+                    auto delimiter = first;
+                    int core_cells = 0;
+                    while (delimiter < last && !separator(glyphs[delimiter])) {
+                        core_cells += string_width(glyphs[delimiter]);
+                        ++delimiter;
+                    }
+                    auto next = delimiter;
+                    int fragment_cells = core_cells;
+                    while (next < last && separator(glyphs[next])) {
+                        fragment_cells += string_width(glyphs[next]);
+                        ++next;
+                    }
+                    // Keep fitting segments whole even if their delimiter alone
+                    // needs the next row. Consecutive separators remain ordered.
+                    const int needed = fragment_cells <= columns ? fragment_cells : core_cells;
+                    if (needed <= columns && cells + needed > columns) {
+                        if (line.find_first_not_of(' ') != std::string::npos)
+                            lines.push_back(text(line));
+                        line.clear();
+                        cells = 0;
+                    }
+                    while (first < next) {
+                        if (columns >= 3 && glyphs[first] == "%" && first + 2 < next &&
+                            hex(glyphs[first + 1]) && hex(glyphs[first + 2])) {
+                            append(glyphs[first] + glyphs[first + 1] + glyphs[first + 2]);
+                            first += 3;
+                        } else {
+                            if (!glyphs[first].empty()) append(glyphs[first]);
+                            ++first;
+                        }
+                    }
+                }
+            } else {
+                // A single oversized word/path/hash still wraps by cells.
+                for (; first < last; ++first)
+                    if (!glyphs[first].empty()) append(glyphs[first]);
+            }
         }
         for ([[maybe_unused]] char space : spaces) append(" ");
         lines.push_back(text(line));

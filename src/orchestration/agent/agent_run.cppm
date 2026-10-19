@@ -11,6 +11,7 @@ export module loom.orchestration.agent.run;
 import std;
 
 import loom.utils.error;
+import loom.constants.paths;
 import loom.scm.git.git;
 import loom.tools.tool;
 import loom.serdes.json;
@@ -138,6 +139,16 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     if (request.parent_system_prompt && !request.parent_system_prompt->empty()) {
         plan.system_prompt = *request.parent_system_prompt;
         plan.system_prompt_overridden = true;
+    }
+    // Complete inherited prompts (including implicit forks) already contain
+    // their owner's instructions. Default agent definitions receive the same
+    // user-level rules as QueryEngine without replacing their role prompt.
+    if (!plan.system_prompt_overridden) {
+        const auto user_memory = loom::constants::paths::user_memory_path();
+        std::ifstream input(user_memory);
+        const std::string content((std::istreambuf_iterator<char>(input)), {});
+        if (!content.empty())
+            plan.system_prompt += std::format("\n\n<context name=\"UserMemory\">\n{}\n</context>", content);
     }
     plan.preloaded_skill_messages = load_preloaded_skill_messages(definition);
     plan.agent_mcp_servers = definition.mcp_servers;

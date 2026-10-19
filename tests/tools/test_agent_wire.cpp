@@ -3073,3 +3073,150 @@ TEST_P(AgentWireCancellationResume, NormalToolFailureRetainsTypedErrorInSidechai
     });
     EXPECT_EQ(sent, 1);
 }
+
+namespace {
+std::string instruction_system_text(const std::string& body) {
+    const auto parsed = json::parse(body);
+    if (!parsed) return {};
+    if (const auto system = parsed->root().get("system"); system.is_str()) return std::string(system.as_str());
+    std::string result;
+    parsed->root().get("messages").iter([&](auto message) {
+        if (message.get("role").is_str() && message.get("role").as_str() == "system" &&
+            message.get("content").is_str()) result += message.get("content").as_str();
+    });
+    return result;
+}
+}
+
+TEST(AgentWire, UserInstructionsReachBuiltInCustomAndDirectRegistryRequestsAcrossWorkingDirectories) {
+    for (const auto protocol : {"messages", "openai"}) for (const auto route : {"built-in", "custom", "direct"}) {
+        SCOPED_TRACE(std::format("{} {}", protocol, route));
+        AgentWireSandbox sandbox;
+        const auto home = sandbox.path / "home";
+        const auto cwd = sandbox.path / (std::string("outside-home-") + route);
+        std::filesystem::create_directories(home / ".loom");
+        std::filesystem::create_directories(home / ".agents");
+        std::filesystem::create_directories(cwd);
+        { std::ofstream(home / ".agents" / "AGENTS.md") << "NATIVE_GLOBAL_RULE_942"; }
+        AgentWireEnv isolated_home("HOME", home.string());
+        AgentWireEnv no_override("LOOM_CONFIG_DIR", "");
+        AgentWireEnv definitions("LOOM_AGENTS_JSON",
+            R"({"global-custom-role":{"description":"Test custom role","prompt":"CUSTOM_ROLE_RULE_731"}})");
+        AgentWireServer server([protocol](const auto&, auto& response, std::size_t) {
+            response.set_content(std::string_view(protocol) == "messages" ? messages_text("global rules complete") :
+                openai_text("global rules complete"), "text/event-stream");
+        });
+        auto context = std::make_shared<loom::core::ApiExecutionContext>(*agent_wire_context(server));
+        context->wire_api = protocol;
+        loom::core::ToolRegistry registry;
+        auto input = loom::core::ToolInput::from_json(std::format(
+            R"({{"prompt":"Complete the controlled request","agent_id":"global-rules-probe","cwd":"{}","subagent_type":"{}"}})",
+            cwd.string(), std::string_view(route) == "custom" ? "global-custom-role" : "general-purpose"));
+        input.api_context = context;
+        input.parent_model = "wire-model";
+        std::optional<loom::core::ToolResult> result;
+        if (std::string_view(route) == "direct") {
+            // This is the direct CLI's native registry path, with no parent
+            // QueryEngine or inherited system prompt to supply global rules.
+            loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
+                .default_model = "wire-model", .api_context = context});
+            auto executed = registry.execute("Agent", input);
+            ASSERT_TRUE(executed);
+            result = std::move(*executed);
+        } else {
+            loom::tools::AgentConfig config;
+            config.default_model = "wire-model";
+            config.api_context = context;
+            loom::tools::AgentTool tool(config, 0, &registry);
+            auto executed = tool.execute(input);
+            ASSERT_TRUE(executed);
+            result = std::move(*executed);
+        }
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error) << result_text(*result);
+        const auto bodies = server.bodies();
+        ASSERT_EQ(bodies.size(), 1u);
+        const auto system = instruction_system_text(bodies.front());
+        const auto at = system.find("NATIVE_GLOBAL_RULE_942");
+        ASSERT_NE(at, std::string::npos);
+        EXPECT_EQ(system.find("NATIVE_GLOBAL_RULE_942", at + 1), std::string::npos);
+        EXPECT_NE(system.find("<context name=\"UserMemory\">"), std::string::npos);
+        if (std::string_view(route) == "custom") EXPECT_NE(system.find("CUSTOM_ROLE_RULE_731"), std::string::npos);
+    }
+}
+
+TEST(AgentWire, CompleteParentPromptPreservesOverrideWithoutDuplicatingInheritedUserInstructions) {
+    for (const bool already_inherited : {false, true}) {
+        AgentWireSandbox sandbox;
+        AgentWireEnv isolated_home("HOME", sandbox.path.string());
+        AgentWireEnv definitions("LOOM_AGENTS_JSON", "{}");
+        const auto config_dir = sandbox.path / "isolated-config";
+        std::filesystem::create_directories(config_dir);
+        { std::ofstream(config_dir / "LOOM.md") << "INHERITED_GLOBAL_RULE_845"; }
+        AgentWireEnv isolated_config("LOOM_CONFIG_DIR", config_dir.string());
+        AgentWireServer server([](const auto&, auto& response, std::size_t) {
+            response.set_content(openai_text("complete inherited prompt"), "text/event-stream");
+        });
+        const std::string complete_prompt = already_inherited
+            ? "Complete parent rules: INHERITED_GLOBAL_RULE_845" : "Complete replacement excludes file instructions";
+        json::JsonMutDoc doc;
+        auto root = doc.object();
+        root.add("prompt", doc.string("Finish the controlled override request"));
+        root.add("agent_id", doc.string("global-override-probe"));
+        root.add("parentSystemPrompt", doc.string(complete_prompt));
+        doc.set_root(root);
+        auto input = loom::core::ToolInput::from_json(doc.to_string());
+        input.api_context = agent_wire_context(server);
+        loom::core::ToolRegistry registry;
+        loom::tools::AgentConfig config;
+        config.default_model = "wire-model";
+        loom::tools::AgentTool tool(config, 0, &registry);
+        const auto result = tool.execute(input);
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error) << result_text(*result);
+        const auto bodies = server.bodies();
+        ASSERT_EQ(bodies.size(), 1u);
+        EXPECT_EQ(instruction_system_text(bodies.front()), complete_prompt);
+    }
+}
+
+TEST(AgentWire, ImplicitForkPreservesOneGlobalInstructionCopyThroughRealNestedRequests) {
+    AgentWireSandbox sandbox;
+    AgentWireEnv isolated_home("HOME", sandbox.path.string());
+    AgentWireEnv definitions("LOOM_AGENTS_JSON", "{}");
+    const auto config_dir = sandbox.path / "isolated-config";
+    std::filesystem::create_directories(config_dir);
+    { std::ofstream(config_dir / "LOOM.md") << "FORK_GLOBAL_RULE_348"; }
+    AgentWireEnv isolated_config("LOOM_CONFIG_DIR", config_dir.string());
+    AgentWireEnv nested("LOOM_ENABLE_NESTED_AGENTS", "1");
+    AgentWireServer server([](const auto&, auto& response, std::size_t index) {
+        if (index == 0) {
+            response.set_content(openai_frame(R"({"choices":[{"delta":{"tool_calls":[{"index":0,"id":"global-fork-call","type":"function","function":{"name":"Agent","arguments":"{\"prompt\":\"Complete the inherited request\",\"agent_id\":\"global-fork-child\"}"}}]},"finish_reason":"tool_calls"}]})") + openai_frame("[DONE]"), "text/event-stream");
+        } else response.set_content(openai_text("global fork complete"), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    auto allow = [](std::string_view, std::string_view, std::string_view) { return loom::tools::AgentLivePermissionCheck{}; };
+    registry.register_tool(loom::tools::make_agent_tool({}, 0, &registry, allow));
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    config.api_context = agent_wire_context(server);
+    loom::tools::AgentTool parent(config, 0, &registry, allow);
+    const auto result = parent.execute(agent_wire_input("global-fork-parent"));
+    ASSERT_TRUE(result);
+    ASSERT_FALSE(result->is_error) << result_text(*result);
+    runtime::native_agent_store().wait_for_background_agents();
+    const auto child = runtime::native_agent_store().get("global-fork-child");
+    ASSERT_TRUE(child);
+    EXPECT_EQ(child->status, runtime::NativeAgentStatus::Completed);
+    const auto bodies = server.bodies();
+    ASSERT_EQ(bodies.size(), 3u);
+    const auto original_system = instruction_system_text(bodies.front());
+    ASSERT_NE(original_system.find("FORK_GLOBAL_RULE_348"), std::string::npos);
+    for (const auto& body : bodies) {
+        const auto system = instruction_system_text(body);
+        EXPECT_EQ(system, original_system);
+        const auto at = system.find("FORK_GLOBAL_RULE_348");
+        ASSERT_NE(at, std::string::npos);
+        EXPECT_EQ(system.find("FORK_GLOBAL_RULE_348", at + 1), std::string::npos);
+    }
+}

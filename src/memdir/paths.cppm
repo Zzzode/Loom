@@ -31,8 +31,8 @@ struct MemoryPath {
 };
 
 /// Get the user-level memory file path. Resolves through the shared cascade
-/// (LOOM.md -> AGENTS.md -> CLAUDE.md), so a user's pre-rename
-/// `~/.claude/CLAUDE.md` is still found.
+/// (LOOM.md -> AGENTS.md -> CLAUDE.md) in ~/.loom then ~/.agents.
+/// LOOM_CONFIG_DIR isolates the search to that directory when configured.
 [[nodiscard]] inline std::filesystem::path get_user_memory_path() {
     return loom::constants::paths::user_memory_path();
 }

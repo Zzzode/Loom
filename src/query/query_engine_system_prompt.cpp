@@ -107,8 +107,9 @@ void QueryEngine::build_and_add_system_prompt() {
     // CLAUDE.md, whichever is nearest). The tag below names the file that
     // was actually read rather than a fixed "LOOM.md", so a legacy
     // CLAUDE.md is not mislabelled to the model as something it is not.
-    if (auto memory_file =
-            loom::constants::paths::find_memory_file(std::filesystem::path(cwd))) {
+    const auto memory_file =
+        loom::constants::paths::find_memory_file(std::filesystem::path(cwd));
+    if (memory_file) {
         std::ifstream mem_ifs(*memory_file);
         if (mem_ifs) {
             std::string loom_md((std::istreambuf_iterator<char>(mem_ifs)), {});
@@ -125,7 +126,10 @@ void QueryEngine::build_and_add_system_prompt() {
     // preferences are injected alongside project memory. Tree/ancestor
     // memory is already covered by the walk above.
     auto user_mem = loom::memdir::get_user_memory_path();
-    if (std::filesystem::exists(user_mem)) {
+    std::error_code equivalent_error;
+    const bool already_loaded = memory_file &&
+        std::filesystem::equivalent(*memory_file, user_mem, equivalent_error);
+    if (!already_loaded && std::filesystem::exists(user_mem)) {
         std::ifstream um_ifs(user_mem);
         if (um_ifs) {
             std::string um_content((std::istreambuf_iterator<char>(um_ifs)), {});

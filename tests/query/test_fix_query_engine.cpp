@@ -1792,3 +1792,115 @@ TEST(QueryEngineFix, AlwaysDeniedAgentIsNotAdvertisedInDefaultPrompt) {
     EXPECT_EQ(prompt->find("\n  - Agent"), std::string::npos);
     fs::remove_all(root);
 }
+
+TEST(QueryEngineFix, UserInstructionsReachRealRequestsAcrossUnrelatedWorkingDirectories) {
+    const auto root = fs::temp_directory_path() /
+        ("loom-global-instructions-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    struct Cleanup { fs::path path; ~Cleanup() { std::error_code error; fs::remove_all(path, error); } } cleanup{root};
+    const auto home = root / "home";
+    fs::create_directories(home / ".loom");
+    fs::create_directories(home / ".agents");
+    { std::ofstream(home / ".agents" / "AGENTS.md") << "GLOBAL_USER_RULE_913"; }
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard config_guard("LOOM_CONFIG_DIR", "");
+    EnvironmentGuard auto_memory("LOOM_DISABLE_AUTO_MEMORY", "1");
+    for (auto directory : {"first-project", "unrelated-project"}) {
+        const auto cwd = root / directory;
+        fs::create_directories(cwd);
+        { std::ofstream(cwd / "AGENTS.md") << "PROJECT_RULE_517"; }
+        ScriptedHttpServer server({ScriptedHttpServer::Response{}});
+        ASSERT_NE(server.port(), 0);
+        loom::core::ToolRegistry registry;
+        loom::core::QueryEngineConfig config;
+        config.cwd = cwd.string();
+        config.api_key = "local-test-key";
+        config.base_url = server.base_url();
+        config.wire_api = "messages";
+        config.model_params.model = "local-test-model";
+        config.context_window.auto_compact = false;
+        loom::core::QueryEngine engine(std::move(config), registry);
+        ASSERT_TRUE(engine.query("Return a short answer without tools."));
+        const auto bodies = server.wait_for_bodies(1);
+        ASSERT_TRUE(bodies);
+        ASSERT_EQ(bodies->size(), 1u);
+        const auto parsed = loom::utils::json::parse(bodies->front());
+        ASSERT_TRUE(parsed);
+        ASSERT_TRUE(parsed->root().get("system").is_str());
+        const std::string prompt(parsed->root().get("system").as_str());
+        for (auto marker : {"GLOBAL_USER_RULE_913", "PROJECT_RULE_517"}) {
+            const auto at = prompt.find(marker);
+            ASSERT_NE(at, std::string::npos) << directory;
+            EXPECT_EQ(prompt.find(marker, at + std::string_view(marker).size()), std::string::npos);
+        }
+    }
+}
+
+TEST(QueryEngineFix, ActualRequestsDeduplicateProjectAndUserInstructionsByFileIdentity) {
+    const auto root = fs::temp_directory_path() /
+        ("loom-global-instruction-alias-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    struct Cleanup { fs::path path; ~Cleanup() { std::error_code error; fs::remove_all(path, error); } } cleanup{root};
+    const auto home = root / "home";
+    const auto cwd = root / "project";
+    fs::create_directories(home / ".loom");
+    fs::create_directories(cwd);
+    { std::ofstream(cwd / "AGENTS.md") << "SHARED_INSTRUCTION_FILE_617"; }
+    fs::create_symlink(cwd / "AGENTS.md", home / ".loom" / "LOOM.md");
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard config_guard("LOOM_CONFIG_DIR", "");
+    EnvironmentGuard auto_memory("LOOM_DISABLE_AUTO_MEMORY", "1");
+    ScriptedHttpServer server({ScriptedHttpServer::Response{}});
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
+    config.cwd = cwd.string();
+    config.api_key = "local-test-key";
+    config.base_url = server.base_url();
+    config.wire_api = "messages";
+    config.model_params.model = "local-test-model";
+    config.context_window.auto_compact = false;
+    loom::core::QueryEngine engine(std::move(config), registry);
+    ASSERT_TRUE(engine.query("Return a short answer without tools."));
+    const auto bodies = server.wait_for_bodies(1);
+    ASSERT_TRUE(bodies);
+    const auto parsed = loom::utils::json::parse(bodies->front());
+    ASSERT_TRUE(parsed);
+    const std::string prompt(parsed->root().get("system").as_str());
+    const auto at = prompt.find("SHARED_INSTRUCTION_FILE_617");
+    ASSERT_NE(at, std::string::npos);
+    EXPECT_EQ(prompt.find("SHARED_INSTRUCTION_FILE_617", at + 1), std::string::npos);
+}
+
+TEST(QueryEngineFix, UserInstructionOverrideStaysIsolatedInActualRequest) {
+    const auto root = fs::temp_directory_path() /
+        ("loom-global-instruction-isolated-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    struct Cleanup { fs::path path; ~Cleanup() { std::error_code error; fs::remove_all(path, error); } } cleanup{root};
+    const auto home = root / "home";
+    const auto cwd = root / "work";
+    const auto override_path = root / "isolated" / "config";
+    fs::create_directories(home / ".loom");
+    fs::create_directories(cwd);
+    fs::create_directories(override_path);
+    { std::ofstream(home / ".loom" / "LOOM.md") << "HOME_USER_RULE_MUST_NOT_LEAK_918"; }
+    { std::ofstream(root / "isolated" / "AGENTS.md") << "PARENT_RULE_MUST_NOT_LEAK_753"; }
+    { std::ofstream(override_path / "AGENTS.md") << "ISOLATED_USER_RULE_853"; }
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard config_guard("LOOM_CONFIG_DIR", override_path.string());
+    EnvironmentGuard auto_memory("LOOM_DISABLE_AUTO_MEMORY", "1");
+    ScriptedHttpServer server({ScriptedHttpServer::Response{}});
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
+    config.cwd = cwd.string();
+    config.api_key = "local-test-key";
+    config.base_url = server.base_url();
+    config.wire_api = "messages";
+    config.model_params.model = "local-test-model";
+    config.context_window.auto_compact = false;
+    loom::core::QueryEngine engine(std::move(config), registry);
+    ASSERT_TRUE(engine.query("Return a short answer without tools."));
+    const auto bodies = server.wait_for_bodies(1);
+    ASSERT_TRUE(bodies);
+    EXPECT_NE(bodies->front().find("ISOLATED_USER_RULE_853"), std::string::npos);
+    EXPECT_EQ(bodies->front().find("HOME_USER_RULE_MUST_NOT_LEAK_918"), std::string::npos);
+    EXPECT_EQ(bodies->front().find("PARENT_RULE_MUST_NOT_LEAK_753"), std::string::npos);
+}

@@ -38,6 +38,18 @@ full original audit stays intact. Runtime nudges must not advance the explicit
 human request anchor, and HTTP 413 requires actual serialized byte reduction,
 not only a lower token estimate. See `docs/dev/context-compaction.md`.
 
+**Global user instructions.** User memory uses a file-level, non-recursive
+lookup across `.loom` and `.agents`, applying the existing `LOOM.md`, `AGENTS.md`,
+`CLAUDE.md` name order within each. `LOOM_CONFIG_DIR` isolates that lookup to
+the selected directory. Directory existence must not hide fallback instruction
+files or turn a config directory's ancestors into global user rules. Main
+QueryEngine deduplicates project/user paths by actual file identity. Native
+default and definition prompts append the same user rules; complete inherited
+parent prompts, including implicit forks, preserve their override contract and
+do not append again. The project still selects the nearest ancestor instruction
+file; this correction does not introduce a full ancestor merge. See
+`docs/user/instruction-files.md` for the supported paths and industry comparison.
+
 **Server model capacities (RFC 0029).** The configured service's
 `data[].context_length` is read once per runtime root, before native tool policy
 snapshots. An exact endpoint/wire/credential-bound immutable snapshot is reused;

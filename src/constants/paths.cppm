@@ -225,8 +225,13 @@ inline constexpr std::array<std::string_view, 3> kMemoryFileCandidates = {
 /// file is still found. Falls back to the WRITE directory, since that is
 /// where a new memory file would be created.
 [[nodiscard]] inline std::filesystem::path user_memory_path() {
-    if (auto found = find_memory_file(config_home_read())) {
-        return *found;
+    if (const char* configured = std::getenv("LOOM_CONFIG_DIR"); configured && *configured) {
+        const std::filesystem::path directory{configured};
+        if (auto found = memory_file_in(directory)) return *found;
+        return directory / std::string{kMemoryFileCandidates.front()};
+    }
+    for (const auto directory : kConfigDirCandidates) {
+        if (auto found = memory_file_in(home_dir() / directory)) return *found;
     }
     return config_home_write() / std::string{kMemoryFileCandidates.front()};
 }

@@ -31,6 +31,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 
 | File | What |
 |---|---|
+| [`user/instruction-files.md`](user/instruction-files.md) | Global user instructions, project discovery, isolated profiles and comparison with other agents. |
 | [`user/agent-instances.md`](user/agent-instances.md) | Runtime instance lists, failure history, bounded details and owned Continue/Stop controls. |
 | [`user/terminal-status.md`](user/terminal-status.md) | Automatic OSC 7501 capability detection, editable question answers, activity and decision status, result retention and exit behavior. |
 

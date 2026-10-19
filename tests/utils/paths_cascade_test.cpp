@@ -386,3 +386,33 @@ TEST(PathsReadWriteSplit, UserMemoryPathPrefersInteropButSeedsOurOwnDir) {
               empty.at(".loom") / "LOOM.md")
         << "with no memory anywhere, name the file under our own dir";
 }
+
+TEST(PathsMemoryFile, UserFileCascadeFallsThroughAnEmptyDotLoomDirectory) {
+    TempHome home;
+    home.make_config_dir(".loom");
+    home.make_config_dir(".agents", "AGENTS.md");
+    std::ofstream(home.at("AGENTS.md")) << "ancestor must not win";
+    EXPECT_EQ(loom::constants::paths::user_memory_path(), home.at(".agents") / "AGENTS.md");
+    std::ofstream(home.at(".loom") / "CLAUDE.md") << "higher directory still wins";
+    EXPECT_EQ(loom::constants::paths::user_memory_path(), home.at(".loom") / "CLAUDE.md");
+}
+
+TEST(PathsMemoryFile, UserConfigOverrideDoesNotWalkAncestorsOrReadOtherHomes) {
+    TempHome home;
+    home.make_config_dir(".loom", "LOOM.md");
+    home.make_config_dir(".agents", "AGENTS.md");
+    const auto override_path = home.at("isolated/config");
+    fs::create_directories(override_path);
+    std::ofstream(home.at("isolated/AGENTS.md")) << "not global";
+    ::setenv("LOOM_CONFIG_DIR", override_path.c_str(), 1);
+    EXPECT_EQ(loom::constants::paths::user_memory_path(), override_path / "LOOM.md");
+    std::ofstream(override_path / "AGENTS.md") << "isolated user rules";
+    EXPECT_EQ(loom::constants::paths::user_memory_path(), override_path / "AGENTS.md");
+}
+
+TEST(PathsMemoryFile, MissingUserFileNeverPromotesHomeAncestorInstructions) {
+    TempHome home;
+    home.make_config_dir(".loom");
+    std::ofstream(home.at("AGENTS.md")) << "ancestor rules";
+    EXPECT_EQ(loom::constants::paths::user_memory_path(), home.at(".loom") / "LOOM.md");
+}

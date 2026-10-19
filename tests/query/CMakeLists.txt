@@ -47,3 +47,8 @@ gtest_discover_tests(test_fix_hooks_integration DISCOVERY_TIMEOUT ${LOOM_TEST_DI
 add_executable(test_wire_transport test_wire_transport.cpp)
 target_link_libraries(test_wire_transport PRIVATE loom_core GTest::gtest_main)
 gtest_discover_tests(test_wire_transport DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# Opt-in configured-provider semantic checkpoint validation (skipped by default).
+add_executable(test_compaction_live test_compaction_live.cpp)
+target_link_libraries(test_compaction_live PRIVATE loom_core GTest::gtest_main)
+gtest_discover_tests(test_compaction_live DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

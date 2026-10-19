@@ -22,6 +22,10 @@ struct ApiExecutionContext {
     std::string auth_token;
     std::string api_version = "2023-06-01";
     std::chrono::milliseconds timeout{120000};
+    std::uint64_t context_window_tokens = 200000;
+    std::uint64_t context_output_tokens = 16384;
+    double context_compaction_threshold = 0.9;
+    bool context_auto_compact = true;
 };
 
 /// Host-only immutable target checked atomically during resume admission.

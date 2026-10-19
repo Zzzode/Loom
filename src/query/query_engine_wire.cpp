@@ -122,11 +122,14 @@ void QueryEngine::restore_task_budget_remaining_from_compact_boundaries_locked()
 }
 
 void QueryEngine::set_wire_backend_factory(WireBackendFactory factory) {
+    std::lock_guard lock(conversation_mutex_);
     wire_backend_factory_ = std::move(factory);
+    context_observed_ = {};
+    context_observed_key_.clear();
 }
 
 [[nodiscard]] std::unique_ptr<loom::query::wire::WireBackend>
-QueryEngine::make_wire_backend() const {
+QueryEngine::make_wire_backend(bool summary) const {
     // The backend supplies the prepared request and protocol decoding; the
     // engine retains ownership of real HTTP, cancellation and tool execution.
     if (wire_backend_factory_) {
@@ -156,6 +159,7 @@ QueryEngine::make_wire_backend() const {
     opts.extra_headers = std::move(auth);
     // API-side context edits / task budget / response schema ride on the
     // options struct because they are not part of the neutral input.
+    if (!summary) {
     if (auto cm = api_context_management()) {
         for (const auto& edit : cm->edits) {
             loom::query::wire::ContextEdit ce;
@@ -182,6 +186,7 @@ QueryEngine::make_wire_backend() const {
         rs.name = config_.response_schema->name;
         rs.schema_json = config_.response_schema->schema_json;
         opts.response_schema = std::move(rs);
+    }
     }
     return std::make_unique<loom::query::wire::MessagesWireBackend>(
         std::move(opts));

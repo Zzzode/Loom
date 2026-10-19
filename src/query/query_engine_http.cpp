@@ -24,6 +24,76 @@ import loom.query.wire_protocol;
 
 namespace loom::core {
 
+[[nodiscard]] Result<loom::services::compact::SummaryResponse> QueryEngine::summarize_context(
+    const loom::services::compact::SummaryRequest& request) {
+    if (should_abort() || budget_tracker_.budget_exceeded) return std::unexpected(
+        Error::make(ErrorCode::InternalError, "Compaction cancelled or spend budget exhausted"));
+    auto backend = make_wire_backend(true);
+    loom::query::wire::RequestInput input;
+    input.model = config_.model_params.model;
+    input.max_tokens = request.max_output_tokens;
+    input.system_prompt = request.instructions;
+    input.stream = false;
+    input.thinking_enabled = false;
+    input.native_computer_tool = false;
+    UserMessage prompt{};
+    prompt.content.push_back(TextBlock{request.transcript});
+    input.messages.emplace_back(std::move(prompt));
+    auto prepared = backend->prepare(input);
+    if (!prepared) return std::unexpected(Error::make(ErrorCode::InvalidRequest, prepared.error()));
+    // The endpoint helper is declared below; the public protocol helper keeps
+    // the same provider path prefix as ordinary requests.
+    const auto scheme = prepared->url.find("://");
+    const auto slash = scheme == std::string::npos ? std::string::npos : prepared->url.find('/', scheme + 3);
+    if (scheme == std::string::npos) return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Invalid summary endpoint"));
+    const auto base = prepared->url.substr(0, slash);
+    const auto path = slash == std::string::npos ? std::string{"/"} : prepared->url.substr(slash);
+    auto client = std::make_shared<httplib::Client>(base);
+#ifdef SO_NOSIGPIPE
+    client->set_socket_options([](::socket_t socket) {
+        const int enabled = 1;
+        ::setsockopt(socket, SOL_SOCKET, SO_NOSIGPIPE, &enabled, sizeof(enabled));
+    });
+#endif
+    client->set_connection_timeout(api_config_.timeout);
+    client->set_read_timeout(api_config_.timeout);
+    client->set_write_timeout(api_config_.timeout);
+    httplib::Headers headers(prepared->headers.begin(), prepared->headers.end());
+    set_abort_callback([client] { client->stop(); });
+    if (should_abort()) { set_abort_callback(nullptr); return std::unexpected(
+        Error::make(ErrorCode::InternalError, "Compaction cancelled")); }
+    if (const auto dump = dump_prompts_path(); dump) {
+        std::ofstream out(*dump, std::ios::app);
+        out << "{\"type\":\"compaction_request\",\"body\":" << prepared->body << "}\n";
+    }
+    const auto response = client->Post(path, headers, prepared->body, "application/json");
+    set_abort_callback(nullptr);
+    if (should_abort()) return std::unexpected(Error::make(ErrorCode::InternalError, "Compaction cancelled"));
+    if (!response) return std::unexpected(Error::make(ErrorCode::ConnectionFailed,
+        "Compaction HTTP request failed: " + httplib::to_string(response.error())));
+    if (response->status >= 400) {
+        const auto category = loom::services::compact::classify_context_failure(response->status, response->body);
+        return std::unexpected(Error::make(category == loom::services::compact::ContextFailure::None
+            ? classify_http_error(response->status) : ErrorCode::ContextWindowExceeded,
+            std::format("Compaction API error ({}): {}", response->status, response->body)));
+    }
+    auto parsed = backend->parse_response(response->body);
+    if (!parsed) return std::unexpected(Error::make(ErrorCode::InvalidRequest, parsed.error()));
+    account_compaction_usage(parsed->usage);
+    loom::services::compact::SummaryResponse result;
+    result.usage = parsed->usage;
+    result.complete = parsed->message.stop_reason == "end_turn" || parsed->message.stop_reason == "stop";
+    for (const auto& block : parsed->message.content) {
+        if (const auto* text = std::get_if<TextBlock>(&block)) result.text += text->text;
+        if (std::holds_alternative<ToolUseBlock>(block)) result.has_tool_use = true;
+    }
+    if (const auto dump = dump_prompts_path(); dump) {
+        std::ofstream out(*dump, std::ios::app);
+        out << "{\"type\":\"compaction_response\",\"body\":" << response->body << "}\n";
+    }
+    return result;
+}
+
 namespace {
 
 // OpenSSL can write a TLS close-notify after stop() has shut down the
@@ -144,8 +214,14 @@ prepared_endpoint(std::string_view url) {
     apply_time_based_microcompact();
     apply_tool_result_budget();
 
+    if (!is_retry_after_compact) {
+        auto budget = ensure_context_budget(options);
+        if (!budget) return std::unexpected(budget.error());
+    }
+
     auto backend = make_wire_backend();
-    auto prepared = backend->prepare(build_wire_input(options, false));
+    const auto sent_input = build_wire_input(options, false);
+    auto prepared = backend->prepare(sent_input);
     if (!prepared) {
         return std::unexpected(Error::make(ErrorCode::InvalidRequest, prepared.error()));
     }
@@ -156,6 +232,7 @@ prepared_endpoint(std::string_view url) {
     httplib::Headers headers(prepared->headers.begin(), prepared->headers.end());
     headers.emplace("User-Agent", "LOOM/1.0");
     const auto& body = prepared->body;
+    const auto sent_schema = context_schema_text(body);
 
     // Create HTTP client (shared_ptr so abort_callback_ can safely call
     // cli->stop() from the main thread even after this function returns).
@@ -185,16 +262,12 @@ prepared_endpoint(std::string_view url) {
 
     // Check for HTTP errors
     if (res->status >= 400) {
-        // P1-2: Reactive compact on 413 / prompt-too-long
-        if (!is_retry_after_compact &&
-            (res->status == 413 ||
-             res->body.find("prompt_too_long") != std::string::npos ||
-             res->body.find("Prompt is too long") != std::string::npos)) {
-            auto compact_result = compact_conversation("reactive");
-            if (compact_result) {
-                // Retry once after compaction
-                return send_request(options, /*is_retry_after_compact=*/true);
-            }
+        const auto category = loom::services::compact::classify_context_failure(res->status, res->body);
+        if (!is_retry_after_compact && category != loom::services::compact::ContextFailure::None) {
+            auto compact_result = compact_context_impl("reactive", options,
+                category == loom::services::compact::ContextFailure::RequestBytesExceeded ? body.size() : 0, false);
+            if (!compact_result) return std::unexpected(compact_result.error());
+            return send_request(options, /*is_retry_after_compact=*/true);
         }
 
         return std::unexpected(Error::make(
@@ -210,6 +283,7 @@ prepared_endpoint(std::string_view url) {
     ApiCallResult result;
     result.message = std::move(parsed->message);
     result.usage = parsed->usage;
+    observe_context_usage(result.usage, sent_input, sent_schema);
     return result;
 }
 
@@ -228,14 +302,25 @@ prepared_endpoint(std::string_view url) {
     return ErrorCode::InternalError;
 }
 
-[[nodiscard]] QueryEngine::StreamCallResult QueryEngine::stream_single_api_call(const QueryOptions& options) {
+[[nodiscard]] QueryEngine::StreamCallResult QueryEngine::stream_single_api_call(
+    const QueryOptions& options, bool is_retry_after_compact) {
     StreamCallResult result;
     replay_snip_boundaries();
     apply_time_based_microcompact();
     apply_tool_result_budget();
+    if (!is_retry_after_compact) {
+        const auto budget = ensure_context_budget(options);
+        if (!budget) {
+            result.failed = true;
+            result.error_message = budget.error().message;
+            if (options.on_event) (*options.on_event)(StreamError{"context_compaction_error", result.error_message});
+            return result;
+        }
+    }
 
     auto backend = make_wire_backend();
-    auto prepared = backend->prepare(build_wire_input(options, true));
+    const auto sent_input = build_wire_input(options, true);
+    auto prepared = backend->prepare(sent_input);
     if (!prepared) {
         result.failed = true;
         result.error_message = prepared.error();
@@ -250,6 +335,7 @@ prepared_endpoint(std::string_view url) {
     httplib::Headers headers(prepared->headers.begin(), prepared->headers.end());
     headers.emplace("User-Agent", "LOOM/1.0");
     const auto& body = prepared->body;
+    const auto sent_schema = context_schema_text(body);
 
     // ── Dump Prompts: log API request ──
     if (dump_prompts_dir_) {
@@ -302,12 +388,7 @@ prepared_endpoint(std::string_view url) {
     auto emit_stream_error = [&](std::string error_type, std::string message) {
         result.failed = true;
         result.error_message = message.empty() ? error_type : message;
-        if (options.on_event) {
-            StreamError ev;
-            ev.error_type = std::move(error_type);
-            ev.message = result.error_message;
-            (*options.on_event)(ev);
-        }
+        result.error_type = std::move(error_type);
     };
 
     auto parse_sse_event = [&](const std::string& event_type,
@@ -464,6 +545,8 @@ prepared_endpoint(std::string_view url) {
                 if (type.valid()) type_text = std::string(type.as_str());
                 auto msg = err.get("message");
                 if (msg.valid()) message_text = std::string(msg.as_str());
+                const auto code = err.get("code");
+                if (code.is_str()) message_text += " (" + std::string(code.as_str()) + ")";
                 emit_stream_error(std::move(type_text), std::move(message_text));
             }
         }
@@ -593,6 +676,7 @@ prepared_endpoint(std::string_view url) {
     req.headers.emplace("Content-Type", "application/json");
     req.body = body;
     bool accepted_response = false;
+    std::string rejected_body;
     req.response_handler = [&](const httplib::Response& response) {
         accepted_response = response.status < 400;
         return true;
@@ -600,7 +684,11 @@ prepared_endpoint(std::string_view url) {
     req.content_receiver = [&](const char* data, size_t len,
                                uint64_t /*offset*/, uint64_t /*total*/) -> bool {
         if (should_abort()) return false;
-        if (!accepted_response) return true;
+        if (!accepted_response) {
+            const auto remaining = std::size_t{65536} - rejected_body.size();
+            rejected_body.append(data, std::min(len, remaining));
+            return true;
+        }
 
         // The decoder buffers partial chunks and yields complete events;
         // dispatch each to the domain handler (parse_sse_event).
@@ -637,8 +725,22 @@ prepared_endpoint(std::string_view url) {
     }
 
     if (!ok || res.status >= 400) {
+        const auto context_failure = loom::services::compact::classify_context_failure(
+            res.status, rejected_body.empty() ? res.body : rejected_body);
+        if (context_failure != loom::services::compact::ContextFailure::None) {
+            if (!is_retry_after_compact) {
+                auto compacted = compact_context_impl("reactive", options,
+                    context_failure == loom::services::compact::ContextFailure::RequestBytesExceeded ? body.size() : 0, true);
+                if (compacted) return stream_single_api_call(options, true);
+                emit_stream_error("context_compaction_error", compacted.error().message);
+            } else {
+                emit_stream_error("invalid_request_error", "Context still exceeded after one compaction retry");
+            }
+            if (options.on_event) (*options.on_event)(StreamError{result.error_type, result.error_message});
+            return result;
+        }
         // If streaming failed and we got nothing, fall back to non-streaming
-        auto fallback = send_request(options);
+        auto fallback = send_request(options, is_retry_after_compact);
         if (should_abort()) {
             result.failed = true;
             return result;
@@ -660,9 +762,19 @@ prepared_endpoint(std::string_view url) {
                 default: break;
             }
             emit_stream_error(std::move(type), fallback.error().format());
+            if (options.on_event) (*options.on_event)(StreamError{result.error_type, result.error_message});
             return result;
         }
-    } else if (result.failed && blocks.empty()) {
+    } else if (result.failed) {
+        const auto category = loom::services::compact::classify_context_failure(0,
+            result.error_type + " " + result.error_message);
+        if (!is_retry_after_compact && category != loom::services::compact::ContextFailure::None) {
+            auto compacted = compact_context_impl("reactive", options,
+                category == loom::services::compact::ContextFailure::RequestBytesExceeded ? body.size() : 0, true);
+            if (compacted) return stream_single_api_call(options, true);
+            emit_stream_error("context_compaction_error", compacted.error().message);
+        }
+        if (options.on_event) (*options.on_event)(StreamError{result.error_type, result.error_message});
         return result;
     } else {
         // Assemble final message from accumulated blocks
@@ -706,6 +818,10 @@ prepared_endpoint(std::string_view url) {
     }
 
     // Emit stream end
+    if (result.failed && options.on_event) {
+        (*options.on_event)(StreamError{result.error_type, result.error_message});
+    }
+    if (!result.failed && ok && res.status < 400) observe_context_usage(result.usage, sent_input, sent_schema);
     if (!result.failed && options.on_event) {
         StreamEnd end_event;
         end_event.stop_reason = result.message.stop_reason;

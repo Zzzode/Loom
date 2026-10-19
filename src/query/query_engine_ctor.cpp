@@ -21,6 +21,10 @@ make_api_execution_context(const QueryEngineConfig& config) {
     context->base_url = config.base_url.value_or("");
     context->api_key = config.api_key;
     context->auth_token = config.auth_token;
+    context->context_window_tokens = config.context_window.max_context_tokens;
+    context->context_output_tokens = config.model_params.max_tokens;
+    context->context_compaction_threshold = config.context_window.compaction_threshold;
+    context->context_auto_compact = config.context_window.auto_compact;
     const auto selected = config.wire_api.value_or(
         std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages");
     if (auto api = loom::query::wire::wire_api_from_string(selected)) {
@@ -37,6 +41,10 @@ std::shared_ptr<const ApiExecutionContext> QueryEngine::api_execution_context() 
     context->auth_token = api_config_.auth_token;
     context->api_version = api_config_.api_version;
     context->timeout = api_config_.timeout;
+    context->context_window_tokens = config_.context_window.max_context_tokens;
+    context->context_output_tokens = config_.model_params.max_tokens;
+    context->context_compaction_threshold = config_.context_window.compaction_threshold;
+    context->context_auto_compact = config_.context_window.auto_compact;
     return context;
 }
 
@@ -52,6 +60,9 @@ QueryEngine::QueryEngine(QueryEngineConfig config, ToolRegistry& registry)
     }
 
     // Set up budget
+    if (config_.task_budget) {
+        configured_task_budget_remaining_ = config_.task_budget->remaining;
+    }
     if (config_.max_budget_usd) {
         budget_tracker_.max_budget_usd = *config_.max_budget_usd;
     }

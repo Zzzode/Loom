@@ -870,9 +870,9 @@ bool AppAdapter::ResumeSessionFromDirectory(
         }
     }
 
+    engine->set_session_id(std::string(session_id));
     engine->restore_conversation(std::move(messages));
     (void)loom::tools::todo_write_store().clear_scope(loom::tools::TodoWriteTool::kDefaultScope);
-    engine->set_session_id(std::string(session_id));
     current_session_id_ = std::string(session_id);
     session_start_time_ = std::chrono::steady_clock::now();
 

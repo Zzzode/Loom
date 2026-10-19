@@ -28,6 +28,7 @@ target_sources(loom_query
         query/query_engine_agent_controls.cpp
         query/query_engine_conversation.cpp
         query/query_engine_compaction.cpp
+        query/query_engine_checkpoint.cpp
         query/query_engine_util.cpp
         # loom.query.assembly implementation unit (PIMPL special members +
         # resolve_engine_config + assemble bodies).

@@ -298,6 +298,7 @@ loom::core::Result<void> Harness::resume(std::string_view session_id) {
             std::format("No parseable messages for session {}", session_id)));
     }
 
+    impl_->handle_->engine().set_session_id(std::string(session_id));
     impl_->handle_->engine().restore_conversation(std::move(messages));
     return {};
 }

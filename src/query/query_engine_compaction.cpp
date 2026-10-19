@@ -264,6 +264,9 @@ void QueryEngine::apply_time_based_microcompact() {
     }
 
     if (changed) {
+        ++conversation_revision_;
+        context_observed_ = {};
+        context_observed_key_.clear();
         rebuild_content_replacement_state_locked();
     }
 }
@@ -309,8 +312,13 @@ void QueryEngine::apply_time_based_microcompact() {
 void QueryEngine::replace_tool_result_message_locked(std::size_t message_index, std::string replacement) {
     auto* tool_result = std::get_if<ToolResultMessage>(&conversation_[message_index]);
     if (!tool_result) return;
+    const auto existing = tool_result_plain_text_content(*tool_result);
+    if (existing && *existing == replacement) return;
     tool_result->content.clear();
     tool_result->content.push_back(TextBlock{std::move(replacement)});
+    ++conversation_revision_;
+    context_observed_ = {};
+    context_observed_key_.clear();
 }
 
 void QueryEngine::rebuild_content_replacement_state_locked() {
@@ -394,57 +402,6 @@ void QueryEngine::apply_tool_result_budget() {
     }
 }
 
-[[nodiscard]] std::string QueryEngine::truncate_for_compaction(std::string text,
-                                                               std::size_t limit) {
-    if (text.size() <= limit) return text;
-    text.resize(limit);
-    text += "...";
-    return text;
-}
-
-[[nodiscard]] std::string QueryEngine::content_block_compaction_text(const ContentBlock& block) {
-    return std::visit([](const auto& b) -> std::string {
-        using T = std::remove_cvref_t<decltype(b)>;
-        if constexpr (std::same_as<T, TextBlock>) {
-            return b.text;
-        } else if constexpr (std::same_as<T, ToolUseBlock>) {
-            return std::format("[tool_use:{} {}]", b.name, b.input_json);
-        } else if constexpr (std::same_as<T, ToolResultBlock>) {
-            return std::format("[tool_result:{} error={}] {}",
-                b.tool_use_id.value,
-                b.is_error ? "true" : "false",
-                tool_result_content_text(b));
-        } else if constexpr (std::same_as<T, ImageBlock>) {
-            return std::format("[image:{} {} bytes]", b.media_type, b.data.size());
-        } else if constexpr (std::same_as<T, DocumentBlock>) {
-            return std::format("[document:{} {} bytes]", b.media_type, b.data.size());
-        } else if constexpr (std::same_as<T, ThinkingBlock>) {
-            return "[thinking omitted from compact summary]";
-        } else {
-            return "[unknown content]";
-        }
-    }, block);
-}
-
-[[nodiscard]] std::string QueryEngine::message_compaction_text(const Message& message) {
-    std::string text;
-    std::visit([&](const auto& m) {
-        for (const auto& block : m.content) {
-            auto block_text = content_block_compaction_text(block);
-            if (block_text.empty()) continue;
-            if (!text.empty()) text += "\n";
-            text += std::move(block_text);
-        }
-    }, message);
-    if (text.empty()) return "[empty message]";
-    return truncate_for_compaction(std::move(text), 300);
-}
-
-[[nodiscard]] bool QueryEngine::is_compact_boundary_message(const Message& message) {
-    const auto* system = std::get_if<SystemMessage>(&message);
-    return system && system->subtype == "compact_boundary";
-}
-
 [[nodiscard]] bool QueryEngine::is_snip_boundary_message(const Message& message) {
     const auto* system = std::get_if<SystemMessage>(&message);
     return system && system->subtype == "snip_boundary" && system->snip_metadata.has_value();
@@ -478,6 +435,9 @@ void QueryEngine::replay_snip_boundaries() {
     }
 
     conversation_ = std::move(projected);
+    ++conversation_revision_;
+    context_observed_ = {};
+    context_observed_key_.clear();
     rebuild_content_replacement_state_locked();
 }
 
@@ -499,36 +459,6 @@ void QueryEngine::replay_snip_boundaries() {
     };
 }
 
-[[nodiscard]] std::string QueryEngine::build_compaction_summary(
-    std::vector<Message>::const_iterator first,
-    std::vector<Message>::const_iterator last) {
-    const auto count = static_cast<std::size_t>(std::ranges::count_if(
-        first,
-        last,
-        [](const Message& message) {
-            return !is_compact_boundary_message(message);
-        }));
-    std::string summary = std::format(
-        "[Conversation compacted: {} older messages summarized]\n"
-        "Preserve these details from the compacted history:",
-        count);
-    constexpr std::size_t max_summary_chars = 8000;
-    std::size_t index = 1;
-    for (auto it = first; it != last; ++it) {
-        if (is_compact_boundary_message(*it)) continue;
-        auto line = std::format("\n- {} #{}: {}",
-            role_to_string(get_role(*it)),
-            index++,
-            message_compaction_text(*it));
-        if (summary.size() + line.size() > max_summary_chars) {
-            summary += "\n- [remaining compacted messages omitted due to summary size limit]";
-            break;
-        }
-        summary += std::move(line);
-    }
-    return summary;
-}
-
 [[nodiscard]] bool QueryEngine::is_tool_enabled_for_query(
     std::string_view tool_name,
     const QueryOptions& options) {
@@ -539,18 +469,24 @@ void QueryEngine::replay_snip_boundaries() {
 }
 
 [[nodiscard]] std::uint32_t QueryEngine::estimate_conversation_tokens_locked() const noexcept {
-    // Rough estimate: ~4 chars per token for English text
-    std::uint32_t total_chars = 0;
-    for (const auto& msg : conversation_) {
-        std::visit([&total_chars](const auto& m) {
-            for (const auto& block : m.content) {
-                if (const auto* text = std::get_if<TextBlock>(&block)) {
-                    total_chars += static_cast<std::uint32_t>(text->text.size());
-                }
+    std::string system;
+    for (const auto& message : conversation_) {
+        if (const auto* value = std::get_if<SystemMessage>(&message); value && !value->subtype) {
+            for (const auto& block : value->content) {
+                if (const auto* text = std::get_if<TextBlock>(&block)) system += text->text;
             }
-        }, msg);
+            break;
+        }
     }
-    return total_chars / 4;
+    loom::query::wire::RequestInput input;
+    input.model = config_.model_params.model;
+    input.max_tokens = config_.model_params.max_tokens;
+    input.tools = config_.tools;
+    const auto schema = context_schema_text(input);
+    const loom::services::compact::RequestContext context{conversation_, system, schema, {}, {}};
+    return static_cast<std::uint32_t>(std::min<std::uint64_t>(
+        loom::services::compact::estimate_request_tokens(context, false),
+        std::numeric_limits<std::uint32_t>::max()));
 }
 
 } // namespace loom::core

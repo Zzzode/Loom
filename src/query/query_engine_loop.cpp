@@ -179,7 +179,7 @@ void QueryEngine::stream_query(
             auto resume = make_user_message(
                 "Your previous response was cut off at the token limit. "
                 "Please continue from where you left off.");
-            append_message(Message{std::move(resume)});
+            append_message(Message{std::move(resume)}, false);
             ++max_tokens_retries;
             ++round;
             continue;
@@ -197,7 +197,7 @@ void QueryEngine::stream_query(
                         "Keep working — do not summarize or stop early.",
                         pct, used, token_budget_);
                     auto cont_msg = make_user_message(nudge);
-                    append_message(Message{std::move(cont_msg)});
+                    append_message(Message{std::move(cont_msg)}, false);
                     ++continuation_count;
                     ++round;
                     continue;
@@ -286,7 +286,7 @@ void QueryEngine::stream_query(
             auto resume = make_user_message(
                 "Your previous response was cut off at the token limit. "
                 "Please continue from where you left off.");
-            append_message(Message{std::move(resume)});
+            append_message(Message{std::move(resume)}, false);
             ++max_tokens_retries;
             ++round;
             continue;
@@ -318,6 +318,12 @@ void QueryEngine::stream_query(
     return std::unexpected(Error::make(
         ErrorCode::InternalError,
         std::format("Tool loop exceeded maximum rounds ({})", max_rounds)));
+}
+
+void QueryEngine::account_compaction_usage(const TokenUsage& usage) {
+    cumulative_usage_ += usage;
+    budget_tracker_.add_usage(usage, config_.model_params.model, model_cost_);
+    global_cost_tracker().record(config_.model_params.model, usage, "compaction");
 }
 
 [[nodiscard]] Result<QueryEngine::ApiCallResult> QueryEngine::call_api(const QueryOptions& options) {

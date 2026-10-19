@@ -426,6 +426,8 @@ private:
         return obj;
     }
 
+public:
+    /// Canonical local-history codec shared with durable context checkpoints.
     [[nodiscard]] static loom::utils::json::JsonMutVal serialize_message(
         loom::utils::json::JsonMutDoc& doc,
         const Message& message) {
@@ -463,6 +465,7 @@ private:
         return obj;
     }
 
+private:
     [[nodiscard]] static loom::utils::json::JsonMutVal serialize_conversation(
         loom::utils::json::JsonMutDoc& doc,
         const std::string& id,
@@ -598,6 +601,7 @@ private:
         return metadata;
     }
 
+public:
     [[nodiscard]] static Result<Message> parse_message(loom::utils::json::JsonVal value) {
         if (!value.is_obj()) {
             return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
@@ -656,6 +660,7 @@ private:
             std::format("Unknown conversation message role '{}'", role)));
     }
 
+private:
     [[nodiscard]] static Result<std::pair<std::string, std::unique_ptr<Conversation>>> parse_conversation(
         loom::utils::json::JsonVal value) {
         if (!value.is_obj()) {

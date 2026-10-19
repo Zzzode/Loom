@@ -30,6 +30,14 @@ std::vector<Message> QueryEngine::get_conversation() const {
 void QueryEngine::restore_conversation(std::vector<Message> messages) {
     std::lock_guard lock(conversation_mutex_);
     conversation_ = std::move(messages);
+    ++conversation_revision_;
+    context_observed_ = {};
+    context_observed_key_.clear();
+    restore_context_request_anchor_locked();
+    if (config_.task_budget) {
+        config_.task_budget->remaining = configured_task_budget_remaining_;
+    }
+    restore_context_checkpoint_locked();
     restore_task_budget_remaining_from_compact_boundaries_locked();
     rebuild_content_replacement_state_locked();
 }
@@ -56,66 +64,17 @@ std::optional<std::filesystem::path> QueryEngine::sessions_dir() const noexcept 
 void QueryEngine::clear_conversation() {
     std::lock_guard lock(conversation_mutex_);
     conversation_.clear();
+    context_request_anchor_id_.reset();
+    ++conversation_revision_;
+    context_observed_ = {};
+    context_observed_key_.clear();
     build_and_add_system_prompt();
 }
 
 [[nodiscard]] loom::utils::VoidResult QueryEngine::compact_conversation(std::string_view trigger) {
-    std::lock_guard lock(conversation_mutex_);
-    if (conversation_.size() <= 4) {
-        return {};  // Nothing to compact
-    }
-
-    // Keep first (system) and last N messages, drop middle
-    constexpr std::size_t keep_recent = 6;
-    if (conversation_.size() <= keep_recent + 1) return {};
-
-    const auto pre_tokens = estimate_conversation_tokens_locked();
-    update_task_budget_remaining_after_compact(pre_tokens);
-    auto recent_start = conversation_.end() - static_cast<std::ptrdiff_t>(keep_recent);
-    auto summary_text = build_compaction_summary(
-        conversation_.begin() + 1,
-        recent_start);
-    // Persist the summary for future runs/resumption of this session.
-    append_session_summary(working_directory(), summary_text);
-
-    std::vector<Message> retained_recent;
-    retained_recent.reserve(keep_recent);
-    for (auto it = recent_start; it != conversation_.end(); ++it) {
-        if (is_compact_boundary_message(*it)) continue;
-        retained_recent.push_back(*it);
-    }
-
-    const auto summary_id = generate_id();
-    CompactMetadata metadata{
-        .trigger = std::string(trigger),
-        .pre_tokens = pre_tokens,
-        .preserved_segment = compact_preserved_segment(retained_recent.begin(), retained_recent.end(), summary_id),
-    };
-
-    // Replace middle section with a compact boundary and summary marker.
-    std::vector<Message> compacted;
-    compacted.push_back(conversation_.front());  // System prompt
-
-    SystemMessage boundary{};
-    boundary.id.value = generate_id();
-    boundary.timestamp = std::chrono::system_clock::now();
-    boundary.subtype = "compact_boundary";
-    boundary.compact_metadata = std::move(metadata);
-    boundary.content.push_back(TextBlock{std::format(
-        "Conversation compacted by {} compact.",
-        trigger.empty() ? std::string_view{"manual"} : trigger)});
-    compacted.push_back(Message{std::move(boundary)});
-
-    UserMessage marker{};
-    marker.id.value = summary_id;
-    marker.timestamp = std::chrono::system_clock::now();
-    marker.content.push_back(TextBlock{std::move(summary_text)});
-    compacted.push_back(Message{std::move(marker)});
-
-    // Keep recent messages, dropping stale compact boundaries from prior compaction chains.
-    compacted.insert(compacted.end(), retained_recent.begin(), retained_recent.end());
-
-    conversation_ = std::move(compacted);
+    auto result = compact_context_impl(trigger, QueryOptions{});
+    if (!result) return std::unexpected(loom::utils::Error(
+        loom::utils::ErrorCode::resource_exhausted, result.error().message));
     return {};
 }
 
@@ -168,6 +127,10 @@ void QueryEngine::flush_session() {
     loom::utils::json::JsonMutDoc doc;
     auto arr = doc.array();
     append_message_to_json(msg, arr, doc);
+    if (auto message = arr.at(0); message.is_obj()) {
+        // Stable local audit identity; wire serialization remains backend-owned.
+        message.add("id", doc.string(message_id_value(msg)));
+    }
     doc.set_root(arr);
     auto s = doc.to_string();
     // arr is a single-element array "[{...}]" -> strip outer brackets.
@@ -177,10 +140,10 @@ void QueryEngine::flush_session() {
     return s;
 }
 
-void QueryEngine::append_message(Message msg) {
-    bool should_compact = false;
+void QueryEngine::append_message(Message msg, bool human_request) {
     std::string persist_json;
     bool do_persist = false;
+    std::optional<std::string> request_anchor_id;
     // RFC 0004: copy for the commit callback (fired outside the lock,
     // before the message is moved into conversation_). Only copied when
     // recording is active — zero overhead otherwise.
@@ -190,6 +153,19 @@ void QueryEngine::append_message(Message msg) {
     }
     {
         std::lock_guard lock(conversation_mutex_);
+        if (human_request) {
+            if (const auto* user = std::get_if<UserMessage>(&msg);
+                user && !std::holds_alternative<TaskEvent>(user->origin)) {
+                const bool only_results = !user->content.empty() &&
+                    std::ranges::all_of(user->content, [](const auto& block) {
+                        return std::holds_alternative<ToolResultBlock>(block);
+                    });
+                if (!only_results) {
+                    context_request_anchor_id_ = user->id.value;
+                    request_anchor_id = user->id.value;
+                }
+            }
+        }
         // Serialize for disk persistence BEFORE moving (if enabled).
         if (sessions_dir_) {
             persist_json = message_to_jsonl_(msg);
@@ -197,11 +173,7 @@ void QueryEngine::append_message(Message msg) {
         }
         conversation_.push_back(std::move(msg));
 
-        // Check if auto-compact needed (but don't call it while holding lock)
-        if (config_.context_window.auto_compact &&
-            context_utilization() > config_.context_window.compaction_threshold) {
-            should_compact = true;
-        }
+        ++conversation_revision_;
     }
     // RFC 0004: fire commit callback outside the conversation lock so
     // JSON serialization and file I/O don't block the engine critical
@@ -216,9 +188,11 @@ void QueryEngine::append_message(Message msg) {
         (void)loom::session::append_message(
             *sessions_dir_, session_id_.str(), persist_json);
     }
-    // Lock released — safe to call compact which re-acquires
-    if (should_compact) {
-        (void)compact_conversation("auto");
+    if (request_anchor_id && sessions_dir_) {
+        std::lock_guard lock(conversation_mutex_);
+        if (context_request_anchor_id_ == request_anchor_id) {
+            persist_context_request_anchor_locked(*request_anchor_id);
+        }
     }
 }
 
@@ -243,7 +217,9 @@ void QueryEngine::append_message(Message msg) {
     std::ifstream ifs(path);
     if (!ifs) return {};
     std::string content((std::istreambuf_iterator<char>(ifs)), {});
-    return content;
+    // Only the newest semantic checkpoint belongs in the next window.
+    const auto last = content.rfind("\n\n## Compaction ");
+    return last == std::string::npos ? content : content.substr(last);
 }
 
 void QueryEngine::append_session_summary(std::string_view cwd,

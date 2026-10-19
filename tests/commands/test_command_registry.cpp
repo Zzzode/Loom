@@ -2,6 +2,7 @@
 /// @brief CommandRegistry and AppCommandRegistry tests.
 
 #include <gtest/gtest.h>
+#include <httplib.h>
 #include <cstdlib>
 #include <atomic>
 #include <unistd.h>
@@ -848,11 +849,35 @@ TEST(ClearCommand, InvokesCallbacksForAllScope) {
 }
 
 TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
+    httplib::Server summary_server;
+    summary_server.new_task_queue = [] { return new httplib::ThreadPool(1); };
+    summary_server.Post("/v1/messages", [](const httplib::Request& request, httplib::Response& response) {
+        EXPECT_NE(request.body.find("CONTEXT CHECKPOINT"), std::string::npos);
+        response.set_content(R"({"id":"command-checkpoint","type":"message","role":"assistant","content":[{"type":"text","text":"## Goal\nContinue command task.\n## Constraints\nPreserve runtime detail; do not commit.\n## Decisions\nUse current implementation.\n## Progress\nInspected history.\n## Next Steps\nComplete verification.\n## References\n/work/source.cpp"}],"stop_reason":"end_turn","usage":{"input_tokens":20,"output_tokens":30}})", "application/json");
+    });
+    const auto port = summary_server.bind_to_any_port("127.0.0.1");
+    ASSERT_GT(port, 0);
+    std::jthread summary_thread([&] { summary_server.listen_after_bind(); });
+    summary_server.wait_until_ready();
+    struct StopSummaryServer {
+        httplib::Server& server;
+        ~StopSummaryServer() { server.stop(); }
+    } stop_summary_server{summary_server};
+
     loom::core::ToolRegistry tool_registry;
     loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
+    config.base_url = std::format("http://127.0.0.1:{}", port);
+    config.api_key = "command-test-key";
+    config.custom_system_prompt = "Verify local work.";
+    config.context_window.max_context_tokens = 4096;
+    config.model_params.max_tokens = 128;
     config.cwd = std::filesystem::current_path().string();
     loom::core::QueryEngine engine(std::move(config), tool_registry);
+    loom::core::SystemMessage system{};
+    system.id.value="controlled-command-compaction-system";
+    system.content.emplace_back(loom::core::TextBlock{"Verify local work and preserve all constraints."});
+    engine.restore_conversation({loom::core::Message{std::move(system)}});
 
     auto make_user = [](std::string text, int index) {
         loom::core::UserMessage msg{};
@@ -893,7 +918,7 @@ TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
         const auto* marker = std::get_if<loom::core::UserMessage>(&message);
         if (!marker || marker->content.empty()) continue;
         const auto* text = std::get_if<loom::core::TextBlock>(&marker->content.front());
-        if (text && text->text.find("Preserve these details") != std::string::npos) {
+        if (text && text->text.find("## Constraints") != std::string::npos) {
             found_summary_marker = true;
             break;
         }

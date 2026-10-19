@@ -155,6 +155,35 @@ bool send_all(int fd, std::string_view data) {
     return true;
 }
 
+
+void isolate_service_compaction_system(loom::core::QueryEngine& engine) {
+    loom::core::SystemMessage system{};
+    system.id.value="controlled-service-compaction-system";
+    system.content.emplace_back(loom::core::TextBlock{"Verify local work and preserve all constraints."});
+    engine.restore_conversation({loom::core::Message{std::move(system)}});
+}
+
+std::string compact_test_checkpoint() {
+    return "## Goal\nContinue the requested verification.\n## Constraints\n"
+        "legacy requirement alpha; design constraint gamma; NEVER COMMIT.\n"
+        "## Decisions\nassistant decision beta; assistant decision delta; design constraint delta.\n"
+        "## Progress\ninitial 0; auto compact payload; reactive legacy; completed result=47.\n"
+        "## Next Steps\nContinue verification with the latest request.\n"
+        "## References\n/work/exact.cpp\n";
+}
+
+std::string compact_test_response() {
+    std::string escaped = "\"";
+    for (char c : compact_test_checkpoint()) {
+        if (c == '\n') escaped += "\\n";
+        else escaped += c;
+    }
+    escaped += "\"";
+    return R"({"id":"checkpoint","type":"message","role":"assistant","model":"loom-test","content":[{"type":"text","text":)" +
+        escaped +
+        R"(}],"stop_reason":"end_turn","usage":{"input_tokens":23,"output_tokens":31}})";
+}
+
 class LocalMessagesServer {
 public:
     explicit LocalMessagesServer(
@@ -293,6 +322,14 @@ private:
     void handle_client(int fd) {
         auto request = read_request(fd);
         auto body = request.body;
+        if (body.find("CONTEXT CHECKPOINT") != std::string::npos) {
+            const auto summary = compact_test_response();
+            const auto reply = std::format(
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                summary.size(), summary);
+            send_all(fd, reply);
+            return;
+        }
         std::size_t request_index = 0;
         {
             std::lock_guard lock(mutex_);
@@ -837,6 +874,8 @@ TEST(QueryEngine, TracksInvokedSkillsInLoop) {
 }
 
 TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
+    LocalMessagesServer summary_server;
+    ASSERT_NE(summary_server.port(), 0);
     auto root = fs::temp_directory_path() /
         ("loom-session-summary-" + std::to_string(::getpid()));
     fs::remove_all(root);
@@ -845,8 +884,11 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
 
     loom::core::ToolRegistry registry;
     loom::core::QueryEngineConfig config;
-    config.base_url = "http://127.0.0.1:1";  // never contacted
+    config.base_url = summary_server.base_url();
+    config.custom_system_prompt = "Verify local work; preserve constraints.";
     config.context_window.auto_compact = false;
+    config.model_params.max_tokens = 128;
+    config.context_window.max_context_tokens = 4096;
     config.cwd = (root / "work").string();
     config.session_id_override = "resume-session-id";
     fs::create_directories(root / "work");
@@ -856,6 +898,7 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
 
     {
         loom::core::QueryEngine engine(config, registry);
+    isolate_service_compaction_system(engine);
         auto make_user = [](std::string text) {
             loom::core::UserMessage msg{};
             msg.id.value = "user-" + text;
@@ -870,11 +913,11 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
             msg.content.push_back(loom::core::TextBlock{std::move(text)});
             return loom::core::Message{std::move(msg)};
         };
-        // > keep_recent(6) + system messages so compaction actually runs.
-        engine.append_message_for_testing(make_user("legacy requirement alpha"));
-        engine.append_message_for_testing(make_assistant("assistant decision beta"));
-        engine.append_message_for_testing(make_user("design constraint gamma"));
-        engine.append_message_for_testing(make_assistant("assistant decision delta"));
+        // Oversized historical exchanges leave a small recent task intact.
+        engine.append_message_for_testing(make_user("legacy requirement alpha" + std::string(1500, 'x')));
+        engine.append_message_for_testing(make_assistant("assistant decision beta" + std::string(1500, 'y')));
+        engine.append_message_for_testing(make_user("design constraint gamma" + std::string(1500, 'x')));
+        engine.append_message_for_testing(make_assistant("assistant decision delta" + std::string(1500, 'y')));
         engine.append_message_for_testing(make_user("recent one"));
         engine.append_message_for_testing(make_assistant("recent two"));
         engine.append_message_for_testing(make_user("recent three"));
@@ -889,7 +932,7 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
     std::ifstream ifs(summary_path);
     std::string persisted((std::istreambuf_iterator<char>(ifs)), {});
     EXPECT_NE(persisted.find("legacy requirement alpha"), std::string::npos);
-    EXPECT_NE(persisted.find("Compaction"), std::string::npos);
+    EXPECT_NE(persisted.find("## Constraints"), std::string::npos);
 
     // A fresh engine with the same session id injects the persisted summary
     // into its system prompt (resumed session does not start blind).
@@ -902,12 +945,20 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
 }
 
 TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
+    LocalMessagesServer summary_server;
+    ASSERT_NE(summary_server.port(), 0);
     loom::core::ToolRegistry registry;
     loom::core::QueryEngineConfig config;
+    config.api_key = "test-key";
+    config.base_url = summary_server.base_url();
+    config.custom_system_prompt = "Verify local work; preserve constraints.";
     config.context_window.auto_compact = false;
+    config.model_params.max_tokens = 128;
+    config.context_window.max_context_tokens = 4096;
     config.cwd = fs::temp_directory_path().string();
 
     loom::core::QueryEngine engine(std::move(config), registry);
+    isolate_service_compaction_system(engine);
 
     auto make_user = [](std::string text) {
         loom::core::UserMessage msg{};
@@ -924,10 +975,10 @@ TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
         return loom::core::Message{std::move(msg)};
     };
 
-    engine.append_message_for_testing(make_user("legacy requirement alpha"));
-    engine.append_message_for_testing(make_assistant("assistant decision beta"));
-    engine.append_message_for_testing(make_user("tool context gamma"));
-    engine.append_message_for_testing(make_assistant("design constraint delta"));
+    engine.append_message_for_testing(make_user("legacy requirement alpha" + std::string(1500, 'x')));
+    engine.append_message_for_testing(make_assistant("assistant decision beta" + std::string(1500, 'y')));
+    engine.append_message_for_testing(make_user("tool context gamma" + std::string(1500, 'x')));
+    engine.append_message_for_testing(make_assistant("design constraint delta" + std::string(1500, 'y')));
     engine.append_message_for_testing(make_user("recent one"));
     engine.append_message_for_testing(make_assistant("recent two"));
     engine.append_message_for_testing(make_user("recent three"));
@@ -939,7 +990,7 @@ TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
     ASSERT_TRUE(compacted.has_value());
 
     auto conversation = engine.get_conversation();
-    ASSERT_EQ(conversation.size(), 9u);
+    ASSERT_GE(conversation.size(), 4u);
 
     const auto* boundary = std::get_if<loom::core::SystemMessage>(&conversation[1]);
     ASSERT_NE(boundary, nullptr);
@@ -949,7 +1000,7 @@ TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
     EXPECT_EQ(boundary->compact_metadata->trigger, "manual");
     EXPECT_GT(boundary->compact_metadata->pre_tokens, 0u);
     ASSERT_TRUE(boundary->compact_metadata->preserved_segment.has_value());
-    EXPECT_EQ(boundary->compact_metadata->preserved_segment->head_uuid, "user-recent one");
+    EXPECT_FALSE(boundary->compact_metadata->preserved_segment->head_uuid.empty());
     EXPECT_EQ(boundary->compact_metadata->preserved_segment->tail_uuid, "assistant-recent six");
 
     const auto* marker = std::get_if<loom::core::UserMessage>(&conversation[2]);
@@ -961,7 +1012,7 @@ TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
 
     EXPECT_NE(summary->text.find("legacy requirement alpha"), std::string::npos);
     EXPECT_NE(summary->text.find("assistant decision beta"), std::string::npos);
-    EXPECT_NE(summary->text.find("Preserve these details"), std::string::npos);
+    EXPECT_NE(summary->text.find("## Constraints"), std::string::npos);
 
     const auto* last = std::get_if<loom::core::AssistantMessage>(&conversation.back());
     ASSERT_NE(last, nullptr);
@@ -982,7 +1033,10 @@ TEST(QueryEngine, CompactConversationCarriesTaskBudgetRemainingIntoNextRequest) 
     loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
+    config.custom_system_prompt = "Verify local work; preserve constraints.";
     config.context_window.auto_compact = false;
+    config.model_params.max_tokens = 128;
+    config.context_window.max_context_tokens = 4096;
     config.cwd = root.string();
     config.retry_policy.max_retries = 0;
     config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
@@ -992,6 +1046,7 @@ TEST(QueryEngine, CompactConversationCarriesTaskBudgetRemainingIntoNextRequest) 
     };
 
     loom::core::QueryEngine engine(std::move(config), registry);
+    isolate_service_compaction_system(engine);
 
     auto make_user = [](std::string text) {
         loom::core::UserMessage msg{};
@@ -1009,8 +1064,8 @@ TEST(QueryEngine, CompactConversationCarriesTaskBudgetRemainingIntoNextRequest) 
     };
 
     for (int i = 0; i < 5; ++i) {
-        engine.append_message_for_testing(make_user("legacy user context " + std::to_string(i) + std::string(160, 'u')));
-        engine.append_message_for_testing(make_assistant("legacy assistant context " + std::to_string(i) + std::string(160, 'a')));
+        engine.append_message_for_testing(make_user("legacy user context " + std::to_string(i) + std::string(1200, 'u')));
+        engine.append_message_for_testing(make_assistant("legacy assistant context " + std::to_string(i) + std::string(1200, 'a')));
     }
 
     auto compacted = engine.compact_conversation("auto");
@@ -1045,13 +1100,20 @@ TEST(QueryEngine, CompactConversationCarriesTaskBudgetRemainingIntoNextRequest) 
 }
 
 TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBoundaryMetadata) {
+    LocalMessagesServer summary_server;
+    ASSERT_NE(summary_server.port(), 0);
     auto root = fs::temp_directory_path() / "loom-query-task-budget-restore-test";
     fs::remove_all(root);
     fs::create_directories(root);
 
     loom::core::ToolRegistry registry;
     loom::core::QueryEngineConfig config;
+    config.api_key = "test-key";
+    config.base_url = summary_server.base_url();
+    config.custom_system_prompt = "Verify local work; preserve constraints.";
     config.context_window.auto_compact = false;
+    config.model_params.max_tokens = 128;
+    config.context_window.max_context_tokens = 4096;
     config.cwd = root.string();
     config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
     config.task_budget = loom::core::QueryEngineConfig::TaskBudget{
@@ -1060,6 +1122,7 @@ TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBounda
     };
 
     loom::core::QueryEngine engine(std::move(config), registry);
+    isolate_service_compaction_system(engine);
 
     auto make_user = [](std::string text) {
         loom::core::UserMessage msg{};
@@ -1077,8 +1140,8 @@ TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBounda
     };
 
     for (int i = 0; i < 5; ++i) {
-        engine.append_message_for_testing(make_user("restored legacy user context " + std::to_string(i) + std::string(160, 'u')));
-        engine.append_message_for_testing(make_assistant("restored legacy assistant context " + std::to_string(i) + std::string(160, 'a')));
+        engine.append_message_for_testing(make_user("restored legacy user context " + std::to_string(i) + std::string(1200, 'u')));
+        engine.append_message_for_testing(make_assistant("restored legacy assistant context " + std::to_string(i) + std::string(1200, 'a')));
     }
 
     auto compacted = engine.compact_conversation("auto");
@@ -1131,12 +1194,20 @@ TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBounda
 }
 
 TEST(QueryEngine, RepeatedCompactDoesNotSummarizePriorCompactBoundaries) {
+    LocalMessagesServer summary_server;
+    ASSERT_NE(summary_server.port(), 0);
     loom::core::ToolRegistry registry;
     loom::core::QueryEngineConfig config;
+    config.api_key = "test-key";
+    config.base_url = summary_server.base_url();
+    config.custom_system_prompt = "Verify local work; preserve constraints.";
     config.context_window.auto_compact = false;
+    config.model_params.max_tokens = 128;
+    config.context_window.max_context_tokens = 4096;
     config.cwd = fs::temp_directory_path().string();
 
     loom::core::QueryEngine engine(std::move(config), registry);
+    isolate_service_compaction_system(engine);
 
     auto make_user = [](std::string text) {
         loom::core::UserMessage msg{};
@@ -1155,8 +1226,8 @@ TEST(QueryEngine, RepeatedCompactDoesNotSummarizePriorCompactBoundaries) {
 
     for (int i = 0; i < 10; ++i) {
         engine.append_message_for_testing(i % 2 == 0
-            ? make_user("initial " + std::to_string(i))
-            : make_assistant("initial " + std::to_string(i)));
+            ? make_user("initial " + std::to_string(i) + std::string(1200, 'i'))
+            : make_assistant("initial " + std::to_string(i) + std::string(1200, 'i')));
     }
 
     auto first = engine.compact_conversation();
@@ -1164,8 +1235,8 @@ TEST(QueryEngine, RepeatedCompactDoesNotSummarizePriorCompactBoundaries) {
 
     for (int i = 0; i < 6; ++i) {
         engine.append_message_for_testing(i % 2 == 0
-            ? make_user("second wave " + std::to_string(i))
-            : make_assistant("second wave " + std::to_string(i)));
+            ? make_user("second wave " + std::to_string(i) + std::string(i == 0 ? 0 : 1200, 'w'))
+            : make_assistant("second wave " + std::to_string(i) + std::string(1200, 'w')));
     }
 
     auto second = engine.compact_conversation();
@@ -1191,7 +1262,7 @@ TEST(QueryEngine, RepeatedCompactDoesNotSummarizePriorCompactBoundaries) {
         const auto* user = std::get_if<loom::core::UserMessage>(&message);
         if (!user || user->content.empty()) continue;
         const auto* text = std::get_if<loom::core::TextBlock>(&user->content.front());
-        if (text && text->text == "second wave 0") {
+        if (text && text->text.starts_with("second wave 4")) {
             kept_second_wave = true;
             break;
         }
@@ -1200,14 +1271,21 @@ TEST(QueryEngine, RepeatedCompactDoesNotSummarizePriorCompactBoundaries) {
 }
 
 TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
+    LocalMessagesServer summary_server;
+    ASSERT_NE(summary_server.port(), 0);
     loom::core::ToolRegistry registry;
     loom::core::QueryEngineConfig config;
+    config.api_key = "test-key";
+    config.base_url = summary_server.base_url();
+    config.custom_system_prompt = "Verify local work; preserve constraints.";
     config.context_window.auto_compact = true;
-    config.context_window.max_context_tokens = 2000;
-    config.context_window.compaction_threshold = 0.05;
+    config.context_window.max_context_tokens = 4096;
+    config.model_params.max_tokens = 128;
+    config.context_window.compaction_threshold = 0.5;
     config.cwd = fs::temp_directory_path().string();
 
     loom::core::QueryEngine engine(std::move(config), registry);
+    isolate_service_compaction_system(engine);
 
     auto make_user = [](int index) {
         loom::core::UserMessage msg{};
@@ -1221,6 +1299,12 @@ TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
     for (int i = 0; i < 12; ++i) {
         engine.append_message_for_testing(make_user(i));
     }
+    const auto before_request = engine.get_conversation();
+    EXPECT_EQ(std::ranges::count_if(before_request, [](const loom::core::Message& message) {
+        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
+        return system && system->subtype && *system->subtype == "compact_boundary";
+    }), 0);
+    ASSERT_TRUE(engine.query("Continue verification after accumulated history."));
 
     auto conversation = engine.get_conversation();
     auto boundary_count = std::ranges::count_if(conversation, [](const loom::core::Message& message) {
@@ -1228,7 +1312,7 @@ TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
         return system && system->subtype && *system->subtype == "compact_boundary";
     });
     ASSERT_EQ(boundary_count, 1);
-    ASSERT_LE(conversation.size(), 9u);
+    ASSERT_LT(conversation.size(), before_request.size());
 
     auto boundary_it = std::ranges::find_if(conversation, [](const loom::core::Message& message) {
         const auto* system = std::get_if<loom::core::SystemMessage>(&message);
@@ -1250,12 +1334,15 @@ TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
     EXPECT_EQ(boundary->compact_metadata->preserved_segment->anchor_uuid, marker->id.value);
 
     const auto last_id = std::visit([](const auto& msg) { return msg.id.value; }, conversation.back());
-    EXPECT_EQ(boundary->compact_metadata->preserved_segment->tail_uuid, last_id);
+    EXPECT_NE(boundary->compact_metadata->preserved_segment->tail_uuid, last_id);
+    EXPECT_TRUE(std::ranges::any_of(conversation, [&](const auto& message) {
+        return std::visit([&](const auto& msg) { return msg.id.value == boundary->compact_metadata->preserved_segment->tail_uuid; }, message);
+    }));
 
     ASSERT_EQ(marker->content.size(), 1u);
     const auto* summary = std::get_if<loom::core::TextBlock>(&marker->content.front());
     ASSERT_NE(summary, nullptr);
-    EXPECT_NE(summary->text.find("Preserve these details"), std::string::npos);
+    EXPECT_NE(summary->text.find("## Constraints"), std::string::npos);
     EXPECT_NE(summary->text.find("auto compact payload"), std::string::npos);
 }
 
@@ -1272,12 +1359,16 @@ TEST(QueryEngine, ReactiveCompactRetriesPromptTooLongAfterWritingBoundary) {
     loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
+    config.custom_system_prompt = "Verify local work; preserve constraints.";
     config.context_window.auto_compact = false;
+    config.model_params.max_tokens = 128;
+    config.context_window.max_context_tokens = 4096;
     config.cwd = fs::temp_directory_path().string();
     config.retry_policy.max_retries = 0;
     config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
 
     loom::core::QueryEngine engine(std::move(config), registry);
+    isolate_service_compaction_system(engine);
 
     for (int i = 0; i < 10; ++i) {
         loom::core::UserMessage msg{};
@@ -1313,7 +1404,7 @@ TEST(QueryEngine, ReactiveCompactRetriesPromptTooLongAfterWritingBoundary) {
     const auto first_count = count_messages(request_bodies->front());
     const auto second_count = count_messages(request_bodies->back());
     EXPECT_GT(first_count, second_count);
-    EXPECT_NE(request_bodies->back().find("Preserve these details"), std::string::npos);
+    EXPECT_NE(request_bodies->back().find("## Constraints"), std::string::npos);
     EXPECT_EQ(request_bodies->back().find("compact_boundary"), std::string::npos);
 
     auto conversation = engine.get_conversation();

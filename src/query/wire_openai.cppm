@@ -712,6 +712,10 @@ public:
             error.text = message.is_str()
                              ? std::string(message.as_str())
                              : std::string("OpenAI stream error");
+            const auto code = error_obj.get("code");
+            const auto type = error_obj.get("type");
+            if (code.is_str()) error.text += " (" + std::string(code.as_str()) + ")";
+            if (type.is_str()) error.text += " (" + std::string(type.as_str()) + ")";
             deltas.push_back(std::move(error));
             return deltas;
         }

@@ -25,6 +25,7 @@ import loom.hooks.lifecycle_hooks;
 import loom.hooks.registry;
 import loom.hooks.execution;
 import loom.services.compact.api_microcompact;
+import loom.services.compact.context_compaction;
 
 export namespace loom::core {
 
@@ -554,7 +555,7 @@ private:
     /// serializes to empty (skipped by append_message).
     [[nodiscard]] std::string message_to_jsonl_(const Message& msg) const;
 
-    void append_message(Message msg);
+    void append_message(Message msg, bool human_request = true);
 
     void append_pending_native_agent_notifications();
 
@@ -616,15 +617,6 @@ private:
 
     void apply_tool_result_budget();
 
-    [[nodiscard]] static std::string truncate_for_compaction(std::string text,
-                                                             std::size_t limit);
-
-    [[nodiscard]] static std::string content_block_compaction_text(const ContentBlock& block);
-
-    [[nodiscard]] static std::string message_compaction_text(const Message& message);
-
-    [[nodiscard]] static bool is_compact_boundary_message(const Message& message);
-
     [[nodiscard]] static bool is_snip_boundary_message(const Message& message);
 
     void replay_snip_boundaries();
@@ -636,7 +628,7 @@ private:
         std::vector<Message>::const_iterator last,
         std::string_view anchor_id);
 
-    /// Read the session's accumulated compaction summary.md (empty when
+    /// Read the latest checkpoint in the session's summary.md (empty when
     /// absent/unreadable).
     [[nodiscard]] std::string read_session_summary(std::string_view cwd) const;
 
@@ -645,10 +637,6 @@ private:
     /// must not break an in-memory compaction that already succeeded.
     void append_session_summary(std::string_view cwd,
                                 std::string_view summary) const;
-
-    [[nodiscard]] static std::string build_compaction_summary(
-        std::vector<Message>::const_iterator first,
-        std::vector<Message>::const_iterator last);
 
     /// Tool loop result structure
     struct ToolLoopResult {
@@ -715,7 +703,7 @@ private:
     /// Construct the wire backend selected by `wire_api_`. Called per request
     /// (cheap) so a config change cannot leave a stale backend behind.
     [[nodiscard]] std::unique_ptr<loom::query::wire::WireBackend>
-    make_wire_backend() const;
+    make_wire_backend(bool summary = false) const;
 
     /// Collect everything a backend needs for one request. This is where the
     /// engine's conversation walk (system-prompt hoisting, snip filtering,
@@ -756,10 +744,34 @@ private:
         bool has_tool_use = false;
         bool failed = false;
         std::string error_message;
+        std::string error_type = "api_error";
     };
 
     /// Stream a single API call with event callbacks
-    [[nodiscard]] StreamCallResult stream_single_api_call(const QueryOptions& options);
+    [[nodiscard]] StreamCallResult stream_single_api_call(const QueryOptions& options,
+                                                         bool is_retry_after_compact = false);
+
+    [[nodiscard]] VoidResult ensure_context_budget(const QueryOptions& options);
+    [[nodiscard]] VoidResult compact_context_impl(std::string_view trigger,
+                                                 const QueryOptions& options,
+                                                 std::size_t rejected_payload_bytes = 0,
+                                                 bool payload_stream = true);
+    [[nodiscard]] Result<loom::services::compact::SummaryResponse> summarize_context(
+        const loom::services::compact::SummaryRequest& request);
+    void observe_context_usage(const TokenUsage& usage,
+                               const loom::query::wire::RequestInput& sent_input,
+                               std::string_view sent_schema);
+    void account_compaction_usage(const TokenUsage& usage);
+    [[nodiscard]] std::string context_schema_text(const loom::query::wire::RequestInput& input) const;
+    [[nodiscard]] static std::string context_schema_text(std::string_view prepared_body);
+    [[nodiscard]] std::optional<std::size_t> context_request_anchor_locked(
+        const std::vector<Message>& messages) const;
+    void restore_context_request_anchor_locked();
+    void persist_context_request_anchor_locked(std::string_view anchor_id) const;
+    [[nodiscard]] bool persist_context_checkpoint_locked(
+        const std::vector<Message>& candidate,
+        std::optional<std::uint32_t> task_budget_remaining) const;
+    void restore_context_checkpoint_locked();
 
     /// Execute all pending tool-use blocks from an assistant message
     /// Uses parallel execution for read-only tools (P1-5)
@@ -792,6 +804,7 @@ private:
 
     /// Estimate total tokens currently consumed by conversation
     [[nodiscard]] std::uint32_t estimate_conversation_tokens() const noexcept {
+        std::lock_guard lock(conversation_mutex_);
         return estimate_conversation_tokens_locked();
     }
 
@@ -832,6 +845,11 @@ private:
     std::mutex abort_callback_mutex_;          // Guards abort_callback_
     std::function<void()> abort_callback_;     // HTTP-layer socket shutdown (set by send_request*)
     mutable std::mutex conversation_mutex_;    // Guards conversation history
+    std::uint64_t conversation_revision_ = 0;
+    loom::services::compact::UsageObservation context_observed_;
+    std::string context_observed_key_;
+    std::optional<std::string> context_request_anchor_id_;
+    std::optional<std::uint32_t> configured_task_budget_remaining_;
     // RFC 0004: set at stream_query entry from QueryOptions::on_commit,
     // cleared via RAII on exit. Fired inside append_message (outside the
     // lock, on a pre-move copy) so it covers ALL commits including native

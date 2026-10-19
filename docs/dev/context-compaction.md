@@ -67,6 +67,11 @@ query, fragment or control characters. Invalid entries and duplicate identities
 within one file fail the configuration load. Higher tiers overlay matching
 profiles; an empty array clears the set. Ordinary project saves preserve its
 own profile JSON without copying effective user/local profiles into the project.
+The production CLI passes the loaded profiles, fallback window and requested
+output into both interactive/headless execution and direct runtime tools.
+Genuine configuration-load errors stop CLI startup before tools or model
+requests; missing files and tolerated non-JSON user/local files retain the
+configuration parser's existing behavior.
 
 The old global `contextWindowSize` is now a fallback, including an explicitly
 configured non-default value. To keep a deliberate ceiling for a catalog model,
@@ -78,6 +83,8 @@ Already loaded model switches, SDK overrides and existing overload fallback
 update budgets before sampling without restarting. Native children and their
 descendants resolve their own selected model from the same immutable policy,
 including after resume; they do not reuse the parent's resolved capacity.
+The interactive `/model <id>` command reports a completed switch through local
+command output and leaves the next prompt usable without a confirmation dialog.
 
 Output requests remain reversible: the wire uses the smaller of requested
 output and a known model output cap, while switching back can restore the
@@ -90,6 +97,11 @@ the original request. `QueryEngine::model_context()` exposes the resolved window
 output and separate `source` / `output_cap_source` values; the status line uses
 the active resolved window. An AppState-only model list reports unknown context
 instead of mislabeling its output-token field as a detected window.
+The built-in footer currently derives its token count and percentage from
+cumulative session usage, so that percentage is not an active-context
+measurement and may exceed 100% after compaction. The resolved window is valid;
+use actual outgoing request bodies and durable checkpoints to verify compaction.
+Changing that existing usage-display accounting is outside RFC 0026.
 
 ## Persistence
 

@@ -171,7 +171,8 @@ private:
                     result.push_back(FallbackModel{
                         .id = m.model_id,
                         .display_name = m.display_name,
-                        .context_window = m.max_tokens > 0 ? m.max_tokens : 200000u,
+                        // AppState max_tokens is output, not context metadata.
+                        .context_window = 0,
                         .input_cost_per_mtok = m.input_cost_per_mtok,
                         .output_cost_per_mtok = m.output_cost_per_mtok,
                     });
@@ -215,8 +216,11 @@ private:
         std::string out = "Available models:\n";
         for (const auto& m : models) {
             std::string marker = (m.id == current_id) ? "  * " : "    ";
-            out += std::format("{}{} ({}K context, ${:.2f}/${:.2f} per MTok)\n",
-                               marker, m.id, m.context_window / 1000,
+            const auto context = m.context_window > 0
+                ? std::format("{}K context", m.context_window / 1000)
+                : std::string{"context unknown"};
+            out += std::format("{}{} ({}, ${:.2f}/${:.2f} per MTok)\n",
+                               marker, m.id, context,
                                m.input_cost_per_mtok, m.output_cost_per_mtok);
         }
         out += std::format("\nCurrent model: {}", current_id);
@@ -230,10 +234,9 @@ private:
             const auto* state = static_cast<const loom::state::AppState*>(raw);
             if (auto cfg = find_model_config(*state, model_id); cfg.has_value()) {
                 auto info = std::format(
-                    "Model: {}\nDisplay: {}\nContext: {}K tokens\n"
+                    "Model: {}\nDisplay: {}\nContext: unknown\n"
                     "Input cost: ${:.2f}/MTok\nOutput cost: ${:.2f}/MTok",
                     cfg->model_id, cfg->display_name,
-                    cfg->max_tokens / 1000,
                     cfg->input_cost_per_mtok, cfg->output_cost_per_mtok);
                 return CommandResult::success(std::move(info));
             }
@@ -288,15 +291,12 @@ private:
             if (it != models.end()) {
                 model_cfg.model_id = it->id;
                 model_cfg.display_name = it->display_name;
-                model_cfg.max_tokens = it->context_window > 0
-                    ? static_cast<std::uint32_t>(it->context_window) : 200000u;
                 model_cfg.input_cost_per_mtok = it->input_cost_per_mtok;
                 model_cfg.output_cost_per_mtok = it->output_cost_per_mtok;
             } else {
                 // Minimal config for unknown model
                 model_cfg.model_id = model_id;
                 model_cfg.display_name = model_id;
-                model_cfg.max_tokens = 200000;
             }
         }
 

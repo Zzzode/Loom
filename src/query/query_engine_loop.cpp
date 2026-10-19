@@ -175,7 +175,9 @@ void QueryEngine::stream_query(
 
         // P1-3: Max output tokens recovery (streaming path)
         if (assistant_msg.stop_reason == "max_tokens" && max_tokens_retries < 3) {
-            config_.model_params.max_tokens = std::max(config_.model_params.max_tokens, std::uint32_t{64000});
+            auto resumed_params = config_.model_params;
+            resumed_params.max_tokens = std::max(resumed_params.max_tokens, std::uint32_t{64000});
+            set_model_params(std::move(resumed_params));
             auto resume = make_user_message(
                 "Your previous response was cut off at the token limit. "
                 "Please continue from where you left off.");
@@ -280,7 +282,9 @@ void QueryEngine::stream_query(
         // P1-3: Max output tokens recovery
         if (msg.stop_reason == "max_tokens" && max_tokens_retries < 3) {
             // Escalate max_tokens to 64k
-            config_.model_params.max_tokens = std::max(config_.model_params.max_tokens, std::uint32_t{64000});
+            auto resumed_params = config_.model_params;
+            resumed_params.max_tokens = std::max(resumed_params.max_tokens, std::uint32_t{64000});
+            set_model_params(std::move(resumed_params));
             // Append partial response and a resume nudge
             append_message(Message{msg});
             auto resume = make_user_message(
@@ -353,7 +357,9 @@ void QueryEngine::account_compaction_usage(const TokenUsage& usage) {
         // P1-4: Model fallback on capacity/overload errors
         if ((err.code == ErrorCode::OverloadedError || err.code == ErrorCode::RateLimited) &&
             fallback_idx < config_.fallback_models.size()) {
-            config_.model_params.model = config_.fallback_models[fallback_idx++];
+            auto fallback_params = config_.model_params;
+            fallback_params.model = config_.fallback_models[fallback_idx++];
+            set_model_params(std::move(fallback_params));
             continue;  // Retry immediately with fallback model
         }
 

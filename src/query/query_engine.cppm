@@ -154,7 +154,7 @@ struct RetryPolicy {
 
 /// Context window management settings
 struct ContextWindowConfig {
-    std::uint32_t max_context_tokens = 200000;    // Model's context window size
+    std::uint32_t max_context_tokens = 200000;    // Fallback when no model limit is known
     double warning_threshold = 0.8;                // Warn when usage exceeds this ratio
     double compaction_threshold = 0.9;             // Auto-compact when exceeding this
     bool auto_compact = true;                      // Enable automatic compaction
@@ -172,6 +172,7 @@ struct QueryEngineConfig {
     ModelParams model_params;
     RetryPolicy retry_policy;
     ContextWindowConfig context_window;
+    std::vector<ModelContextLimit> model_context_limits;
     ThinkingConfig thinking_config;
     std::string api_key;                            // API key (x-api-key)
     std::string auth_token;                         // OAuth/gateway bearer token (Authorization: Bearer); takes precedence over api_key when set
@@ -418,10 +419,12 @@ public:
     /// Get current token usage for the session
     [[nodiscard]] TokenUsage get_usage() const noexcept { return cumulative_usage_; }
 
-    /// Get the configured model context window size.
+    /// Get the active model's resolved context window size.
     [[nodiscard]] std::uint32_t max_context_tokens() const noexcept {
-        return config_.context_window.max_context_tokens;
+        return model_context_.window_tokens;
     }
+
+    [[nodiscard]] const ResolvedModelContext& model_context() const noexcept { return model_context_; }
 
     /// Get estimated context window utilization ratio [0.0, 1.0]
     [[nodiscard]] double context_utilization() const noexcept;
@@ -444,7 +447,7 @@ public:
     }
 
     /// Update model parameters at runtime
-    void set_model_params(ModelParams params) { config_.model_params = std::move(params); }
+    void set_model_params(ModelParams params);
 
     /// Get current model parameters
     [[nodiscard]] const ModelParams& model_params() const noexcept { return config_.model_params; }
@@ -505,6 +508,7 @@ private:
 
     /// Setup API client configuration
     void setup_api_client();
+    void refresh_model_context();
 
     /// Build and add system prompt to conversation
     void build_and_add_system_prompt();
@@ -828,6 +832,8 @@ private:
     }
 
     QueryEngineConfig config_;
+    std::shared_ptr<const ModelContextConfig> model_context_config_;
+    ResolvedModelContext model_context_;
     ToolRegistry* tool_registry_;              // Non-owning reference to tools
     loom::hooks::ToolPermissionHook* permission_hook_ = nullptr;  // Optional permission policy
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks_ = nullptr; // Optional lifecycle hooks

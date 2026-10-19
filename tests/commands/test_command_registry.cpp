@@ -21,6 +21,7 @@ import loom.commands.help;
 import loom.commands.hooks;
 import loom.commands.insights;
 import loom.commands.model;
+import loom.state.app_state;
 import loom.commands.mcp_cmd;
 import loom.commands.rewind;
 import loom.commands.plugin_cmd;
@@ -960,6 +961,29 @@ TEST(ModelCommand, ListsSwitchesAndCompletesModels) {
     // No built-in model completions — only subcommands match
     auto completions = model.complete("claude-");
     EXPECT_TRUE(completions.empty());
+}
+
+TEST(ModelCommand, DoesNotPresentOutputTokensAsDetectedContext) {
+    loom::state::AppState state;
+    loom::state::ModelConfig configured;
+    configured.model_id = "private-model";
+    configured.display_name = "Private model";
+    configured.max_tokens = 8192;
+    state.available_models.push_back(configured);
+    auto context = ctx({"list"});
+    context.app_store = &state;
+    context.get_state_fn = [](void* raw) -> const void* { return raw; };
+    loom::commands::ModelCommand model;
+    auto result = model.execute(context);
+    ASSERT_TRUE(result);
+    EXPECT_NE(result->message.find("private-model"), std::string::npos);
+    EXPECT_NE(result->message.find("context unknown"), std::string::npos);
+    EXPECT_EQ(result->message.find("8K context"), std::string::npos);
+    context.args = {"info", "private-model"};
+    auto info = model.execute(context);
+    ASSERT_TRUE(info);
+    EXPECT_NE(info->message.find("Context: unknown"), std::string::npos);
+    EXPECT_EQ(info->message.find("Context: 8K"), std::string::npos);
 }
 
 TEST(MigratedCommandMetadata, HooksAndRewindExposeTypeScriptCompatibleMetadata) {

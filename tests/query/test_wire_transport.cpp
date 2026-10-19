@@ -10,6 +10,7 @@ import std;
 import loom.query.query_engine;
 import loom.query.wire_protocol;
 import loom.query.assembly;
+import loom.config.config;
 import loom.session.storage;
 import loom.session.history;
 import loom.query.wire_openai;
@@ -1082,6 +1083,306 @@ TEST_F(WireTransport, UsageObservationKeepsTheActuallySentDynamicToolSnapshot) {
                 const auto expected="DYNAMIC_SCHEMA_V"+std::to_string(query_number);
                 EXPECT_NE(requests.back().body.find(expected),std::string::npos);
                 EXPECT_EQ(requests.back().body.find("DYNAMIC_SCHEMA_V"+std::to_string(query_number+1)),std::string::npos);
+            }
+        }
+    }
+}
+
+
+// RFC 0026: actual large capacities distinguish model-aware budgeting from
+// the old shared 200K fallback, over the real public HTTP owner boundary.
+std::vector<ModelContextLimit> mixed_model_limits() {
+    return {
+        {.model="large-budget-model", .context_window_tokens=1000000, .max_output_tokens=64000},
+        {.model="small-budget-model", .context_window_tokens=256000, .max_output_tokens=4096},
+    };
+}
+
+TEST_F(WireTransport, ModelSwitchRechecksMillionAnd256KBudgetsBeforeSampling) {
+    for (const auto protocol : {"messages", "openai"}) {
+        for (const bool streaming : {false, true}) {
+            SCOPED_TRACE(protocol);
+            SCOPED_TRACE(streaming);
+            auto answer=streaming
+                ? TransportReply{protocol==std::string_view{"messages"} ? compact_messages_stream() : openai_answer_stream()}
+                : compact_reply(protocol);
+            WireHttpServer server({answer},compact_reply(protocol,true));
+            ASSERT_TRUE(server.valid());
+            ToolRegistry registry;
+            auto settings=config(server,registry);
+            settings.wire_api=protocol;
+            settings.context_window.auto_compact=true;
+            settings.model_params.model="large-budget-model";
+            settings.model_params.max_tokens=64000;
+            settings.model_context_limits=mixed_model_limits();
+            QueryEngine engine(std::move(settings),registry);
+            isolate_compaction_system(engine);
+            seed_compactable_history(engine,600000);
+            const auto sample=[&](std::string_view prompt) {
+                if (!streaming) {
+                    auto result=engine.query(std::string(prompt));
+                    if (!result) ADD_FAILURE()<<result.error().format();
+                    return result.has_value();
+                }
+                bool failed=false;
+                QueryOptions options;
+                options.on_event=[&](const auto& event) {
+                    if (const auto* error=std::get_if<StreamError>(&event)) {
+                        ADD_FAILURE()<<error->message;
+                        failed=true;
+                    }
+                };
+                engine.stream_query(std::string(prompt),options);
+                return !failed;
+            };
+            EXPECT_EQ(engine.max_context_tokens(),1000000u);
+            ASSERT_TRUE(sample("LARGE_CURRENT_EXACT: preserve all task constraints."));
+            ASSERT_EQ(server.requests().size(),1u)<<"Large model must not use the old 200K budget";
+            auto params=engine.model_params();
+            params.model="small-budget-model";
+            engine.set_model_params(params);
+            EXPECT_EQ(engine.max_context_tokens(),256000u);
+            EXPECT_EQ(engine.model_context().output_tokens,4096u);
+            EXPECT_EQ(engine.model_params().max_tokens,64000u)<<"Keep the requested output reversible";
+            ASSERT_TRUE(sample("SMALL_CURRENT_EXACT: preserve constraints and completed result."));
+            const auto after_small=server.requests();
+            ASSERT_GT(after_small.size(),2u)<<"Smaller model must summarize before its business request";
+            const auto business=business_requests(server);
+            ASSERT_EQ(business.size(),2u);
+            EXPECT_NE(business.back().body.find("SMALL_CURRENT_EXACT"),std::string::npos);
+            EXPECT_NE(business.back().body.find("LATE_CONSTRAINT_47"),std::string::npos);
+            EXPECT_LT(business.back().body.size(),business.front().body.size());
+            for (const auto& request : after_small) {
+                if (request.body.find("CONTEXT CHECKPOINT")==std::string::npos) continue;
+                auto parsed=loom::utils::json::parse(request.body);
+                ASSERT_TRUE(parsed);
+                EXPECT_EQ(parsed->root().get("model").as_str(),"small-budget-model");
+                EXPECT_LE(parsed->root().get("max_tokens").as_int(),4096);
+            }
+            params=engine.model_params();
+            params.model="large-budget-model";
+            engine.set_model_params(params);
+            EXPECT_EQ(engine.max_context_tokens(),1000000u);
+            EXPECT_EQ(engine.model_context().output_tokens,64000u);
+            ASSERT_TRUE(sample("LARGE_RETURN_EXACT: finish using the checkpoint."));
+            const auto final_business=business_requests(server);
+            ASSERT_EQ(final_business.size(),3u);
+            const std::array<std::string_view,3> models{"large-budget-model","small-budget-model","large-budget-model"};
+            const std::array<std::int64_t,3> outputs{64000,4096,64000};
+            for (std::size_t i=0;i<3;++i) {
+                auto parsed=loom::utils::json::parse(final_business[i].body);
+                ASSERT_TRUE(parsed);
+                EXPECT_EQ(parsed->root().get("model").as_str(),models[i]);
+                EXPECT_EQ(parsed->root().get("max_tokens").as_int(),outputs[i]);
+                EXPECT_EQ(final_business[i].authorization,"Bearer transport-bearer");
+            }
+        }
+    }
+}
+
+TEST_F(WireTransport, ModelFallbackCompactsFor256KBeforeRetryingOverloadedMillionModel) {
+    for (const auto protocol : {"messages","openai"}) {
+        SCOPED_TRACE(protocol);
+        WireHttpServer server({{R"({"error":{"type":"overloaded_error","message":"Overloaded"}})",529,"application/json"},compact_reply(protocol)},compact_reply(protocol,true));
+        ASSERT_TRUE(server.valid());
+        ToolRegistry registry;
+        auto settings=config(server,registry);
+        settings.wire_api=protocol;
+        settings.context_window.auto_compact=true;
+        settings.retry_policy.max_retries=1;
+        settings.model_params.model="large-budget-model";
+        settings.model_params.max_tokens=64000;
+        settings.model_context_limits=mixed_model_limits();
+        settings.fallback_models={"small-budget-model"};
+        QueryEngine engine(std::move(settings),registry);
+        isolate_compaction_system(engine);
+        seed_compactable_history(engine,600000);
+        const auto result=engine.query("FALLBACK_CURRENT_EXACT: preserve the original task and result.");
+        ASSERT_TRUE(result)<<result.error().format();
+        EXPECT_EQ(engine.max_context_tokens(),256000u);
+        EXPECT_EQ(engine.model_context().output_tokens,4096u);
+        const auto requests=server.requests();
+        ASSERT_GT(requests.size(),2u);
+        EXPECT_EQ(requests.front().body.find("CONTEXT CHECKPOINT"),std::string::npos);
+        EXPECT_NE(requests[1].body.find("CONTEXT CHECKPOINT"),std::string::npos);
+        const auto business=business_requests(server);
+        ASSERT_EQ(business.size(),2u);
+        for (std::size_t i=0;i<business.size();++i) {
+            const auto parsed=loom::utils::json::parse(business[i].body);
+            ASSERT_TRUE(parsed);
+            EXPECT_EQ(parsed->root().get("model").as_str(),i==0 ? "large-budget-model" : "small-budget-model");
+            EXPECT_EQ(parsed->root().get("max_tokens").as_int(),i==0 ? 64000 : 4096);
+        }
+        EXPECT_LT(business.back().body.size(),business.front().body.size());
+        EXPECT_NE(business.back().body.find("FALLBACK_CURRENT_EXACT"),std::string::npos);
+        EXPECT_NE(business.back().body.find("LATE_CONSTRAINT_47"),std::string::npos);
+    }
+}
+
+TEST_F(WireTransport, ModelContextAssemblyKeepsOriginalFallbackAndIndependentCatalogOutputCap) {
+    loom::core::Settings settings;
+    settings.model.default_model="gpt-4.1";
+    settings.model.context_window_size=123456;
+    settings.model.max_output_tokens=64000;
+    settings.model.context_limits={{.model="gpt-4.1",.context_window_tokens=256000}};
+    loom::query::AssemblyOverrides overrides;
+    overrides.base_url="https://api.openai.com/v1";
+    overrides.wire_api="openai";
+    overrides.cwd=root_.string();
+    const auto resolved=loom::query::resolve_engine_config(settings,overrides);
+    ASSERT_TRUE(resolved);
+    ToolRegistry registry;
+    QueryEngine engine(*resolved,registry);
+    EXPECT_EQ(engine.max_context_tokens(),256000u);
+    EXPECT_EQ(engine.model_context().source,"profile");
+    EXPECT_EQ(engine.model_context().output_tokens,32768u);
+    EXPECT_EQ(engine.model_context().output_cap_source,"catalog");
+    const auto snapshot=make_api_execution_context(*resolved);
+    ASSERT_TRUE(snapshot->model_context_config);
+    EXPECT_EQ(snapshot->model_context_config->fallback_window_tokens,123456u);
+    EXPECT_EQ(snapshot->context_output_tokens,64000u);
+    auto params=engine.model_params();
+    params.model="unknown-private-alias";
+    engine.set_model_params(params);
+    EXPECT_EQ(engine.max_context_tokens(),123456u);
+    EXPECT_EQ(engine.model_context().source,"fallback");
+    EXPECT_EQ(engine.model_context().output_tokens,64000u);
+    params.model="gpt-4.1";
+    engine.set_model_params(params);
+    EXPECT_EQ(engine.model_context().output_tokens,32768u);
+    auto catalog_config=*resolved;
+    catalog_config.model_context_limits.clear();
+    QueryEngine automatic(catalog_config,registry);
+    EXPECT_EQ(automatic.max_context_tokens(),1047576u);
+    EXPECT_EQ(automatic.model_context().source,"catalog");
+    EXPECT_EQ(automatic.model_context().output_tokens,32768u);
+    catalog_config.base_url="https://private-gateway.invalid/v1";
+    QueryEngine private_alias(catalog_config,registry);
+    EXPECT_EQ(private_alias.max_context_tokens(),123456u);
+    EXPECT_EQ(private_alias.model_context().source,"fallback");
+    EXPECT_EQ(private_alias.model_context().output_tokens,64000u);
+}
+
+
+TEST_F(WireTransport, ModelOutputCapRejectsImpossibleForcedThinkingBeforeHttpAndRestoresOnSwitch) {
+    for (const auto protocol : {"messages","openai"}) {
+        for (const bool streaming : {false,true}) {
+            for (const bool auto_compact : {false,true}) {
+                SCOPED_TRACE(protocol);
+                SCOPED_TRACE(streaming);
+                SCOPED_TRACE(auto_compact);
+                auto answer=streaming
+                    ? TransportReply{protocol==std::string_view{"messages"} ? compact_messages_stream() : openai_answer_stream()}
+                    : compact_reply(protocol);
+                WireHttpServer server({answer},compact_reply(protocol,true));
+                ASSERT_TRUE(server.valid());
+                ToolRegistry registry;
+                auto settings=config(server,registry);
+                settings.wire_api=protocol;
+                settings.context_window.auto_compact=auto_compact;
+                settings.model_params.model="large-budget-model";
+                settings.model_params.max_tokens=64000;
+                settings.model_context_limits={
+                    {.model="large-budget-model",.context_window_tokens=1000000,.max_output_tokens=64000},
+                    {.model="small-budget-model",.context_window_tokens=256000,.max_output_tokens=8192},
+                    {.model="equal-thinking-budget",.context_window_tokens=256000,.max_output_tokens=32000}};
+                settings.thinking_config.mode=ThinkingConfig::Mode::Forced;
+                settings.thinking_config.budget_tokens=32000;
+                QueryEngine engine(std::move(settings),registry);
+                isolate_compaction_system(engine);
+                const auto sample=[&] {
+                    if (!streaming) {
+                        auto result=engine.query("Finish without tools; preserve the configured thinking request.");
+                        if (!result) {
+                            EXPECT_EQ(result.error().code,ErrorCode::InvalidRequest);
+                            EXPECT_NE(result.error().message.find("Forced thinking budget 32000"),std::string::npos);
+                        }
+                        return result.has_value();
+                    }
+                    bool failed=false;
+                    QueryOptions options;
+                    options.on_event=[&](const auto& event) {
+                        if (const auto* error=std::get_if<StreamError>(&event)) {
+                            EXPECT_NE(error->message.find("Forced thinking budget 32000"),std::string::npos);
+                            failed=true;
+                        }
+                    };
+                    engine.stream_query("Finish without tools; preserve configured thinking.",options);
+                    return !failed;
+                };
+                ASSERT_TRUE(sample());
+                ASSERT_EQ(server.requests().size(),1u);
+                for (const auto model : {"small-budget-model","equal-thinking-budget"}) {
+                    auto params=engine.model_params();
+                    params.model=model;
+                    engine.set_model_params(params);
+                    const bool accepted=sample();
+                    EXPECT_EQ(accepted,protocol==std::string_view{"openai"});
+                }
+                EXPECT_EQ(server.requests().size(),protocol==std::string_view{"messages"} ? 1u : 3u)
+                    << "Invalid manual thinking must not send a summary or business HTTP request";
+                auto params=engine.model_params();
+                params.model="large-budget-model";
+                engine.set_model_params(params);
+                ASSERT_TRUE(sample());
+                const auto requests=server.requests();
+                ASSERT_EQ(requests.size(),protocol==std::string_view{"messages"} ? 2u : 4u);
+                for (const auto& request : requests) {
+                    const auto parsed=loom::utils::json::parse(request.body);
+                    ASSERT_TRUE(parsed);
+                    if (protocol==std::string_view{"messages"}) {
+                        EXPECT_EQ(parsed->root().get("max_tokens").as_int(),64000);
+                        EXPECT_EQ(parsed->root().get("thinking").get("budget_tokens").as_int(),32000);
+                    } else EXPECT_FALSE(parsed->root().get("thinking").valid());
+                }
+            }
+        }
+    }
+}
+
+
+TEST_F(WireTransport, ModelOutputCapPreservesAdaptiveAndDisabledThinkingWithUnusedManualBudget) {
+    for (const auto protocol : {"messages","openai"}) {
+        for (const auto mode : {ThinkingConfig::Mode::Adaptive,ThinkingConfig::Mode::Disabled}) {
+            for (const bool streaming : {false,true}) {
+                SCOPED_TRACE(protocol);
+                SCOPED_TRACE(static_cast<int>(mode));
+                SCOPED_TRACE(streaming);
+                auto answer=streaming
+                    ? TransportReply{protocol==std::string_view{"messages"} ? compact_messages_stream() : openai_answer_stream()}
+                    : compact_reply(protocol);
+                WireHttpServer server({answer});
+                ASSERT_TRUE(server.valid());
+                ToolRegistry registry;
+                auto settings=config(server,registry);
+                settings.wire_api=protocol;
+                settings.model_params.model="small-budget-model";
+                settings.model_params.max_tokens=64000;
+                settings.model_context_limits={{.model="small-budget-model",.context_window_tokens=256000,.max_output_tokens=8192}};
+                settings.thinking_config.mode=mode;
+                settings.thinking_config.budget_tokens=32000;
+                QueryEngine engine(std::move(settings),registry);
+                isolate_compaction_system(engine);
+                if (streaming) {
+                    QueryOptions options;
+                    options.on_event=[](const auto& event) {
+                        if (const auto* error=std::get_if<StreamError>(&event)) ADD_FAILURE()<<error->message;
+                    };
+                    engine.stream_query("Finish the bounded verification.",options);
+                } else {
+                    const auto answer_result=engine.query("Finish the bounded verification.");
+                    ASSERT_TRUE(answer_result)<<answer_result.error().format();
+                }
+                const auto requests=server.requests();
+                ASSERT_EQ(requests.size(),1u);
+                const auto parsed=loom::utils::json::parse(requests.front().body);
+                ASSERT_TRUE(parsed);
+                EXPECT_EQ(parsed->root().get("max_tokens").as_int(),8192);
+                const auto thinking=parsed->root().get("thinking");
+                if (protocol==std::string_view{"messages"} && mode==ThinkingConfig::Mode::Adaptive) {
+                    EXPECT_EQ(thinking.get("type").as_str(),"adaptive");
+                    EXPECT_FALSE(thinking.get("budget_tokens").valid());
+                } else EXPECT_FALSE(thinking.valid());
             }
         }
     }

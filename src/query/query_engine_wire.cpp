@@ -25,7 +25,7 @@ namespace loom::core {
 
 double QueryEngine::context_utilization() const noexcept {
     auto estimated = estimate_conversation_tokens();
-    return static_cast<double>(estimated) / config_.context_window.max_context_tokens;
+    return static_cast<double>(estimated) / model_context_.window_tokens;
 }
 
 std::string QueryEngine::working_directory() const {
@@ -197,7 +197,7 @@ QueryEngine::make_wire_backend(bool summary) const {
     bool stream) const {
     loom::query::wire::RequestInput input;
     input.model = config_.model_params.model;
-    input.max_tokens = config_.model_params.max_tokens;
+    input.max_tokens = model_context_.output_tokens;
     input.stream = stream;
     input.temperature = config_.model_params.temperature;
     input.top_p = config_.model_params.top_p;

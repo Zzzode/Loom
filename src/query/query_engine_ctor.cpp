@@ -12,6 +12,7 @@ import std;
 
 import loom.query.wire_protocol;
 import loom.services.analytics;
+import loom.services.compact.model_context;
 
 namespace loom::core {
 
@@ -21,7 +22,6 @@ make_api_execution_context(const QueryEngineConfig& config) {
     context->base_url = config.base_url.value_or("");
     context->api_key = config.api_key;
     context->auth_token = config.auth_token;
-    context->context_window_tokens = config.context_window.max_context_tokens;
     context->context_output_tokens = config.model_params.max_tokens;
     context->context_compaction_threshold = config.context_window.compaction_threshold;
     context->context_auto_compact = config.context_window.auto_compact;
@@ -30,6 +30,11 @@ make_api_execution_context(const QueryEngineConfig& config) {
     if (auto api = loom::query::wire::wire_api_from_string(selected)) {
         context->wire_api = std::string(loom::query::wire::wire_api_name(*api));
     }
+    context->model_context_config = std::make_shared<const ModelContextConfig>(
+        ModelContextConfig{config.context_window.max_context_tokens, config.model_context_limits});
+    context->context_window_tokens = loom::services::compact::resolve_model_context(
+        *context->model_context_config, config.model_params.model, context->base_url,
+        context->wire_api, config.model_params.max_tokens).window_tokens;
     return context;
 }
 
@@ -41,8 +46,9 @@ std::shared_ptr<const ApiExecutionContext> QueryEngine::api_execution_context() 
     context->auth_token = api_config_.auth_token;
     context->api_version = api_config_.api_version;
     context->timeout = api_config_.timeout;
-    context->context_window_tokens = config_.context_window.max_context_tokens;
+    context->context_window_tokens = model_context_.window_tokens;
     context->context_output_tokens = config_.model_params.max_tokens;
+    context->model_context_config = model_context_config_;
     context->context_compaction_threshold = config_.context_window.compaction_threshold;
     context->context_auto_compact = config_.context_window.auto_compact;
     return context;
@@ -69,6 +75,9 @@ QueryEngine::QueryEngine(QueryEngineConfig config, ToolRegistry& registry)
 
     // Initialize API client config
     setup_api_client();
+    model_context_config_ = std::make_shared<const ModelContextConfig>(
+        ModelContextConfig{config_.context_window.max_context_tokens, config_.model_context_limits});
+    refresh_model_context();
 
     // Initialize conversation with system prompt if available
     build_and_add_system_prompt();
@@ -81,6 +90,21 @@ QueryEngine::QueryEngine(QueryEngineConfig config, ToolRegistry& registry)
     loom::services::analytics::local_analytics().log_event(
         "session_start",
         {{"wire_api", std::string(loom::query::wire::wire_api_name(wire_api_))}});
+}
+
+void QueryEngine::refresh_model_context() {
+    model_context_ = loom::services::compact::resolve_model_context(
+        *model_context_config_, config_.model_params.model, api_config_.base_url,
+        loom::query::wire::wire_api_name(wire_api_), config_.model_params.max_tokens);
+}
+
+void QueryEngine::set_model_params(ModelParams params) {
+    std::lock_guard lock(conversation_mutex_);
+    config_.model_params = std::move(params);
+    refresh_model_context();
+    context_observed_ = {};
+    context_observed_key_.clear();
+    ++conversation_revision_;
 }
 
 void QueryEngine::setup_api_client() {

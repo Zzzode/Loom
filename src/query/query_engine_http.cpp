@@ -31,7 +31,9 @@ namespace loom::core {
     auto backend = make_wire_backend(true);
     loom::query::wire::RequestInput input;
     input.model = config_.model_params.model;
-    input.max_tokens = request.max_output_tokens;
+    input.max_tokens = model_context_.output_cap
+        ? std::min(request.max_output_tokens, *model_context_.output_cap)
+        : request.max_output_tokens;
     input.system_prompt = request.instructions;
     input.stream = false;
     input.thinking_enabled = false;

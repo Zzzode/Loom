@@ -372,6 +372,7 @@ loom::core::Result<loom::core::QueryEngineConfig> resolve_engine_config(
     config.model_params.max_tokens = settings.model.max_output_tokens;
     config.model_params.temperature = settings.model.temperature;
     config.context_window.max_context_tokens = settings.model.context_window_size;
+    config.model_context_limits = settings.model.context_limits;
     config.retry_policy.max_retries = settings.network.max_retries;
     config.thinking_config.mode = settings.model.extended_thinking
         ? loom::core::ThinkingConfig::Mode::Adaptive

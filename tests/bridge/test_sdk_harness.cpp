@@ -37,10 +37,20 @@ namespace fs = std::filesystem;
 // loop run end-to-end against this with zero external network calls.
 class LoopbackServer {
 public:
-    LoopbackServer(std::vector<std::string> bodies, std::string content_type)
-        : bodies_(std::move(bodies)), content_type_(std::move(content_type)) {
-        svr_.Post("/v1/messages", [this](const httplib::Request&,
+    LoopbackServer(std::vector<std::string> bodies, std::string content_type,
+                   std::optional<std::string> summary_body = {})
+        : bodies_(std::move(bodies)), content_type_(std::move(content_type)),
+          summary_body_(std::move(summary_body)) {
+        svr_.Post("/v1/messages", [this](const httplib::Request& request,
                                          httplib::Response& res) {
+            {
+                std::lock_guard lock(requests_mutex_);
+                requests_.push_back(request.body);
+            }
+            if (summary_body_ && request.body.find("CONTEXT CHECKPOINT") != std::string::npos) {
+                res.set_content(*summary_body_, "application/json");
+                return;
+            }
             const auto idx = request_count_.fetch_add(1);
             const auto& body = bodies_[std::min(idx, bodies_.size() - 1)];
             res.set_content(body, content_type_);
@@ -72,6 +82,10 @@ public:
     [[nodiscard]] std::string base_url() const {
         return std::format("http://127.0.0.1:{}", port_);
     }
+    [[nodiscard]] std::vector<std::string> requests() const {
+        std::lock_guard lock(requests_mutex_);
+        return requests_;
+    }
 
 private:
     httplib::Server svr_;
@@ -79,6 +93,9 @@ private:
     int port_ = -1;
     std::vector<std::string> bodies_;
     std::string content_type_;
+    std::optional<std::string> summary_body_;
+    mutable std::mutex requests_mutex_;
+    std::vector<std::string> requests_;
     std::atomic<std::size_t> request_count_{0};
 };
 
@@ -123,7 +140,176 @@ constexpr std::string_view kToolUseResponse =
 constexpr std::string_view kFinalTextResponse =
     R"({"id":"msg_2","type":"message","role":"assistant","model":"loom-test","content":[{"type":"text","text":"done"}],"stop_reason":"end_turn","usage":{"input_tokens":2,"output_tokens":1}})";
 
+// ConfigManager reads process configuration at construction. Keep these public
+// SDK tests independent of the developer's settings, project and output env.
+class ModelBudgetSettings {
+public:
+    explicit ModelBudgetSettings(std::string_view endpoint)
+        : previous_cwd_(fs::current_path()),
+          root_(fs::temp_directory_path() / ("loom_sdk_model_budget_" +
+              std::to_string(::getpid()) + "_" +
+              std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))) {
+        fs::create_directories(root_ / "config");
+        fs::create_directories(root_ / "work");
+        for (const char* name : {"LOOM_CONFIG_DIR", "LOOM_MAX_TOKENS"}) {
+            const auto* value = std::getenv(name);
+            environment_.emplace_back(name, value ? std::optional<std::string>{value} : std::nullopt);
+            unsetenv(name);
+        }
+        setenv("LOOM_CONFIG_DIR", (root_ / "config").string().c_str(), 1);
+        fs::current_path(root_ / "work");
+        loom::utils::json::JsonMutDoc doc;
+        auto settings = doc.object();
+        settings.add("contextWindowSize", doc.number(std::int64_t{200000}));
+        settings.add("maxOutputTokens", doc.number(std::int64_t{64000}));
+        settings.add("extendedThinking", doc.boolean(false));
+        auto profiles = doc.array();
+        for (const bool large : {true, false}) {
+            auto profile = doc.object();
+            profile.add("model", doc.string(large ? "sdk-window-large" : "sdk-window-small"));
+            profile.add("contextWindowSize", doc.number(std::int64_t{large ? 1000000 : 256000}));
+            profile.add("maxOutputTokens", doc.number(std::int64_t{large ? 64000 : 8192}));
+            profile.add("baseUrl", doc.string(endpoint));
+            profile.add("wireApi", doc.string("messages"));
+            profiles.append(profile);
+        }
+        settings.add("modelContextLimits", profiles);
+        doc.set_root(settings);
+        std::ofstream output(root_ / "config" / "settings.json");
+        output << doc.to_string();
+    }
+    ~ModelBudgetSettings() {
+        std::error_code error;
+        fs::current_path(previous_cwd_, error);
+        for (const auto& [name, value] : environment_) {
+            if (value) setenv(name.c_str(), value->c_str(), 1);
+            else unsetenv(name.c_str());
+        }
+        fs::remove_all(root_, error);
+    }
+    [[nodiscard]] fs::path sessions_dir() const { return root_ / "sessions"; }
+
+private:
+    fs::path previous_cwd_;
+    fs::path root_;
+    std::vector<std::pair<std::string, std::optional<std::string>>> environment_;
+};
+
+std::string model_budget_checkpoint_response() {
+    loom::utils::json::JsonMutDoc doc;
+    auto response = doc.object();
+    response.add("id", doc.string("budget-checkpoint"));
+    response.add("type", doc.string("message"));
+    response.add("role", doc.string("assistant"));
+    response.add("model", doc.string("sdk-window-small"));
+    response.add("stop_reason", doc.string("end_turn"));
+    auto content = doc.array();
+    auto block = doc.object();
+    block.add("type", doc.string("text"));
+    block.add("text", doc.string("## Goal\nContinue the SDK budget test.\n"
+        "## Constraints\nKeep the current request.\n## Decisions\nUse the selected model.\n"
+        "## Progress\nLarge history accepted.\n## Next Steps\nAnswer the next request.\n"
+        "## References\nSDK model budget profiles.\n"));
+    content.append(block);
+    response.add("content", content);
+    auto usage = doc.object();
+    usage.add("input_tokens", doc.number(std::int64_t{1}));
+    usage.add("output_tokens", doc.number(std::int64_t{1}));
+    response.add("usage", usage);
+    doc.set_root(response);
+    return doc.to_string();
+}
+
+void exercise_sdk_model_budget_switch(bool streaming) {
+    LoopbackServer server{
+        {streaming ? make_sse_body() : std::string(kTextResponse)},
+        streaming ? "text/event-stream" : "application/json",
+        model_budget_checkpoint_response()};
+    ASSERT_TRUE(server.ready());
+    ModelBudgetSettings settings(server.base_url());
+    loom::sdk::HarnessConfig config;
+    make_harness_config(config, server.base_url());
+    config.model = "sdk-window-small";
+    config.wire_api = "messages";
+    config.cwd = fs::current_path();
+    config.sessions_dir = settings.sessions_dir();
+    loom::sdk::Harness harness(std::move(config));
+    const auto turn = [&](std::string model, std::string prompt) {
+        loom::sdk::TurnOptions options;
+        options.model = std::move(model);
+        options.prompt = std::move(prompt);
+        if (!streaming) {
+            const auto result = harness.run(options);
+            if (!result) {
+                ADD_FAILURE() << result.error().format();
+                return false;
+            }
+            return result->success;
+        }
+        bool ended = false;
+        std::string errors;
+        harness.stream(options, [&](const loom::core::StreamEvent& event) {
+            if (std::holds_alternative<loom::core::StreamEnd>(event)) ended = true;
+            if (const auto* error = std::get_if<loom::core::StreamError>(&event)) {
+                errors += error->message;
+            }
+        });
+        EXPECT_TRUE(errors.empty()) << errors;
+        return ended && errors.empty();
+    };
+    // About 350K locally estimated tokens: above the actual 256K budget,
+    // comfortably inside 1M. A small-window alias cannot pass this turn.
+    const std::string large_history(1400000, 'h');
+    ASSERT_TRUE(turn("sdk-window-large", large_history));
+    auto requests = server.requests();
+    ASSERT_EQ(requests.size(), 1u) << "The 1M override must accept history without a summary";
+    auto first = loom::utils::json::parse(requests.front());
+    ASSERT_TRUE(first.has_value());
+    EXPECT_EQ(first->root().get_string("model"), "sdk-window-large");
+    EXPECT_EQ(first->root().get_int("max_tokens"), 64000);
+
+    ASSERT_TRUE(turn("sdk-window-small", "Continue with the smaller model."));
+    requests = server.requests();
+    ASSERT_GT(requests.size(), 2u) << "The 256K override must summarize before its business request";
+    ASSERT_LE(requests.size(), 18u) << "Compaction keeps the shared 16-request bound";
+    for (std::size_t index = 1; index + 1 < requests.size(); ++index) {
+        EXPECT_NE(requests[index].find("CONTEXT CHECKPOINT"), std::string::npos);
+        auto summary = loom::utils::json::parse(requests[index]);
+        ASSERT_TRUE(summary.has_value());
+        EXPECT_EQ(summary->root().get_string("model"), "sdk-window-small");
+        EXPECT_GT(summary->root().get_int("max_tokens"), 0);
+        EXPECT_LE(summary->root().get_int("max_tokens"), 8192);
+        EXPECT_FALSE(summary->root().get("stream").as_bool());
+    }
+    auto small = loom::utils::json::parse(requests.back());
+    ASSERT_TRUE(small.has_value());
+    EXPECT_EQ(small->root().get_string("model"), "sdk-window-small");
+    EXPECT_EQ(small->root().get_int("max_tokens"), 8192);
+    EXPECT_NE(requests.back().find("[Context checkpoint]"), std::string::npos);
+    EXPECT_EQ(requests.back().find("CONTEXT CHECKPOINT"), std::string::npos);
+    EXPECT_EQ(small->root().get("stream").as_bool(), streaming);
+
+    const auto after_small = requests.size();
+    ASSERT_TRUE(turn("sdk-window-large", large_history));
+    requests = server.requests();
+    ASSERT_EQ(requests.size(), after_small + 1) << "Switching back must restore the 1M window";
+    auto restored = loom::utils::json::parse(requests.back());
+    ASSERT_TRUE(restored.has_value());
+    EXPECT_EQ(restored->root().get_string("model"), "sdk-window-large");
+    EXPECT_EQ(restored->root().get_int("max_tokens"), 64000)
+        << "The smaller model's effective cap must not overwrite requested output";
+    EXPECT_EQ(restored->root().get("stream").as_bool(), streaming);
+}
+
 } // namespace
+
+TEST(SdkHarness, RunModelOverrideRecomputesMillionAnd256KBudgetsAndRestoresOutput) {
+    exercise_sdk_model_budget_switch(false);
+}
+
+TEST(SdkHarness, StreamModelOverrideRecomputesMillionAnd256KBudgetsAndRestoresOutput) {
+    exercise_sdk_model_budget_switch(true);
+}
 
 // §4.4: run() against a loopback HTTP server serving a canned Messages API
 // response — exercising the real transport with zero external calls.

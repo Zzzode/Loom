@@ -88,11 +88,20 @@ std::string QueryEngine::context_schema_text(std::string_view prepared_body) {
 }
 
 VoidResult QueryEngine::ensure_context_budget(const QueryOptions& options) {
+    if (wire_api_ == loom::query::wire::WireApi::Messages && thinking_enabled_for_request() &&
+        config_.thinking_config.mode == ThinkingConfig::Mode::Forced) {
+        const auto thinking_budget = config_.thinking_config.budget_tokens.value_or(10000);
+        if (thinking_budget >= model_context_.output_tokens) return std::unexpected(Error::make(
+            ErrorCode::InvalidRequest, std::format(
+                "Forced thinking budget {} must be below the effective model output limit {}; "
+                "reduce the thinking budget or select a model with a larger output limit",
+                thinking_budget, model_context_.output_tokens)));
+    }
     if (!config_.context_window.auto_compact) return {};
     const auto input = build_wire_input(options, false);
     const auto schema = context_schema_text(input);
-    const compact::ContextPolicy policy{config_.context_window.max_context_tokens,
-        config_.model_params.max_tokens, config_.context_window.compaction_threshold};
+    const compact::ContextPolicy policy{model_context_.window_tokens,
+        model_context_.output_tokens, config_.context_window.compaction_threshold};
     compact::UsageObservation observed;
     std::optional<std::size_t> anchor;
     {
@@ -150,8 +159,8 @@ VoidResult QueryEngine::compact_context_impl(std::string_view trigger, const Que
     }
     const compact::RequestContext context{input.messages, input.system_prompt, schema,
                                          anchor, observed};
-    const compact::ContextPolicy policy{config_.context_window.max_context_tokens,
-        config_.model_params.max_tokens, config_.context_window.compaction_threshold};
+    const compact::ContextPolicy policy{model_context_.window_tokens,
+        model_context_.output_tokens, config_.context_window.compaction_threshold};
     auto compacted = compact::compact_context(context, policy,
         [this](const auto& request) { return summarize_context(request); },
         [this] { return should_abort() || budget_tracker_.budget_exceeded; });

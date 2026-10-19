@@ -480,7 +480,7 @@ void QueryEngine::replay_snip_boundaries() {
     }
     loom::query::wire::RequestInput input;
     input.model = config_.model_params.model;
-    input.max_tokens = config_.model_params.max_tokens;
+    input.max_tokens = model_context_.output_tokens;
     input.tools = config_.tools;
     const auto schema = context_schema_text(input);
     const loom::services::compact::RequestContext context{conversation_, system, schema, {}, {}};

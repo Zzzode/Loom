@@ -178,6 +178,7 @@ public:
     std::atomic<int> metadata_requests{0};
     std::atomic<bool> retry_fault{true};
     std::atomic<bool> selection_grow{false};
+    std::atomic<bool> mermaid_finish{false};
     std::atomic<bool> chain_finish{false};
     std::atomic<bool> chain_tools{false};
     std::atomic<int> occupancy_business{0};
@@ -244,6 +245,36 @@ private:
             request_bodies_.push_back(request.substr(request.find("\r\n\r\n") + 4));
         }
         const int index = requests.fetch_add(1);
+        if (recovery_ == "mermaid") {
+            if (index == 0) {
+                const auto delta = [](const std::string& text) {
+                    return event("content_block_delta", "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + escape_json(text) + "\"}}");
+                };
+                const std::string prefix = "```mermaid\nflowchart LR\nA[Mermaid Client] -->|request| B[Mermaid Server]\n";
+                const auto first = message_start() +
+                    event("content_block_start", R"({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}})") + delta(prefix);
+                const auto last = delta("```\n\nMERMAID_DONE") +
+                    event("content_block_stop", R"({"type":"content_block_stop","index":0})") +
+                    event("message_delta", R"({"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":32}})") +
+                    event("message_stop", R"({"type":"message_stop"})");
+                if (!send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
+                        std::to_string(first.size() + last.size()) + "\r\nConnection: close\r\n\r\n" + first)) return;
+                ++parked;
+                const auto deadline = Clock::now() + 15s;
+                while (!mermaid_finish && !stopping_ && Clock::now() < deadline)
+                    std::this_thread::sleep_for(10ms);
+                if (!mermaid_finish || stopping_) return;
+                send_bytes(last);
+            } else {
+                const auto body = text_response(index == 1 ?
+                    "```mermaid\nsequenceDiagram\nparticipant C as Client\nparticipant S as Server\nC->>S: Ask\nS-->>C: Reply\nS->>S: Work\n```\n\nSEQUENCE_DONE" :
+                    "```mermaid\nflowchart TD\nA --> B\nsubgraph UnsupportedGroup\nC\nend\n```\n\nFALLBACK_DONE");
+                send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
+                    std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            }
+            ::shutdown(fd, SHUT_WR);
+            return;
+        }
         if (recovery_.starts_with("context-occupancy")) {
             const bool summary = request.find("CONTEXT CHECKPOINT") != std::string::npos;
             std::string body;
@@ -2404,6 +2435,110 @@ void run_selection_case(const std::string& binary, const std::string& scenario, 
     terminal.verify_exit(0);
 }
 
+void run_mermaid_case(const std::string& binary, const fs::path& root,
+                      const fs::path& harness) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":true,"permissionMode":"default"})";
+    std::ofstream(root / "config" / "LOOM.md") << "GLOBAL_PTY_INSTRUCTION_63";
+    install_clipboard_capture(root, harness);
+    ModelOptions options;
+    options.capture_clipboard = true;
+    options.isolate_budget_environment = true;
+    ModelServer server(false, false, root / "unused.txt", false, "mermaid");
+    server.start();
+    Terminal terminal(binary, root, server.url(), options);
+    require(terminal.wait([&] { return terminal.installed(); }), "Mermaid terminal did not start");
+    terminal.input("Return the Mermaid flowchart\r");
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return server.parked.load() == 1 && frame.find("flowchart LR") != std::string::npos &&
+            frame.find("Mermaid Server") != std::string::npos;
+    }), "unfinished Mermaid fence did not retain its source");
+    save_attention_frame(root, "mermaid-streaming-source", terminal.latest_frame());
+    server.mermaid_finish = true;
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return terminal.idle_response_visible("MERMAID_DONE") &&
+            frame.find("flowchart LR") == std::string::npos &&
+            frame.find("Mermaid Client") != std::string::npos &&
+            frame.find("Mermaid Server") != std::string::npos && frame.find("┌") != std::string::npos;
+    }), "completed Mermaid fence did not render a diagram");
+    save_attention_frame(root, "mermaid-flowchart-wide", terminal.latest_frame());
+
+    const auto baseline = decode_frame(terminal.latest_frame());
+    const auto client = baseline.find("Mermaid Client");
+    const auto target = baseline.find("Mermaid Server");
+    require(client.first >= 0 && client.second >= 0 && target.first >= 0 && target.second >= 0,
+            "Mermaid labels unavailable for selection");
+    require(client.second == target.second, "LR Mermaid nodes were not on the same row");
+    int left = client.first;
+    while (left > 0 && baseline.cells[client.second][left].text != "│") --left;
+    int right = target.first + static_cast<int>(std::string("Mermaid Server").size());
+    while (right < 119 && baseline.cells[target.second][right].text != "│") ++right;
+    require(baseline.cells[client.second][left].text == "│" &&
+            baseline.cells[target.second][right].text == "│", "Mermaid node borders unavailable for selection");
+    std::string visible_selection;
+    for (int x = left; x <= right; ++x) visible_selection += baseline.cells[client.second][x].text;
+    terminal.input(mouse_report(0, {left, client.second}) + mouse_report(32, {right, target.second}) +
+                   mouse_report(0, {right, target.second}, true));
+    require(terminal.wait([&] { return read_file(root / "clipboard.txt") == visible_selection; }),
+            "Mermaid diagram drag produced no clipboard payload");
+    require(read_file(root / "clipboard.txt") == visible_selection,
+            "Mermaid drag did not copy the actual rendered Unicode cells");
+    std::ofstream(root / "mermaid-copied.txt") << read_file(root / "clipboard.txt");
+
+    terminal.resize(40, 40);
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return frame.find("flowchart LR") != std::string::npos &&
+            frame.find("MERMAID_DONE") != std::string::npos;
+    }), "narrow Mermaid fallback or following paragraph disappeared");
+    save_attention_frame(root, "mermaid-narrow-source", terminal.latest_frame());
+    terminal.resize(120, 40);
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return frame.find("flowchart LR") == std::string::npos &&
+            frame.find("Mermaid Client") != std::string::npos &&
+            frame.find("MERMAID_DONE") != std::string::npos;
+    }), "wide Mermaid diagram did not recover after resize");
+    save_attention_frame(root, "mermaid-wide-restored", terminal.latest_frame());
+
+    terminal.input("/clear\r");
+    require(terminal.wait([&] { return terminal.latest_frame_text().find("MERMAID_DONE") == std::string::npos; }),
+            "Mermaid fixture clear did not complete");
+    terminal.input("Return the sequence diagram\r");
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return terminal.idle_response_visible("SEQUENCE_DONE") &&
+            frame.find("sequenceDiagram") == std::string::npos &&
+            frame.find("Reply") != std::string::npos && frame.find("Work") != std::string::npos &&
+            frame.find("┌") != std::string::npos;
+    }), "sequence diagram did not preserve its messages");
+    save_attention_frame(root, "mermaid-sequence", terminal.latest_frame());
+    terminal.input("/clear\r");
+    require(terminal.wait([&] { return terminal.latest_frame_text().find("SEQUENCE_DONE") == std::string::npos; }),
+            "sequence fixture clear did not complete");
+    terminal.input("Return an unsupported diagram\r");
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return terminal.idle_response_visible("FALLBACK_DONE") &&
+            frame.find("subgraph UnsupportedGroup") != std::string::npos &&
+            frame.find("flowchart TD") != std::string::npos;
+    }), "unsupported Mermaid syntax did not retain the complete source");
+    save_attention_frame(root, "mermaid-unsupported-source", terminal.latest_frame());
+    const auto bodies = server.request_bodies();
+    require(bodies.size() == 3, "Mermaid rendering caused extra business requests");
+    for (std::size_t i = 0; i < bodies.size(); ++i) {
+        const auto first = bodies[i].find("GLOBAL_PTY_INSTRUCTION_63");
+        require(first != std::string::npos &&
+                bodies[i].find("GLOBAL_PTY_INSTRUCTION_63", first + 1) == std::string::npos,
+                "real CLI did not load the isolated global instruction exactly once");
+        std::ofstream(root / ("mermaid-request-" + std::to_string(i) + ".txt")) << bodies[i];
+    }
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+}
+
 void run_escape_case(const std::string& binary, const std::string& scenario, const fs::path& root,
                      const fs::path& harness) {
     std::ofstream(root / "config" / "settings.json") <<
@@ -3566,6 +3701,10 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
         run_selection_case(binary, scenario, root, harness);
         return;
     }
+    if (scenario == "mermaid") {
+        run_mermaid_case(binary, root, harness);
+        return;
+    }
     if (scenario == "prompt-wrap") {
         run_prompt_wrap_case(binary, root);
         return;
@@ -3719,7 +3858,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("generation-defaults-") || scenario.starts_with("context-occupancy-") || scenario.starts_with("model-context-") || scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("task-") || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario == "mermaid" || scenario.starts_with("generation-defaults-") || scenario.starts_with("context-occupancy-") || scenario.starts_with("model-context-") || scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("task-") || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

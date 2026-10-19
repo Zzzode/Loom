@@ -14,6 +14,7 @@ target_sources(loom_ui_visual
         ui/visual/code_highlight.cppm
         ui/visual/file_edit_tool_diff.cppm
         ui/visual/markdown.cppm
+        ui/visual/mermaid.cppm
         ui/visual/structured_diff.cppm
 )
 # Module implementation units for loom.ui.visual.markdown (RFC 0001 Phase C
@@ -35,6 +36,7 @@ target_sources(loom_ui_visual PRIVATE
     ui/visual/markdown_render_impl.cpp
     ui/visual/markdown_api_impl.cpp
     ui/visual/markdown_component_impl.cpp
+    ui/visual/mermaid_impl.cpp
     # HTML serializer for CommonMark/GFM conformance testing.
     ui/visual/markdown_html_impl.cpp
 )

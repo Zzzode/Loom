@@ -474,3 +474,27 @@ TEST(MarkdownRenderStyles, TableAlignsColumns) {
     EXPECT_EQ(header_positions, data_positions)
         << "table │ separators are not aligned between header and data rows";
 }
+
+TEST(MarkdownRenderStyles, MermaidRespectsInheritedPaletteAndDimMode) {
+    const auto original = ui::design::theme::current_theme();
+    for (auto variant : {ui::design::theme::ThemeVariant::Dark,
+                         ui::design::theme::ThemeVariant::Light,
+                         ui::design::theme::ThemeVariant::Monochrome}) {
+        ui::design::theme::set_theme(variant);
+        ui::MarkdownOptions options;
+        options.dim_color = true;
+        auto element = ui::render_markdown(
+            "```mermaid\nflowchart LR\nA[Client] --> B[Server]\n```", options);
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(100),
+                                           ftxui::Dimension::Fixed(30));
+        ftxui::Render(screen, element);
+        const auto label = find_pixel_with_text(screen, "Client");
+        EXPECT_TRUE(label.has_value());
+        if (label) {
+            EXPECT_TRUE(label->pixel->dim);
+            EXPECT_EQ(label->pixel->hyperlink, 0);
+            EXPECT_EQ(label->pixel->background_color, ftxui::Color{});
+        }
+    }
+    ui::design::theme::set_theme(original);
+}

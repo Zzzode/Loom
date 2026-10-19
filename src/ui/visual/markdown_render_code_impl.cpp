@@ -12,11 +12,13 @@ module loom.ui.visual.markdown;
 import std;
 
 import loom.ui.visual.code_highlight;
+import loom.ui.visual.mermaid;
 
 namespace loom::ui {
 namespace detail {
+namespace {
 
-[[nodiscard]] Element render_code_block(const BlockToken& tok,
+[[nodiscard]] Element render_source_code_block(const BlockToken& tok,
                                         const MarkdownOptions& opts) {
     // Split into lines (preserve trailing empty line behavior like EOL).
     auto split_lines = [](std::string_view code) {
@@ -91,6 +93,18 @@ namespace detail {
         out.push_back(std::move(el));
     }
     return vbox(std::move(out));
+}
+} // namespace
+
+[[nodiscard]] Element render_code_block(const BlockToken& tok,
+                                        const MarkdownOptions& opts) {
+    auto source = render_source_code_block(tok, opts);
+    if (tok.code_lang == "mermaid" && tok.code_fence_closed) {
+        if (auto diagram = mermaid::render_mermaid(tok.code_content, source)) {
+            return opts.dim_color ? *diagram | dim : *diagram;
+        }
+    }
+    return source;
 }
 } // namespace detail
 } // namespace loom::ui

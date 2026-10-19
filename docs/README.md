@@ -32,6 +32,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | File | What |
 |---|---|
 | [`user/instruction-files.md`](user/instruction-files.md) | Global user instructions, project discovery, isolated profiles and comparison with other agents. |
+| [`user/mermaid-diagrams.md`](user/mermaid-diagrams.md) | Native Mermaid flowchart/sequence syntax, streaming, width fallback and copy behavior. |
 | [`user/agent-instances.md`](user/agent-instances.md) | Runtime instance lists, failure history, bounded details and owned Continue/Stop controls. |
 | [`user/terminal-status.md`](user/terminal-status.md) | Automatic OSC 7501 capability detection, editable question answers, activity and decision status, result retention and exit behavior. |
 
@@ -92,6 +93,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0027-current-context-occupancy.md`](rfcs/0027-current-context-occupancy.md) | **Implemented.** Current working-context token estimates and percentages, separate from cumulative session usage. |
 | [`rfcs/0028-automatic-model-generation-defaults.md`](rfcs/0028-automatic-model-generation-defaults.md) | **Implemented.** Automatic generation defaults and preserved explicit overrides across model switching. |
 | [`rfcs/0029-model-capacity-metadata.md`](rfcs/0029-model-capacity-metadata.md) | **Implemented.** Read model context capacities from the configured service before using local fallback estimates. |
+| [`rfcs/0030-terminal-mermaid-diagrams.md`](rfcs/0030-terminal-mermaid-diagrams.md) | **Implemented.** Native terminal diagrams for supported Mermaid flowcharts and sequence diagrams, preserving unsupported source. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

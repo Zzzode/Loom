@@ -156,6 +156,20 @@ TEST(MessageInteractions, AssistantPreviewAndCopyControlsHaveWorkingBindings) {
     EXPECT_EQ(regenerated, 0);
 }
 
+TEST(MessageInteractions, MermaidMessageCopyPreservesOriginalMarkdown) {
+    msg::AssistantTextMessageData data;
+    data.content = "```mermaid\nflowchart LR\nA[Client] --> B[Server]\n```";
+    std::string copied;
+    auto component = msg::MakeAssistantTextMessage(data,
+        [&](std::string_view text) { copied = text; });
+    const auto rendered = plain(component->Render());
+    EXPECT_NE(rendered.find("Client"), std::string::npos);
+    EXPECT_NE(rendered.find("Server"), std::string::npos);
+    EXPECT_EQ(rendered.find("flowchart LR"), std::string::npos);
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Special({3})));
+    EXPECT_EQ(copied, data.content);
+}
+
 TEST(MessageInteractions, StaticApiErrorDoesNotAdvertiseUnavailableKeyboardActions) {
     namespace api = msg::api_error_message;
     api::APIErrorOptions opts;

@@ -202,6 +202,13 @@ foreach(_pty_generation_case IN ITEMS auto explicit manual)
       SKIP_RETURN_CODE 125)
 endforeach()
 
+# RFC 0030: real streamed diagrams, resize fallback and Unicode selection.
+add_test(NAME E2E_Pty_Mermaid COMMAND e2e_pty_shutdown mermaid)
+set_tests_properties(E2E_Pty_Mermaid PROPERTIES
+    TIMEOUT 45
+    ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+    SKIP_RETURN_CODE 125)
+
 # RFC 0027: current working context stays distinct from cumulative request usage.
 add_test(NAME E2E_Pty_ContextOccupancy_RepeatedAndClear
     COMMAND e2e_pty_shutdown context-occupancy-repeated)

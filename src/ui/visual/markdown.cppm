@@ -157,6 +157,8 @@ struct BlockToken {
     // FootnoteDef: raw label as written in [^label]: (used for href/id).
     // Definition content is in sub_blocks (parsed via recursive lex_blocks).
     std::string footnote_label;
+    // Host-only streaming state; unclosed fences remain ordinary source.
+    bool code_fence_closed = false;
 };
 
 // ============================================================
@@ -174,9 +176,10 @@ namespace detail {
         s[2] == ' ' && s[3] == ' ') {
         return true;
     }
-    // Sample first 500 chars — if markdown exists it's usually early.
-    const std::size_t sample_len = std::min(s.size(), std::size_t{500});
-    for (std::size_t i = 0; i < sample_len; ++i) {
+    // A code fence can follow an arbitrarily long plain-text preface.
+    // Scan the complete source, retaining the early return at the first marker.
+    const std::size_t source_len = s.size();
+    for (std::size_t i = 0; i < source_len; ++i) {
         char c = s[i];
         if (c == '#' || c == '*' || c == '`' || c == '|' ||
             c == '[' || c == ']' || c == '<' || c == '>' || c == '-' ||
@@ -187,23 +190,27 @@ namespace detail {
         // Ordered list marker: digit(s) followed by . or ) and space
         if (c >= '0' && c <= '9') {
             std::size_t j = i;
-            while (j < sample_len && s[j] >= '0' && s[j] <= '9') ++j;
-            if (j < sample_len && (s[j] == '.' || s[j] == ')') &&
-                j + 1 < sample_len && (s[j + 1] == ' ' || s[j + 1] == '\t')) {
+            while (j < source_len && s[j] >= '0' && s[j] <= '9') ++j;
+            if (j < source_len && (s[j] == '.' || s[j] == ')') &&
+                j + 1 < source_len && (s[j + 1] == ' ' || s[j + 1] == '\t')) {
                 return true;
             }
+            // Do not rescan this run from every digit. Leave its following
+            // delimiter for the next outer iteration.
+            i = j - 1;
+            continue;
         }
         // GFM extended autolinks: bare URLs (www., ://)
-        if (c == 'w' && i + 4 <= sample_len &&
+        if (c == 'w' && i + 4 <= source_len &&
             s[i + 1] == 'w' && s[i + 2] == 'w' && s[i + 3] == '.') {
             return true;
         }
-        if (c == ':' && i + 3 <= sample_len &&
+        if (c == ':' && i + 3 <= source_len &&
             s[i + 1] == '/' && s[i + 2] == '/') {
             return true;
         }
         // Potential entity reference: &Name; or &#NNN; / &#xHH;
-        if (c == '&' && i + 1 < sample_len) {
+        if (c == '&' && i + 1 < source_len) {
             char n = s[i + 1];
             if ((n >= '0' && n <= '9') || (n >= 'a' && n <= 'z') ||
                 (n >= 'A' && n <= 'Z') || n == '#') {
@@ -215,7 +222,7 @@ namespace detail {
             if (i >= 2 && s[i - 1] == ' ' && s[i - 2] == ' ') return true;
             if (i >= 1 && s[i - 1] == '\\') return true;
             // Check for ordered list start on next line
-            if (i + 1 < sample_len) {
+            if (i + 1 < source_len) {
                 char n = s[i + 1];
                 if (n >= '0' && n <= '9') return true;
                 // Check for heading / list / blockquote after newline

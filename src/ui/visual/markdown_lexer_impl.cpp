@@ -4121,6 +4121,7 @@ struct ParsedHtmlBlock {
                         tok.kind = BlockTokenKind::CodeBlock;
                         tok.code_lang = std::move(lang);
                         tok.code_content = std::move(code);
+                        tok.code_fence_closed = i < lines.size();
                         tokens.push_back(std::move(tok));
                         continue;
                     }

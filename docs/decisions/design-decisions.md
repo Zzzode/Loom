@@ -50,6 +50,16 @@ do not append again. The project still selects the nearest ancestor instruction
 file; this correction does not introduce a full ancestor merge. See
 `docs/user/instruction-files.md` for the supported paths and industry comparison.
 
+**Terminal Mermaid (RFC 0030).** Diagram parsing and cell layout belong to
+`loom.ui.visual.mermaid` inside the existing visual target, imported only by the
+code-block implementation. Complete supported flowchart/sequence fences become
+native Unicode diagrams; strict whole-input parsing and bounded layout retain
+the original code for unsupported semantics, unfinished fences or insufficient
+width. The host-only AST fence-closure field defaults to false and does not
+change HTML, session or wire formats. Screen selection copies visible diagram
+cells; message Copy retains original Markdown. No external runtime, graph
+service, terminal image protocol or shared selection changes are introduced.
+
 **Server model capacities (RFC 0029).** The configured service's
 `data[].context_length` is read once per runtime root, before native tool policy
 snapshots. An exact endpoint/wire/credential-bound immutable snapshot is reused;

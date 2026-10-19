@@ -2,7 +2,7 @@
 /// @brief Golden file snapshot tests for the FTXUI terminal markdown renderer.
 ///
 /// Two complementary suites:
-///   1. TerminalSpecific — 4 hand-crafted cases covering behaviors the
+///   1. TerminalSpecific — 8 hand-crafted cases covering behaviors the
 ///      conformance fixtures can't: CJK rendering, paragraph wrapping at
 ///      80 columns, long URL wrapping, and long code-line non-wrapping.
 ///   2. Conformance — 1353 examples from the CommonMark + GFM spec fixtures,
@@ -179,8 +179,8 @@ struct SnapshotCase {
 // conformance fixtures.  The fixtures cover every construct (headings,
 // emphasis, lists, tables, ...) but contain no CJK text, no lines long
 // enough to wrap at 80 columns, and no long URLs or code lines.  These
-// four cases fill that gap.
-constexpr std::array<SnapshotCase, 4> kCases = {{
+// Additional Mermaid cases cover terminal-native graph layout.
+constexpr std::array<SnapshotCase, 8> kCases = {{
     {"cjk",
      "这是一段中文文本，用于测试终端渲染器对 CJK 字符的处理。\n"
      "Chinese text should render correctly in the terminal.\n"},
@@ -198,6 +198,19 @@ constexpr std::array<SnapshotCase, 4> kCases = {{
      "```\n"
      "this is a very long code line that should not wrap at the 80-column boundary because code blocks do not wrap\n"
      "```\n"},
+    {"mermaid_flowchart",
+     "```mermaid\nflowchart TD\nA[Start] --> B{Ready?}\n"
+     "B -->|yes| C[Finish]\nB -->|no| D[Retry]\n```\n"},
+    {"mermaid_sequence",
+     "```mermaid\nsequenceDiagram\nparticipant C as Client\n"
+     "participant S as Server\nC->>S: Request\nS-->>C: Response\nS->>S: Work\n```\n"},
+    {"mermaid_directions",
+     "```mermaid\nflowchart LR\nA[Origin] --> B[Target]\n```\n\n"
+     "```mermaid\nflowchart RL\nA[Origin] --> B[Target]\n```\n\n"
+     "```mermaid\nflowchart BT\nA[Origin] --> B[Target]\n```\n"},
+    {"mermaid_cycles",
+     "```mermaid\nflowchart TD\nA[First] --> B[Second]\nB -->|back| A\n```\n\n"
+     "```mermaid\nflowchart LR\nA[Loop] -->|again| A\n```\n"},
 }};
 
 // ── Conformance fixture snapshot runner ─────────────────────────────

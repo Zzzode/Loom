@@ -18,6 +18,7 @@ target_sources(loom_services
         services/auth/provider_selector.cppm
         services/compact/api_microcompact.cppm
         services/compact/context_compaction.cppm
+        services/compact/model_context.cppm
         services/image/image.cppm
         services/lsp/LSPServerInstance.cppm
         services/lsp/LSPServerManager.cppm
@@ -58,6 +59,7 @@ target_sources(loom_services
     PRIVATE
         services/api/client.cpp
         services/compact/context_compaction.cpp
+        services/compact/model_context.cpp
         services/mcp/config_impl.cpp
         services/mcp/headers_helper_impl.cpp
         services/mcp/client_stdio_transport.cpp

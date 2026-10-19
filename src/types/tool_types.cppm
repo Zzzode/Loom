@@ -13,6 +13,29 @@ export namespace loom::core {
 // Tool Input / Output types
 // ============================================================
 
+/// Exact model capacities supplied by file configuration (RFC 0026).
+struct ModelContextLimit {
+    std::string model;
+    std::uint32_t context_window_tokens = 0;
+    std::optional<std::uint32_t> max_output_tokens;
+    std::optional<std::string> base_url;
+    std::optional<std::string> wire_api;
+};
+
+/// Original fallback and all profiles, shared immutably by execution owners.
+struct ModelContextConfig {
+    std::uint32_t fallback_window_tokens = 200000;
+    std::vector<ModelContextLimit> limits;
+};
+
+struct ResolvedModelContext {
+    std::uint32_t window_tokens = 200000;
+    std::uint32_t output_tokens = 16384;
+    std::optional<std::uint32_t> output_cap;
+    std::string source = "fallback";
+    std::string output_cap_source = "none";
+};
+
 /// Immutable authenticated session snapshot. Internal only: never write it to
 /// tool JSON, transcripts, agent records, or session persistence.
 struct ApiExecutionContext {
@@ -26,6 +49,7 @@ struct ApiExecutionContext {
     std::uint64_t context_output_tokens = 16384;
     double context_compaction_threshold = 0.9;
     bool context_auto_compact = true;
+    std::shared_ptr<const ModelContextConfig> model_context_config{};
 };
 
 /// Host-only immutable target checked atomically during resume admission.

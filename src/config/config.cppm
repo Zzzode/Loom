@@ -18,6 +18,7 @@ export module loom.config.config;
 import std;
 
 import loom.types.types;
+import loom.types.tool_types;
 import loom.serdes.json;
 import loom.constants.paths;
 
@@ -100,6 +101,7 @@ struct ModelSettings {
     bool extended_thinking = false;
     std::optional<std::uint32_t> thinking_budget;
     std::uint32_t context_window_size = 200000;
+    std::vector<ModelContextLimit> context_limits;
 };
 
 /// Permission settings for tool execution
@@ -1527,10 +1529,13 @@ private:
         return merge_parsed(doc_result->root(), scope);
     }
 
+    [[nodiscard]] VoidResult merge_model_context_limits(loom::utils::json::JsonVal root);
+
     /// Parse JSON content and merge into current settings.
     /// Uses yyjson via loom::utils::json to deserialize fields.
     [[nodiscard]] VoidResult
     merge_parsed(loom::utils::json::JsonVal root, McpStorageScope scope) {
+        if (auto limits = merge_model_context_limits(root); !limits) return limits;
         // c13b: every successfully-applied leaf whose disk provenance is
         // queried is recorded: projected leaves feed setting_source()'s
         // file-vs-default classification, and apiKey/baseUrl/proxy feed

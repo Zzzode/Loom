@@ -17,6 +17,7 @@ target_sources(loom_services
         services/auth/azure_credential.cppm
         services/auth/provider_selector.cppm
         services/compact/api_microcompact.cppm
+        services/compact/context_compaction.cppm
         services/image/image.cppm
         services/lsp/LSPServerInstance.cppm
         services/lsp/LSPServerManager.cppm
@@ -56,6 +57,7 @@ target_sources(loom_services
 target_sources(loom_services
     PRIVATE
         services/api/client.cpp
+        services/compact/context_compaction.cpp
         services/mcp/config_impl.cpp
         services/mcp/headers_helper_impl.cpp
         services/mcp/client_stdio_transport.cpp

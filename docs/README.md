@@ -38,6 +38,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 
 | File | What |
 |---|---|
+| [`dev/context-compaction.md`](dev/context-compaction.md) | Shared main/child context budgeting, checkpoint recovery, and native/live verification. |
 | [`dev/markdown-conformance.md`](dev/markdown-conformance.md) | CommonMark 0.31.2 + GFM conformance suite: architecture, fixtures, HTML serializer, floor system, JSON output + dashboard. Baseline: 1350/1354 (99.7%). |
 | [`dev/error-handling-conventions.md`](dev/error-handling-conventions.md) | `std::expected` / `Result<T>` error-handling conventions for the C++ tree. |
 | [`dev/ui-glossary.md`](dev/ui-glossary.md) | Canonical UI vocabulary: framework terms (Element/Component/Box/Screen) vs project terms (Block/Row/Panel/Pane/Store/…), deprecated terms. |
@@ -85,6 +86,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0022-structured-task-events.md`](rfcs/0022-structured-task-events.md) | **Implemented.** Typed session-owned task events with separate model context and user notifications. |
 | [`rfcs/0023-agent-instance-browser-and-controls.md`](rfcs/0023-agent-instance-browser-and-controls.md) | **Implemented.** Session-scoped runtime instance lists, bounded details and host Continue/Stop controls. |
 | [`rfcs/0024-interactive-agent-sessions.md`](rfcs/0024-interactive-agent-sessions.md) | **Implemented.** Interactive native Subagent and Team Agent conversations, input routing and targeted lifecycle controls. |
+| [`rfcs/0025-unified-context-compaction.md`](rfcs/0025-unified-context-compaction.md) | **Implemented.** Shared semantic compaction, complete request budgeting and checkpoint recovery for main and native Agents. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

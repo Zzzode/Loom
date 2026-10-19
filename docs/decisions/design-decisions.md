@@ -27,6 +27,17 @@ documentation-only RFC 0019 proposal.
 
 ---
 
+**Context checkpoint ownership (RFC 0025).** Main and native child agents use
+the lower-level `loom.services.compact.context_compaction` policy, while each
+owner retains its wire transport, usage accounting and persistence. Retention
+returns original indices so native signatures and opaque blocks do not pass
+through a lossy common representation. Main `context-checkpoints.jsonl` and
+native sidechain checkpoint records are additive versioned recovery formats;
+their working snapshots must become durable before live history changes. The
+full original audit stays intact. Runtime nudges must not advance the explicit
+human request anchor, and HTTP 413 requires actual serialized byte reduction,
+not only a lower token estimate. See `docs/dev/context-compaction.md`.
+
 **Path convention.** Paths are written relative to the repository root as of
 2026-09-21, when the C++ tree still lived under `cpp_migration/`. The tree was
 promoted to the repository root in the same series of commits, so

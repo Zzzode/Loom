@@ -38,6 +38,17 @@ full original audit stays intact. Runtime nudges must not advance the explicit
 human request anchor, and HTTP 413 requires actual serialized byte reduction,
 not only a lower token estimate. See `docs/dev/context-compaction.md`.
 
+**Model budget identity (RFC 0026).** Context and output limits resolve
+independently for the actual endpoint, canonical wire API and exact model.
+Runtime switches and existing fallback use the same resolution path as initial
+construction. Native descendants inherit the complete immutable profiles and
+original fallback/requested output, never an ancestor's resolved limits. A
+context-only override must not erase a catalog output cap. Legacy global
+contextWindowSize is a fallback; intentional per-model ceilings use explicit
+profiles. Profile saves retain the destination file's own data instead of
+serializing the merged user/project/local set into another scope. Unknown
+private aliases remain explicit fallback, not fictitious discovered capacity.
+
 **Path convention.** Paths are written relative to the repository root as of
 2026-09-21, when the C++ tree still lived under `cpp_migration/`. The tree was
 promoted to the repository root in the same series of commits, so

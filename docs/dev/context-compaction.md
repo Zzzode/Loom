@@ -97,11 +97,47 @@ the original request. `QueryEngine::model_context()` exposes the resolved window
 output and separate `source` / `output_cap_source` values; the status line uses
 the active resolved window. An AppState-only model list reports unknown context
 instead of mislabeling its output-token field as a detected window.
-The built-in footer currently derives its token count and percentage from
-cumulative session usage, so that percentage is not an active-context
-measurement and may exceed 100% after compaction. The resolved window is valid;
-use actual outgoing request bodies and durable checkpoints to verify compaction.
-Changing that existing usage-display accounting is outside RFC 0026.
+
+## Current context occupancy (RFC 0027)
+
+The footer shows an estimated current working-context token count and its share
+of the active resolved window, for example `~8% 20.8K/256.0K`. The `~` marks an
+estimate, not an exact provider tokenizer result. Occupancy includes the system
+instructions, current retained messages (including assistant/tool contents) and
+known request schema. Future output reserves and safety margins are budget
+headroom, not occupied context. An actually over-capacity working history can
+still exceed 100% before compaction; the display does not hide it by clamping.
+
+`QueryEngine::context_usage()` supplies this snapshot independently from
+`get_usage()`, which retains cumulative session billing. Successful summaries
+increase cumulative usage/cost without becoming business-context observations.
+Compaction, clear, restore, content reduction and model/backend changes discard
+obsolete observations and cached counts. Repeated short turns do not sum all
+historical input usage into occupancy. The UI retains its stable committed
+snapshot while a query worker runs, then refreshes at the completion handoff;
+uncommitted streaming drafts are not part of this count.
+
+The query owner reuses its shared request projection and most recently prepared
+business schema, with matching provider input calibration. Messages cache-read
+and cache-created input count once; OpenAI prompt input is not double-counted.
+Before the first business request, only static known schema is available;
+new dynamic/MCP metadata becomes known at real request assembly. Status reads
+never invoke providers, prepare requests or make HTTP calls, and unchanged
+conversation revisions reuse the cached estimate. Media/opaque blocks and
+unsampled dynamic changes remain estimation limitations.
+
+Custom statusline JSON retains cumulative `context_window.total_input_tokens`,
+`total_output_tokens` and session cost. Its `current_usage` now reports the last
+successful business response, or null after an invalidating lifecycle change or
+an all-zero/unreported usage response. It excludes summary/failed-request usage.
+Additive `current_context_tokens` and `current_context_is_estimated` fields,
+`used_percentage`, `remaining_percentage` and `exceeds_200k_tokens` describe the
+same current snapshot. Remaining percentage has a zero floor. Model, clear,
+successful compact/resume and clear-session operations refresh command input;
+configured command output still takes priority over the built-in footer.
+Scripts that formerly treated cumulative `current_usage` or percentages as
+occupancy should use the corrected current-context fields. No configuration,
+wire or persisted checkpoint/agent format changed.
 
 ## Persistence
 

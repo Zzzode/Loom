@@ -49,6 +49,20 @@ profiles. Profile saves retain the destination file's own data instead of
 serializing the merged user/project/local set into another scope. Unknown
 private aliases remain explicit fallback, not fictitious discovered capacity.
 
+**Current context occupancy (RFC 0027).** The query owner publishes a cached
+estimate of its committed working context, independently from cumulative billing
+and the latest successful business response's usage. Reuse the same pure
+system/history/snip projection as business requests, actual prepared schema and
+matching provider calibration. Status getters never call dynamic providers or
+prepare requests. Conversation revision and observation/schema changes invalidate
+the cache; reductions and lifecycle changes also discard obsolete usage floors.
+Before real assembly, dynamic metadata is unsampled, so the footer always marks
+occupancy with `~`. App preserves its busy-worker completion handoff. The matching
+64-bit chrome/footer and custom-statusline fields change together; cumulative
+totals/cost remain cumulative, while current_usage excludes summaries and failures.
+New current_context_tokens/current_context_is_estimated fields are additive.
+No wire, session/checkpoint or native-agent record format changes are involved.
+
 **Path convention.** Paths are written relative to the repository root as of
 2026-09-21, when the C++ tree still lived under `cpp_migration/`. The tree was
 promoted to the repository root in the same series of commits, so

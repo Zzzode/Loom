@@ -88,6 +88,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0024-interactive-agent-sessions.md`](rfcs/0024-interactive-agent-sessions.md) | **Implemented.** Interactive native Subagent and Team Agent conversations, input routing and targeted lifecycle controls. |
 | [`rfcs/0025-unified-context-compaction.md`](rfcs/0025-unified-context-compaction.md) | **Implemented.** Shared semantic compaction, complete request budgeting and checkpoint recovery for main and native Agents. |
 | [`rfcs/0026-model-aware-context-budgets.md`](rfcs/0026-model-aware-context-budgets.md) | **Implemented.** Resolve per-model context budgets across main, native child, model switching and fallback. |
+| [`rfcs/0027-current-context-occupancy.md`](rfcs/0027-current-context-occupancy.md) | **Implemented.** Current working-context token estimates and percentages, separate from cumulative session usage. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

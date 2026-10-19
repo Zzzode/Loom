@@ -280,6 +280,13 @@ struct QueryResponse {
     std::vector<std::string> errors;// Any errors encountered
 };
 
+/// Estimated committed working context, separate from cumulative billing usage.
+struct ContextUsageSnapshot {
+    std::uint64_t tokens = 0;
+    std::uint64_t window_tokens = 0;
+    std::optional<TokenUsage> last_request_usage;
+};
+
 // ============================================================
 // User context and system context builders
 // ============================================================
@@ -426,7 +433,9 @@ public:
 
     [[nodiscard]] const ResolvedModelContext& model_context() const noexcept { return model_context_; }
 
-    /// Get estimated context window utilization ratio [0.0, 1.0]
+    [[nodiscard]] ContextUsageSnapshot context_usage() const;
+
+    /// Estimated occupied share of the active window; over-capacity history may exceed 1.
     [[nodiscard]] double context_utilization() const noexcept;
 
     /// Get the full conversation history (thread-safe copy)
@@ -715,7 +724,8 @@ private:
     /// ignorant of the engine's message model.
     [[nodiscard]] loom::query::wire::RequestInput build_wire_input(
         const QueryOptions& options,
-        bool stream) const;
+        bool stream, bool include_dynamic = true) const;
+    void project_context_messages_locked(loom::query::wire::RequestInput& input) const;
 
     /// Build HTTP request body
     [[nodiscard]] std::string build_request_body(
@@ -766,6 +776,9 @@ private:
                                const loom::query::wire::RequestInput& sent_input,
                                std::string_view sent_schema);
     void account_compaction_usage(const TokenUsage& usage);
+    void initialize_context_schema();
+    void capture_context_schema(std::string_view prepared_schema);
+    void reset_context_observation_locked();
     [[nodiscard]] std::string context_schema_text(const loom::query::wire::RequestInput& input) const;
     [[nodiscard]] static std::string context_schema_text(std::string_view prepared_body);
     [[nodiscard]] std::optional<std::size_t> context_request_anchor_locked(
@@ -805,14 +818,6 @@ private:
     [[nodiscard]] ToolPermissionCheck check_tool_permission(std::string_view tool_name,
                                                             std::string_view input_json,
                                                             std::string_view tool_use_id = {});
-
-    /// Estimate total tokens currently consumed by conversation
-    [[nodiscard]] std::uint32_t estimate_conversation_tokens() const noexcept {
-        std::lock_guard lock(conversation_mutex_);
-        return estimate_conversation_tokens_locked();
-    }
-
-    [[nodiscard]] std::uint32_t estimate_conversation_tokens_locked() const noexcept;
 
     /// Add random jitter to a delay duration (±25%)
     [[nodiscard]] static std::chrono::milliseconds add_jitter(std::chrono::milliseconds base);
@@ -854,6 +859,10 @@ private:
     std::uint64_t conversation_revision_ = 0;
     loom::services::compact::UsageObservation context_observed_;
     std::string context_observed_key_;
+    std::string context_schema_snapshot_;
+    std::optional<TokenUsage> last_request_usage_;
+    mutable std::optional<std::uint64_t> context_tokens_cache_;
+    mutable std::uint64_t context_tokens_cache_revision_ = 0;
     std::optional<std::string> context_request_anchor_id_;
     std::optional<std::uint32_t> configured_task_budget_remaining_;
     // RFC 0004: set at stream_query entry from QueryOptions::on_commit,

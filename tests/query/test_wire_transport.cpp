@@ -298,10 +298,11 @@ TEST_F(WireTransport, OpenAiStreamErrorsAndTruncationNeverCommitSuccessfulAssist
 
 class CustomTransportBackend final : public wire::WireBackend {
 public:
-    explicit CustomTransportBackend(std::string base_url)
-        : base_url_(std::move(base_url)), delegate_(base_url_) {}
+    explicit CustomTransportBackend(std::string base_url, std::shared_ptr<std::atomic<int>> prepares = {})
+        : base_url_(std::move(base_url)), delegate_(base_url_), prepares_(std::move(prepares)) {}
     wire::WireApi api() const noexcept override { return wire::WireApi::OpenAi; }
     std::expected<wire::PreparedRequest, std::string> prepare(const wire::RequestInput& input) const override {
+        if (prepares_) ++*prepares_;
         auto prepared = delegate_.prepare(input);
         if (prepared) {
             prepared->url = base_url_ + "/gateway/prepared-request";
@@ -322,6 +323,7 @@ public:
 private:
     std::string base_url_;
     wire::OpenAiWireBackend delegate_;
+    std::shared_ptr<std::atomic<int>> prepares_;
 };
 
 TEST_F(WireTransport, InjectedBackendControlsActualTransportPathAndHeaders) {
@@ -1491,3 +1493,419 @@ TEST_F(WireTransport, DelegationPolicyAndMetadataReachBothProductionWireFormats)
         }
     }
 }
+
+namespace {
+TransportReply occupancy_reply(std::string_view protocol, bool streaming, TokenUsage usage,
+    bool has_usage = true, bool checkpoint = false) {
+    loom::utils::json::JsonMutDoc doc;
+    auto values = doc.object();
+    values.add(protocol == "messages" ? "input_tokens" : "prompt_tokens", doc.number(static_cast<int64_t>(usage.input_tokens)));
+    values.add(protocol == "messages" ? "output_tokens" : "completion_tokens", doc.number(static_cast<int64_t>(usage.output_tokens)));
+    if (protocol == "messages") {
+        values.add("cache_creation_input_tokens", doc.number(static_cast<int64_t>(usage.cache_creation_tokens)));
+        values.add("cache_read_input_tokens", doc.number(static_cast<int64_t>(usage.cache_read_tokens)));
+    } else {
+        auto details = doc.object();
+        details.add("cached_tokens", doc.number(static_cast<int64_t>(usage.cache_read_tokens)));
+        values.add("prompt_tokens_details", details);
+    }
+    doc.set_root(values);
+    const auto usage_json = doc.to_string();
+    if (!streaming) {
+        auto reply = compact_reply(protocol, checkpoint);
+        auto parsed = loom::utils::json::parse(reply.body);
+        loom::utils::json::JsonMutDoc response;
+        auto root = response.copy_val(parsed->root());
+        (void)root.remove("usage");
+        if (has_usage) root.add("usage", response.raw_json(usage_json));
+        response.set_root(root);
+        reply.body = response.to_string();
+        return reply;
+    }
+    const auto text = json_string(checkpoint ? checkpoint_text() : "wire complete");
+    if (protocol == "openai") return {
+        openai_frame("{\"choices\":[{\"delta\":{\"content\":" + text + "},\"finish_reason\":\"stop\"}]}") +
+        (has_usage ? openai_frame("{\"choices\":[],\"usage\":" + usage_json + "}") : std::string{}) + openai_frame("[DONE]")};
+    return {"event: message_start\ndata: {\"message\":{\"id\":\"occupancy\"" +
+        (has_usage ? ",\"usage\":" + usage_json : std::string{}) + "}}\n\n"
+        "event: content_block_start\ndata: {\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
+        "event: content_block_delta\ndata: {\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":" + text + "}}\n\n"
+        "event: content_block_stop\ndata: {\"index\":0}\n\n"
+        "event: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\"}" +
+        (has_usage ? ",\"usage\":" + usage_json : std::string{}) + "}\n\n"
+        "event: message_stop\ndata: {}\n\n"};
+}
+
+bool occupancy_turn(QueryEngine& engine, bool streaming, std::string_view prompt = "Continue the context probe",
+    QueryOptions options = {}) {
+    if (!streaming) return engine.query(prompt, options).has_value();
+    bool ended = false;
+    bool failed = false;
+    options.on_event = [&](const StreamEvent& event) {
+        ended |= std::holds_alternative<StreamEnd>(event);
+        failed |= std::holds_alternative<StreamError>(event);
+    };
+    engine.stream_query(prompt, options);
+    return ended && !failed;
+}
+
+TEST_F(WireTransport, CurrentContextUsesLatestBusinessInputInsteadOfAccumulatedBilling) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool streaming : {false, true}) {
+        SCOPED_TRACE(protocol);
+        SCOPED_TRACE(streaming);
+        WireHttpServer server({occupancy_reply(protocol, streaming, {5000, 7}),
+            occupancy_reply(protocol, streaming, {5100, 9})});
+        ToolRegistry registry;
+        auto settings = config(server, registry);
+        settings.wire_api = protocol;
+        QueryEngine engine(std::move(settings), registry);
+        isolate_compaction_system(engine);
+        ASSERT_TRUE(occupancy_turn(engine, streaming));
+        auto first = engine.context_usage();
+        ASSERT_TRUE(first.last_request_usage);
+        EXPECT_EQ(first.last_request_usage->input_tokens, 5000u);
+        EXPECT_GE(first.tokens, 5000u);
+        EXPECT_LT(first.tokens, 5100u);
+        ASSERT_TRUE(occupancy_turn(engine, streaming));
+        const auto second = engine.context_usage();
+        ASSERT_TRUE(second.last_request_usage);
+        EXPECT_EQ(second.last_request_usage->input_tokens, 5100u);
+        EXPECT_GE(second.tokens, 5100u);
+        EXPECT_LT(second.tokens, 5200u);
+        EXPECT_EQ(engine.get_usage().input_tokens, 10100u);
+        EXPECT_EQ(engine.get_usage().output_tokens, 16u);
+        EXPECT_DOUBLE_EQ(engine.context_utilization(), static_cast<double>(second.tokens) / second.window_tokens);
+        const auto count = server.requests().size();
+        AssistantMessage retained;
+        retained.id.value = "new-retained-output";
+        retained.content.emplace_back(TextBlock{std::string(4000, 'a')});
+        engine.append_message_for_testing(Message{std::move(retained)});
+        EXPECT_GE(engine.context_usage().tokens, second.tokens + 1000);
+        EXPECT_EQ(server.requests().size(), count);
+        EXPECT_EQ(engine.get_usage().input_tokens, 10100u);
+    }
+}
+
+TEST_F(WireTransport, CurrentContextCountsCachedInputOnceForBothWireProtocols) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool streaming : {false, true}) {
+        SCOPED_TRACE(protocol);
+        SCOPED_TRACE(streaming);
+        const TokenUsage usage = std::string_view(protocol) == "messages" ? TokenUsage{1000, 7, 2000, 3000}
+            : TokenUsage{6000, 7, 0, 3000};
+        WireHttpServer server({occupancy_reply(protocol, streaming, usage)});
+        ToolRegistry registry;
+        auto settings = config(server, registry);
+        settings.wire_api = protocol;
+        QueryEngine engine(std::move(settings), registry);
+        isolate_compaction_system(engine);
+        ASSERT_TRUE(occupancy_turn(engine, streaming));
+        const auto current = engine.context_usage();
+        ASSERT_TRUE(current.last_request_usage);
+        EXPECT_GE(current.tokens, 6000u);
+        EXPECT_LT(current.tokens, 6100u);
+        EXPECT_EQ(current.last_request_usage->input_tokens, usage.input_tokens);
+        EXPECT_EQ(current.last_request_usage->cache_read_tokens, std::string_view(protocol) == "messages" ? 3000u : 0u);
+        EXPECT_EQ(current.last_request_usage->cache_creation_tokens, std::string_view(protocol) == "messages" ? 2000u : 0u);
+    }
+}
+
+TEST_F(WireTransport, CurrentContextKeepsActualDynamicAndVerbatimSchemasWithoutGetterProviderCalls) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool streaming : {false, true}) {
+        SCOPED_TRACE(protocol);
+        SCOPED_TRACE(streaming);
+        WireHttpServer server({occupancy_reply(protocol, streaming, {17, 9})});
+        ToolRegistry registry;
+        auto settings = config(server, registry);
+        settings.wire_api = protocol;
+        int dynamic_calls = 0;
+        int mcp_calls = 0;
+        settings.dynamic_tools_provider = [&] {
+            ++dynamic_calls;
+            return std::vector<ToolDefinition>{{.name = "DynamicContextProbe", .description = "dynamic tool"}};
+        };
+        settings.mcp_input_schema_provider = [&] {
+            ++mcp_calls;
+            return std::unordered_map<std::string, std::string>{{"DynamicContextProbe",
+                R"({"type":"object","description":")" + std::string(20000, 'v') + R"(","properties":{}})"}};
+        };
+        settings.tools = {{.name = "DeniedContextTool", .description = std::string(100000, 'd')}};
+        settings.always_deny_rules = {"DeniedContextTool"};
+        QueryEngine engine(std::move(settings), registry);
+        isolate_compaction_system(engine);
+        const auto initial = engine.context_usage();
+        EXPECT_LT(initial.tokens, 1000u);
+        EXPECT_EQ(dynamic_calls, 0);
+        EXPECT_EQ(mcp_calls, 0);
+        ASSERT_TRUE(occupancy_turn(engine, streaming));
+        const auto sampled = engine.context_usage();
+        EXPECT_GT(sampled.tokens, initial.tokens + 4000);
+        EXPECT_EQ(dynamic_calls, 1);
+        EXPECT_EQ(mcp_calls, 1);
+        for (int read = 0; read < 100; ++read) {
+            EXPECT_EQ(engine.context_usage().tokens, sampled.tokens);
+            EXPECT_DOUBLE_EQ(engine.context_utilization(), static_cast<double>(sampled.tokens) / sampled.window_tokens);
+        }
+        EXPECT_EQ(dynamic_calls, 1);
+        EXPECT_EQ(mcp_calls, 1);
+        ASSERT_EQ(server.requests().size(), 1u);
+        EXPECT_EQ(server.requests().front().body.find("DeniedContextTool"), std::string::npos);
+        EXPECT_NE(server.requests().front().body.find(std::string(1000, 'v')), std::string::npos);
+    }
+}
+
+TEST_F(WireTransport, CurrentContextReadsNeverPrepareAnInjectedBackendOrSendHttp) {
+    for (const bool streaming : {false, true}) {
+        SCOPED_TRACE(streaming);
+        WireHttpServer server({occupancy_reply("openai", streaming, {5000, 7})});
+        ToolRegistry registry;
+        QueryEngine engine(config(server, registry), registry);
+        isolate_compaction_system(engine);
+        auto prepares = std::make_shared<std::atomic<int>>(0);
+        engine.set_wire_backend_factory([prepares, url = server.base_url()] {
+            return std::make_unique<CustomTransportBackend>(url, prepares);
+        });
+        const auto initial_prepares = prepares->load();
+        EXPECT_EQ(initial_prepares, 0);
+        for (int read = 0; read < 100; ++read) (void)engine.context_usage();
+        EXPECT_EQ(prepares->load(), initial_prepares);
+        EXPECT_TRUE(server.requests().empty());
+        ASSERT_TRUE(occupancy_turn(engine, streaming));
+        const auto sampled_prepares = prepares->load();
+        for (int read = 0; read < 100; ++read) {
+            (void)engine.context_usage();
+            (void)engine.context_utilization();
+        }
+        EXPECT_EQ(prepares->load(), sampled_prepares);
+        EXPECT_EQ(sampled_prepares, initial_prepares + 1);
+        EXPECT_EQ(server.requests().size(), 1u);
+        engine.set_wire_backend_factory([prepares, url = server.base_url()] {
+            return std::make_unique<CustomTransportBackend>(url, prepares);
+        });
+        EXPECT_FALSE(engine.context_usage().last_request_usage);
+        EXPECT_LT(engine.context_usage().tokens, 1000u);
+        EXPECT_EQ(prepares->load(), sampled_prepares);
+        EXPECT_EQ(server.requests().size(), 1u);
+    }
+}
+
+TEST_F(WireTransport, CurrentContextCompactionRestoreAndClearDiscardOldUsageFloors) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool streaming : {false, true}) {
+        SCOPED_TRACE(protocol);
+        SCOPED_TRACE(streaming);
+        WireHttpServer server({occupancy_reply(protocol, streaming, {6000, 7})},
+            occupancy_reply(protocol, false, {12000, 13}, true, true));
+        ToolRegistry registry;
+        auto settings = config(server, registry);
+        settings.wire_api = protocol;
+        settings.context_window.max_context_tokens = 4096;
+        settings.model_params.max_tokens = 128;
+        QueryEngine engine(std::move(settings), registry);
+        isolate_compaction_system(engine);
+        ASSERT_TRUE(occupancy_turn(engine, streaming));
+        seed_compactable_history(engine);
+        const auto before = engine.context_usage();
+        ASSERT_TRUE(before.last_request_usage);
+        ASSERT_TRUE(engine.compact_conversation());
+        const auto compacted = engine.context_usage();
+        EXPECT_LT(compacted.tokens, before.tokens);
+        EXPECT_FALSE(compacted.last_request_usage);
+        EXPECT_GT(engine.get_usage().input_tokens, before.last_request_usage->input_tokens);
+        EXPECT_GT(server.requests().size(), business_requests(server).size());
+        auto retained = engine.get_conversation();
+        ASSERT_TRUE(occupancy_turn(engine, streaming));
+        ASSERT_TRUE(engine.context_usage().last_request_usage);
+        const auto billed = engine.get_usage().input_tokens;
+        engine.restore_conversation(std::move(retained));
+        EXPECT_EQ(engine.context_usage().tokens, compacted.tokens);
+        EXPECT_FALSE(engine.context_usage().last_request_usage);
+        EXPECT_EQ(engine.get_usage().input_tokens, billed);
+        engine.clear_conversation();
+        const auto cleared = engine.context_usage();
+        EXPECT_GT(cleared.tokens, 0u) << "A fresh working context still contains system instructions";
+        EXPECT_LT(cleared.tokens, before.tokens);
+        EXPECT_FALSE(cleared.last_request_usage);
+        EXPECT_EQ(engine.get_usage().input_tokens, billed);
+    }
+}
+
+TEST_F(WireTransport, CurrentContextFailuresSummaryAndMissingUsageDoNotInventBusinessMetrics) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool streaming : {false, true}) {
+        SCOPED_TRACE(protocol);
+        SCOPED_TRACE(streaming);
+        ToolRegistry registry;
+        {
+            WireHttpServer server({occupancy_reply(protocol, streaming, {6000, 7}),
+                {R"({"error":{"type":"authentication_error","message":"denied"}})", 401, "application/json"}});
+            auto settings = config(server, registry);
+            settings.wire_api = protocol;
+            QueryEngine engine(std::move(settings), registry);
+            isolate_compaction_system(engine);
+            ASSERT_TRUE(occupancy_turn(engine, streaming));
+            EXPECT_FALSE(occupancy_turn(engine, streaming));
+            const auto failed = engine.context_usage();
+            ASSERT_TRUE(failed.last_request_usage);
+            EXPECT_EQ(failed.last_request_usage->input_tokens, 6000u);
+            EXPECT_EQ(engine.get_usage().input_tokens, 6000u);
+        }
+        {
+            WireHttpServer server({occupancy_reply(protocol, streaming, {6000, 7}),
+                occupancy_reply(protocol, streaming, {}, false)});
+            auto settings = config(server, registry);
+            settings.wire_api = protocol;
+            QueryEngine engine(std::move(settings), registry);
+            isolate_compaction_system(engine);
+            ASSERT_TRUE(occupancy_turn(engine, streaming));
+            ASSERT_TRUE(engine.context_usage().last_request_usage);
+            ASSERT_TRUE(occupancy_turn(engine, streaming));
+            EXPECT_FALSE(engine.context_usage().last_request_usage);
+            EXPECT_EQ(engine.get_usage().input_tokens, 6000u);
+            EXPECT_GE(engine.context_usage().tokens, 6000u);
+        }
+        {
+            WireHttpServer server({occupancy_reply(protocol, streaming, {6000, 7})},
+                occupancy_reply(protocol, false, {12000, 13})); // A complete response with invalid summary sections.
+            auto settings = config(server, registry);
+            settings.wire_api = protocol;
+            settings.context_window.max_context_tokens = 4096;
+            settings.model_params.max_tokens = 128;
+            QueryEngine engine(std::move(settings), registry);
+            isolate_compaction_system(engine);
+            ASSERT_TRUE(occupancy_turn(engine, streaming));
+            seed_compactable_history(engine);
+            const auto before = engine.context_usage();
+            EXPECT_FALSE(engine.compact_conversation());
+            const auto rejected = engine.context_usage();
+            EXPECT_EQ(rejected.tokens, before.tokens);
+            ASSERT_TRUE(rejected.last_request_usage);
+            EXPECT_EQ(rejected.last_request_usage->input_tokens, 6000u);
+            EXPECT_EQ(engine.get_usage().input_tokens, 18000u);
+        }
+    }
+}
+
+TEST_F(WireTransport, CurrentContextSharesBusinessProjectionForSnipBoundariesAndRetainedTools) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool streaming : {false, true}) {
+        SCOPED_TRACE(protocol);
+        SCOPED_TRACE(streaming);
+        WireHttpServer server({occupancy_reply(protocol, streaming, {}, false)});
+        ToolRegistry registry;
+        auto settings = config(server, registry);
+        settings.wire_api = protocol;
+        settings.context_window.max_context_tokens = 1000;
+        settings.model_params.max_tokens = 128;
+        QueryEngine engine(std::move(settings), registry);
+        SystemMessage system;
+        system.id.value = "projection-system";
+        system.content.emplace_back(TextBlock{"Controlled system instructions"});
+        UserMessage removed;
+        removed.id.value = "projection-removed";
+        removed.content.emplace_back(TextBlock{"REMOVED_CONTEXT_" + std::string(20000, 'r')});
+        SystemMessage compact;
+        compact.id.value = "projection-compact";
+        compact.subtype = "compact_boundary";
+        compact.content.emplace_back(TextBlock{"REMOVED_BOUNDARY_" + std::string(20000, 'c')});
+        SystemMessage snip;
+        snip.id.value = "projection-snip";
+        snip.subtype = "snip_boundary";
+        snip.snip_metadata = SnipMetadata{{removed.id.value}};
+        ToolUseMessage call;
+        call.id.value = "projection-call-message";
+        call.tool_name = "Echo";
+        call.tool_input_json = R"({"text":"retain"})";
+        call.content.emplace_back(ToolUseBlock{.id = ToolUseId{"projection-call"}, .name = "Echo", .input_json = call.tool_input_json});
+        ToolResultMessage result;
+        result.id.value = "projection-result";
+        result.tool_use_id.value = "projection-call";
+        result.tool_name = "Echo";
+        result.content.emplace_back(TextBlock{"RETAINED_TOOL_OUTPUT_" + std::string(8000, 't')});
+        UserMessage current;
+        current.id.value = "projection-current";
+        current.content.emplace_back(TextBlock{"Continue from the retained tool observation"});
+        const std::vector<Message> visible{Message{call}, Message{result}, Message{current}};
+        const auto expected = loom::services::compact::estimate_request_tokens({visible,
+            "Controlled system instructions", "", {}, {}}, false);
+        engine.restore_conversation({Message{system}, Message{removed}, Message{compact}, Message{snip},
+            Message{call}, Message{result}, Message{current}});
+        const auto before = engine.context_usage();
+        EXPECT_EQ(before.tokens, expected);
+        EXPECT_GT(before.tokens, before.window_tokens);
+        EXPECT_GT(engine.context_utilization(), 1.0);
+        EXPECT_EQ(engine.get_conversation().size(), 7u) << "The getter must not mutate or replay audit history";
+        ASSERT_TRUE(occupancy_turn(engine, streaming));
+        ASSERT_EQ(server.requests().size(), 1u);
+        const auto body = server.requests().front().body;
+        EXPECT_EQ(body.find("REMOVED_CONTEXT_"), std::string::npos);
+        EXPECT_EQ(body.find("REMOVED_BOUNDARY_"), std::string::npos);
+        EXPECT_NE(body.find("RETAINED_TOOL_OUTPUT_"), std::string::npos);
+        EXPECT_GT(engine.context_usage().tokens, before.tokens);
+        EXPECT_FALSE(engine.context_usage().last_request_usage);
+    }
+}
+
+TEST_F(WireTransport, CurrentContextSnipImmediatelyInvalidatesTheOldMeasuredFloor) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool streaming : {false, true}) {
+        SCOPED_TRACE(protocol);
+        SCOPED_TRACE(streaming);
+        WireHttpServer server({occupancy_reply(protocol, streaming, {20000, 7})});
+        ToolRegistry registry;
+        auto settings = config(server, registry);
+        settings.wire_api = protocol;
+        QueryEngine engine(std::move(settings), registry);
+        isolate_compaction_system(engine);
+        UserMessage removed;
+        removed.id.value = "snip-large-observation";
+        removed.content.emplace_back(TextBlock{std::string(12000, 'h')});
+        engine.append_message_for_testing(Message{removed});
+        ASSERT_TRUE(occupancy_turn(engine, streaming));
+        EXPECT_GE(engine.context_usage().tokens, 20000u);
+        ASSERT_TRUE(engine.context_usage().last_request_usage);
+        SystemMessage snip;
+        snip.id.value = "current-occupancy-snip";
+        snip.subtype = "snip_boundary";
+        snip.snip_metadata = SnipMetadata{{removed.id.value}};
+        engine.append_message_for_testing(Message{snip});
+        EXPECT_LT(engine.context_usage().tokens, 1000u);
+        EXPECT_FALSE(engine.context_usage().last_request_usage);
+        EXPECT_EQ(engine.get_usage().input_tokens, 20000u);
+        EXPECT_EQ(server.requests().size(), 1u);
+    }
+}
+
+TEST_F(WireTransport, CurrentContextModelSwitchChangesWindowAndClearsUsageWithoutHttp) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool streaming : {false, true}) {
+        SCOPED_TRACE(protocol);
+        SCOPED_TRACE(streaming);
+        WireHttpServer server({occupancy_reply(protocol, streaming, {5000, 7})});
+        ToolRegistry registry;
+        auto settings = config(server, registry);
+        settings.wire_api = protocol;
+        settings.model_params.model = "occupancy-large";
+        settings.model_context_limits = {{.model = "occupancy-large", .context_window_tokens = 1000000},
+            {.model = "occupancy-small", .context_window_tokens = 256000}};
+        QueryEngine engine(std::move(settings), registry);
+        isolate_compaction_system(engine);
+        ASSERT_TRUE(occupancy_turn(engine, streaming));
+        const auto measured = engine.context_usage();
+        ASSERT_TRUE(measured.last_request_usage);
+        engine.set_session_id("same-working-context-new-id");
+        EXPECT_EQ(engine.context_usage().tokens, measured.tokens);
+        EXPECT_TRUE(engine.context_usage().last_request_usage);
+        auto params = engine.model_params();
+        params.model = "occupancy-small";
+        engine.set_model_params(params);
+        const auto small = engine.context_usage();
+        EXPECT_EQ(small.window_tokens, 256000u);
+        EXPECT_LT(small.tokens, measured.tokens);
+        EXPECT_FALSE(small.last_request_usage);
+        EXPECT_DOUBLE_EQ(engine.context_utilization(), static_cast<double>(small.tokens) / small.window_tokens);
+        params.model = "occupancy-large";
+        engine.set_model_params(params);
+        const auto large = engine.context_usage();
+        EXPECT_EQ(large.window_tokens, 1000000u);
+        EXPECT_EQ(large.tokens, small.tokens);
+        EXPECT_FALSE(large.last_request_usage);
+        EXPECT_EQ(server.requests().size(), 1u);
+        EXPECT_EQ(engine.get_usage().input_tokens, 5000u);
+    }
+}
+} // namespace

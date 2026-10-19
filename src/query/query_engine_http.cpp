@@ -235,6 +235,7 @@ prepared_endpoint(std::string_view url) {
     headers.emplace("User-Agent", "LOOM/1.0");
     const auto& body = prepared->body;
     const auto sent_schema = context_schema_text(body);
+    capture_context_schema(sent_schema);
 
     // Create HTTP client (shared_ptr so abort_callback_ can safely call
     // cli->stop() from the main thread even after this function returns).
@@ -338,6 +339,7 @@ prepared_endpoint(std::string_view url) {
     headers.emplace("User-Agent", "LOOM/1.0");
     const auto& body = prepared->body;
     const auto sent_schema = context_schema_text(body);
+    capture_context_schema(sent_schema);
 
     // ── Dump Prompts: log API request ──
     if (dump_prompts_dir_) {

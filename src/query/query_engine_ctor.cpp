@@ -81,6 +81,7 @@ QueryEngine::QueryEngine(QueryEngineConfig config, ToolRegistry& registry)
 
     // Initialize conversation with system prompt if available
     build_and_add_system_prompt();
+    initialize_context_schema();
 
     // Record the session start in the local-only event log. The engine is
     // the one place every entry point (REPL, server, headless) passes
@@ -102,8 +103,7 @@ void QueryEngine::set_model_params(ModelParams params) {
     std::lock_guard lock(conversation_mutex_);
     config_.model_params = std::move(params);
     refresh_model_context();
-    context_observed_ = {};
-    context_observed_key_.clear();
+    reset_context_observation_locked();
     ++conversation_revision_;
 }
 

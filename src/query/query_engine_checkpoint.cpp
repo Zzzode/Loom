@@ -52,6 +52,43 @@ bool append_context_record(const std::filesystem::path& path, std::string_view r
 
 } // namespace
 
+ContextUsageSnapshot QueryEngine::context_usage() const {
+    std::lock_guard lock(conversation_mutex_);
+    if (!context_tokens_cache_ || context_tokens_cache_revision_ != conversation_revision_) {
+        loom::query::wire::RequestInput input;
+        input.model = config_.model_params.model;
+        project_context_messages_locked(input);
+        compact::UsageObservation observed;
+        if (context_observed_key_ == observation_key(input, context_schema_snapshot_, wire_api_))
+            observed = context_observed_;
+        context_tokens_cache_ = compact::estimate_request_tokens({input.messages, input.system_prompt,
+            context_schema_snapshot_, {}, observed});
+        context_tokens_cache_revision_ = conversation_revision_;
+    }
+    return {*context_tokens_cache_, model_context_.window_tokens, last_request_usage_};
+}
+
+void QueryEngine::reset_context_observation_locked() {
+    context_observed_ = {};
+    context_observed_key_.clear();
+    last_request_usage_.reset();
+    context_tokens_cache_.reset();
+}
+
+void QueryEngine::capture_context_schema(std::string_view prepared_schema) {
+    std::lock_guard lock(conversation_mutex_);
+    context_schema_snapshot_ = prepared_schema;
+    context_tokens_cache_.reset();
+}
+
+void QueryEngine::initialize_context_schema() {
+    // Static metadata is known before sampling; dynamic providers belong only to real requests.
+    auto input = build_wire_input(QueryOptions{}, false, false);
+    input.messages.clear();
+    input.system_prompt.clear();
+    capture_context_schema(context_schema_text(input));
+}
+
 std::optional<std::size_t> QueryEngine::context_request_anchor_locked(
     const std::vector<Message>& messages) const {
     if (!context_request_anchor_id_) return {};
@@ -109,6 +146,7 @@ VoidResult QueryEngine::ensure_context_budget(const QueryOptions& options) {
         if (context_observed_key_ != observation_key(input, schema, wire_api_)) {
             context_observed_ = {};
             context_observed_key_.clear();
+            context_tokens_cache_.reset();
         }
         observed = context_observed_;
         anchor = context_request_anchor_locked(input.messages);
@@ -130,8 +168,12 @@ void QueryEngine::observe_context_usage(const TokenUsage& usage,
         observed += usage.cache_creation_tokens;
         observed += usage.cache_read_tokens;
     }
-    if (observed == 0) return;
     std::lock_guard lock(conversation_mutex_);
+    if (usage.input_tokens || usage.output_tokens || usage.cache_creation_tokens || usage.cache_read_tokens)
+        last_request_usage_ = usage;
+    else last_request_usage_.reset();
+    context_tokens_cache_.reset();
+    if (observed == 0) return;
     context_observed_ = {observed, compact::estimate_request_tokens(context, false)};
     context_observed_key_ = observation_key(sent_input, sent_schema, wire_api_);
 }
@@ -234,8 +276,7 @@ VoidResult QueryEngine::compact_context_impl(std::string_view trigger, const Que
         update_task_budget_remaining_after_compact(boundary_value.compact_metadata->pre_tokens);
         conversation_ = std::move(replacement);
         ++conversation_revision_;
-        context_observed_ = {};
-        context_observed_key_.clear();
+        reset_context_observation_locked();
     }
     append_session_summary(working_directory(), compacted->summary);
     return {};

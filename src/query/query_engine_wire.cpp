@@ -24,8 +24,8 @@ import loom.services.compact.api_microcompact;
 namespace loom::core {
 
 double QueryEngine::context_utilization() const noexcept {
-    auto estimated = estimate_conversation_tokens();
-    return static_cast<double>(estimated) / model_context_.window_tokens;
+    const auto usage = context_usage();
+    return usage.window_tokens == 0 ? 0.0 : static_cast<double>(usage.tokens) / usage.window_tokens;
 }
 
 std::string QueryEngine::working_directory() const {
@@ -124,8 +124,9 @@ void QueryEngine::restore_task_budget_remaining_from_compact_boundaries_locked()
 void QueryEngine::set_wire_backend_factory(WireBackendFactory factory) {
     std::lock_guard lock(conversation_mutex_);
     wire_backend_factory_ = std::move(factory);
-    context_observed_ = {};
-    context_observed_key_.clear();
+    // A custom backend may be stateful; its schema becomes known on real preparation.
+    context_schema_snapshot_.clear();
+    reset_context_observation_locked();
 }
 
 [[nodiscard]] std::unique_ptr<loom::query::wire::WireBackend>
@@ -192,9 +193,31 @@ QueryEngine::make_wire_backend(bool summary) const {
         std::move(opts));
 }
 
+void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInput& input) const {
+    std::unordered_set<std::string> snipped_message_ids;
+    for (const auto& msg : conversation_) {
+        const auto* sys = std::get_if<SystemMessage>(&msg);
+        if (!sys || !sys->snip_metadata) continue;
+        for (const auto& uuid : sys->snip_metadata->removed_uuids) snipped_message_ids.insert(uuid);
+    }
+    for (const auto& msg : conversation_) {
+        const auto message_id = std::visit([](const auto& value) { return value.id.value; }, msg);
+        if (snipped_message_ids.contains(message_id)) continue;
+        if (const auto* sys = std::get_if<SystemMessage>(&msg)) {
+            if (sys->subtype == "compact_boundary") continue;
+            if (input.system_prompt.empty()) {
+                for (const auto& block : sys->content)
+                    if (const auto* text = std::get_if<TextBlock>(&block)) input.system_prompt += text->text;
+            }
+            continue;
+        }
+        input.messages.push_back(msg);
+    }
+}
+
 [[nodiscard]] loom::query::wire::RequestInput QueryEngine::build_wire_input(
     const QueryOptions& options,
-    bool stream) const {
+    bool stream, bool include_dynamic) const {
     loom::query::wire::RequestInput input;
     input.model = config_.model_params.model;
     input.max_tokens = model_context_.output_tokens;
@@ -226,41 +249,16 @@ QueryEngine::make_wire_backend(bool summary) const {
         env_dim("LOOM_COMPUTER_DISPLAY_NUMBER", 0);
 
     // MCP verbatim schemas (snapshotted once per request).
-    if (config_.mcp_input_schema_provider) {
+    if (include_dynamic && config_.mcp_input_schema_provider) {
         for (auto& [name, schema] : config_.mcp_input_schema_provider()) {
             input.tool_schemas.emplace_back(std::move(name),
                                             std::move(schema));
         }
     }
 
-    std::unordered_set<std::string> snipped_message_ids;
     {
         std::lock_guard lock(conversation_mutex_);
-        for (const auto& msg : conversation_) {
-            const auto* sys = std::get_if<SystemMessage>(&msg);
-            if (!sys || !sys->snip_metadata) continue;
-            for (const auto& uuid : sys->snip_metadata->removed_uuids) {
-                snipped_message_ids.insert(uuid);
-            }
-        }
-        for (const auto& msg : conversation_) {
-            const auto message_id = std::visit(
-                [](const auto& value) { return value.id.value; }, msg);
-            if (snipped_message_ids.contains(message_id)) continue;
-
-            if (const auto* sys = std::get_if<SystemMessage>(&msg)) {
-                if (sys->subtype == "compact_boundary") continue;
-                if (input.system_prompt.empty()) {
-                    for (const auto& block : sys->content) {
-                        if (const auto* tb = std::get_if<TextBlock>(&block)) {
-                            input.system_prompt += tb->text;
-                        }
-                    }
-                }
-                continue;  // system messages never enter the messages array
-            }
-            input.messages.push_back(msg);
-        }
+        project_context_messages_locked(input);
     }
 
     // Tool pruning: deny rules, dedup (built-ins win), enabled filter.
@@ -281,7 +279,7 @@ QueryEngine::make_wire_backend(bool summary) const {
         input.tools.push_back(tool);
     };
     for (const auto& tool : config_.tools) add_tool(tool);
-    if (config_.dynamic_tools_provider) {
+    if (include_dynamic && config_.dynamic_tools_provider) {
         for (const auto& tool : config_.dynamic_tools_provider()) {
             add_tool(tool);
         }

@@ -265,8 +265,7 @@ void QueryEngine::apply_time_based_microcompact() {
 
     if (changed) {
         ++conversation_revision_;
-        context_observed_ = {};
-        context_observed_key_.clear();
+        reset_context_observation_locked();
         rebuild_content_replacement_state_locked();
     }
 }
@@ -317,8 +316,7 @@ void QueryEngine::replace_tool_result_message_locked(std::size_t message_index, 
     tool_result->content.clear();
     tool_result->content.push_back(TextBlock{std::move(replacement)});
     ++conversation_revision_;
-    context_observed_ = {};
-    context_observed_key_.clear();
+    reset_context_observation_locked();
 }
 
 void QueryEngine::rebuild_content_replacement_state_locked() {
@@ -436,8 +434,7 @@ void QueryEngine::replay_snip_boundaries() {
 
     conversation_ = std::move(projected);
     ++conversation_revision_;
-    context_observed_ = {};
-    context_observed_key_.clear();
+    reset_context_observation_locked();
     rebuild_content_replacement_state_locked();
 }
 
@@ -466,27 +463,6 @@ void QueryEngine::replay_snip_boundaries() {
     return std::ranges::any_of(options.enabled_tools, [tool_name](const std::string& enabled) {
         return enabled == tool_name;
     });
-}
-
-[[nodiscard]] std::uint32_t QueryEngine::estimate_conversation_tokens_locked() const noexcept {
-    std::string system;
-    for (const auto& message : conversation_) {
-        if (const auto* value = std::get_if<SystemMessage>(&message); value && !value->subtype) {
-            for (const auto& block : value->content) {
-                if (const auto* text = std::get_if<TextBlock>(&block)) system += text->text;
-            }
-            break;
-        }
-    }
-    loom::query::wire::RequestInput input;
-    input.model = config_.model_params.model;
-    input.max_tokens = model_context_.output_tokens;
-    input.tools = config_.tools;
-    const auto schema = context_schema_text(input);
-    const loom::services::compact::RequestContext context{conversation_, system, schema, {}, {}};
-    return static_cast<std::uint32_t>(std::min<std::uint64_t>(
-        loom::services::compact::estimate_request_tokens(context, false),
-        std::numeric_limits<std::uint32_t>::max()));
 }
 
 } // namespace loom::core

@@ -31,8 +31,7 @@ void QueryEngine::restore_conversation(std::vector<Message> messages) {
     std::lock_guard lock(conversation_mutex_);
     conversation_ = std::move(messages);
     ++conversation_revision_;
-    context_observed_ = {};
-    context_observed_key_.clear();
+    reset_context_observation_locked();
     restore_context_request_anchor_locked();
     if (config_.task_budget) {
         config_.task_budget->remaining = configured_task_budget_remaining_;
@@ -66,8 +65,7 @@ void QueryEngine::clear_conversation() {
     conversation_.clear();
     context_request_anchor_id_.reset();
     ++conversation_revision_;
-    context_observed_ = {};
-    context_observed_key_.clear();
+    reset_context_observation_locked();
     build_and_add_system_prompt();
 }
 
@@ -153,6 +151,12 @@ void QueryEngine::append_message(Message msg, bool human_request) {
     }
     {
         std::lock_guard lock(conversation_mutex_);
+        if (const auto* system = std::get_if<SystemMessage>(&msg); system && system->snip_metadata) {
+            const auto& removed = system->snip_metadata->removed_uuids;
+            if (std::ranges::any_of(conversation_, [&](const auto& previous) {
+                    return std::ranges::contains(removed, message_id_value(previous));
+                })) reset_context_observation_locked();
+        }
         if (human_request) {
             if (const auto* user = std::get_if<UserMessage>(&msg);
                 user && !std::holds_alternative<TaskEvent>(user->origin)) {

@@ -213,6 +213,13 @@ private:
             request_bodies_.push_back(request.substr(request.find("\r\n\r\n") + 4));
         }
         const int index = requests.fetch_add(1);
+        if (recovery_ == "model-context") {
+            const auto body = text_response("PTY model context reply " + std::to_string(index));
+            send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
+                std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            ::shutdown(fd, SHUT_WR);
+            return;
+        }
         if (recovery_ == "task-completion") {
             if (index == 1) {
                 ++parked;
@@ -550,6 +557,8 @@ struct ModelOptions {
     bool shell_handoff = false;
     std::string handoff_helper;
     bool tls = false;
+    bool isolate_budget_environment = false;
+    std::string runtime_tool_input;
     std::string file_model;
     std::string environment_model = "pty-test-model";
     std::string settings_model;
@@ -600,7 +609,9 @@ public:
         std::vector<std::string> arguments{binary};
         if (options.direct) {
             arguments.insert(arguments.end(), {"--run-runtime-tool", "Agent", "--runtime-tool-input",
-                R"({"description":"Direct model probe","prompt":"Return the probe result","name":"pty-agent"})"});
+                options.runtime_tool_input.empty()
+                    ? R"({"description":"Direct model probe","prompt":"Return the probe result","name":"pty-agent"})"
+                    : options.runtime_tool_input});
         } else arguments.push_back("--permissions");
         if (!options.settings_model.empty()) {
             arguments.push_back("--settings");
@@ -664,6 +675,12 @@ printf '\nPTY-SHELL-RECEIVED\n'
             ::setenv("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").c_str(), 1);
             ::setenv("LOOM_API_KEY", "pty-test-key", 1);
             ::setenv("LOOM_BASE_URL", url.c_str(), 1);
+            if (options.isolate_budget_environment) {
+                // These cases prove persisted CLI settings, independent of the test runner.
+                ::unsetenv("LOOM_MAX_TOKENS");
+                ::setenv("LOOM_ENABLE_MEMORY_EXTRACTION", "0", 1);
+                ::setenv("LOOM_DISABLE_AUTO_MEMORY", "1", 1);
+            }
             if (options.environment_model.empty()) ::unsetenv("LOOM_MODEL");
             else ::setenv("LOOM_MODEL", options.environment_model.c_str(), 1);
             ::setenv("LOOM_DISABLE_THINKING", "1", 1);
@@ -2949,8 +2966,153 @@ void run_question_case(const std::string& binary, const std::string& scenario, c
     }
 }
 
+// RFC 0026: exercise main.cpp's real CLI loader, not only QueryEngine assembly.
+void run_model_context_case(const std::string& binary, const std::string& scenario,
+                            const fs::path& root) {
+    const auto write_settings = [](const fs::path& directory, bool invalid, bool fallback) {
+        fs::create_directories(directory / "config");
+        std::ofstream settings(directory / "config" / "settings.json");
+        settings << R"({"mouseMode":false,"permissionMode":"default","extendedThinking":false,"model":")"
+            << (fallback ? "budget-private" : "budget-1m")
+            << R"(","contextWindowSize":345678,"maxOutputTokens":64000,"modelContextLimits":[{"model":"budget-1m","contextWindowSize":)"
+            << (invalid ? 0 : 1000000)
+            << R"(,"maxOutputTokens":64000},{"model":"budget-256k","contextWindowSize":256000,"maxOutputTokens":4096}]})";
+        require(settings.good(), "model-context fixture settings were not written");
+    };
+    ModelOptions options;
+    options.environment_model.clear();
+    options.isolate_budget_environment = true;
+    if (scenario == "model-context-tolerance") {
+        options.environment_model = "budget-default";
+        for (const std::string kind : {"missing", "soft-user", "soft-local"}) {
+            const auto directory = root / kind;
+            fs::create_directories(directory / "config");
+            if (kind == "soft-user")
+                std::ofstream(directory / "config" / "settings.json") << "legacy_key=legacy_value\n";
+            if (kind == "soft-local") {
+                fs::create_directories(directory / ".loom");
+                std::ofstream(directory / ".loom" / "settings.local.json") << "legacy_key=legacy_value\n";
+            }
+            ModelServer server(false, false, directory / "unused.txt", false, "model-context");
+            server.start();
+            Terminal terminal(binary, directory, server.url(), options);
+            require(terminal.wait([&] {
+                const auto frame = terminal.latest_frame_text();
+                return terminal.installed() && frame.find("budget-default") != std::string::npos &&
+                    frame.find("/200.0K") != std::string::npos;
+            }), kind + " configuration did not preserve usable default CLI budgets");
+            require(server.requests.load() == 0, kind + " configuration unexpectedly sampled at startup");
+            save_attention_frame(root, kind, terminal.latest_frame());
+            terminal.input("Return the default CLI budget probe\r");
+            require(terminal.wait([&] {
+                return server.requests.load() == 1 && terminal.idle_response_visible("PTY model context reply 0");
+            }), kind + " configuration could not complete a request");
+            const auto bodies = server.request_bodies();
+            require(bodies.size() == 1, kind + " configuration duplicated the request");
+            const auto body = compact_json(bodies.front());
+            require(body.find("\"model\":\"budget-default\"") != std::string::npos &&
+                    (body.find("\"max_tokens\":16384,") != std::string::npos ||
+                     body.find("\"max_tokens\":16384}") != std::string::npos),
+                    kind + " configuration lost environment model or default output tokens");
+            std::ofstream(root / (kind + "-request.txt")) << bodies.front();
+            terminal.input("\x04");
+            terminal.verify_exit(0);
+        }
+        return;
+    }
+    if (scenario == "model-context-invalid") {
+        // Both CLI entry points must propagate strict profile-load failure.
+        for (const bool direct : {false, true}) {
+            const auto directory = root / (direct ? "direct" : "interactive");
+            write_settings(directory, true, false);
+            ModelServer server(false, false, directory / "unused.txt", false, "model-context");
+            server.start();
+            options.direct = direct;
+            Terminal terminal(binary, directory, server.url(), options);
+            terminal.verify_completion(1);
+            std::ofstream(root / (direct ? "invalid-direct.txt" : "invalid-interactive.txt"))
+                << terminal_text(terminal.output);
+            require(terminal.output.find("modelContextLimits") != std::string::npos,
+                    "invalid profile did not produce its configuration diagnostic");
+            require(server.requests.load() == 0, "invalid profile reached the model endpoint");
+            require(!terminal.installed(), "invalid profile entered the interactive application");
+        }
+        return;
+    }
+    const bool direct = scenario == "model-context-direct";
+    const bool fallback = scenario == "model-context-fallback";
+    write_settings(root, false, fallback);
+    options.direct = direct;
+    if (direct) options.runtime_tool_input =
+        R"({"description":"Child budget probe","prompt":"Return the child result","name":"pty-agent","model":"budget-256k"})";
+    ModelServer server(false, false, root / "unused.txt", false, "model-context");
+    server.start();
+    Terminal terminal(binary, root, server.url(), options);
+    const auto verify_request = [&](std::size_t index, const std::string& model, int output) {
+        const auto bodies = server.request_bodies();
+        require(bodies.size() == index + 1, "model-context request count changed unexpectedly");
+        const auto body = compact_json(bodies[index]);
+        require(body.find("\"model\":\"" + model + "\"") != std::string::npos,
+                "CLI selected the wrong actual model");
+        require(body.find("\"max_tokens\":" + std::to_string(output) + ",") != std::string::npos ||
+                body.find("\"max_tokens\":" + std::to_string(output) + "}") != std::string::npos,
+                "CLI did not apply the expected output budget " + std::to_string(output));
+        std::ofstream(root / ("request-" + std::to_string(index) + ".txt")) << bodies[index];
+    };
+    if (direct) {
+        terminal.verify_completion(0);
+        verify_request(0, "budget-256k", 4096);
+        require(terminal.output.find("PTY model context reply 0") != std::string::npos,
+                "direct child did not return its model response");
+        require(compact_json(read_file(root / "runtime" / "pty-agent.json")).find("\"status\":\"completed\"") != std::string::npos,
+                "direct child did not complete durably");
+        return;
+    }
+    const auto verify_footer = [&](const std::string& model, const std::string& capacity) {
+        require(terminal.wait([&] {
+            const auto frame = terminal.latest_frame_text();
+            return terminal.installed() && frame.find(model) != std::string::npos &&
+                frame.find("/" + capacity) != std::string::npos;
+        }), "CLI footer did not show " + model + " /" + capacity);
+    };
+    verify_footer(fallback ? "budget-private" : "budget-1m", fallback ? "345.7K" : "1000.0K");
+    require(server.requests.load() == 0, "CLI startup unexpectedly sampled the model");
+    const std::vector<std::string> models = fallback
+        ? std::vector<std::string>{"budget-private"}
+        : std::vector<std::string>{"budget-1m", "budget-256k", "budget-1m"};
+    for (std::size_t index = 0; index < models.size(); ++index) {
+        const auto& model = models[index];
+        if (index > 0) {
+            terminal.input("/model " + model + "\r");
+            require(terminal.wait([&] {
+                const auto frame = terminal.latest_frame_text();
+                return frame.find("Switched model:") != std::string::npos &&
+                    frame.find(models[index - 1] + " → " + model) != std::string::npos &&
+                    frame.find("model-switch") == std::string::npos &&
+                    frame.find("Dialog not implemented") == std::string::npos;
+            }), "model switch did not render its local confirmation without an overlay");
+            verify_footer(model, index == 1 ? "256.0K" : "1000.0K");
+            require(server.requests.load() == static_cast<int>(index),
+                    "model setter sent an unexpected HTTP request");
+        }
+        save_attention_frame(root, "budget-" + std::to_string(index), terminal.latest_frame());
+        terminal.input("Return model budget probe " + std::to_string(index) + "\r");
+        require(terminal.wait([&] {
+            return server.requests.load() == static_cast<int>(index + 1) &&
+                terminal.idle_response_visible("PTY model context reply " + std::to_string(index));
+        }), "CLI model-budget request did not complete");
+        verify_request(index, model, model == "budget-256k" ? 4096 : 64000);
+    }
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+}
+
 void run_case(const std::string& binary, const std::string& scenario, const fs::path& root,
               const std::string& harness) {
+    if (scenario.starts_with("model-context-")) {
+        run_model_context_case(binary, scenario, root);
+        return;
+    }
     if (scenario.starts_with("question-")) {
         run_question_case(binary, scenario, root);
         return;
@@ -3156,7 +3318,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("task-") || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("model-context-") || scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("task-") || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

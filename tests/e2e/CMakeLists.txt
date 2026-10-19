@@ -181,6 +181,17 @@ foreach(_pty_direct_source IN ITEMS file settings cli)
       SKIP_RETURN_CODE 125)
 endforeach()
 
+# RFC 0026: the executable's separate loader must supply persisted model budgets
+# to the real terminal and direct Agent entry, including strict load errors.
+foreach(_pty_context_case IN ITEMS switch direct invalid fallback tolerance)
+  add_test(NAME E2E_Pty_ModelContext_${_pty_context_case}
+      COMMAND e2e_pty_shutdown model-context-${_pty_context_case})
+  set_tests_properties(E2E_Pty_ModelContext_${_pty_context_case} PROPERTIES
+      TIMEOUT 40
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
 # Drag selection travels through real SGR input and flushed ANSI frames.
 # Clipboard commands are isolated fixture executables; no host clipboard writes.
 foreach(_pty_selection_case IN ITEMS

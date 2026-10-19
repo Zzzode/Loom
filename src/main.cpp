@@ -665,7 +665,7 @@ loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
     return check;
 }
 
-auto load_config(bool& mouse_mode) -> loom::core::QueryEngineConfig;
+auto load_config(bool& mouse_mode) -> loom::core::Result<loom::core::QueryEngineConfig>;
 
 int run_runtime_tool_once(
     const CliOptions& opts,
@@ -676,7 +676,12 @@ int run_runtime_tool_once(
         return 1;
     }
     bool mouse_mode = false;
-    auto config = load_config(mouse_mode);
+    auto loaded_config = load_config(mouse_mode);
+    if (!loaded_config) {
+        std::println(stderr, "Error: {}", loaded_config.error().format());
+        return 1;
+    }
+    auto config = std::move(*loaded_config);
     if (opts.model) config.model_params.model = *opts.model;
     else if (settings_model_override && !settings_model_override->empty()) {
         config.model_params.model = *settings_model_override;
@@ -718,14 +723,14 @@ int run_runtime_tool_once(
 /**
  * Load engine configuration from environment and defaults
  */
-auto load_config(bool& mouse_mode) -> loom::core::QueryEngineConfig {
+auto load_config(bool& mouse_mode) -> loom::core::Result<loom::core::QueryEngineConfig> {
     loom::core::QueryEngineConfig config;
 
     // Load config file (~/.loom/settings.json) as a fallback for credentials
     // and model settings. Env vars take precedence over file values.
     loom::core::ConfigManager file_config;
     if (auto result = file_config.load(loom::core::LoadOptions{.quiet = true}); !result) {
-        // Non-fatal: env vars may still provide everything needed.
+        return std::unexpected(result.error());
     }
 
     // Read mouseMode once at startup from the effective three-tier config.
@@ -787,9 +792,10 @@ auto load_config(bool& mouse_mode) -> loom::core::QueryEngineConfig {
 
     config.max_budget_usd = 10.0;
     config.cwd = fs::current_path().string();
-    config.model_params.max_tokens = 16384;
+    config.model_params.max_tokens = file_config.settings().model.max_output_tokens;
     config.retry_policy.max_retries = 3;
-    config.context_window.max_context_tokens = 200000;
+    config.context_window.max_context_tokens = file_config.settings().model.context_window_size;
+    config.model_context_limits = file_config.settings().model.context_limits;
 
     // statusLine from settings.json → env vars. The --settings flag path
     // (apply_flag_status_line_environment) runs BEFORE this function and
@@ -1951,7 +1957,12 @@ int main(int argc, const char* argv[]) {
     }
 
     bool mouse_mode = false;
-    auto config = load_config(mouse_mode);
+    auto loaded_config = load_config(mouse_mode);
+    if (!loaded_config) {
+        std::println(stderr, "Error: {}", loaded_config.error().format());
+        return 1;
+    }
+    auto config = std::move(*loaded_config);
     // permissions.deny from --settings feeds the pre-request tool filter.
     // TS reads the permission context live; the CPP engine snapshots config at
     // construction, so this must be set before the engine is created.

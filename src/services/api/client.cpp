@@ -19,6 +19,14 @@ Result<StreamParser> MessagesClient::create_message_stream(
                         auth_ctx_->provider() != EProv::FirstParty);
 }
 
+Result<std::size_t> MessagesClient::prepared_stream_request_size(const CreateMessageRequest& request) {
+    auto stream_request = request;
+    stream_request.stream = true;
+    auto prepared = prepare_request(stream_request, betas_for_request(request), true);
+    if (!prepared) return std::unexpected(prepared.error());
+    return prepared->body.size();
+}
+
 Result<StreamParser> MessagesClient::create_prepared_stream(
     std::string url, std::string body, std::vector<std::string> headers,
     StreamParser::EventDecoder decoder) {

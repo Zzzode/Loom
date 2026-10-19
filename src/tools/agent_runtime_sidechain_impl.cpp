@@ -11,6 +11,7 @@ import std;
 import loom.constants.xml;
 import loom.serdes.json;
 import loom.types.message_origin_json;
+import loom.fs.atomic_replace;
 
 namespace loom::tools::agent_runtime {
 
@@ -202,12 +203,12 @@ void refresh_native_agent_output_symlink(
         content_json = fallback_sidechain_content_json(text);
     }
 
-    return make_sidechain_jsonl_entry(
-        agent_id,
-        index,
-        role,
-        content_json,
-        {});
+    auto rebased = make_sidechain_jsonl_entry(agent_id, index, role, content_json, {});
+    if (root.get("requestAnchor").is_bool() && root.get("requestAnchor").as_bool()) {
+        rebased.pop_back();
+        rebased += R"(,"requestAnchor":true})";
+    }
+    return rebased;
 }
 [[nodiscard]] std::optional<std::string> rebase_content_replacement_entry_for_agent(
     std::string_view entry,
@@ -250,6 +251,11 @@ void refresh_native_agent_output_symlink(
         std::size_t message_index = 0;
         for (const auto& entry : parent.sidechain_entries) {
             if (entry.empty()) continue;
+            auto checkpoint = loom::utils::json::parse(entry);
+            if (checkpoint && checkpoint->root().get("kind").as_str() == "context-checkpoint") {
+                entries.push_back(entry);
+                continue;
+            }
             if (auto rebased_replacement = rebase_content_replacement_entry_for_agent(entry, child_agent_id)) {
                 entries.push_back(std::move(*rebased_replacement));
                 continue;
@@ -442,38 +448,9 @@ bool write_sidechain_jsonl(
     }
     return sidechain.good();
 }
-bool persist_native_agent_record(const NativeAgentRecord& record) {
-    std::error_code ec;
-    const auto dir = runtime_state_dir();
-    fs::create_directories(dir, ec);
-    if (ec) return false;
-
-    auto transcript_path = record.transcript_path
-        ? fs::path{*record.transcript_path}
-        : agent_transcript_path(record.agent_id);
-    if (transcript_path.is_relative()) transcript_path = dir / transcript_path;
-    fs::create_directories(transcript_path.parent_path(), ec);
-
-    {
-        std::ofstream transcript(transcript_path, std::ios::trunc);
-        if (!transcript) return false;
-        for (const auto& line : record.transcript) transcript << line << '\n';
-    }
-
-    auto sidechain_path = record.sidechain_jsonl_path
-        ? fs::path{*record.sidechain_jsonl_path}
-        : agent_sidechain_jsonl_path(record.agent_id);
-    if (sidechain_path.is_relative()) sidechain_path = dir / sidechain_path;
-    (void)write_sidechain_jsonl(record, sidechain_path);
-
-    auto output_path = record.output_file_path
-        ? fs::path{*record.output_file_path}
-        : agent_output_file_path(record.agent_id);
-    if (output_path.is_relative()) output_path = dir / output_path;
-    refresh_native_agent_output_symlink(output_path, transcript_path);
-
-    std::ofstream out(agent_record_path(record.agent_id), std::ios::trunc);
-    if (!out) return false;
+namespace {
+void encode_native_agent_record(std::ostream& out, const NativeAgentRecord& record,
+    const fs::path& transcript_path, const fs::path& sidechain_path, const fs::path& output_path) {
     out << R"({"agent_id":")" << json_escape(record.agent_id)
         << R"(","agent_type":")" << json_escape(record.agent_type)
         << R"(","background":)" << (record.background ? "true" : "false")
@@ -507,7 +484,52 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     write_json_string_array(out, "pending_messages", record.pending_messages);
     write_json_string_array(out, "capabilities", record.capabilities);
     out << '}';
-    return out.good();
+}
+} // namespace
+
+std::expected<void, std::string> persist_native_agent_checkpoint(const NativeAgentRecord& record) {
+    const auto dir = runtime_state_dir();
+    auto resolve = [&](const std::optional<std::string>& value, fs::path fallback) {
+        auto path = value ? fs::path{*value} : std::move(fallback);
+        return path.is_relative() ? dir / path : path;
+    };
+    const auto transcript = resolve(record.transcript_path, agent_transcript_path(record.agent_id));
+    const auto sidechain = resolve(record.sidechain_jsonl_path, agent_sidechain_jsonl_path(record.agent_id));
+    const auto output = resolve(record.output_file_path, agent_output_file_path(record.agent_id));
+    std::ostringstream encoded;
+    encode_native_agent_record(encoded, record, transcript, sidechain, output);
+    if (!encoded.good()) return std::unexpected("Cannot encode native agent checkpoint");
+    // The authoritative record embeds all sidechain entries. Auxiliary files
+    // remain unchanged until ordinary subsequent mutations refresh their views.
+    return loom::utils::atomic_replace_file(agent_record_path(record.agent_id), encoded.str(),
+        loom::utils::AtomicMode::OwnerOnly);
+}
+
+bool persist_native_agent_record(const NativeAgentRecord& record) {
+    const auto dir = runtime_state_dir();
+    auto resolve = [&](const std::optional<std::string>& value, fs::path fallback) {
+        auto path = value ? fs::path{*value} : std::move(fallback);
+        return path.is_relative() ? dir / path : path;
+    };
+    const auto transcript_path = resolve(record.transcript_path, agent_transcript_path(record.agent_id));
+    const auto sidechain_path = resolve(record.sidechain_jsonl_path, agent_sidechain_jsonl_path(record.agent_id));
+    const auto output_path = resolve(record.output_file_path, agent_output_file_path(record.agent_id));
+    std::ostringstream encoded;
+    encode_native_agent_record(encoded, record, transcript_path, sidechain_path, output_path);
+    if (!encoded.good() || !loom::utils::atomic_replace_file(
+            agent_record_path(record.agent_id), encoded.str())) return false;
+
+    // Auxiliary views are refreshed only after an atomic authoritative commit.
+    // A failed progress/finalization write must never truncate a saved checkpoint.
+    std::error_code ec;
+    fs::create_directories(transcript_path.parent_path(), ec);
+    if (!ec) {
+        std::ofstream transcript(transcript_path, std::ios::trunc);
+        if (transcript) for (const auto& line : record.transcript) transcript << line << '\n';
+    }
+    (void)write_sidechain_jsonl(record, sidechain_path);
+    refresh_native_agent_output_symlink(output_path, transcript_path);
+    return true;
 }
 [[nodiscard]] std::vector<std::string> read_transcript_lines(const fs::path& path) {
     std::vector<std::string> lines;

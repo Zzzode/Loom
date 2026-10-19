@@ -22,6 +22,9 @@ import loom.teams.swarm.backends;
 import loom.skills.skill;
 import loom.services.api.client;
 import loom.services.api.streaming;
+import loom.services.api.errors;
+import loom.services.compact.context_compaction;
+import loom.types.types;
 
 export namespace loom::tools::agent::utils {
 
@@ -192,6 +195,7 @@ struct AgentExecutionPlan {
     bool use_exact_tools = false;
     std::vector<Message> fork_context_messages;
     bool fork_context_includes_prompt = false;
+    std::optional<std::size_t> fork_request_anchor;
     std::optional<std::string> name;
     std::optional<std::string> team_name;
     std::optional<std::string> mode;
@@ -793,6 +797,34 @@ AgentToolResultBudgetOutcome apply_agent_tool_result_budget(
 [[nodiscard]] std::string message_json_object(const Message& message);
 
 void append_agent_sidechain_message(std::string_view agent_id, const Message& message,
-    std::optional<std::string_view> transcript_entry = std::nullopt);
+    std::optional<std::string_view> transcript_entry = std::nullopt,
+    bool request_anchor = false);
 
+} // namespace loom::tools::agent::utils
+
+export namespace loom::tools::agent::utils {
+[[nodiscard]] loom::utils::Result<std::size_t> agent_serialized_request_size(
+    loom::services::api::MessagesClient& client, const CreateMessageRequest& request,
+    const std::shared_ptr<const loom::core::ApiExecutionContext>& context);
+[[nodiscard]] std::vector<loom::core::Message> agent_core_messages(const std::vector<Message>& messages);
+struct AgentReplayContext {
+    std::vector<Message> messages;
+    std::optional<std::size_t> request_anchor;
+    bool checkpoint = false;
+};
+[[nodiscard]] AgentReplayContext replay_agent_context(const std::vector<std::string>& entries);
+[[nodiscard]] loom::services::compact::ContextPolicy agent_context_policy(
+    const std::shared_ptr<const loom::core::ApiExecutionContext>& context);
+[[nodiscard]] std::uint64_t estimate_agent_context(const CreateMessageRequest& request,
+    std::optional<std::size_t> anchor, loom::services::compact::UsageObservation observed = {});
+[[nodiscard]] loom::core::Result<void> compact_agent_context(
+    loom::services::api::MessagesClient& client, const CreateMessageRequest& request,
+    const std::shared_ptr<const loom::core::ApiExecutionContext>& context,
+    std::string_view agent_id, std::vector<Message>& messages,
+    std::optional<std::size_t>& anchor, loom::services::compact::UsageObservation& observed,
+    std::string_view reason, const std::function<void(int, int)>& record_usage,
+    const loom::services::compact::CancellationCheck& cancelled,
+    bool require_payload_reduction = false);
+[[nodiscard]] loom::services::compact::ContextFailure agent_context_failure(
+    const loom::services::api::errors::ApiErrorDetails& error);
 } // namespace loom::tools::agent::utils

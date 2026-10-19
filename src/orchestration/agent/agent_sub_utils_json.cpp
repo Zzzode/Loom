@@ -568,6 +568,14 @@ void append_json_optional_string_field(
             .is_error = block.get("is_error").is_bool() && block.get("is_error").as_bool(),
         };
     }
+    if (type == "image" || type == "document") {
+        const auto source = block.get("source");
+        return ContentBlock{
+            .type = type == "image" ? ContentBlockType::Image : ContentBlockType::Document,
+            .media_type = json_string_member(source, "media_type"),
+            .image_data = json_string_member(source, "data"),
+        };
+    }
     if (type == "thinking") {
         return ContentBlock{
             .type = ContentBlockType::Thinking,

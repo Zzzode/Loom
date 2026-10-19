@@ -438,6 +438,15 @@ private:
                     obj.add("source", source);
                     break;
                 }
+                case ContentBlockType::Thinking:
+                    obj.add("type", doc.string("thinking"));
+                    obj.add("thinking", doc.string(block.thinking));
+                    if (!block.signature.empty()) obj.add("signature", doc.string(block.signature));
+                    break;
+                case ContentBlockType::RedactedThinking:
+                    obj.add("type", doc.string("redacted_thinking"));
+                    obj.add("data", doc.string(block.thinking));
+                    break;
                 default:
                     break;
             }
@@ -811,6 +820,10 @@ public:
         std::string url, std::string body, std::vector<std::string> headers,
         StreamParser::EventDecoder decoder);
 
+    /// Inspect the same serialized streaming body used by the transfer, including
+    /// provider routing rewrites, without issuing an inference request.
+    [[nodiscard]] Result<std::size_t> prepared_stream_request_size(const CreateMessageRequest& request);
+
     // Verify API key
     [[nodiscard]] Result<bool> verify_api_key() {
         if (!config_.fallback_model || config_.fallback_model->empty()) {
@@ -893,14 +906,24 @@ private:
             // WRITEFUNCTION: feed chunks into StreamParser
             struct WriteCtx {
                 std::shared_ptr<StreamParser> parser;
+                CURL* handle;
+                std::string error_body;
             };
-            WriteCtx ctx{parser};
+            WriteCtx ctx{parser, static_cast<CURL*>(curl.get()), {}};
 
             auto write_cb = +[](char* ptr, size_t size, size_t nmemb,
                                 void* userdata) -> size_t {
                 auto* wctx = static_cast<WriteCtx*>(userdata);
                 size_t bytes = size * nmemb;
-                wctx->parser->feed(std::string_view(ptr, bytes));
+                long status = 0;
+                curl_easy_getinfo(wctx->handle, CURLINFO_RESPONSE_CODE, &status);
+                if (status >= 400) {
+                    constexpr std::size_t limit = 64 * 1024;
+                    const auto remaining = limit - wctx->error_body.size();
+                    wctx->error_body.append(ptr, std::min(bytes, remaining));
+                } else {
+                    wctx->parser->feed(std::string_view(ptr, bytes));
+                }
                 return bytes;
             };
             curl.setopt(CURLOPT_WRITEFUNCTION, write_cb);
@@ -962,10 +985,11 @@ private:
                     auth_ctx_ptr->invalidate_all();
                 }
                 if (http_code >= 400) {
-                    parser->set_error(ErrorFactory::from_http(
-                        static_cast<int>(http_code),
-                        std::format("HTTP {} error during streaming at {}",
-                                    http_code, url)));
+                    auto details = ctx.error_body.empty()
+                        ? ErrorFactory::from_http(static_cast<int>(http_code),
+                            std::format("HTTP {} error during streaming at {}", http_code, url))
+                        : ErrorFactory::from_json(static_cast<int>(http_code), ctx.error_body);
+                    parser->set_error(std::move(details));
                 } else {
                     parser->finish();
                 }

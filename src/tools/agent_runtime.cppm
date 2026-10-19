@@ -673,6 +673,7 @@ bool write_sidechain_jsonl(
     const NativeAgentRecord& record,
     const fs::path& sidechain_path);
 bool persist_native_agent_record(const NativeAgentRecord& record);
+[[nodiscard]] std::expected<void, std::string> persist_native_agent_checkpoint(const NativeAgentRecord& record);
 [[nodiscard]] std::vector<std::string> read_transcript_lines(const fs::path& path);
 [[nodiscard]] std::string transcript_text_from_content(loom::utils::json::JsonVal content);
 [[nodiscard]] std::optional<std::string> transcript_entry_from_ts_jsonl(loom::utils::json::JsonVal root);
@@ -784,9 +785,15 @@ public:
         std::string_view role,
         std::string_view content_json,
         std::string_view fallback_text = {},
-        std::optional<std::string_view> transcript_entry = std::nullopt);
+        std::optional<std::string_view> transcript_entry = std::nullopt,
+        bool request_anchor = false);
 
     void append_sidechain_entry(std::string_view agent_id, std::string entry);
+
+    /// Checkpoint publication is conditional on unchanged history and an atomic
+    /// authoritative write. Other mutations keep their established semantics.
+    [[nodiscard]] std::expected<void, std::string> append_checkpoint_checked(
+        std::string_view agent_id, std::size_t expected_entries, std::string entry);
 
     void update_progress(std::string_view agent_id, double progress);
 

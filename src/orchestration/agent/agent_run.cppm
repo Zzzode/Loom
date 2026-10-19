@@ -84,7 +84,6 @@ using loom::tools::agent::utils::format_critical_system_reminder;
 using loom::tools::agent::utils::format_agent_runtime_context;
 
 using loom::tools::agent::fork_::forked_messages_from_parent_assistant_entries;
-using loom::tools::agent::fork_::messages_contain_fork_boilerplate;
 using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
 
 [[nodiscard]] inline std::expected<AgentExecutionPlan, std::string> build_agent_execution_plan(
@@ -176,8 +175,17 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     if (!plan.fork_context_messages.empty()) {
         plan.fork_child_context = true;
         plan.fork_context_includes_prompt = true;
+        plan.fork_request_anchor = plan.fork_context_messages.size() - 1;
     }
-    auto explicit_fork_context_messages = fork_context_messages_from_entries(request.fork_context_entries);
+    auto explicit_replay = utils::replay_agent_context(request.fork_context_entries);
+    auto explicit_fork_context_messages = utils::resume_messages_from_sidechain_entries(request.fork_context_entries);
+    if (!plan.fork_request_anchor && explicit_replay.request_anchor &&
+        *explicit_replay.request_anchor < explicit_replay.messages.size()) {
+        const auto anchor_content = utils::message_json_object(explicit_replay.messages[*explicit_replay.request_anchor]);
+        for (std::size_t index = 0; index < explicit_fork_context_messages.size(); ++index)
+            if (utils::message_json_object(explicit_fork_context_messages[index]) == anchor_content)
+                plan.fork_request_anchor = plan.fork_context_messages.size() + index;
+    }
     plan.fork_context_messages.insert(
         plan.fork_context_messages.end(),
         std::make_move_iterator(explicit_fork_context_messages.begin()),
@@ -188,12 +196,14 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     // followed by user message with tool_result"). Mirrors TS
     // filterIncompleteToolCalls applied to fork_context_messages.
     if (!plan.fork_context_messages.empty()) {
-        plan.fork_context_messages = filter_incomplete_tool_calls(
-            std::move(plan.fork_context_messages));
-    }
-    if (!plan.fork_context_includes_prompt &&
-        messages_contain_fork_boilerplate(plan.fork_context_messages)) {
-        plan.fork_context_includes_prompt = true;
+        std::optional<std::string> anchor_content;
+        if (plan.fork_request_anchor && *plan.fork_request_anchor < plan.fork_context_messages.size())
+            anchor_content = utils::message_json_object(plan.fork_context_messages[*plan.fork_request_anchor]);
+        plan.fork_context_messages = filter_incomplete_tool_calls(std::move(plan.fork_context_messages));
+        plan.fork_request_anchor.reset();
+        if (anchor_content) for (std::size_t index = 0; index < plan.fork_context_messages.size(); ++index)
+            if (utils::message_json_object(plan.fork_context_messages[index]) == *anchor_content)
+                plan.fork_request_anchor = index;
     }
     if (!plan.fork_child_context) {
         if (auto existing = loom::tools::agent_runtime::native_agent_store().get(plan.agent_id);

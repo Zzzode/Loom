@@ -15,7 +15,12 @@ import loom.tasks.support;
 import loom.tools.tool;
 import loom.tools.runtime_registry;
 import loom.services.api.streaming;
+import loom.services.api.client;
 import loom.serdes.json;
+import loom.orchestration.agent.utils;
+import loom.services.compact.context_compaction;
+import loom.config.config;
+import loom.query.assembly;
 
 namespace {
 namespace api = loom::services::api;
@@ -315,6 +320,835 @@ TEST(AgentWire, RejectsHttpErrorsAndTruncatedStreams) {
         ASSERT_TRUE(record);
         EXPECT_EQ(record->status, runtime::NativeAgentStatus::Failed);
     }
+}
+
+namespace {
+std::string native_checkpoint_summary() {
+    return "## Goal\nFinish the current request.\n## Constraints\nDo not commit; preserve late-constraint-783."
+        "\n## Decisions\nUse the completed investigation.\n## Progress\nThe completed tool result is 47."
+        "\n## Next Steps\nReturn the answer.\n## References\nprobe.txt\n";
+}
+
+void seed_native_compaction_history(std::string_view id, std::size_t observation_size = 24'000) {
+    auto record = runtime::make_native_agent_record(std::string(id), "general-purpose");
+    record.status = runtime::NativeAgentStatus::Completed;
+    runtime::native_agent_store().upsert(std::move(record));
+    namespace agent = loom::tools::agent::utils;
+    agent::append_agent_sidechain_message(id, api::Message::from_text("user", "Original investigation"),
+        std::nullopt, true);
+    agent::append_agent_sidechain_message(id, api::Message::from_text("assistant",
+        "old-historical-observation " + std::string(observation_size, 'q') +
+        " late-constraint-783; do not commit; completed tool result 47"));
+}
+
+std::shared_ptr<loom::core::ApiExecutionContext> native_compaction_context(
+    const AgentWireServer& server, std::string_view protocol, bool proactive = true) {
+    auto context = std::make_shared<loom::core::ApiExecutionContext>(*agent_wire_context(server));
+    context->wire_api = protocol;
+    context->context_window_tokens = 4000;
+    context->context_output_tokens = 128;
+    context->context_auto_compact = proactive;
+    return context;
+}
+
+bool native_summary_request(const httplib::Request& request) {
+    const auto parsed = json::parse(request.body);
+    return parsed && parsed->root().get("tools").size() == 0;
+}
+
+class NativeGrowingProbe final : public loom::core::ITool {
+public:
+    int calls = 0;
+    const loom::core::ToolDefinition& definition() const override { return definition_; }
+    bool check_permission(const loom::core::ToolInput&) const override { return true; }
+    loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+        ++calls;
+        return loom::core::ToolResult::success("completed tool result 47 " + std::string(8'000, 'z'));
+    }
+private:
+    loom::core::ToolDefinition definition_{.name = "NativeGrowingProbe",
+        .description = "Return a large completed observation", .permission = loom::core::ToolPermission::ReadOnly};
+};
+
+class NativeArithmeticProbe final : public loom::core::ITool {
+public:
+    const loom::core::ToolDefinition& definition() const override { return definition_; }
+    bool check_permission(const loom::core::ToolInput&) const override { return true; }
+    loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+        return loom::core::ToolResult::success(std::to_string(19 + 28));
+    }
+private:
+    loom::core::ToolDefinition definition_{.name = "CheckpointArithmetic",
+        .description = "Return the verified sum of 19 and 28", .permission = loom::core::ToolPermission::ReadOnly};
+};
+
+std::string native_compaction_tool_call(std::string_view protocol, int number) {
+    const auto id = "native-growing-" + std::to_string(number);
+    if (protocol == "openai") return openai_frame(std::format(
+        R"({{"choices":[{{"delta":{{"tool_calls":[{{"index":0,"id":"{}","type":"function","function":{{"name":"NativeGrowingProbe","arguments":"{{}}"}}}}]}} ,"finish_reason":"tool_calls"}}]}})", id)) + openai_frame("[DONE]");
+    return "event: message_start\ndata: {\"message\":{\"id\":\"growing\"}}\n\n"
+        "event: content_block_start\ndata: " + std::format(
+        R"({{"index":0,"content_block":{{"type":"tool_use","id":"{}","name":"NativeGrowingProbe","input":{{}}}}}})", id) +
+        "\n\nevent: content_block_delta\ndata: {\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{}\"}}\n\n"
+        "event: content_block_stop\ndata: {\"index\":0}\n\n"
+        "event: message_delta\ndata: {\"delta\":{\"stop_reason\":\"tool_use\"}}\n\n"
+        "event: message_stop\ndata: {}\n\n";
+}
+
+auto resume_native_compaction_input(std::string_view id) {
+    return loom::core::ToolInput::from_json(std::format(
+        R"({{"prompt":"Complete current request verbatim","agent_id":"{}","resume_existing":true}})", id));
+}
+} // namespace
+
+TEST(AgentWire, ContextBudgetCompactsAndResumeKeepsOnlyCommittedWorkingHistory) {
+    for (const auto protocol : {"messages", "openai"}) {
+        SCOPED_TRACE(protocol);
+        AgentWireSandbox sandbox;
+        seed_native_compaction_history("native-checkpoint");
+        std::atomic<int> summaries{0};
+        std::atomic<bool> summarized_late_constraint{false};
+        AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+            const bool summary = native_summary_request(request);
+            if (summary) {
+                ++summaries;
+                if (request.body.find("late-constraint-783") != std::string::npos)
+                    summarized_late_constraint = true;
+                const auto parsed = json::parse(request.body);
+                ASSERT_TRUE(parsed);
+                EXPECT_FALSE(parsed->root().get("thinking").valid());
+                EXPECT_FALSE(parsed->root().get("output_effort").valid());
+                EXPECT_FALSE(parsed->root().get("task_budget").valid());
+                EXPECT_FALSE(parsed->root().get("tool_choice").valid());
+            } else {
+                EXPECT_EQ(request.body.find("old-historical-observation"), std::string::npos);
+                EXPECT_NE(request.body.find("Complete current request verbatim"), std::string::npos);
+                EXPECT_NE(request.body.find("late-constraint-783"), std::string::npos);
+                EXPECT_NE(request.body.find("47"), std::string::npos);
+            }
+            const auto text = summary ? native_checkpoint_summary() : std::string("native continuation complete");
+            response.set_content(std::string_view(protocol) == "openai" ? openai_text(text) : messages_text(text),
+                "text/event-stream");
+        });
+        loom::core::ToolRegistry registry;
+        registry.register_tool(std::make_unique<WireProbeTool>());
+        loom::tools::AgentConfig config;
+        config.default_model = "wire-model";
+        config.max_turns = 1;
+        config.api_context = native_compaction_context(server, protocol);
+        loom::tools::AgentTool tool(config, 0, &registry);
+        auto result = tool.execute(resume_native_compaction_input("native-checkpoint"));
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error) << result_text(*result);
+        EXPECT_EQ(tool.last_run_turns(), 1);
+        const auto summary_count = summaries.load();
+        EXPECT_GT(summary_count, 0);
+        EXPECT_TRUE(summarized_late_constraint.load());
+        const auto record = runtime::native_agent_store().get("native-checkpoint");
+        ASSERT_TRUE(record);
+        EXPECT_TRUE(std::ranges::any_of(record->sidechain_entries, [](const auto& entry) {
+            return entry.find("context-checkpoint") != std::string::npos;
+        }));
+        EXPECT_TRUE(std::ranges::any_of(record->sidechain_entries, [](const auto& entry) {
+            return entry.find("old-historical-observation") != std::string::npos;
+        }));
+        const auto persisted = runtime::load_native_agent_record("native-checkpoint");
+        ASSERT_TRUE(persisted);
+        runtime::native_agent_store().clear_for_testing();
+        auto resumed = tool.execute(resume_native_compaction_input("native-checkpoint"));
+        ASSERT_TRUE(resumed);
+        ASSERT_FALSE(resumed->is_error) << result_text(*resumed);
+        EXPECT_EQ(summaries.load(), summary_count);
+        EXPECT_GT(tool.last_run_tokens(), 0);
+    }
+}
+
+TEST(AgentWire, SingleTaskToolRoundsCompactAndContinueWithOriginalRequest) {
+    for (const auto protocol : {"messages", "openai"}) {
+        SCOPED_TRACE(protocol);
+        AgentWireSandbox sandbox;
+        int business = 0;
+        int summaries = 0;
+        AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+            if (native_summary_request(request)) {
+                ++summaries;
+                response.set_content(std::string_view(protocol) == "openai"
+                    ? openai_text(native_checkpoint_summary()) : messages_text(native_checkpoint_summary()),
+                    "text/event-stream");
+            } else if (++business <= 2) {
+                response.set_content(native_compaction_tool_call(protocol, business), "text/event-stream");
+            } else {
+                EXPECT_NE(request.body.find("Keep this original request verbatim"), std::string::npos);
+                EXPECT_NE(request.body.find("47"), std::string::npos);
+                response.set_content(std::string_view(protocol) == "openai"
+                    ? openai_text("all rounds complete") : messages_text("all rounds complete"), "text/event-stream");
+            }
+        });
+        loom::core::ToolRegistry registry;
+        auto probe = std::make_unique<NativeGrowingProbe>();
+        auto* probe_ptr = probe.get();
+        registry.register_tool(std::move(probe));
+        loom::tools::AgentConfig config;
+        config.default_model = "wire-model";
+        config.max_turns = 3;
+        config.api_context = native_compaction_context(server, protocol);
+        loom::tools::AgentTool tool(config, 0, &registry);
+        auto result = tool.execute(loom::core::ToolInput::from_json(
+            R"({"agent_id":"native-growing","prompt":"Keep this original request verbatim; finish the tool rounds without committing."})"));
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error) << result_text(*result);
+        EXPECT_GT(summaries, 0);
+        EXPECT_EQ(business, 3);
+        EXPECT_EQ(probe_ptr->calls, 2);
+        EXPECT_EQ(tool.last_run_turns(), 3);
+    }
+}
+
+TEST(AgentWire, ContextOverflowRecoversOnceWithoutConsumingExtraBusinessTurns) {
+    for (const auto protocol : {"messages", "openai"}) {
+        for (const auto mode : {"http400", "http413", "in-band", "second-overflow"}) {
+            SCOPED_TRACE(std::format("{} {}", protocol, mode));
+            AgentWireSandbox sandbox;
+            seed_native_compaction_history("native-reactive");
+            int business = 0;
+            int summaries = 0;
+            AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+                if (native_summary_request(request)) {
+                    ++summaries;
+                    response.set_content(std::string_view(protocol) == "openai"
+                        ? openai_text(native_checkpoint_summary()) : messages_text(native_checkpoint_summary()),
+                        "text/event-stream");
+                    return;
+                }
+                ++business;
+                if (business == 1 || std::string_view(mode) == "second-overflow") {
+                    const std::string error = R"({"error":{"type":"invalid_request_error","code":"context_length_exceeded","message":"prompt is too long"}})";
+                    if (std::string_view(mode) == "in-band") {
+                        response.set_content(std::string_view(protocol) == "openai"
+                            ? openai_frame(error) : "event: error\ndata: " + error + "\n\n", "text/event-stream");
+                    } else {
+                        response.status = std::string_view(mode) == "http413" ? 413 : 400;
+                        response.set_content(error, "application/json");
+                    }
+                    return;
+                }
+                EXPECT_EQ(request.body.find("old-historical-observation"), std::string::npos);
+                response.set_content(std::string_view(protocol) == "openai"
+                    ? openai_text("recovered") : messages_text("recovered"), "text/event-stream");
+            });
+            loom::core::ToolRegistry registry;
+            auto probe = std::make_unique<WireProbeTool>();
+            auto* probe_ptr = probe.get();
+            registry.register_tool(std::move(probe));
+            loom::tools::AgentConfig config;
+            config.default_model = "wire-model";
+            config.max_turns = 1;
+            config.api_context = native_compaction_context(server, protocol, false);
+            loom::tools::AgentTool tool(config, 0, &registry);
+            auto result = tool.execute(resume_native_compaction_input("native-reactive"));
+            ASSERT_TRUE(result);
+            EXPECT_EQ(result->is_error, std::string_view(mode) == "second-overflow") << result_text(*result);
+            EXPECT_EQ(business, 2);
+            EXPECT_GT(summaries, 0);
+            EXPECT_LE(summaries, 16);
+            EXPECT_EQ(tool.last_run_turns(), 1);
+            EXPECT_TRUE(probe_ptr->inputs.empty());
+        }
+    }
+}
+
+TEST(AgentWire, PayloadRecoveryRejectsTokenSmallerButByteLargerCheckpointBeforePublication) {
+    for (const auto protocol : {"messages", "openai"}) {
+        SCOPED_TRACE(protocol);
+        AgentWireSandbox sandbox;
+        seed_native_compaction_history("native-payload-no-progress", 3000);
+        int business = 0;
+        int summaries = 0;
+        AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+            if (native_summary_request(request)) {
+                ++summaries;
+                // JSON doubles each slash, so a token-smaller summary grows the actual body.
+                const auto summary = native_checkpoint_summary() + std::string(2000, '\\');
+                response.set_content(std::string_view(protocol) == "openai"
+                    ? openai_text(summary) : messages_text(summary), "text/event-stream");
+            } else {
+                ++business;
+                response.status = 413;
+                response.set_content(R"({"error":{"type":"request_too_large","message":"Request too large"}})",
+                    "application/json");
+            }
+        });
+        loom::core::ToolRegistry registry;
+        registry.register_tool(std::make_unique<WireProbeTool>());
+        loom::tools::AgentConfig config;
+        config.default_model = "wire-model";
+        config.api_context = native_compaction_context(server, protocol, false);
+        loom::tools::AgentTool tool(config, 0, &registry);
+        auto result = tool.execute(resume_native_compaction_input("native-payload-no-progress"));
+        ASSERT_TRUE(result);
+        EXPECT_TRUE(result->is_error);
+        EXPECT_NE(result_text(*result).find("serialized request payload"), std::string::npos) << result_text(*result);
+        EXPECT_EQ(business, 1);
+        EXPECT_EQ(summaries, 1);
+        const auto record = runtime::native_agent_store().get("native-payload-no-progress");
+        ASSERT_TRUE(record);
+        EXPECT_FALSE(std::ranges::any_of(record->sidechain_entries, [](const auto& entry) {
+            return entry.find("context-checkpoint") != std::string::npos;
+        }));
+    }
+}
+
+TEST(AgentWire, MessagesCachedInputCountsTowardNativeUsage) {
+    AgentWireSandbox sandbox;
+    AgentWireServer server([](const auto&, auto& response, std::size_t) {
+        auto stream = messages_text("cached usage complete");
+        const auto usage = R"("usage":{"input_tokens":11,"cache_creation_input_tokens":13,"cache_read_input_tokens":17},)";
+        stream.insert(stream.find("\"id\":\"session-probe\""), usage);
+        response.set_content(stream, "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    config.api_context = native_compaction_context(server, "messages");
+    loom::tools::AgentTool tool(config, 0, &registry);
+    const auto result = tool.execute(agent_wire_input("native-cache-usage"));
+    ASSERT_TRUE(result);
+    ASSERT_FALSE(result->is_error) << result_text(*result);
+    EXPECT_EQ(tool.last_run_tokens(), 44); // 11 input + 13 write + 17 read + 3 output.
+}
+
+TEST(AgentWire, CheckpointWriteFailureAndConflictingHistoryPreserveAuthoritativeRecord) {
+    AgentWireSandbox sandbox;
+    seed_native_compaction_history("checked-write");
+    auto& store = runtime::native_agent_store();
+    const auto initial = store.get("checked-write");
+    ASSERT_TRUE(initial);
+    const auto record_path = runtime::agent_record_path("checked-write");
+    std::ifstream input(record_path);
+    const std::string before((std::istreambuf_iterator<char>(input)), {});
+    EXPECT_FALSE(store.append_checkpoint_checked("checked-write", initial->sidechain_entries.size() + 1, "probe"));
+    const auto saved = record_path.string() + ".preserved";
+    std::filesystem::rename(record_path, saved);
+    std::filesystem::create_directory(record_path);
+    EXPECT_FALSE(store.append_checkpoint_checked("checked-write", initial->sidechain_entries.size(), "probe"));
+    std::filesystem::remove(record_path);
+    std::filesystem::rename(saved, record_path);
+    const auto after = store.get("checked-write");
+    ASSERT_TRUE(after);
+    EXPECT_EQ(after->sidechain_entries, initial->sidechain_entries);
+    std::ifstream restored(record_path);
+    EXPECT_EQ(std::string((std::istreambuf_iterator<char>(restored)), {}), before);
+}
+
+TEST(AgentWire, MalformedCheckpointFallsBackAndRetainedThinkingSignaturesRemainExact) {
+    AgentWireSandbox sandbox;
+    seed_native_compaction_history("native-signed-tail");
+    namespace agent = loom::tools::agent::utils;
+    agent::append_agent_sidechain_message("native-signed-tail",
+        api::Message::from_text("user", "Preserve the completed signed tool progress"), std::nullopt, true);
+    api::Message tail;
+    tail.role = "assistant";
+    tail.content.push_back(api::ContentBlock{.type = api::ContentBlockType::Thinking,
+        .thinking = "retained signed reasoning", .signature = "exact-original-signature"});
+    tail.content.push_back(api::ContentBlock{.type = api::ContentBlockType::RedactedThinking,
+        .thinking = "exact-original-redacted-data"});
+    tail.content.push_back(api::ContentBlock{.type = api::ContentBlockType::Text, .text = "retained progress"});
+    agent::append_agent_sidechain_message("native-signed-tail", tail);
+    AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+        if (native_summary_request(request)) response.set_content(messages_text(native_checkpoint_summary()), "text/event-stream");
+        else {
+            EXPECT_NE(request.body.find("exact-original-signature"), std::string::npos);
+            EXPECT_NE(request.body.find("exact-original-redacted-data"), std::string::npos);
+            response.set_content(messages_text("signed continuation"), "text/event-stream");
+        }
+    });
+    loom::core::ToolRegistry registry;
+    registry.register_tool(std::make_unique<WireProbeTool>());
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    config.api_context = native_compaction_context(server, "messages");
+    const auto before = runtime::native_agent_store().get("native-signed-tail");
+    ASSERT_TRUE(before);
+    auto replay = agent::replay_agent_context(before->sidechain_entries);
+    auto messages = replay.messages;
+    auto anchor = replay.request_anchor;
+    api::MessagesClient client(agent::agent_api_client_config(config.api_context));
+    api::CreateMessageRequest input;
+    input.model = "wire-model";
+    input.messages = messages;
+    loom::services::compact::UsageObservation observed;
+    const auto compacted = agent::compact_agent_context(client, input, config.api_context, "native-signed-tail",
+        messages, anchor, observed, "signed-tail-test", [](int, int) {}, [] { return false; });
+    ASSERT_TRUE(compacted) << compacted.error().format();
+    const auto original_tail = agent::message_json_object(tail);
+    ASSERT_TRUE(std::ranges::any_of(messages, [&](const auto& message) {
+        return agent::message_json_object(message) == original_tail;
+    }));
+    const auto checkpoint_record = runtime::native_agent_store().get("native-signed-tail");
+    ASSERT_TRUE(checkpoint_record);
+    const auto restored_messages = agent::resume_messages_from_sidechain_entries(checkpoint_record->sidechain_entries);
+    ASSERT_TRUE(std::ranges::any_of(restored_messages, [&](const auto& message) {
+        return agent::message_json_object(message) == original_tail;
+    }));
+    loom::tools::AgentTool tool(config, 0, &registry);
+    auto result = tool.execute(resume_native_compaction_input("native-signed-tail"));
+    ASSERT_TRUE(result);
+    ASSERT_FALSE(result->is_error) << result_text(*result);
+    auto record = runtime::native_agent_store().get("native-signed-tail");
+    ASSERT_TRUE(record);
+    auto entries = record->sidechain_entries;
+    const auto expected = agent::replay_agent_context(entries);
+    ASSERT_TRUE(expected.checkpoint);
+    entries.push_back(R"({"kind":"context-checkpoint","version":1,"requestAnchor":99,"snapshot":[{"role":"user","content":[{"type":"text","text":"invalid"}]}]})");
+    entries.push_back(R"({"kind":"context-checkpoint","version":1,"snapshot":)");
+    const auto actual = agent::replay_agent_context(entries);
+    EXPECT_TRUE(actual.checkpoint);
+    ASSERT_EQ(actual.messages.size(), expected.messages.size());
+    for (std::size_t index = 0; index < actual.messages.size(); ++index)
+        EXPECT_EQ(agent::message_json_object(actual.messages[index]), agent::message_json_object(expected.messages[index]));
+}
+
+TEST(AgentWire, NativeCheckpointReplaysMixedTextImageAndDocumentWithoutLoss) {
+    AgentWireSandbox sandbox;
+    namespace agent = loom::tools::agent::utils;
+    const auto summary = api::Message::from_text("user", native_checkpoint_summary());
+    api::Message mixed;
+    mixed.role = "user";
+    mixed.content.push_back(api::ContentBlock{.type = api::ContentBlockType::Text, .text = "keep media exactly"});
+    mixed.content.push_back(api::ContentBlock{.type = api::ContentBlockType::Image,
+        .media_type = "image/png", .image_data = "image-base64-exact"});
+    mixed.content.push_back(api::ContentBlock{.type = api::ContentBlockType::Document,
+        .media_type = "application/pdf", .image_data = "document-base64-exact"});
+    auto record = runtime::make_native_agent_record("media-checkpoint", "general-purpose");
+    runtime::native_agent_store().upsert(std::move(record));
+    const auto checkpoint = std::format(
+        R"({{"kind":"context-checkpoint","version":1,"requestAnchor":1,"snapshot":[{},{}]}})",
+        agent::message_json_object(summary), agent::message_json_object(mixed));
+    ASSERT_TRUE(runtime::native_agent_store().append_checkpoint_checked("media-checkpoint", 0, checkpoint));
+    runtime::native_agent_store().clear_for_testing();
+    const auto restored = runtime::load_native_agent_record("media-checkpoint");
+    ASSERT_TRUE(restored);
+    const auto replay = agent::replay_agent_context(restored->sidechain_entries);
+    ASSERT_TRUE(replay.checkpoint);
+    ASSERT_EQ(replay.messages.size(), 2u);
+    ASSERT_EQ(replay.messages[1].content.size(), 3u);
+    EXPECT_EQ(agent::message_json_object(replay.messages[1]), agent::message_json_object(mixed));
+    EXPECT_EQ(replay.messages[1].content[1].type, api::ContentBlockType::Image);
+    EXPECT_EQ(replay.messages[1].content[2].type, api::ContentBlockType::Document);
+}
+
+TEST(AgentWire, FailedSummaryDoesNotPublishCheckpointOrContinueBusinessRequest) {
+    for (const auto protocol : {"messages", "openai"}) {
+        for (const auto mode : {"empty", "truncated", "open-block", "unauthorized"}) {
+            SCOPED_TRACE(std::format("{} {}", protocol, mode));
+            AgentWireSandbox sandbox;
+            seed_native_compaction_history("native-summary-failure");
+            AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+                EXPECT_TRUE(native_summary_request(request));
+                if (std::string_view(mode) == "unauthorized") {
+                    response.status = 401;
+                    response.set_content(R"({"error":{"type":"authentication_error","message":"not authorized"}})",
+                        "application/json");
+                } else if (std::string_view(mode) == "open-block") {
+                    auto stream = messages_text(native_checkpoint_summary());
+                    const auto start = stream.find("event: content_block_stop");
+                    const auto end = stream.find("event: message_delta", start);
+                    stream.erase(start, end - start);
+                    // OpenAI's adapter produces balanced blocks itself; use a
+                    // missing terminator to exercise its incomplete response path.
+                    response.set_content(std::string_view(protocol) == "openai"
+                        ? openai_frame(R"({"choices":[{"delta":{"content":"partial"},"finish_reason":"stop"}]})")
+                        : stream, "text/event-stream");
+                } else if (std::string_view(mode) == "truncated") {
+                    response.set_content(std::string_view(protocol) == "openai"
+                        ? openai_frame(R"({"choices":[{"delta":{"content":"partial"},"finish_reason":"length"}]})") + openai_frame("[DONE]")
+                        : "event: message_start\ndata: {\"message\":{\"id\":\"truncated\"}}\n\n"
+                          "event: message_delta\ndata: {\"delta\":{\"stop_reason\":\"max_tokens\"}}\n\n"
+                          "event: message_stop\ndata: {}\n\n", "text/event-stream");
+                } else {
+                    response.set_content(std::string_view(protocol) == "openai" ? openai_text("") : messages_text(""),
+                        "text/event-stream");
+                }
+            });
+            loom::core::ToolRegistry registry;
+            registry.register_tool(std::make_unique<WireProbeTool>());
+            loom::tools::AgentConfig config;
+            config.default_model = "wire-model";
+            config.api_context = native_compaction_context(server, protocol);
+            loom::tools::AgentTool tool(config, 0, &registry);
+            auto result = tool.execute(resume_native_compaction_input("native-summary-failure"));
+            ASSERT_TRUE(result);
+            EXPECT_TRUE(result->is_error);
+            EXPECT_EQ(server.bodies().size(), 1u);
+            EXPECT_EQ(tool.last_run_turns(), 0);
+            const auto record = runtime::native_agent_store().get("native-summary-failure");
+            ASSERT_TRUE(record);
+            EXPECT_FALSE(std::ranges::any_of(record->sidechain_entries, [](const auto& entry) {
+                return entry.find("context-checkpoint") != std::string::npos;
+            }));
+        }
+    }
+}
+
+TEST(AgentWire, CancellationDuringSummaryPreservesHistoryAndPublishesOneTerminalNotification) {
+    for (const auto protocol : {"messages", "openai"}) {
+        SCOPED_TRACE(protocol);
+        AgentWireSandbox sandbox;
+        seed_native_compaction_history("native-summary-cancel");
+        std::atomic<bool> release{false};
+        AgentWireServer server([&](const auto&, auto& response, std::size_t) {
+            const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+            while (!release.load() && std::chrono::steady_clock::now() < deadline)
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            response.set_content(messages_text(native_checkpoint_summary()), "text/event-stream");
+        });
+        loom::core::ToolRegistry registry;
+        registry.register_tool(std::make_unique<WireProbeTool>());
+        loom::tools::AgentConfig config;
+        config.default_model = "wire-model";
+        config.parent_session_id = "summary-cancel-session";
+        config.api_context = native_compaction_context(server, protocol);
+        loom::tools::AgentTool tool(config, 0, &registry);
+        auto input = loom::core::ToolInput::from_json(
+            R"({"prompt":"Complete current request verbatim","agent_id":"native-summary-cancel","resume_existing":true,"run_in_background":true})");
+        auto result = tool.execute(input);
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error);
+        ASSERT_TRUE(server.wait_for_requests(1));
+        runtime::native_agent_store().request_cancel("native-summary-cancel", "cancel summary probe");
+        runtime::native_agent_store().wait_for_background_agents();
+        release.store(true);
+        const auto record = runtime::native_agent_store().get("native-summary-cancel");
+        ASSERT_TRUE(record);
+        EXPECT_EQ(record->status, runtime::NativeAgentStatus::Cancelled);
+        EXPECT_FALSE(std::ranges::any_of(record->sidechain_entries, [](const auto& entry) {
+            return entry.find("context-checkpoint") != std::string::npos;
+        }));
+        auto events = runtime::native_agent_store().take_pending_task_events("summary-cancel-session");
+        EXPECT_EQ(events.size(), 1u);
+        EXPECT_TRUE(runtime::native_agent_store().take_pending_task_events("summary-cancel-session").empty());
+    }
+}
+
+TEST(AgentWire, SummaryInBandOverflowReducesChunkAndRetriesWithinSharedBounds) {
+    AgentWireSandbox sandbox;
+    seed_native_compaction_history("summary-inband-overflow");
+    int summaries = 0;
+    std::vector<std::size_t> sizes;
+    AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+        if (!native_summary_request(request)) {
+            response.set_content(openai_text("chunk recovery complete"), "text/event-stream");
+            return;
+        }
+        sizes.push_back(request.body.size());
+        if (++summaries == 1) {
+            response.set_content(openai_frame(R"({"error":{"type":"invalid_request_error","code":"context_length_exceeded","message":"summary input too long"}})"),
+                "text/event-stream");
+        } else response.set_content(openai_text(native_checkpoint_summary()), "text/event-stream");
+    });
+    loom::core::ToolRegistry registry;
+    registry.register_tool(std::make_unique<WireProbeTool>());
+    loom::tools::AgentConfig config;
+    config.default_model = "wire-model";
+    config.max_turns = 1;
+    config.api_context = native_compaction_context(server, "openai");
+    loom::tools::AgentTool tool(config, 0, &registry);
+    const auto result = tool.execute(resume_native_compaction_input("summary-inband-overflow"));
+    ASSERT_TRUE(result);
+    ASSERT_FALSE(result->is_error) << result_text(*result);
+    ASSERT_GE(sizes.size(), 2u);
+    EXPECT_LT(sizes[1], sizes[0]);
+    EXPECT_LE(summaries, 16);
+    EXPECT_EQ(tool.last_run_turns(), 1);
+}
+
+TEST(AgentWire, ForkDirectiveAnchorDoesNotMoveWhenWorktreeNoticeIsAppended) {
+    AgentWireSandbox sandbox;
+    namespace agent = loom::tools::agent::utils;
+    loom::tools::agent::AgentToolRequest request;
+    request.prompt = "Keep the actual fork directive verbatim";
+    request.subagent_type = "general-purpose";
+    request.parent_assistant_message_entries = {R"({"role":"assistant","content":[{"type":"text","text":"parent result"}]})"};
+    const auto plan = loom::tools::agent::build_agent_execution_plan(request, loom::tools::AgentConfig{});
+    ASSERT_TRUE(plan) << plan.error();
+    ASSERT_TRUE(plan->fork_request_anchor);
+    auto messages = plan->fork_context_messages;
+    const auto anchor_text = agent::message_content_text(messages[*plan->fork_request_anchor]);
+    messages.push_back(api::Message::from_text("user", "Worktree notice: " + std::string(24'000, 'w')));
+    auto anchor = plan->fork_request_anchor;
+    auto record = runtime::make_native_agent_record("fork-anchor-checkpoint", "general-purpose");
+    runtime::native_agent_store().upsert(std::move(record));
+    for (std::size_t i = 0; i < messages.size(); ++i)
+        agent::append_agent_sidechain_message("fork-anchor-checkpoint", messages[i], std::nullopt, anchor == i);
+    AgentWireServer server([](const auto&, auto& response, std::size_t) {
+        response.set_content(messages_text(native_checkpoint_summary()), "text/event-stream");
+    });
+    auto context = native_compaction_context(server, "messages");
+    api::MessagesClient client(agent::agent_api_client_config(context));
+    api::CreateMessageRequest input;
+    input.model = "wire-model";
+    input.messages = messages;
+    loom::services::compact::UsageObservation observed;
+    const auto result = agent::compact_agent_context(client, input, context, "fork-anchor-checkpoint",
+        messages, anchor, observed, "fork-anchor-test", [](int, int) {}, [] { return false; });
+    ASSERT_TRUE(result) << result.error().format();
+    ASSERT_TRUE(anchor);
+    EXPECT_EQ(agent::message_content_text(messages[*anchor]), anchor_text);
+    EXPECT_NE(anchor_text.find(request.prompt), std::string::npos);
+}
+
+TEST(AgentWire, CheckpointResumeFiltersDanglingCallsAndKeepsCompletedToolProgress) {
+    for (const auto protocol : {"messages", "openai"}) {
+        SCOPED_TRACE(protocol);
+        AgentWireSandbox sandbox;
+        namespace agent = loom::tools::agent::utils;
+        const std::string id = "checkpoint-dangling-resume";
+        auto record = runtime::make_native_agent_record(id, "general-purpose");
+        record.status = runtime::NativeAgentStatus::Completed;
+        auto& store = runtime::native_agent_store();
+        store.upsert(std::move(record));
+        api::Message completed;
+        completed.role = "assistant";
+        completed.content.push_back(api::ContentBlock{.type = api::ContentBlockType::ToolUse,
+            .tool_use_id = "already-completed-call", .tool_name = "WireProbe", .tool_input_json = R"({"value":"completed"})"});
+        api::Message observation;
+        observation.role = "user";
+        observation.content.push_back(api::ContentBlock{.type = api::ContentBlockType::ToolResult,
+            .text = "completed result 47", .tool_use_id = "already-completed-call"});
+        const auto checkpoint = std::format(
+            R"({{"kind":"context-checkpoint","version":1,"requestAnchor":1,"snapshot":[{},{},{},{}]}})",
+            agent::message_json_object(api::Message::from_text("user", native_checkpoint_summary())),
+            agent::message_json_object(api::Message::from_text("user", "Current checkpoint task")),
+            agent::message_json_object(completed), agent::message_json_object(observation));
+        ASSERT_TRUE(store.append_checkpoint_checked(id, 0, checkpoint));
+        api::Message dangling = completed;
+        dangling.content.front().tool_use_id = "dangling-call-after-checkpoint";
+        agent::append_agent_sidechain_message(id, dangling);
+        store.clear_for_testing();
+        AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+            EXPECT_FALSE(native_summary_request(request));
+            EXPECT_EQ(request.body.find("dangling-call-after-checkpoint"), std::string::npos);
+            EXPECT_NE(request.body.find("already-completed-call"), std::string::npos);
+            EXPECT_NE(request.body.find("completed result 47"), std::string::npos);
+            response.set_content(std::string_view(protocol) == "openai" ? openai_text("continued") : messages_text("continued"),
+                "text/event-stream");
+        });
+        loom::core::ToolRegistry registry;
+        auto probe = std::make_unique<WireProbeTool>();
+        auto* executions = probe.get();
+        registry.register_tool(std::move(probe));
+        loom::tools::AgentConfig config;
+        config.default_model = "wire-model";
+        config.api_context = native_compaction_context(server, protocol);
+        loom::tools::AgentTool tool(config, 0, &registry);
+        const auto result = tool.execute(resume_native_compaction_input(id));
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error) << result_text(*result);
+        EXPECT_TRUE(executions->inputs.empty());
+        EXPECT_EQ(server.bodies().size(), 1u);
+    }
+}
+
+TEST(AgentWire, FreshForkHistoryCannotSuppressOrReplaceTheCurrentDirective) {
+    for (const auto protocol : {"messages", "openai"}) {
+        SCOPED_TRACE(protocol);
+        AgentWireSandbox sandbox;
+        const auto old_directive = runtime::build_fork_child_message("Old inherited request");
+        json::JsonMutDoc old_doc;
+        auto old = old_doc.object();
+        old.add("role", old_doc.string("user"));
+        old.add("content", old_doc.string(old_directive));
+        old.add("requestAnchor", old_doc.boolean(true));
+        old_doc.set_root(old);
+        loom::tools::agent::AgentToolRequest request;
+        request.prompt = "Actual new fork request must remain verbatim";
+        request.subagent_type = "general-purpose";
+        request.fork_context_entries = {old_doc.to_string()};
+        auto plan = loom::tools::agent::build_agent_execution_plan(request, loom::tools::AgentConfig{});
+        ASSERT_TRUE(plan) << plan.error();
+        EXPECT_FALSE(plan->fork_context_includes_prompt);
+        request.parent_assistant_message_entries = {R"({"role":"assistant","content":"parent progress"})"};
+        plan = loom::tools::agent::build_agent_execution_plan(request, loom::tools::AgentConfig{});
+        ASSERT_TRUE(plan) << plan.error();
+        ASSERT_TRUE(plan->fork_request_anchor);
+        EXPECT_NE(loom::tools::agent::utils::message_content_text(
+            plan->fork_context_messages[*plan->fork_request_anchor]).find(request.prompt), std::string::npos);
+        AgentWireServer server([&](const auto& input, auto& response, std::size_t) {
+            EXPECT_NE(input.body.find(request.prompt), std::string::npos);
+            response.set_content(std::string_view(protocol) == "openai" ? openai_text("fork continued") : messages_text("fork continued"),
+                "text/event-stream");
+        });
+        json::JsonMutDoc doc;
+        auto root = doc.object();
+        root.add("prompt", doc.string(request.prompt));
+        root.add("agent_id", doc.string("fresh-explicit-fork"));
+        auto inherited = doc.array();
+        inherited.append(doc.string(old_doc.to_string()));
+        root.add("fork_context", inherited);
+        doc.set_root(root);
+        loom::core::ToolRegistry registry;
+        registry.register_tool(std::make_unique<WireProbeTool>());
+        loom::tools::AgentConfig config;
+        config.default_model = "wire-model";
+        config.api_context = native_compaction_context(server, protocol);
+        loom::tools::AgentTool tool(config, 0, &registry);
+        const auto result = tool.execute(loom::core::ToolInput::from_json(doc.to_string()));
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error) << result_text(*result);
+        EXPECT_EQ(server.bodies().size(), 1u);
+    }
+}
+
+TEST(AgentWire, StoppedExecutionOwnerCannotPublishCheckpoint) {
+    AgentWireSandbox sandbox;
+    auto& store = runtime::native_agent_store();
+    auto record = runtime::make_native_agent_record("stopped-checkpoint-owner", "general-purpose");
+    std::stop_source owner;
+    store.begin_execution(std::move(record), owner.get_token());
+    owner.request_stop();
+    ASSERT_TRUE(store.is_cancel_requested("stopped-checkpoint-owner"));
+    EXPECT_FALSE(store.append_checkpoint_checked("stopped-checkpoint-owner", 0, "must not publish"));
+    const auto after = store.get("stopped-checkpoint-owner");
+    ASSERT_TRUE(after);
+    EXPECT_TRUE(after->sidechain_entries.empty());
+    store.end_execution("stopped-checkpoint-owner");
+}
+
+TEST(AgentWire, LaterProgressWriteFailureCannotTruncateCommittedCheckpoint) {
+    AgentWireSandbox sandbox;
+    auto record = runtime::make_native_agent_record("later-progress", "general-purpose");
+    auto& store = runtime::native_agent_store();
+    store.upsert(std::move(record));
+    const auto checkpoint = std::format(
+        R"({{"kind":"context-checkpoint","version":1,"requestAnchor":null,"snapshot":[{}]}})",
+        loom::tools::agent::utils::message_json_object(api::Message::from_text("user", native_checkpoint_summary())));
+    ASSERT_TRUE(store.append_checkpoint_checked("later-progress", 0, checkpoint));
+    const auto path = runtime::agent_record_path("later-progress");
+    const auto bytes = std::filesystem::file_size(path);
+    const auto backup = path.string() + ".saved";
+    std::filesystem::rename(path, backup);
+    std::filesystem::create_symlink(backup, path);
+    store.update_progress("later-progress", 0.5);
+    EXPECT_EQ(std::filesystem::file_size(backup), bytes);
+    const auto loaded = runtime::load_native_agent_record_from_path(backup);
+    ASSERT_TRUE(loaded);
+    ASSERT_EQ(loaded->sidechain_entries.size(), 1u);
+    EXPECT_NE(loaded->sidechain_entries.front().find("context-checkpoint"), std::string::npos);
+    std::filesystem::remove(path);
+    std::filesystem::rename(backup, path);
+}
+
+TEST(CompactionLive, NativeChildPreservesLateConstraintAndCompletedToolProgress) {
+    const auto* settings_path = std::getenv("LOOM_COMPACTION_LIVE_SETTINGS");
+    if (!settings_path || std::string_view(settings_path).empty())
+        GTEST_SKIP() << "Set LOOM_COMPACTION_LIVE_SETTINGS to run paid native-child validation";
+    const auto* evidence_path = std::getenv("LOOM_COMPACTION_LIVE_EVIDENCE");
+    ASSERT_NE(evidence_path, nullptr);
+    const auto evidence = std::filesystem::absolute(evidence_path) / "child";
+    std::filesystem::create_directories(evidence);
+    AgentWireSandbox sandbox;
+    loom::core::ConfigManager manager{std::filesystem::path(settings_path)};
+    ASSERT_TRUE(manager.load(loom::core::LoadOptions{.quiet = true}));
+    loom::query::AssemblyOverrides overrides;
+    overrides.cwd = sandbox.path.string();
+    if (const auto* wire = std::getenv("LOOM_COMPACTION_LIVE_WIRE_API")) overrides.wire_api = wire;
+    auto resolved = loom::query::resolve_engine_config(manager.settings(), overrides);
+    ASSERT_TRUE(resolved) << resolved.error().format();
+    if (const auto* token = std::getenv("LOOM_COMPACTION_LIVE_AUTH_TOKEN")) resolved->auth_token = token;
+    else if (const auto* token = std::getenv("LOOM_AUTH_TOKEN")) resolved->auth_token = token;
+    ASSERT_FALSE(resolved->api_key.empty() && resolved->auth_token.empty());
+    auto context = std::make_shared<loom::core::ApiExecutionContext>(
+        *loom::core::make_api_execution_context(*resolved));
+    context->context_window_tokens = 8192;
+    context->context_output_tokens = 1024;
+    namespace agent = loom::tools::agent::utils;
+    const auto nonce = "LATE_CHILD_CONSTRAINT_" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    std::string background;
+    for (int i = 0; i < 80; ++i) background += std::format(
+        "Observation {}: use existing interfaces for reversible local verification and preserve task progress.\n", i);
+    const auto constraint = "Never commit, push or publish. Repeat the exact marker " + nonce +
+        " and the completed arithmetic result in the final answer.";
+    auto record = runtime::make_native_agent_record("live-child-checkpoint", "general-purpose");
+    record.status = runtime::NativeAgentStatus::Completed;
+    runtime::native_agent_store().upsert(std::move(record));
+    std::vector<api::Message> messages;
+    auto append = [&](api::Message message, bool anchor = false) {
+        agent::append_agent_sidechain_message("live-child-checkpoint", message, std::nullopt, anchor);
+        messages.push_back(std::move(message));
+    };
+    append(api::Message::from_text("user", background + constraint), true);
+    api::Message call;
+    call.role = "assistant";
+    call.content.push_back(api::ContentBlock{.type = api::ContentBlockType::ToolUse,
+        .tool_use_id = "live-child-sum", .tool_name = "CheckpointArithmetic", .tool_input_json = "{}"});
+    append(std::move(call));
+    loom::core::ToolRegistry registry;
+    registry.register_tool(std::make_unique<NativeArithmeticProbe>());
+    const auto arithmetic = registry.execute("CheckpointArithmetic", loom::core::ToolInput::from_json("{}"));
+    ASSERT_TRUE(arithmetic);
+    ASSERT_FALSE(arithmetic->is_error);
+    ASSERT_EQ(arithmetic->content.front().text, "47");
+    api::Message completed;
+    completed.role = "user";
+    completed.content.push_back(api::ContentBlock{.type = api::ContentBlockType::ToolResult,
+        .text = arithmetic->content.front().text, .tool_use_id = "live-child-sum"});
+    append(std::move(completed));
+    append(api::Message::from_text("assistant", background + "Completed CheckpointArithmetic: 47."));
+    append(api::Message::from_text("user", "CURRENT_CHILD_REQUEST_EXACT: report the marker, result and prohibition."), true);
+    std::optional<std::size_t> anchor = messages.size() - 1;
+    loom::services::compact::UsageObservation observed;
+    api::MessagesClient client(agent::agent_api_client_config(context));
+    api::CreateMessageRequest request;
+    request.model = resolved->model_params.model;
+    request.system_prompt = "Execute only the local verification task. Never commit, push, publish or modify files.";
+    request.messages = messages;
+    request.max_tokens = 1024;
+    int summary_tokens = 0;
+    const auto compacted = agent::compact_agent_context(client, request, context,
+        "live-child-checkpoint", messages, anchor, observed, "manual-live",
+        [&](int input, int output) { summary_tokens += input + output; }, [] { return false; });
+    ASSERT_TRUE(compacted) << compacted.error().format();
+    const auto summary = agent::message_content_text(messages.front());
+    std::ofstream(evidence / "checkpoint.txt") << summary;
+    ASSERT_NE(summary.find(nonce), std::string::npos) << summary;
+    ASSERT_NE(summary.find("47"), std::string::npos) << summary;
+    for (const auto word : {"commit", "push", "publish"}) {
+        auto lower = summary;
+        std::ranges::transform(lower, lower.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+        ASSERT_TRUE(lower.find(word) != std::string::npos ||
+            (std::string_view(word) == "publish" && lower.find("publication") != std::string::npos))
+            << word << ": " << summary;
+    }
+    ASSERT_TRUE(anchor);
+    EXPECT_EQ(agent::message_content_text(messages[*anchor]),
+        "CURRENT_CHILD_REQUEST_EXACT: report the marker, result and prohibition.");
+    loom::tools::AgentConfig config;
+    config.default_model = request.model;
+    config.max_turns = 1;
+    config.api_context = context;
+    loom::tools::AgentTool tool(config, 0, &registry);
+    auto answer = tool.execute(loom::core::ToolInput::from_json(
+        R"({"agent_id":"live-child-checkpoint","resume_existing":true,"prompt":"Continue CURRENT_CHILD_REQUEST_EXACT. Return the exact preserved marker, arithmetic result and prohibition. Do not use tools."})"));
+    ASSERT_TRUE(answer);
+    ASSERT_FALSE(answer->is_error) << result_text(*answer);
+    const auto text = result_text(*answer);
+    std::ofstream(evidence / "final-answer.txt") << text;
+    EXPECT_NE(text.find(nonce), std::string::npos) << text;
+    EXPECT_NE(text.find("47"), std::string::npos) << text;
+    for (const auto word : {"commit", "push", "publish"}) {
+        auto lower = text;
+        std::ranges::transform(lower, lower.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+        EXPECT_TRUE(lower.find(word) != std::string::npos ||
+            (std::string_view(word) == "publish" && lower.find("publication") != std::string::npos))
+            << word << ": " << text;
+    }
+    const auto persisted = runtime::native_agent_store().get("live-child-checkpoint");
+    ASSERT_TRUE(persisted);
+    std::ofstream trace(evidence / "sidechain.jsonl");
+    for (const auto& entry : persisted->sidechain_entries) trace << entry << '\n';
+    std::ofstream(evidence / "manifest.txt") << "model=" << request.model << "\nwire=" << context->wire_api
+        << "\nsummary_tokens=" << summary_tokens << "\nbusiness_tokens=" << tool.last_run_tokens() << '\n';
 }
 
 TEST(AgentWire, BackgroundAgentsShareContextAndResumeStructuredHistory) {

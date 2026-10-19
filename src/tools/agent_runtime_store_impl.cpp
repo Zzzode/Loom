@@ -703,16 +703,18 @@ void NativeAgentStore::append_sidechain_message(
     std::string_view role,
     std::string_view content_json,
     std::string_view fallback_text,
-    std::optional<std::string_view> transcript_entry
+    std::optional<std::string_view> transcript_entry,
+    bool request_anchor
 ) {
         update(agent_id, [&](NativeAgentRecord& record) {
             if (role == "assistant") record.live_text.clear();
-            record.sidechain_entries.push_back(make_sidechain_jsonl_entry(
-                record.agent_id,
-                record.sidechain_entries.size(),
-                role,
-                content_json,
-                fallback_text));
+            auto entry = make_sidechain_jsonl_entry(record.agent_id,
+                record.sidechain_entries.size(), role, content_json, fallback_text);
+            if (request_anchor) {
+                entry.pop_back();
+                entry += R"(,"requestAnchor":true})";
+            }
+            record.sidechain_entries.push_back(std::move(entry));
             if (transcript_entry) record.transcript.emplace_back(*transcript_entry);
         });
 }
@@ -722,6 +724,30 @@ void NativeAgentStore::append_sidechain_entry(std::string_view agent_id, std::st
         update(agent_id, [&](NativeAgentRecord& record) {
             record.sidechain_entries.push_back(std::move(entry));
         });
+}
+
+std::expected<void, std::string> NativeAgentStore::append_checkpoint_checked(
+    std::string_view agent_id, std::size_t expected_entries, std::string entry) {
+    {
+        std::scoped_lock lock(mutex_);
+        const auto found = records_.find(std::string(agent_id));
+        if (found == records_.end()) return std::unexpected("Agent checkpoint target disappeared");
+        const auto active = active_executions_.find(std::string(agent_id));
+        if (found->second.cancel_requested ||
+            (active != active_executions_.end() && active->second.owner.stop_requested()))
+            return std::unexpected("Agent cancelled before checkpoint commit");
+        if (found->second.sidechain_entries.size() != expected_entries) {
+            return std::unexpected("Agent history changed during compaction");
+        }
+        auto candidate = found->second;
+        candidate.sidechain_entries.push_back(std::move(entry));
+        candidate.updated_at = std::chrono::system_clock::now();
+        auto persisted = persist_native_agent_checkpoint(candidate);
+        if (!persisted) return std::unexpected(persisted.error());
+        found->second = std::move(candidate);
+    }
+    notify_changed();
+    return {};
 }
 
 void NativeAgentStore::update_progress(std::string_view agent_id, double progress) {

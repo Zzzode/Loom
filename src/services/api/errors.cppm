@@ -44,6 +44,7 @@ struct ApiErrorDetails {
 
     // Overloaded error specific
     std::optional<bool> is_retryable;
+    std::string error_code;
 
     [[nodiscard]] std::string to_string() const {
         return std::format("[HTTP {}] {}: {} - {}",
@@ -304,6 +305,9 @@ private:
             error.error_type = std::string(type.as_str());
         } else {
             error.error_type = "api_error";
+        }
+        if (auto code = error_obj.get("code"); code.is_str()) {
+            error.error_code = std::string(code.as_str());
         }
         if (auto message = error_obj.get("message"); message.valid() && message.is_str()) {
             error.error_message = std::string(message.as_str());

@@ -39,15 +39,7 @@ namespace loom::tools::agent::utils {
 [[nodiscard]] std::vector<Message> fork_context_messages_from_entries(
     const std::vector<std::string>& entries
 ) {
-    std::vector<Message> messages;
-    for (const auto& entry : entries) {
-        auto parsed = loom::utils::json::parse(entry);
-        if (!parsed) continue;
-        if (auto message = message_from_json_value(parsed->root())) {
-            messages.push_back(std::move(*message));
-        }
-    }
-    return messages;
+    return replay_agent_context(entries).messages;
 }
 
 [[nodiscard]] std::vector<std::string> tool_use_ids_in_message(const Message& message) {
@@ -265,7 +257,7 @@ void apply_resume_content_replacements(
 [[nodiscard]] std::vector<Message> resume_messages_from_sidechain_entries(
     const std::vector<std::string>& entries
 ) {
-    auto messages = fork_context_messages_from_entries(entries);
+    auto messages = replay_agent_context(entries).messages;
     // migrated edge case: drop assistant messages with any tool_use that
     // never received a tool_result. filter_resume_unresolved_tool_use_messages
     // handles the case where an assistant message's tool_uses are *all*
@@ -280,12 +272,12 @@ void apply_resume_content_replacements(
 }
 
 void append_agent_sidechain_message(std::string_view agent_id, const Message& message,
-    std::optional<std::string_view> transcript_entry) {
+    std::optional<std::string_view> transcript_entry, bool request_anchor) {
     loom::tools::agent_runtime::native_agent_store().append_sidechain_message(
         agent_id,
         message.role,
         message_content_sidechain_json(message),
-        message_content_text(message), transcript_entry);
+        message_content_text(message), transcript_entry, request_anchor);
 }
 
 } // namespace loom::tools::agent::utils

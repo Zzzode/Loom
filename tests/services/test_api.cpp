@@ -639,6 +639,33 @@ TEST(ApiStreaming, StreamParserAccumulatesTextDeltas) {
     EXPECT_EQ(parser.statistics().total_events, 1);
 }
 
+TEST(ApiStreaming, TerminalPublicationDoesNotDrainFramesAfterAnEarlierEmptyPoll) {
+    using namespace loom::services::api;
+    StreamParser parser;
+    parser.start();
+    const auto first = parser.next_event();
+    ASSERT_TRUE(first);
+    ASSERT_FALSE(first->has_value());
+    // Model the producer publishing its final frames between the two consumer polls.
+    parser.feed("event: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":47}}\n\n"
+                "event: message_stop\ndata: {}\n\n");
+    parser.finish();
+    ASSERT_TRUE(parser.is_finished());
+    const auto usage = parser.next_event();
+    ASSERT_TRUE(usage);
+    ASSERT_TRUE(usage->has_value());
+    EXPECT_EQ((**usage).type, StreamEventType::MessageDelta);
+    ASSERT_TRUE((**usage).message_delta.usage.output_tokens);
+    EXPECT_EQ(*(**usage).message_delta.usage.output_tokens, 47);
+    const auto stop = parser.next_event();
+    ASSERT_TRUE(stop);
+    ASSERT_TRUE(stop->has_value());
+    EXPECT_EQ((**stop).type, StreamEventType::MessageStop);
+    const auto drained = parser.next_event();
+    ASSERT_TRUE(drained);
+    EXPECT_FALSE(drained->has_value());
+}
+
 // End of file
 
 TEST(ApiClient, ToolResultSerializerEmitsOnlyTrueErrorFlags) {

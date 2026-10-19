@@ -240,6 +240,35 @@ public:
 };
 } // namespace
 
+std::vector<loom::core::Message> agent_core_messages(const std::vector<Message>& messages) {
+    api::CreateMessageRequest request;
+    request.messages = messages;
+    auto projected = wire_input(request).messages;
+    for (std::size_t index = 0; index < messages.size(); ++index) {
+        std::visit([&](auto& value) {
+            for (std::size_t block = 0; block < messages[index].content.size(); ++block) {
+                if (messages[index].content[block].type == api::ContentBlockType::RedactedThinking)
+                    value.content[block] = loom::core::ThinkingBlock{messages[index].content[block].thinking, {}};
+            }
+        }, projected[index]);
+    }
+    return projected;
+}
+
+loom::utils::Result<std::size_t> agent_serialized_request_size(api::MessagesClient& client,
+    const CreateMessageRequest& request,
+    const std::shared_ptr<const loom::core::ApiExecutionContext>& context) {
+    const auto protocol = context ? context->wire_api
+        : (std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages");
+    if (wire::wire_api_from_string(protocol) != wire::WireApi::OpenAi)
+        return client.prepared_stream_request_size(request);
+    wire::OpenAiWireBackend backend(client.config().base_url);
+    auto prepared = backend.prepare(wire_input(request));
+    if (!prepared) return std::unexpected(loom::utils::Error(
+        loom::utils::ErrorCode::invalid_argument, prepared.error()));
+    return prepared->body.size();
+}
+
 loom::services::api::MessagesClient::Config agent_api_client_config(
     const std::shared_ptr<const loom::core::ApiExecutionContext>& context) {
     if (!context) return loom::services::api::get_default_client().config();

@@ -4,6 +4,9 @@ module;
 module loom.orchestration.agent;
 
 import std;
+import loom.types.types;
+import loom.services.api.errors;
+import loom.services.compact.context_compaction;
 
 namespace loom::tools::agent {
 
@@ -310,11 +313,13 @@ void AgentTool::record_run_usage(int input_tokens, int output_tokens) noexcept {
 
 void AgentTool::append_queued_agent_messages(
         const AgentExecutionPlan& plan,
-        std::vector<Message>& messages
+        std::vector<Message>& messages,
+        std::optional<std::size_t>& request_anchor
     ) const {
         for (auto& pending_message : loom::tools::agent_runtime::native_agent_store().take_pending_messages(plan.agent_id)) {
             auto queued_message = Message::from_text("user", pending_message);
-            append_agent_sidechain_message(plan.agent_id, queued_message);
+            request_anchor = messages.size();
+            append_agent_sidechain_message(plan.agent_id, queued_message, std::nullopt, true);
             messages.push_back(std::move(queued_message));
         }
         SendMessageTool inbox(plan.agent_id);
@@ -326,7 +331,8 @@ void AgentTool::append_queued_agent_messages(
                     message->from_agent,
                     message_priority_name(message->priority),
                     message->content));
-            append_agent_sidechain_message(plan.agent_id, queued_message);
+            request_anchor = messages.size();
+            append_agent_sidechain_message(plan.agent_id, queued_message, std::nullopt, true);
             messages.push_back(std::move(queued_message));
         }
     }
@@ -386,46 +392,57 @@ Result<ToolResult> AgentTool::run_agent_loop(const AgentExecutionPlan& plan) {
 
         MessagesClient client(utils::agent_api_client_config(plan.api_context));
 
-        // Build initial messages
+        // Restore the committed working snapshot before adding this run's input.
+        auto replay = resumed_record ? utils::replay_agent_context(resumed_record->sidechain_entries)
+                                     : utils::AgentReplayContext{};
+        const bool resumed_history = !replay.messages.empty();
         std::vector<Message> messages;
-        for (const auto& context_message : plan.fork_context_messages) {
-            append_agent_sidechain_message(plan.agent_id, context_message);
-            messages.push_back(context_message);
-        }
-        for (const auto& skill_message : plan.preloaded_skill_messages) {
-            auto message = Message::from_text("user", skill_message);
-            append_agent_sidechain_message(plan.agent_id, message);
-            messages.push_back(std::move(message));
+        std::optional<std::size_t> request_anchor;
+        if (!replay.messages.empty()) {
+            std::optional<std::string> anchor_content;
+            if (replay.request_anchor && *replay.request_anchor < replay.messages.size())
+                anchor_content = utils::message_json_object(replay.messages[*replay.request_anchor]);
+            messages = resume_messages_from_sidechain_entries(resumed_record->sidechain_entries);
+            if (anchor_content) {
+                for (std::size_t index = 0; index < messages.size(); ++index)
+                    if (utils::message_json_object(messages[index]) == *anchor_content) request_anchor = index;
+            }
+        } else {
+            for (const auto& context_message : plan.fork_context_messages) {
+                const bool directive = plan.fork_request_anchor &&
+                    *plan.fork_request_anchor < plan.fork_context_messages.size() &&
+                    &context_message == &plan.fork_context_messages[*plan.fork_request_anchor];
+                if (directive) request_anchor = messages.size();
+                append_agent_sidechain_message(plan.agent_id, context_message, std::nullopt, directive);
+                messages.push_back(context_message);
+            }
+            for (const auto& skill_message : plan.preloaded_skill_messages) {
+                auto message = Message::from_text("user", skill_message);
+                append_agent_sidechain_message(plan.agent_id, message);
+                messages.push_back(std::move(message));
+            }
+            if (resumed_record && !resumed_record->transcript.empty()) {
+                auto message = Message::from_text("user", format_resumed_agent_context(*resumed_record));
+                append_agent_sidechain_message(plan.agent_id, message);
+                messages.push_back(std::move(message));
+            }
         }
         const auto hook_message_start = messages.size();
         append_hook_additional_context_messages(messages, hook_additional_contexts);
-        for (std::size_t i = hook_message_start; i < messages.size(); ++i) {
+        for (std::size_t i = hook_message_start; i < messages.size(); ++i)
             append_agent_sidechain_message(plan.agent_id, messages[i]);
-        }
-        auto structured_resume_messages = resumed_record
-            ? resume_messages_from_sidechain_entries(resumed_record->sidechain_entries)
-            : std::vector<Message>{};
-        if (!structured_resume_messages.empty()) {
-            messages.insert(
-                messages.end(),
-                std::make_move_iterator(structured_resume_messages.begin()),
-                std::make_move_iterator(structured_resume_messages.end()));
-        } else if (resumed_record && !resumed_record->transcript.empty()) {
-            auto message = Message::from_text("user", format_resumed_agent_context(*resumed_record));
-            append_agent_sidechain_message(plan.agent_id, message);
-            messages.push_back(std::move(message));
-        }
-        if (plan.agent_mcp_context_message) {
+        if (plan.agent_mcp_context_message && !resumed_history) {
             auto message = Message::from_text("user", *plan.agent_mcp_context_message);
             append_agent_sidechain_message(plan.agent_id, message);
             messages.push_back(std::move(message));
         }
-        append_queued_agent_messages(plan, messages);
-        if (!plan.fork_context_includes_prompt) {
+        append_queued_agent_messages(plan, messages, request_anchor);
+        if (plan.resume_existing || !plan.fork_context_includes_prompt || !request_anchor) {
             auto prompt_message = Message::from_text("user", plan.prompt);
             // Publish the canonical message and its diagnostic projection together.
             // Observers must never materialize a fallback between the two writes.
-            append_agent_sidechain_message(plan.agent_id, prompt_message, "user: " + plan.prompt);
+            request_anchor = messages.size();
+            append_agent_sidechain_message(plan.agent_id, prompt_message, "user: " + plan.prompt, true);
             messages.push_back(std::move(prompt_message));
         }
         if (plan.critical_system_reminder && !plan.system_prompt_overridden) {
@@ -469,40 +486,22 @@ Result<ToolResult> AgentTool::run_agent_loop(const AgentExecutionPlan& plan) {
         } input_guard{input_store, plan.agent_id};
         (void)input_store.open_input(plan.agent_id);
 
+        loom::services::compact::UsageObservation observed;
         for (int turn = 0; turn < plan.max_turns; ++turn) {
             if (auto reason = cancel_if_requested(std::format("before turn {}", turn + 1))) {
                 return ToolResult::error(std::move(*reason));
             }
             update_turn_progress(turn, 0.0);
-            append_queued_agent_messages(plan, messages);
-            (void)apply_agent_tool_result_budget(
+            append_queued_agent_messages(plan, messages, request_anchor);
+            const auto budget_outcome = apply_agent_tool_result_budget(
                 plan.agent_id,
                 messages,
                 content_replacement_state,
                 content_replacement_skip_tools,
                 content_replacement_thresholds);
+            if (budget_outcome.newly_replaced) observed = {};
 
-            // Build request
             CreateMessageRequest req;
-            req.model = plan.model;
-            req.messages = messages;
-            req.max_tokens = 16384;
-            req.stream = true;
-            if (!plan.system_prompt.empty()) req.system_prompt = plan.system_prompt;
-            req.tools = api_tools_for_plan(plan);
-            apply_agent_effort_to_request(req, plan.effort);
-
-            // Perform streaming request
-            std::atomic_ref<int>(last_run_turns_).fetch_add(1, std::memory_order_relaxed);
-            auto stream_result = utils::create_agent_model_stream(client, req, plan.api_context);
-            if (!stream_result) {
-                return fail_agent(std::format(
-                    "Agent API call failed: {}", stream_result.error().message()));
-            }
-            update_turn_progress(turn, 0.05);
-
-            auto& parser = *stream_result;
-
             // Consume the stream and accumulate content blocks
             std::string text_content;
             std::vector<ContentBlock> tool_uses;
@@ -513,109 +512,192 @@ Result<ToolResult> AgentTool::run_agent_loop(const AgentExecutionPlan& plan) {
             bool message_stopped = false;
             int input_tokens = 0;
             int output_tokens = 0;
+            int cache_creation_tokens = 0;
+            int cache_read_tokens = 0;
 
-            while (true) {
-                if (auto reason = cancel_if_requested("while waiting for model stream")) {
-                    return ToolResult::error(std::move(*reason));
+            for (int attempt = 0; ; ++attempt) {
+                // Build request
+                req = {};
+                req.model = plan.model;
+                req.messages = messages;
+                req.max_tokens = plan.api_context ? static_cast<int>(plan.api_context->context_output_tokens) : 16384;
+                req.stream = true;
+                if (!plan.system_prompt.empty()) req.system_prompt = plan.system_prompt;
+                req.tools = api_tools_for_plan(plan);
+                apply_agent_effort_to_request(req, plan.effort);
+
+                const auto cancelled = [&] {
+                    return loom::tools::agent_runtime::native_agent_store().is_cancel_requested(plan.agent_id);
+                };
+                const auto compact_history = [&](std::string_view reason, bool payload = false) {
+                    return utils::compact_agent_context(client, req, plan.api_context, plan.agent_id,
+                        messages, request_anchor, observed, reason,
+                        [&](int input, int output) { record_run_usage(input, output); }, cancelled, payload);
+                };
+                if (attempt == 0 && (!plan.api_context || plan.api_context->context_auto_compact) &&
+                    utils::estimate_agent_context(req, request_anchor, observed) >=
+                        loom::services::compact::usable_input_tokens(utils::agent_context_policy(plan.api_context))) {
+                    auto compacted = compact_history("budget");
+                    if (!compacted) return fail_agent("Agent context compaction failed: " + compacted.error().message);
+                    req.messages = messages;
                 }
-                auto event_result = parser.next_event();
-                if (!event_result) {
+                const auto request_estimate = utils::estimate_agent_context(req, request_anchor);
+                // A summary and overflow retry do not consume an additional business turn.
+                if (attempt == 0)
+                    std::atomic_ref<int>(last_run_turns_).fetch_add(1, std::memory_order_relaxed);
+                auto stream_result = utils::create_agent_model_stream(client, req, plan.api_context);
+                if (!stream_result) {
                     return fail_agent(std::format(
-                        "Agent stream decode failed: {}", event_result.error().message()));
+                        "Agent API call failed: {}", stream_result.error().message()));
                 }
-                if (!event_result->has_value()) {
-                    if (parser.has_error()) {
-                        const auto error = parser.error_details();
-                        const auto error_text = error && !error->error_message.empty()
-                            ? error->error_message
-                            : std::string{"stream connection failed"};
-                        return fail_agent(std::format("Agent stream error: {}", error_text));
+                update_turn_progress(turn, 0.05);
+
+                auto& parser = *stream_result;
+
+                text_content.clear();
+                tool_uses.clear();
+                stop_reason.clear();
+                current_block = {};
+                accumulated_json.clear();
+                in_block = false;
+                message_stopped = false;
+                input_tokens = output_tokens = cache_creation_tokens = cache_read_tokens = 0;
+                std::optional<loom::services::api::errors::ApiErrorDetails> response_error;
+                while (true) {
+                    if (auto reason = cancel_if_requested("while waiting for model stream")) {
+                        return ToolResult::error(std::move(*reason));
                     }
-                    if (parser.is_finished()) break;
-                    // Brief wait for producer
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                    continue;
-                }
-
-                const auto& event = **event_result;
-
-                switch (event.type) {
-                    case StreamEventType::MessageStart:
-                        if (event.input_tokens) input_tokens = std::max(0, *event.input_tokens);
-                        update_turn_progress(turn, 0.10);
+                    auto event_result = parser.next_event();
+                    if (event_result && !event_result->has_value()) {
+                        if (!parser.is_finished()) {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                            continue;
+                        }
+                        // Terminal publication stabilizes the queue; drain a late final frame.
+                        event_result = parser.next_event();
+                    }
+                    if (!event_result) {
+                        response_error.emplace();
+                        response_error->error_message = event_result.error().message();
                         break;
-
-                    case StreamEventType::ContentBlockStart:
-                        update_turn_progress(turn, 0.20);
-                        in_block = true;
-                        current_block = ContentBlock{};
-                        if (event.block_type == StreamContentBlockType::Text) {
-                            current_block.type = ContentBlockType::Text;
-                            current_block.text = event.block_text;
-                            input_store.append_live_text(plan.agent_id, event.block_text);
-                        } else if (event.block_type == StreamContentBlockType::ToolUse) {
-                            current_block.type = ContentBlockType::ToolUse;
-                            current_block.tool_use_id = event.tool_use_id;
-                            current_block.tool_name = event.tool_name;
-                            accumulated_json.clear();
+                    }
+                    if (!event_result->has_value()) {
+                        if (parser.has_error()) {
+                            response_error = parser.error_details().value_or(
+                                loom::services::api::errors::ApiErrorDetails{});
+                            if (response_error->error_message.empty()) response_error->error_message = "stream connection failed";
+                            break;
                         }
                         break;
+                    }
 
-                    case StreamEventType::ContentBlockDelta:
-                        update_turn_progress(turn, 0.35);
-                        if (event.delta.type == StreamContentBlockType::Text) {
-                            current_block.text += event.delta.text;
-                            input_store.append_live_text(plan.agent_id, event.delta.text);
-                        } else if (event.delta.type == StreamContentBlockType::ToolUse) {
-                            accumulated_json += event.delta.partial_json;
-                        }
-                        break;
+                    const auto& event = **event_result;
 
-                    case StreamEventType::ContentBlockStop:
-                        update_turn_progress(turn, 0.45);
-                        if (in_block) {
-                            if (current_block.type == ContentBlockType::Text) {
-                                text_content += current_block.text;
-                            } else if (current_block.type == ContentBlockType::ToolUse) {
-                                current_block.tool_input_json = accumulated_json;
-                                tool_uses.push_back(current_block);
+                    switch (event.type) {
+                        case StreamEventType::MessageStart:
+                            if (event.input_tokens) input_tokens = std::max(0, *event.input_tokens);
+                            if (event.cache_creation_tokens) cache_creation_tokens = std::max(0, *event.cache_creation_tokens);
+                            if (event.cache_read_tokens) cache_read_tokens = std::max(0, *event.cache_read_tokens);
+                            update_turn_progress(turn, 0.10);
+                            break;
+
+                        case StreamEventType::ContentBlockStart:
+                            update_turn_progress(turn, 0.20);
+                            in_block = true;
+                            current_block = ContentBlock{};
+                            if (event.block_type == StreamContentBlockType::Text) {
+                                current_block.type = ContentBlockType::Text;
+                                current_block.text = event.block_text;
+                                input_store.append_live_text(plan.agent_id, event.block_text);
+                            } else if (event.block_type == StreamContentBlockType::ToolUse) {
+                                current_block.type = ContentBlockType::ToolUse;
+                                current_block.tool_use_id = event.tool_use_id;
+                                current_block.tool_name = event.tool_name;
+                                accumulated_json.clear();
                             }
-                            in_block = false;
-                        }
-                        break;
+                            break;
 
-                    case StreamEventType::MessageDelta:
-                        if (event.message_delta.usage.input_tokens) {
-                            input_tokens = std::max(0, *event.message_delta.usage.input_tokens);
-                        }
-                        if (event.message_delta.usage.output_tokens) {
-                            output_tokens = std::max(0, *event.message_delta.usage.output_tokens);
-                        }
-                        update_turn_progress(turn, 0.55);
-                        if (event.message_delta.stop_reason) {
-                            stop_reason = *event.message_delta.stop_reason;
-                        }
-                        break;
+                        case StreamEventType::ContentBlockDelta:
+                            update_turn_progress(turn, 0.35);
+                            if (event.delta.type == StreamContentBlockType::Text) {
+                                current_block.text += event.delta.text;
+                                input_store.append_live_text(plan.agent_id, event.delta.text);
+                            } else if (event.delta.type == StreamContentBlockType::ToolUse) {
+                                accumulated_json += event.delta.partial_json;
+                            }
+                            break;
 
-                    case StreamEventType::MessageStop:
-                        update_turn_progress(turn, 0.65);
-                        // Wait for HTTP completion as well: an error status or
-                        // a failed transfer can arrive after the final frame.
-                        message_stopped = true;
-                        break;
+                        case StreamEventType::ContentBlockStop:
+                            update_turn_progress(turn, 0.45);
+                            if (in_block) {
+                                if (current_block.type == ContentBlockType::Text) {
+                                    text_content += current_block.text;
+                                } else if (current_block.type == ContentBlockType::ToolUse) {
+                                    current_block.tool_input_json = accumulated_json;
+                                    tool_uses.push_back(current_block);
+                                }
+                                in_block = false;
+                            }
+                            break;
 
-                    case StreamEventType::Error:
-                        return fail_agent(std::format(
-                            "Agent stream error: {}", event.error.error_message));
+                        case StreamEventType::MessageDelta:
+                            if (event.message_delta.usage.input_tokens) {
+                                input_tokens = std::max(0, *event.message_delta.usage.input_tokens);
+                            }
+                            if (event.message_delta.usage.output_tokens) {
+                                output_tokens = std::max(0, *event.message_delta.usage.output_tokens);
+                            }
+                            if (event.message_delta.usage.cache_creation_tokens)
+                                cache_creation_tokens = std::max(0, *event.message_delta.usage.cache_creation_tokens);
+                            if (event.message_delta.usage.cache_read_tokens)
+                                cache_read_tokens = std::max(0, *event.message_delta.usage.cache_read_tokens);
+                            update_turn_progress(turn, 0.55);
+                            if (event.message_delta.stop_reason) {
+                                stop_reason = *event.message_delta.stop_reason;
+                            }
+                            break;
 
-                    default:
-                        break;
+                        case StreamEventType::MessageStop:
+                            update_turn_progress(turn, 0.65);
+                            // Wait for HTTP completion as well: an error status or
+                            // a failed transfer can arrive after the final frame.
+                            message_stopped = true;
+                            break;
+
+                        case StreamEventType::Error:
+                            response_error = event.error;
+                            break;
+
+                        default:
+                            break;
+                    }
+                    if (response_error) break;
                 }
-            }
-            if (!message_stopped || in_block) {
-                return fail_agent("Agent stream ended before the message completed");
-            }
-            record_run_usage(input_tokens, output_tokens);
+                const auto full_input = static_cast<int>(std::min<long long>(
+                    static_cast<long long>(input_tokens) + cache_creation_tokens + cache_read_tokens,
+                    std::numeric_limits<int>::max()));
+                record_run_usage(full_input, output_tokens);
+                if (response_error) {
+                    // Stop and join any remaining producer before summary generation.
+                    parser = loom::services::api::StreamParser{};
+                    if (attempt == 0 && utils::agent_context_failure(*response_error) !=
+                            loom::services::compact::ContextFailure::None) {
+                        loom::tools::agent_runtime::native_agent_store().clear_live_text(plan.agent_id);
+                        auto compacted = compact_history("overflow", utils::agent_context_failure(*response_error) ==
+                            loom::services::compact::ContextFailure::RequestBytesExceeded);
+                        if (!compacted) return fail_agent("Agent context recovery failed: " + compacted.error().message);
+                        continue;
+                    }
+                    return fail_agent("Agent stream error: " +
+                        (response_error->http_status > 0 ? std::format("HTTP {}: ", response_error->http_status) : std::string{}) +
+                        response_error->error_message);
+                }
+                observed = {static_cast<std::uint64_t>(full_input), request_estimate};
+                if (!message_stopped || in_block) {
+                    return fail_agent("Agent stream ended before the message completed");
+                }
+                break;
+            } // One business request, with at most one overflow recovery.
 
             // Completion must be explicit and leave no pending tool calls.
             if (stop_reason == "end_turn" && tool_uses.empty()) {

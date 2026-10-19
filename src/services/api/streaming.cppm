@@ -61,6 +61,8 @@ struct StreamContentDelta {
 struct StreamTokenUsage {
     std::optional<int> output_tokens;
     std::optional<int> input_tokens;
+    std::optional<int> cache_creation_tokens;
+    std::optional<int> cache_read_tokens;
 };
 
 // =========================================================================
@@ -104,6 +106,8 @@ struct StreamEvent {
 
     // MessageStart usage; appended to preserve aggregate field ordering.
     std::optional<int> input_tokens;
+    std::optional<int> cache_creation_tokens;
+    std::optional<int> cache_read_tokens;
 };
 
 // =========================================================================
@@ -223,6 +227,10 @@ private:
         event.role = std::string(message.get("role").as_str());
         const auto input_tokens = message.get("usage").get("input_tokens");
         if (input_tokens.is_num()) event.input_tokens = static_cast<int>(input_tokens.as_int());
+        const auto cache_creation = message.get("usage").get("cache_creation_input_tokens");
+        const auto cache_read = message.get("usage").get("cache_read_input_tokens");
+        if (cache_creation.is_num()) event.cache_creation_tokens = static_cast<int>(cache_creation.as_int());
+        if (cache_read.is_num()) event.cache_read_tokens = static_cast<int>(cache_read.as_int());
 
         return event;
     }
@@ -321,6 +329,10 @@ private:
 
         auto usage = root.get("usage");
         if (usage.valid()) {
+            const auto cache_creation = usage.get("cache_creation_input_tokens");
+            const auto cache_read = usage.get("cache_read_input_tokens");
+            if (cache_creation.is_num()) event.message_delta.usage.cache_creation_tokens = static_cast<int>(cache_creation.as_int());
+            if (cache_read.is_num()) event.message_delta.usage.cache_read_tokens = static_cast<int>(cache_read.as_int());
             const auto input_tokens = usage.get("input_tokens");
             if (input_tokens.is_num()) {
                 event.message_delta.usage.input_tokens = static_cast<int>(input_tokens.as_int());
@@ -346,6 +358,7 @@ private:
         event.error = ApiErrorDetails{};
         event.error.error_type = std::string(error.get("type").as_str());
         event.error.error_message = std::string(error.get("message").as_str());
+        event.error.error_code = std::string(error.get("code").as_str());
 
         return event;
     }

@@ -561,7 +561,8 @@ private:
 
     void append_queued_agent_messages(
         const AgentExecutionPlan& plan,
-        std::vector<Message>& messages
+        std::vector<Message>& messages,
+        std::optional<std::size_t>& request_anchor
     ) const;
 
     /// All executions publish their terminal state after the loop's resources

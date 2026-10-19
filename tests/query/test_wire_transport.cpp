@@ -15,6 +15,7 @@ import loom.session.storage;
 import loom.session.history;
 import loom.query.wire_openai;
 import loom.services.compact.context_compaction;
+import loom.services.compact.model_context;
 import loom.tools.tool;
 import loom.tools.runtime_registry;
 import loom.orchestration.agent;
@@ -43,15 +44,30 @@ struct TransportRequest {
 
 class WireHttpServer {
 public:
-    explicit WireHttpServer(std::vector<TransportReply> replies, std::optional<TransportReply> summary = {})
+    using MetadataHandler = std::function<void(const httplib::Request&, httplib::Response&)>;
+    explicit WireHttpServer(std::vector<TransportReply> replies, std::optional<TransportReply> summary = {},
+                            MetadataHandler metadata = {})
         : replies_(std::move(replies)), summary_(std::move(summary)) {
         server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
+        server_.Get(R"(/.*)", [this, metadata = std::move(metadata)](const httplib::Request& request, httplib::Response& response) {
+            {
+                std::lock_guard lock(mutex_);
+                metadata_requests_.push_back(TransportRequest{
+                    request.path, request.body, request.get_header_value("Authorization"),
+                    request.get_header_value("anthropic-version"), request.get_header_value("x-api-key"),
+                    request.get_header_value("X-Transport-Probe")});
+                methods_.push_back("GET");
+            }
+            if (metadata) metadata(request, response);
+            else response.status = 404;
+        });
         server_.Post(R"(/.*)", [this](const httplib::Request& request, httplib::Response& response) {
             std::size_t index;
             const bool summary_request = summary_ && request.body.find("CONTEXT CHECKPOINT") != std::string::npos;
             {
                 std::lock_guard lock(mutex_);
                 index = business_requests_;
+                methods_.push_back("POST");
                 if (!summary_request) ++business_requests_;
                 requests_.push_back(TransportRequest{
                     request.path, request.body,
@@ -83,6 +99,15 @@ public:
         return requests_;
     }
 
+    std::vector<TransportRequest> metadata_requests() const {
+        std::lock_guard lock(mutex_);
+        return metadata_requests_;
+    }
+    std::vector<std::string> methods() const {
+        std::lock_guard lock(mutex_);
+        return methods_;
+    }
+
 private:
     std::vector<TransportReply> replies_;
     std::optional<TransportReply> summary_;
@@ -92,6 +117,8 @@ private:
     std::thread thread_;
     mutable std::mutex mutex_;
     std::vector<TransportRequest> requests_;
+    std::vector<TransportRequest> metadata_requests_;
+    std::vector<std::string> methods_;
 };
 
 std::string openai_frame(std::string_view json) {
@@ -116,6 +143,7 @@ std::string interleaved_tool_stream() {
 
 class TransportEcho final : public ITool {
 public:
+    explicit TransportEcho(std::function<void(const ToolInput&)> observe = {}) : observe_(std::move(observe)) {}
     const ToolDefinition& definition() const override { return definition_; }
     Result<ToolResult> execute(const ToolInput& input) override {
         const auto parsed = loom::utils::json::parse(input.json());
@@ -123,6 +151,7 @@ public:
         const auto text = parsed->root().get("text");
         if (!text.is_str()) return ToolResult::error("Echo requires text");
         std::string value(text.as_str());
+        if (observe_) observe_(input);
         {
             std::lock_guard lock(mutex_);
             values_.push_back(value);
@@ -141,6 +170,7 @@ public:
     }
 
 private:
+    std::function<void(const ToolInput&)> observe_;
     ToolDefinition definition_{
         .name = "Echo", .description = "Echo the provided text",
         .input_schema = InputSchema{.properties = {
@@ -914,7 +944,7 @@ TEST_F(WireTransport, RuntimeMaxTokensContinuationCannotReplaceOriginalHumanAnch
         for(const bool streaming:{false,true}) {
             SCOPED_TRACE(protocol);
             SCOPED_TRACE(streaming);
-            const std::string partial_text=std::string(60000,'p')+" unfinished partial response";
+            const std::string partial_text=std::string(260000,'p')+" unfinished partial response";
             TransportReply truncated;
             if(!streaming) {
                 truncated=compact_reply(protocol);
@@ -961,7 +991,13 @@ TEST_F(WireTransport, RuntimeMaxTokensContinuationCannotReplaceOriginalHumanAnch
             const auto requests=business_requests(server);
             ASSERT_EQ(requests.size(),2u);
             EXPECT_GT(server.requests().size(),requests.size())<<"The continuation must trigger compaction";
-            for(const auto& request:requests) EXPECT_NE(request.body.find(human),std::string::npos);
+            for(const auto& request:requests) {
+                EXPECT_NE(request.body.find(human),std::string::npos);
+                const auto body = loom::utils::json::parse(request.body);
+                ASSERT_TRUE(body);
+                EXPECT_EQ(body->root().get("max_tokens").as_int(), 16384);
+            }
+            EXPECT_EQ(engine.model_params().max_tokens, 16384u);
             const auto conversation=engine.get_conversation();
             EXPECT_EQ(std::ranges::count_if(conversation,[&](const auto& message) {
                 const auto* user=std::get_if<UserMessage>(&message);
@@ -1231,8 +1267,19 @@ TEST_F(WireTransport, ModelContextAssemblyKeepsOriginalFallbackAndIndependentCat
     overrides.base_url="https://api.openai.com/v1";
     overrides.wire_api="openai";
     overrides.cwd=root_.string();
-    const auto resolved=loom::query::resolve_engine_config(settings,overrides);
+    auto resolved=loom::query::resolve_engine_config(settings,overrides);
     ASSERT_TRUE(resolved);
+    // This is a catalog-only regression. Freeze an empty attempted discovery
+    // for each synthetic external identity rather than contacting real services.
+    const auto no_discovery = [](QueryEngineConfig& config) {
+        auto snapshot = std::make_shared<QueryEngineConfig::ModelMetadataSnapshot>();
+        snapshot->base_url = config.base_url.value_or("");
+        snapshot->wire_api = config.wire_api.value_or("messages");
+        snapshot->api_key = config.api_key;
+        snapshot->auth_token = config.auth_token;
+        config.model_metadata = std::move(snapshot);
+    };
+    no_discovery(*resolved);
     ToolRegistry registry;
     QueryEngine engine(*resolved,registry);
     EXPECT_EQ(engine.max_context_tokens(),256000u);
@@ -1259,6 +1306,7 @@ TEST_F(WireTransport, ModelContextAssemblyKeepsOriginalFallbackAndIndependentCat
     EXPECT_EQ(automatic.model_context().source,"catalog");
     EXPECT_EQ(automatic.model_context().output_tokens,32768u);
     catalog_config.base_url="https://private-gateway.invalid/v1";
+    no_discovery(catalog_config);
     QueryEngine private_alias(catalog_config,registry);
     EXPECT_EQ(private_alias.max_context_tokens(),123456u);
     EXPECT_EQ(private_alias.model_context().source,"fallback");
@@ -1909,3 +1957,429 @@ TEST_F(WireTransport, CurrentContextModelSwitchChangesWindowAndClearsUsageWithou
     }
 }
 } // namespace
+
+
+TEST_F(WireTransport, AutomaticModelSwitchUsesProviderDefaultsWithoutLosingRawPolicy) {
+    for (const auto protocol : {"messages", "openai"}) {
+        for (const bool streaming : {false, true}) {
+            SCOPED_TRACE(protocol);
+            SCOPED_TRACE(streaming);
+            const auto answer = streaming ? TransportReply{std::string_view(protocol) == "messages"
+                ? compact_messages_stream() : openai_answer_stream()} : compact_reply(protocol);
+            WireHttpServer server({answer});
+            ASSERT_TRUE(server.valid());
+            ToolRegistry registry;
+            auto settings = config(server, registry);
+            settings.wire_api = protocol;
+            settings.model_params.model = "large-budget-model";
+            settings.model_context_limits = mixed_model_limits();
+            settings.thinking_config = {};
+            QueryEngine engine(std::move(settings), registry);
+            isolate_compaction_system(engine);
+            for (const auto model : {"large-budget-model", "small-budget-model", "private-alias", "large-budget-model"}) {
+                auto params = engine.model_params();
+                params.model = model;
+                engine.set_model_params(params);
+                if (streaming) {
+                    bool failed = false;
+                    QueryOptions options;
+                    options.on_event = [&](const auto& event) { if (std::holds_alternative<StreamError>(event)) failed = true; };
+                    engine.stream_query("Finish without tools.", options);
+                    ASSERT_FALSE(failed);
+                } else {
+                    const auto result = engine.query("Finish without tools.");
+                    ASSERT_TRUE(result) << result.error().format();
+                }
+                EXPECT_EQ(engine.model_params().max_tokens, 0u);
+            }
+            const auto requests = server.requests();
+            ASSERT_EQ(requests.size(), 4u);
+            const std::array<std::uint32_t, 4> reserves{64000, 4096, 16384, 64000};
+            for (std::size_t index = 0; index < requests.size(); ++index) {
+                const auto body = loom::utils::json::parse(requests[index].body);
+                ASSERT_TRUE(body);
+                const auto output = body->root().get("max_tokens");
+                if (std::string_view(protocol) == "openai") EXPECT_FALSE(output.valid());
+                else EXPECT_EQ(output.as_int(), reserves[index]);
+                EXPECT_FALSE(body->root().get("thinking").valid());
+                EXPECT_FALSE(body->root().get("temperature").valid());
+            }
+        }
+    }
+}
+
+TEST_F(WireTransport, ThinkingOverridesUseOneRecipeAndValidateAutomaticOutputBeforeHttp) {
+    for (const auto enabled : {std::optional<bool>{}, std::optional<bool>{true}, std::optional<bool>{false}}) {
+        for (const bool streaming : {false, true}) {
+            for (const auto budget : {32768u, std::numeric_limits<std::uint32_t>::max()}) {
+                WireHttpServer server({streaming ? TransportReply{compact_messages_stream()} : compact_reply("messages")});
+                ASSERT_TRUE(server.valid());
+                ToolRegistry registry;
+                SCOPED_TRACE(std::format("thinking={}, budget={}, streaming={}",
+                    enabled ? (*enabled ? "true" : "false") : "unset", budget, streaming));
+                Settings settings;
+                settings.model.default_model = "private-model";
+                settings.network.api_key = "transport-api-key";
+                settings.model.extended_thinking = enabled;
+                settings.model.thinking_budget = budget;
+                settings.model.temperature = 0.9;
+                const auto resolved = loom::query::resolve_engine_config(settings,
+                    {.base_url = server.base_url(), .wire_api = "messages", .cwd = root_.string()});
+                ASSERT_TRUE(resolved);
+                EXPECT_EQ(resolved->thinking_config.mode,
+                    enabled == false ? ThinkingConfig::Mode::Disabled : ThinkingConfig::Mode::Forced);
+                EXPECT_EQ(resolved->model_params.temperature, std::optional<double>{0.9});
+                auto config = *resolved;
+                config.native_computer_tool = false;
+                QueryEngine engine(std::move(config), registry);
+                isolate_compaction_system(engine);
+                const bool valid = enabled == false || budget == 32768;
+                if (streaming) {
+                    bool failed = false;
+                    QueryOptions options;
+                    options.on_event = [&](const auto& event) { if (std::holds_alternative<StreamError>(event)) failed = true; };
+                    engine.stream_query("Finish without tools.", options);
+                    EXPECT_EQ(!failed, valid);
+                } else {
+                    const auto result = engine.query("Finish without tools.");
+                    EXPECT_EQ(result.has_value(), valid) << (result ? "" : result.error().format());
+                }
+                const auto requests = server.requests();
+                ASSERT_EQ(requests.size(), valid ? 1u : 0u);
+                if (!valid) continue;
+                const auto body = loom::utils::json::parse(requests.front().body);
+                ASSERT_TRUE(body);
+                if (enabled == false) EXPECT_FALSE(body->root().get("thinking").valid());
+                else {
+                    EXPECT_EQ(body->root().get("max_tokens").as_int(), 32769);
+                    EXPECT_EQ(body->root().get("thinking").get("budget_tokens").as_int(), 32768);
+                }
+            }
+        }
+    }
+    EXPECT_EQ(resolve_thinking_config({}, {}).mode, ThinkingConfig::Mode::Default);
+    EXPECT_EQ(resolve_thinking_config(true, {}).mode, ThinkingConfig::Mode::Adaptive);
+}
+
+TEST_F(WireTransport, AutomaticOutputContinuationKeepsProviderDefault) {
+    for (const auto protocol : {"messages", "openai"}) {
+        for (const bool streaming : {false, true}) {
+            TransportReply truncated = streaming ? TransportReply{std::string_view(protocol) == "messages"
+                ? compact_messages_stream() : openai_answer_stream()} : compact_reply(protocol);
+            const auto stop = std::string_view(protocol) == "messages" ? "end_turn" : "stop";
+            const auto limit = std::string_view(protocol) == "messages" ? "max_tokens" : "length";
+            const auto position = truncated.body.find(std::string("\"") + stop + "\"");
+            ASSERT_NE(position, std::string::npos);
+            truncated.body.replace(position, std::string_view(stop).size() + 2, std::string("\"") + limit + "\"");
+            const auto answer = streaming ? TransportReply{std::string_view(protocol) == "messages"
+                ? compact_messages_stream() : openai_answer_stream()} : compact_reply(protocol);
+            WireHttpServer server({truncated, answer});
+            ToolRegistry registry;
+            auto settings = config(server, registry);
+            settings.wire_api = protocol;
+            QueryEngine engine(std::move(settings), registry);
+            isolate_compaction_system(engine);
+            if (streaming) {
+                QueryOptions options;
+                options.on_event = [](const auto&) {};
+                engine.stream_query("Finish without tools.", options);
+            } else ASSERT_TRUE(engine.query("Finish without tools."));
+            const auto requests = server.requests();
+            ASSERT_EQ(requests.size(), 2u);
+            for (const auto& request : requests) {
+                const auto body = loom::utils::json::parse(request.body);
+                ASSERT_TRUE(body);
+                if (std::string_view(protocol) == "openai") EXPECT_FALSE(body->root().get("max_tokens").valid());
+                else EXPECT_EQ(body->root().get("max_tokens").as_int(), 16384);
+            }
+            EXPECT_EQ(engine.model_params().max_tokens, 0u);
+        }
+    }
+}
+
+
+TEST_F(WireTransport, AutomaticManualThinkingRejectsCapacityAndHeadroomConflictsBeforeHttp) {
+    for (const auto& profile : {ModelContextLimit{.model="private", .context_window_tokens=200000, .max_output_tokens=32768},
+                               ModelContextLimit{.model="private", .context_window_tokens=1000}}) {
+        for (const bool streaming : {false, true}) {
+            WireHttpServer server({compact_reply("messages")});
+            ToolRegistry registry;
+            auto settings = config(server, registry);
+            settings.wire_api = "messages";
+            settings.model_params.model = "private";
+            settings.model_context_limits = {profile};
+            settings.thinking_config = resolve_thinking_config(true, 32768);
+            QueryEngine engine(std::move(settings), registry);
+            isolate_compaction_system(engine);
+            if (streaming) {
+                bool failed = false;
+                QueryOptions options;
+                options.on_event = [&](const auto& event) { if (std::holds_alternative<StreamError>(event)) failed = true; };
+                engine.stream_query("Complete once.", options);
+                EXPECT_TRUE(failed);
+            } else {
+                const auto result = engine.query("Complete once.");
+                ASSERT_FALSE(result);
+                EXPECT_EQ(result.error().code, ErrorCode::InvalidRequest);
+            }
+            EXPECT_TRUE(server.requests().empty());
+        }
+    }
+}
+
+TEST_F(WireTransport, AutomaticBusinessRequestsKeepExplicitSummaryBounds) {
+    for (const auto protocol : {"messages", "openai"}) {
+        WireHttpServer server({compact_reply(protocol)}, compact_reply(protocol, true));
+        ToolRegistry registry;
+        auto settings = config(server, registry);
+        settings.wire_api = protocol;
+        settings.model_params.model = "small-budget-model";
+        settings.model_context_limits = mixed_model_limits();
+        settings.context_window.auto_compact = true;
+        QueryEngine engine(std::move(settings), registry);
+        isolate_compaction_system(engine);
+        seed_compactable_history(engine, 600000);
+        const auto result = engine.query("Finish without tools.");
+        ASSERT_TRUE(result) << result.error().format();
+        std::size_t summaries = 0;
+        for (const auto& request : server.requests()) {
+            const auto body = loom::utils::json::parse(request.body);
+            ASSERT_TRUE(body);
+            if (request.body.find("CONTEXT CHECKPOINT") != std::string::npos) {
+                ++summaries;
+                EXPECT_GT(body->root().get("max_tokens").as_int(), 0);
+                EXPECT_LE(body->root().get("max_tokens").as_int(), 4096);
+            } else if (std::string_view(protocol) == "openai") EXPECT_FALSE(body->root().get("max_tokens").valid());
+            else EXPECT_EQ(body->root().get("max_tokens").as_int(), 4096);
+        }
+        EXPECT_GT(summaries, 0u);
+    }
+}
+
+TEST_F(WireTransport, ModelMetadataLoadsBeforeBusinessWithWireAuthAndTenantPaths) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool token : {false, true})
+        for (const auto suffix : {"/tenant/acme", "/tenant/acme/v1/"}) {
+            SCOPED_TRACE(std::format("{} token={} {}", protocol, token, suffix));
+            WireHttpServer server({compact_reply(protocol)}, {}, [](const auto&, auto& response) {
+                response.set_content(R"({"data":[{"id":"transport-model","context_length":1048576,"max_output_tokens":32768}]})", "application/json");
+            });
+            ASSERT_TRUE(server.valid());
+            ToolRegistry registry;
+            auto settings = config(server, registry);
+            settings.base_url = server.base_url() + suffix;
+            settings.wire_api = protocol;
+            if (!token) settings.auth_token.clear();
+            QueryEngine engine(settings, registry);
+            EXPECT_EQ(engine.max_context_tokens(), 1048576u);
+            EXPECT_EQ(engine.model_context().source, "metadata");
+            EXPECT_EQ(engine.model_context().output_cap_source, "metadata");
+            ASSERT_TRUE(engine.query("Finish without tools."));
+            const auto metadata = server.metadata_requests();
+            ASSERT_EQ(metadata.size(), 1u);
+            EXPECT_EQ(metadata.front().path, "/tenant/acme/v1/models");
+            if (token || std::string_view(protocol) == "openai") {
+                EXPECT_EQ(metadata.front().authorization, token ? "Bearer transport-bearer" : "Bearer transport-api-key");
+                EXPECT_TRUE(metadata.front().api_key.empty());
+            } else {
+                EXPECT_TRUE(metadata.front().authorization.empty());
+                EXPECT_EQ(metadata.front().api_key, "transport-api-key");
+            }
+            EXPECT_EQ(metadata.front().anthropic_version, std::string_view(protocol) == "messages" ? "2023-06-01" : "");
+            EXPECT_EQ(server.requests().size(), 1u);
+            EXPECT_EQ(server.methods(), (std::vector<std::string>{"GET", "POST"}));
+        }
+}
+
+TEST_F(WireTransport, PreparedMetadataReusesOneSnapshotForEngineSwitchAndNativePolicy) {
+    WireHttpServer server({compact_reply("messages")}, {}, [](const auto&, auto& response) {
+        response.set_content(R"({"data":[{"id":"transport-model","context_length":1048576},{"id":"metadata-child","context_length":256000,"max_output_tokens":8192}]})", "application/json");
+    });
+    ASSERT_TRUE(server.valid());
+    ToolRegistry registry;
+    auto settings = config(server, registry);
+    settings.wire_api = "messages";
+    prepare_model_metadata(settings);
+    prepare_model_metadata(settings);
+    ASSERT_TRUE(settings.model_metadata);
+    EXPECT_EQ(server.metadata_requests().size(), 1u);
+    const auto native = make_api_execution_context(settings);
+    ASSERT_TRUE(native->model_context_config);
+    ASSERT_EQ(native->model_context_config->metadata_limits.size(), 2u);
+    const auto child = loom::services::compact::resolve_model_context(*native->model_context_config,
+        "metadata-child", native->base_url, native->wire_api, 0);
+    EXPECT_EQ(child.window_tokens, 256000u);
+    EXPECT_EQ(child.source, "metadata");
+    EXPECT_EQ(child.output_cap, std::optional<std::uint32_t>{8192});
+    QueryEngine engine(settings, registry);
+    EXPECT_EQ(engine.max_context_tokens(), 1048576u);
+    auto params = engine.model_params();
+    params.model = "metadata-child";
+    engine.set_model_params(params);
+    EXPECT_EQ(engine.max_context_tokens(), 256000u);
+    EXPECT_EQ(engine.model_context().output_cap_source, "metadata");
+    ASSERT_TRUE(engine.query("Finish without tools."));
+    params.model = "transport-model";
+    engine.set_model_params(params);
+    EXPECT_EQ(engine.max_context_tokens(), 1048576u);
+    EXPECT_EQ(server.metadata_requests().size(), 1u);
+    EXPECT_EQ(server.requests().size(), 1u);
+}
+
+TEST_F(WireTransport, CopiedPreparedMetadataRefetchesForChangedCredentialsWireAndEndpoint) {
+    WireHttpServer server({compact_reply("openai")}, {}, [](const auto& request, auto& response) {
+        const auto capacity = request.get_header_value("Authorization") == "Bearer replacement-token" ? 256000 : 1048576;
+        response.set_content(std::format(R"({{"data":[{{"id":"transport-model","context_length":{}}}]}})", capacity), "application/json");
+    });
+    ASSERT_TRUE(server.valid());
+    ToolRegistry registry;
+    auto original = config(server, registry);
+    prepare_model_metadata(original);
+    ASSERT_TRUE(original.model_metadata);
+    const auto original_snapshot = original.model_metadata;
+    auto copied = original;
+    prepare_model_metadata(copied);
+    EXPECT_EQ(copied.model_metadata, original_snapshot);
+    EXPECT_EQ(server.metadata_requests().size(), 1u);
+    for (int change = 0; change < 4; ++change) {
+        auto changed = original;
+        if (change == 0) changed.auth_token = "replacement-token";
+        if (change == 1) changed.api_key = "replacement-key";
+        if (change == 2) changed.wire_api = "messages";
+        if (change == 3) changed.base_url = server.base_url() + "/other-tenant";
+        prepare_model_metadata(changed);
+        ASSERT_TRUE(changed.model_metadata);
+        EXPECT_NE(changed.model_metadata, original_snapshot);
+        QueryEngine engine(changed, registry);
+        EXPECT_EQ(engine.max_context_tokens(), change == 0 ? 256000u : 1048576u);
+        EXPECT_EQ(server.metadata_requests().size(), static_cast<std::size_t>(change + 2));
+    }
+    QueryEngine unaffected(original, registry);
+    EXPECT_EQ(unaffected.max_context_tokens(), 1048576u);
+    EXPECT_EQ(original.model_metadata, original_snapshot);
+    EXPECT_EQ(server.metadata_requests().size(), 5u);
+}
+
+TEST_F(WireTransport, MetadataFailuresRemainAnAttemptedSnapshotAndDoNotBlockBusinessRequests) {
+    for (const auto failure : {"malformed", "missing-capacity", "not-found", "redirect", "transport"}) {
+        SCOPED_TRACE(failure);
+        WireHttpServer server({compact_reply("openai")}, {}, [failure](const auto&, auto& response) {
+            const std::string_view kind(failure);
+            if (kind == "malformed") response.set_content("not-json", "application/json");
+            else if (kind == "missing-capacity") response.set_content(R"({"data":[{"id":"transport-model","usage":{"input_tokens":1048576}}]})", "application/json");
+            else if (kind == "not-found") response.status = 404;
+            else if (kind == "redirect") response.set_redirect("/redirect-target");
+            else response.set_content_provider(32, "application/json", [](std::size_t, std::size_t, httplib::DataSink&) { return false; });
+        });
+        ASSERT_TRUE(server.valid());
+        ToolRegistry registry;
+        auto settings = config(server, registry);
+        settings.context_window.max_context_tokens = 234567;
+        prepare_model_metadata(settings);
+        ASSERT_TRUE(settings.model_metadata);
+        EXPECT_TRUE(settings.model_metadata->limits.empty());
+        prepare_model_metadata(settings);
+        QueryEngine engine(settings, registry);
+        EXPECT_EQ(engine.max_context_tokens(), 234567u);
+        EXPECT_EQ(engine.model_context().source, "fallback");
+        ASSERT_TRUE(engine.query("Finish without tools."));
+        EXPECT_EQ(server.metadata_requests().size(), 1u);
+        EXPECT_EQ(server.requests().size(), 1u);
+        EXPECT_EQ(server.methods(), (std::vector<std::string>{"GET", "POST"}));
+    }
+}
+
+TEST_F(WireTransport, MetadataReceiverRejectsOversizedBodyBeforeUsingAdvertisedCapacity) {
+    WireHttpServer server({compact_reply("messages")}, {}, [](const auto&, auto& response) {
+        const auto body = std::string(R"({"data":[{"id":"transport-model","context_length":1048576}],"padding":")") +
+            std::string(4 * 1024 * 1024, 'x') + "\"}";
+        response.set_content(body, "application/json");
+    });
+    ASSERT_TRUE(server.valid());
+    ToolRegistry registry;
+    auto settings = config(server, registry);
+    settings.wire_api = "messages";
+    QueryEngine engine(settings, registry);
+    EXPECT_EQ(engine.model_context().source, "fallback");
+    EXPECT_EQ(engine.max_context_tokens(), 200000u);
+    ASSERT_TRUE(engine.query("Finish without tools."));
+    EXPECT_EQ(server.metadata_requests().size(), 1u);
+    EXPECT_EQ(server.requests().size(), 1u);
+}
+
+TEST_F(WireTransport, MetadataSlowHeadersAndContinuousBodyRespectRequestDeadlineAndStillPost) {
+    for (const bool slow_headers : {true, false}) {
+        SCOPED_TRACE(slow_headers);
+        WireHttpServer server({compact_reply("messages")}, {}, [slow_headers](const auto&, auto& response) {
+            if (slow_headers) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+                response.set_content(R"({"data":[{"id":"transport-model","context_length":1048576}]})", "application/json");
+            } else {
+                auto chunk = std::make_shared<int>(0);
+                response.set_chunked_content_provider("application/json", [chunk](std::size_t, httplib::DataSink& sink) {
+                    if ((*chunk)++ == 0) {
+                        constexpr std::string_view prefix = R"({"data":[{"id":"transport-model","context_length":1048576}],"padding":")";
+                        return sink.write(prefix.data(), prefix.size());
+                    }
+                    if (*chunk < 40) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                        return sink.write("x", 1);
+                    }
+                    const bool written = sink.write("\"}", 2);
+                    sink.done();
+                    return written;
+                });
+            }
+        });
+        ASSERT_TRUE(server.valid());
+        ToolRegistry registry;
+        auto settings = config(server, registry);
+        settings.wire_api = "messages";
+        QueryEngine engine(settings, registry);
+        // The body remains below the size limit and arrives within each I/O
+        // timeout. Accepting its valid capacity would expose a missing total deadline.
+        EXPECT_EQ(engine.max_context_tokens(), 200000u);
+        EXPECT_EQ(engine.model_context().source, "fallback");
+        ASSERT_TRUE(engine.query("Finish without tools."));
+        EXPECT_EQ(server.metadata_requests().size(), 1u);
+        EXPECT_EQ(server.requests().size(), 1u);
+    }
+}
+
+TEST_F(WireTransport, AssemblyPreparesMetadataOnceBeforeNativeToolsAndEngineShareIt) {
+    WireHttpServer server({compact_tool_reply("messages", 0, "capture model policy"), compact_reply("messages")}, {}, [](const auto&, auto& response) {
+        response.set_content(R"({"data":[{"id":"assembly-metadata","context_length":1048576},{"id":"assembly-child","context_length":262144,"max_output_tokens":4096}]})", "application/json");
+    });
+    ASSERT_TRUE(server.valid());
+    loom::core::Settings settings;
+    settings.model.default_model = "assembly-metadata";
+    loom::query::AssemblyOverrides overrides;
+    overrides.base_url = server.base_url();
+    overrides.api_key = "metadata-assembly-key";
+    overrides.wire_api = "messages";
+    overrides.cwd = root_.string();
+    auto resolved = loom::query::resolve_engine_config(settings, overrides);
+    ASSERT_TRUE(resolved);
+    resolved->context_window.auto_compact = false;
+    std::shared_ptr<const ApiExecutionContext> native;
+    loom::query::AssemblyConfig assembly;
+    assembly.engine = std::move(*resolved);
+    assembly.register_extra_tools = [&](ToolRegistry& registry) {
+        registry.register_tool(std::make_unique<TransportEcho>([&](const ToolInput& input) {
+            native = input.api_context;
+        }));
+    };
+    auto assembled = loom::query::assemble(assembly, {});
+    ASSERT_TRUE(assembled) << assembled.error().message;
+    auto& engine = assembled->engine();
+    EXPECT_EQ(engine.max_context_tokens(), 1048576u);
+    EXPECT_EQ(engine.model_context().source, "metadata");
+    ASSERT_TRUE(engine.query("Call Echo once, then finish."));
+    ASSERT_TRUE(native);
+    ASSERT_TRUE(native->model_context_config);
+    const auto child = loom::services::compact::resolve_model_context(*native->model_context_config,
+        "assembly-child", native->base_url, native->wire_api, 0);
+    EXPECT_EQ(child.window_tokens, 262144u);
+    EXPECT_EQ(child.output_cap, std::optional<std::uint32_t>{4096});
+    EXPECT_EQ(server.metadata_requests().size(), 1u);
+    EXPECT_EQ(server.methods(), (std::vector<std::string>{"GET", "POST", "POST"}));
+}

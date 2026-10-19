@@ -175,9 +175,7 @@ void QueryEngine::stream_query(
 
         // P1-3: Max output tokens recovery (streaming path)
         if (assistant_msg.stop_reason == "max_tokens" && max_tokens_retries < 3) {
-            auto resumed_params = config_.model_params;
-            resumed_params.max_tokens = std::max(resumed_params.max_tokens, std::uint32_t{64000});
-            set_model_params(std::move(resumed_params));
+            // Continue under the original request policy, including explicit limits.
             auto resume = make_user_message(
                 "Your previous response was cut off at the token limit. "
                 "Please continue from where you left off.");
@@ -281,10 +279,7 @@ void QueryEngine::stream_query(
 
         // P1-3: Max output tokens recovery
         if (msg.stop_reason == "max_tokens" && max_tokens_retries < 3) {
-            // Escalate max_tokens to 64k
-            auto resumed_params = config_.model_params;
-            resumed_params.max_tokens = std::max(resumed_params.max_tokens, std::uint32_t{64000});
-            set_model_params(std::move(resumed_params));
+            // Continue under the original request policy, including explicit limits.
             // Append partial response and a resume nudge
             append_message(Message{msg});
             auto resume = make_user_message(

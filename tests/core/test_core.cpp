@@ -108,7 +108,8 @@ TEST(UtilsParseInt, StrictFromCharsSemantics) {
 TEST(CoreConfig, ConfigManagerExposesDefaultSettings) {
     loom::core::ConfigManager manager;
     EXPECT_TRUE(manager.settings().model.default_model.empty());
-    EXPECT_GT(manager.settings().model.max_output_tokens, 0u);
+    EXPECT_EQ(manager.settings().model.max_output_tokens, 0u);
+    EXPECT_FALSE(manager.settings().model.extended_thinking.has_value());
 }
 
 // The statusLine.segments nested object controls the built-in status bar

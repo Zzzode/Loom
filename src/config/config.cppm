@@ -96,9 +96,9 @@ public:
 /// Model-specific settings
 struct ModelSettings {
     std::string default_model;  // No default — must be explicitly configured
-    std::uint32_t max_output_tokens = 16384;
+    std::uint32_t max_output_tokens = 0;  // Zero selects automatic provider policy.
     std::optional<double> temperature;
-    bool extended_thinking = false;
+    std::optional<bool> extended_thinking;
     std::optional<std::uint32_t> thinking_budget;
     std::uint32_t context_window_size = 200000;
     std::vector<ModelContextLimit> context_limits;
@@ -440,8 +440,9 @@ class ConfigManager {
     // per leaf, the env VALUE it applied and the PRE-OVERLAY merged value (the
     // value to PERSIST); env_explicit_leaves_ additionally marks leaves the
     // /config command explicitly wrote THIS session, so an explicit set to a
-    // value that happens to equal the env value still persists. The whole
-    // rule is explained at its use site in build_save_fragments.
+    // value that happens to equal the env value still persists. It also
+    // retains optional/default-write intent across same-instance saves.
+    // The rules are explained at their use sites in build_save_fragments.
     std::set<std::pair<std::string, std::string>> disk_leaves_;
     std::set<std::pair<std::string, std::string>> env_explicit_leaves_;
     std::optional<std::string> env_model_value_;
@@ -685,11 +686,14 @@ public:
     /// in-memory value even if it happens to equal the value the environment
     /// overlay applied. /config set calls this before saving; a plain
     /// settings_mut() change is recognized by the value-difference rule
-    /// instead (see build_save_fragments). Only leaves with an env_var in the
-    /// spec table have provenance to mark, so other keys are a no-op.
+    /// instead (see build_save_fragments). Nullable generation overrides
+    /// also retain explicit-write intent so a same-instance clear is saved
+    /// even when the previous value was created after the last load(). The
+    /// context fallback retains explicit writes equal to its implicit default.
     void clear_env_provenance(std::string_view section, std::string_view leaf) {
         for (const auto& spec : user_setting_specs()) {
-            if (!spec.env_var.empty() &&
+            if ((!spec.env_var.empty() || spec.key == "extendedThinking" ||
+                 spec.key == "contextWindowSize") &&
                 spec.section == section && spec.leaf == leaf) {
                 env_explicit_leaves_.emplace(std::string(section),
                                              std::string(leaf));
@@ -2005,9 +2009,9 @@ private:
     struct SaveFragments {
         // model (c19 guard applied to the two env-overridable leaves)
         std::string model;
-        std::string max_output_tokens;
-        std::string extended_thinking;
-        std::string context_window_size;
+        std::optional<std::string> max_output_tokens;
+        std::optional<std::string> extended_thinking;
+        std::optional<std::string> context_window_size;
         // Optional model leaves: nullopt => the key is left untouched on a
         // save (a rebuilt-from-scratch file simply omits it).
         std::optional<double> temperature;
@@ -2093,11 +2097,22 @@ private:
 
         frag.model =
             std::format("\"{}\"", escape_json(model_to_emit));
-        frag.max_output_tokens = std::to_string(tokens_to_emit);
-        frag.extended_thinking =
-            settings_.model.extended_thinking ? "true" : "false";
-        frag.context_window_size =
-            std::to_string(settings_.model.context_window_size);
+        // An unset value is omitted on a fresh save. Explicit clears patch
+        // null even if a previous same-instance save created the old value
+        // after load() recorded disk leaves. Null retains tier inheritance.
+        if (tokens_to_emit > 0) frag.max_output_tokens = std::to_string(tokens_to_emit);
+        else if (disk_leaves_.contains({"", "maxOutputTokens"}) ||
+                 env_explicit_leaves_.contains({"", "maxOutputTokens"}))
+            frag.max_output_tokens = "null";
+        if (settings_.model.extended_thinking.has_value())
+            frag.extended_thinking = *settings_.model.extended_thinking ? "true" : "false";
+        else if (disk_leaves_.contains({"", "extendedThinking"}) ||
+                 env_explicit_leaves_.contains({"", "extendedThinking"}))
+            frag.extended_thinking = "null";
+        if (settings_.model.context_window_size != ModelSettings{}.context_window_size ||
+            disk_leaves_.contains({"", "contextWindowSize"}) ||
+            env_explicit_leaves_.contains({"", "contextWindowSize"}))
+            frag.context_window_size = std::to_string(settings_.model.context_window_size);
         frag.temperature = settings_.model.temperature;
         frag.thinking_budget = settings_.model.thinking_budget;
 
@@ -2242,12 +2257,18 @@ private:
         // model — flat string at root (replaces any legacy model object)
         if (auto r = patch_leaf(root, "model",
                                 frag.model); !r) return r;
-        if (auto r = patch_leaf(root, "maxOutputTokens",
-                                frag.max_output_tokens); !r) return r;
-        if (auto r = patch_leaf(root, "extendedThinking",
-                                frag.extended_thinking); !r) return r;
-        if (auto r = patch_leaf(root, "contextWindowSize",
-                                frag.context_window_size); !r) return r;
+        if (frag.max_output_tokens) {
+            if (auto r = patch_leaf(root, "maxOutputTokens",
+                                    *frag.max_output_tokens); !r) return r;
+        }
+        if (frag.extended_thinking) {
+            if (auto r = patch_leaf(root, "extendedThinking",
+                                    *frag.extended_thinking); !r) return r;
+        }
+        if (frag.context_window_size) {
+            if (auto r = patch_leaf(root, "contextWindowSize",
+                                    *frag.context_window_size); !r) return r;
+        }
         // Optional model leaves: patch only when set, so a save re-emits
         // them on a rebuilt-from-scratch file while an unset in-memory
         // value leaves an on-disk key untouched (same save semantics).
@@ -2952,13 +2973,21 @@ private:
         const auto& p = settings_.permissions;
         const std::string_view key = spec.key;
         if (key == "model") { token.set("value", m.default_model); return; }
-        if (key == "maxOutputTokens") { token.set("value", static_cast<std::int64_t>(m.max_output_tokens)); return; }
+        if (key == "maxOutputTokens") {
+            if (m.max_output_tokens > 0) token.set("value", static_cast<std::int64_t>(m.max_output_tokens));
+            else token.add("value", token.make_null());
+            return;
+        }
         if (key == "temperature") {
             if (m.temperature) token.add("value", token.make_real(*m.temperature));
             else token.add("value", token.make_null());
             return;
         }
-        if (key == "extendedThinking") { token.set("value", m.extended_thinking); return; }
+        if (key == "extendedThinking") {
+            if (m.extended_thinking.has_value()) token.set("value", *m.extended_thinking);
+            else token.add("value", token.make_null());
+            return;
+        }
         if (key == "thinkingBudget") {
             if (m.thinking_budget) token.set("value", static_cast<std::int64_t>(*m.thinking_budget));
             else token.add("value", token.make_null());
@@ -3898,19 +3927,19 @@ ConfigManager::user_setting_specs() noexcept {
          "LLM model to use"},
         {"maxOutputTokens",  "", "maxOutputTokens",
          UserSettingKind::UInteger,  true, true, "integer", "LOOM_MAX_TOKENS",
-         "Maximum output token count"},
+         "Explicit per-request output limit (null = automatic)"},
         {"temperature",      "", "temperature",
          UserSettingKind::Number,    true, false, "number", "",
          "Sampling temperature"},
         {"extendedThinking", "", "extendedThinking",
          UserSettingKind::Boolean,   true, false, "boolean", "",
-         "Enable extended thinking"},
+         "Override extended thinking (null = provider default)"},
         {"thinkingBudget",   "", "thinkingBudget",
          UserSettingKind::UInteger,  true, true, "integer", "",
          "Extended thinking token budget"},
         {"contextWindowSize","", "contextWindowSize",
          UserSettingKind::UInteger,  true, true, "integer", "",
-         "Context window size in tokens"},
+         "Fallback context capacity when no model-specific limit is known"},
         {"maxRetries",       "", "maxRetries",
          UserSettingKind::UInteger,  true, false, "integer", "",
          "Max retry attempts"},
@@ -4043,6 +4072,8 @@ ConfigManager::serialize_user_setting_specs_json() {
     root.add("blocked", blocked);
 
     auto null_clear = root.make_arr();
+    null_clear.append(doc.string("maxOutputTokens"));
+    null_clear.append(doc.string("extendedThinking"));
     null_clear.append(doc.string("temperature"));
     null_clear.append(doc.string("thinkingBudget"));
     root.add("null_clear_keys", null_clear);
@@ -4167,7 +4198,9 @@ ConfigManager::set_user_setting(std::string_view dotted,
 
     // Key-specific validation, then kind coercion.
     CoercedUserValue coerced;
-    if (dotted == "thinkingBudget") {
+    if ((dotted == "maxOutputTokens" || dotted == "extendedThinking") && value.is_null()) {
+        coerced = CoercedUserValue{"null", true};
+    } else if (dotted == "thinkingBudget") {
         auto budget = coerce_thinking_budget(value);
         if (!budget) return std::unexpected(budget.error());
         coerced = *budget;

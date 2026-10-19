@@ -3789,7 +3789,7 @@ TEST(AppRuntime, SettingsCtrlSSavesThroughRootWithoutStashingPrompt) {
     ASSERT_NE(PaintShortcutApp(app).find(draft), std::string::npos);
     app->HandleCommand("/settings");
     ASSERT_NE(PaintShortcutApp(app).find("Settings"), std::string::npos);
-    for (int field = 0; field < 7; ++field)
+    for (int field = 0; field < 6; ++field)
         ASSERT_TRUE(app->OnEvent(ftxui::Event::Tab));
     ASSERT_TRUE(app->OnEvent(ftxui::Event::Return));
     const auto edited = PaintShortcutApp(app);

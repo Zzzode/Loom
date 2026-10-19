@@ -452,8 +452,9 @@ public:
         auto root = doc.object();
 
         root.add("model", doc.string(input.model));
-        root.add("max_tokens",
-                 doc.number(static_cast<int64_t>(input.max_tokens)));
+        if (input.max_tokens != 0) {
+            root.add("max_tokens", doc.number(static_cast<int64_t>(input.max_tokens)));
+        }
         root.add("stream", doc.boolean(input.stream));
         if (input.stream) {
             auto stream_options = doc.object();

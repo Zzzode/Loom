@@ -274,17 +274,12 @@ struct WorkingSettings {
     bool auto_mode = false;
     std::string effort_level = "medium";
     bool fast_mode = false;
-    double default_temperature = 0.7;
     bool show_thinking = true;
     bool show_token_usage = false;
     bool compact_mode = false;
 
     // Model
     std::string default_model;  // no default — user configures their model
-    std::uint32_t max_output_tokens = 16384;
-    bool extended_thinking = false;
-    std::optional<std::uint32_t> thinking_budget;
-    std::uint32_t context_window_size = 200000;
     std::string teammate_model;   // swarm teammate model override
 
     // API
@@ -336,11 +331,6 @@ struct WorkingSettings {
     w.show_token_usage = s.display.show_token_usage;
     w.compact_mode = s.display.compact_mode;
     w.default_model = s.model.default_model;
-    w.max_output_tokens = s.model.max_output_tokens;
-    w.extended_thinking = s.model.extended_thinking;
-    w.default_temperature = s.model.temperature.value_or(0.7);
-    w.thinking_budget = s.model.thinking_budget;
-    w.context_window_size = s.model.context_window_size;
     w.base_url = s.network.base_url;
     w.api_key = s.network.api_key;
     w.timeout_seconds = s.network.timeout_seconds;
@@ -366,11 +356,6 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     s.display.show_token_usage = w.show_token_usage;
     s.display.compact_mode = w.compact_mode;
     s.model.default_model = w.default_model;
-    s.model.max_output_tokens = w.max_output_tokens;
-    s.model.extended_thinking = w.extended_thinking;
-    s.model.temperature = w.default_temperature;
-    s.model.thinking_budget = w.thinking_budget;
-    s.model.context_window_size = w.context_window_size;
     s.network.base_url = w.base_url;
     s.network.api_key = w.api_key;
     s.network.timeout_seconds = w.timeout_seconds;
@@ -451,39 +436,27 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         "Use the faster (cheaper) model when available",
         false, focus_row == -2, columns));
 
-    // Temperature (slider display)
-    body.push_back(SettingRow(
-        "Default temperature",
-        hbox({
-            gauge(w.default_temperature / 2.0) | color(pal.info) |
-                size(WIDTH, EQUAL, 20),
-            SettingsText(std::format(" {:.2f} ", w.default_temperature), ValueColumns(columns)) |
-                color(pal.info) | (focus_row == 4 ? FocusedSetting : nothing),
-        }),
-        "Sampling temperature (0 = deterministic, 2 = maximum randomness)",
-        false, focus_row == -2, columns));
-
     body.push_back(separator());
     body.push_back(SettingsText("  Display options:", ValueColumns(columns)) | color(pal.muted));
     body.push_back(SettingRow(
         "Show thinking",
         SettingsText(w.show_thinking ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.show_thinking ? pal.success : pal.muted) |
-             (focus_row == 5 ? FocusedSetting : nothing),
+             (focus_row == 4 ? FocusedSetting : nothing),
         "Display thinking blocks in assistant output",
         false, false, columns));
     body.push_back(SettingRow(
         "Token usage display",
         SettingsText(w.show_token_usage ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.show_token_usage ? pal.success : pal.muted) |
-             (focus_row == 6 ? FocusedSetting : nothing),
+             (focus_row == 5 ? FocusedSetting : nothing),
         "Show token counters after each response",
         false, false, columns));
     body.push_back(SettingRow(
         "Compact mode",
         SettingsText(w.compact_mode ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
              color(w.compact_mode ? pal.success : pal.muted) |
-             (focus_row == 7 ? FocusedSetting : nothing),
+             (focus_row == 6 ? FocusedSetting : nothing),
         "Minimal output formatting for smaller terminals",
         false, false, columns));
 
@@ -495,7 +468,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                                             int focus_row, int columns = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
-    body.push_back(RenderTabHeader("Model", "Default model and generation limits", columns));
+    body.push_back(RenderTabHeader("Model", "Default and teammate models", columns));
 
     body.push_back(SettingRow(
         "Default model",
@@ -504,41 +477,11 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         false, false, columns));
 
     body.push_back(SettingRow(
-        "Max output tokens",
-        SettingsText(std::format(" {} ", w.max_output_tokens), ValueColumns(columns)) | color(pal.info) |
-             (focus_row == 1 ? FocusedSetting : nothing),
-        "Maximum tokens per assistant turn",
-        false, false, columns));
-
-    body.push_back(SettingRow(
-        "Extended thinking",
-        SettingsText(w.extended_thinking ? " [ON]  " : " [OFF] ", ValueColumns(columns)) |
-             color(w.extended_thinking ? pal.success : pal.muted) |
-             (focus_row == 2 ? FocusedSetting : nothing),
-        "Allocate additional tokens for chain-of-thought reasoning",
-        false, false, columns));
-
-    body.push_back(separator());
-    body.push_back(SettingRow(
-        "Thinking budget",
-        SettingsText(w.thinking_budget
-            ? std::format(" {} tokens ", *w.thinking_budget)
-            : std::string(" (auto) "), ValueColumns(columns)) | color(pal.info) |
-             (focus_row == 3 ? FocusedSetting : nothing),
-        "Max tokens allocated for chain-of-thought (blank = automatic)",
-        false, false, columns));
-    body.push_back(SettingRow(
-        "Context window size",
-        SettingsText(std::format(" {} ", w.context_window_size), ValueColumns(columns)) | color(pal.info) |
-             (focus_row == 4 ? FocusedSetting : nothing),
-        "Maximum context window tokens",
-        false, false, columns));
-    body.push_back(SettingRow(
         "Teammate model",
         SettingsText(w.teammate_model.empty()
             ? std::string(" (same as default) ")
             : " [" + w.teammate_model + "] ", ValueColumns(columns)) | color(pal.warning) |
-             (focus_row == 5 ? FocusedSetting : nothing),
+             (focus_row == 1 ? FocusedSetting : nothing),
         "Override model for sub-agent / swarm teammates",
         false, false, columns));
     return vbox(body);
@@ -1276,8 +1219,8 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         }
         const auto row_count = [&] {
             switch (state->selected_tab) {
-                case SettingsTabId::General: return 8;
-                case SettingsTabId::Model: return 6;
+                case SettingsTabId::General: return 7;
+                case SettingsTabId::Model: return 2;
                 case SettingsTabId::API: return 6;
                 case SettingsTabId::Permissions: return 7;
                 case SettingsTabId::Tools: return 6;
@@ -1428,49 +1371,15 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                         mark(); return true;
                     }
                     if (row == 3) { toggle(w.fast_mode); return true; }
-                    if (row == 4) { // temperature step up by 0.1
-                        w.default_temperature = std::min(2.0, w.default_temperature + 0.1);
-                        mark(); return true;
-                    }
-                    if (row == 5) { toggle(w.show_thinking); return true; }
-                    if (row == 6) { toggle(w.show_token_usage); return true; }
-                    if (row == 7) { toggle(w.compact_mode); return true; }
+                    if (row == 4) { toggle(w.show_thinking); return true; }
+                    if (row == 5) { toggle(w.show_token_usage); return true; }
+                    if (row == 6) { toggle(w.compact_mode); return true; }
                     break;
                 case SettingsTabId::Model:
-                    if (row == 1) { // max tokens cycle (coarse steps)
-                        static const std::vector<std::uint32_t> kSteps =
-                            {2048, 4096, 8192, 16384, 32768, 65536};
-                        auto it = std::find(kSteps.begin(), kSteps.end(), w.max_output_tokens);
-                        int idx = (it == kSteps.end()) ? 3
-                                  : static_cast<int>(it - kSteps.begin());
-                        w.max_output_tokens = kSteps[(idx + 1) % kSteps.size()];
-                        mark(); return true;
-                    }
-                    if (row == 2) { toggle(w.extended_thinking); return true; }
                     if (row == 0) { // cycle model — no built-in presets, no-op
                         mark(); return true;
                     }
-                    if (row == 3) { // thinking budget step
-                        static const std::vector<std::optional<std::uint32_t>> kBudgets = {
-                            std::nullopt, std::optional(4096u), std::optional(8192u),
-                            std::optional(16384u), std::optional(32768u),
-                        };
-                        auto it = std::find(kBudgets.begin(), kBudgets.end(), w.thinking_budget);
-                        int idx = (it == kBudgets.end()) ? 0
-                                  : static_cast<int>(it - kBudgets.begin());
-                        w.thinking_budget = kBudgets[(idx + 1) % kBudgets.size()];
-                        mark(); return true;
-                    }
-                    if (row == 4) { // context window cycle
-                        static const std::vector<std::uint32_t> kCtx =
-                            {100000, 128000, 200000};
-                        auto it = std::find(kCtx.begin(), kCtx.end(), w.context_window_size);
-                        int idx = (it == kCtx.end()) ? 2
-                                  : static_cast<int>(it - kCtx.begin());
-                        w.context_window_size = kCtx[(idx + 1) % kCtx.size()];
-                        mark(); return true;
-                    }
-                    if (row == 5) { // teammate model cycle — no built-in presets, no-op
+                    if (row == 1) { // teammate model cycle — no built-in presets, no-op
                         mark(); return true;
                     }
                     break;

@@ -206,6 +206,13 @@ public:
     /// URL + serialized body + headers for one non-streaming request.
     [[nodiscard]] std::expected<PreparedRequest, std::string>
     prepare(const RequestInput& input) const override {
+        if (input.max_tokens == 0) {
+            return std::unexpected("Messages requests require a positive resolved output limit");
+        }
+        if (input.thinking_enabled && input.thinking_budget_tokens &&
+            *input.thinking_budget_tokens >= input.max_tokens) {
+            return std::unexpected("Manual thinking budget must be below the request output limit");
+        }
         auto endpoint = api_messages_endpoint(options_.base_url);
         if (!endpoint) {
             return std::unexpected(endpoint.error());

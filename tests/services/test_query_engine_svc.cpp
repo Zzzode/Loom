@@ -321,6 +321,12 @@ private:
 
     void handle_client(int fd) {
         auto request = read_request(fd);
+        // Capacity discovery is not a model turn: do not publish an empty
+        // business body or consume a scripted POST response for this GET.
+        if (request.headers.starts_with("GET ")) {
+            send_all(fd, "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            return;
+        }
         auto body = request.body;
         if (body.find("CONTEXT CHECKPOINT") != std::string::npos) {
             const auto summary = compact_test_response();

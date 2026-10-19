@@ -134,7 +134,7 @@ struct PermissionDenial {
 /// Model parameters for API requests
 struct ModelParams {
     std::string model;                               // Model ID (user-configured, no default)
-    std::uint32_t max_tokens = 16384;                 // Max output tokens
+    std::uint32_t max_tokens = 0;                     // Explicit limit; zero uses automatic defaults
     std::optional<double> temperature;                // Sampling temperature
     std::optional<double> top_p;                      // Nucleus sampling
     std::optional<std::uint32_t> top_k;              // Top-k sampling
@@ -162,10 +162,14 @@ struct ContextWindowConfig {
 
 /// Thinking configuration
 struct ThinkingConfig {
-    enum class Mode { Disabled, Adaptive, Forced };
-    Mode mode = Mode::Adaptive;
+    enum class Mode { Default, Disabled, Adaptive, Forced };
+    Mode mode = Mode::Default;
     std::optional<std::uint32_t> budget_tokens;
 };
+
+/// Resolve only explicit thinking overrides; absent values retain provider defaults.
+[[nodiscard]] ThinkingConfig resolve_thinking_config(
+    std::optional<bool> enabled, std::optional<std::uint32_t> budget);
 
 /// Full query engine configuration
 struct QueryEngineConfig {
@@ -173,6 +177,15 @@ struct QueryEngineConfig {
     RetryPolicy retry_policy;
     ContextWindowConfig context_window;
     std::vector<ModelContextLimit> model_context_limits;
+    /// Session-local attempted metadata load. Never persisted or logged.
+    struct ModelMetadataSnapshot {
+        std::string base_url;
+        std::string wire_api;
+        std::string api_key;
+        std::string auth_token;
+        std::vector<ModelContextLimit> limits;
+    };
+    std::shared_ptr<const ModelMetadataSnapshot> model_metadata;
     ThinkingConfig thinking_config;
     std::string api_key;                            // API key (x-api-key)
     std::string auth_token;                         // OAuth/gateway bearer token (Authorization: Bearer); takes precedence over api_key when set
@@ -227,6 +240,9 @@ struct QueryEngineConfig {
     std::vector<std::string> agent_definitions;     // Agent definitions
     std::vector<std::string> fallback_models;       // Fallback models for capacity errors
 };
+
+/// Load best-effort capacity metadata once per effective session identity.
+void prepare_model_metadata(QueryEngineConfig& config);
 
 /// Resolve once per session/tool call; explicit credentials (including empty)
 /// override environment/bootstrap state for delegated execution.

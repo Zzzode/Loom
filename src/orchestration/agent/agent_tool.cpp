@@ -521,7 +521,8 @@ Result<ToolResult> AgentTool::run_agent_loop(const AgentExecutionPlan& plan) {
                 req.model = plan.model;
                 req.messages = messages;
                 const auto context_policy = utils::agent_context_policy(plan.api_context, plan.model);
-                req.max_tokens = static_cast<int>(context_policy.output_tokens);
+                req.max_tokens = static_cast<int>(utils::agent_model_context(plan.api_context, plan.model)
+                    .request_output_tokens.value_or(0));
                 req.stream = true;
                 if (!plan.system_prompt.empty()) req.system_prompt = plan.system_prompt;
                 req.tools = api_tools_for_plan(plan);

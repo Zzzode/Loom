@@ -183,10 +183,20 @@ endforeach()
 
 # RFC 0026: the executable's separate loader must supply persisted model budgets
 # to the real terminal and direct Agent entry, including strict load errors.
-foreach(_pty_context_case IN ITEMS switch direct invalid fallback tolerance)
+foreach(_pty_context_case IN ITEMS switch direct invalid fallback tolerance metadata metadata-direct)
   add_test(NAME E2E_Pty_ModelContext_${_pty_context_case}
       COMMAND e2e_pty_shutdown model-context-${_pty_context_case})
   set_tests_properties(E2E_Pty_ModelContext_${_pty_context_case} PROPERTIES
+      TIMEOUT 40
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
+# RFC 0028: real main.cpp generation defaults and ordinary settings saves.
+foreach(_pty_generation_case IN ITEMS auto explicit manual)
+  add_test(NAME E2E_Pty_GenerationDefaults_${_pty_generation_case}
+      COMMAND e2e_pty_shutdown generation-defaults-${_pty_generation_case})
+  set_tests_properties(E2E_Pty_GenerationDefaults_${_pty_generation_case} PROPERTIES
       TIMEOUT 40
       ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
       SKIP_RETURN_CODE 125)

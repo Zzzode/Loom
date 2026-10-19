@@ -184,9 +184,9 @@ private:
         std::string output = "Current Configuration:\n\n";
 
         output += std::format("  model             = {}\n", settings.model.default_model);
-        output += std::format("  maxOutputTokens   = {}\n", settings.model.max_output_tokens);
+        output += std::format("  maxOutputTokens   = {}\n", settings.model.max_output_tokens ? std::to_string(settings.model.max_output_tokens) : "auto");
         output += std::format("  extendedThinking  = {}\n",
-                             settings.model.extended_thinking ? "true" : "false");
+                             settings.model.extended_thinking.has_value() ? (*settings.model.extended_thinking ? "true" : "false") : "auto");
         output += std::format("  contextWindowSize = {}\n", settings.model.context_window_size);
         output += "\n";
         output += std::format("  showThinking      = {}\n",
@@ -302,11 +302,11 @@ private:
         const Settings d{};
         const std::string_view key = spec.key;
         if (key == "model")              return d.model.default_model;
-        if (key == "maxOutputTokens")    return std::to_string(d.model.max_output_tokens);
+        if (key == "maxOutputTokens")    return d.model.max_output_tokens ? std::optional<std::string>(std::to_string(d.model.max_output_tokens)) : std::nullopt;
         if (key == "temperature")        return d.model.temperature
             ? std::optional<std::string>(std::format("{}", *d.model.temperature))
             : std::nullopt;
-        if (key == "extendedThinking")   return d.model.extended_thinking ? "true" : "false";
+        if (key == "extendedThinking")   return d.model.extended_thinking.has_value() ? std::optional<std::string>(*d.model.extended_thinking ? "true" : "false") : std::nullopt;
         if (key == "thinkingBudget")     return d.model.thinking_budget
             ? std::optional<std::string>(std::to_string(*d.model.thinking_budget))
             : std::nullopt;
@@ -337,11 +337,11 @@ private:
         }
         const auto& s = config_manager_.settings();
         if (key == "model")             return s.model.default_model;
-        if (key == "maxOutputTokens")   return std::to_string(s.model.max_output_tokens);
+        if (key == "maxOutputTokens")   return s.model.max_output_tokens ? std::to_string(s.model.max_output_tokens) : "auto";
         if (key == "temperature")       return s.model.temperature
             ? std::optional<std::string>(std::format("{}", *s.model.temperature))
             : std::optional<std::string>("unset");
-        if (key == "extendedThinking")  return s.model.extended_thinking ? "true" : "false";
+        if (key == "extendedThinking")  return s.model.extended_thinking.has_value() ? (*s.model.extended_thinking ? "true" : "false") : "auto";
         if (key == "thinkingBudget")    return s.model.thinking_budget
             ? std::optional<std::string>(std::to_string(*s.model.thinking_budget))
             : std::optional<std::string>("unset");
@@ -370,6 +370,21 @@ private:
     [[nodiscard]] static VoidResult validate_value(std::string_view key, std::string_view value) {
         const auto* spec = loom::core::ConfigManager::find_user_setting(key);
         if (spec == nullptr) return {};
+        if ((key == "maxOutputTokens" || key == "extendedThinking") &&
+            (value == "auto" || value == "null")) return {};
+        if (key == "maxOutputTokens") {
+            try {
+                std::size_t used = 0;
+                const auto parsed = std::stoull(std::string(value), &used);
+                if (value.empty() || !std::ranges::all_of(value, [](char c) { return c >= '0' && c <= '9'; }) ||
+                    used != value.size() || parsed == 0 || parsed > std::numeric_limits<std::uint32_t>::max())
+                    throw std::invalid_argument("invalid output override");
+            } catch (...) {
+                return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+                    "maxOutputTokens must be a positive uint32 integer, auto or null"));
+            }
+            return {};
+        }
         switch (spec->kind) {
             case UserSettingKind::Boolean:
                 if (value != "true" && value != "false") {
@@ -420,9 +435,13 @@ private:
         }
         auto& s = config_manager_.settings_mut();
         if (key == "model")               { s.model.default_model = value; return {}; }
-        if (key == "maxOutputTokens")     { s.model.max_output_tokens = std::stoul(std::string(value)); return {}; }
+        if (key == "maxOutputTokens")     { s.model.max_output_tokens = (value == "auto" || value == "null") ? 0 : std::stoul(std::string(value)); return {}; }
         if (key == "temperature")         { s.model.temperature = std::stod(std::string(value)); return {}; }
-        if (key == "extendedThinking")    { s.model.extended_thinking = (value == "true"); return {}; }
+        if (key == "extendedThinking")    {
+            if (value == "auto" || value == "null") s.model.extended_thinking.reset();
+            else s.model.extended_thinking = (value == "true");
+            return {};
+        }
         if (key == "thinkingBudget")      { s.model.thinking_budget = std::stoul(std::string(value)); return {}; }
         if (key == "contextWindowSize")   { s.model.context_window_size = std::stoul(std::string(value)); return {}; }
         if (key == "showThinking")        { s.display.show_thinking = (value == "true"); return {}; }

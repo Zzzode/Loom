@@ -29,20 +29,77 @@ the original working history intact. The same is true of a checkpoint write
 failure. `auto_compact=false` disables the proactive trigger; explicit `/compact`
 and reactive overflow recovery remain available.
 
-## Model-aware budgets (RFC 0026)
+## Model-aware budgets (RFC 0026 / RFC 0028 / RFC 0029)
+
+Ordinary model switching needs no output-token or thinking-budget setting.
+Leave `maxOutputTokens`, `thinkingBudget`, `extendedThinking` and `temperature`
+unspecified to use automatic generation defaults. The settings panel does not
+write these generation options when saving display or connection preferences.
+Existing explicit values remain supported and are not automatically deleted:
+Loom cannot distinguish an old generated number from an intentional override.
+Use `null` through the configuration tool to clear a user-tier output/thinking
+flag override; lower-tier and environment precedence still apply.
+
+Automatic OpenAI-compatible business requests omit `max_tokens`, leaving the
+output limit to the service. Messages requires a positive `max_tokens`, so Loom
+resolves one from the exact model output cap, or a 16384-token fallback for an
+unknown model. Both protocols reserve estimated output headroom for compaction:
+the target is bounded by half of the context left after the existing safety
+margin. This does not detect an unknown private model's actual capacity, and an
+OpenAI-compatible service may choose a default larger than the reserve. An
+endpoint that requires an explicit output field can use `maxOutputTokens`.
+Summary requests keep their own bounded explicit output limit on either wire.
+
+An explicit positive `maxOutputTokens` limits each request, including truncation
+continuations, after applying known model caps. It does not bound an entire
+agent task's aggregate tokens or cost. Continuation no longer raises an explicit
+limit to 64000. Original automatic/explicit policy survives model changes,
+fallback and native descendants; each selected model resolves its own reserve.
+
+Unspecified thinking leaves the provider's default unchanged, which may mean no
+thinking on older models. An explicit `extendedThinking: true` requests adaptive
+thinking. A positive `thinkingBudget`, unless disabled by an explicit false,
+selects manual thinking on Messages. Automatic output makes room for budget+1
+within the model cap and context headroom; impossible combinations fail before
+HTTP. Explicit output is never raised. Legacy false retains omission semantics;
+it does not guarantee that an arbitrary endpoint stops thinking. OpenAI-compatible
+requests retain their existing omission of unsupported thinking parameters.
+Temperature is omitted unless explicitly configured. These overrides are
+provider-specific, not interchangeable controls across all model families.
+
+At runtime startup, Loom reads `GET /v1/models` from the configured service.
+An entry with the selected exact `id` and positive integer `context_length`
+supplies its capacity, for example `1048576`; a global 200000-token fallback does
+not override it. Optional `max_output_tokens` supplies an independent output cap.
+Ordinary completion `usage` fields count consumed tokens and are not capacity.
+This metadata read uses the selected wire's credentials and preserves tenant paths.
+There is no dependency on an external CLI or service-specific model-name mapping.
+
+The immutable session snapshot is bound to endpoint, canonical wire and credentials.
+Main and native descendants share it; switching chooses another exact model from
+the same snapshot. Identity changes refresh metadata. No model list or credential
+is written as configuration or cached globally/on disk. Unsupported endpoints,
+missing/invalid capacity and HTTP/network failures retain catalog/fallback behavior.
+Discovery uses one-second I/O timeouts, a two-second cumulative cancellation guard,
+no retries/redirects and a 4-MiB receiver-enforced decompressed-body limit. Synchronous
+DNS, per-address connection attempts and TLS initialization hold a library socket
+mutex that cancellation also needs; those stages may outlive the guard. The
+two-second deadline applies to established-connection HTTP transfer, not a strict
+whole-startup wall-clock promise.
 
 The active model resolves its context window and output cap independently.
 The context window uses an exact endpoint/wire/model profile, a generic
-exact-model profile, an applicable official-endpoint catalog entry, then the
-configured global fallback. The output cap uses the first present cap in the
-scoped profile, generic profile or applicable catalog; without a cap, effective
-output equals the requested output. A context-only profile retains any
+exact-model profile, exact endpoint/wire metadata, an applicable official-endpoint
+catalog entry, then the configured global fallback. The output cap uses the first present cap in the
+scoped profile, generic profile, service metadata or applicable catalog; without a cap, an explicit
+output request is unchanged and automatic mode uses the fallback described above. A context-only profile retains any
 applicable generic or catalog output cap. The catalog is capacity metadata, not a model availability
 or recommendation list. A model name on a custom proxy never activates official
-catalog limits. There is no network capacity probing or arbitrary alias discovery.
+catalog limits by name. Server metadata applies only at its own endpoint/wire;
+there is no capacity probing through large prompts or arbitrary alias guessing.
 
-Configure private models once in `settings.json`; switching the loaded models
-then updates budgets automatically:
+For services without capacity metadata, advanced exact profiles can supply
+missing limits or deliberate overrides in `settings.json`:
 
 ```json
 {
@@ -73,8 +130,10 @@ Genuine configuration-load errors stop CLI startup before tools or model
 requests; missing files and tolerated non-JSON user/local files retain the
 configuration parser's existing behavior.
 
-The old global `contextWindowSize` is now a fallback, including an explicitly
-configured non-default value. To keep a deliberate ceiling for a catalog model,
+The old global `contextWindowSize` is a fallback, including an explicitly
+configured non-default value. It defaults internally to 200000 when unknown;
+ordinary new saves omit that implicit default, and the settings panel no longer
+presents it as the active model capacity. Existing explicit values remain readable. To keep a deliberate ceiling for a catalog model,
 use an exact profile, for example
 `{"model":"gpt-4.1","contextWindowSize":100000}`. Profiles are file-only and
 do not expand the scalar configuration-tool interface. Editing profile files

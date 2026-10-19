@@ -340,3 +340,136 @@ TEST_F(ModelContextFiles, ScalarPatchesPreserveProfileJsonAndDoNotExpandTheSetti
     EXPECT_FALSE(config.set_user_setting("modelContextLimits",array->root()));
     EXPECT_EQ(read(user),unchanged);
 }
+
+
+TEST(ModelContext, AutomaticOutputSeparatesProviderDefaultsFromContextReserve) {
+    ModelContextConfig config;
+    config.limits = {profile("large", 1000000, 64000), profile("small", 32768, 8192)};
+    for (const auto wire : {"messages", "openai"}) {
+        const auto large = resolve_model_context(config, "large", "https://gateway.example", wire, 0);
+        const auto small = resolve_model_context(config, "small", "https://gateway.example", wire, 0);
+        const auto back = resolve_model_context(config, "large", "https://gateway.example", wire, 0);
+        EXPECT_EQ(large.output_tokens, 64000u);
+        EXPECT_EQ(small.output_tokens, 8192u);
+        EXPECT_EQ(back.output_tokens, large.output_tokens);
+        EXPECT_EQ(large.request_output_tokens.has_value(), std::string_view(wire) == "messages");
+        if (large.request_output_tokens) EXPECT_EQ(*large.request_output_tokens, large.output_tokens);
+        const auto explicit_limit = resolve_model_context(config, "small", "https://gateway.example", wire, 1024);
+        EXPECT_EQ(explicit_limit.request_output_tokens, std::optional<std::uint32_t>{1024});
+    }
+}
+
+TEST(ModelContext, AutomaticUnknownAndTinyWindowsRetainInputHeadroomWithoutUnderflow) {
+    for (const auto window : {0u, 1u, 64u, 65u, 100u, 1000u, 200000u}) {
+        const ModelContextConfig config{.fallback_window_tokens = window};
+        const auto result = resolve_model_context(config, "private", "https://gateway.example", "messages", 0);
+        const auto safety = std::max<std::uint64_t>(64, window / 50);
+        const auto expected = std::max<std::uint64_t>(1, std::min<std::uint64_t>(16384,
+            window > safety ? (window - safety) / 2 : 0));
+        EXPECT_EQ(result.output_tokens, expected);
+        EXPECT_EQ(result.request_output_tokens, std::optional<std::uint32_t>{static_cast<std::uint32_t>(expected)});
+        EXPECT_EQ(result.output_cap_source, "none");
+    }
+}
+
+TEST(ModelContext, ManualThinkingRaisesOnlyAutomaticTargetWithinCapacityAndHeadroom) {
+    ModelContextConfig config;
+    config.limits = {profile("capped", 200000, 8192), profile("tiny", 1000)};
+    EXPECT_EQ(resolve_model_context(config, "unknown", "https://gateway.example", "messages", 0, 32769).output_tokens, 32769u);
+    EXPECT_EQ(resolve_model_context(config, "unknown", "https://gateway.example", "messages", 4096, 32769).output_tokens, 4096u);
+    EXPECT_EQ(resolve_model_context(config, "capped", "https://gateway.example", "messages", 0, 32769).output_tokens, 8192u);
+    EXPECT_EQ(resolve_model_context(config, "tiny", "https://gateway.example", "messages", 0, 8193).output_tokens, 468u);
+    EXPECT_EQ(resolve_model_context(config, "unknown", "https://gateway.example", "messages", 0,
+        std::uint64_t{std::numeric_limits<std::uint32_t>::max()} + 1).output_tokens, 98000u);
+}
+
+TEST(ModelMetadata, ParsesExactScopedCapacitiesWithIndependentOptionalOutput) {
+    const auto limits = loom::services::compact::parse_model_metadata(R"({"data":[
+      {"id":"opensource/exact-model","context_length":1048576,"max_output_tokens":65536,"unknown":true},
+      {"id":"context-only","context_length":256000},
+      {"id":"bad-output","context_length":128000,"max_output_tokens":"4096"}
+    ]})", "https://gateway.example/tenant/v1/", "messages");
+    ASSERT_EQ(limits.size(), 3u);
+    EXPECT_EQ(limits[0].model, "opensource/exact-model");
+    EXPECT_EQ(limits[0].context_window_tokens, 1048576u);
+    EXPECT_EQ(limits[0].max_output_tokens, std::optional<std::uint32_t>{65536});
+    EXPECT_FALSE(limits[1].max_output_tokens);
+    EXPECT_FALSE(limits[2].max_output_tokens);
+    for (const auto& limit : limits) {
+        EXPECT_EQ(limit.base_url, std::optional<std::string>{"https://gateway.example/tenant/v1/"});
+        EXPECT_EQ(limit.wire_api, std::optional<std::string>{"messages"});
+    }
+}
+
+TEST(ModelMetadata, RejectsInvalidCapacityShapesAndConflictingDuplicateIds) {
+    using loom::services::compact::parse_model_metadata;
+    for (const auto body : {"not-json", "[]", "{}", R"({"data":{}})",
+         R"({"data":[{"id":"usage-only","usage":{"input_tokens":1048576}}]})"})
+        EXPECT_TRUE(parse_model_metadata(body, "https://gateway.example", "openai").empty()) << body;
+    const auto limits = parse_model_metadata(R"({"data":[
+      {"id":"","context_length":100}, {"context_length":100},
+      {"id":3,"context_length":100}, {"id":"zero","context_length":0},
+      {"id":"negative","context_length":-1}, {"id":"overflow","context_length":4294967296},
+      {"id":"float","context_length":1048576.0}, {"id":"fraction","context_length":1.5},
+      {"id":"string","context_length":"1048576"}, {"id":"bool","context_length":true},
+      {"id":"null","context_length":null},
+      {"id":"conflict","context_length":1000}, {"id":"conflict","context_length":2000},
+      {"id":"conflict","context_length":1000},
+      {"id":"output-conflict","context_length":1000,"max_output_tokens":100},
+      {"id":"output-conflict","context_length":1000,"max_output_tokens":200},
+      {"id":"same","context_length":3000}, {"id":"same","context_length":3000},
+      {"id":"max-uint","context_length":4294967295}
+    ]})", "https://gateway.example", "openai");
+    ASSERT_EQ(limits.size(), 2u);
+    const auto same = std::ranges::find(limits, "same", &ModelContextLimit::model);
+    ASSERT_NE(same, limits.end());
+    EXPECT_EQ(same->context_window_tokens, 3000u);
+    const auto maximum = std::ranges::find(limits, "max-uint", &ModelContextLimit::model);
+    ASSERT_NE(maximum, limits.end());
+    EXPECT_EQ(maximum->context_window_tokens, std::numeric_limits<std::uint32_t>::max());
+    for (auto invalid : {"0", "-1", "4294967296", "4096.0", "true", "null", "\"4096\""}) {
+        const auto parsed = parse_model_metadata(std::format(
+            R"({{"data":[{{"id":"context-kept","context_length":10000,"max_output_tokens":{}}}]}})", invalid),
+            "https://gateway.example", "openai");
+        ASSERT_EQ(parsed.size(), 1u) << invalid;
+        EXPECT_FALSE(parsed[0].max_output_tokens) << invalid;
+    }
+}
+
+TEST(ModelMetadata, PolicyPrecedenceAndEndpointIdentityRemainIndependentForContextAndOutput) {
+    ModelContextConfig config{.fallback_window_tokens = 123456};
+    config.metadata_limits = loom::services::compact::parse_model_metadata(
+        R"({"data":[{"id":"gpt-4.1","context_length":900000,"max_output_tokens":12000},{"id":"other","context_length":500000}]})",
+        "https://api.openai.com/v1", "openai");
+    auto resolved = resolve_model_context(config, "gpt-4.1", "https://api.openai.com/v1", "openai", 64000);
+    EXPECT_EQ(resolved.window_tokens, 900000u);
+    EXPECT_EQ(resolved.source, "metadata");
+    EXPECT_EQ(resolved.output_cap, std::optional<std::uint32_t>{12000});
+    EXPECT_EQ(resolved.output_cap_source, "metadata");
+    config.metadata_limits[0].max_output_tokens.reset();
+    resolved = resolve_model_context(config, "gpt-4.1", "https://api.openai.com/v1", "openai", 64000);
+    EXPECT_EQ(resolved.window_tokens, 900000u);
+    EXPECT_EQ(resolved.output_tokens, 32768u);
+    EXPECT_EQ(resolved.output_cap_source, "catalog");
+    config.limits = {profile("gpt-4.1", 256000)};
+    config.metadata_limits[0].max_output_tokens = 12000;
+    resolved = resolve_model_context(config, "gpt-4.1", "https://api.openai.com/v1", "openai", 64000);
+    EXPECT_EQ(resolved.window_tokens, 256000u);
+    EXPECT_EQ(resolved.source, "profile");
+    EXPECT_EQ(resolved.output_tokens, 12000u);
+    auto scoped = profile("gpt-4.1", 128000, 4096);
+    scoped.base_url = "https://api.openai.com/v1";
+    scoped.wire_api = "openai";
+    config.limits.push_back(scoped);
+    resolved = resolve_model_context(config, "gpt-4.1", "https://api.openai.com/v1", "openai", 64000);
+    EXPECT_EQ(resolved.window_tokens, 128000u);
+    EXPECT_EQ(resolved.output_tokens, 4096u);
+    EXPECT_EQ(resolved.output_cap_source, "profile");
+    for (auto endpoint : {"https://api.openai.com/tenant/v1", "https://different.example/v1"}) {
+        const auto isolated = resolve_model_context(config, "other", endpoint, "openai", 0);
+        EXPECT_EQ(isolated.window_tokens, 123456u);
+        EXPECT_EQ(isolated.source, "fallback");
+    }
+    EXPECT_EQ(resolve_model_context(config, "other", "https://api.openai.com/v1", "messages", 0).source, "fallback");
+    EXPECT_EQ(resolve_model_context(config, "not-other", "https://api.openai.com/v1", "openai", 0).source, "fallback");
+}

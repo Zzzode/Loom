@@ -813,6 +813,10 @@ struct AgentReplayContext {
     bool checkpoint = false;
 };
 [[nodiscard]] AgentReplayContext replay_agent_context(const std::vector<std::string>& entries);
+[[nodiscard]] loom::core::ResolvedModelContext agent_model_context(
+    const std::shared_ptr<const loom::core::ApiExecutionContext>& context, std::string_view model,
+    std::optional<std::uint32_t> requested_output = std::nullopt,
+    std::uint64_t minimum_auto_output = 0);
 [[nodiscard]] loom::services::compact::ContextPolicy agent_context_policy(
     const std::shared_ptr<const loom::core::ApiExecutionContext>& context, std::string_view model);
 [[nodiscard]] std::uint64_t estimate_agent_context(const CreateMessageRequest& request,

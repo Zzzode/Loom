@@ -99,7 +99,7 @@ enum class WireApi {
 /// engine fills this in and hands it over.
 struct RequestInput {
     std::string model;                       ///< model id as the user configured it
-    std::uint32_t max_tokens = 4096;
+    std::uint32_t max_tokens = 4096; // Zero omits the limit on OpenAI-compatible requests.
     bool stream = false;
     std::string system_prompt;               ///< empty => omit
     std::vector<Message> messages;           ///< conversation, system excluded

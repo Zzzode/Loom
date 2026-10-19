@@ -592,3 +592,33 @@ TEST(WireProtocol, TaskOriginRemainsLocalWhileBothBackendsPreserveModelContextEx
     verify(messages);
     verify(openai);
 }
+
+
+TEST(OpenAiWireBackend, AutomaticOutputOmitsProviderLimit) {
+    wire::OpenAiWireBackend backend("http://localhost:8080");
+    wire::RequestInput input;
+    input.model = "private-model";
+    input.max_tokens = 0;
+    input.messages.push_back(loom::core::Message{make_user("hello")});
+    const auto prepared = backend.prepare(input);
+    ASSERT_TRUE(prepared);
+    const auto doc = parse_or_fail(prepared->body);
+    EXPECT_FALSE(doc.root().get("max_tokens").valid());
+    EXPECT_FALSE(doc.root().get("max_completion_tokens").valid());
+    EXPECT_FALSE(doc.root().get("thinking").valid());
+    EXPECT_FALSE(doc.root().get("temperature").valid());
+}
+
+TEST(MessagesWireBackend, RejectsUnresolvedOutputAndInvalidManualBudget) {
+    wire::MessagesWireBackend backend("http://localhost:8080");
+    wire::RequestInput input;
+    input.model = "private-model";
+    input.max_tokens = 0;
+    EXPECT_FALSE(backend.prepare(input));
+    input.max_tokens = 1024;
+    input.thinking_enabled = true;
+    input.thinking_budget_tokens = 1024;
+    EXPECT_FALSE(backend.prepare(input));
+    input.max_tokens = 1025;
+    EXPECT_TRUE(backend.prepare(input));
+}

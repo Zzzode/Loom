@@ -26,6 +26,7 @@ struct ModelContextLimit {
 struct ModelContextConfig {
     std::uint32_t fallback_window_tokens = 200000;
     std::vector<ModelContextLimit> limits;
+    std::vector<ModelContextLimit> metadata_limits{};
 };
 
 struct ResolvedModelContext {
@@ -34,6 +35,8 @@ struct ResolvedModelContext {
     std::optional<std::uint32_t> output_cap;
     std::string source = "fallback";
     std::string output_cap_source = "none";
+    // Separate context headroom from an optional limit sent to the provider.
+    std::optional<std::uint32_t> request_output_tokens;
 };
 
 /// Immutable authenticated session snapshot. Internal only: never write it to
@@ -46,7 +49,7 @@ struct ApiExecutionContext {
     std::string api_version = "2023-06-01";
     std::chrono::milliseconds timeout{120000};
     std::uint64_t context_window_tokens = 200000;
-    std::uint64_t context_output_tokens = 16384;
+    std::uint64_t context_output_tokens = 0; // Original request; zero selects automatic defaults.
     double context_compaction_threshold = 0.9;
     bool context_auto_compact = true;
     std::shared_ptr<const ModelContextConfig> model_context_config{};

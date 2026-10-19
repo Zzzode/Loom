@@ -214,6 +214,13 @@ private:
     void handle_client(int fd) {
         auto request = read_request(fd);
         if (request.request_line.empty()) return;
+        const auto path_end = request.request_line.find(' ', 4);
+        if (request.request_line.starts_with("GET ") && path_end != std::string::npos &&
+            std::string_view(request.request_line).substr(4, path_end - 4).ends_with("/v1/models")) {
+            // Unsupported metadata must not consume scripted business responses.
+            send_all(fd, "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            return;
+        }
         std::size_t idx = 0;
         {
             std::lock_guard lock(mutex_);

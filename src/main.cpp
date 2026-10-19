@@ -686,6 +686,7 @@ int run_runtime_tool_once(
     else if (settings_model_override && !settings_model_override->empty()) {
         config.model_params.model = *settings_model_override;
     }
+    loom::core::prepare_model_metadata(config);
     auto tool_registry = loom::core::ToolRegistry{};
     loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
         .parent_permission_mode = parent_permission_mode_from_options(opts),
@@ -793,6 +794,9 @@ auto load_config(bool& mouse_mode) -> loom::core::Result<loom::core::QueryEngine
     config.max_budget_usd = 10.0;
     config.cwd = fs::current_path().string();
     config.model_params.max_tokens = file_config.settings().model.max_output_tokens;
+    config.model_params.temperature = file_config.settings().model.temperature;
+    config.thinking_config = loom::core::resolve_thinking_config(
+        file_config.settings().model.extended_thinking, file_config.settings().model.thinking_budget);
     config.retry_policy.max_retries = 3;
     config.context_window.max_context_tokens = file_config.settings().model.context_window_size;
     config.model_context_limits = file_config.settings().model.context_limits;
@@ -2017,6 +2021,7 @@ int main(int argc, const char* argv[]) {
     permission_hook.set_working_dir(config.cwd.value_or(fs::current_path().string()));
 
     // Initialize tool registry and register all built-in tools
+    loom::core::prepare_model_metadata(config);
     auto tool_registry = loom::core::ToolRegistry{};
     loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
         .parent_permission_mode = parent_permission_mode_from_options(opts),

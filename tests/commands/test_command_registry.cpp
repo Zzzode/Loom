@@ -385,7 +385,7 @@ TEST(AppCommandRegistry, ConfigListGetReflectLoadedConfig) {
         EXPECT_NE(list->message.find("= 42s"), std::string::npos);
         // ...and the defaults they replaced do not.
         EXPECT_EQ(list->message.find("test-model"), std::string::npos);
-        EXPECT_EQ(list->message.find("= auto"), std::string::npos);
+        EXPECT_EQ(list->message.find("  theme             = auto\n"), std::string::npos);
         EXPECT_EQ(list->message.find("= 120s"), std::string::npos);
 
         auto get_model = registry.execute("/config get model", ctx());
@@ -1365,4 +1365,51 @@ TEST(AppCommandRegistry, XaaShowPresenceOnlyDoesNotEchoSecret) {
     }
 
     cleanup();
+}
+
+TEST(ConfigCommand, ExplicitGenerationOverridesCanReturnToAuto) {
+    namespace fs = std::filesystem;
+    const auto root = cmd_make_temp_root("loom_cmd_generation_auto_");
+    struct Cleanup {
+        fs::path previous = fs::current_path();
+        fs::path root;
+        ~Cleanup() { std::error_code error; fs::current_path(previous, error); fs::remove_all(root, error); }
+    } cleanup{fs::current_path(), root};
+    fs::create_directories(root / "home");
+    fs::create_directories(root / "config");
+    fs::create_directories(root / "work");
+    EnvironmentGuard home("HOME", (root / "home").string());
+    EnvironmentGuard config_dir("LOOM_CONFIG_DIR", (root / "config").string());
+    EnvironmentUnsetGuard tokens("LOOM_MAX_TOKENS");
+    fs::current_path(root / "work");
+    loom::commands::AppCommandRegistry registry;
+    // Both overrides are created through this latched manager after its
+    // initial load; a later clear must not rely on stale disk provenance.
+    for (auto command : {"/config set maxOutputTokens 4096", "/config set extendedThinking false",
+                         "/config set contextWindowSize 200000"}) {
+        const auto result = registry.execute(command, ctx());
+        ASSERT_TRUE(result.has_value());
+        ASSERT_TRUE(result->ok) << result->message;
+    }
+    const auto explicit_false = registry.execute("/config get extendedThinking", ctx());
+    ASSERT_TRUE(explicit_false.has_value());
+    EXPECT_EQ(explicit_false->message, "extendedThinking = false");
+    for (auto command : {"/config set maxOutputTokens auto", "/config set extendedThinking null"}) {
+        const auto result = registry.execute(command, ctx());
+        ASSERT_TRUE(result.has_value());
+        ASSERT_TRUE(result->ok) << result->message;
+    }
+    const auto project_path = root / "work" / ".loom" / "settings.json";
+    const auto document = loom::utils::json::parse_file(project_path);
+    ASSERT_TRUE(document.has_value());
+    EXPECT_TRUE(document->root().get("maxOutputTokens").is_null());
+    EXPECT_TRUE(document->root().get("extendedThinking").is_null());
+    EXPECT_EQ(document->root().get("contextWindowSize").as_int(), 200000);
+    // A new command registry must observe persisted auto, not stale working state.
+    loom::commands::AppCommandRegistry fresh;
+    for (auto key : {"maxOutputTokens", "extendedThinking"}) {
+        const auto result = fresh.execute(std::format("/config get {}", key), ctx());
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result->message, std::format("{} = auto", key));
+    }
 }

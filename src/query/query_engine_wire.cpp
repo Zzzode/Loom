@@ -23,6 +23,16 @@ import loom.services.compact.api_microcompact;
 
 namespace loom::core {
 
+ThinkingConfig resolve_thinking_config(
+    std::optional<bool> enabled, std::optional<std::uint32_t> budget) {
+    ThinkingConfig result;
+    result.budget_tokens = budget;
+    if (enabled == false) result.mode = ThinkingConfig::Mode::Disabled;
+    else if (budget) result.mode = ThinkingConfig::Mode::Forced;
+    else if (enabled == true) result.mode = ThinkingConfig::Mode::Adaptive;
+    return result;
+}
+
 double QueryEngine::context_utilization() const noexcept {
     const auto usage = context_usage();
     return usage.window_tokens == 0 ? 0.0 : static_cast<double>(usage.tokens) / usage.window_tokens;
@@ -42,7 +52,8 @@ QueryEngine::api_context_management() const {
 }
 
 [[nodiscard]] bool QueryEngine::thinking_enabled_for_request() const {
-    return config_.thinking_config.mode != ThinkingConfig::Mode::Disabled &&
+    return (config_.thinking_config.mode == ThinkingConfig::Mode::Adaptive ||
+            config_.thinking_config.mode == ThinkingConfig::Mode::Forced) &&
         !loom::utils::is_env_truthy(std::getenv("LOOM_DISABLE_THINKING"));
 }
 
@@ -220,7 +231,7 @@ void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInpu
     bool stream, bool include_dynamic) const {
     loom::query::wire::RequestInput input;
     input.model = config_.model_params.model;
-    input.max_tokens = model_context_.output_tokens;
+    input.max_tokens = model_context_.request_output_tokens.value_or(0);
     input.stream = stream;
     input.temperature = config_.model_params.temperature;
     input.top_p = config_.model_params.top_p;

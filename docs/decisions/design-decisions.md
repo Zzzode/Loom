@@ -38,6 +38,32 @@ full original audit stays intact. Runtime nudges must not advance the explicit
 human request anchor, and HTTP 413 requires actual serialized byte reduction,
 not only a lower token estimate. See `docs/dev/context-compaction.md`.
 
+**Server model capacities (RFC 0029).** The configured service's
+`data[].context_length` is read once per runtime root, before native tool policy
+snapshots. An exact endpoint/wire/credential-bound immutable snapshot is reused;
+identity changes reprepare it. Resolution is explicit profile, scoped metadata,
+official catalog, then fallback. Output caps resolve independently. No provider
+CLI, global/disk cache or name heuristic supplies capacities. Metadata failures
+continue normally; streaming receive limits and a scoped deadline guard bound
+established-connection transfers. Synchronous DNS, per-address connection attempts
+and TLS socket establishment can outlive cancellation because the HTTP library
+holds its socket mutex. The context fallback is
+an advanced override, omitted on implicit-default saves and removed from the
+ordinary settings panel. See `docs/rfcs/0029-model-capacity-metadata.md`.
+
+**Generation defaults (RFC 0028).** Zero in the host-only original output
+request means automatic, not a zero-valued provider parameter. Resolved positive
+context headroom and optional request output limit are separate: OpenAI-compatible
+business requests omit automatic limits while Messages sends a positive derived
+limit. Summary output remains explicit. Preserve raw policy across native
+snapshots, descendants, switching and fallback; truncation continuation cannot
+raise an explicit request. Unset thinking/temperature stays unset across settings
+saves; explicit thinking plus budget selects manual mode. Main CLI and assembly
+share the same thinking resolver. Legacy false retains omission semantics.
+Manual thinking plus auto output reserves budget+1 subject to cap/headroom;
+impossible combinations fail before HTTP. Model profile output caps remain
+capacity metadata. Ordinary settings do not expose generation tuning controls.
+
 **Model budget identity (RFC 0026).** Context and output limits resolve
 independently for the actual endpoint, canonical wire API and exact model.
 Runtime switches and existing fallback use the same resolution path as initial

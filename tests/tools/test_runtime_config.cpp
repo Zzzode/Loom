@@ -232,6 +232,8 @@ TEST(RuntimeConfigTool, GetMissingReturnsDefaultsAndCreatesNothing) {
     EXPECT_EQ(std::string(settings.get("model").get("source").as_str()),
               "default");
     EXPECT_TRUE(settings.get("temperature").get("value").is_null());
+    EXPECT_TRUE(settings.get("maxOutputTokens").get("value").is_null());
+    EXPECT_TRUE(settings.get("extendedThinking").get("value").is_null());
 
     EXPECT_FALSE(fs::exists(env.home / ".loom"));
     EXPECT_FALSE(fs::exists(env.work / ".loom"));
@@ -260,7 +262,7 @@ TEST(RuntimeConfigTool, SetTypedValuesVerifiedByRealLoad) {
     loom::core::ConfigManager manager;
     ASSERT_TRUE(manager.load(loom::core::LoadOptions{.quiet = true}).has_value());
     EXPECT_DOUBLE_EQ(*manager.settings().model.temperature, 0.7);
-    EXPECT_TRUE(manager.settings().model.extended_thinking);
+    EXPECT_EQ(manager.settings().model.extended_thinking, std::optional<bool>(true));
     EXPECT_EQ(manager.settings().network.max_retries, 2u);
     EXPECT_EQ(manager.settings().model.default_model, "rt-model");
 
@@ -397,7 +399,7 @@ TEST(RuntimeConfigTool, ListPayloadShape) {
     EXPECT_EQ(specs.get("writable").size(), 8u);
     EXPECT_EQ(specs.get("read_only").size(), 9u);
     EXPECT_GE(specs.get("blocked").size(), 9u);
-    EXPECT_EQ(specs.get("null_clear_keys").size(), 2u);
+    EXPECT_EQ(specs.get("null_clear_keys").size(), 4u);
     EXPECT_TRUE(specs.get("null_clear_note").is_str());
 }
 
@@ -539,4 +541,34 @@ TEST(RuntimeConfigTool, EnvShadowDisclosure) {
               "env");
     EXPECT_EQ(std::string(g.root.get("setting").get("value").as_str()),
               "env-rt-model");
+}
+
+TEST(RuntimeConfigTool, GenerationOverridesCanReturnToProviderDefaults) {
+    RtConfigEnv env;
+    loom::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+    for (auto payload : {
+        R"({"action":"set","key":"maxOutputTokens","value":4096})",
+        R"({"action":"set","key":"extendedThinking","value":false})"}) {
+        const auto result = rt_config_run(registry, payload);
+        ASSERT_TRUE(result.has_value());
+        ASSERT_FALSE(result->is_error) << result->content.front().text;
+    }
+    const auto explicit_false = rt_config_run(registry, R"({"action":"get","key":"extendedThinking"})");
+    ASSERT_TRUE(explicit_false.has_value());
+    RtConfigJson parsed_false(explicit_false->content.front().text);
+    const auto value = parsed_false.root.get("setting").get("value");
+    ASSERT_TRUE(value.is_bool());
+    EXPECT_FALSE(value.as_bool());
+    for (auto key : {"maxOutputTokens", "extendedThinking"}) {
+        const auto cleared = rt_config_run(registry,
+            std::format(R"({{"action":"set","key":"{}","value":null}})", key));
+        ASSERT_TRUE(cleared.has_value());
+        ASSERT_FALSE(cleared->is_error) << cleared->content.front().text;
+        const auto result = rt_config_run(registry,
+            std::format(R"({{"action":"get","key":"{}"}})", key));
+        ASSERT_TRUE(result.has_value());
+        RtConfigJson parsed(result->content.front().text);
+        EXPECT_TRUE(parsed.root.get("setting").get("value").is_null()) << key;
+    }
 }

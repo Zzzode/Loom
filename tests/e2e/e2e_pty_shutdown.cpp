@@ -175,6 +175,7 @@ public:
     std::atomic<int> parked{0};
     std::atomic<int> closed{0};
     std::atomic<int> requests{0};
+    std::atomic<int> metadata_requests{0};
     std::atomic<bool> retry_fault{true};
     std::atomic<bool> selection_grow{false};
     std::atomic<bool> chain_finish{false};
@@ -218,6 +219,20 @@ private:
             request.append(buffer.data(), static_cast<std::size_t>(count));
             const auto headers_end = request.find("\r\n\r\n");
             if (headers_end == std::string::npos) continue;
+            // Metadata GETs never consume the business POST fixture sequence.
+            if (request.starts_with("GET ")) {
+                ++metadata_requests;
+                const bool available = recovery_ == "model-metadata" &&
+                    request.starts_with("GET /v1/models ");
+                const std::string body = available ?
+                    R"({"data":[{"id":"metadata-large","context_length":1048576},{"id":"metadata-small","context_length":262144,"max_output_tokens":4096}]})" :
+                    R"({"error":"metadata unavailable"})";
+                send_bytes(std::string("HTTP/1.1 ") + (available ? "200 OK" : "404 Not Found") +
+                    "\r\nContent-Type: application/json\r\nContent-Length: " +
+                    std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+                ::shutdown(fd, SHUT_WR);
+                return;
+            }
             std::string headers = request.substr(0, headers_end);
             std::transform(headers.begin(), headers.end(), headers.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
             const auto length = headers.find("content-length:");
@@ -252,7 +267,7 @@ private:
             ::shutdown(fd, SHUT_WR);
             return;
         }
-        if (recovery_ == "model-context") {
+        if (recovery_ == "model-context" || recovery_ == "model-metadata") {
             const auto body = text_response("PTY model context reply " + std::to_string(index));
             send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
                 std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
@@ -597,6 +612,7 @@ struct ModelOptions {
     std::string handoff_helper;
     bool tls = false;
     bool isolate_budget_environment = false;
+    bool use_configured_thinking = false;
     std::string runtime_tool_input;
     std::string file_model;
     std::string environment_model = "pty-test-model";
@@ -722,7 +738,8 @@ printf '\nPTY-SHELL-RECEIVED\n'
             }
             if (options.environment_model.empty()) ::unsetenv("LOOM_MODEL");
             else ::setenv("LOOM_MODEL", options.environment_model.c_str(), 1);
-            ::setenv("LOOM_DISABLE_THINKING", "1", 1);
+            if (options.use_configured_thinking) ::unsetenv("LOOM_DISABLE_THINKING");
+            else ::setenv("LOOM_DISABLE_THINKING", "1", 1);
             ::setenv("LOOM_WIRE_API", "messages", 1);
             ::setenv("LOOM_USE_BEDROCK", "0", 1);
             ::setenv("LOOM_USE_VERTEX", "0", 1);
@@ -3177,6 +3194,114 @@ void run_context_occupancy_case(const std::string& binary, const std::string& sc
     terminal.verify_exit(0);
 }
 
+// RFC 0028: real CLI assembly and settings persistence must agree with the
+// provider-default policy, including the environment normally disabled here.
+void run_generation_defaults_case(const std::string& binary, const std::string& scenario,
+                                  const fs::path& root) {
+    const bool explicit_values = scenario == "generation-defaults-explicit";
+    const bool manual = scenario == "generation-defaults-manual";
+    const std::vector<std::string> variants = manual
+        ? std::vector<std::string>{"absent", "true"} : std::vector<std::string>{"probe"};
+    for (const auto& variant : variants) {
+        const auto directory = manual ? root / variant : root;
+        fs::create_directories(directory / "config");
+        const auto user_path = directory / "config" / "settings.json";
+        std::string fixture = R"({"mouseMode":false,"permissionMode":"default","model":"generation-private","theme":"dark")";
+        if (explicit_values)
+            fixture += R"(,"maxOutputTokens":1024,"temperature":0.4,"extendedThinking":false,"thinkingBudget":4096)";
+        if (manual) {
+            fixture += R"(,"thinkingBudget":2048)";
+            if (variant == "true") fixture += R"(,"extendedThinking":true)";
+        }
+        fixture += '}';
+        { std::ofstream output(user_path); output << fixture; require(output.good(), "generation fixture settings were not written"); }
+        ModelOptions options;
+        options.environment_model.clear();
+        options.isolate_budget_environment = true;
+        options.use_configured_thinking = true;
+        ModelServer server(false, false, directory / "unused.txt", false, "model-context");
+        server.start();
+        Terminal terminal(binary, directory, server.url(), options);
+        require(terminal.wait([&] {
+            return terminal.installed() && terminal.latest_frame_text().find("generation-private") != std::string::npos;
+        }), "generation CLI did not show its configured model");
+        require(server.requests.load() == 0, "generation startup unexpectedly sampled the model");
+        save_attention_frame(root, variant + "-initial", terminal.latest_frame());
+        if (!manual) {
+            terminal.input("/config\r");
+            require(terminal.wait([&] {
+                const auto frame = terminal.latest_frame_text();
+                return frame.find("Settings") != std::string::npos && frame.find("Theme") != std::string::npos &&
+                    frame.find("Ctrl+S Save") != std::string::npos;
+            }), "generation settings panel did not open");
+            save_attention_frame(root, "settings-before", terminal.latest_frame());
+            terminal.input("\r");  // The first General field changes dark to light.
+            require(terminal.wait([&] {
+                const auto frame = terminal.latest_frame_text();
+                return frame.find("[light]") != std::string::npos && frame.find("unsaved changes") != std::string::npos;
+            }), "generation settings theme change did not render");
+            terminal.input("\x13");
+            const auto project_path = directory / ".loom" / "settings.json";
+            require(terminal.wait([&] {
+                const auto frame = terminal.latest_frame_text();
+                return frame.find("Settings saved") != std::string::npos &&
+                    compact_json(read_file(project_path)).find("\"theme\":\"light\"") != std::string::npos;
+            }), "generation settings did not save the visible theme to the project file");
+            save_attention_frame(root, "settings-saved", terminal.latest_frame());
+            const auto saved = compact_json(read_file(project_path));
+            std::ofstream(root / "settings-saved.txt") << read_file(project_path);
+            require(read_file(user_path) == fixture, "settings save unexpectedly changed the source user file");
+            if (explicit_values) {
+                for (const std::string field : {"\"maxOutputTokens\":1024", "\"temperature\":0.4", "\"extendedThinking\":false", "\"thinkingBudget\":4096"})
+                    require(saved.find(field) != std::string::npos, "settings save lost explicit field " + field);
+            } else {
+                for (const std::string key : {"maxOutputTokens", "temperature", "extendedThinking", "thinkingBudget"})
+                    require(saved.find("\"" + key + "\":") == std::string::npos, "settings save materialized automatic field " + key);
+            }
+            terminal.input("\x1b");
+            require(terminal.wait([&] {
+                const auto frame = terminal.latest_frame_text();
+                return frame.find("Ctrl+S Save") == std::string::npos && frame.find("generation-private") != std::string::npos;
+            }), "settings panel did not return to the model prompt");
+        }
+        terminal.input("Return the generation defaults probe\r");
+        require(terminal.wait([&] {
+            return server.requests.load() == 1 && terminal.idle_response_visible("PTY model context reply 0");
+        }), "generation defaults request did not finish");
+        const auto bodies = server.request_bodies();
+        require(bodies.size() == 1, "generation defaults duplicated the business request");
+        std::ofstream(root / (variant + "-request.txt")) << bodies.front();
+        const auto body = compact_json(bodies.front());
+        require(body.find("\"model\":\"generation-private\"") != std::string::npos,
+                "generation request used the wrong actual model");
+        std::smatch output_match;
+        require(std::regex_search(body, output_match, std::regex(R"("max_tokens":([1-9][0-9]*)[,}])")),
+                "Messages automatic output was omitted or nonpositive");
+        const auto output = std::stoull(output_match[1].str());
+        if (explicit_values) {
+            require(output == 1024, "CLI did not preserve its explicit output override");
+            std::smatch temperature_match;
+            require(std::regex_search(body, temperature_match, std::regex(R"("temperature":([0-9.]+)[,}])")) &&
+                std::abs(std::stod(temperature_match[1].str()) - 0.4) < 0.000000001,
+                "CLI did not preserve its explicit sampling temperature");
+            require(body.find("\"thinking\":") == std::string::npos,
+                    "legacy false activated thinking or its ignored budget");
+        } else {
+            require(body.find("\"temperature\":") == std::string::npos,
+                    "CLI invented an automatic sampling temperature");
+            if (manual) {
+                require(body.find("\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":2048}") != std::string::npos,
+                        "CLI did not activate the configured manual thinking budget");
+                require(output > 2048, "manual thinking budget exhausted its output allowance");
+            } else require(body.find("\"thinking\":") == std::string::npos,
+                           "CLI invented a provider-default thinking override");
+        }
+        save_attention_frame(root, variant + "-completed", terminal.latest_frame());
+        terminal.input("\x04");
+        terminal.verify_exit(0);
+    }
+}
+
 // RFC 0026: exercise main.cpp's real CLI loader, not only QueryEngine assembly.
 void run_model_context_case(const std::string& binary, const std::string& scenario,
                             const fs::path& root) {
@@ -3193,6 +3318,63 @@ void run_model_context_case(const std::string& binary, const std::string& scenar
     ModelOptions options;
     options.environment_model.clear();
     options.isolate_budget_environment = true;
+    if (scenario == "model-context-metadata" || scenario == "model-context-metadata-direct") {
+        const bool direct = scenario == "model-context-metadata-direct";
+        std::ofstream(root / "config" / "settings.json") <<
+            R"({"mouseMode":false,"permissionMode":"default","model":"metadata-large"})";
+        ModelServer server(false, false, root / "unused.txt", false, "model-metadata");
+        server.start();
+        options.direct = direct;
+        if (direct) options.runtime_tool_input =
+            R"({"description":"Discovered child capacity","prompt":"Return the child result","name":"pty-agent","model":"metadata-small"})";
+        Terminal terminal(binary, root, server.url(), options);
+        if (direct) {
+            terminal.verify_completion(0);
+            require(server.metadata_requests.load() == 1, "direct entry did not prepare metadata exactly once");
+            const auto bodies = server.request_bodies();
+            require(bodies.size() == 1, "direct metadata child changed business request count");
+            const auto body = compact_json(bodies.front());
+            require(body.find("\"model\":\"metadata-small\"") != std::string::npos &&
+                    body.find("\"max_tokens\":4096") != std::string::npos,
+                    "direct child did not inherit the service's model-specific policy");
+            std::ofstream(root / "metadata-child-request.txt") << bodies.front();
+        } else {
+            const auto footer = [&](const std::string& model, const std::string& window) {
+                require(terminal.wait([&] {
+                    const auto frame = terminal.latest_frame_text();
+                    return terminal.installed() && frame.find(model) != std::string::npos &&
+                        frame.find("/" + window) != std::string::npos;
+                }), "service metadata was not reflected in the real CLI footer");
+            };
+            footer("metadata-large", "1048.6K");
+            require(server.requests.load() == 0, "metadata discovery sampled the model");
+            for (int index = 0; index < 3; ++index) {
+                const std::string model = index == 1 ? "metadata-small" : "metadata-large";
+                if (index > 0) terminal.input("/model " + model + "\r");
+                footer(model, index == 1 ? "262.1K" : "1048.6K");
+                save_attention_frame(root, "metadata-" + std::to_string(index), terminal.latest_frame());
+                terminal.input("Return discovered capacity probe " + std::to_string(index) + "\r");
+                require(terminal.wait([&] {
+                    return server.requests.load() == index + 1 &&
+                        terminal.idle_response_visible("PTY model context reply " + std::to_string(index));
+                }), "discovered-capacity business request did not complete");
+                const auto body = compact_json(server.request_bodies().back());
+                require(body.find("\"model\":\"" + model + "\"") != std::string::npos &&
+                        body.find("\"max_tokens\":" + std::to_string(index == 1 ? 4096 : 16384)) != std::string::npos,
+                        "metadata capacity and business output policy disagreed");
+                std::ofstream(root / ("metadata-request-" + std::to_string(index) + ".txt"))
+                    << server.request_bodies().back();
+            }
+            terminal.input("\x04");
+            terminal.verify_exit(0);
+            require(server.metadata_requests.load() == 1, "model switching repeated metadata discovery");
+        }
+        const auto saved = read_file(root / "config" / "settings.json");
+        require(saved.find("contextWindowSize") == std::string::npos &&
+                saved.find("modelContextLimits") == std::string::npos,
+                "service metadata was persisted as a user override");
+        return;
+    }
     if (scenario == "model-context-tolerance") {
         options.environment_model = "budget-default";
         for (const std::string kind : {"missing", "soft-user", "soft-local"}) {
@@ -3320,6 +3502,10 @@ void run_model_context_case(const std::string& binary, const std::string& scenar
 
 void run_case(const std::string& binary, const std::string& scenario, const fs::path& root,
               const std::string& harness) {
+    if (scenario.starts_with("generation-defaults-")) {
+        run_generation_defaults_case(binary, scenario, root);
+        return;
+    }
     if (scenario.starts_with("context-occupancy-")) {
         run_context_occupancy_case(binary, scenario, root);
         return;
@@ -3533,7 +3719,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("context-occupancy-") || scenario.starts_with("model-context-") || scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("task-") || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("generation-defaults-") || scenario.starts_with("context-occupancy-") || scenario.starts_with("model-context-") || scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("task-") || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

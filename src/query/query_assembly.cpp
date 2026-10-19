@@ -374,10 +374,8 @@ loom::core::Result<loom::core::QueryEngineConfig> resolve_engine_config(
     config.context_window.max_context_tokens = settings.model.context_window_size;
     config.model_context_limits = settings.model.context_limits;
     config.retry_policy.max_retries = settings.network.max_retries;
-    config.thinking_config.mode = settings.model.extended_thinking
-        ? loom::core::ThinkingConfig::Mode::Adaptive
-        : loom::core::ThinkingConfig::Mode::Disabled;
-    config.thinking_config.budget_tokens = settings.model.thinking_budget;
+    config.thinking_config = loom::core::resolve_thinking_config(
+        settings.model.extended_thinking, settings.model.thinking_budget);
     config.cwd = overrides.cwd.value_or(fs::current_path().string());
     // permissions.deny must be enforced on the headless/server engine too,
     // not only the interactive CLI — otherwise denied tools still reach
@@ -398,6 +396,8 @@ loom::core::Result<AssemblyHandle> assemble(
     const AssemblyCallbacks& callbacks
 ) {
     auto impl = std::make_unique<AssemblyHandle::Impl>();
+    auto engine_config = config.engine;
+    loom::core::prepare_model_metadata(engine_config);
 
     // Step 4 (RFC-0001 B11): ensure orchestration runtime backends (image
     // codec this batch) are installed before this per-session ToolRegistry
@@ -424,8 +424,8 @@ loom::core::Result<AssemblyHandle> assemble(
     // Step 5: ToolRegistry + runtime tools.
     impl->registry = std::make_unique<loom::core::ToolRegistry>();
     loom::tools::RuntimeToolOptions options;
-    options.default_model = config.engine.model_params.model;
-    options.api_context = loom::core::make_api_execution_context(config.engine);
+    options.default_model = engine_config.model_params.model;
+    options.api_context = loom::core::make_api_execution_context(engine_config);
     options.parent_permission_mode = std::nullopt;
     if (callbacks.permission_check) {
         options.permission_check = *callbacks.permission_check;
@@ -459,7 +459,6 @@ loom::core::Result<AssemblyHandle> assemble(
     // Step 7 + 8: snapshot visible definitions and wire the dynamic MCP
     // tool providers (recipe steps 7-8, server_routes.cppm:800-810) so MCP
     // tool discovery is preserved.
-    auto engine_config = config.engine;
     engine_config.tools = impl->registry->get_visible_definitions();
     engine_config.dynamic_tools_provider = []() -> std::vector<loom::core::ToolDefinition> {
         return loom::tools::collect_mcp_tool_definitions();

@@ -11,6 +11,7 @@ module;
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <httplib.h>
 
 module loom.query.query_engine;
@@ -21,6 +22,7 @@ import loom.types.types;
 import loom.utils.error;
 import loom.serdes.json;
 import loom.query.wire_protocol;
+import loom.services.compact.model_context;
 
 namespace loom::core {
 
@@ -165,6 +167,78 @@ prepared_endpoint(std::string_view url) {
         .client_base_url = std::move(client_base_url),
         .path = std::move(path),
     };
+}
+
+void prepare_model_metadata(QueryEngineConfig& config) {
+    const auto base_url = config.base_url.value_or("");
+    const auto selected = config.wire_api && !config.wire_api->empty() ? *config.wire_api :
+        (std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages");
+    const auto wire = loom::query::wire::wire_api_from_string(selected)
+        .value_or(loom::query::wire::WireApi::Messages);
+    const auto canonical_wire = std::string(loom::query::wire::wire_api_name(wire));
+    const auto& prior = config.model_metadata;
+    if (prior && prior->base_url == base_url && prior->wire_api == canonical_wire &&
+        prior->api_key == config.api_key && prior->auth_token == config.auth_token) return;
+    auto snapshot = std::make_shared<QueryEngineConfig::ModelMetadataSnapshot>();
+    snapshot->base_url = base_url;
+    snapshot->wire_api = canonical_wire;
+    snapshot->api_key = config.api_key;
+    snapshot->auth_token = config.auth_token;
+    // An empty snapshot still records an attempt for this precise identity.
+    config.model_metadata = snapshot;
+    if ((!base_url.starts_with("http://") && !base_url.starts_with("https://")) ||
+        base_url.find_first_of("?#") != std::string::npos ||
+        std::ranges::any_of(base_url, [](unsigned char ch) { return ch <= 0x20 || ch == 0x7f; })) return;
+    const auto authority_start = base_url.find("://") + 3;
+    const auto authority_end = base_url.find('/', authority_start);
+    if (std::string_view(base_url).substr(authority_start, authority_end == std::string::npos
+            ? std::string::npos : authority_end - authority_start).contains('@')) return;
+    const auto endpoint = api_messages_endpoint(base_url);
+    if (!endpoint) return;
+    auto path = endpoint->path;
+    path.replace(path.size() - std::string_view("messages").size(), std::string_view("messages").size(), "models");
+    try {
+        httplib::Client client(endpoint->client_base_url);
+        suppress_socket_sigpipe(client);
+        client.set_connection_timeout(std::chrono::seconds{1});
+        client.set_read_timeout(std::chrono::seconds{1});
+        client.set_write_timeout(std::chrono::seconds{1});
+        client.set_follow_location(false);
+        client.set_decompress(true);
+        httplib::Headers headers;
+        const auto& credential = config.auth_token.empty() ? config.api_key : config.auth_token;
+        if (wire == loom::query::wire::WireApi::OpenAi || !config.auth_token.empty()) {
+            if (!credential.empty()) headers.emplace("Authorization", "Bearer " + credential);
+        } else if (!config.api_key.empty()) headers.emplace("x-api-key", config.api_key);
+        if (wire == loom::query::wire::WireApi::Messages) headers.emplace("anthropic-version", "2023-06-01");
+        std::string body;
+        bool oversized = false;
+        std::atomic<bool> timed_out{false};
+        std::mutex deadline_mutex;
+        std::condition_variable_any deadline_cv;
+        std::jthread deadline([&](std::stop_token stop) {
+            std::unique_lock lock(deadline_mutex);
+            deadline_cv.wait_for(lock, stop, std::chrono::seconds{2}, [] { return false; });
+            if (!stop.stop_requested()) {
+                timed_out.store(true);
+                client.stop();
+            }
+        });
+        const auto response = client.Get(path, headers, [&](const char* data, std::size_t size) {
+            constexpr std::size_t limit = 4 * 1024 * 1024;
+            if (size > limit - body.size()) { oversized = true; return false; }
+            body.append(data, size);
+            return true;
+        });
+        deadline.request_stop();
+        deadline_cv.notify_all();
+        deadline.join();
+        if (!response || oversized || timed_out.load() || response->status < 200 || response->status >= 300) return;
+        snapshot->limits = loom::services::compact::parse_model_metadata(body, base_url, canonical_wire);
+    } catch (const std::exception&) {
+        // Metadata is best-effort; malformed endpoints and transport failures
+        // must not prevent the ordinary model request from being attempted.
+    }
 }
 
 [[nodiscard]] std::vector<SseEvent> SseEventDecoder::feed(std::string_view chunk) {

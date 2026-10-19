@@ -481,7 +481,7 @@ TEST(ConfigManagerUserSettings, SevenWritableKindsRoundTrip) {
     EXPECT_EQ(s.model.default_model, "my-model");
     EXPECT_EQ(s.model.max_output_tokens, 4096u);
     EXPECT_DOUBLE_EQ(*s.model.temperature, 0.5);
-    EXPECT_TRUE(s.model.extended_thinking);
+    EXPECT_EQ(s.model.extended_thinking, std::optional<bool>(true));
     EXPECT_EQ(*s.model.thinking_budget, 2048u);
     EXPECT_EQ(s.model.context_window_size, 100000u);
     EXPECT_EQ(s.network.max_retries, 0u);
@@ -499,7 +499,7 @@ TEST(ConfigManagerUserSettings, SevenWritableKindsRoundTrip) {
     }
     auto reloaded = p.manager();
     ASSERT_TRUE(reloaded.load().has_value());
-    EXPECT_FALSE(reloaded.settings().model.extended_thinking);
+    EXPECT_EQ(reloaded.settings().model.extended_thinking, std::optional<bool>(false));
     EXPECT_DOUBLE_EQ(*reloaded.settings().model.temperature, 0.25);
     EXPECT_EQ(reloaded.settings().network.max_retries, 5u);
 }
@@ -689,9 +689,11 @@ TEST(ConfigManagerUserSettings, ReadOnlyProjectionAndListShape) {
     });
     EXPECT_TRUE(found_theme);
     auto null_keys = list.root.get("null_clear_keys");
-    ASSERT_EQ(null_keys.size(), 2u);
-    EXPECT_EQ(std::string(null_keys.at(0).as_str()), "temperature");
-    EXPECT_EQ(std::string(null_keys.at(1).as_str()), "thinkingBudget");
+    ASSERT_EQ(null_keys.size(), 4u);
+    EXPECT_EQ(std::string(null_keys.at(0).as_str()), "maxOutputTokens");
+    EXPECT_EQ(std::string(null_keys.at(1).as_str()), "extendedThinking");
+    EXPECT_EQ(std::string(null_keys.at(2).as_str()), "temperature");
+    EXPECT_EQ(std::string(null_keys.at(3).as_str()), "thinkingBudget");
 }
 
 
@@ -2625,3 +2627,89 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
 }
 
 // End of file
+
+TEST(ConfigManagerGenerationDefaults, NewSaveOmitsGenerationOverridesAndProjectsNull) {
+    C13Paths p("generation_defaults");
+    CurrentPathGuard cwd_guard(p.root);
+    EnvironmentUnsetGuard tokens("LOOM_MAX_TOKENS");
+    auto manager = p.manager();
+    ASSERT_TRUE(manager.load());
+    EXPECT_EQ(manager.settings().model.max_output_tokens, 0u);
+    EXPECT_FALSE(manager.settings().model.extended_thinking.has_value());
+    for (auto key : {"maxOutputTokens", "extendedThinking", "thinkingBudget", "temperature"}) {
+        const auto projected = manager.agent_setting_value_json(key);
+        ASSERT_TRUE(projected.has_value());
+        EXPECT_TRUE(c13_parse(*projected).root.get("value").is_null()) << key;
+    }
+    ASSERT_TRUE(manager.save());
+    const auto doc = loom::utils::json::parse_file(p.project_path);
+    ASSERT_TRUE(doc.has_value());
+    for (auto key : {"maxOutputTokens", "extendedThinking", "thinkingBudget", "temperature"})
+        EXPECT_FALSE(doc->root().get(key).valid()) << key;
+    EXPECT_FALSE(doc->root().get("contextWindowSize").valid());
+}
+
+TEST(ConfigManagerGenerationDefaults, ExplicitOverridesSurviveSaveAndFalseProjection) {
+    C13Paths p("generation_explicit");
+    CurrentPathGuard cwd_guard(p.root);
+    EnvironmentUnsetGuard tokens("LOOM_MAX_TOKENS");
+    c13_write_file(p.project_path, R"({"maxOutputTokens":4096,"extendedThinking":false,"thinkingBudget":2048,"temperature":0.3,"contextWindowSize":200000})");
+    auto manager = p.manager();
+    ASSERT_TRUE(manager.load());
+    manager.settings_mut().display.theme = "light";
+    ASSERT_TRUE(manager.save());
+    auto reloaded = p.manager();
+    ASSERT_TRUE(reloaded.load());
+    EXPECT_EQ(reloaded.settings().model.max_output_tokens, 4096u);
+    EXPECT_EQ(reloaded.settings().model.context_window_size, 200000u);
+    const auto saved = loom::utils::json::parse_file(p.project_path);
+    ASSERT_TRUE(saved.has_value());
+    EXPECT_EQ(saved->root().get("contextWindowSize").as_int(), 200000);
+    EXPECT_EQ(reloaded.settings().model.extended_thinking, std::optional<bool>(false));
+    EXPECT_EQ(reloaded.settings().model.thinking_budget, std::optional<std::uint32_t>(2048u));
+    ASSERT_TRUE(reloaded.settings().model.temperature.has_value());
+    EXPECT_DOUBLE_EQ(*reloaded.settings().model.temperature, 0.3);
+    const auto projection = reloaded.agent_setting_value_json("extendedThinking");
+    ASSERT_TRUE(projection.has_value());
+    const auto parsed = c13_parse(*projection);
+    ASSERT_TRUE(parsed.root.get("value").is_bool());
+    EXPECT_FALSE(parsed.root.get("value").as_bool());
+}
+
+TEST(ConfigManagerGenerationDefaults, NullClearsOnlyUserTierAndKeepsProjectFallback) {
+    C13Paths p("generation_null");
+    CurrentPathGuard cwd_guard(p.root);
+    EnvironmentUnsetGuard tokens("LOOM_MAX_TOKENS");
+    c13_write_file(p.user_path, R"({"maxOutputTokens":8192,"extendedThinking":true})");
+    c13_write_file(p.project_path, R"({"maxOutputTokens":4096,"extendedThinking":false})");
+    auto manager = p.manager();
+    ASSERT_TRUE(manager.load());
+    for (auto key : {"maxOutputTokens", "extendedThinking"})
+        ASSERT_TRUE(manager.set_user_setting(key, c13_parse("null"))) << key;
+    const auto user = loom::utils::json::parse_file(p.user_path);
+    ASSERT_TRUE(user.has_value());
+    EXPECT_TRUE(user->root().get("maxOutputTokens").is_null());
+    EXPECT_TRUE(user->root().get("extendedThinking").is_null());
+    auto reloaded = p.manager();
+    ASSERT_TRUE(reloaded.load());
+    EXPECT_EQ(reloaded.settings().model.max_output_tokens, 4096u);
+    EXPECT_EQ(reloaded.settings().model.extended_thinking, std::optional<bool>(false));
+    fs::remove(p.project_path);
+    ASSERT_TRUE(reloaded.load());
+    EXPECT_EQ(reloaded.settings().model.max_output_tokens, 0u);
+    EXPECT_FALSE(reloaded.settings().model.extended_thinking.has_value());
+}
+
+TEST(ConfigManagerGenerationDefaults, EnvOutputOverrideDoesNotTurnAutoIntoPersistedNumber) {
+    C13Paths p("generation_env");
+    CurrentPathGuard cwd_guard(p.root);
+    EnvironmentGuard tokens("LOOM_MAX_TOKENS", "8192");
+    auto manager = p.manager();
+    ASSERT_TRUE(manager.load());
+    EXPECT_EQ(manager.settings().model.max_output_tokens, 8192u);
+    manager.settings_mut().display.theme = "light";
+    ASSERT_TRUE(manager.save());
+    const auto doc = loom::utils::json::parse_file(p.project_path);
+    ASSERT_TRUE(doc.has_value());
+    EXPECT_FALSE(doc->root().get("maxOutputTokens").valid());
+}

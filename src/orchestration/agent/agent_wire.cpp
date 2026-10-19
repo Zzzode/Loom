@@ -17,6 +17,32 @@ namespace {
 namespace api = loom::services::api;
 namespace wire = loom::query::wire;
 
+[[nodiscard]] loom::utils::Result<CreateMessageRequest> resolved_request(
+    const CreateMessageRequest& request,
+    const std::shared_ptr<const loom::core::ApiExecutionContext>& context, bool messages) {
+    if (request.max_tokens < 0)
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+            "Request output limit must be non-negative"));
+    const auto minimum = messages && request.thinking_budget && *request.thinking_budget >= 0
+        ? static_cast<std::uint32_t>(*request.thinking_budget) + 1 : 0;
+    const auto policy = agent_model_context(context, request.model,
+        static_cast<std::uint32_t>(request.max_tokens), minimum);
+    const auto output = policy.request_output_tokens.value_or(0);
+    if (output > static_cast<std::uint32_t>(std::numeric_limits<int>::max()))
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+            "Request output limit exceeds the native transport range"));
+    if (messages && output == 0)
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+            "Messages requests require a positive resolved output limit"));
+    if (messages && request.thinking_budget &&
+        (*request.thinking_budget < 0 || static_cast<std::uint32_t>(*request.thinking_budget) >= output))
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+            "Manual thinking budget must be below the request output limit"));
+    auto resolved = request;
+    resolved.max_tokens = static_cast<int>(output);
+    return resolved;
+}
+
 [[nodiscard]] loom::core::ContentBlock wire_content(const api::ContentBlock& block) {
     switch (block.type) {
         case api::ContentBlockType::ToolUse: {
@@ -260,10 +286,12 @@ loom::utils::Result<std::size_t> agent_serialized_request_size(api::MessagesClie
     const std::shared_ptr<const loom::core::ApiExecutionContext>& context) {
     const auto protocol = context ? context->wire_api
         : (std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages");
-    if (wire::wire_api_from_string(protocol) != wire::WireApi::OpenAi)
-        return client.prepared_stream_request_size(request);
+    const bool messages = wire::wire_api_from_string(protocol) != wire::WireApi::OpenAi;
+    auto resolved = resolved_request(request, context, messages);
+    if (!resolved) return std::unexpected(resolved.error());
+    if (messages) return client.prepared_stream_request_size(*resolved);
     wire::OpenAiWireBackend backend(client.config().base_url);
-    auto prepared = backend.prepare(wire_input(request));
+    auto prepared = backend.prepare(wire_input(*resolved));
     if (!prepared) return std::unexpected(loom::utils::Error(
         loom::utils::ErrorCode::invalid_argument, prepared.error()));
     return prepared->body.size();
@@ -287,16 +315,19 @@ loom::utils::Result<loom::services::api::StreamParser> create_agent_model_stream
     std::string protocol;
     if (context) protocol = context->wire_api;
     else if (const char* value = std::getenv("LOOM_WIRE_API")) protocol = value;
-    if (wire::wire_api_from_string(protocol) != wire::WireApi::OpenAi) {
+    const bool messages = wire::wire_api_from_string(protocol) != wire::WireApi::OpenAi;
+    auto resolved = resolved_request(request, context, messages);
+    if (!resolved) return std::unexpected(resolved.error());
+    if (messages) {
         // Preserve enterprise routing, signing, and credential invalidation.
-        return client.create_message_stream(request);
+        return client.create_message_stream(*resolved);
     }
     const auto& config = client.config();
     std::vector<std::pair<std::string, std::string>> headers;
     const auto& credential = config.auth_token.empty() ? config.api_key : config.auth_token;
     if (!credential.empty()) headers.emplace_back("Authorization", "Bearer " + credential);
     auto backend = std::make_shared<wire::OpenAiWireBackend>(config.base_url, std::move(headers));
-    auto prepared = backend->prepare(wire_input(request));
+    auto prepared = backend->prepare(wire_input(*resolved));
     if (!prepared) {
         return std::unexpected(loom::utils::Error(
             loom::utils::ErrorCode::invalid_argument, prepared.error()));

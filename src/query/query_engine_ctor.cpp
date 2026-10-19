@@ -17,7 +17,9 @@ import loom.services.compact.model_context;
 namespace loom::core {
 
 std::shared_ptr<const ApiExecutionContext>
-make_api_execution_context(const QueryEngineConfig& config) {
+make_api_execution_context(const QueryEngineConfig& original) {
+    auto config = original;
+    prepare_model_metadata(config);
     auto context = std::make_shared<ApiExecutionContext>();
     context->base_url = config.base_url.value_or("");
     context->api_key = config.api_key;
@@ -25,13 +27,10 @@ make_api_execution_context(const QueryEngineConfig& config) {
     context->context_output_tokens = config.model_params.max_tokens;
     context->context_compaction_threshold = config.context_window.compaction_threshold;
     context->context_auto_compact = config.context_window.auto_compact;
-    const auto selected = config.wire_api.value_or(
-        std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages");
-    if (auto api = loom::query::wire::wire_api_from_string(selected)) {
-        context->wire_api = std::string(loom::query::wire::wire_api_name(*api));
-    }
+    context->wire_api = config.model_metadata->wire_api;
     context->model_context_config = std::make_shared<const ModelContextConfig>(
-        ModelContextConfig{config.context_window.max_context_tokens, config.model_context_limits});
+        ModelContextConfig{config.context_window.max_context_tokens, config.model_context_limits,
+            config.model_metadata ? config.model_metadata->limits : std::vector<ModelContextLimit>{}});
     context->context_window_tokens = loom::services::compact::resolve_model_context(
         *context->model_context_config, config.model_params.model, context->base_url,
         context->wire_api, config.model_params.max_tokens).window_tokens;
@@ -75,8 +74,10 @@ QueryEngine::QueryEngine(QueryEngineConfig config, ToolRegistry& registry)
 
     // Initialize API client config
     setup_api_client();
+    prepare_model_metadata(config_);
     model_context_config_ = std::make_shared<const ModelContextConfig>(
-        ModelContextConfig{config_.context_window.max_context_tokens, config_.model_context_limits});
+        ModelContextConfig{config_.context_window.max_context_tokens, config_.model_context_limits,
+            config_.model_metadata ? config_.model_metadata->limits : std::vector<ModelContextLimit>{}});
     refresh_model_context();
 
     // Initialize conversation with system prompt if available
@@ -94,9 +95,12 @@ QueryEngine::QueryEngine(QueryEngineConfig config, ToolRegistry& registry)
 }
 
 void QueryEngine::refresh_model_context() {
+    const auto minimum_output = wire_api_ == loom::query::wire::WireApi::Messages &&
+        thinking_enabled_for_request() && config_.thinking_config.mode == ThinkingConfig::Mode::Forced
+        ? static_cast<std::uint64_t>(config_.thinking_config.budget_tokens.value_or(10000)) + 1 : 0;
     model_context_ = loom::services::compact::resolve_model_context(
         *model_context_config_, config_.model_params.model, api_config_.base_url,
-        loom::query::wire::wire_api_name(wire_api_), config_.model_params.max_tokens);
+        loom::query::wire::wire_api_name(wire_api_), config_.model_params.max_tokens, minimum_output);
 }
 
 void QueryEngine::set_model_params(ModelParams params) {

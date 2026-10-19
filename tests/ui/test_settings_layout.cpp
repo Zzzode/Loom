@@ -172,7 +172,7 @@ std::string ScanPages(const Component& component, int count = 32) {
 }
 Event Control(char key) { return Event::Special(std::string(1, key - 'a' + 1)); }
 void FocusLastGeneral(const Component& component) {
-    for (int row = 0; row < 7; ++row) component->OnEvent(Event::Tab);
+    for (int row = 0; row < 6; ++row) component->OnEvent(Event::Tab);
 }
 void Click(const Component& component, std::string_view label) {
     const auto screen = Paint(component);
@@ -603,4 +603,50 @@ TEST(SettingsLayout, McpLifecycleHelpAndAddDelegationRemainInSection) {
     EXPECT_TRUE(Find(delegated, "/mcp add")) << delegated.ToString();
     EXPECT_TRUE(Find(delegated, "MCP")) << delegated.ToString();
     EXPECT_FALSE(Find(delegated, "About")) << delegated.ToString();
+}
+
+TEST(SettingsLayout, UnrelatedSavePreservesAutomaticGenerationDefaults) {
+    TempSettings temp;
+    loom::core::ConfigManager config(temp.file);
+    ASSERT_TRUE(config.load());
+    config.settings_mut().model.max_output_tokens = 0;
+    config.settings_mut().model.extended_thinking.reset();
+    config.settings_mut().model.thinking_budget.reset();
+    config.settings_mut().model.temperature.reset();
+    auto component = settings::MakeSettingsDialog(config);
+    (void)Paint(component);
+    component->OnEvent(Event::Return);  // Change theme.
+    component->OnEvent(Control('s'));
+    EXPECT_EQ(config.settings().model.max_output_tokens, 0u);
+    EXPECT_FALSE(config.settings().model.extended_thinking.has_value());
+    EXPECT_FALSE(config.settings().model.thinking_budget.has_value());
+    EXPECT_FALSE(config.settings().model.temperature.has_value());
+    const auto saved = Read(temp.file);
+    for (auto key : {"maxOutputTokens", "extendedThinking", "thinkingBudget", "temperature", "contextWindowSize"})
+        EXPECT_EQ(saved.find(key), std::string::npos) << key << '\n' << saved;
+    const auto general = Ink(Paint(component, 120, 40));
+    EXPECT_EQ(general.find("Defaulttemperature"), std::string::npos);
+    component->OnEvent(Event::ArrowRight);
+    const auto model = Ink(Paint(component, 120, 40));
+    for (auto key : {"Maxoutputtokens", "Extendedthinking", "Thinkingbudget", "Contextwindowsize"})
+        EXPECT_EQ(model.find(key), std::string::npos) << key;
+}
+
+TEST(SettingsLayout, UnrelatedSavePreservesExplicitGenerationOverrides) {
+    TempSettings temp;
+    { std::ofstream stream(temp.file); stream << R"({"maxOutputTokens":4096,"extendedThinking":false,"thinkingBudget":2048,"temperature":0.3,"contextWindowSize":1048576})"; }
+    loom::core::ConfigManager config(temp.file);
+    ASSERT_TRUE(config.load());
+    auto component = settings::MakeSettingsDialog(config);
+    (void)Paint(component);
+    component->OnEvent(Event::Return);
+    component->OnEvent(Control('s'));
+    loom::core::ConfigManager reloaded(temp.file);
+    ASSERT_TRUE(reloaded.load());
+    EXPECT_EQ(reloaded.settings().model.max_output_tokens, 4096u);
+    EXPECT_EQ(reloaded.settings().model.context_window_size, 1048576u);
+    EXPECT_EQ(reloaded.settings().model.extended_thinking, std::optional<bool>(false));
+    EXPECT_EQ(reloaded.settings().model.thinking_budget, std::optional<std::uint32_t>(2048u));
+    ASSERT_TRUE(reloaded.settings().model.temperature.has_value());
+    EXPECT_DOUBLE_EQ(*reloaded.settings().model.temperature, 0.3);
 }

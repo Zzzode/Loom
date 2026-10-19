@@ -1,5 +1,6 @@
 // RFC 0025: native ownership of summary transport and durable checkpoints.
 module;
+#include <cstdlib>
 module loom.orchestration.agent.utils;
 
 import std;
@@ -13,16 +14,6 @@ namespace loom::tools::agent::utils {
 namespace {
 namespace compact = loom::services::compact;
 namespace api = loom::services::api;
-
-std::optional<loom::core::ResolvedModelContext> resolved_agent_model_context(
-    const std::shared_ptr<const loom::core::ApiExecutionContext>& context, std::string_view model) {
-    if (!context || !context->model_context_config) return std::nullopt;
-    const auto wire = loom::query::wire::wire_api_from_string(context->wire_api)
-        .value_or(loom::query::wire::WireApi::Messages);
-    return compact::resolve_model_context(*context->model_context_config, model, context->base_url,
-        loom::query::wire::wire_api_name(wire), static_cast<std::uint32_t>(std::min<std::uint64_t>(
-            context->context_output_tokens, std::numeric_limits<std::uint32_t>::max())));
-}
 
 std::string tool_schema(const CreateMessageRequest& request) {
     std::string schema = "[";
@@ -127,13 +118,32 @@ AgentReplayContext replay_agent_context(const std::vector<std::string>& entries)
     return replay;
 }
 
+loom::core::ResolvedModelContext agent_model_context(
+    const std::shared_ptr<const loom::core::ApiExecutionContext>& context, std::string_view model,
+    std::optional<std::uint32_t> requested_output, std::uint64_t minimum_auto_output) {
+    const auto wire = loom::query::wire::wire_api_from_string(context ? context->wire_api :
+        (std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages"))
+        .value_or(loom::query::wire::WireApi::Messages);
+    const auto requested = requested_output.value_or(context ? static_cast<std::uint32_t>(
+        std::min<std::uint64_t>(context->context_output_tokens,
+            std::numeric_limits<std::uint32_t>::max())) : 0);
+    if (context && context->model_context_config)
+        return compact::resolve_model_context(*context->model_context_config, model, context->base_url,
+            loom::query::wire::wire_api_name(wire), requested, minimum_auto_output);
+    // Legacy snapshots carry scalar capacities rather than model policy. Preserve
+    // that window and explicit output instead of inferring a catalog replacement.
+    loom::core::ModelContextConfig legacy;
+    if (context) legacy.fallback_window_tokens = static_cast<std::uint32_t>(
+        std::min<std::uint64_t>(context->context_window_tokens, std::numeric_limits<std::uint32_t>::max()));
+    return compact::resolve_model_context(legacy, model, {}, loom::query::wire::wire_api_name(wire),
+        requested, minimum_auto_output);
+}
+
 compact::ContextPolicy agent_context_policy(
     const std::shared_ptr<const loom::core::ApiExecutionContext>& context, std::string_view model) {
-    if (!context) return {};
-    if (const auto resolved = resolved_agent_model_context(context, model))
-        return {resolved->window_tokens, resolved->output_tokens, context->context_compaction_threshold};
-    return {context->context_window_tokens, context->context_output_tokens,
-        context->context_compaction_threshold};
+    const auto resolved = agent_model_context(context, model);
+    return {resolved.window_tokens, resolved.output_tokens,
+        context ? context->context_compaction_threshold : 0.9};
 }
 
 std::uint64_t estimate_agent_context(const CreateMessageRequest& request,
@@ -172,15 +182,15 @@ loom::core::Result<void> compact_agent_context(api::MessagesClient& client,
     const auto core_messages = agent_core_messages(messages);
     const auto schema = tool_schema(request);
     const auto system = request.system_prompt.value_or("");
-    const auto resolved = resolved_agent_model_context(context, request.model);
+    const auto resolved = agent_model_context(context, request.model);
     const auto summarize = [&](const compact::SummaryRequest& input)
         -> loom::core::Result<compact::SummaryResponse> {
         CreateMessageRequest summary;
         summary.model = request.model;
         summary.system_prompt = input.instructions;
         summary.messages = {Message::from_text("user", input.transcript)};
-        summary.max_tokens = static_cast<int>(resolved && resolved->output_cap
-            ? std::min(input.max_output_tokens, *resolved->output_cap) : input.max_output_tokens);
+        summary.max_tokens = static_cast<int>(resolved.output_cap
+            ? std::min(input.max_output_tokens, *resolved.output_cap) : input.max_output_tokens);
         summary.stream = true;
         auto stream = create_agent_model_stream(client, summary, context);
         if (!stream) return std::unexpected(loom::core::Error::make(

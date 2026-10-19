@@ -520,7 +520,8 @@ Result<ToolResult> AgentTool::run_agent_loop(const AgentExecutionPlan& plan) {
                 req = {};
                 req.model = plan.model;
                 req.messages = messages;
-                req.max_tokens = plan.api_context ? static_cast<int>(plan.api_context->context_output_tokens) : 16384;
+                const auto context_policy = utils::agent_context_policy(plan.api_context, plan.model);
+                req.max_tokens = static_cast<int>(context_policy.output_tokens);
                 req.stream = true;
                 if (!plan.system_prompt.empty()) req.system_prompt = plan.system_prompt;
                 req.tools = api_tools_for_plan(plan);
@@ -536,7 +537,7 @@ Result<ToolResult> AgentTool::run_agent_loop(const AgentExecutionPlan& plan) {
                 };
                 if (attempt == 0 && (!plan.api_context || plan.api_context->context_auto_compact) &&
                     utils::estimate_agent_context(req, request_anchor, observed) >=
-                        loom::services::compact::usable_input_tokens(utils::agent_context_policy(plan.api_context))) {
+                        loom::services::compact::usable_input_tokens(context_policy)) {
                     auto compacted = compact_history("budget");
                     if (!compacted) return fail_agent("Agent context compaction failed: " + compacted.error().message);
                     req.messages = messages;

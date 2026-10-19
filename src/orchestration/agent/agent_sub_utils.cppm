@@ -814,7 +814,7 @@ struct AgentReplayContext {
 };
 [[nodiscard]] AgentReplayContext replay_agent_context(const std::vector<std::string>& entries);
 [[nodiscard]] loom::services::compact::ContextPolicy agent_context_policy(
-    const std::shared_ptr<const loom::core::ApiExecutionContext>& context);
+    const std::shared_ptr<const loom::core::ApiExecutionContext>& context, std::string_view model);
 [[nodiscard]] std::uint64_t estimate_agent_context(const CreateMessageRequest& request,
     std::optional<std::size_t> anchor, loom::services::compact::UsageObservation observed = {});
 [[nodiscard]] loom::core::Result<void> compact_agent_context(

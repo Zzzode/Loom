@@ -399,7 +399,378 @@ auto resume_native_compaction_input(std::string_view id) {
     return loom::core::ToolInput::from_json(std::format(
         R"({{"prompt":"Complete current request verbatim","agent_id":"{}","resume_existing":true}})", id));
 }
+
+std::shared_ptr<loom::core::ApiExecutionContext> native_model_context(
+    const AgentWireServer& server, std::string_view protocol, std::uint32_t parent_window = 200000) {
+    auto context = std::make_shared<loom::core::ApiExecutionContext>(*agent_wire_context(server));
+    context->wire_api = protocol;
+    context->context_window_tokens = parent_window;
+    context->context_output_tokens = 16384;
+    auto policy = std::make_shared<loom::core::ModelContextConfig>();
+    policy->fallback_window_tokens = 200000;
+    policy->limits = {
+        {.model = "native-large", .context_window_tokens = 1000000, .max_output_tokens = 32768},
+        {.model = "native-small", .context_window_tokens = 256000, .max_output_tokens = 1024},
+    };
+    context->model_context_config = std::move(policy);
+    return context;
+}
+
+loom::core::ToolInput native_model_resume_input(std::string_view id, std::string_view model) {
+    return loom::core::ToolInput::from_json(std::format(
+        R"({{"prompt":"Continue the current model-specific task","agent_id":"{}","resume_existing":true,"model":"{}"}})",
+        id, model));
+}
+
+std::string native_agent_model_call(std::string_view protocol, std::string_view child_id,
+    std::string_view model, bool resume = false) {
+    json::JsonMutDoc args;
+    auto input = args.object();
+    input.add("prompt", args.string("Complete the nested model task"));
+    input.add("agent_id", args.string(child_id));
+    input.add("subagent_type", args.string("general-purpose"));
+    input.add("model", args.string(model));
+    input.add("resume_existing", args.boolean(resume));
+    args.set_root(input);
+    json::JsonMutDoc doc;
+    auto root = doc.object();
+    if (protocol == "openai") {
+        auto function = doc.object();
+        function.add("name", doc.string("Agent"));
+        function.add("arguments", doc.string(args.to_string()));
+        auto call = doc.object();
+        call.add("index", doc.number(static_cast<int64_t>(0)));
+        call.add("id", doc.string("delegate-" + std::string(child_id)));
+        call.add("function", function);
+        auto calls = doc.array();
+        calls.append(call);
+        auto delta = doc.object();
+        delta.add("tool_calls", calls);
+        auto choice = doc.object();
+        choice.add("delta", delta);
+        choice.add("finish_reason", doc.string("tool_calls"));
+        auto choices = doc.array();
+        choices.append(choice);
+        root.add("choices", choices);
+        doc.set_root(root);
+        return openai_frame(doc.to_string()) + openai_frame("[DONE]");
+    }
+    auto delta = doc.object();
+    delta.add("type", doc.string("input_json_delta"));
+    delta.add("partial_json", doc.string(args.to_string()));
+    root.add("index", doc.number(static_cast<int64_t>(0)));
+    root.add("delta", delta);
+    doc.set_root(root);
+    return "event: message_start\ndata: {\"message\":{\"id\":\"nested-model\"}}\n\n"
+        "event: content_block_start\ndata: " + std::format(
+            R"({{"index":0,"content_block":{{"type":"tool_use","id":"delegate-{}","name":"Agent","input":{{}}}}}})", child_id) +
+        "\n\nevent: content_block_delta\ndata: " + doc.to_string() +
+        "\n\nevent: content_block_stop\ndata: {\"index\":0}\n\n"
+        "event: message_delta\ndata: {\"delta\":{\"stop_reason\":\"tool_use\"}}\n\n"
+        "event: message_stop\ndata: {}\n\n";
+}
 } // namespace
+
+TEST(AgentWire, ModelPolicyResolvesActualChildAtRealMillionAnd256KLimits) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool parent_large : {true, false}) {
+        SCOPED_TRACE(std::format("{} parent_large={}", protocol, parent_large));
+        AgentWireSandbox sandbox;
+        seed_native_compaction_history("model-child", 1200000);
+        const std::string child_model = parent_large ? "native-small" : "native-large";
+        int business = 0;
+        int summaries = 0;
+        AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+            const auto parsed = json::parse(request.body);
+            ASSERT_TRUE(parsed);
+            EXPECT_EQ(parsed->root().get("model").as_str(), child_model);
+            if (native_summary_request(request)) {
+                ++summaries;
+                EXPECT_EQ(parsed->root().get("max_tokens").as_int(), 1024);
+            } else {
+                ++business;
+                EXPECT_EQ(parsed->root().get("max_tokens").as_int(), parent_large ? 1024 : 16384);
+                EXPECT_EQ(request.body.find("old-historical-observation") == std::string::npos, parent_large);
+            }
+            const auto text = native_summary_request(request) ? native_checkpoint_summary() : "model child complete";
+            response.set_content(std::string_view(protocol) == "openai" ? openai_text(text) : messages_text(text), "text/event-stream");
+        });
+        auto context = native_model_context(server, protocol, parent_large ? 1000000 : 256000);
+        loom::core::ToolRegistry registry;
+        registry.register_tool(std::make_unique<WireProbeTool>());
+        loom::tools::AgentConfig config;
+        config.default_model = "stale-registered-model";
+        config.api_context = context;
+        loom::tools::AgentTool tool(config, 0, &registry);
+        auto input = native_model_resume_input("model-child", child_model);
+        input.parent_model = parent_large ? "native-large" : "native-small";
+        const auto result = tool.execute(input);
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error) << result_text(*result);
+        EXPECT_EQ(business, 1);
+        EXPECT_EQ(summaries > 0, parent_large);
+        EXPECT_LE(summaries, 16);
+        EXPECT_EQ(context->context_window_tokens, parent_large ? 1000000u : 256000u);
+        EXPECT_EQ(context->context_output_tokens, 16384u);
+    }
+}
+
+TEST(AgentWire, ModelPolicyResumeSwitchRechecksWindowAndRestoresRequestedOutput) {
+    for (const auto protocol : {"messages", "openai"}) {
+        SCOPED_TRACE(protocol);
+        AgentWireSandbox sandbox;
+        seed_native_compaction_history("model-resume-switch", 1200000);
+        std::vector<std::string> business_models;
+        int summaries = 0;
+        AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+            const auto parsed = json::parse(request.body);
+            ASSERT_TRUE(parsed);
+            const auto model = parsed->root().get("model").as_str();
+            if (native_summary_request(request)) {
+                ++summaries;
+                EXPECT_EQ(model, "native-small");
+                EXPECT_EQ(parsed->root().get("max_tokens").as_int(), 1024);
+            } else {
+                business_models.emplace_back(model);
+                EXPECT_EQ(parsed->root().get("max_tokens").as_int(), model == "native-small" ? 1024 : 16384);
+                EXPECT_EQ(request.body.find("old-historical-observation") != std::string::npos,
+                    business_models.size() == 1);
+            }
+            const auto text = native_summary_request(request) ? native_checkpoint_summary() : "switch complete";
+            response.set_content(std::string_view(protocol) == "openai" ? openai_text(text) : messages_text(text), "text/event-stream");
+        });
+        loom::core::ToolRegistry registry;
+        registry.register_tool(std::make_unique<WireProbeTool>());
+        loom::tools::AgentConfig config;
+        config.default_model = "native-large";
+        config.api_context = native_model_context(server, protocol, 1000000);
+        loom::tools::AgentTool tool(config, 0, &registry);
+        int after_small = 0;
+        for (const auto model : {"native-large", "native-small", "native-large"}) {
+            runtime::native_agent_store().clear_for_testing();
+            const auto result = tool.execute(native_model_resume_input("model-resume-switch", model));
+            ASSERT_TRUE(result);
+            ASSERT_FALSE(result->is_error) << result_text(*result);
+            if (std::string_view(model) == "native-small") { EXPECT_GT(summaries, 0); after_small = summaries; }
+        }
+        EXPECT_EQ(business_models, (std::vector<std::string>{"native-large", "native-small", "native-large"}));
+        EXPECT_EQ(summaries, after_small);
+        EXPECT_EQ(config.api_context->context_output_tokens, 16384u);
+    }
+}
+
+TEST(AgentWire, ModelPolicyGrandchildUsesOwnWindowAndOriginalRequestedOutput) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool outer_large : {true, false}) {
+        SCOPED_TRACE(std::format("{} outer_large={}", protocol, outer_large));
+        AgentWireSandbox sandbox;
+        AgentWireEnv nested("LOOM_ENABLE_NESTED_AGENTS", "1");
+        seed_native_compaction_history("policy-leaf", 1200000);
+        const std::string outer_model = outer_large ? "native-large" : "native-small";
+        const std::string middle_model = outer_large ? "native-small" : "native-large";
+        std::vector<std::string> models;
+        int summaries = 0;
+        AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+            const auto parsed = json::parse(request.body);
+            ASSERT_TRUE(parsed);
+            const auto model = parsed->root().get("model").as_str();
+            if (native_summary_request(request)) {
+                ++summaries;
+                EXPECT_EQ(model, outer_model);
+                EXPECT_EQ(parsed->root().get("max_tokens").as_int(), 1024);
+                response.set_content(std::string_view(protocol) == "openai" ? openai_text(native_checkpoint_summary()) :
+                    messages_text(native_checkpoint_summary()), "text/event-stream");
+                return;
+            }
+            models.emplace_back(model);
+            EXPECT_EQ(parsed->root().get("max_tokens").as_int(), model == "native-small" ? 1024 : 16384);
+            if (models.size() == 1 || models.size() == 2) {
+                response.set_content(native_agent_model_call(protocol, models.size() == 1 ? "policy-middle" : "policy-leaf",
+                    models.size() == 1 ? middle_model : outer_model, models.size() == 2), "text/event-stream");
+            } else response.set_content(std::string_view(protocol) == "openai" ? openai_text("nested policy complete") :
+                messages_text("nested policy complete"), "text/event-stream");
+        });
+        loom::core::ToolRegistry registry;
+        registry.register_tool(loom::tools::make_agent_tool({}, 0, &registry));
+        loom::tools::AgentConfig config;
+        config.default_model = outer_model;
+        config.api_context = native_model_context(server, protocol, outer_large ? 256000 : 1000000);
+        auto allow = [](std::string_view, std::string_view, std::string_view) { return loom::tools::AgentLivePermissionCheck{}; };
+        loom::tools::AgentTool tool(config, 0, &registry, allow);
+        const auto result = tool.execute(agent_wire_input("policy-outer"));
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error) << result_text(*result);
+        EXPECT_EQ(models, (std::vector<std::string>{outer_model, middle_model, outer_model, middle_model, outer_model}));
+        EXPECT_EQ(summaries > 0, !outer_large);
+        EXPECT_LE(summaries, 16);
+        EXPECT_EQ(config.api_context->context_output_tokens, 16384u);
+        EXPECT_EQ(server.auth(), std::vector<std::string>(server.bodies().size(), "Bearer session-token"));
+    }
+}
+
+TEST(AgentWire, ModelPolicySummaryCapIsIndependentOfBusinessRequestedOutput) {
+    for (const auto protocol : {"messages", "openai"}) for (const bool capped : {true, false}) {
+        SCOPED_TRACE(std::format("{} capped={}", protocol, capped));
+        AgentWireSandbox sandbox;
+        seed_native_compaction_history("summary-model-cap", 1200000);
+        int summaries = 0;
+        int business = 0;
+        AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+            const auto parsed = json::parse(request.body);
+            ASSERT_TRUE(parsed);
+            EXPECT_EQ(parsed->root().get("model").as_str(), "native-summary");
+            if (native_summary_request(request)) {
+                ++summaries;
+                EXPECT_EQ(parsed->root().get("max_tokens").as_int(), capped ? 128 : 4096);
+            } else { ++business; EXPECT_EQ(parsed->root().get("max_tokens").as_int(), 64); }
+            const auto text = native_summary_request(request) ? native_checkpoint_summary() : "small business output";
+            response.set_content(std::string_view(protocol) == "openai" ? openai_text(text) : messages_text(text), "text/event-stream");
+        });
+        auto context = native_model_context(server, protocol, 1000000);
+        context->context_output_tokens = 64;
+        auto policy = std::make_shared<loom::core::ModelContextConfig>();
+        policy->limits.push_back({.model = "native-summary", .context_window_tokens = 256000,
+            .max_output_tokens = capped ? std::optional<std::uint32_t>{128} : std::nullopt});
+        context->model_context_config = std::move(policy);
+        loom::core::ToolRegistry registry;
+        registry.register_tool(std::make_unique<WireProbeTool>());
+        loom::tools::AgentConfig config;
+        config.default_model = "native-summary";
+        config.api_context = context;
+        loom::tools::AgentTool tool(config, 0, &registry);
+        const auto result = tool.execute(native_model_resume_input("summary-model-cap", "native-summary"));
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error) << result_text(*result);
+        EXPECT_GT(summaries, 0);
+        EXPECT_LE(summaries, 16);
+        EXPECT_EQ(business, 1);
+    }
+}
+
+TEST(AgentWire, ModelPolicyParallelSessionsKeepScopedLimitsAndCredentialsSeparate) {
+    for (const auto protocol : {"messages", "openai"}) {
+        SCOPED_TRACE(protocol);
+        AgentWireSandbox sandbox;
+        seed_native_compaction_history("policy-parallel-large", 1200000);
+        seed_native_compaction_history("policy-parallel-small", 1200000);
+        std::mutex mutex;
+        std::condition_variable cv;
+        int arrived = 0;
+        int first_summaries = 0;
+        int second_summaries = 0;
+        auto respond = [&](bool large, const auto& request, auto& response, std::size_t index) {
+            if (index == 0) {
+                std::unique_lock lock(mutex);
+                ++arrived;
+                cv.notify_all();
+                EXPECT_TRUE(cv.wait_for(lock, std::chrono::seconds(5), [&] { return arrived == 2; }));
+            }
+            const auto parsed = json::parse(request.body);
+            ASSERT_TRUE(parsed);
+            EXPECT_EQ(parsed->root().get("model").as_str(), "same-private-model");
+            const bool summary = request.body.find("CONTEXT CHECKPOINT:") != std::string::npos;
+            EXPECT_EQ(native_summary_request(request), summary);
+            if (summary) {
+                if (large) ++first_summaries;
+                else ++second_summaries;
+                EXPECT_EQ(parsed->root().get("max_tokens").as_int(), 512);
+            } else EXPECT_EQ(parsed->root().get("max_tokens").as_int(), large ? 16384 : 512);
+            const auto text = summary ? native_checkpoint_summary() : "isolated policy complete";
+            response.set_content(std::string_view(protocol) == "openai" ? openai_text(text) : messages_text(text), "text/event-stream");
+        };
+        AgentWireServer first([&](const auto& request, auto& response, std::size_t index) { respond(true, request, response, index); });
+        AgentWireServer second([&](const auto& request, auto& response, std::size_t index) { respond(false, request, response, index); });
+        auto context_for = [&](const AgentWireServer& server, bool large) {
+            auto context = native_model_context(server, protocol, large ? 256000 : 1000000);
+            context->auth_token = large ? "large-policy-secret" : "small-policy-secret";
+            // The resolver receives the same canonical protocol used by the transport.
+            if (std::string_view(protocol) == "openai") context->wire_api = "openai-compatible";
+            auto policy = std::make_shared<loom::core::ModelContextConfig>();
+            policy->limits.push_back({.model = "same-private-model", .context_window_tokens = large ? 1000000u : 256000u,
+                .max_output_tokens = large ? 32768u : 512u, .base_url = server.url() + "/", .wire_api = protocol});
+            context->model_context_config = std::move(policy);
+            const auto resolved = loom::tools::agent::utils::agent_context_policy(context, "same-private-model");
+            EXPECT_EQ(resolved.window_tokens, large ? 1000000u : 256000u);
+            EXPECT_EQ(resolved.output_tokens, large ? 16384u : 512u);
+            return context;
+        };
+        loom::core::ToolRegistry registry;
+        loom::tools::AgentConfig config;
+        config.default_model = "same-private-model";
+        registry.register_tool(loom::tools::make_agent_tool(config, 0, &registry));
+        // Agent itself is filtered from child requests unless nested agents are enabled.
+        registry.register_tool(std::make_unique<WireProbeTool>());
+        auto first_input = native_model_resume_input("policy-parallel-large", "same-private-model");
+        first_input.api_context = context_for(first, true);
+        auto second_input = native_model_resume_input("policy-parallel-small", "same-private-model");
+        second_input.api_context = context_for(second, false);
+        auto first_run = std::async(std::launch::async, [&] { return registry.execute("Agent", first_input); });
+        auto second_run = std::async(std::launch::async, [&] { return registry.execute("Agent", second_input); });
+        const auto first_result = first_run.get();
+        const auto second_result = second_run.get();
+        ASSERT_TRUE(first_result);
+        ASSERT_FALSE(first_result->is_error) << result_text(*first_result);
+        ASSERT_TRUE(second_result);
+        ASSERT_FALSE(second_result->is_error) << result_text(*second_result);
+        EXPECT_EQ(first_summaries, 0);
+        EXPECT_GT(second_summaries, 0);
+        EXPECT_LE(second_summaries, 16);
+        EXPECT_EQ(first.bodies().size(), 1u);
+        EXPECT_EQ(second.bodies().size(), static_cast<std::size_t>(second_summaries + 1));
+        EXPECT_EQ(first.auth(), std::vector<std::string>(first.bodies().size(), "Bearer large-policy-secret"));
+        EXPECT_EQ(second.auth(), std::vector<std::string>(second.bodies().size(), "Bearer small-policy-secret"));
+    }
+}
+
+TEST(AgentWire, ModelPolicyUnknownChildUsesOriginalFallbackInsteadOfParentWindow) {
+    for (const auto protocol : {"messages", "openai"}) {
+        SCOPED_TRACE(protocol);
+        AgentWireSandbox sandbox;
+        seed_native_compaction_history("unknown-model-child", 1200000);
+        int summaries = 0;
+        int business = 0;
+        AgentWireServer server([&](const auto& request, auto& response, std::size_t) {
+            const auto parsed = json::parse(request.body);
+            ASSERT_TRUE(parsed);
+            EXPECT_EQ(parsed->root().get("model").as_str(), "unknown-private-model");
+            if (native_summary_request(request)) { ++summaries; EXPECT_EQ(parsed->root().get("max_tokens").as_int(), 4096); }
+            else { ++business; EXPECT_EQ(parsed->root().get("max_tokens").as_int(), 16384); }
+            const auto text = native_summary_request(request) ? native_checkpoint_summary() : "fallback complete";
+            response.set_content(std::string_view(protocol) == "openai" ? openai_text(text) : messages_text(text), "text/event-stream");
+        });
+        auto context = native_model_context(server, protocol, 1000000);
+        const auto policy = loom::tools::agent::utils::agent_context_policy(context, "unknown-private-model");
+        EXPECT_EQ(policy.window_tokens, 200000u);
+        loom::core::ToolRegistry registry;
+        registry.register_tool(std::make_unique<WireProbeTool>());
+        loom::tools::AgentConfig config;
+        config.default_model = "native-large";
+        config.api_context = context;
+        loom::tools::AgentTool tool(config, 0, &registry);
+        auto input = native_model_resume_input("unknown-model-child", "unknown-private-model");
+        input.parent_model = "native-large";
+        const auto result = tool.execute(input);
+        ASSERT_TRUE(result);
+        ASSERT_FALSE(result->is_error) << result_text(*result);
+        EXPECT_GT(summaries, 0);
+        EXPECT_LE(summaries, 16);
+        EXPECT_EQ(business, 1);
+    }
+}
+
+TEST(AgentWire, ModelPolicyLegacyScalarAndNullKeepTheirExistingBudgets) {
+    namespace agent = loom::tools::agent::utils;
+    const auto defaults = agent::agent_context_policy({}, "gpt-4.1");
+    EXPECT_EQ(defaults.window_tokens, 200000u);
+    EXPECT_EQ(defaults.output_tokens, 16384u);
+    auto legacy = std::make_shared<loom::core::ApiExecutionContext>();
+    legacy->base_url = "https://api.openai.com/v1";
+    legacy->wire_api = "openai";
+    legacy->context_window_tokens = 12345;
+    legacy->context_output_tokens = 3456;
+    const auto policy = agent::agent_context_policy(legacy, "gpt-4.1");
+    EXPECT_EQ(policy.window_tokens, 12345u);
+    EXPECT_EQ(policy.output_tokens, 3456u);
+    EXPECT_FALSE(legacy->model_context_config);
+}
 
 TEST(AgentWire, ContextBudgetCompactsAndResumeKeepsOnlyCommittedWorkingHistory) {
     for (const auto protocol : {"messages", "openai"}) {

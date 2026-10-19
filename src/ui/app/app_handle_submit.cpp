@@ -638,17 +638,9 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
             params.model = std::string(new_model);
             static_cast<loom::core::QueryEngine*>(engine_raw())->set_model_params(std::move(params));
 
-            // M7.5: Show model switch confirmation banner
-            dtrig::PushModelSwitch(
-                screen_state_->dialog_store.dialog_queue,
-                old_model,
-                std::string(new_model),
-                [this](bool confirm) {
-                    (void)confirm; // always confirmed via /model command
-                    screen_state_->dialog_store.PopBottom(
-                        /*is_prompt_input_active=*/false);
-                    PostRenderEvent();
-                });
+            AppendLocalCommandInputMessage(std::string(normalized));
+            AppendLocalCommandMessage(
+                std::format("Switched model: {} → {}", old_model, new_model), false);
         }
         this->SyncState();
         return;

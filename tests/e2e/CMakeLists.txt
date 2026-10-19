@@ -192,6 +192,18 @@ foreach(_pty_context_case IN ITEMS switch direct invalid fallback tolerance)
       SKIP_RETURN_CODE 125)
 endforeach()
 
+# RFC 0027: current working context stays distinct from cumulative request usage.
+add_test(NAME E2E_Pty_ContextOccupancy_RepeatedAndClear
+    COMMAND e2e_pty_shutdown context-occupancy-repeated)
+add_test(NAME E2E_Pty_ContextOccupancy_CompactionSwitchRestore
+    COMMAND e2e_pty_shutdown context-occupancy-compaction)
+set_tests_properties(
+    E2E_Pty_ContextOccupancy_RepeatedAndClear
+    E2E_Pty_ContextOccupancy_CompactionSwitchRestore PROPERTIES
+    TIMEOUT 60
+    ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+    SKIP_RETURN_CODE 125)
+
 # Drag selection travels through real SGR input and flushed ANSI frames.
 # Clipboard commands are isolated fixture executables; no host clipboard writes.
 foreach(_pty_selection_case IN ITEMS

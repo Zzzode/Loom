@@ -1077,6 +1077,26 @@ TEST(StatusLine, ContextRetainsExactThresholdsWithoutDimAcrossThemes) {
     }
 }
 
+TEST(StatusLine, CurrentContextEstimateUses64BitCountAndMarker) {
+    namespace pif = loom::ui::prompt::footer;
+    for (const auto tokens : {std::uint64_t{3'000'000'000}, std::uint64_t{6'000'000'000}}) {
+        pif::BuiltinStatusLineData data;
+        data.segments = {.cwd = false, .git = false, .model = false,
+            .tokens = true, .cost = false, .tasks = false, .agent = false};
+        data.context_window_size = 4'000'000'000LL;
+        data.context_token_count = tokens;
+        data.context_tokens_estimated = true;
+        data.input_tokens = 17;
+        data.output_tokens = 29;
+        const auto rendered = strip_ansi(render_to_plain_text(
+            pif::RenderBuiltinStatusLine(data), 120, 1));
+        const auto expected = tokens == 3'000'000'000
+            ? "~75% 3000000.0K/4000000.0K"
+            : "~150% 6000000.0K/4000000.0K";
+        EXPECT_EQ(rendered.find(expected), 0u);
+    }
+}
+
 TEST(StatusLine, CostUsesSubCentMarkerOrTwoDecimalsAndOmitsAbsentTotals) {
     namespace pif = loom::ui::prompt::footer;
     struct Case {

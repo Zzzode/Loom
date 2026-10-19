@@ -354,6 +354,7 @@ using namespace ftxui;
         builtin_data.input_tokens = s.chrome_store.status_bar.input_tokens;
         builtin_data.output_tokens = s.chrome_store.status_bar.output_tokens;
         builtin_data.context_token_count = s.chrome_store.status_bar.context_token_count;
+        builtin_data.context_tokens_estimated = s.chrome_store.status_bar.context_tokens_estimated;
         builtin_data.cost_usd = s.chrome_store.status_bar.cost_usd;
         builtin_data.context_window_size = s.chrome_store.status_bar.context_window_size;
         builtin_data.task_count = s.task_view_store.teammate_count;

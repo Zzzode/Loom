@@ -104,9 +104,9 @@ inline constexpr std::array<SegmentRow, 7> kSegments = {{
                 : s.chrome_store.status_bar.model_name;
         case 3: {  // tokens
             const auto& sb = s.chrome_store.status_bar;
-            return std::format("{}/{}",
+            return std::format("{}{}/{}", sb.context_tokens_estimated ? "~" : "",
                 pif::FormatTokensK(sb.context_token_count),
-                pif::FormatTokensK(200000));
+                pif::FormatTokensK(sb.context_window_size));
         }
         case 4: {  // cost
             const auto& sb = s.chrome_store.status_bar;

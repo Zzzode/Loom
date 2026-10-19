@@ -76,6 +76,8 @@ struct StatusLineContextWindowInfo {
     std::optional<StatusLineCurrentUsageInfo> current_usage;
     std::optional<double> used_percentage;
     std::optional<double> remaining_percentage;
+    std::optional<std::uint64_t> current_context_tokens;
+    std::optional<bool> current_context_is_estimated;
 };
 
 struct StatusLineVimInfo {
@@ -216,6 +218,17 @@ struct StatusLineCommandInput {
         cw.add("total_input_tokens", doc.number(input.context_window.total_input_tokens));
         cw.add("total_output_tokens", doc.number(input.context_window.total_output_tokens));
         cw.add("context_window_size", doc.number(input.context_window.context_window_size));
+        if (input.context_window.current_context_tokens) {
+            cw.add("current_context_tokens",
+                doc.raw_json(std::to_string(*input.context_window.current_context_tokens)));
+        } else {
+            cw.add("current_context_tokens", doc.null());
+        }
+        if (input.context_window.current_context_is_estimated) {
+            cw.add("current_context_is_estimated", doc.boolean(*input.context_window.current_context_is_estimated));
+        } else {
+            cw.add("current_context_is_estimated", doc.null());
+        }
         if (input.context_window.current_usage) {
             auto current = doc.object();
             current.add("input_tokens", doc.number(input.context_window.current_usage->input_tokens));

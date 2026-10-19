@@ -636,6 +636,7 @@ namespace loom::testing {
                     auto field = fields.substr(0, next);
                     while (!field.empty() && (field.back() == ' ' || field.back() == '\r'))
                         field.remove_suffix(1);
+                    if (field.starts_with('~')) field.remove_prefix(1);
                     const auto percent = field.find('%');
                     if (percent != std::string_view::npos && percent > 0 &&
                         field.substr(0, percent).find_first_not_of("0123456789") == std::string_view::npos) {

@@ -173,7 +173,8 @@ TEST(StreamingReplay, PlainFooterTempPathNormalization) {
     const std::string abbreviated = runtime_stem.substr(0, std::min<std::size_t>(3, runtime_stem.size())) + "…";
     for (const auto& stem : {std::string{"tmp"}, runtime_stem, abbreviated}) {
         for (const auto fields : {" · 0%", " · test-model · 14% 28.0K/200.0K · $0.1234",
-                " · 2% 512/200.0K"}) {
+                " · 2% 512/200.0K", " · ~0%", " · ~2% 5.3K/256.0K",
+                " · test-model · ~119% 305.1K/256.0K · $0.1234"}) {
             const auto raw = input + "  " + stem + fields + "  \n  2 tasks";
             const auto expected_semantic = input + "  <tmpdir>" + fields + "\n  2 tasks";
             const auto normalized = normalize_screen(raw);
@@ -185,7 +186,10 @@ TEST(StreamingReplay, PlainFooterTempPathNormalization) {
             input + "  arbitrary… · 0%", input + "  tmp · usage 0%",
             input + "  tmp · 0% invalid-counts", divider + "  " + abbreviated + " · 0%",
             std::string{"body\n  "} + abbreviated + " · 0%",
-            input + "  project/T · 0%", input + "  tmp · 0% garbage/200K"}) {
+            input + "  project/T · 0%", input + "  tmp · 0% garbage/200K",
+            input + "  tmp · ~~2%", input + "  tmp · ~%",
+            input + "  tmp · ~2% garbage/200K",
+            std::string{"body\n  "} + abbreviated + " · ~2%"}) {
         EXPECT_EQ(normalize_screen(content), content);
     }
 

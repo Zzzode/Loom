@@ -35,8 +35,8 @@ using namespace ftxui;
     }
     return result;
 }
-[[nodiscard]] std::string FormatTokensK(std::int64_t tokens) {
-    if (tokens <= 0) return "0K";
+[[nodiscard]] std::string FormatTokensK(std::uint64_t tokens) {
+    if (tokens == 0) return "0K";
     if (tokens < 1000) return std::to_string(tokens);
     double k = tokens / 1000.0;
     // Show 1 decimal for thousands
@@ -122,7 +122,8 @@ struct StatusField {
         const double pct = data.context_window_size > 0
             ? 100.0 * data.context_token_count / data.context_window_size : 0.0;
         const auto usage_color = pct >= 80.0 ? pal.danger : pct >= 50.0 ? pal.warning : pal.muted;
-        auto usage = std::format("{}%", static_cast<int>(std::round(pct)));
+        auto usage = std::format("{}{:.0f}%",
+            data.context_tokens_estimated ? "~" : "", std::round(pct));
         if (!bounded || columns >= 90)
             usage += std::format(" {}/{}", FormatTokensK(data.context_token_count),
                 FormatTokensK(data.context_window_size));

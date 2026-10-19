@@ -311,6 +311,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         ResetScrollToBottom(screen_state_->messages_store);
         reset_virtual_renderer_state(screen_state_->messages_store);
         this->SyncState();
+        this->TriggerStatuslineUpdate();
     };
     // Retain a copy so tests can trigger the session-expired card path.
     clear_session_callback_ = cbs.on_clear_session;
@@ -533,37 +534,29 @@ void AppAdapter::TriggerStatuslineUpdate() {
         input.cost.total_lines_removed = 0;
 
         // Context window
+        const auto context = static_cast<loom::core::QueryEngine*>(engine_raw())->context_usage();
         input.context_window.total_input_tokens = usage.input_tokens;
         input.context_window.total_output_tokens = usage.output_tokens;
-        input.context_window.context_window_size =
-            static_cast<std::int64_t>(static_cast<loom::core::QueryEngine*>(engine_raw())->max_context_tokens());
-        const bool has_usage = usage.input_tokens > 0 || usage.output_tokens > 0 ||
-            usage.cache_creation_tokens > 0 || usage.cache_read_tokens > 0;
-        if (has_usage) {
+        input.context_window.context_window_size = context.window_tokens;
+        input.context_window.current_context_tokens = context.tokens;
+        input.context_window.current_context_is_estimated = true;
+        if (context.last_request_usage) {
+            const auto& current = *context.last_request_usage;
             input.context_window.current_usage = sl::StatusLineCurrentUsageInfo{
-                .input_tokens = usage.input_tokens,
-                .output_tokens = usage.output_tokens,
-                .cache_creation_input_tokens = usage.cache_creation_tokens,
-                .cache_read_input_tokens = usage.cache_read_tokens,
+                .input_tokens = current.input_tokens,
+                .output_tokens = current.output_tokens,
+                .cache_creation_input_tokens = current.cache_creation_tokens,
+                .cache_read_input_tokens = current.cache_read_tokens,
             };
-            const auto input_context_tokens =
-                static_cast<std::int64_t>(usage.input_tokens) +
-                static_cast<std::int64_t>(usage.cache_creation_tokens) +
-                static_cast<std::int64_t>(usage.cache_read_tokens);
-            if (input.context_window.context_window_size > 0) {
-                auto pct = static_cast<int>(std::llround(
-                    static_cast<double>(input_context_tokens) /
-                    static_cast<double>(input.context_window.context_window_size) *
-                    100.0));
-                pct = std::clamp(pct, 0, 100);
-                input.context_window.used_percentage = static_cast<double>(pct);
-                input.context_window.remaining_percentage = static_cast<double>(100 - pct);
-            }
+        }
+        if (context.window_tokens > 0) {
+            const double pct = 100.0 * static_cast<double>(context.tokens) / context.window_tokens;
+            input.context_window.used_percentage = pct;
+            input.context_window.remaining_percentage = std::max(0.0, 100.0 - pct);
         }
 
         // 200k threshold flag
-        input.exceeds_200k_tokens =
-            (usage.input_tokens + usage.output_tokens) > 200'000;
+        input.exceeds_200k_tokens = context.tokens > 200'000;
 
         // Session name: use session id as identifier (getCurrentSessionTitle
         // derives from the first user message; session id is always available)

@@ -26,7 +26,8 @@ struct StatusBarData {
     std::string model_name;
     std::optional<std::string> session_name, agent_name;
     std::optional<double> cost_usd;
-    int input_tokens = 0, output_tokens = 0, context_token_count = 0;
+    int input_tokens = 0, output_tokens = 0;
+    std::uint64_t context_token_count = 0;
     std::int64_t context_window_size = 200000;
     bool is_fast_mode = false, is_auto_mode = false, is_brief_mode = false;
     std::optional<std::string> effort_level;
@@ -36,6 +37,7 @@ struct StatusBarData {
     // RFC 0007 Phase 2: persistent mouse-mode hint shown in the status bar.
     // Empty = hidden (e.g., before the label is set at startup).
     std::string mouse_mode_label;
+    bool context_tokens_estimated = false;
 };
 
 /// RFC 0002 F3 store — chrome / welcome-header / status-bar projection

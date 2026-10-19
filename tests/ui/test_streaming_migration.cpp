@@ -195,7 +195,7 @@ TEST(StreamingMigration, StatuslineVisibleAfterSubmit) {
     // At this fixture's narrow width the status row keeps the complete
     // context percentage, anchored below the prompt's lower divider.
     const auto& final_screen = snapshots.at("after_end_query");
-    const auto status_start = final_screen.rfind("\n  <tmpdir> · 0%");
+    const auto status_start = final_screen.rfind("\n  <tmpdir> · ~2%");
     ASSERT_NE(status_start, std::string::npos);
     EXPECT_EQ(final_screen.substr(status_start).find("ctx "), std::string::npos);
 }

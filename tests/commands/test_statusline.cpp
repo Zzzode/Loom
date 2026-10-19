@@ -159,8 +159,29 @@ TEST(StatuslineJson, SerializesUnknownContextUsageAsNulls) {
     EXPECT_TRUE(cw.is_obj());
     EXPECT_EQ(cw.get("context_window_size").as_int(), 200000);
     EXPECT_TRUE(cw.get("current_usage").is_null());
+    EXPECT_TRUE(cw.get("current_context_tokens").is_null());
+    EXPECT_TRUE(cw.get("current_context_is_estimated").is_null());
     EXPECT_TRUE(cw.get("used_percentage").is_null());
     EXPECT_TRUE(cw.get("remaining_percentage").is_null());
+}
+
+TEST(StatuslineJson, SerializesCurrentContextOccupancyWithoutNarrowing) {
+    for (const auto tokens : {std::uint64_t{5'000'000'000},
+                              std::numeric_limits<std::uint64_t>::max()}) {
+        for (const bool estimated : {false, true}) {
+            StatusLineCommandInput input;
+            input.context_window.total_input_tokens = 17;
+            input.context_window.current_context_tokens = tokens;
+            input.context_window.current_context_is_estimated = estimated;
+            auto doc = parse(to_json(input));
+            ASSERT_TRUE(doc);
+            const auto context = doc->root().get("context_window");
+            EXPECT_EQ(context.get("current_context_tokens").to_string(), std::to_string(tokens));
+            EXPECT_EQ(context.get("current_context_is_estimated").as_bool(), estimated);
+            EXPECT_EQ(context.get("total_input_tokens").as_int(), 17);
+            EXPECT_TRUE(context.get("current_usage").is_null());
+        }
+    }
 }
 
 TEST(StatuslineJson, SerializesExceeds200kTokensFlag) {

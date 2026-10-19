@@ -3833,3 +3833,228 @@ TEST(AppRuntime, NormalCtrlSStillStashesAndRestoresPrompt) {
     EXPECT_NE(restored.find(draft), std::string::npos) << restored;
     EXPECT_EQ(restored.find("Stashed"), std::string::npos) << restored;
 }
+
+
+TEST(AppRuntime, CurrentContextProjectionTracksWorkingHistoryAndBusyHandoff) {
+    AppShortcutSandbox sandbox;
+    sandbox.status_command.set(":");
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.cwd = fs::current_path().string();
+    config.custom_system_prompt = "Footer occupancy fixture";
+    config.context_window.auto_compact = false;
+    config.model_params.model = "footer-large";
+    config.model_context_limits = {
+        {.model="footer-large", .context_window_tokens=1'000'000,
+            .max_output_tokens=std::nullopt, .base_url=std::nullopt, .wire_api=std::nullopt},
+        {.model="footer-small", .context_window_tokens=256'000,
+            .max_output_tokens=std::nullopt, .base_url=std::nullopt, .wire_api=std::nullopt},
+    };
+    loom::core::QueryEngine engine(std::move(config), tools);
+    auto history = engine.get_conversation();
+    loom::core::UserMessage user{};
+    user.id = loom::core::MessageId{"footer-restored-human"};
+    user.content.emplace_back(loom::core::TextBlock{std::string(20'000, 'h')});
+    history.emplace_back(std::move(user));
+    engine.restore_conversation(history);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, sandbox.root / "storage", [] {});
+    const auto paint = [&] {
+        return strip_ansi(render_to_plain_text(app->Render(), 120, 36));
+    };
+    const auto first = engine.context_usage();
+    ASSERT_GT(first.tokens, 0u);
+    EXPECT_EQ(engine.get_usage().total(), 0u);
+    const auto initial = paint();
+    auto state = test_seams(app).screen_state_for_testing();
+    EXPECT_EQ(state->chrome_store.status_bar.context_token_count, first.tokens);
+    EXPECT_EQ(state->chrome_store.status_bar.context_window_size, 1'000'000);
+    EXPECT_TRUE(state->chrome_store.status_bar.context_tokens_estimated);
+    EXPECT_NE(initial.find("~"), std::string::npos);
+
+    test_seams(app).set_query_running_for_testing(true);
+    loom::core::UserMessage pending{};
+    pending.id = loom::core::MessageId{"footer-worker-commit"};
+    pending.content.emplace_back(loom::core::TextBlock{std::string(20'000, 'w')});
+    engine.append_message_for_testing(std::move(pending));
+    (void)paint();
+    EXPECT_EQ(state->chrome_store.status_bar.context_token_count, first.tokens)
+        << "Busy UI must retain its stable owner snapshot";
+    test_seams(app).set_query_running_for_testing(false);
+    (void)paint();
+    EXPECT_GT(state->chrome_store.status_bar.context_token_count, first.tokens);
+    EXPECT_EQ(state->chrome_store.status_bar.context_token_count, engine.context_usage().tokens);
+
+    test_seams(app).submit_for_testing("/model footer-small");
+    (void)paint();
+    EXPECT_EQ(state->chrome_store.status_bar.context_window_size, 256'000);
+    EXPECT_EQ(state->chrome_store.status_bar.context_token_count, engine.context_usage().tokens);
+    const auto before_clear = engine.context_usage().tokens;
+    test_seams(app).submit_for_testing("/clear");
+    (void)paint();
+    EXPECT_LT(state->chrome_store.status_bar.context_token_count, before_clear);
+    engine.restore_conversation(std::move(history));
+    (void)paint();
+    EXPECT_EQ(state->chrome_store.status_bar.context_token_count, engine.context_usage().tokens);
+    EXPECT_EQ(engine.get_usage().total(), 0u);
+}
+
+TEST(AppRuntime, CurrentContextStatuslineKeepsBillingAndRefreshesLifecycleSnapshots) {
+    AppShortcutSandbox sandbox;
+    EnvironmentGuard disable_extraction("LOOM_ENABLE_MEMORY_EXTRACTION", "0");
+    EnvironmentGuard disable_memory("LOOM_DISABLE_AUTO_MEMORY", "1");
+    const auto capture = sandbox.root / "context-status.json";
+    const auto shell_quote = [](std::string_view value) {
+        std::string quoted = "'";
+        for (const char c : value) quoted += c == '\'' ? "'\\''" : std::string(1, c);
+        return quoted + "'";
+    };
+    const auto temporary = shell_quote(capture.string() + ".tmp");
+    sandbox.status_command.set("cat > " + temporary + " && mv " + temporary + " " +
+        shell_quote(capture.string()) + " && printf occupancy-status");
+    sandbox.status_enabled.set("1");
+    httplib::Server server;
+    std::atomic<int> requests{0}, summaries{0};
+    server.Post("/v1/messages", [&](const httplib::Request& request, httplib::Response& response) {
+        ++requests;
+        const bool summary = request.body.find("CONTEXT CHECKPOINT") != std::string::npos;
+        if (summary) ++summaries;
+        const std::string text = summary
+            ? "## Goal\nContinue the current request.\n## Constraints\nKeep the latest human text.\n## Decisions\nUse the current model.\n## Progress\nEarlier history completed.\n## Next Steps\nContinue.\n## References\nOriginal audit."
+            : "Footer business reply";
+        loom::utils::json::JsonMutDoc document;
+        auto body = document.object();
+        document.set_root(body);
+        body.set("id", "footer-reply");
+        body.set("type", "message");
+        body.set("role", "assistant");
+        body.set("stop_reason", "end_turn");
+        auto content = document.array();
+        auto block = document.object();
+        block.set("type", "text");
+        block.set("text", text);
+        content.append(block);
+        body.add("content", content);
+        auto usage = document.object();
+        usage.set("input_tokens", 100000);
+        usage.set("output_tokens", 64);
+        body.add("usage", usage);
+        response.set_content(document.to_string(), "application/json");
+    });
+    const int port = server.bind_to_any_port("127.0.0.1");
+    ASSERT_GT(port, 0);
+    std::jthread listener([&] { server.listen_after_bind(); });
+    struct Cleanup { httplib::Server& server; ~Cleanup() { server.stop(); } } cleanup{server};
+    server.wait_until_ready();
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.api_key = "footer-fixture-key";
+    config.base_url = std::format("http://127.0.0.1:{}", port);
+    config.wire_api = "messages";
+    config.cwd = fs::current_path().string();
+    config.custom_system_prompt = "Footer fixture";
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
+    config.context_window.auto_compact = false;
+    config.model_params.model = "footer-large";
+    config.model_context_limits = {
+        {.model="footer-large", .context_window_tokens=1'000'000,
+            .max_output_tokens=std::nullopt, .base_url=std::nullopt, .wire_api=std::nullopt},
+        {.model="footer-small", .context_window_tokens=256'000, .max_output_tokens=4096,
+            .base_url=std::nullopt, .wire_api=std::nullopt},
+    };
+    loom::core::QueryEngine engine(std::move(config), tools);
+    ASSERT_TRUE(engine.query("First short request"));
+    ASSERT_TRUE(engine.query("Second short request"));
+    ASSERT_EQ(requests.load(), 2);
+    ASSERT_EQ(engine.get_usage().input_tokens, 200'000u);
+    ASSERT_EQ(engine.get_usage().output_tokens, 128u);
+    ASSERT_LT(engine.context_usage().tokens, 150'000u);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, sandbox.root / "storage", [] {});
+    std::string last_capture;
+    const auto wait_for_snapshot = [&] {
+        const auto expected = engine.context_usage();
+        const auto cumulative = engine.get_usage();
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (std::chrono::steady_clock::now() < deadline) {
+            (void)app->Render();
+            std::ifstream file(capture);
+            last_capture.assign(std::istreambuf_iterator<char>(file), {});
+            const auto parsed = loom::utils::json::parse(last_capture);
+            if (parsed) {
+                const auto context = parsed->root().get("context_window");
+                if (context.get("current_context_tokens").to_string() == std::to_string(expected.tokens) &&
+                    static_cast<std::uint64_t>(context.get("context_window_size").as_int()) == expected.window_tokens &&
+                    context.get("current_usage").is_null() == !expected.last_request_usage.has_value() &&
+                    context.get("total_input_tokens").as_int() == cumulative.input_tokens) {
+                    EXPECT_EQ(context.get("total_output_tokens").as_int(), cumulative.output_tokens);
+                    EXPECT_TRUE(context.get("current_context_is_estimated").as_bool());
+                    const double percentage = 100.0 * static_cast<double>(expected.tokens) / expected.window_tokens;
+                    EXPECT_NEAR(context.get("used_percentage").as_double(), percentage, 1e-9);
+                    EXPECT_NEAR(context.get("remaining_percentage").as_double(),
+                        std::max(0.0, 100.0 - percentage), 1e-9);
+                    EXPECT_EQ(parsed->root().get("exceeds_200k_tokens").as_bool(), expected.tokens > 200'000);
+                    EXPECT_DOUBLE_EQ(parsed->root().get("cost").get("total_cost_usd").as_double(),
+                        engine.budget_tracker().current_spend_usd);
+                    if (expected.last_request_usage) {
+                        EXPECT_EQ(context.get("current_usage").get("input_tokens").as_int(), 100'000);
+                        EXPECT_EQ(context.get("current_usage").get("output_tokens").as_int(), 64);
+                    }
+                    return true;
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+        return false;
+    };
+    ASSERT_TRUE(wait_for_snapshot()) << last_capture;
+    test_seams(app).submit_for_testing("/model footer-small");
+    ASSERT_TRUE(wait_for_snapshot()) << last_capture;
+    EXPECT_EQ(requests.load(), 2);
+    test_seams(app).trigger_clear_session_for_testing();
+    ASSERT_TRUE(wait_for_snapshot()) << last_capture;
+    loom::core::UserMessage clear_probe{};
+    clear_probe.id = loom::core::MessageId{"footer-before-clear"};
+    clear_probe.content.emplace_back(loom::core::TextBlock{std::string(10'000, 'c')});
+    engine.append_message_for_testing(std::move(clear_probe));
+    test_seams(app).submit_for_testing("/model footer-large");
+    ASSERT_TRUE(wait_for_snapshot()) << last_capture;
+    test_seams(app).submit_for_testing("/clear");
+    ASSERT_TRUE(wait_for_snapshot()) << last_capture;
+    EXPECT_EQ(requests.load(), 2);
+
+    ASSERT_TRUE(engine.sessions_dir());
+    const auto sessions = *engine.sessions_dir();
+    const auto session = sessions / "footer-resume";
+    fs::create_directories(session);
+    std::ofstream(session / "metadata.json") << R"({"session_id":"footer-resume"})";
+    std::ofstream messages(session / "messages.jsonl");
+    const auto write_message = [&](std::string_view role, const std::string& id, const std::string& text) {
+        loom::utils::json::JsonMutDoc document;
+        auto record = document.object();
+        document.set_root(record);
+        record.set("role", role);
+        record.set("id", id);
+        record.set("content", text);
+        messages << document.to_string() << '\n';
+    };
+    for (int i = 0; i < 20; ++i) {
+        write_message("user", "old-human-" + std::to_string(i), i == 0 ? std::string(60'000, 'h') : "Completed historical request");
+        write_message("assistant", "old-answer-" + std::to_string(i), "Completed historical answer");
+    }
+    write_message("user", "latest-human", "Preserve the original late human constraint.");
+    write_message("assistant", "latest-answer", "Constraint acknowledged.");
+    messages.close();
+    ASSERT_TRUE(test_seams(app).resume_session_for_testing(sessions, "footer-resume"));
+    ASSERT_TRUE(wait_for_snapshot()) << last_capture;
+    EXPECT_EQ(requests.load(), 2);
+    const auto before_compact = engine.context_usage().tokens;
+    test_seams(app).submit_for_testing("/compact");
+    ASSERT_GT(summaries.load(), 0);
+    ASSERT_TRUE(wait_for_snapshot()) << last_capture;
+    EXPECT_LT(engine.context_usage().tokens, before_compact);
+    EXPECT_EQ(engine.get_usage().input_tokens, static_cast<std::uint32_t>(requests.load()) * 100'000u);
+    EXPECT_FALSE(engine.context_usage().last_request_usage);
+}

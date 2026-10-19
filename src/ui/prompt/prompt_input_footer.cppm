@@ -412,7 +412,7 @@ struct BuiltinStatusLineData {
     std::string model_name;         ///< Model display name
     int input_tokens = 0;           ///< Input tokens used this session
     int output_tokens = 0;          ///< Output tokens used this session
-    int context_token_count = 0;    ///< Total context tokens (in+out)
+    std::uint64_t context_token_count = 0; ///< Current working-context tokens
     std::optional<double> cost_usd; ///< Session cost in USD
     std::int64_t context_window_size = 200000; ///< Context window size (default 200k)
     int task_count = 0;             ///< Background task/teammate count
@@ -421,6 +421,7 @@ struct BuiltinStatusLineData {
     bool status_bar_enabled = true; ///< Master switch (false = hide entirely)
     std::string mouse_mode_label;   ///< Mouse-mode hint (empty = hidden)
     int columns = 0;                ///< Usable terminal cells; zero is unconstrained
+    bool context_tokens_estimated = false; ///< Counts include local estimation
 };
 
 /// Extract the last N path components for display.
@@ -429,7 +430,7 @@ struct BuiltinStatusLineData {
     const std::string& cwd, int n = 2);
 
 /// Format token count as "K" string (e.g. 28000 → "28.0K")
-[[nodiscard]] std::string FormatTokensK(std::int64_t tokens);
+[[nodiscard]] std::string FormatTokensK(std::uint64_t tokens);
 
 /// Render the built-in statusline (defined after RenderStatusLine).
 [[nodiscard]] Element RenderBuiltinStatusLine(
@@ -676,7 +677,7 @@ struct NotificationData {
     // Mode indicators
     bool debug_mode = false;
     bool verbose = false;
-    int token_usage = 0;      // used when verbose + apiKey valid
+    std::uint64_t token_usage = 0; // used when verbose + apiKey valid
 
     // Overage
     bool is_overage_mode = false;

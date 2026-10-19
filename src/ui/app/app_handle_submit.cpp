@@ -579,6 +579,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
         ResetScrollToBottom(screen_state_->messages_store);
         reset_virtual_renderer_state(screen_state_->messages_store);
         this->SyncState();
+        this->TriggerStatuslineUpdate();
         return;
     }
     if (normalized == "/compact") {
@@ -608,6 +609,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
         auto result = static_cast<loom::core::QueryEngine*>(engine_raw())->compact_conversation();
         if (result) {
             this->SyncState();
+            this->TriggerStatuslineUpdate();
             // Restore stash after the operation that triggered it
             // finishes.
             if (repl::HasStashedPrompt(screen_state_)) {
@@ -641,6 +643,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
             AppendLocalCommandInputMessage(std::string(normalized));
             AppendLocalCommandMessage(
                 std::format("Switched model: {} → {}", old_model, new_model), false);
+            this->TriggerStatuslineUpdate();
         }
         this->SyncState();
         return;
@@ -877,6 +880,7 @@ bool AppAdapter::ResumeSessionFromDirectory(
     ResetScrollToBottom(screen_state_->messages_store);
     reset_virtual_renderer_state(screen_state_->messages_store);
     this->SyncState();
+    this->TriggerStatuslineUpdate();
     AppendLocalCommandMessage(std::string(status_message), false, true);
     PostRenderEvent();
     return true;

@@ -7,6 +7,7 @@
 #include <cctype>
 #include <cerrno>
 #include <condition_variable>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -17,6 +18,8 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <regex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -97,6 +100,18 @@ std::string text_response(const std::string& text) {
         event("message_stop", R"({"type":"message_stop"})");
 }
 
+std::string occupancy_response(const std::string& text, int input_tokens, int output_tokens) {
+    auto body = text_response(text);
+    const auto start = body.find("\"content\":[]");
+    require(start != std::string::npos, "occupancy fixture has no message start");
+    body.insert(start, "\"usage\":{\"input_tokens\":" + std::to_string(input_tokens) + "},");
+    const auto output = body.find("\"output_tokens\":5");
+    require(output != std::string::npos, "occupancy fixture has no output usage");
+    body.replace(output, std::string("\"output_tokens\":5").size(),
+                 "\"output_tokens\":" + std::to_string(output_tokens));
+    return body;
+}
+
 bool send_all(int fd, const std::string& bytes) {
     std::size_t offset = 0;
     while (offset < bytes.size()) {
@@ -164,6 +179,7 @@ public:
     std::atomic<bool> selection_grow{false};
     std::atomic<bool> chain_finish{false};
     std::atomic<bool> chain_tools{false};
+    std::atomic<int> occupancy_business{0};
     std::vector<std::string> request_bodies() {
         std::lock_guard lock(mutex_);
         return request_bodies_;
@@ -213,6 +229,29 @@ private:
             request_bodies_.push_back(request.substr(request.find("\r\n\r\n") + 4));
         }
         const int index = requests.fetch_add(1);
+        if (recovery_.starts_with("context-occupancy")) {
+            const bool summary = request.find("CONTEXT CHECKPOINT") != std::string::npos;
+            std::string body;
+            if (summary) {
+                const std::string checkpoint =
+                    "## Goal\nFinish occupancy validation.\n## Constraints\n"
+                    "Late constraint: preserve OCCUPANCY_KEEP_47; do not commit.\n"
+                    "## Decisions\nUse the completed read.\n## Progress\nCompleted result=47.\n"
+                    "## Next Steps\nReturn the answer.\n## References\noccupancy-history.txt\n";
+                body = "{\"id\":\"occupancy-summary\",\"type\":\"message\",\"role\":\"assistant\","
+                    "\"content\":[{\"type\":\"text\",\"text\":\"" + escape_json(checkpoint) +
+                    "\"}],\"stop_reason\":\"end_turn\",\"usage\":{\"input_tokens\":1000,\"output_tokens\":100}}";
+            } else {
+                const int turn = occupancy_business.fetch_add(1);
+                const int input = recovery_ == "context-occupancy-repeated" ? 100000 : turn == 0 ? 350000 : 8000;
+                body = occupancy_response("PTY occupancy reply " + std::to_string(turn), input, 64);
+            }
+            send_bytes("HTTP/1.1 200 OK\r\nContent-Type: " +
+                std::string(summary ? "application/json" : "text/event-stream") +
+                "\r\nContent-Length: " + std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            ::shutdown(fd, SHUT_WR);
+            return;
+        }
         if (recovery_ == "model-context") {
             const auto body = text_response("PTY model context reply " + std::to_string(index));
             send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
@@ -2966,6 +3005,178 @@ void run_question_case(const std::string& binary, const std::string& scenario, c
     }
 }
 
+struct OccupancyFooter {
+    double tokens;
+    double window;
+    int percent;
+};
+
+std::optional<OccupancyFooter> occupancy_footer(const Terminal& terminal) {
+    const auto frame = terminal.latest_frame_text();
+    static const std::regex pattern(R"(~([0-9]+)%\s+([0-9]+(?:\.[0-9]+)?)(K?)/([0-9]+(?:\.[0-9]+)?)(K?))");
+    std::optional<OccupancyFooter> result;
+    for (std::sregex_iterator it(frame.begin(), frame.end(), pattern), end; it != end; ++it) {
+        const auto& match = *it;
+        result = OccupancyFooter{std::stod(match[2]) * (match[3] == "K" ? 1000 : 1),
+            std::stod(match[4]) * (match[5] == "K" ? 1000 : 1), std::stoi(match[1])};
+    }
+    return result;
+}
+
+OccupancyFooter wait_occupancy(Terminal& terminal, double window) {
+    require(terminal.wait([&] {
+        const auto current = occupancy_footer(terminal);
+        return current && current->window == window;
+    }), "complete estimated occupancy footer with expected window was not rendered");
+    const auto value = *occupancy_footer(terminal);
+    // The footer rounds displayed thousands to 100 tokens and percentage to an integer.
+    require(std::abs(value.percent - std::lround(100.0 * value.tokens / value.window)) <= 1,
+            "footer percentage and displayed current tokens disagree");
+    return value;
+}
+
+void seed_occupancy_history(const fs::path& path) {
+    std::ofstream out(path);
+    out << R"({"active_conversation_id":"occupancy-seed","conversations":[{"id":"occupancy-seed","title":"Occupancy history","messages":[)";
+    const auto text = [&](const std::string& role, const std::string& id, const std::string& content) {
+        out << "{\"role\":\"" << role << "\",\"id\":\"" << id
+            << "\",\"timestamp_ms\":1700000000000,\"content\":[{\"type\":\"text\",\"text\":\""
+            << escape_json(content) << "\"}]}";
+    };
+    text("user", "occupancy-task", "Inspect the historical fixture; preserve completed result 47.");
+    out << R"(,{"role":"assistant","id":"occupancy-read","timestamp_ms":1700000000000,"content":[{"type":"tool_use","id":"occupancy-read-call","name":"Read","input_json":"{\"file_path\":\"occupancy-history.txt\"}"}],"tool_name":"Read","tool_input_json":"{\"file_path\":\"occupancy-history.txt\"}"},)";
+    out << R"({"role":"tool","id":"occupancy-result","timestamp_ms":1700000000000,"tool_name":"Read","tool_use_id":"occupancy-read-call","is_error":false,"content":[{"type":"text","text":")"
+        << std::string(1200000, 'x') << R"( completed result=47"}]},)";
+    text("assistant", "occupancy-read-done", "Historical read completed.");
+    for (int i = 0; i < 20; ++i) {
+        out << ',';
+        text("user", "occupancy-old-u-" + std::to_string(i), "Completed historical turn " + std::to_string(i));
+        out << ',';
+        text("assistant", "occupancy-old-a-" + std::to_string(i), "Recorded historical progress " + std::to_string(i));
+    }
+    out << ',';
+    text("user", "occupancy-late-constraint", "Late constraint: preserve OCCUPANCY_KEEP_47; do not commit.");
+    out << ',';
+    text("assistant", "occupancy-recent", std::string(12000, 'r') + " Completed result=47; ready for verification.");
+    out << "]}]}";
+    require(out.good(), "occupancy seed conversation was not written");
+}
+
+void run_context_occupancy_case(const std::string& binary, const std::string& scenario,
+                                const fs::path& root) {
+    const bool repeated = scenario == "context-occupancy-repeated";
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":false,"extendedThinking":false,"model":"occupancy-1m","maxOutputTokens":64000,"modelContextLimits":[{"model":"occupancy-1m","contextWindowSize":1000000,"maxOutputTokens":64000},{"model":"occupancy-256k","contextWindowSize":256000,"maxOutputTokens":4096}]})";
+    ModelOptions options;
+    options.environment_model.clear();
+    options.isolate_budget_environment = true;
+    if (!repeated) {
+        seed_occupancy_history(root / "seed.json");
+        options.extra_arguments = {"--session-store", (root / "seed.json").string(), "--continue"};
+    }
+    ModelServer server(false, false, root / "unused.txt", false, scenario);
+    server.start();
+    Terminal terminal(binary, root, server.url(), options);
+    const auto initial = wait_occupancy(terminal, 1000000);
+    require(server.requests.load() == 0, "occupancy status read sampled at startup");
+    const auto sample = [&](int turn) {
+        terminal.input("Verify occupancy; keep OCCUPANCY_KEEP_47 and completed result=47, turn " + std::to_string(turn) + "\r");
+        require(terminal.wait([&] {
+            return server.occupancy_business.load() == turn + 1 &&
+                terminal.idle_response_visible("PTY occupancy reply " + std::to_string(turn));
+        }), "occupancy business request did not complete");
+    };
+    sample(0);
+    const auto first = wait_occupancy(terminal, 1000000);
+    save_attention_frame(root, "occupancy-first", terminal.latest_frame());
+    // Precise cumulative billing is covered through the native App status-command
+    // JSON contract. These PTY cases exercise visible current-context behavior.
+    if (repeated) {
+        sample(1);
+        const auto second = wait_occupancy(terminal, 1000000);
+        require(first.tokens >= 99000 && second.tokens >= 99000 && second.tokens < 150000,
+                "repeated business usage accumulated into current occupancy");
+        require(second.tokens < first.tokens * 1.2, "small retained output doubled current context");
+        require(server.requests.load() == 2, "short repeated requests unexpectedly compacted or retried");
+        save_attention_frame(root, "occupancy-repeated", terminal.latest_frame());
+        terminal.input("/clear\r");
+        require(terminal.wait([&] {
+            const auto current = occupancy_footer(terminal);
+            return current && current->tokens < first.tokens / 4;
+        }), "clear retained the previous request's occupancy floor");
+        require(server.requests.load() == 2, "clear sampled the model");
+    } else {
+        require(initial.tokens > 250000 && first.tokens > 300000,
+                "restored large history did not cross the smaller model's capacity");
+        terminal.input("/model occupancy-256k\r");
+        const auto switched = wait_occupancy(terminal, 256000);
+        require(switched.tokens > 256000 && switched.percent > 100,
+                "real over-capacity working history was hidden or clamped");
+        require(server.requests.load() == 1, "model switch sampled before the business boundary");
+        sample(1);
+        const auto compacted = wait_occupancy(terminal, 256000);
+        require(compacted.tokens < first.tokens / 4, "compaction did not lower displayed current occupancy");
+        const auto bodies = server.request_bodies();
+        int summaries = 0;
+        for (std::size_t i = 0; i < bodies.size(); ++i) {
+            if (bodies[i].find("CONTEXT CHECKPOINT") != std::string::npos) ++summaries;
+            std::ofstream(root / ("occupancy-request-" + std::to_string(i) + ".txt")) << bodies[i];
+        }
+        require(summaries >= 1 && summaries <= 16 && bodies.size() == static_cast<std::size_t>(summaries + 2),
+                "compaction did not separate bounded summary calls from exactly two business requests");
+        require(bodies.front().size() > 1200000 && bodies.back().size() < bodies.front().size() / 4,
+                "actual compacted business request did not shrink");
+        const auto first_body = compact_json(bodies.front());
+        const auto last_body = compact_json(bodies.back());
+        require(first_body.find("\"model\":\"occupancy-1m\"") != std::string::npos &&
+                first_body.find("\"max_tokens\":64000") != std::string::npos &&
+                last_body.find("\"model\":\"occupancy-256k\"") != std::string::npos &&
+                last_body.find("\"max_tokens\":4096") != std::string::npos,
+                "footer model/window changes disagree with actual business model/output limits");
+        require(bodies.back().find("Late constraint: preserve OCCUPANCY_KEEP_47; do not commit.") != std::string::npos &&
+                bodies.back().find("completed result=47") != std::string::npos,
+                "compacted request lost its task constraint or completed progress");
+        std::string saved_session;
+        std::string checkpoint;
+        for (const auto& entry : fs::directory_iterator(root / "config" / "sessions")) {
+            const auto candidate = compact_json(read_file(entry.path() / "context-checkpoints.jsonl"));
+            if (candidate.find("\"kind\":\"context_checkpoint\"") == std::string::npos) continue;
+            require(saved_session.empty(), "fixture committed checkpoints in multiple sessions");
+            saved_session = entry.path().filename().string();
+            checkpoint = candidate;
+        }
+        require(occurrences(checkpoint, "\"kind\":\"context_checkpoint\"") == 1 &&
+                checkpoint.find("OCCUPANCY_KEEP_47") != std::string::npos,
+                "one durable semantic checkpoint with the constraint was not committed");
+        std::ofstream(root / "occupancy-checkpoint.txt") << checkpoint;
+        save_attention_frame(root, "occupancy-compacted", terminal.latest_frame());
+        const int requests = server.requests.load();
+        terminal.input("/model occupancy-1m\r");
+        const auto restored_window = wait_occupancy(terminal, 1000000);
+        require(restored_window.tokens < first.tokens / 4, "switch-back revived old large occupancy");
+        require(server.requests.load() == requests, "switch-back sampled the model");
+        terminal.input("/clear\r");
+        require(terminal.wait([&] {
+            const auto value = occupancy_footer(terminal);
+            return value && value->tokens + 500 < restored_window.tokens;
+        }), "clear did not remove retained checkpoint history from occupancy");
+        const auto cleared = wait_occupancy(terminal, 1000000);
+        save_attention_frame(root, "occupancy-cleared", terminal.latest_frame());
+        terminal.input("/resume " + saved_session + "\r");
+        require(terminal.wait([&] {
+            const auto value = occupancy_footer(terminal);
+            return terminal.latest_frame_text().find("Resuming session:") != std::string::npos &&
+                value && value->tokens > cleared.tokens + 500 && value->tokens < first.tokens / 4;
+        }), "resume failed to recompute the compacted working context");
+        save_attention_frame(root, "occupancy-resumed", terminal.latest_frame());
+        require(server.requests.load() == requests, "switch-back, clear or resume sampled the model");
+    }
+    std::ofstream(root / "occupancy-counts.txt") << "initial=" << initial.tokens << "\nfirst=" << first.tokens
+        << "\nrequests=" << server.requests.load() << '\n';
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+}
+
 // RFC 0026: exercise main.cpp's real CLI loader, not only QueryEngine assembly.
 void run_model_context_case(const std::string& binary, const std::string& scenario,
                             const fs::path& root) {
@@ -3109,6 +3320,10 @@ void run_model_context_case(const std::string& binary, const std::string& scenar
 
 void run_case(const std::string& binary, const std::string& scenario, const fs::path& root,
               const std::string& harness) {
+    if (scenario.starts_with("context-occupancy-")) {
+        run_context_occupancy_case(binary, scenario, root);
+        return;
+    }
     if (scenario.starts_with("model-context-")) {
         run_model_context_case(binary, scenario, root);
         return;
@@ -3318,7 +3533,7 @@ int main(int argc, char** argv) {
     }
     std::error_code ignored;
     if (result == 0) {
-        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("model-context-") || scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("task-") || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("context-occupancy-") || scenario.starts_with("model-context-") || scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-") || scenario.starts_with("compressed-chain-") || scenario.starts_with("osc7501-") || scenario.starts_with("question-") || scenario == "welcome-monogram" || scenario.starts_with("task-") || scenario.starts_with("generation-tps-") || scenario == "prompt-wrap" || scenario == "permission-footer" || scenario == "bash-failure" || scenario == "permission-denial" || scenario.starts_with("api-retry"))) {
             const auto destination = fs::path(evidence) / scenario;
             fs::create_directories(destination);
             for (const auto& entry : fs::directory_iterator(root)) {

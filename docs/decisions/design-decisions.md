@@ -71,6 +71,21 @@ a positive drawing obligation. Exact source deduplication preserves option and
 assertion variants, and native integrity anchors reject altered inventories. See
 `docs/dev/mermaid-conformance.md` for provenance and reproduction.
 
+**Mermaid metadata envelope and E2a admission (RFC 0031).** Every family reads
+frontmatter/init structure through one bounded shared parser
+(`parse_envelope`); each family keeps its own stricter value whitelist, so
+structure is shared but value policy is not. Phase E2a extends the dispatcher
+to classify a frontmatter gitGraph or stateDiagram effective body before the
+charts fallback, and admits a config-free/init-only `description` envelope
+(description is documentation-only and never rendered) for the reviewed
+cohort. State titles use the existing relations title projection; gitGraph
+titles, any `config`/`theme`/init metadata, and bodies the native parser or
+`plan_parent_routes` cannot complete keep whole source. The only expectation
+path is the independently reviewed, sha-bound ledger
+(`tools/mermaid/e2a-cohort.json`); a parse-accepts-but-unroutable class is
+execution-attested in that ledger rather than guessed textually, and no
+expectation changes from rendered output.
+
 **Server model capacities (RFC 0029).** The configured service's
 `data[].context_length` is read once per runtime root, before native tool policy
 snapshots. An exact endpoint/wire/credential-bound immutable snapshot is reused;

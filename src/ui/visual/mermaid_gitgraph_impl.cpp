@@ -712,8 +712,48 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
 
 } // namespace
 
+// RFC 0031 E2a: gitGraph admits a description-only frontmatter envelope.
+// The description is documentation-only: validated and discarded, never
+// rendered. A top-level config key, any body init directive, or any title
+// (gitGraph has no title projection) keeps the whole source.
+std::optional<std::string_view> git_frontmatter_body(std::string_view source, Work& work) {
+    const auto envelope = parse_envelope(source, work);
+    if (!envelope || !envelope->has_frontmatter || !envelope->init.empty()) return {};
+    bool description_seen = false;
+    for (const auto& event : envelope->events) {
+        if (event.blank || event.comment) continue;
+        if (!event.top_level) return {};
+        if (event.path == "config") return {};
+        if (event.path == "title") return {};
+        if (event.path != "description") return {};
+        description_seen = true;
+    }
+    if (!description_seen || !envelope->description) return {};
+    const auto& description = *envelope->description;
+    if (description.form != EnvelopeScalarForm::Folded || description.header != ">-") return {};
+    bool payload = false;
+    for (std::size_t at = 0; at < description.text.size();) {
+        const auto newline = description.text.find('\n', at);
+        const auto line = description.text.substr(at, newline == std::string_view::npos ?
+            std::string_view::npos : newline - at);
+        at = newline == std::string_view::npos ? description.text.size() : newline + 1u;
+        if (line.empty()) continue;
+        if (line.size() < 3u || !line.starts_with("  ") || line.starts_with("   ") ||
+            line.find('\t') != std::string_view::npos || !unicode_text(line)) return {};
+        payload = true;
+    }
+    if (!payload) return {};
+    return envelope->raw_body;
+}
+
 std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source, Work& work, bool use_ascii) {
-    const auto graph = parse_gitgraph(source, work);
+    std::string_view body = source;
+    if (!use_ascii && source.starts_with("---")) {
+        const auto admitted = git_frontmatter_body(source, work);
+        if (!admitted) return {};
+        body = *admitted;
+    }
+    const auto graph = parse_gitgraph(body, work);
     if (!graph) return {};
     return layout_gitgraph(*graph, work, use_ascii);
 }

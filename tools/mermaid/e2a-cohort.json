@@ -1,0 +1,2043 @@
+{
+  "schema": "loom_mermaid_e2a_cohort/v1",
+  "rfc": 31,
+  "phase": "E2a",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter original containing neither a top-level config key nor a body %%{init}%% directive",
+    "roots": [
+      "git",
+      "state-diagram-v2",
+      "state-diagram"
+    ],
+    "blocker_detection": "six fixed source-content detectors plus one execution-attested reviewed set (native parent-route debt); no expectation is derived from rendered output",
+    "width_policy": "E2a pre-registers the 240-column admission; narrow_40 is uniformly 'source'."
+  },
+  "review": {
+    "reviewer_agent": "agent:rfc0031-e2a-ledger-review (two independent adversarial rounds)",
+    "date": "2026-10-24",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 69,
+    "git": 64,
+    "state_v2": 5,
+    "state_v1_qualified": 0,
+    "predicted_draw": 42,
+    "predicted_blocked": 27
+  },
+  "blocker_vocabulary": [
+    "gitgraph-title-not-projected",
+    "gitgraph-multiline-quoted-branch-label",
+    "gitgraph-empty-quoted-tag",
+    "gitgraph-canvas-dimension-overflow",
+    "gitgraph-native-parent-route-debt",
+    "state-composite-brace-on-next-line",
+    "state-composite-divider"
+  ],
+  "rows": [
+    {
+      "path": "git/nightly-check/1-should-render-a-simple-gitgraph-with-commit-on-main-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "6f0cda04b8a95433e7c40b1b918f89c0d6ce96bfb4f9140b255533a4d84225e4",
+      "manifest_sha256": "6f0cda04b8a95433e7c40b1b918f89c0d6ce96bfb4f9140b255533a4d84225e4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag.mmd",
+      "family": "gitGraph",
+      "sha256": "0f5b0d73e5b0aab6055eaa7ff3b4fa50626cce0ed9c8c879b6352dce0bf130c8",
+      "manifest_sha256": "0f5b0d73e5b0aab6055eaa7ff3b4fa50626cce0ed9c8c879b6352dce0bf130c8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-empty-quoted-tag",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42",
+        "detail": "parse_cherry_pick requires a non-empty quoted tag; tag: \"\" decodes to no label."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/11-should-render-a-simple-gitgraph-with-cherry-pick-commit.mmd",
+      "family": "gitGraph",
+      "sha256": "f0bc6e60248dafd83b58bf4ddd7881fa9345c9e0c9239832d98d4d472fbb7959",
+      "manifest_sha256": "f0bc6e60248dafd83b58bf4ddd7881fa9345c9e0c9239832d98d4d472fbb7959",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/11-should-render-a-simple-gitgraph-with-two-cherry-pick-commit.mmd",
+      "family": "gitGraph",
+      "sha256": "d516092f993177e07ab01f520462e1e831dd19042b228a5ff35c67c6fcae3891",
+      "manifest_sha256": "d516092f993177e07ab01f520462e1e831dd19042b228a5ff35c67c6fcae3891",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd",
+      "family": "gitGraph",
+      "sha256": "c6e08cd9843e64593279c50f6e8680a733c1f0fcf65f0574dca1c9ba3ffcf9e8",
+      "manifest_sha256": "c6e08cd9843e64593279c50f6e8680a733c1f0fcf65f0574dca1c9ba3ffcf9e8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/13-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type.mmd",
+      "family": "gitGraph",
+      "sha256": "896bc8cb89035fd1788898d67c6c6f7d2d1dd92f146ba3706243b4aaeab34252",
+      "manifest_sha256": "896bc8cb89035fd1788898d67c6c6f7d2d1dd92f146ba3706243b4aaeab34252",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/1433-should-render-a-simple-gitgraph-with-a-title.mmd",
+      "family": "gitGraph",
+      "sha256": "8b574b19dd5185454254ca203fcbea807d27213112e12986d81325f6e35d51d6",
+      "manifest_sha256": "8b574b19dd5185454254ca203fcbea807d27213112e12986d81325f6e35d51d6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/15-should-render-a-simple-gitgraph-with-commit-on-main-branch-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "307856a92f4d4cbeb2f2cf266085006ed52151df994a18552e898531903c13ad",
+      "manifest_sha256": "307856a92f4d4cbeb2f2cf266085006ed52151df994a18552e898531903c13ad",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/16-should-render-a-simple-gitgraph-with-commit-on-main-branch-with-id-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "90a772607e710e78ab8cb79664897775bf90ef2cf2ae63a5644a1c0372b2cab4",
+      "manifest_sha256": "90a772607e710e78ab8cb79664897775bf90ef2cf2ae63a5644a1c0372b2cab4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/18-should-render-a-simple-gitgraph-with-tags-committypes-on-main-branch-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "103ade0945ab45bc3c1c5bd26ab1dc9a5d72f4adf2dca2a2739a3664e41ae6b9",
+      "manifest_sha256": "103ade0945ab45bc3c1c5bd26ab1dc9a5d72f4adf2dca2a2739a3664e41ae6b9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/19-should-render-a-simple-gitgraph-with-two-branches-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "fcba00592fc59dcbb0448eeacca40dfd2d8f457ecde0d2b1be8e0d1d890a6dda",
+      "manifest_sha256": "fcba00592fc59dcbb0448eeacca40dfd2d8f457ecde0d2b1be8e0d1d890a6dda",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/2-should-render-a-simple-gitgraph-with-commit-on-main-branch-with-id.mmd",
+      "family": "gitGraph",
+      "sha256": "7ce4e894f24d78fea139dfbb8a7e87cea0fc8de2ca3fcf47bdb199bfc7c157de",
+      "manifest_sha256": "7ce4e894f24d78fea139dfbb8a7e87cea0fc8de2ca3fcf47bdb199bfc7c157de",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/20-should-render-a-simple-gitgraph-with-two-branches-and-merge-commit-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "ebc9562d7ba1da0c34e21ac0ac3fbe957e8646bd9edbd8a0900c941f946b94d7",
+      "manifest_sha256": "ebc9562d7ba1da0c34e21ac0ac3fbe957e8646bd9edbd8a0900c941f946b94d7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/21-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "363d2ab385a489fa554779b2f81dcfe2628af95f7c71ba633d2172752b3f88a0",
+      "manifest_sha256": "363d2ab385a489fa554779b2f81dcfe2628af95f7c71ba633d2172752b3f88a0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/25-should-render-a-simple-gitgraph-with-cherry-pick-commit-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "12c60c933d86ff603fefd855606c414659d3c7ef2a32c49098190efcbfe50853",
+      "manifest_sha256": "12c60c933d86ff603fefd855606c414659d3c7ef2a32c49098190efcbfe50853",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/26-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "a039a7d980be39d6f0f5598d24e3b8c820798ce9bf891c147197d2fcfa79d933",
+      "manifest_sha256": "a039a7d980be39d6f0f5598d24e3b8c820798ce9bf891c147197d2fcfa79d933",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/27-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "12f194c90a751d95d7e06d88988f1c6f8fa67593316025cd9736446ba32d3ab6",
+      "manifest_sha256": "12f194c90a751d95d7e06d88988f1c6f8fa67593316025cd9736446ba32d3ab6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-empty-quoted-tag",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42",
+        "detail": "parse_cherry_pick requires a non-empty quoted tag; tag: \"\" decodes to no label."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/28-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "57446ecf1c69ab17c243cb157b73664c53e264ac856fb31ae598d34bf1d62124",
+      "manifest_sha256": "57446ecf1c69ab17c243cb157b73664c53e264ac856fb31ae598d34bf1d62124",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/29-should-render-commits-for-more-than-8-branches-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "2a6f16398a0e6501686348ae82a3fd942bf3f5456bcfafa77e63309884c6382d",
+      "manifest_sha256": "2a6f16398a0e6501686348ae82a3fd942bf3f5456bcfafa77e63309884c6382d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-canvas-dimension-overflow",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); :449-552 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); :449-552 (plan_parent_routes)",
+        "detail": "With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the greedy BFS parent router still cannot close an edge."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/31-should-render-a-simple-gitgraph-with-a-title-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "8e538ebb07bf90436e249c0b7d8d163974a10d388819cfcc5d93fa2ede729275",
+      "manifest_sha256": "8e538ebb07bf90436e249c0b7d8d163974a10d388819cfcc5d93fa2ede729275",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/32-should-render-a-simple-gitgraph-overlapping-commits-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "1ae95f9385085e347bd9e84fcaaad76827e06256e3cc42186baa22b9179a7b57",
+      "manifest_sha256": "1ae95f9385085e347bd9e84fcaaad76827e06256e3cc42186baa22b9179a7b57",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/33-should-render-a-simple-gitgraph-overlapping-commits.mmd",
+      "family": "gitGraph",
+      "sha256": "76e73982e7cb87187facea2bdea3a800c62fd7db407673fc568f7419283ffaad",
+      "manifest_sha256": "76e73982e7cb87187facea2bdea3a800c62fd7db407673fc568f7419283ffaad",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/34-should-render-a-simple-gitgraph-with-two-branches-from-same-commit.mmd",
+      "family": "gitGraph",
+      "sha256": "98d64bd1715eab4c0597318d58911a6c5b25aa5077f1d5d63083ad7440fac14b",
+      "manifest_sha256": "98d64bd1715eab4c0597318d58911a6c5b25aa5077f1d5d63083ad7440fac14b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/35-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "b5d73a772d822dd3c396bd7d32dad1510e4ab2f1761906bcb919f6eaeb2141e9",
+      "manifest_sha256": "b5d73a772d822dd3c396bd7d32dad1510e4ab2f1761906bcb919f6eaeb2141e9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/36-should-render-gitgraph-with-branch-that-is-not-used-immediately.mmd",
+      "family": "gitGraph",
+      "sha256": "1209e544f1a1109e913bf21a02a256deabe4c422c0e3062f1f83c17e4cd7d6f9",
+      "manifest_sha256": "1209e544f1a1109e913bf21a02a256deabe4c422c0e3062f1f83c17e4cd7d6f9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/37-should-render-gitgraph-with-branch-that-is-not-used-immediately-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "919887c260bdc1be11f89a26d6aac91cecd271cb12d9941d1acb98c57e99ab31",
+      "manifest_sha256": "919887c260bdc1be11f89a26d6aac91cecd271cb12d9941d1acb98c57e99ab31",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/38-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately.mmd",
+      "family": "gitGraph",
+      "sha256": "8a01decf191f62aec1e5f9ca7eccd80400a5a6eef1ef9f9085fa4fd8327a4c39",
+      "manifest_sha256": "8a01decf191f62aec1e5f9ca7eccd80400a5a6eef1ef9f9085fa4fd8327a4c39",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/39-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "31c3dc075b8b88e16ddf1de12ddc3a92e9d59c980561f7171b36c98a1208e8a4",
+      "manifest_sha256": "31c3dc075b8b88e16ddf1de12ddc3a92e9d59c980561f7171b36c98a1208e8a4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/4-should-render-a-simple-gitgraph-with-tags-committypes-on-main-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "4f3137ef22fa05a579107c846e5a3e21a92bc6b5a037517218e49975279a20c9",
+      "manifest_sha256": "4f3137ef22fa05a579107c846e5a3e21a92bc6b5a037517218e49975279a20c9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/40-should-render-a-simple-gitgraph-with-cherry-pick-merge-commit.mmd",
+      "family": "gitGraph",
+      "sha256": "a1a58f85413fbf8d3008cb2e1f2ff7e5e29ccec65e6215840b2fa83d9ad45b35",
+      "manifest_sha256": "a1a58f85413fbf8d3008cb2e1f2ff7e5e29ccec65e6215840b2fa83d9ad45b35",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/5-should-render-a-simple-gitgraph-with-two-branches.mmd",
+      "family": "gitGraph",
+      "sha256": "4e896b6c1ad40734c4b4a4b2bd9098f7dc827c1ae9229245c2d79aa904a24d17",
+      "manifest_sha256": "4e896b6c1ad40734c4b4a4b2bd9098f7dc827c1ae9229245c2d79aa904a24d17",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/50-should-render-a-simple-gitgraph-with-commit-on-main-branch-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "cba3675e9ea189b1fac07d25c5dd0d7c8d2426d6e0dbf0ccd1a20c27e758b1f3",
+      "manifest_sha256": "cba3675e9ea189b1fac07d25c5dd0d7c8d2426d6e0dbf0ccd1a20c27e758b1f3",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/51-should-render-a-simple-gitgraph-with-commit-on-main-branch-with-id-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "4d67377e5c008c2f4a1af33a79ea0cff07f4c15ac88c36b433fbd4c888e03287",
+      "manifest_sha256": "4d67377e5c008c2f4a1af33a79ea0cff07f4c15ac88c36b433fbd4c888e03287",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/53-should-render-a-simple-gitgraph-with-tags-committypes-on-main-branch-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "30b7e6bcb29eced8aa984c036c0cb4e39e1c07b4d02dc15fd08eb0c09597d8b5",
+      "manifest_sha256": "30b7e6bcb29eced8aa984c036c0cb4e39e1c07b4d02dc15fd08eb0c09597d8b5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/54-should-render-a-simple-gitgraph-with-two-branches-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "ac540d6ec826a9cd4365e50e44c544c1567547aadce91dc3f9bed5bfaa329a63",
+      "manifest_sha256": "ac540d6ec826a9cd4365e50e44c544c1567547aadce91dc3f9bed5bfaa329a63",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/55-should-render-a-simple-gitgraph-with-two-branches-and-merge-commit-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "9e252fb4287145c86f3a9bd8605532b1874425380324dbac6075ae650695ded1",
+      "manifest_sha256": "9e252fb4287145c86f3a9bd8605532b1874425380324dbac6075ae650695ded1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/56-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "f3f26e958cc807d0376bbe5a7c60ff6ab2ff5e35ab6489363155cb9ca6d6ed12",
+      "manifest_sha256": "f3f26e958cc807d0376bbe5a7c60ff6ab2ff5e35ab6489363155cb9ca6d6ed12",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/6-should-render-a-simple-gitgraph-with-two-branches-and-merge-commit.mmd",
+      "family": "gitGraph",
+      "sha256": "990538230b1362ed6ddf583aecaa5b0112ec38a10e794367d1146b9d69ea1296",
+      "manifest_sha256": "990538230b1362ed6ddf583aecaa5b0112ec38a10e794367d1146b9d69ea1296",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/60-should-render-a-simple-gitgraph-with-cherry-pick-commit-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "6e66e76309c616d2d0636e80275f8b05d170c406809193a035a718c8e20a4cf3",
+      "manifest_sha256": "6e66e76309c616d2d0636e80275f8b05d170c406809193a035a718c8e20a4cf3",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/61-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "2e1a8941bbdfcaf50517752ce8787ea12704d5bb2513f18059cecd890d9f81cc",
+      "manifest_sha256": "2e1a8941bbdfcaf50517752ce8787ea12704d5bb2513f18059cecd890d9f81cc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/62-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "705a2d49b3ab9ef000de93b3c82e98f5fc55e1d66e6180fa3dfef836724b3e35",
+      "manifest_sha256": "705a2d49b3ab9ef000de93b3c82e98f5fc55e1d66e6180fa3dfef836724b3e35",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-empty-quoted-tag",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42",
+        "detail": "parse_cherry_pick requires a non-empty quoted tag; tag: \"\" decodes to no label."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/63-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "65118816de5106ea56908930b46a43d1de7146f4daf549316487208beb64602b",
+      "manifest_sha256": "65118816de5106ea56908930b46a43d1de7146f4daf549316487208beb64602b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/64-should-render-commits-for-more-than-8-branches-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "4275dbbef52d1a3bf4e16c7d1352e6c9129bc52811384da0783f7655cb7b972e",
+      "manifest_sha256": "4275dbbef52d1a3bf4e16c7d1352e6c9129bc52811384da0783f7655cb7b972e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-canvas-dimension-overflow",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); :449-552 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); :449-552 (plan_parent_routes)",
+        "detail": "With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the greedy BFS parent router still cannot close an edge."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/65-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "18fba5fcbf0ef308c228b324b2fb68fcaedbf562ddf65c1fa5332703db613da1",
+      "manifest_sha256": "18fba5fcbf0ef308c228b324b2fb68fcaedbf562ddf65c1fa5332703db613da1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/66-should-render-a-simple-gitgraph-with-a-title-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "3f7f0856dadcb566d92cffe068ffe85868a2eab8c9e1adb1d5444f35193ed4b9",
+      "manifest_sha256": "3f7f0856dadcb566d92cffe068ffe85868a2eab8c9e1adb1d5444f35193ed4b9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description",
+        "title"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-title-not-projected",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:348-403",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:348-403",
+        "detail": "GitGraph has no title projection; admitting a titled row would silently drop the title."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/68-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "e50a77586360cd5c40d13f000e2cb3cd96a329365e66110a9a477904c7fc4ab5",
+      "manifest_sha256": "e50a77586360cd5c40d13f000e2cb3cd96a329365e66110a9a477904c7fc4ab5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/69-should-render-gitgraph-with-branch-that-is-not-used-immediately-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "424fbf114d3b409cb57936fa08908741bcb2a8e82ee457cc26facf3244fb798d",
+      "manifest_sha256": "424fbf114d3b409cb57936fa08908741bcb2a8e82ee457cc26facf3244fb798d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/7-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit.mmd",
+      "family": "gitGraph",
+      "sha256": "0f0e5431147d014a90f1d9b7133d7b3e83fd90fe4209466d5d15863339a8f057",
+      "manifest_sha256": "0f0e5431147d014a90f1d9b7133d7b3e83fd90fe4209466d5d15863339a8f057",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/70-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "dae3847ee16cccf0448d19ae359484ffb50d9bc979f8f05d829368655b847e89",
+      "manifest_sha256": "dae3847ee16cccf0448d19ae359484ffb50d9bc979f8f05d829368655b847e89",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/73-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-using-switch-instead-of-checkout.mmd",
+      "family": "gitGraph",
+      "sha256": "a729cd5ab5a290579f8cf43d6a39a6809d3b3f37257c35988d2ca5f48998ed0c",
+      "manifest_sha256": "a729cd5ab5a290579f8cf43d6a39a6809d3b3f37257c35988d2ca5f48998ed0c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/74-should-render-commits-for-more-than-8-branches-using-switch-instead-of-checkout.mmd",
+      "family": "gitGraph",
+      "sha256": "ac8600ffaf7582b8ccda078e4a7229be2058de8d19149621fe9411567fb81291",
+      "manifest_sha256": "ac8600ffaf7582b8ccda078e4a7229be2058de8d19149621fe9411567fb81291",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/75-should-render-a-gitgraph-with-multiple-tags-on-a-merge-commit-on-bottom-to-top-orientation.mmd",
+      "family": "gitGraph",
+      "sha256": "f69a31e71ab605d8acd9c5e660d0f630d32598ce23b86d46ec981552efc195bd",
+      "manifest_sha256": "f69a31e71ab605d8acd9c5e660d0f630d32598ce23b86d46ec981552efc195bd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/76-should-render-a-bt-gitgraph-with-branch-ordering-and-merge-from-right-branch-regression-6593.mmd",
+      "family": "gitGraph",
+      "sha256": "4fee97dec440c26563fd93d2a339de30ef2a666b9b46059f42d8187197b71713",
+      "manifest_sha256": "4fee97dec440c26563fd93d2a339de30ef2a666b9b46059f42d8187197b71713",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/76-should-render-a-gitgraph-with-multiple-tags-on-a-merge-commit-on-left-to-right-orientation.mmd",
+      "family": "gitGraph",
+      "sha256": "03d8c22b9cd9bf2a38e19cafb33399983084a3fe24b62392f4a3a15dbd3f6023",
+      "manifest_sha256": "03d8c22b9cd9bf2a38e19cafb33399983084a3fe24b62392f4a3a15dbd3f6023",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/77-should-render-a-bt-gitgraph-with-three-branches-and-multiple-merges-regression-6593.mmd",
+      "family": "gitGraph",
+      "sha256": "fcc5ca2b9edefe997a8ba6c87973768131f1b0a945a9e5fee5ca7c773ab7fe00",
+      "manifest_sha256": "fcc5ca2b9edefe997a8ba6c87973768131f1b0a945a9e5fee5ca7c773ab7fe00",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/nightly-check/78-should-render-a-bt-gitgraph-with-cherry-pick-regression-6593.mmd",
+      "family": "gitGraph",
+      "sha256": "8ded4ed3cdb5a1f10f9a45ff3251f8795af3ce182802c0aeab8e7608d82a6813",
+      "manifest_sha256": "8ded4ed3cdb5a1f10f9a45ff3251f8795af3ce182802c0aeab8e7608d82a6813",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/79-should-render-a-bt-gitgraph-with-two-cherry-picks-regression-6593.mmd",
+      "family": "gitGraph",
+      "sha256": "f32c6246e840012aaec6d43ab69d8b34c593d250f7f266d240cbb190b68b85ff",
+      "manifest_sha256": "f32c6246e840012aaec6d43ab69d8b34c593d250f7f266d240cbb190b68b85ff",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/nightly-check/97-should-render-branch-labels-with-multi-line-text-aligned-with-background-in-lr-layout.mmd",
+      "family": "gitGraph",
+      "sha256": "59849f01da279bfe43bfaf089e7d1dc2869a7f2564990a88ee1a03a6254d388b",
+      "manifest_sha256": "59849f01da279bfe43bfaf089e7d1dc2869a7f2564990a88ee1a03a6254d388b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-multiline-quoted-branch-label",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:55-64",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:55-64",
+        "detail": "Cursor::quoted scans one physical line; a quoted label split across lines cannot close."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/pr-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag.mmd",
+      "family": "gitGraph",
+      "sha256": "deb00f2f2497c4b0a5d5b5d2b65939a90c59b80f839577e197326b94e7a9175a",
+      "manifest_sha256": "deb00f2f2497c4b0a5d5b5d2b65939a90c59b80f839577e197326b94e7a9175a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "gitgraph-native-parent-route-debt",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
+        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "git/pr-check/17-should-render-a-simple-gitgraph-with-different-committypes-on-main-branch-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "e48195601cc4be21c87694cfb7f2c062f0e88ec787434191d8a660ef1675b988",
+      "manifest_sha256": "e48195601cc4be21c87694cfb7f2c062f0e88ec787434191d8a660ef1675b988",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/pr-check/3-should-render-a-simple-gitgraph-with-different-committypes-on-main-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "56608fde56d7218682069101f5ee4f73e8d86756f807d4ea5cae89697e569fbd",
+      "manifest_sha256": "56608fde56d7218682069101f5ee4f73e8d86756f807d4ea5cae89697e569fbd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/pr-check/30-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type-vertical-branch.mmd",
+      "family": "gitGraph",
+      "sha256": "7d6797b80535ef7e6daa9140303ba74b389595821563c8a483f68c0736e6a216",
+      "manifest_sha256": "7d6797b80535ef7e6daa9140303ba74b389595821563c8a483f68c0736e6a216",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/pr-check/52-should-render-a-simple-gitgraph-with-different-committypes-on-main-branch-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "9ff6e1365f452bb7060545954cda245572765cbaf7b9f69cdbe6f48388e44d80",
+      "manifest_sha256": "9ff6e1365f452bb7060545954cda245572765cbaf7b9f69cdbe6f48388e44d80",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "git/pr-check/67-should-render-a-simple-gitgraph-overlapping-commits-vertical-branch-bottom-to-top.mmd",
+      "family": "gitGraph",
+      "sha256": "57a6dae9431c4a285ce4236c5a23905037dfea2e534603caf59b79e4524fa42c",
+      "manifest_sha256": "57a6dae9431c4a285ce4236c5a23905037dfea2e534603caf59b79e4524fa42c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/1433-should-render-a-simple-state-diagram-with-a-title.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "f8dd32b12789f547d7ffa89abb16df2dfa15a0c2b1d66c20914f66ee2918a66f",
+      "manifest_sha256": "f8dd32b12789f547d7ffa89abb16df2dfa15a0c2b1d66c20914f66ee2918a66f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-align-dividers-correctly.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "b668fcb64597d4d5909bf296e768fd92e789bd8660850fcf91b8661cb01d6c83",
+      "manifest_sha256": "b668fcb64597d4d5909bf296e768fd92e789bd8660850fcf91b8661cb01d6c83",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-composite-divider",
+        "site": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
+        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
+        "detail": "A standalone '--' region divider reaches edge parsing where identifier('--') is rejected."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "1e359f909af210d7338db0674c6f86daaf25b5a3959bd70b0649e92ee0c8f3f3",
+      "manifest_sha256": "1e359f909af210d7338db0674c6f86daaf25b5a3959bd70b0649e92ee0c8f3f3",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-composite-brace-on-next-line",
+        "site": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
+        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
+        "detail": "A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "8f5f84b56734e20aa522613ae397585b37aaa248cae2880bd85bcfa39134733c",
+      "manifest_sha256": "8f5f84b56734e20aa522613ae397585b37aaa248cae2880bd85bcfa39134733c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-composite-brace-on-next-line",
+        "site": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
+        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
+        "detail": "A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "b6ef22abdcd251e866c6ab5a9ee7d68d98e1092a8d65f294de849d4aa3b68c4a",
+      "manifest_sha256": "b6ef22abdcd251e866c6ab5a9ee7d68d98e1092a8d65f294de849d4aa3b68c4a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "metadata_keys": [
+        "description"
+      ],
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-composite-brace-on-next-line",
+        "site": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
+        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
+        "detail": "A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected."
+      },
+      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+    }
+  ]
+}

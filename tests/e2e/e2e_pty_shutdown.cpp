@@ -268,6 +268,10 @@ private:
             } else {
                 const auto body = text_response(index == 1 ?
                     "```mermaid\nsequenceDiagram\nparticipant C as Client\nparticipant S as Server\nC->>S: Ask\nS-->>C: Reply\nS->>S: Work\n```\n\nSEQUENCE_DONE" :
+                    index == 2 ?
+                    "```mermaid\n---\ndescription: >-\n  PTY gitGraph E2a smoke\n---\ngitGraph\n  commit id:\"1\"\n  commit id:\"2\"\n  commit id:\"3\"\n```\n\nGITGRAPH_DONE" :
+                    index == 3 ?
+                    "```mermaid\n---\ndescription: >-\n  PTY state E2a smoke\n---\nstateDiagram-v2\n  [*] --> State1\n  State1 --> [*]\n```\n\nSTATE_DONE" :
                     "```mermaid\nflowchart TD\nA --> B\nsubgraph UnsupportedGroup\nC\nend\nclick A \"https://example.invalid\"\n```\n\nFALLBACK_DONE");
                 send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
                     std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
@@ -2518,6 +2522,33 @@ void run_mermaid_case(const std::string& binary, const fs::path& root,
     terminal.input("/clear\r");
     require(terminal.wait([&] { return terminal.latest_frame_text().find("SEQUENCE_DONE") == std::string::npos; }),
             "sequence fixture clear did not complete");
+    terminal.input("Return the git graph\r");
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return terminal.idle_response_visible("GITGRAPH_DONE") &&
+            frame.find("gitGraph") == std::string::npos &&
+            frame.find("PTY gitGraph E2a smoke") == std::string::npos &&
+            frame.find("●") != std::string::npos;
+    }), "config-free gitGraph frontmatter did not render and hide its description");
+    save_attention_frame(root, "mermaid-gitgraph", terminal.latest_frame());
+    terminal.input("/clear\r");
+    require(terminal.wait([&] { return terminal.latest_frame_text().find("GITGRAPH_DONE") == std::string::npos; }),
+            "gitGraph fixture clear did not complete");
+    terminal.input("Return the state diagram\r");
+    // The state graph is tall enough to scroll the following sentinel out of
+    // the visible frame, so gate on the rendered state geometry and the hidden
+    // description rather than the off-screen STATE_DONE marker.
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return frame.find("State1") != std::string::npos &&
+            frame.find("stateDiagram") == std::string::npos &&
+            frame.find("PTY state E2a smoke") == std::string::npos &&
+            frame.find(" to interrupt") == std::string::npos;
+    }), "config-free state frontmatter did not render and hide its description");
+    save_attention_frame(root, "mermaid-state", terminal.latest_frame());
+    terminal.input("/clear\r");
+    require(terminal.wait([&] { return terminal.latest_frame_text().find("State1") == std::string::npos; }),
+            "state fixture clear did not complete");
     terminal.input("Return an unsupported diagram\r");
     require(terminal.wait([&] {
         const auto frame = terminal.latest_frame_text();
@@ -2528,7 +2559,7 @@ void run_mermaid_case(const std::string& binary, const fs::path& root,
     }), "unsupported Mermaid syntax did not retain the complete source");
     save_attention_frame(root, "mermaid-unsupported-source", terminal.latest_frame());
     const auto bodies = server.request_bodies();
-    require(bodies.size() == 3, "Mermaid rendering caused extra business requests");
+    require(bodies.size() == 5, "Mermaid rendering caused extra business requests");
     for (std::size_t i = 0; i < bodies.size(); ++i) {
         const auto first = bodies[i].find("GLOBAL_PTY_INSTRUCTION_63");
         require(first != std::string::npos &&

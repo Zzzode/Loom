@@ -2263,6 +2263,9 @@ std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Ele
             remaining.remove_prefix(end + 1);
         }
         bool titled_sequence = false,configured_er = false;
+        // RFC 0031 E2a: frontmatter-bearing gitGraph/state sources classify on
+        // the first post-fence body line instead of falling through to charts.
+        bool configured_gitgraph = false, configured_state = false;
         std::size_t prefix_work = 0;
         if (header == "---") {
             auto peek = remaining;
@@ -2291,6 +2294,9 @@ std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Ele
                 configured_er = line.starts_with("erDiagram") &&
                     (line.size() == 9 || line[9] == ' ' || line[9] == '\t');
                 configured_requirement = requirement_prefix_header(line);
+                configured_gitgraph = line.starts_with("gitGraph") &&
+                    (line.size() == 8u || line[8] == ' ' || line[8] == '\t' || line[8] == ':');
+                configured_state = line == "stateDiagram-v2" || line == "stateDiagram";
                 if(line.starts_with("classDiagram")){
                     if(!work.spend(line.size()+32u))return {};
                     configured_class=class_prefix_header(line);
@@ -2316,12 +2322,16 @@ std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Ele
             if (titled_sequence && !work.spend(prefix_work)) return {};
             lines = detail::sequence_layout(source, work);
         }
+        else if (configured_gitgraph) {
+            if (!work.spend(prefix_work)) return {};
+            lines = detail::gitgraph_layout(source, work);
+        }
         else if (header.starts_with("gitGraph")) {
             lines = detail::gitgraph_layout(source, work);
         }
         else if (header.starts_with("classDiagram") || header.starts_with("erDiagram") || header.starts_with("stateDiagram") ||
-                 requirement_prefix_header(header) || configured_er || configured_class || configured_requirement) {
-            if ((configured_er||configured_class||configured_requirement) && !work.spend(prefix_work)) return {};
+                 requirement_prefix_header(header) || configured_er || configured_class || configured_requirement || configured_state) {
+            if ((configured_er||configured_class||configured_requirement||configured_state) && !work.spend(prefix_work)) return {};
             lines = detail::relations_layout(source, work,configured_class||(class_envelope_seen&&class_prefix_header(header)),
                 requirement_prefix_header(header)||configured_requirement);
         }

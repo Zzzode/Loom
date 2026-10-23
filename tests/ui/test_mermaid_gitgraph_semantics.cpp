@@ -1175,4 +1175,119 @@ TEST(MermaidGitGraph30, ThirtyCompleteSourcesAreActualPixelAtFirstRed) {
     out.add("rows",rows);out.set("selected_complete_sources",static_cast<std::int64_t>(selected));out.set("admitted_nonempty_sources",static_cast<std::int64_t>(admitted));out.set("empty_zero_ink_verified",static_cast<std::int64_t>(empty_verified));out.set("unselected_other_terminal_or_official_sources",true);report.set_root(out);write_report(report);
     EXPECT_EQ(selected,30u);EXPECT_EQ(empty_verified,1u);EXPECT_EQ(admitted,29u) << "A nonempty fallback, resource failure, schema failure, or cell-geometry failure is first-red; the single empty source proves only its zero-ink predicate and earns no drawing credit.";
 }
+// TEMPORARY E2a LENS B probe — do not keep.
+namespace {
+[[maybe_unused]] std::string render_text(const std::string& source, bool ascii = false) {
+    auto element = ascii
+        ? loom::ui::mermaid::render_mermaid(source, ftxui::text("ZZ_FALLBACK_ZZ"), true)
+        : loom::ui::mermaid::render_mermaid(source, ftxui::text("ZZ_FALLBACK_ZZ"));
+    if (!element) return std::string{"<nullopt>"};
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(240), ftxui::Dimension::Fixed(200));
+    ftxui::Render(screen, *element);
+    return screen.ToString();
+}
+[[maybe_unused]] bool native_drawn(const std::string& text) {
+    return text.find("ZZ_FALLBACK_ZZ") == std::string::npos &&
+           text.find("gitGraph") == std::string::npos && text != "<nullopt>";
+}
+} // namespace
+
+TEST(MermaidGitGraphEnvelope, DescriptionOnlyFrontmatterDraws) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  SecretDescriptionToken\n"
+        "---\n"
+        "gitGraph LR:\n"
+        "  commit id:\"1\"\n"
+        "  commit id:\"2\"\n"
+        "  commit id:\"3\"\n";
+    const auto text = render_text(source);
+    EXPECT_TRUE(native_drawn(text)) << text;
+}
+
+TEST(MermaidGitGraphEnvelope, DescriptionIsNeverRendered) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  SecretDescriptionToken\n"
+        "---\n"
+        "gitGraph LR:\n"
+        "  commit id:\"1\"\n"
+        "  commit id:\"2\"\n";
+    const auto text = render_text(source);
+    ASSERT_TRUE(native_drawn(text)) << text;
+    EXPECT_EQ(text.find("SecretDescriptionToken"), std::string::npos);
+}
+
+TEST(MermaidGitGraphEnvelope, TitleIsBlockedNotDropped) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  A titled gitGraph row has no title projection.\n"
+        "title: simpleGitGraphTitle\n"
+        "---\n"
+        "gitGraph BT:\n"
+        "  commit id:\"1\"\n";
+    const auto text = render_text(source);
+    // Whole source falls back rather than drawing with the title dropped.
+    EXPECT_FALSE(native_drawn(text)) << text;
+}
+
+TEST(MermaidGitGraphEnvelope, ConfigFrontmatterStaysSource) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  d\n"
+        "config:\n"
+        "  gitGraph:\n"
+        "    mainBranchName: trunk\n"
+        "---\n"
+        "gitGraph LR:\n"
+        "  commit id:\"1\"\n";
+    const auto text = render_text(source);
+    EXPECT_FALSE(native_drawn(text)) << text;
+}
+
+TEST(MermaidGitGraphEnvelope, InitBearingFrontmatterStaysSource) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  d\n"
+        "---\n"
+        "%%{init: {\"gitGraph\": {\"mainBranchName\": \"trunk\"}}}%%\n"
+        "gitGraph LR:\n"
+        "  commit id:\"1\"\n";
+    const auto text = render_text(source);
+    EXPECT_FALSE(native_drawn(text)) << text;
+}
+
+TEST(MermaidGitGraphEnvelope, MultilineQuotedBranchLabelStaysSource) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  d\n"
+        "---\n"
+        "gitGraph LR:\n"
+        "  commit id:\"1\"\n"
+        "  branch \"Feature A\n"
+        "  (ongoing)\"\n"
+        "  commit id:\"2\"\n";
+    const auto text = render_text(source);
+    EXPECT_FALSE(native_drawn(text)) << text;
+}
+
+TEST(MermaidGitGraphEnvelope, AsciiProfileKeepsRawSemantics) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  d\n"
+        "---\n"
+        "gitGraph LR:\n"
+        "  commit id:\"1\"\n"
+        "  commit id:\"2\"\n";
+    auto element = loom::ui::mermaid::render_mermaid(source, ftxui::text("fb"), true);
+    EXPECT_FALSE(element);
+}
+
 } // namespace

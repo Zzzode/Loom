@@ -383,3 +383,4 @@ TEST(MermaidEnvelope, ErThemeCssBlockRendersDirectly) {
     const auto text = screen.ToString();
     EXPECT_EQ(text.find("erDiagram"), std::string::npos) << text;
 }
+

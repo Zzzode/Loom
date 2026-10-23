@@ -1478,6 +1478,58 @@ std::optional<ErEnvelope> er_source_envelope(std::string_view source,Work& work)
     return envelope;
 }
 
+// RFC 0031 E2a: stateDiagram(-v2) admits a description-only frontmatter
+// envelope, optionally with a title the relations layout already projects.
+// config and init stay whole-source (E2b); the description is never rendered.
+struct StateEnvelope {
+    std::string_view body;
+    std::optional<std::string> title;
+};
+std::optional<StateEnvelope> state_source_envelope(std::string_view source,Work& work) {
+    if(!source.starts_with("---")||!work.spend(4u*sizeof(bool)+16u))return {};
+    const auto parsed=parse_envelope(source,work);
+    if(!parsed||!parsed->has_frontmatter||!parsed->init.empty())return {};
+    bool description_seen=false,title_seen=false;
+    StateEnvelope result;
+    for(const auto& event:parsed->events) {
+        if(event.blank||event.comment)continue;
+        if(!event.top_level)return {};
+        if(event.path=="description"){if(description_seen)return {};description_seen=true;continue;}
+        if(event.path=="config")return {};
+        if(event.path=="title") {
+            if(title_seen)return {};
+            title_seen=true;
+            const auto decoded=er_yaml_value(er_strip_comment(event.value),work);
+            if(decoded.kind!=ErMetaValue::Kind::Text||decoded.text.empty()||decoded.text.size()>kLabelLimit||
+               !work.spend(decoded.text.size()*4+1))return {};
+            bool ink=false;for(const unsigned char c:decoded.text){if(c<0x20||c>0x7e)return {};ink|=c!=' ';}
+            if(!ink)return {};
+            result.title=std::string(decoded.text);
+            continue;
+        }
+        return {};
+    }
+    if(!description_seen||!parsed->description)return {};
+    const auto& description=*parsed->description;
+    if(description.form!=EnvelopeScalarForm::Folded||description.header!=">-")return {};
+    bool content=false;
+    for(std::size_t at=0;at<description.text.size();) {
+        const auto newline=description.text.find('\n',at);
+        const auto line=description.text.substr(at,newline==std::string_view::npos?
+            std::string_view::npos:newline-at);
+        at=newline==std::string_view::npos?description.text.size():newline+1u;
+        if(line.find_first_of("\t\r")!=std::string_view::npos)return {};
+        const auto indent=line.find_first_not_of(' ');
+        if(indent==std::string_view::npos){if(!line.empty()&&line.size()!=2u)return {};continue;}
+        if(indent!=2u||!er_description_text(line.substr(2u),work))return {};
+        content=true;
+    }
+    if(!content)return {};
+    if(!parsed->raw_body.starts_with("stateDiagram"))return {};
+    result.body=parsed->raw_body;
+    return result;
+}
+
 // Class owns its finite metadata schema. ER scalar/leaf/envelope grammar stays
 // unchanged; this stack never retries an ER or Sequence parser.
 struct ClassEnvelope {
@@ -2553,6 +2605,34 @@ std::optional<RelationDiagram> parse_relations(std::string_view source,Work& wor
             if(original[at]=='\r'&&(at+1u==original.size()||original[at+1u]!='\n'))return {};
     }
     if(!class_envelope&&(original.starts_with("---")||original.starts_with("%%{"))) {
+        // RFC 0031 E2a: distinguish state frontmatter from ER before parsing.
+        // A bounded structural peek finds the closing fence and the first real
+        // body line; the ER Work-charge sequence below is left byte-identical.
+        bool state_route=false;
+        if(original.starts_with("---")) {
+            auto scan=original;
+            const auto first_newline=scan.find('\n');
+            if(first_newline==std::string_view::npos)return {};
+            scan.remove_prefix(first_newline+1u);
+            bool closed=false;
+            while(!scan.empty()) {
+                const auto at=scan.find('\n');
+                auto line=scan.substr(0,at);
+                if(line.ends_with('\r'))line.remove_suffix(1);
+                scan=at==std::string_view::npos?std::string_view{}:scan.substr(at+1u);
+                if(!closed){if(line=="---")closed=true;continue;}
+                line=trim_relation(line);
+                if(line.empty()||line.starts_with("%%"))continue;
+                state_route=line=="stateDiagram-v2"||line=="stateDiagram";
+                break;
+            }
+        }
+        if(state_route) {
+            auto state=state_source_envelope(original,work);if(!state)return {};
+            auto diagram=parse_relations(state->body,work);if(!diagram)return {};
+            if(state->title)diagram->diagram_title=*state->title;
+            return diagram;
+        }
         auto envelope=er_source_envelope(original,work);if(!envelope)return {};
         ErCursor header{envelope->body,work};if(!header.take("erDiagram",true))return {};
         auto diagram=parse_plain_er(envelope->body,work);if(!diagram)return {};

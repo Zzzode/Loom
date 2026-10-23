@@ -11569,6 +11569,108 @@ TEST(MermaidRequirement11, CompleteOverflowSourcesKeepSccAndIncomparablePeersInP
     output.set("qualification","Two complete synthetic 911-byte sources and independent nine-node/ten-edge Models. All original P1 fields retained. Five actual PixelAt captures precede source binding and Model construction. No original/foreign admission.");output.set("sources",2);output.set("complete",complete);output.set("mandatory_fallbacks",fallbacks);output.set("resource_errors",resources);output.set("errors",errors);output.add("cases",records);report.set_root(output);state85_write("mermaid-requirement11-overflow-peers-native.json",report);EXPECT_EQ(complete,2);EXPECT_EQ(fallbacks,0);EXPECT_EQ(resources,0);EXPECT_EQ(errors,0);
 }
 
+
+// RFC 0031 E2a: config-free stateDiagram-v2 frontmatter admission.
+namespace e2a_state {
+std::string surface(const std::string& source, const char* language) {
+    auto element = loom::ui::render_markdown(fenced(source, language));
+    auto grid = capture(element, 240, 60);
+    std::string joined;
+    for (const auto& cell : grid.cells) joined += cell;
+    return joined;
+}
+bool draws(const std::string& source) {
+    const auto native = surface(source, "mermaid");
+    const auto control = surface(source, "text");
+    return native != control &&
+           native.find("stateDiagram") == std::string::npos &&
+           native.find("description") == std::string::npos;
+}
+} // namespace e2a_state
+
+TEST(MermaidStateEnvelope, V2DescriptionOnlyDraws) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  SecretStateDescriptionToken\n"
+        "---\n"
+        "stateDiagram-v2\n"
+        "  [*] --> State1\n"
+        "  State1 --> [*]\n";
+    EXPECT_TRUE(e2a_state::draws(source));
+    EXPECT_EQ(e2a_state::surface(source, "mermaid").find("SecretStateDescriptionToken"),
+              std::string::npos);
+}
+
+TEST(MermaidStateEnvelope, TitleProjectsAboveDiagram) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  d\n"
+        "title: ProjectedStateTitle\n"
+        "---\n"
+        "stateDiagram-v2\n"
+        "  [*] --> State1\n";
+    const auto native = e2a_state::surface(source, "mermaid");
+    EXPECT_NE(native.find("ProjectedStateTitle"), std::string::npos);
+    EXPECT_NE(native.find("State1"), std::string::npos);
+}
+
+TEST(MermaidStateEnvelope, ConfigFrontmatterStaysSource) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  d\n"
+        "config:\n"
+        "  theme: dark\n"
+        "---\n"
+        "stateDiagram-v2\n"
+        "  [*] --> State1\n";
+    EXPECT_FALSE(e2a_state::draws(source));
+}
+
+TEST(MermaidStateEnvelope, InitThemeFrontmatterStaysSource) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  d\n"
+        "---\n"
+        "%%{init: {\"theme\": \"dark\"}}%%\n"
+        "stateDiagram-v2\n"
+        "  [*] --> State1\n";
+    EXPECT_FALSE(e2a_state::draws(source));
+}
+
+TEST(MermaidStateEnvelope, CompositeBraceOnNextLineStaysSource) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  d\n"
+        "---\n"
+        "stateDiagram-v2\n"
+        "  state X\n"
+        "  {\n"
+        "    a\n"
+        "  }\n"
+        "  [*] --> X\n";
+    EXPECT_FALSE(e2a_state::draws(source));
+}
+
+TEST(MermaidStateEnvelope, CompositeDividerStaysSource) {
+    const std::string source =
+        "---\n"
+        "description: >-\n"
+        "  d\n"
+        "---\n"
+        "stateDiagram-v2\n"
+        "  state s2 {\n"
+        "  s3\n"
+        "  --\n"
+        "  s4\n"
+        "  }\n";
+    EXPECT_FALSE(e2a_state::draws(source));
+}
+
 } // namespace
 
 } // namespace

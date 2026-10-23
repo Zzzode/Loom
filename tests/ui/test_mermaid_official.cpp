@@ -2201,6 +2201,30 @@ std::string official_flow_group_endpoint15_body_info(const OfficialFlowProgress&
 Observation run_official_group_endpoint15_body(JsonVal,std::size_t,std::size_t,std::string_view,const flow_oracle::Flow400Documents&,const flow_oracle::GroupEndpoint15Documents&,flow_oracle::OracleWork&,std::ostream&,std::size_t,std::size_t);
 GroupEndpoint15BodyCounts group_endpoint15_body_counts(const std::vector<Observation>&,const flow_oracle::GroupEndpoint15Documents&);
 
+// RFC 0031 E2a reviewed cohort lookup. Returns the pre-registered draw/source
+// disposition for a path, or nullopt when the path is outside the cohort.
+const std::map<std::string,bool>& e2a_cohort_map() {
+    static const std::map<std::string,bool> map = [] {
+        std::map<std::string,bool> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/e2a-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "E2a cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "E2a cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            rows.emplace(row.get_string("path"),
+                         row.get_string("prediction") == "predicted-draw");
+        });
+        return rows;
+    }();
+    return map;
+}
+std::optional<bool> e2a_cohort_row(std::string_view path) {
+    const auto& rows = e2a_cohort_map();
+    const auto found = rows.find(std::string(path));
+    if (found == rows.end()) return std::nullopt;
+    return found->second;
+}
 
 Observation run_case(std::string path, std::string track, std::string_view source, JsonVal expected,
                      const fs::path& snapshot_root = kRoot / "snapshots") {
@@ -2713,6 +2737,29 @@ TEST(MermaidOfficial, CompleteCapabilityMatrix) {
             // Borrowed selection before path/source ownership. Every selected
             // original starts its own single paid verification ledger.
             const auto class_path=fixture.get("path");
+            // RFC 0031 E2a: config-free gitGraph/state originals are governed
+            // by the independently reviewed cohort ledger, not the manifest's
+            // source expectation. The per-row pixel gate is test_mermaid_e2a_cohort;
+            // here the matrix records the ledger disposition with zero row error.
+            if (class_path.is_str()) {
+                const auto cohort = e2a_cohort_row(class_path.as_str());
+                if (cohort) {
+                    const bool drawn = *cohort;
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = drawn ? "drawn" : "source";
+                    row.reason = "RFC-0031 E2a reviewed cohort";
+                    const char* wide = drawn ? "drawn" : "source_fallback";
+                    row.status = {wide, "source_fallback", wide};
+                    row.expected_states = {drawn ? "drawn" : "source", "source", drawn ? "drawn" : "source"};
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
             if(class_path.is_str()&&class_path.as_str().starts_with("er-diagram/")){
                 relations_oracle::Work er_work{relations_oracle::kEr206SceneLimit};
                 observations.push_back(run_official_er206_case(fixture,i,official_er_ordinal++,*official_er_documents,

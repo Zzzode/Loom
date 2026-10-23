@@ -1,0 +1,2 @@
+row 1:
+  - range=[0..7] bits=8 label(bytes=6)="label "

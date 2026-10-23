@@ -1,0 +1,263 @@
+{
+  "schema": "class_same_owner_reopen_test_first/v1",
+  "qualification": "Four complete source-authored terminal Models and five finite closed whole-source boundaries. No rendered output authors Models. Original116 whole source/Model remains separately mandatory; no foreign assertion certified.",
+  "cases": [
+    {
+      "ordinal": 0,
+      "name": "same_owner_rows_append",
+      "positive": true,
+      "source": "classDiagram\nclass A {\nint id\n}\nclass A {\nrun()\n}\nnote for A \"kept\"\n",
+      "source_sha256": "787717994e452ee5e2f0349776968459024f94ff1d951307f0b09d87956a10fa",
+      "whole_Model": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:41",
+            "label": "A",
+            "shape": "box",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "run()"
+                ]
+              }
+            ],
+            "owner": ""
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": [
+          {
+            "position": "linked",
+            "target": "class:41",
+            "owner": "",
+            "text": "kept"
+          }
+        ]
+      },
+      "whole_Model_sha256": "017c74c17dd920affddb011d2b693711006bfe742349066399ea88ae3e16e19d"
+    },
+    {
+      "ordinal": 1,
+      "name": "same_owner_annotation_after_rows",
+      "positive": true,
+      "source": "classDiagram\nclass A {\nint id\ntest()\n}\nclass A {\n&lt;&lt;service&gt;&gt;\n}\n",
+      "source_sha256": "230db69a392e34c3a2824816ee0e36a7d348a376139471cb36d6a5d87347f5a1",
+      "whole_Model": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:41",
+            "label": "A",
+            "shape": "box",
+            "headers": [
+              [
+                "A",
+                "<<service>>"
+              ],
+              [
+                "<<service>>",
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "test()"
+                ]
+              }
+            ],
+            "owner": ""
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "whole_Model_sha256": "5141ec82c27ec1cabaeefb8c74ae7e1c2287137478537fc76209d21861f4b7f5"
+    },
+    {
+      "ordinal": 2,
+      "name": "namespace_same_owner_reopen",
+      "positive": true,
+      "source": "classDiagram\nnamespace N {\nclass A {\nint id\n}\nclass A {\nrun()\n}\n}\n",
+      "source_sha256": "99863fedb7e46260969a189c087c73b868fab53f8736bca44d49ea01dde2cbba",
+      "whole_Model": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:41",
+            "label": "A",
+            "shape": "box",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "run()"
+                ]
+              }
+            ],
+            "owner": "namespace:4e"
+          }
+        ],
+        "relations": [],
+        "groups": [
+          {
+            "id": "namespace:4e",
+            "label": "N",
+            "direction": "",
+            "parent": "",
+            "members": [
+              "class:41"
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "whole_Model_sha256": "c014276fdc6f80dd69efd14d516e8aa9db4eb3731dc5777943f94016e72da612"
+    },
+    {
+      "ordinal": 3,
+      "name": "reopen_then_business_edge",
+      "positive": true,
+      "source": "classDiagram\nclass A {\nint id\n}\nclass A {\nrun()\n}\nA --> B : kept\n",
+      "source_sha256": "fc1b640b19aebdd8058cea9a9561c3741e9bca344a1ff2ec98bdc1625238d53a",
+      "whole_Model": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:41",
+            "label": "A",
+            "shape": "box",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "run()"
+                ]
+              }
+            ],
+            "owner": ""
+          },
+          {
+            "id": "class:42",
+            "label": "B",
+            "shape": "box",
+            "headers": [
+              [
+                "B"
+              ]
+            ],
+            "rows": [],
+            "owner": ""
+          }
+        ],
+        "relations": [
+          {
+            "source": "class:41",
+            "target": "class:42",
+            "label": "kept",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "order": 0
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "whole_Model_sha256": "6e67e240a0db18cd037efecf1d74ec4df2d5bc625671f449669cdbeeb4a87bf6"
+    },
+    {
+      "ordinal": 4,
+      "name": "different_owner",
+      "positive": false,
+      "source": "classDiagram\nnamespace N {\nclass A\n}\nnamespace M {\nclass A {\nint id\n}\n}\n",
+      "source_sha256": "3b3375eb19046a68897545dcfc1b0451f2556fc80e5ad99da044dc9ff955c80c",
+      "whole_Model": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 5,
+      "name": "alias_redefinition",
+      "positive": false,
+      "source": "classDiagram\nclass A\nclass A[\"Other\"] {\nint id\n}\n",
+      "source_sha256": "a37897b0c875fe22d1543266a7b01ba97da9c8d98bcf8ad8a644c6155bb97ded",
+      "whole_Model": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 6,
+      "name": "explicit_typed_reopen",
+      "positive": false,
+      "source": "classDiagram\nclass A~T~\nclass A~U~ {\nint id\n}\n",
+      "source_sha256": "3c9d3967624f511cf6ef9c41a04859e9193d1d4b28cdc5cf070862f6577db535",
+      "whole_Model": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 7,
+      "name": "unfinished_second_body",
+      "positive": false,
+      "source": "classDiagram\nclass A {}\nclass A {\nint id\n",
+      "source_sha256": "7d3c3954a13c37d0b8e5685d0c2b4120925bee4ab106955de03f58971151b92e",
+      "whole_Model": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 8,
+      "name": "repeated_annotation_unreviewed",
+      "positive": false,
+      "source": "classDiagram\nclass A {\n<<first>>\n}\nclass A {\n<<second>>\n}\n",
+      "source_sha256": "19f3103c8e1836af5c921b4ae4086518f5fe307ee1e1faee084cdd97d102d628",
+      "whole_Model": null,
+      "whole_Model_sha256": null
+    }
+  ]
+}

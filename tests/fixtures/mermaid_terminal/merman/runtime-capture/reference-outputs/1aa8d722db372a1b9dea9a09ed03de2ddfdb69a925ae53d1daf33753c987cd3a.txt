@@ -1,0 +1,27 @@
+titleDisplay: chart(bytes=13)="Sales Revenue"
+titleDisplay: yAxis(bytes=14)="Revenue (in $)"
+xDomain: band categories=[bytes=3="jan", bytes=1="a", bytes=1="b", bytes=1="c", bytes=1="d", bytes=1="e", bytes=1="f", bytes=1="g", bytes=1="h", bytes=1="i", bytes=1="j", bytes=1="k", bytes=1="l", bytes=1="m", bytes=1="n", bytes=1="o", bytes=1="p", bytes=1="q", bytes=1="r", bytes=1="s"]
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=3)="jan" value=5000 pointLabel=none clipped=false}, {index=1 x(bytes=1)="a" value=6000 pointLabel=none clipped=false}, {index=2 x(bytes=1)="b" value=7500 pointLabel=none clipped=false}, {index=3 x(bytes=1)="c" value=8200 pointLabel=none clipped=false}, {index=4 x(bytes=1)="d" value=9500 pointLabel=none clipped=false}, {index=5 x(bytes=1)="e" value=10500 pointLabel=none clipped=false}, {index=6 x(bytes=1)="f" value=11000 pointLabel=none clipped=false}, {index=7 x(bytes=1)="g" value=10200 pointLabel=none clipped=false}, {index=8 x(bytes=1)="h" value=9200 pointLabel=none clipped=false}, {index=9 x(bytes=1)="i" value=8500 pointLabel=none clipped=false}, {index=10 x(bytes=1)="j" value=7000 pointLabel=none clipped=false}, {index=11 x(bytes=1)="k" value=6000 pointLabel=none clipped=false}, {index=12 x(bytes=1)="l" value=8000 pointLabel=none clipped=false}, {index=13 x(bytes=1)="m" value=10000 pointLabel=none clipped=false}, {index=14 x(bytes=1)="n" value=5000 pointLabel=none clipped=false}, {index=15 x(bytes=1)="o" value=7600 pointLabel=none clipped=false}, {index=16 x(bytes=1)="p" value=4999 pointLabel=none clipped=false}, {index=17 x(bytes=1)="q" value=11000 pointLabel=none clipped=false}, {index=18 x(bytes=1)="r" value=5000 pointLabel=none clipped=false}, {index=19 x(bytes=1)="s" value=6000 pointLabel=none clipped=false}] orphanPointLabels=[]
+jan +#          5000
+  a +###        6000
+  b +7500
+  c +#8200
+  d +###9500
+  e +###10500
+  f +####11000
+  g +###10200
+  h +###9200
+  i +##8500
+  j +7000
+  k +###        6000
+  l +#8000
+  m +###10000
+  n +#          5000
+  o +#7600
+  p +#          4999
+  q +####11000
+  r +#          5000
+  s +###        6000
+    ++--------+
+     4000 12000
+titleDisplay: xAxis(bytes=6)="Months"

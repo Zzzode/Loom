@@ -1,0 +1,8 @@
+sequenceDiagram
+    participant U as User
+    participant B as Browser
+    participant S as Server
+    U->>B: Click Login
+    B->>S: POST /login
+    S-->>B: Return Token
+    B-->>U: Show Success

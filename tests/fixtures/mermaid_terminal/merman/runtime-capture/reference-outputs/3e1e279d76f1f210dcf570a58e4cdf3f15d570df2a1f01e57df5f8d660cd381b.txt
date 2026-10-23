@@ -1,0 +1,5 @@
+<span style="color:#445566;background-color:#ffeecc">+-------+</span>
+<span style="color:#445566;background-color:#ffeecc">|</span><span style="background-color:#ffeecc">       </span><span style="color:#445566;background-color:#ffeecc">|</span>
+<span style="color:#445566;background-color:#ffeecc">|</span><span style="background-color:#ffeecc"> </span><span style="color:#112233">Alpha</span><span style="background-color:#ffeecc"> </span><span style="color:#445566;background-color:#ffeecc">|</span>
+<span style="color:#445566;background-color:#ffeecc">|</span><span style="background-color:#ffeecc">       </span><span style="color:#445566;background-color:#ffeecc">|</span>
+<span style="color:#445566;background-color:#ffeecc">+-------+</span>

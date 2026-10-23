@@ -1,0 +1,2198 @@
+{
+  "schema": 1,
+  "kind": "sequence-role-body-batch/v1",
+  "baseline_manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+  "source_facts": {
+    "path": "sequence_official_role41_facts.json",
+    "sha256": "15db9135e6bdd51a9ce498addeb16ee62448642f871f3571abd0afda5466dedd",
+    "schema": 1,
+    "model_schema": "sequence_native_single_role_number_text/v1"
+  },
+  "promotions": [
+    {
+      "path": "sequence/nightly-check/redux-neo-all-participant-types-redux-color-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 0,
+      "case_id": "official-role-body/1bfb4d72ecff524f",
+      "raw_sha256": "2328a4d35db904c2a54809df0b2161f2ef11cbe59bd2139e658ff68a77ad2e21",
+      "body_offset_utf8_bytes": 272,
+      "body_sha256": "1bfb4d72ecff524f35a8871f100942b41b6df7788416673e14477279a66fdae7",
+      "full_model_sha256": "8a6ef0a2ae5665f1c72afa2eb7c120de56d3181676ba046407dad58af5558ffa",
+      "baseline_expectation_sha256": "829ee4b3f6b86e26e2b3730f4a670bb22c3310ac36f5fb5d4f7c93ba5c070e94",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "P",
+            "A",
+            "B",
+            "C",
+            "E",
+            "D",
+            "Col",
+            "Q",
+            "Message 1",
+            "Message 2",
+            "Message 3",
+            "Message 4",
+            "Message 5",
+            "Message 6",
+            "Message 7"
+          ],
+          "arrows": 8,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_1bfb4d72ecff524f35a8871f100942b41b6df7788416673e14477279a66fdae7.txt"
+      },
+      "snapshot_sha256": "85253865908f1636a1272783e89df27c7f9f5f95cc7a35235ba4593923dea4a8",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-all-participant-types-redux-dark-color-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 0,
+      "case_id": "official-role-body/1bfb4d72ecff524f",
+      "raw_sha256": "cb36c078933bb448f783f7ea21912e42089f16b109d21818ec44ca4d0afb4b43",
+      "body_offset_utf8_bytes": 282,
+      "body_sha256": "1bfb4d72ecff524f35a8871f100942b41b6df7788416673e14477279a66fdae7",
+      "full_model_sha256": "8a6ef0a2ae5665f1c72afa2eb7c120de56d3181676ba046407dad58af5558ffa",
+      "baseline_expectation_sha256": "82e3563b4196908ea1b0ebecafd9284e042d8b2efe268fc1326903c9af5556b2",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "P",
+            "A",
+            "B",
+            "C",
+            "E",
+            "D",
+            "Col",
+            "Q",
+            "Message 1",
+            "Message 2",
+            "Message 3",
+            "Message 4",
+            "Message 5",
+            "Message 6",
+            "Message 7"
+          ],
+          "arrows": 8,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_1bfb4d72ecff524f35a8871f100942b41b6df7788416673e14477279a66fdae7.txt"
+      },
+      "snapshot_sha256": "85253865908f1636a1272783e89df27c7f9f5f95cc7a35235ba4593923dea4a8",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-all-participant-types-redux-dark-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 0,
+      "case_id": "official-role-body/1bfb4d72ecff524f",
+      "raw_sha256": "00d4aa87085653fdb7571db3e551e4f29c863aed6ed8337f0a81def60ef7792a",
+      "body_offset_utf8_bytes": 270,
+      "body_sha256": "1bfb4d72ecff524f35a8871f100942b41b6df7788416673e14477279a66fdae7",
+      "full_model_sha256": "8a6ef0a2ae5665f1c72afa2eb7c120de56d3181676ba046407dad58af5558ffa",
+      "baseline_expectation_sha256": "972c84730434baf50338921e057ee6b767a498925de32b467b4b556ab68ac07b",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "P",
+            "A",
+            "B",
+            "C",
+            "E",
+            "D",
+            "Col",
+            "Q",
+            "Message 1",
+            "Message 2",
+            "Message 3",
+            "Message 4",
+            "Message 5",
+            "Message 6",
+            "Message 7"
+          ],
+          "arrows": 8,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_1bfb4d72ecff524f35a8871f100942b41b6df7788416673e14477279a66fdae7.txt"
+      },
+      "snapshot_sha256": "85253865908f1636a1272783e89df27c7f9f5f95cc7a35235ba4593923dea4a8",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-all-participant-types-redux-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 0,
+      "case_id": "official-role-body/1bfb4d72ecff524f",
+      "raw_sha256": "dfe3bc1f994bac9460aa9232555ffc930d56f102d53540c727dd3e13d998c0be",
+      "body_offset_utf8_bytes": 260,
+      "body_sha256": "1bfb4d72ecff524f35a8871f100942b41b6df7788416673e14477279a66fdae7",
+      "full_model_sha256": "8a6ef0a2ae5665f1c72afa2eb7c120de56d3181676ba046407dad58af5558ffa",
+      "baseline_expectation_sha256": "e337ca2ec633257ceef854238b080e710d5982644c33de21c8cb6653ea2b6585",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "P",
+            "A",
+            "B",
+            "C",
+            "E",
+            "D",
+            "Col",
+            "Q",
+            "Message 1",
+            "Message 2",
+            "Message 3",
+            "Message 4",
+            "Message 5",
+            "Message 6",
+            "Message 7"
+          ],
+          "arrows": 8,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_1bfb4d72ecff524f35a8871f100942b41b6df7788416673e14477279a66fdae7.txt"
+      },
+      "snapshot_sha256": "85253865908f1636a1272783e89df27c7f9f5f95cc7a35235ba4593923dea4a8",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-complex-sequence-with-all-features-redux-color-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 1,
+      "case_id": "official-role-body/8c1f24602495deed",
+      "raw_sha256": "8d5584363ca2c3e57035f68972888aeb8bd1a916c3ff475fd17e98d7474986b6",
+      "body_offset_utf8_bytes": 290,
+      "body_sha256": "8c1f24602495deed9fd544c6ea4baf003cc633b3c92bc2a3595b1f61df291353",
+      "full_model_sha256": "513835de917cfebf9080e1843bfc7fb6808fb199988a649e8e46c680b8337998",
+      "baseline_expectation_sha256": "aff3bff2ea7ccbb7c17e1ef92bb55838353c88f4f5f2bb94d77cca2af518e9f0",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "User",
+            "LoginUI",
+            "AuthService",
+            "UserDB",
+            "Order",
+            "OrderQueue",
+            "AuditLogs",
+            "Enter credentials",
+            "Validate",
+            "Query user",
+            "User data",
+            "Success",
+            "Welcome",
+            "New order",
+            "Process",
+            "Record",
+            "Update status",
+            "Notification",
+            "Failure",
+            "Retry",
+            "alt Valid credentials",
+            "else Invalid credentials",
+            "par Place order",
+            "and",
+            "loop Until confirmed",
+            "Authentication",
+            "color: rgb(40,150,150)",
+            "Order Processing",
+            "color: rgb(200,55,22)"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_8c1f24602495deed9fd544c6ea4baf003cc633b3c92bc2a3595b1f61df291353.txt"
+      },
+      "snapshot_sha256": "cfc76e737a7c529a38010808a1ae6f8cde9f82751abc7768780f7f8128704a6d",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-complex-sequence-with-all-features-redux-dark-color-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 1,
+      "case_id": "official-role-body/8c1f24602495deed",
+      "raw_sha256": "36963507b4debdc2b967675bda94dcc382d89e1c626ee46bf982eeb9907aafc5",
+      "body_offset_utf8_bytes": 300,
+      "body_sha256": "8c1f24602495deed9fd544c6ea4baf003cc633b3c92bc2a3595b1f61df291353",
+      "full_model_sha256": "513835de917cfebf9080e1843bfc7fb6808fb199988a649e8e46c680b8337998",
+      "baseline_expectation_sha256": "0f4720365767788a967ebb4f4b5457d5ed22bdb355c535e6808c36fb6acd75c2",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "User",
+            "LoginUI",
+            "AuthService",
+            "UserDB",
+            "Order",
+            "OrderQueue",
+            "AuditLogs",
+            "Enter credentials",
+            "Validate",
+            "Query user",
+            "User data",
+            "Success",
+            "Welcome",
+            "New order",
+            "Process",
+            "Record",
+            "Update status",
+            "Notification",
+            "Failure",
+            "Retry",
+            "alt Valid credentials",
+            "else Invalid credentials",
+            "par Place order",
+            "and",
+            "loop Until confirmed",
+            "Authentication",
+            "color: rgb(40,150,150)",
+            "Order Processing",
+            "color: rgb(200,55,22)"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_8c1f24602495deed9fd544c6ea4baf003cc633b3c92bc2a3595b1f61df291353.txt"
+      },
+      "snapshot_sha256": "cfc76e737a7c529a38010808a1ae6f8cde9f82751abc7768780f7f8128704a6d",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-complex-sequence-with-all-features-redux-dark-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 1,
+      "case_id": "official-role-body/8c1f24602495deed",
+      "raw_sha256": "aba21f7423dc5426c86be88c13f9899f46d3a2debc10f8a87e3a948ebe7d00ac",
+      "body_offset_utf8_bytes": 288,
+      "body_sha256": "8c1f24602495deed9fd544c6ea4baf003cc633b3c92bc2a3595b1f61df291353",
+      "full_model_sha256": "513835de917cfebf9080e1843bfc7fb6808fb199988a649e8e46c680b8337998",
+      "baseline_expectation_sha256": "4bc0e24a15c5fbf803eaa06bd04042c00dfda60c587d5df0a6c1337a0112d24e",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "User",
+            "LoginUI",
+            "AuthService",
+            "UserDB",
+            "Order",
+            "OrderQueue",
+            "AuditLogs",
+            "Enter credentials",
+            "Validate",
+            "Query user",
+            "User data",
+            "Success",
+            "Welcome",
+            "New order",
+            "Process",
+            "Record",
+            "Update status",
+            "Notification",
+            "Failure",
+            "Retry",
+            "alt Valid credentials",
+            "else Invalid credentials",
+            "par Place order",
+            "and",
+            "loop Until confirmed",
+            "Authentication",
+            "color: rgb(40,150,150)",
+            "Order Processing",
+            "color: rgb(200,55,22)"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_8c1f24602495deed9fd544c6ea4baf003cc633b3c92bc2a3595b1f61df291353.txt"
+      },
+      "snapshot_sha256": "cfc76e737a7c529a38010808a1ae6f8cde9f82751abc7768780f7f8128704a6d",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-complex-sequence-with-all-features-redux-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 1,
+      "case_id": "official-role-body/8c1f24602495deed",
+      "raw_sha256": "38c28ce05e82f02858d880a22aaea2acd01ccc57f426209cd24d8f35885aea76",
+      "body_offset_utf8_bytes": 278,
+      "body_sha256": "8c1f24602495deed9fd544c6ea4baf003cc633b3c92bc2a3595b1f61df291353",
+      "full_model_sha256": "513835de917cfebf9080e1843bfc7fb6808fb199988a649e8e46c680b8337998",
+      "baseline_expectation_sha256": "cf34b17b8fcce8176d033bab54be702873ea8276ee586ec88cc6eb097db00822",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "User",
+            "LoginUI",
+            "AuthService",
+            "UserDB",
+            "Order",
+            "OrderQueue",
+            "AuditLogs",
+            "Enter credentials",
+            "Validate",
+            "Query user",
+            "User data",
+            "Success",
+            "Welcome",
+            "New order",
+            "Process",
+            "Record",
+            "Update status",
+            "Notification",
+            "Failure",
+            "Retry",
+            "alt Valid credentials",
+            "else Invalid credentials",
+            "par Place order",
+            "and",
+            "loop Until confirmed",
+            "Authentication",
+            "color: rgb(40,150,150)",
+            "Order Processing",
+            "color: rgb(200,55,22)"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_8c1f24602495deed9fd544c6ea4baf003cc633b3c92bc2a3595b1f61df291353.txt"
+      },
+      "snapshot_sha256": "cfc76e737a7c529a38010808a1ae6f8cde9f82751abc7768780f7f8128704a6d",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-participant-creation-and-destruction-redux-color-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 2,
+      "case_id": "official-role-body/3a336fbfd277daad",
+      "raw_sha256": "7c0c0854787ad74661cf326835eee07cc2ad902eef5297be481e22311e2be91c",
+      "body_offset_utf8_bytes": 241,
+      "body_sha256": "3a336fbfd277daadc218288c47a9699be114bcd2f1d4c16b3ea5b2fc9c3bdd9c",
+      "full_model_sha256": "d833cd44c31d115ee39bf09c252c85eb4f8f5391663cfb00f20dfe7365686dfe",
+      "baseline_expectation_sha256": "a0dbc2b0f27d9c6e4493877bbb29bd6bfc55af0eb4ca2028cf0742fe8e4f703b",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "Carl",
+            "Donald",
+            "Hello Bob, how are you?",
+            "Fine, thank you. And you?",
+            "Hi Carl!",
+            "Hi!",
+            "We are too many",
+            "I agree"
+          ],
+          "arrows": 6,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_3a336fbfd277daadc218288c47a9699be114bcd2f1d4c16b3ea5b2fc9c3bdd9c.txt"
+      },
+      "snapshot_sha256": "5385ee7ebaaec7185f0e09b63fa152623c79e4018e3e1220f4c4b97362335f7d",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-participant-creation-and-destruction-redux-dark-color-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 2,
+      "case_id": "official-role-body/3a336fbfd277daad",
+      "raw_sha256": "dc51312d545bae7a13a432cb59e6b3775b2104c8431fa17c98fa17185e6540fb",
+      "body_offset_utf8_bytes": 251,
+      "body_sha256": "3a336fbfd277daadc218288c47a9699be114bcd2f1d4c16b3ea5b2fc9c3bdd9c",
+      "full_model_sha256": "d833cd44c31d115ee39bf09c252c85eb4f8f5391663cfb00f20dfe7365686dfe",
+      "baseline_expectation_sha256": "fe343a127c8e4b65d1790258831d4d692718e32a3b8a99d756851daa13269df0",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "Carl",
+            "Donald",
+            "Hello Bob, how are you?",
+            "Fine, thank you. And you?",
+            "Hi Carl!",
+            "Hi!",
+            "We are too many",
+            "I agree"
+          ],
+          "arrows": 6,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_3a336fbfd277daadc218288c47a9699be114bcd2f1d4c16b3ea5b2fc9c3bdd9c.txt"
+      },
+      "snapshot_sha256": "5385ee7ebaaec7185f0e09b63fa152623c79e4018e3e1220f4c4b97362335f7d",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-participant-creation-and-destruction-redux-dark-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 2,
+      "case_id": "official-role-body/3a336fbfd277daad",
+      "raw_sha256": "0d4c3d1294d67668b95fb219b366a3579e9c97a863f1f52eb6e65995465a572e",
+      "body_offset_utf8_bytes": 239,
+      "body_sha256": "3a336fbfd277daadc218288c47a9699be114bcd2f1d4c16b3ea5b2fc9c3bdd9c",
+      "full_model_sha256": "d833cd44c31d115ee39bf09c252c85eb4f8f5391663cfb00f20dfe7365686dfe",
+      "baseline_expectation_sha256": "95b279a35226e7b7efe29de4da6bc6ea2a8e5f80029fc528e5a0ac3391078bf7",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "Carl",
+            "Donald",
+            "Hello Bob, how are you?",
+            "Fine, thank you. And you?",
+            "Hi Carl!",
+            "Hi!",
+            "We are too many",
+            "I agree"
+          ],
+          "arrows": 6,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_3a336fbfd277daadc218288c47a9699be114bcd2f1d4c16b3ea5b2fc9c3bdd9c.txt"
+      },
+      "snapshot_sha256": "5385ee7ebaaec7185f0e09b63fa152623c79e4018e3e1220f4c4b97362335f7d",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-participant-creation-and-destruction-redux-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 2,
+      "case_id": "official-role-body/3a336fbfd277daad",
+      "raw_sha256": "daedd19529ed29321cc5136aab98b484eb9e36177adb17e0c6c0b1cea456e6d5",
+      "body_offset_utf8_bytes": 229,
+      "body_sha256": "3a336fbfd277daadc218288c47a9699be114bcd2f1d4c16b3ea5b2fc9c3bdd9c",
+      "full_model_sha256": "d833cd44c31d115ee39bf09c252c85eb4f8f5391663cfb00f20dfe7365686dfe",
+      "baseline_expectation_sha256": "e8cee39aa287cb858136349051630d364f99a82cd330e78acae62747158da8ca",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "Carl",
+            "Donald",
+            "Hello Bob, how are you?",
+            "Fine, thank you. And you?",
+            "Hi Carl!",
+            "Hi!",
+            "We are too many",
+            "I agree"
+          ],
+          "arrows": 6,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_3a336fbfd277daadc218288c47a9699be114bcd2f1d4c16b3ea5b2fc9c3bdd9c.txt"
+      },
+      "snapshot_sha256": "5385ee7ebaaec7185f0e09b63fa152623c79e4018e3e1220f4c4b97362335f7d",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-with-notes-and-loops-redux-color-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 3,
+      "case_id": "official-role-body/8ce2d449f395a423",
+      "raw_sha256": "1e2c0889e95b227b9f8fc29d0bdfd8349f0effa1632c597f50dba2fbf12ba7a2",
+      "body_offset_utf8_bytes": 243,
+      "body_sha256": "8ce2d449f395a4239a0470a346cf8c697c03b428fcdcdf1f33040d83769ae562",
+      "full_model_sha256": "f6402d48bcaedfbf9bdcf27dde98416a2d9d89a2c14f5337094462e6ad866dbc",
+      "baseline_expectation_sha256": "7a58d813e6d4bc35a89f88efd016fc2fbf6100e92fe95f9b17bceab99368cf45",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Admin",
+            "Dashboard",
+            "AuthService",
+            "UserManager",
+            "UserProfile",
+            "UserDB",
+            "Logs",
+            "Open user management",
+            "Verify admin rights",
+            "Access granted",
+            "List users",
+            "Query users",
+            "Return user data",
+            "Format profiles",
+            "Formatted data",
+            "Display users",
+            "Record access",
+            "Audit trail",
+            "Encrypted data",
+            "requires decryption",
+            "loop Authentication check"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_8ce2d449f395a4239a0470a346cf8c697c03b428fcdcdf1f33040d83769ae562.txt"
+      },
+      "snapshot_sha256": "83c9cb67a87e2e62ed13d47c079ec12c75909cd5dd7ef25d7e1b8ab9db91c78b",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-with-notes-and-loops-redux-dark-color-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 3,
+      "case_id": "official-role-body/8ce2d449f395a423",
+      "raw_sha256": "d5b767ec90caad799035961b5561d4dfc17e6b38b0804b55751e3b9f3d197c85",
+      "body_offset_utf8_bytes": 253,
+      "body_sha256": "8ce2d449f395a4239a0470a346cf8c697c03b428fcdcdf1f33040d83769ae562",
+      "full_model_sha256": "f6402d48bcaedfbf9bdcf27dde98416a2d9d89a2c14f5337094462e6ad866dbc",
+      "baseline_expectation_sha256": "61dfbcb84b329ea7ccdb587431976533e5b6febc29ac2cc5c6c72d044adaa59a",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Admin",
+            "Dashboard",
+            "AuthService",
+            "UserManager",
+            "UserProfile",
+            "UserDB",
+            "Logs",
+            "Open user management",
+            "Verify admin rights",
+            "Access granted",
+            "List users",
+            "Query users",
+            "Return user data",
+            "Format profiles",
+            "Formatted data",
+            "Display users",
+            "Record access",
+            "Audit trail",
+            "Encrypted data",
+            "requires decryption",
+            "loop Authentication check"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_8ce2d449f395a4239a0470a346cf8c697c03b428fcdcdf1f33040d83769ae562.txt"
+      },
+      "snapshot_sha256": "83c9cb67a87e2e62ed13d47c079ec12c75909cd5dd7ef25d7e1b8ab9db91c78b",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-with-notes-and-loops-redux-dark-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 3,
+      "case_id": "official-role-body/8ce2d449f395a423",
+      "raw_sha256": "9be7bba123eec1af03725076bee64f97e405aef6274b4bc48dc8e5aae9fa4a72",
+      "body_offset_utf8_bytes": 241,
+      "body_sha256": "8ce2d449f395a4239a0470a346cf8c697c03b428fcdcdf1f33040d83769ae562",
+      "full_model_sha256": "f6402d48bcaedfbf9bdcf27dde98416a2d9d89a2c14f5337094462e6ad866dbc",
+      "baseline_expectation_sha256": "de2e5d0f853ab9cce50fca7db1b87091cc4c8122deea3015e7dc6453509921c7",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Admin",
+            "Dashboard",
+            "AuthService",
+            "UserManager",
+            "UserProfile",
+            "UserDB",
+            "Logs",
+            "Open user management",
+            "Verify admin rights",
+            "Access granted",
+            "List users",
+            "Query users",
+            "Return user data",
+            "Format profiles",
+            "Formatted data",
+            "Display users",
+            "Record access",
+            "Audit trail",
+            "Encrypted data",
+            "requires decryption",
+            "loop Authentication check"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_8ce2d449f395a4239a0470a346cf8c697c03b428fcdcdf1f33040d83769ae562.txt"
+      },
+      "snapshot_sha256": "83c9cb67a87e2e62ed13d47c079ec12c75909cd5dd7ef25d7e1b8ab9db91c78b",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-with-notes-and-loops-redux-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 3,
+      "case_id": "official-role-body/8ce2d449f395a423",
+      "raw_sha256": "b491697b6365902f3d4e0ad7f65a7452b23e8a71c298b25bad51ebc96eb8be36",
+      "body_offset_utf8_bytes": 231,
+      "body_sha256": "8ce2d449f395a4239a0470a346cf8c697c03b428fcdcdf1f33040d83769ae562",
+      "full_model_sha256": "f6402d48bcaedfbf9bdcf27dde98416a2d9d89a2c14f5337094462e6ad866dbc",
+      "baseline_expectation_sha256": "5078251f61e95b52fc6cf6c50c4185d5c4b3163ca8cc5103387b4768c7d6e2e6",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Admin",
+            "Dashboard",
+            "AuthService",
+            "UserManager",
+            "UserProfile",
+            "UserDB",
+            "Logs",
+            "Open user management",
+            "Verify admin rights",
+            "Access granted",
+            "List users",
+            "Query users",
+            "Return user data",
+            "Format profiles",
+            "Formatted data",
+            "Display users",
+            "Record access",
+            "Audit trail",
+            "Encrypted data",
+            "requires decryption",
+            "loop Authentication check"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_8ce2d449f395a4239a0470a346cf8c697c03b428fcdcdf1f33040d83769ae562.txt"
+      },
+      "snapshot_sha256": "83c9cb67a87e2e62ed13d47c079ec12c75909cd5dd7ef25d7e1b8ab9db91c78b",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-align-multiline-actor-labels-on-the-datum-neo.mmd",
+      "track": "body_diagnostic",
+      "case_index": 4,
+      "case_id": "official-role-body/7417c3d9eab462ac",
+      "raw_sha256": "fcc18dafd415bab6de4146a5aa390f5e040c1f24d36a0f1a7111f3eb7c2f65b9",
+      "body_offset_utf8_bytes": 336,
+      "body_sha256": "7417c3d9eab462ac39b001b99ede29bed668a8dba8d25ff5a8463aa35e81db73",
+      "full_model_sha256": "095eca8ba9fde19d655f2a7ef743f5c2bec8ef319ef514d38450ce9ebc3be5c6",
+      "baseline_expectation_sha256": "818b5ac0f5b858654f9390bffcc7736a753150a5d087a238612f4d024a7f6f22",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Multi",
+            "line",
+            "actor",
+            "Plain",
+            "Single",
+            "Two",
+            "lines",
+            "Database",
+            "the lifelines should share one start",
+            "and one end"
+          ],
+          "arrows": 3,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_7417c3d9eab462ac39b001b99ede29bed668a8dba8d25ff5a8463aa35e81db73.txt"
+      },
+      "snapshot_sha256": "cd488ccda9eecb5e8243c869b906e0483e18f8d0ed6c38eeb2dd9d2b496991d6",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-handle-mixed-inline-and-external-alias-syntax.mmd",
+      "track": "body_diagnostic",
+      "case_index": 5,
+      "case_id": "official-role-body/f68a33ac63130034",
+      "raw_sha256": "3bdea9be441ffb8860840eb9278402996d3fa388f1a67c1d765e39678d288ab8",
+      "body_offset_utf8_bytes": 353,
+      "body_sha256": "f68a33ac63130034b57e79f800ae98ec4c97d5423be33a386283e521a34237c0",
+      "full_model_sha256": "facc8a9605053cda3aec0bd33509cb05f7d1dc09498a2d89104f05591d821a56",
+      "baseline_expectation_sha256": "9c1fc75ed12c46dad915a3fe03904a209037e5003b0f2f5d701702fcdb889869",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Service A",
+            "Service B",
+            "C",
+            "Request",
+            "Query",
+            "Data",
+            "Response"
+          ],
+          "arrows": 5,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_f68a33ac63130034b57e79f800ae98ec4c97d5423be33a386283e521a34237c0.txt"
+      },
+      "snapshot_sha256": "374b3d43ef79e26d802b3135eeba65542127bb5ab65230e93637d68689927bf3",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-prioritize-external-alias-over-inline-alias.mmd",
+      "track": "body_diagnostic",
+      "case_index": 6,
+      "case_id": "official-role-body/35b51c4d224199a5",
+      "raw_sha256": "894ffb08c207d23d81ab87261507650324094689e58228f6cc745d607447bdeb",
+      "body_offset_utf8_bytes": 337,
+      "body_sha256": "35b51c4d224199a5cb2ea6a6bf09941325d45b63f47b869397346a8b7bf4f3e4",
+      "full_model_sha256": "61c8b943fec3905b2c0aa28d4ed3a4d1e672d607eacc3d3561eb2e18873f6985",
+      "baseline_expectation_sha256": "9cd1d0f80d2f27380824cc484922660ec342e7a068ed186f398caca3ee1582cc",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "External Name",
+            "External DB",
+            "Query",
+            "Result"
+          ],
+          "arrows": 2,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_35b51c4d224199a5cb2ea6a6bf09941325d45b63f47b869397346a8b7bf4f3e4.txt"
+      },
+      "snapshot_sha256": "9d7937893c4f319fb18cc2fd7133488fd2205d8f58abdac41e3c28ca7e82302c",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-actors-with-inline-alias-in-config-object.mmd",
+      "track": "body_diagnostic",
+      "case_index": 7,
+      "case_id": "official-role-body/26cca033d62d61c5",
+      "raw_sha256": "2507612dfd82b1a4032b33628bb999435e566801ba5a4452eb59e999a0ccca71",
+      "body_offset_utf8_bytes": 309,
+      "body_sha256": "26cca033d62d61c5396769afba08b178cd8b3298c57219e74607ff83e31aab52",
+      "full_model_sha256": "9c5e113c7317822076ae8cc6ec6d739e3b36df79db637d68106638c064c2ec4f",
+      "baseline_expectation_sha256": "903c3aacd99dd753f0f3d3179cb5d49165b2ee3696c9a6586d1249db3aa03940",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "End User",
+            "Gateway",
+            "Service",
+            "Request",
+            "Process",
+            "Response",
+            "Result"
+          ],
+          "arrows": 5,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_26cca033d62d61c5396769afba08b178cd8b3298c57219e74607ff83e31aab52.txt"
+      },
+      "snapshot_sha256": "d0b1d6eb0e17e938df7ad4161486ebfe55d67003f95d5a12a1888e4892dd187c",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-actors-with-stereotypes-and-aliases.mmd",
+      "track": "body_diagnostic",
+      "case_index": 8,
+      "case_id": "official-role-body/a06b68e49e94885d",
+      "raw_sha256": "4c3ce1dc4d018b13bb65ec766aa1b270e84cdd9e30172ecd616e5e0400abcedf",
+      "body_offset_utf8_bytes": 325,
+      "body_sha256": "a06b68e49e94885dcdfb9903f3472279dcfb040f6a649a3e9003559b75900cc8",
+      "full_model_sha256": "b531ee9623f47c99083079a788485a3e76127db606d0d6a98961efd1f691eaec",
+      "baseline_expectation_sha256": "8c483dc3ba7e40ad27ce4fdb9a6e009fa4c737096fdebcd44c766dfac6649c1a",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "End User",
+            "API Gateway",
+            "Service Layer",
+            "Data Store",
+            "Send request",
+            "Process",
+            "Persist",
+            "Success",
+            "Response",
+            "Result"
+          ],
+          "arrows": 7,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_a06b68e49e94885dcdfb9903f3472279dcfb040f6a649a3e9003559b75900cc8.txt"
+      },
+      "snapshot_sha256": "2579b69f9334cdf4e46a687ffc8a243f1619aca5e114cdc4ee0a492f9ea21061",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-central-connections-with-different-participant-types.mmd",
+      "track": "body_diagnostic",
+      "case_index": 9,
+      "case_id": "official-role-body/a352427b3b8ca8b3",
+      "raw_sha256": "51c6dff27ae915377676477ed8442c0246ab27f4c68c7d0fbf529a5e481615c9",
+      "body_offset_utf8_bytes": 373,
+      "body_sha256": "a352427b3b8ca8b3848be5ea4242bc894b4ea8aa696535a11f0b51e37f85e479",
+      "full_model_sha256": "5227a6122f15ba7caecac532ac6d6127214e5dc6291f38d53ff6a1d6627b7cc0",
+      "baseline_expectation_sha256": "4316cae7a53a30cc28893ad832f9c91d9becf68ee0460307f3dfae50cee3355c",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "Charlie",
+            "David",
+            "Eve",
+            "To actor",
+            "To boundary",
+            "To control",
+            "To entity",
+            "Back to participant"
+          ],
+          "arrows": 6,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_a352427b3b8ca8b3848be5ea4242bc894b4ea8aa696535a11f0b51e37f85e479.txt"
+      },
+      "snapshot_sha256": "cb49ed36011dbe60673a56040b5482c63418d8be9ce75ca2faa068fe97998738",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-different-participant-types-with-notes-and-loops.mmd",
+      "track": "body_diagnostic",
+      "case_index": 10,
+      "case_id": "official-role-body/18b6916e432f0a32",
+      "raw_sha256": "16144a6af98e8ac77fd9d6a128f500c76b64d927c4fd861aa3d7ba98b3ee8a0b",
+      "body_offset_utf8_bytes": 355,
+      "body_sha256": "18b6916e432f0a32a5406a3419c5bd8f25bca3e1488440b6cc2c9db113cc48c0",
+      "full_model_sha256": "1f3a4f0cf8b81f737db6c344cf67ff1d875eddf0c7f85b46064fdc476f517876",
+      "baseline_expectation_sha256": "3d61bdc87b0cf366672379d6b174c5969c7381dc9835b11417ca7ea9573c1da3",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Admin",
+            "Dashboard",
+            "AuthService",
+            "UserManager",
+            "UserProfile",
+            "UserDB",
+            "Logs",
+            "Open user management",
+            "Verify admin rights",
+            "Access granted",
+            "List users",
+            "Query users",
+            "Return user data",
+            "Format profiles",
+            "Formatted data",
+            "Display users",
+            "Record access",
+            "Audit trail",
+            "Encrypted data",
+            "requires decryption",
+            "loop Authentication check"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_18b6916e432f0a32a5406a3419c5bd8f25bca3e1488440b6cc2c9db113cc48c0.txt"
+      },
+      "snapshot_sha256": "7cf5ac85290d4ea446aada03d3f7b538f5116dd8ea9f004b56022b30c82f5004",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-different-participant-types-with-wrapping-text.mmd",
+      "track": "body_diagnostic",
+      "case_index": 11,
+      "case_id": "official-role-body/fcb7712416a59184",
+      "raw_sha256": "611fe7429bd035b0402b87d950b81825dc57817b39548c09595b777b5b668cb2",
+      "body_offset_utf8_bytes": 425,
+      "body_sha256": "fcb7712416a5918464aca8f117d05b7b4aa66a8149e6e843e4bf2fd36bf55a91",
+      "full_model_sha256": "23ec7ea0351423edcc05e53fa9ff10fb4c51701e1cc6ef8b0f67362351a73392",
+      "baseline_expectation_sha256": "89667bdee8f77fd3f7a59ca7b80b9eda520e9b7fa0e22ddfb6013ced462971e7",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "B",
+            "C",
+            "E",
+            "DB",
+            "COL",
+            "Q",
+            "FE",
+            "LongNameUser",
+            "Another long message",
+            "with explicit",
+            "line breaks",
+            "Response message that is also quite long and needs to wrap",
+            "Process data",
+            "Validate",
+            "Validation result",
+            "Save",
+            "Save result",
+            "Log",
+            "Forward",
+            "Final response with confirmation of all actions taken"
+          ],
+          "arrows": 11,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_fcb7712416a5918464aca8f117d05b7b4aa66a8149e6e843e4bf2fd36bf55a91.txt"
+      },
+      "snapshot_sha256": "91c02b735e5d6466a051ba1231e0ae9187625c70b2a111e039c2ff165eb46107",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-inline-alias-with-only-alias-field-no-type.mmd",
+      "track": "body_diagnostic",
+      "case_index": 12,
+      "case_id": "official-role-body/f19c18d379834e9c",
+      "raw_sha256": "0fd1de342eeb5c8688e9d8de934d12afe8981544323b867a566121fa1d23bfe5",
+      "body_offset_utf8_bytes": 360,
+      "body_sha256": "f19c18d379834e9c6967de941784a114b5d61e65f507154d2af3af02558b854f",
+      "full_model_sha256": "0767f2ce46b3376294ea8f4234ee1f33b6ebba061a18d589c09af645f42d08fe",
+      "baseline_expectation_sha256": "40762e1d9b1267fb8e2a66aa5c8eed2e03ffd975e96f854b0ea8f2320c7ebc19",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Public API",
+            "Auth Service",
+            "Request",
+            "Response"
+          ],
+          "arrows": 2,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_f19c18d379834e9c6967de941784a114b5d61e65f507154d2af3af02558b854f.txt"
+      },
+      "snapshot_sha256": "a8356de5c3eab0775a7750f90209a3ef432d0f618862a12ed56f35e8a0d57124",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-long-messages-from-database-to-collections.mmd",
+      "track": "body_diagnostic",
+      "case_index": 13,
+      "case_id": "official-role-body/aebb8c3d0d314a86",
+      "raw_sha256": "abc8509329d0bd084d84f154883c5bebbd264c7b430f1248084b2ffe8f626443",
+      "body_offset_utf8_bytes": 279,
+      "body_sha256": "aebb8c3d0d314a8601ccd3c9b7c6c0210e3eedfeaa39341c35c17434c0ec1ae0",
+      "full_model_sha256": "8eb88c236833bb8b8e2da2eaa4bb153497c827eba172e79061429eb02dcef905",
+      "baseline_expectation_sha256": "d904820c994c55cb3f3fbac5e459f1b5e7a0d6ce10bc1d85332beccc503c3d83",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be",
+            "I'm short though"
+          ],
+          "arrows": 2,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_aebb8c3d0d314a8601ccd3c9b7c6c0210e3eedfeaa39341c35c17434c0ec1ae0.txt"
+      },
+      "snapshot_sha256": "a20fd198981415b1eacf282110f028f1572fc0ce5ad75972d4c3fb258e7d58ae",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-long-messages-from-queue-to-boundary.mmd",
+      "track": "body_diagnostic",
+      "case_index": 14,
+      "case_id": "official-role-body/d04a2e3f1b081993",
+      "raw_sha256": "924e66048a14893a7c5a43295617a08964312671c9803d2bd846038856e128fd",
+      "body_offset_utf8_bytes": 300,
+      "body_sha256": "d04a2e3f1b081993124fb6dd379a04784d5f7358e8f002e1f6278cd2b7fbe85e",
+      "full_model_sha256": "68f9d52837614a332d8ebbae1feb4f84266d824ca568c6e7e29fe10fc7194b35",
+      "baseline_expectation_sha256": "7a5530dd2e37c170333a68e224227f3832831f5618b5ce36c6138723165d110c",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "I'm short",
+            "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be"
+          ],
+          "arrows": 2,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_d04a2e3f1b081993124fb6dd379a04784d5f7358e8f002e1f6278cd2b7fbe85e.txt"
+      },
+      "snapshot_sha256": "4128ff0aebb06031d732217960bf374d2c18690138e9f4de2e2064c3e90721cf",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-long-notes-left-of-boundary.mmd",
+      "track": "body_diagnostic",
+      "case_index": 15,
+      "case_id": "official-role-body/76b31d42ad8c9307",
+      "raw_sha256": "6b2a62a49028059aa93d485b59611cc03a3fe520ee15ff7bc50d846775e4da34",
+      "body_offset_utf8_bytes": 287,
+      "body_sha256": "76b31d42ad8c93076b1fb7d97625504bbfe04614f7787e7815ade1ef96bd0f7e",
+      "full_model_sha256": "d0d93474d397ba0dd4334a5fc356c630d313cf0e2d997934a966bbc7e3d47a14",
+      "baseline_expectation_sha256": "af1faf54e4af8aa571d2f1adaa7ce60143cbc421a0011e998a49be4acb05ba1b",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "Hola",
+            "I'm short though",
+            "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be"
+          ],
+          "arrows": 2,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_76b31d42ad8c93076b1fb7d97625504bbfe04614f7787e7815ade1ef96bd0f7e.txt"
+      },
+      "snapshot_sha256": "979214e1acde63e1ba865746d84ed951aca2f4fa93cc40dce9237eedfeae813a",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-long-notes-over-collections.mmd",
+      "track": "body_diagnostic",
+      "case_index": 16,
+      "case_id": "official-role-body/66c83ca4f29df77c",
+      "raw_sha256": "7969738a6372ed55a416ae0727be260bc6f426023ac8aeb804e4618a13b892d2",
+      "body_offset_utf8_bytes": 290,
+      "body_sha256": "66c83ca4f29df77c75477f79633897267b7572c5bcc12c70fbce23b52b4c0829",
+      "full_model_sha256": "99f1d2557fecbde3116d844c6648e034b9347337f4dcace1d11c4e3bae2ed185",
+      "baseline_expectation_sha256": "eab2ea645f5e3c5ca42d0845971b3383198b5246d30612c9781fb6935e13a7bb",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "Hola",
+            "I'm short though",
+            "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be"
+          ],
+          "arrows": 2,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_66c83ca4f29df77c75477f79633897267b7572c5bcc12c70fbce23b52b4c0829.txt"
+      },
+      "snapshot_sha256": "52f35a8f3332a02528ae0514038fdf50aaf38eb93c07a809679102e3ba1ff7c6",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-long-notes-right-of-entity.mmd",
+      "track": "body_diagnostic",
+      "case_index": 17,
+      "case_id": "official-role-body/4bdab9549060797b",
+      "raw_sha256": "4e2e3eb11e02d847bac8294add526dd18a410ecbceb1cfd3de99c13c3e395136",
+      "body_offset_utf8_bytes": 285,
+      "body_sha256": "4bdab9549060797ba848458226fe8bf56fedd4dcc398d37f990d58c091932c58",
+      "full_model_sha256": "82525cc49d6a9f3d4c043d733cd889f52b1a38d79030539bee3c64b3eb28c25a",
+      "baseline_expectation_sha256": "e94e1b4d5c9264003f3e793e1bbd12d014e14cbb58c8dd80720286220ddbbc63",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "Hola",
+            "I'm short though",
+            "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be"
+          ],
+          "arrows": 2,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_4bdab9549060797ba848458226fe8bf56fedd4dcc398d37f990d58c091932c58.txt"
+      },
+      "snapshot_sha256": "6c5eddaed9f008cf186822c7c17b03b3d9147716cce2f7bc1db76ef990d87c38",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-mixed-participants-and-actors-with-stereotypes-and-aliases.mmd",
+      "track": "body_diagnostic",
+      "case_index": 18,
+      "case_id": "official-role-body/9b5c6b125eb46ae3",
+      "raw_sha256": "2f266bf717bdfbe9202b82157dcacf74981b1699dffa5b938560806f07d13a62",
+      "body_offset_utf8_bytes": 442,
+      "body_sha256": "9b5c6b125eb46ae357b575e6084b73a2dda3950c433aa3a6de5def8847c4db13",
+      "full_model_sha256": "8db06945843d14ddbb77e1896ba9fcbf5d475221c49613023bccafe864cc0cc9",
+      "baseline_expectation_sha256": "5831a126b762f22d2f46c4cca987701017de522c1e01aed8b7deb61763cdc57f",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Mobile Client",
+            "API Gateway",
+            "Order Service",
+            "Message Queue",
+            "Order Database",
+            "Audit Logs",
+            "Place order",
+            "Validate order",
+            "Queue for processing  as well",
+            "Save order",
+            "Log transaction",
+            "Processing started AS Well",
+            "Order saved",
+            "Logged",
+            "Order confirmed",
+            "Confirmation"
+          ],
+          "arrows": 11,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_9b5c6b125eb46ae357b575e6084b73a2dda3950c433aa3a6de5def8847c4db13.txt"
+      },
+      "snapshot_sha256": "23d2f5fe09598e21d73493b4ca27221b1a34c92a7395e246284fcd4c8f5771c5",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-notes-over-actor-and-boundary.mmd",
+      "track": "body_diagnostic",
+      "case_index": 19,
+      "case_id": "official-role-body/210eae6d32804891",
+      "raw_sha256": "f5f21e4911cf2be22d4849e67d6e340ac2c59ba22d05711331be46e42b332c2a",
+      "body_offset_utf8_bytes": 221,
+      "body_sha256": "210eae6d32804891c05ba3f279f6d7abf7fa3e4fc11ba6a74db69e4185f3558b",
+      "full_model_sha256": "6c34db637f49274b250f55673beb938343b40ad19db5dba1021f0f3ad28870eb",
+      "baseline_expectation_sha256": "a4472d61c24dce454b75bad695276c0d74e580bcb285d2309b9da0b8c3657500",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Charlie",
+            "Some note",
+            "Other note"
+          ],
+          "arrows": 0,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_210eae6d32804891c05ba3f279f6d7abf7fa3e4fc11ba6a74db69e4185f3558b.txt"
+      },
+      "snapshot_sha256": "3a6a777f3b4e7d645ffcb5bc0b00561e50c7f7792c6d4cc02fcf1b56484326bb",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-participant-creation-and-destruction-with-different-types.mmd",
+      "track": "body_diagnostic",
+      "case_index": 20,
+      "case_id": "official-role-body/9f7acba19ad7c2a6",
+      "raw_sha256": "8939464bf9a664a40065d39bbf0ac1291f214d20277cd809b443b7b810eb8c2a",
+      "body_offset_utf8_bytes": 350,
+      "body_sha256": "9f7acba19ad7c2a663886d0735d4e8c9c1f9ed277150c104df71972d0abe4889",
+      "full_model_sha256": "e179867874c0a4ce8e2ad6c622ceb1140bcef6a4b96f0b7f1efa9656e508e58d",
+      "baseline_expectation_sha256": "292911f95570501434f9bb66ffee2ea953e646170a3ca2677b3c2d41c9ff7db3",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "Carl",
+            "Donald",
+            "Hello Bob, how are you ?",
+            "Fine, thank you. And you?",
+            "Hi Carl!",
+            "Hi!",
+            "We are too many",
+            "I agree"
+          ],
+          "arrows": 6,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_9f7acba19ad7c2a663886d0735d4e8c9c1f9ed277150c104df71972d0abe4889.txt"
+      },
+      "snapshot_sha256": "fd5fa58da67327acac7983403b27c017b4c970ef6b27c5eed354998159e3165c",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-participants-with-inline-alias-in-config-object.mmd",
+      "track": "body_diagnostic",
+      "case_index": 21,
+      "case_id": "official-role-body/d4482ded73637087",
+      "raw_sha256": "3626b7247e04ea1b1300a3dceb3ee2cd0ae9596510e90534a22a159c7a676d31",
+      "body_offset_utf8_bytes": 402,
+      "body_sha256": "d4482ded7363708701b91e98adbfaf14e237d8acab979177d636f5f4d2aa4af7",
+      "full_model_sha256": "7d646840d7fd2047a8fa4b5a178e8d15e9ef1eb1eeccda939482901942d5f8bc",
+      "baseline_expectation_sha256": "19582dc5fd35d8c185b3bf57320159117283496f2bc574466acafacd59843cc5",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Public API",
+            "Auth Service",
+            "User DB",
+            "Login request",
+            "Query user",
+            "User data",
+            "Token"
+          ],
+          "arrows": 5,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_d4482ded7363708701b91e98adbfaf14e237d8acab979177d636f5f4d2aa4af7.txt"
+      },
+      "snapshot_sha256": "35a12a7cda2dc66c4998d08950a01e3a71feeab2b1a574eb5337fa436ad783a2",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-participants-with-stereotypes-and-aliases.mmd",
+      "track": "body_diagnostic",
+      "case_index": 22,
+      "case_id": "official-role-body/7882b5ba5884c061",
+      "raw_sha256": "7714370453ca51ddfe39746b1f76f664b757e9230a97a0c4bf78770abcc754ff",
+      "body_offset_utf8_bytes": 419,
+      "body_sha256": "7882b5ba5884c061cd1e6a365f9fe120dacdea726786a70f8c952a3706e53fec",
+      "full_model_sha256": "de36d3306329edf4c179bbcb56a89214832944c25cfdbcbaac785931de2e6d3b",
+      "baseline_expectation_sha256": "25b187389f400ca9bd591997cbaafd3df8eed7f7ccae306457e2f21592456f3a",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Public API",
+            "Auth Controller",
+            "User Database",
+            "Cache Layer",
+            "Authenticate request",
+            "Query user",
+            "User data",
+            "Store session",
+            "Confirmed",
+            "Token"
+          ],
+          "arrows": 7,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_7882b5ba5884c061cd1e6a365f9fe120dacdea726786a70f8c952a3706e53fec.txt"
+      },
+      "snapshot_sha256": "beab01292debbeb36ab75b85ba5f1ef89d4050dfcd554134e1974c22e3770f61",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-stereotypes-with-aliases-and-complex-interactions.mmd",
+      "track": "body_diagnostic",
+      "case_index": 23,
+      "case_id": "official-role-body/5996f743b6b5d7e5",
+      "raw_sha256": "5baaaaca372acdb97d8f5ad4232481f78b4dc5d559ffdb4259002b0cf15c1766",
+      "body_offset_utf8_bytes": 416,
+      "body_sha256": "5996f743b6b5d7e542b37ad88a6fab114677902386615a6cb0e6342c45bdbb82",
+      "full_model_sha256": "495003f5e4ddebeebe88bf3d99db19fb108163d097573c8ce12b14899c401812",
+      "baseline_expectation_sha256": "fc4919363b74d6d0f76e7dde02fcc06f0e7a1c1638e3a895228ae053952f13b9",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Web Portal",
+            "Auth Service",
+            "User DB",
+            "Event Queue",
+            "Audit Trail",
+            "Login request",
+            "Verify credentials",
+            "User found",
+            "Publish login event",
+            "Log success",
+            "Event queued",
+            "Logged",
+            "Success token",
+            "Log failure",
+            "Access denied",
+            "All interactions logged",
+            "alt Valid credentials",
+            "else Invalid credentials",
+            "par Parallel processing",
+            "and"
+          ],
+          "arrows": 11,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_5996f743b6b5d7e542b37ad88a6fab114677902386615a6cb0e6342c45bdbb82.txt"
+      },
+      "snapshot_sha256": "c5a6ce9c9f3547a758492d5635dc4c2c096f600f9272000fe7044aeae04cc99f",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/v2-classic-all-interaction-types.mmd",
+      "track": "body_diagnostic",
+      "case_index": 24,
+      "case_id": "official-role-body/e113dfa19073d7b3",
+      "raw_sha256": "2f506e18f5570ec8006224f944c36830d45dec75bb796e2e3bb1796dd0dcc124",
+      "body_offset_utf8_bytes": 152,
+      "body_sha256": "e113dfa19073d7b33b4f8f7b054fbd69992a46bac0db9f0e5be317a28e4847d4",
+      "full_model_sha256": "495ba53d037efdcdabc8d33ac4aa0234b496bfcbd15f674c938da1b88ef9c04c",
+      "baseline_expectation_sha256": "961b3fb47aadaef253d056c940d412179a243233c673610cbdcdbaa29643c36d",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "A",
+            "B",
+            "->> message 0",
+            "-->> message 1",
+            "-> message 2",
+            "--> message 3",
+            "-x message 4",
+            "--x message 5",
+            "->>+ message 6",
+            "-->>+ message 7"
+          ],
+          "arrows": 4,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_e113dfa19073d7b33b4f8f7b054fbd69992a46bac0db9f0e5be317a28e4847d4.txt"
+      },
+      "snapshot_sha256": "bd7d130d2027bb60df8aa2eca8bbb86c32660bbfec6b5fd3e22261e0bdfb8cc9",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/v2-classic-all-participant-types.mmd",
+      "track": "body_diagnostic",
+      "case_index": 25,
+      "case_id": "official-role-body/64843d3ac098e32d",
+      "raw_sha256": "b859fc82fa596fb8f3c429bfbd8052d25ceb9cc2d91e56a0cd166e4861d6e8a2",
+      "body_offset_utf8_bytes": 215,
+      "body_sha256": "64843d3ac098e32d89528749fafd0bb95af417ad8b7d7e08833555ab0696c91e",
+      "full_model_sha256": "6638d21532904e9eda195b74f1fa9c2e1f32bd069d0a58d7e6f9ad26b2962ea6",
+      "baseline_expectation_sha256": "f342a038c4e832d20378d9d2b5e2ac187967fa052b32dc07b9065ab5d1e1c588",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "participant0",
+            "actor1",
+            "boundary2",
+            "control3",
+            "entity4",
+            "database5",
+            "collections6",
+            "queue7",
+            "Message 0",
+            "Message 1",
+            "Message 2",
+            "Message 3",
+            "Message 4",
+            "Message 5",
+            "Message 6"
+          ],
+          "arrows": 8,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_64843d3ac098e32d89528749fafd0bb95af417ad8b7d7e08833555ab0696c91e.txt"
+      },
+      "snapshot_sha256": "673719b9114ceea44fd516835f096b7b639c73f60269a55cbb90620d0a1361da",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/v2-classic-alternative-flows.mmd",
+      "track": "body_diagnostic",
+      "case_index": 26,
+      "case_id": "official-role-body/d8ce06706f9ff09e",
+      "raw_sha256": "12d818ef2dcfd048763d304a4ded8a7ce8aa20eed97d1744315ceb43b702bf06",
+      "body_offset_utf8_bytes": 108,
+      "body_sha256": "d8ce06706f9ff09e306e97550c79d706497cebfadf15a4f3436da5c48a092ea8",
+      "full_model_sha256": "bae2e2b54e777be1ae511b6a32ff0294b27d5d69353d1f578869a74bcd530742",
+      "baseline_expectation_sha256": "a0b432f2aaf1fb8b54ccf431e48aa89108808563dfe82ab5aef733bb0fb374ad",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "A",
+            "B",
+            "Request",
+            "Success",
+            "Failure",
+            "alt Successful case",
+            "else Failure case"
+          ],
+          "arrows": 3,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_d8ce06706f9ff09e306e97550c79d706497cebfadf15a4f3436da5c48a092ea8.txt"
+      },
+      "snapshot_sha256": "cebbe72df6038ba7fe529a4ea4767f85a6d3a5b0fa4972bcd3b953a34d7bb2d3",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/v2-classic-boxes-around-groups.mmd",
+      "track": "body_diagnostic",
+      "case_index": 27,
+      "case_id": "official-role-body/b027ed572c46ea60",
+      "raw_sha256": "ac5a11a497d3fbf23826b5247078e5ddbd1c50eb05eca393ebd21266f30d50c4",
+      "body_offset_utf8_bytes": 152,
+      "body_sha256": "b027ed572c46ea60e3c9e1363e4640d777ed493933f11ecfc7690c1144f15850",
+      "full_model_sha256": "6edcffc045961839d635a21bb6439ba720afc245578e22ac81f91d98cb91baf1",
+      "baseline_expectation_sha256": "e493a26c4a8192b2f15412f34bcc9928d597374fe20a798972a95f2a784e0fc7",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "participant0",
+            "actor1",
+            "boundary2",
+            "control0",
+            "entity1",
+            "database2",
+            "Cross-group message",
+            "Group 1",
+            "Group 2",
+            "color: rgb(200,220,255)"
+          ],
+          "arrows": 2,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_b027ed572c46ea60e3c9e1363e4640d777ed493933f11ecfc7690c1144f15850.txt"
+      },
+      "snapshot_sha256": "b46bb475400b8363399a5b6fa2f8f69b83bdfe32bb66e2e7fd10ccf3aaea0246",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/v2-classic-loops.mmd",
+      "track": "body_diagnostic",
+      "case_index": 28,
+      "case_id": "official-role-body/220517db0345dc45",
+      "raw_sha256": "1a3187434fe0624d9d90c02ad539a5eeac2525c1ae2f92931ef52bedeea20a5c",
+      "body_offset_utf8_bytes": 133,
+      "body_sha256": "220517db0345dc452e2cfdb8a4b365e435376f3538b4798ab7e1db6ddd2e4324",
+      "full_model_sha256": "8e29f9d15485019941fecacfb8c712d6d56fb0d7cb74fbbdfae0a45a547cc347",
+      "baseline_expectation_sha256": "369c033873b80851eee11ef60a8f3bff04678c1c6b7a8c1eeb493dcf245554d7",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "participant0",
+            "actor1",
+            "boundary2",
+            "Message 0",
+            "Message 1",
+            "Message 2",
+            "loop For each participant"
+          ],
+          "arrows": 3,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_220517db0345dc452e2cfdb8a4b365e435376f3538b4798ab7e1db6ddd2e4324.txt"
+      },
+      "snapshot_sha256": "dd67c05484dbba5a485855aa3110a1066ef64140c4746a8a4114dfa56afb1662",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/v2-classic-notes-in-all-positions.mmd",
+      "track": "body_diagnostic",
+      "case_index": 29,
+      "case_id": "official-role-body/ec82e3dce97899fc",
+      "raw_sha256": "b02b75f3375f612cb5c27e96747a3ce17d61177e1140fbae055f8f273295053a",
+      "body_offset_utf8_bytes": 134,
+      "body_sha256": "ec82e3dce97899fc9aecbb4663569641f0a8437cb0b931dc780ba47946679cd7",
+      "full_model_sha256": "25ea9c6752e1c9a7de38ac5c2b150fa60f692590a8ee4e5d036b62c3f6cad296",
+      "baseline_expectation_sha256": "7a8dc107d3ab060900c552fa558a6d5e94bdadc868b367f6aab0262675c7dc88",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "A",
+            "B",
+            "Message with notes",
+            "Note left of 0",
+            "Note right of 1",
+            "Note over 2"
+          ],
+          "arrows": 1,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_ec82e3dce97899fc9aecbb4663569641f0a8437cb0b931dc780ba47946679cd7.txt"
+      },
+      "snapshot_sha256": "71f58a299288966165d8919a5381724c0d3c7d74c29ddc10e477e722f24257c6",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/v2-classic-parallel-interactions.mmd",
+      "track": "body_diagnostic",
+      "case_index": 30,
+      "case_id": "official-role-body/2fec18b0e8eaa38b",
+      "raw_sha256": "44d75d9bb8f958b60d5807db286bb6feb6c1763bcaeedcd1b91b683562386313",
+      "body_offset_utf8_bytes": 251,
+      "body_sha256": "2fec18b0e8eaa38b4729e7eec9c881bf7a93e8efc2c491f342a8fea9f09c44a7",
+      "full_model_sha256": "ace021a1126cc52bf4d46d4a558c1fe40d92c63ca779ae389d0da14ff64bfc13",
+      "baseline_expectation_sha256": "c4e113ac001ea52be86c6ae08d67a96c5ba41ec0d23146e298edbf0d8dad57c9",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "participant0",
+            "actor1",
+            "boundary2",
+            "control3",
+            "Message 0",
+            "Message 2",
+            "par Parallel actions",
+            "and"
+          ],
+          "arrows": 3,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_2fec18b0e8eaa38b4729e7eec9c881bf7a93e8efc2c491f342a8fea9f09c44a7.txt"
+      },
+      "snapshot_sha256": "c86ae74f0bec9b415a2dcacf9fd52ebd9437a7e7921efaf541a1811e070f06b7",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/v2-classic-with-different-font-settings.mmd",
+      "track": "body_diagnostic",
+      "case_index": 31,
+      "case_id": "official-role-body/486f472675bf2d13",
+      "raw_sha256": "197755bee24e719fd19e04916669d0d6cbfa4edaa0c27cf03cae7b57ca1ea4ec",
+      "body_offset_utf8_bytes": 359,
+      "body_sha256": "486f472675bf2d13c80b5a45aee51a580e7e6c75c40e5e023cfd57f4df5bb110",
+      "full_model_sha256": "afedfc6b482ffc477fb8e404d47abd86c94392f797bb436fd26453a64c0fab2e",
+      "baseline_expectation_sha256": "a3999b2508d35e6e154f879e1dbde687f4339d0e88d807356f13fa6d4e5b6798",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "participant0",
+            "actor1",
+            "boundary2",
+            "Regular message",
+            "Regular note"
+          ],
+          "arrows": 1,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_486f472675bf2d13c80b5a45aee51a580e7e6c75c40e5e023cfd57f4df5bb110.txt"
+      },
+      "snapshot_sha256": "f2b66eeca5d335f44605b11f7b8a68f92efa54567eddbce952789bf51ff8b2ec",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/v2-complex-sequence-with-all-features.mmd",
+      "track": "body_diagnostic",
+      "case_index": 32,
+      "case_id": "official-role-body/d18922a015ec7769",
+      "raw_sha256": "bfb2ba55ac7ce21c9cf93608b2713ac18a2e5216194835e0e65681297e05338d",
+      "body_offset_utf8_bytes": 230,
+      "body_sha256": "d18922a015ec77699043f7bcc30a9ddae1852b58077c4e22f4ecf9405224fe79",
+      "full_model_sha256": "1228bfef30709c1951b5786ac9554afaa9423b60c69b78baa6ed65944da536c6",
+      "baseline_expectation_sha256": "6286624adae9cd3d6c83ae7952007f34968e780aa9d2c1502cdc0d3e5a3d5e79",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "User",
+            "LoginUI",
+            "AuthService",
+            "UserDB",
+            "Order",
+            "OrderQueue",
+            "AuditLogs",
+            "Enter credentials",
+            "Validate",
+            "Query user",
+            "User data",
+            "Success",
+            "Welcome",
+            "New order",
+            "Process",
+            "Record",
+            "Update status",
+            "Notification",
+            "Failure",
+            "Retry",
+            "alt Valid credentials",
+            "else Invalid credentials",
+            "par Place order",
+            "and",
+            "loop Until confirmed",
+            "Authentication",
+            "color: rgb(200,220,255)",
+            "Order Processing",
+            "color: rgb(200,255,220)"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_d18922a015ec77699043f7bcc30a9ddae1852b58077c4e22f4ecf9405224fe79.txt"
+      },
+      "snapshot_sha256": "e18b5a43e30e887969b928a6176125494982e3410cd24f57b053b9857ddd32d5",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/pr-check/should-handle-complex-interactions-between-different-participant-types.mmd",
+      "track": "body_diagnostic",
+      "case_index": 33,
+      "case_id": "official-role-body/4264c0b678e0c54c",
+      "raw_sha256": "1f1a81fb1851ac4ccb2254a335263088ff8052b110e257f99d5d9a7eb018a5a6",
+      "body_offset_utf8_bytes": 321,
+      "body_sha256": "4264c0b678e0c54c8f096cbd0925a63ae61dc47425d0cb29c3757ed8eb0d9344",
+      "full_model_sha256": "1228bfef30709c1951b5786ac9554afaa9423b60c69b78baa6ed65944da536c6",
+      "baseline_expectation_sha256": "9460af7a76b048dc40c14b83cf481d0af743c27c1fe2403b1ff1e77407f18ec8",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "User",
+            "LoginUI",
+            "AuthService",
+            "UserDB",
+            "Order",
+            "OrderQueue",
+            "AuditLogs",
+            "Enter credentials",
+            "Validate",
+            "Query user",
+            "User data",
+            "Success",
+            "Welcome",
+            "New order",
+            "Process",
+            "Record",
+            "Update status",
+            "Notification",
+            "Failure",
+            "Retry",
+            "alt Valid credentials",
+            "else Invalid credentials",
+            "par Place order",
+            "and",
+            "loop Until confirmed",
+            "Authentication",
+            "color: rgb(200,220,255)",
+            "Order Processing",
+            "color: rgb(200,255,220)"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_4264c0b678e0c54c8f096cbd0925a63ae61dc47425d0cb29c3757ed8eb0d9344.txt"
+      },
+      "snapshot_sha256": "e18b5a43e30e887969b928a6176125494982e3410cd24f57b053b9857ddd32d5",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/pr-check/should-render-a-sequence-diagram-with-various-participant-types.mmd",
+      "track": "body_diagnostic",
+      "case_index": 34,
+      "case_id": "official-role-body/06a0e5361f712f8a",
+      "raw_sha256": "f0c5bc53bd140f3c5f68dafc822ce3a81130b0e8c86914b2cb8aa761c898c397",
+      "body_offset_utf8_bytes": 254,
+      "body_sha256": "06a0e5361f712f8a84f903b4d58482f3dd52b1969e3a1437f9e7d8d11f686378",
+      "full_model_sha256": "b4b7a8bbd4fab6760912a65ef32c97387a6c586a8fefe676c9822bb65bfbf171",
+      "baseline_expectation_sha256": "7c27ae93f927f492dff0949f9750b363be36779b3611dc1ebb8420cab00b01f7",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "User",
+            "AuthService",
+            "UI",
+            "OrderController",
+            "Product",
+            "MongoDB",
+            "Products",
+            "OrderQueue",
+            "Login request",
+            "Validate credentials",
+            "Authentication token",
+            "Place order",
+            "Check availability",
+            "Available",
+            "Save order",
+            "Order saved",
+            "Process payment",
+            "Order confirmation"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_06a0e5361f712f8a84f903b4d58482f3dd52b1969e3a1437f9e7d8d11f686378.txt"
+      },
+      "snapshot_sha256": "f2af8c354c20e83516d046c046af61b61075a30d26217fabe8a4ca3046691588",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/pr-check/should-render-actor-and-database-aligned-on-neo.mmd",
+      "track": "body_diagnostic",
+      "case_index": 35,
+      "case_id": "official-role-body/1f01b6e7f3a01c2c",
+      "raw_sha256": "33484e6d4fe8f3af3a778ea7f16966052dc72744ba26451f5c67b6db62a7cc60",
+      "body_offset_utf8_bytes": 308,
+      "body_sha256": "1f01b6e7f3a01c2c32bcc773e83e2dd4d077f00519c29b052fd8806e7ad94553",
+      "full_model_sha256": "32e1b634b5ac79476da78e6e0ffc06ed3b67604349b2b65f491eb9b5ed53f504",
+      "baseline_expectation_sha256": "06346c7bc1f27929154eee7e6287ba7c302dc465801c36b2c076646e66afa11a",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "User",
+            "API",
+            "Database",
+            "request",
+            "query",
+            "rows",
+            "response",
+            "A note on the actor",
+            "A wider note",
+            "rect",
+            "rect rgb(200, 230, 255)"
+          ],
+          "arrows": 4,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_1f01b6e7f3a01c2c32bcc773e83e2dd4d077f00519c29b052fd8806e7ad94553.txt"
+      },
+      "snapshot_sha256": "368429392cf2d4ca03f5808589b51245eb196b4bcc930c135ea8625f0d264be0",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/pr-check/should-render-stereotypes-with-aliases-in-boxes.mmd",
+      "track": "body_diagnostic",
+      "case_index": 36,
+      "case_id": "official-role-body/72c9953210992651",
+      "raw_sha256": "c431ee03060a0f5f7dde81fb4fe16c20f2a187662c1643008254a3ee9657c93c",
+      "body_offset_utf8_bytes": 339,
+      "body_sha256": "72c9953210992651edd506b17c12e995c4839a28c373c440edd7982b062d4497",
+      "full_model_sha256": "81f62cbb2199d6df7099edbd8ffe03bbe83e10155e368cb237cc9c2879f36c3b",
+      "baseline_expectation_sha256": "a8465feb036c6f55c7a604233f28b4ef1b6ba5acca430569f22bbc9c20f6facb",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "End User",
+            "User Interface",
+            "REST API",
+            "Business Logic",
+            "Primary DB",
+            "Cache Store",
+            "Click button",
+            "HTTP request",
+            "Process",
+            "Check cache",
+            "Cache miss",
+            "Query data",
+            "Data",
+            "Update cache",
+            "Response",
+            "Display",
+            "Frontend Layer",
+            "color: rgb(200,220,255)",
+            "Backend Layer",
+            "color: rgb(255,220,200)",
+            "Data Layer",
+            "color: rgb(220,255,200)"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_72c9953210992651edd506b17c12e995c4839a28c373c440edd7982b062d4497.txt"
+      },
+      "snapshot_sha256": "45fff2daa24074732ba8b5ac19715d0142cd4b5a3c77304f25fecc8e25a8291c",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/visual-check/v2-usemaxwidth-false.mmd",
+      "track": "body_diagnostic",
+      "case_index": 37,
+      "case_id": "official-role-body/2629c5cd989eb0d3",
+      "raw_sha256": "41f4513dd466a8fa6480e7ebcb75fff7eb6295bed737707eb08b407b33d25009",
+      "body_offset_utf8_bytes": 269,
+      "body_sha256": "2629c5cd989eb0d360ef5f09aea81c8fc6811a381806895275c193c69e34fe90",
+      "full_model_sha256": "5046b91af87252b9ed880cafb189e6cb2977fc66a2df4e1bd69148d422294054",
+      "baseline_expectation_sha256": "8e41c121bc2e22486b7665145fd8c0b61517cdf97a64436a8cf6affc58d93a5c",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "John",
+            "Hello Bob, how are you?",
+            "How about you John?",
+            "I am good thanks!",
+            "Checking with John...",
+            "Yes",
+            "No",
+            "Maybe",
+            "Parallel message 1",
+            "Parallel message 2",
+            "Bob thinks a long",
+            "long time, so long",
+            "that the text does",
+            "not fit on a row.",
+            "alt either this",
+            "else or this",
+            "else or this will happen",
+            "par this happens in parallel",
+            "and"
+          ],
+          "arrows": 7,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_2629c5cd989eb0d360ef5f09aea81c8fc6811a381806895275c193c69e34fe90.txt"
+      },
+      "snapshot_sha256": "d0499120e572dc8841dee8e12481a369005b2f17e0be353a1856c70fc599dad1",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/visual-check/v2-usemaxwidth-true.mmd",
+      "track": "body_diagnostic",
+      "case_index": 37,
+      "case_id": "official-role-body/2629c5cd989eb0d3",
+      "raw_sha256": "443208b6b672529c7400976321144d72b2b2842a3bb9ea0e614c5179e6233409",
+      "body_offset_utf8_bytes": 359,
+      "body_sha256": "2629c5cd989eb0d360ef5f09aea81c8fc6811a381806895275c193c69e34fe90",
+      "full_model_sha256": "5046b91af87252b9ed880cafb189e6cb2977fc66a2df4e1bd69148d422294054",
+      "baseline_expectation_sha256": "ff8e23b32683ba0ad6d03359c06612ff5f84b221e2399c07f8fe86d8dfdae77a",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "John",
+            "Hello Bob, how are you?",
+            "How about you John?",
+            "I am good thanks!",
+            "Checking with John...",
+            "Yes",
+            "No",
+            "Maybe",
+            "Parallel message 1",
+            "Parallel message 2",
+            "Bob thinks a long",
+            "long time, so long",
+            "that the text does",
+            "not fit on a row.",
+            "alt either this",
+            "else or this",
+            "else or this will happen",
+            "par this happens in parallel",
+            "and"
+          ],
+          "arrows": 7,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_2629c5cd989eb0d360ef5f09aea81c8fc6811a381806895275c193c69e34fe90.txt"
+      },
+      "snapshot_sha256": "d0499120e572dc8841dee8e12481a369005b2f17e0be353a1856c70fc599dad1",
+      "reason": "Reviewed complete38 body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-color-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 38,
+      "case_id": "official-role-body/72ca9299abd383ce",
+      "raw_sha256": "df9133c99dfd05bd2fe05392580fb91ccbfeda0d47e6201d0205fb318708eea8",
+      "body_offset_utf8_bytes": 255,
+      "body_sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83",
+      "full_model_sha256": "bfcf9e93566630fe566e26a27fbacf66ac9bb39a3eb13c0168630cdafa637c34",
+      "baseline_expectation_sha256": "c7bcb26adb594979bdf8a2311d0a14db34f841a5f19a1988e6e09a1be4b007a1",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Customer",
+            "Frontend",
+            "PaymentService",
+            "InventoryManager",
+            "Order",
+            "OrdersDB",
+            "NotificationQueue",
+            "Place order",
+            "Create order",
+            "Process payment",
+            "Reserve items",
+            "Payment confirmed",
+            "Items reserved",
+            "Save finalized order",
+            "Order saved",
+            "Send confirmation",
+            "Order confirmation",
+            "par Parallel Processing",
+            "and"
+          ],
+          "arrows": 11,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83.txt"
+      },
+      "snapshot_sha256": "ea4f72e2213a55d6145d555ea7059d76eb2de07e30a02870f22b3e226589a8bf",
+      "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-dark-color-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 38,
+      "case_id": "official-role-body/72ca9299abd383ce",
+      "raw_sha256": "d3aada2c6d5e1f7196fd9b2562ad7160ca3750c5abc0f3d802f845105fc24f08",
+      "body_offset_utf8_bytes": 265,
+      "body_sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83",
+      "full_model_sha256": "bfcf9e93566630fe566e26a27fbacf66ac9bb39a3eb13c0168630cdafa637c34",
+      "baseline_expectation_sha256": "1b473e7a6b2b10a03631609f6698a9fbe91f01c1a12d465e50f8b92373abb649",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Customer",
+            "Frontend",
+            "PaymentService",
+            "InventoryManager",
+            "Order",
+            "OrdersDB",
+            "NotificationQueue",
+            "Place order",
+            "Create order",
+            "Process payment",
+            "Reserve items",
+            "Payment confirmed",
+            "Items reserved",
+            "Save finalized order",
+            "Order saved",
+            "Send confirmation",
+            "Order confirmation",
+            "par Parallel Processing",
+            "and"
+          ],
+          "arrows": 11,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83.txt"
+      },
+      "snapshot_sha256": "ea4f72e2213a55d6145d555ea7059d76eb2de07e30a02870f22b3e226589a8bf",
+      "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-dark-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 38,
+      "case_id": "official-role-body/72ca9299abd383ce",
+      "raw_sha256": "de9e10d692bc0e9e71628957a17d4b6959b0d2cf1ac9cf7c020ed8e76036d252",
+      "body_offset_utf8_bytes": 253,
+      "body_sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83",
+      "full_model_sha256": "bfcf9e93566630fe566e26a27fbacf66ac9bb39a3eb13c0168630cdafa637c34",
+      "baseline_expectation_sha256": "561a5d830fbab9282784d45ff38f68d3bafb5da7426d0457967119836aafd965",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Customer",
+            "Frontend",
+            "PaymentService",
+            "InventoryManager",
+            "Order",
+            "OrdersDB",
+            "NotificationQueue",
+            "Place order",
+            "Create order",
+            "Process payment",
+            "Reserve items",
+            "Payment confirmed",
+            "Items reserved",
+            "Save finalized order",
+            "Order saved",
+            "Send confirmation",
+            "Order confirmation",
+            "par Parallel Processing",
+            "and"
+          ],
+          "arrows": 11,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83.txt"
+      },
+      "snapshot_sha256": "ea4f72e2213a55d6145d555ea7059d76eb2de07e30a02870f22b3e226589a8bf",
+      "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-theme.mmd",
+      "track": "body_diagnostic",
+      "case_index": 38,
+      "case_id": "official-role-body/72ca9299abd383ce",
+      "raw_sha256": "bfc6693b6338b8667e4f8748ff4955597f72afe2f1db09253f6209440ae6f5fd",
+      "body_offset_utf8_bytes": 243,
+      "body_sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83",
+      "full_model_sha256": "bfcf9e93566630fe566e26a27fbacf66ac9bb39a3eb13c0168630cdafa637c34",
+      "baseline_expectation_sha256": "6fddff616b4e52e6ed6a5bae92a16e8cfca00a064d6d1feed5bc106d2302b44c",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Customer",
+            "Frontend",
+            "PaymentService",
+            "InventoryManager",
+            "Order",
+            "OrdersDB",
+            "NotificationQueue",
+            "Place order",
+            "Create order",
+            "Process payment",
+            "Reserve items",
+            "Payment confirmed",
+            "Items reserved",
+            "Save finalized order",
+            "Order saved",
+            "Send confirmation",
+            "Order confirmation",
+            "par Parallel Processing",
+            "and"
+          ],
+          "arrows": 11,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83.txt"
+      },
+      "snapshot_sha256": "ea4f72e2213a55d6145d555ea7059d76eb2de07e30a02870f22b3e226589a8bf",
+      "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-different-participant-types-with-alternative-flows.mmd",
+      "track": "body_diagnostic",
+      "case_index": 39,
+      "case_id": "official-role-body/dbfcb2258bed074f",
+      "raw_sha256": "20f32830793e5aa3635757d24ebe19d4e04bb02d36648a59278cb45261eea1fa",
+      "body_offset_utf8_bytes": 330,
+      "body_sha256": "dbfcb2258bed074f122bf1ee144890b5da8411c216db6fa73fbb0083bf4a9af1",
+      "full_model_sha256": "2d7e9ec1d27258191226793d66199d90256d21c736c79965d393b84ee4a6a1f7",
+      "baseline_expectation_sha256": "cf5250a586de60403477f24e3ed3e3a1c65e7aa455d3066cdd8fb3467a43df59",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Client",
+            "MobileApp",
+            "CloudService",
+            "DataProcessor",
+            "Transaction",
+            "TransactionsDB",
+            "EventBus",
+            "Initiate transaction",
+            "Authenticate",
+            "Auth token",
+            "Process data",
+            "Create transaction",
+            "Save record",
+            "Confirmation",
+            "Publish event",
+            "Notification",
+            "Error",
+            "Show error",
+            "alt Authentication successful",
+            "else Authentication failed"
+          ],
+          "arrows": 12,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_dbfcb2258bed074f122bf1ee144890b5da8411c216db6fa73fbb0083bf4a9af1.txt"
+      },
+      "snapshot_sha256": "ed862468459e7f45edd49915e1744f23c4256340ef1cc2c8d6afe0d7d45e9800",
+      "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-parallel-processes-with-different-participant-types.mmd",
+      "track": "body_diagnostic",
+      "case_index": 40,
+      "case_id": "official-role-body/e1ed6eec0ceb1b6c",
+      "raw_sha256": "efd1a08d05338d0410719ea3d74ebac215d49dd131bce46294c40e872197505c",
+      "body_offset_utf8_bytes": 334,
+      "body_sha256": "e1ed6eec0ceb1b6c5b73b8f26a067b0e9e923dc5d41cc1f8e701630bf9e787b7",
+      "full_model_sha256": "bfcf9e93566630fe566e26a27fbacf66ac9bb39a3eb13c0168630cdafa637c34",
+      "baseline_expectation_sha256": "4983d72207648b95964afccc482fcf631321d6dd72f8dfc99d81abe393230ee0",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending.",
+        "checks": {
+          "labels": [
+            "Customer",
+            "Frontend",
+            "PaymentService",
+            "InventoryManager",
+            "Order",
+            "OrdersDB",
+            "NotificationQueue",
+            "Place order",
+            "Create order",
+            "Process payment",
+            "Reserve items",
+            "Payment confirmed",
+            "Items reserved",
+            "Save finalized order",
+            "Order saved",
+            "Send confirmation",
+            "Order confirmation",
+            "par Parallel Processing",
+            "and"
+          ],
+          "arrows": 11,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_role_e1ed6eec0ceb1b6c5b73b8f26a067b0e9e923dc5d41cc1f8e701630bf9e787b7.txt"
+      },
+      "snapshot_sha256": "ea4f72e2213a55d6145d555ea7059d76eb2de07e30a02870f22b3e226589a8bf",
+      "reason": "Reviewed complete body native Role projection; original raw metadata, browser/SVG/ASCII/API predicates remain pending."
+    }
+  ]
+}

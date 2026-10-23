@@ -1,0 +1,10 @@
+sequenceDiagram
+box Group
+participant A
+participant B
+end
+rect rgba(0,0,0,0.1)
+Note over A,B: Wait
+A->>+B: Start
+B-->>-A: Done
+end

@@ -1,0 +1,104 @@
++------------------------+
+| <<interface>>          |
+| Class01                |
++------------------------+
+| int chimp              |
+| int gorilla            |
+| -int privateChimp      |
+| +int publicGorilla     |
+| #int protectedMarmoset |
++------------------------+
+| size()                 |
++------------------------+
+             ^
+           Cool
+             |
+    +----------------+
+    | AveryLongClass |
+    +----------------+
+
++---------+
+| Class03 |
++---------+
+     1
+     *
+     |
+     *
++---------+
+| Class04 |
++---------+
+
++---------+
+| Class05 |
++---------+
+     1
+     o
+     |
+   many
++---------+
+| Class06 |
++---------+
+
++----------------------+
+| Class07              |
++----------------------+
+| Object[] elementData |
++----------------------+
+| equals()             |
++----------------------+
+
++---------+
+| Class08 |
++---------+
+
++---------+
+| Class09 |
++---------+
+
++----+
+| C2 |
++----+
+
++----+
+| C3 |
++----+
+
++---------+
+| Class12 |
++---------+
+
++---------+
+| Class11 |
++---------+
+
+relations:
+id(bytes=7)="Class07" endpoint1=[bytes=1 "1"] .. endpoint2=[bytes=1 "*"]   id(bytes=7)="Class08"
+id(bytes=7)="Class09" endpoint1=[bytes=1 "1"] --> endpoint2=[bytes=1 "*"]  id(bytes=2)="C2"      : Where am i?
+id(bytes=7)="Class09" endpoint1=[bytes=1 "*"] --* endpoint2=[bytes=1 "*"]  id(bytes=2)="C3"
+id(bytes=7)="Class07" endpoint2=[bytes=1 "1"] <|-- endpoint1=[bytes=1 "1"] id(bytes=7)="Class09"
+id(bytes=7)="Class12" <|..                                                 id(bytes=7)="Class08"
+id(bytes=7)="Class11" ..>                                                  id(bytes=7)="Class12"
+id(bytes=7)="Class08" <-->                                                 id(bytes=2)="C2"      : Cool label
+
++---------------------------------------------------------------+
+| note                                                          |
+| Cool class                                                    |
+| I said it's very cool class!                                  |
+| authored(bytes=39)="Cool class\nI said it's very cool class!" |
++---------------------------------------------------------------+
+                                :
+                         +-------------+
+                         | <<service>> |
+                         | Class10     |
+                         +-------------+
+                         | int id      |
+                         +-------------+
+                         | test()      |
+                         +-------------+
+
++------------------------------------------------------------+
+| note                                                       |
+| I love this diagram!                                       |
+| Do you love it?                                            |
+| authored(bytes=36)="I love this diagram!\nDo you love it?" |
++------------------------------------------------------------+

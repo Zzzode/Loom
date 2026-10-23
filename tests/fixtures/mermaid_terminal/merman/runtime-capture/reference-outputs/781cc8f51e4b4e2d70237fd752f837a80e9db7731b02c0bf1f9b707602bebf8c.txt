@@ -1,0 +1,18 @@
++------+
+| BOOK |
++------+
+
++--------+
+| AUTHOR |
++--------+
+
++-------+
+| GENRE |
++-------+
+
+relations:
+id(bytes=4)="BOOK"   }|..|{ id(bytes=6)="AUTHOR"
+id(bytes=4)="BOOK"   }|..|{ id(bytes=5)="GENRE"  :
+                                                   authored(bytes=1)=" "
+id(bytes=6)="AUTHOR" }|..|{ id(bytes=5)="GENRE"  :
+                                                   authored(bytes=2)="  "

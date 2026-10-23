@@ -1,0 +1,15 @@
++-------------------------------------------------------------------------------+
+| VeryLongClassName_With_Dashes-And_Underscores                                 |
++-------------------------------------------------------------------------------+
+| +String thisIsAnExcessivelyLongAttributeNameThatShouldWrapOrClip              |
++-------------------------------------------------------------------------------+
+| +doSomethingWithManyParameters(String a, String b, String c, String d) : void |
++-------------------------------------------------------------------------------+
+                                        |
+             edge label with spaces, punctuation, and unicode → αβγ
+                                        v
+                    +--------------------------------------+
+                    | AnotherExtremelyLongNamedClass       |
+                    +--------------------------------------+
+                    | +calculateSuperLongResult() : String |
+                    +--------------------------------------+

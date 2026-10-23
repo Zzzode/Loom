@@ -1,0 +1,6 @@
+group(bytes=7)="Backlog" [id(bytes=7)="backlog"]
+  - card(bytes=8)="Ticket A" [id(bytes=6)="card-a", ticket(bytes=3)="K-1",
+    priority(bytes=4)="high", assigned(bytes=5)="alice", icon(bytes=3)="bug"]
+  - card(bytes=8)="Ticket B" [id(bytes=6)="card-b", ticket(bytes=3)="K-2"]
+group(bytes=5)="Doing" [id(bytes=5)="doing"]
+  - card(bytes=8)="Ticket C" [id(bytes=6)="card-c", ticket(bytes=3)="K-3"]

@@ -1,0 +1,34 @@
++---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| CAR                                                                                                                                                           |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| type(bytes=6)="string" name(bytes=18)="registrationNumber" keys=[bytes=2 "PK"] comment(bytes=58)="Primary Key<br><strong>Unique registration number</strong>" |
+| type(bytes=6)="string" name(bytes=4)="make" keys=[] comment(bytes=41)="Car make<br><strong>e.g., Toyota</strong>"                                             |
+| type(bytes=6)="string" name(bytes=5)="model" keys=[] comment(bytes=50)="Model of the car<br><strong>e.g., Corolla</strong>"                                   |
+| type(bytes=8)="string[]" name(bytes=5)="parts" keys=[] comment(bytes=49)="List of parts<br><strong>Stored as array</strong>"                                  |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| NAMED-DRIVER                                                                                                                                                                                           |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| type(bytes=6)="string" name(bytes=21)="carRegistrationNumber" keys=[bytes=2 "PK", bytes=2 "FK", bytes=2 "UK", bytes=2 "PK"] comment(bytes=54)="Foreign key to CAR<br><strong>Also part of PK</strong>" |
+| type(bytes=6)="string" name(bytes=13)="driverLicence" keys=[bytes=2 "PK", bytes=2 "FK"] comment(bytes=57)="Foreign key to PERSON<br><strong>Also part of PK</strong>"                                  |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------+
+| PERSON                                                                                                                                                 |
++--------------------------------------------------------------------------------------------------------------------------------------------------------+
+| type(bytes=6)="string" name(bytes=14)="driversLicense" keys=[bytes=2 "PK"] comment(bytes=45)="The license #<br><strong>Primary Key</strong>"           |
+| type(bytes=10)="string(99)" name(bytes=9)="firstName" keys=[] comment(bytes=68)="Only 99 characters <br>are allowed <br> <strong>e.g., Smith</strong>" |
+| type(bytes=6)="string" name(bytes=8)="lastName" keys=[] comment(bytes=51)="Last name of person<br><strong>e.g., Smith</strong>"                        |
+| type(bytes=6)="string" name(bytes=5)="phone" keys=[bytes=2 "UK"] comment(bytes=56)="Unique phone number<br><strong>Used for contact</strong>"          |
+| type(bytes=3)="int" name(bytes=3)="age" keys=[] comment(bytes=53)="Age of the person<br><strong>Must be numeric</strong>"                              |
++--------------------------------------------------------------------------------------------------------------------------------------------------------+
+
++--------------+
+| MANUFACTURER |
++--------------+
+
+relations:
+id(bytes=3)="CAR"           ||--o{ id(bytes=12)="NAMED-DRIVER" : allows
+id(bytes=6)="PERSON"        ||--o{ id(bytes=12)="NAMED-DRIVER" : is
+id(bytes=12)="MANUFACTURER" ||--o{ id(bytes=3)="CAR"           : makesx

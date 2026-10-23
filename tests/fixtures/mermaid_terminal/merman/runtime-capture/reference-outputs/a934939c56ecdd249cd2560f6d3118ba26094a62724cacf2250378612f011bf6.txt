@@ -1,0 +1,185 @@
+family: flow
+chart
+model.accDes
+cr: null
+model.accTit
+le: null
+model.classD
+efs: {}
+model.direct
+ion: "LR"
+model.edgeDe
+faults.inter
+polate: null
+model.edgeDe
+faults.style
+: []
+model.edges[
+0].animate: 
+null
+model.edges[
+0].animation
+: null
+model.edges[
+0].arrow: "-
+->"
+model.edges[
+0].classes: 
+[]
+model.edges[
+0].endMarker
+: "point"
+model.edges[
+0].from: "A"
+model.edges[
+0].id: "L_A_
+B_0"
+model.edges[
+0].interpola
+te: null
+model.edges[
+0].isUserDef
+inedId: fals
+e
+model.edges[
+0].label: nu
+ll
+model.edges[
+0].labelType
+: "text"
+model.edges[
+0].length: 1
+model.edges[
+0].startMark
+er: "none"
+model.edges[
+0].stroke: "
+normal"
+model.edges[
+0].strokeKin
+d: "normal"
+model.edges[
+0].style: []
+model.edges[
+0].to: "B"
+model.edges[
+0].type: "ar
+row_point"
+model.edges[
+0].visibilit
+y: "visible"
+model.keywor
+d: "flowchar
+t"
+model.nodes[
+0].assetHeig
+ht: null
+model.nodes[
+0].assetWidt
+h: null
+model.nodes[
+0].classes: 
+[]
+model.nodes[
+0].constrain
+t: null
+model.nodes[
+0].form: nul
+l
+model.nodes[
+0].haveCallb
+ack: false
+model.nodes[
+0].icon: nul
+l
+model.nodes[
+0].id: "A"
+model.nodes[
+0].img: null
+model.nodes[
+0].label: "a
+lpha\u{202E}
+beta"
+model.nodes[
+0].labelType
+: "string"
+model.nodes[
+0].layoutSha
+pe: "squareR
+ect"
+model.nodes[
+0].link: nul
+l
+model.nodes[
+0].linkTarge
+t: null
+model.nodes[
+0].pos: null
+model.nodes[
+0].shape: "s
+quare"
+model.nodes[
+0].styles: [
+]
+model.nodes[
+1].assetHeig
+ht: null
+model.nodes[
+1].assetWidt
+h: null
+model.nodes[
+1].classes: 
+[]
+model.nodes[
+1].constrain
+t: null
+model.nodes[
+1].form: nul
+l
+model.nodes[
+1].haveCallb
+ack: false
+model.nodes[
+1].icon: nul
+l
+model.nodes[
+1].id: "B"
+model.nodes[
+1].img: null
+model.nodes[
+1].label: "B
+"
+model.nodes[
+1].labelType
+: "text"
+model.nodes[
+1].layoutSha
+pe: "squareR
+ect"
+model.nodes[
+1].link: nul
+l
+model.nodes[
+1].linkTarge
+t: null
+model.nodes[
+1].pos: null
+model.nodes[
+1].shape: nu
+ll
+model.nodes[
+1].styles: [
+]
+model.subgra
+phs: []
+model.toolti
+ps: {}
+model.type: 
+"flowchart-v
+2"
+model.vertex
+Calls[0]: "A
+"
+model.vertex
+Calls[1]: "B
+"

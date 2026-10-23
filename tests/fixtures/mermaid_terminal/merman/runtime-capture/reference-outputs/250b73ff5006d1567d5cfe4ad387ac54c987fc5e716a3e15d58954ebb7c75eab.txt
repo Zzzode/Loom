@@ -1,0 +1,34 @@
++-------+                              +-----+                        +---------+
+| Alice |                              | Bob |                        | Charlie |
++---+---+                              +--+--+                        +----+----+
+    |                                     |                                |
+    | 1. Solid arrow self-reference       |                                |
+    +--+                                  |                                |
+    |  |                                  |                                |
+    |<-+                                  |                                |
+    |                                     |                                |
+    |                                     | 2. Dotted arrow self-reference |
+    |                                     +..+                             |
+    |                                     |  |                             |
+    |                                     |<.+                             |
+    |                                     |                                |
+    |                                     |                                | 3. Open arrow self-reference
+    |                                     |                                +--+
+    |                                     |                                |  |
+    |                                     |                                |--+
+    |                                     |                                |
+    | 4. Dotted open arrow self-reference |                                |
+    +..+                                  |                                |
+    |  |                                  |                                |
+    |..+                                  |                                |
+    |                                     |                                |
+    |                                     | 5. Cross arrow self-reference  |
+    |                                     +--+                             |
+    |                                     |  |                             |
+    |                                     |x-+                             |
+    |                                     |                                |
+    |                                     |                                | 6. Dotted cross self-reference
+    |                                     |                                +..+
+    |                                     |                                |  |
+    |                                     |                                |x.+
+    |                                     |                                |

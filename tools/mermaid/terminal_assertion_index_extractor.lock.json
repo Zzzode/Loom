@@ -1,0 +1,56 @@
+{
+  "schema": "five_suite_terminal_assertion_extractor_lock/v1",
+  "purpose": "maintenance-only static byte-span extraction; not a Loom production dependency",
+  "python": {
+    "version": "3.9.6",
+    "implementation": "cpython"
+  },
+  "requirements_path": "tools/mermaid/requirements-terminal-assertion-index.txt",
+  "requirements_sha256": "2d46454ff086867ad94107b9a915986b13491aeff0cf1cf78362b93310da5d6e",
+  "packages": {
+    "tree_sitter": {
+      "version": "0.23.2",
+      "files": [
+        {
+          "relative_path": "tree_sitter/__init__.py",
+          "sha256": "3886bee6bbcda6512ad76808255d58bdf0b4b83f426de5e1ae914a35212b41d3",
+          "bytes": 1570
+        }
+      ]
+    },
+    "tree_sitter_rust": {
+      "version": "0.21.2",
+      "files": [
+        {
+          "relative_path": "tree_sitter_rust/__init__.py",
+          "sha256": "dedd0d69a069d4ee7df08914d77d6ca9a24db0144aba690b363d52cdc0151a60",
+          "bytes": 87
+        },
+        {
+          "relative_path": "tree_sitter_rust/__init__.pyi",
+          "sha256": "f317fb6d8d6cce00d8f47449ec5277dba4a8e121603224917c20782c00e44e95",
+          "bytes": 27
+        },
+        {
+          "relative_path": "tree_sitter_rust/_binding.abi3.so",
+          "sha256": "151cd6abb39a71da4dc4bf5393683ce22192d1b053522d46db740d16f8185afb",
+          "bytes": 1079168
+        },
+        {
+          "relative_path": "tree_sitter_rust/binding.c",
+          "sha256": "a9b61e455e1293320546fee6b0053303e8a614a33c8b82956b2ac43430ded485",
+          "bytes": 632
+        },
+        {
+          "relative_path": "tree_sitter_rust/py.typed",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      ]
+    }
+  },
+  "platform": {
+    "system": "Darwin",
+    "machine": "arm64"
+  }
+}

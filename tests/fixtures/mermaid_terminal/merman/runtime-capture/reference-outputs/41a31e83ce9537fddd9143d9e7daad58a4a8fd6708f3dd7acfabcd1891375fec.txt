@@ -1,0 +1,12 @@
+titleDisplay: chart(bytes=16)="Single Bar Chart"
+titleDisplay: yAxis(bytes=5)="Value"
+xDomain: band categories=[bytes=1="A"]
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=1)="A" value=75 pointLabel=none clipped=false}] orphanPointLabels=[]
+100 +
+ 80 +75
+ 60 +###
+ 40 +###
+ 20 +###
+  0 +-+-
+      A
+titleDisplay: xAxis(bytes=10)="Categories"

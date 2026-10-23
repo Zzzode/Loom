@@ -1,0 +1,20 @@
++---+
+| A |
++---+
+
++---+
+| B |
++---+
+
++---+
+| C |
++---+
+
+relations:
+reason: crossing
+id(bytes=1)="A" --> id(bytes=1)="B" : ab
+id(bytes=1)="B" --> id(bytes=1)="A" : ba
+id(bytes=1)="A" --> id(bytes=1)="C" : ac
+id(bytes=1)="C" --> id(bytes=1)="A" : ca
+id(bytes=1)="B" --> id(bytes=1)="C" : bc
+id(bytes=1)="C" --> id(bytes=1)="B" : cb

@@ -1,0 +1,20 @@
++----------+
+| CUSTOMER |
++----------+
+
++-------+
+| ORDER |
++-------+
+
++-----------+
+| LINE-ITEM |
++-----------+
+
++------------------+
+| DELIVERY-ADDRESS |
++------------------+
+
+relations:
+id(bytes=8)="CUSTOMER" ||--o{ id(bytes=5)="ORDER"             : places
+id(bytes=5)="ORDER"    ||--|{ id(bytes=9)="LINE-ITEM"         : contains
+id(bytes=8)="CUSTOMER" }|..|{ id(bytes=16)="DELIVERY-ADDRESS" : uses

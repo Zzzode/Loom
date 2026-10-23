@@ -1,0 +1,7 @@
+
+
+  main    --o-----|------o-
+            A     |  B-cherry
+                  |      |
+  develop         o------|
+                  B

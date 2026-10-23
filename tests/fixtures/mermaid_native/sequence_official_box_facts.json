@@ -1,0 +1,345 @@
+{
+  "schema": 1,
+  "qualification": "Independently hand-transcribed from all source-positive box bodies in the 193-source box audit; no renderer output or backend parser generates these expected models. Original raw and all unsupported box sources remain separate obligations.",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b"
+  },
+  "scope": "All one current-profile independent positive out of nine authored-box bodies; eight typed-shape bodies remain unsupported without role/type loss.",
+  "counts": {
+    "cases": 1,
+    "actors": 3,
+    "messages": 10,
+    "notes": 1,
+    "fragments": 2,
+    "ordered_events": 18,
+    "participant_boxes": 1
+  },
+  "cases": [
+    {
+      "path": "sequence/visual-check/with-boxes.mmd",
+      "raw_sha256": "7645c4273c309306771e0dbdd33b5c9017a59638a11ff1ade2761346ab1d8d95",
+      "body_offset_utf8_bytes": 335,
+      "body_sha256": "8417116926b3d1395c4c4ad99af4c0f76ad4f213af59a68ef8e4e246329f7559",
+      "body": "sequenceDiagram\n  box LightGrey Alice and Bob\n    participant Alice\n    participant Bob\n  end\n  participant John as John<br/>Second Line\n  Alice ->> Bob: Hello Bob, how are you?\n  Bob-->>John: How about you John?\n  Bob--x Alice: I am good thanks!\n  Bob-x John: I am good thanks!\n  Note right of John: Bob thinks a long<br/>long time, so long<br/>that the text does<br/>not fit on a row.\n  Bob-->Alice: Checking with John...\n  alt either this\n    Alice->>John: Yes\n  else or this\n    Alice->>John: No\n  else or this will happen\n    Alice->John: Maybe\n  end\n  par this happens in parallel\n    Alice -->> Bob: Parallel message 1\n  and\n    Alice -->> John: Parallel message 2\n  end\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          },
+          {
+            "id": "John",
+            "label": "John\nSecond Line",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "How about you John?",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "dashed": true,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "I am good thanks!",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Checking with John...",
+            "dashed": true,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "Yes",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "No",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "Maybe",
+            "dashed": false,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Parallel message 1",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "Parallel message 2",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              2
+            ],
+            "text": "Bob thinks a long\nlong time, so long\nthat the text does\nnot fit on a row.",
+            "position": "right",
+            "after": 3
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "alt",
+            "label": "either this",
+            "parent": -1,
+            "dividers": [
+              "or this",
+              "or this will happen"
+            ]
+          },
+          {
+            "kind": "par",
+            "label": "this happens in parallel",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 1
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 9,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "boxes": [
+          {
+            "actors": [
+              0,
+              1
+            ],
+            "title": "Alice and Bob",
+            "color": "LightGrey"
+          }
+        ]
+      },
+      "message_statement_witnesses": [
+        {
+          "message_index": 0,
+          "offset_utf8_bytes": 137,
+          "text": "  Alice ->> Bob: Hello Bob, how are you?"
+        },
+        {
+          "message_index": 1,
+          "offset_utf8_bytes": 178,
+          "text": "  Bob-->>John: How about you John?"
+        },
+        {
+          "message_index": 2,
+          "offset_utf8_bytes": 213,
+          "text": "  Bob--x Alice: I am good thanks!"
+        },
+        {
+          "message_index": 3,
+          "offset_utf8_bytes": 247,
+          "text": "  Bob-x John: I am good thanks!"
+        },
+        {
+          "message_index": 4,
+          "offset_utf8_bytes": 387,
+          "text": "  Bob-->Alice: Checking with John..."
+        },
+        {
+          "message_index": 5,
+          "offset_utf8_bytes": 442,
+          "text": "    Alice->>John: Yes"
+        },
+        {
+          "message_index": 6,
+          "offset_utf8_bytes": 479,
+          "text": "    Alice->>John: No"
+        },
+        {
+          "message_index": 7,
+          "offset_utf8_bytes": 527,
+          "text": "    Alice->John: Maybe"
+        },
+        {
+          "message_index": 8,
+          "offset_utf8_bytes": 587,
+          "text": "    Alice -->> Bob: Parallel message 1"
+        },
+        {
+          "message_index": 9,
+          "offset_utf8_bytes": 632,
+          "text": "    Alice -->> John: Parallel message 2"
+        }
+      ],
+      "projection": "Native full-timeline participant-group geometry, separately disclosed exact color token, explicit alias/note line breaks, complete ordered alt/par branches. Body only; no raw frontmatter/config/theme/browser-fill parity.",
+      "resource_review": {
+        "source_bytes": 678,
+        "actors": 3,
+        "messages": 10,
+        "notes": 1,
+        "participant_boxes": 1,
+        "fragments": 2,
+        "max_fragment_depth": 1,
+        "ordered_events": 18,
+        "activation_depth": 0,
+        "conclusion": "Under all unchanged count/source/label caps. The longest display rows and three lanes give an obvious <=240-column, <=1024-row finite layout lower-bound candidate; actual complete geometry must still be executed, not assumed."
+      }
+    }
+  ]
+}

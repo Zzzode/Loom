@@ -1,0 +1,8 @@
++---+    +---+    +---+
+| A |    | B |    | C |
++---+    +---+    +---+
+
+relations:
+id(bytes=1)="A" <|-- id(bytes=1)="B" : parent
+id(bytes=1)="A" ..>  id(bytes=1)="B" : depends
+id(bytes=1)="B" -->  id(bytes=1)="C" : next

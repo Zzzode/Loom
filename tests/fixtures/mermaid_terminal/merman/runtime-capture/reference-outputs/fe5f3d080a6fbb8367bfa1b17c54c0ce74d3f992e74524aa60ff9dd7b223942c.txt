@@ -1,0 +1,24 @@
++---+
+| A |
++---+
+
++---+
+| B |
++---+
+
++------------------------------------------+
+| note                                     |
+| This note mentions: class and namespace. |
++------------------------------------------+
+
++-----------------------------------------------------------+
+| note                                                      |
+| Multiline note                                            |
+| with unicode αβγ.                                         |
+| authored(bytes=39)="Multiline note<br/>with unicode αβγ." |
++-----------------------------------------------------------+
+
+relations:
+id(bytes=1)="A"     --> id(bytes=1)="B" : uses
+id(bytes=5)="note0" ..  id(bytes=1)="A"
+id(bytes=5)="note1" ..  id(bytes=1)="B"

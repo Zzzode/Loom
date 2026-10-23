@@ -1,0 +1,5 @@
+<span style="color:#a1a1aa">+-------+</span>       <span style="color:#a1a1aa">+------+</span>
+<span style="color:#a1a1aa">|</span>       <span style="color:#a1a1aa">|</span>       <span style="color:#a1a1aa">|</span>      <span style="color:#a1a1aa">|</span>
+<span style="color:#a1a1aa">|</span> <span style="color:#27272a">Alpha</span> <span style="color:#a1a1aa">|</span><span style="color:#123456">--</span><span style="color:#654321">go</span><span style="color:#123456">--&gt;</span><span style="color:#a1a1aa">|</span> <span style="color:#27272a">Beta</span> <span style="color:#a1a1aa">|</span>
+<span style="color:#a1a1aa">|</span>       <span style="color:#a1a1aa">|</span>       <span style="color:#a1a1aa">|</span>      <span style="color:#a1a1aa">|</span>
+<span style="color:#a1a1aa">+-------+</span>       <span style="color:#a1a1aa">+------+</span>

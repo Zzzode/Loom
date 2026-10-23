@@ -1,0 +1,4 @@
+
+
+  main ──●───────────────●───────────────●─
+         a   this-is-a-very-long-label   b

@@ -268,7 +268,7 @@ private:
             } else {
                 const auto body = text_response(index == 1 ?
                     "```mermaid\nsequenceDiagram\nparticipant C as Client\nparticipant S as Server\nC->>S: Ask\nS-->>C: Reply\nS->>S: Work\n```\n\nSEQUENCE_DONE" :
-                    "```mermaid\nflowchart TD\nA --> B\nsubgraph UnsupportedGroup\nC\nend\n```\n\nFALLBACK_DONE");
+                    "```mermaid\nflowchart TD\nA --> B\nsubgraph UnsupportedGroup\nC\nend\nclick A \"https://example.invalid\"\n```\n\nFALLBACK_DONE");
                 send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
                     std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
             }
@@ -2523,6 +2523,7 @@ void run_mermaid_case(const std::string& binary, const fs::path& root,
         const auto frame = terminal.latest_frame_text();
         return terminal.idle_response_visible("FALLBACK_DONE") &&
             frame.find("subgraph UnsupportedGroup") != std::string::npos &&
+            frame.find("click A") != std::string::npos &&
             frame.find("flowchart TD") != std::string::npos;
     }), "unsupported Mermaid syntax did not retain the complete source");
     save_attention_frame(root, "mermaid-unsupported-source", terminal.latest_frame());

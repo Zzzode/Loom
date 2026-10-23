@@ -1,0 +1,120 @@
+family: sequ
+ence
+model.accDes
+cr: null
+model.accTit
+le: null
+model.actorO
+rder[0]: "Al
+ice"
+model.actorO
+rder[1]: "Bo
+b"
+model.actors
+.Alice.descr
+iption: "Ali
+ce"
+model.actors
+.Alice.links
+: {}
+model.actors
+.Alice.name:
+ "Alice"
+model.actors
+.Alice.prope
+rties: {}
+model.actors
+.Alice.type:
+ "participan
+t"
+model.actors
+.Alice.wrap:
+ false
+model.actors
+.Bob.descrip
+tion: "Bob"
+model.actors
+.Bob.links: 
+{}
+model.actors
+.Bob.name: "
+Bob"
+model.actors
+.Bob.propert
+ies: {}
+model.actors
+.Bob.type: "
+participant"
+model.actors
+.Bob.wrap: f
+alse
+model.boxes:
+ []
+model.consta
+nts.placemen
+t.leftOf: 0
+model.consta
+nts.placemen
+t.over: 2
+model.consta
+nts.placemen
+t.rightOf: 1
+model.create
+dActors: {}
+model.destro
+yedActors: {
+}
+model.messag
+es[0].activa
+te: false
+model.messag
+es[0].from: 
+"Alice"
+model.messag
+es[0].id: "0
+"
+model.messag
+es[0].messag
+e: "Request 
+with a long 
+authored mes
+sage"
+model.messag
+es[0].to: "B
+ob"
+model.messag
+es[0].type: 
+0
+model.messag
+es[0].wrap: 
+false
+model.messag
+es[1].activa
+te: false
+model.messag
+es[1].from: 
+"Bob"
+model.messag
+es[1].id: "1
+"
+model.messag
+es[1].messag
+e: "Response
+ with anothe
+r long autho
+red message"
+model.messag
+es[1].to: "A
+lice"
+model.messag
+es[1].type: 
+1
+model.messag
+es[1].wrap: 
+false
+model.notes:
+ []
+model.title:
+ null
+model.type: 
+"sequence"

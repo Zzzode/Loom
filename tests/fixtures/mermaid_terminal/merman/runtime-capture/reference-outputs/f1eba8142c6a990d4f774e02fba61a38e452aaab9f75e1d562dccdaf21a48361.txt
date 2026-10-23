@@ -1,0 +1,5 @@
+<span style="color:#1d4ed8">before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}</span>
+<span style="color:#a1a1aa">+---+</span>
+<span style="color:#a1a1aa">|</span> <span style="color:#27272a">A</span> <span style="color:#a1a1aa">|</span>
+<span style="color:#a1a1aa">+-+-+</span>
+  <span style="color:#71717a">|</span>

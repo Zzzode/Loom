@@ -1,0 +1,9 @@
+xDomain: band categories=[bytes=1="A", bytes=1="B", bytes=1="C"]
+values: * series=0 type=line title=none samples=[{index=0 x(bytes=1)="A" value=1 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=5 pointLabel=none clipped=false}, {index=2 x(bytes=1)="C" value=9 pointLabel=none clipped=false}] orphanPointLabels=[]
+10 +       +-*
+ 8 +       |
+ 6 +   +-*-+
+ 4 +   |
+ 2 + *-+
+ 0 +-+---+---+-
+     A   B   C

@@ -37,6 +37,12 @@ target_sources(loom_ui_visual PRIVATE
     ui/visual/markdown_api_impl.cpp
     ui/visual/markdown_component_impl.cpp
     ui/visual/mermaid_impl.cpp
+    ui/visual/mermaid_envelope_impl.cpp
+    ui/visual/mermaid_cells_impl.cpp
+    ui/visual/mermaid_sequence_impl.cpp
+    ui/visual/mermaid_charts_impl.cpp
+    ui/visual/mermaid_gitgraph_impl.cpp
+    ui/visual/mermaid_relations_impl.cpp
     # HTML serializer for CommonMark/GFM conformance testing.
     ui/visual/markdown_html_impl.cpp
 )

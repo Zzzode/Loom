@@ -1,0 +1,3 @@
+gitGraph direction(bytes=2)="LR" current(bytes=4)="main"
+branches=[bytes=4 "main"]
+  - seq=0 branch(bytes=4)="main" id(bytes=5)="first" kind=normal message(bytes=0)=""

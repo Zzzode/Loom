@@ -1,0 +1,23 @@
++----------------+
+| Bike           |
++----------------+
+| -id : int      |
+| -name : string |
++----------------+
+
++----------------+
+| IdCard         |
++----------------+
+| -id : int      |
+| -name : string |
++----------------+
+
++------------------+
+| Student          |
++------------------+
+| -idCard : IdCard |
++------------------+
+
+relations:
+id(bytes=7)="Student" endpoint1=[bytes=1 "1"] --o endpoint2=[bytes=1 "1"] id(bytes=6)="IdCard" : carries
+id(bytes=7)="Student" endpoint1=[bytes=1 "1"] --o endpoint2=[bytes=1 "1"] id(bytes=4)="Bike"   : rides

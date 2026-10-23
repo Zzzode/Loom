@@ -1,0 +1,11 @@
+            +--------+
+            | Animal |
+            +--------+
+                 ^
+               north
+               south
+authored(bytes=14)="north<br>south"
+                 |
+              +-----+
+              | Dog |
+              +-----+

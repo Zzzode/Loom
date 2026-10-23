@@ -1,0 +1,10 @@
+sequenceDiagram
+participant A
+participant B
+rect rgba(0,0,0,0.1)
+create participant C
+B->>C: Hello C
+C->>B: Still here
+destroy C
+B--xC: Bye C
+end

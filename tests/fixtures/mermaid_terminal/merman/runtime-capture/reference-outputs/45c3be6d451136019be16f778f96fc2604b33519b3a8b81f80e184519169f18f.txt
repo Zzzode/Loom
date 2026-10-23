@@ -1,0 +1,2 @@
+[directory] name(bytes=1)="/" [id=0, level=-1,
+icon(bytes=23)="folder, class=highlight"]

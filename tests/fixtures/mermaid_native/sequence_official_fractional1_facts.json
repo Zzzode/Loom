@@ -1,0 +1,954 @@
+{
+  "schema": 1,
+  "model_schema": "sequence_native_full_model_number_text/v1",
+  "status": "AUTHOR source-only official fractional candidate; independent review required; no manifest/snapshot/native pass authorized",
+  "author": "/root/corpus_oracle",
+  "reviewer_requested": "/root/corpus_review",
+  "upstream": {
+    "repository": "https://github.com/mermaid-js/mermaid",
+    "tag": "mermaid@12.2.0",
+    "tag_object": "ee1fdbcebe057cae346232efb6df066215565bec",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "tree": "58f6617da68d7f2b8a58161175db5db5a971cd82",
+    "root": "e2e/diagrams",
+    "license_sha256": "ec9fb67dcb25eccc416ed56e1aab819222c805a2a4bfe4cb19e7556bf2ffde80"
+  },
+  "manifest_before": {
+    "path": "tests/fixtures/mermaid_official/manifest.json",
+    "bytes": 1272942,
+    "sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "source_record_pointer": "/fixtures/1613",
+  "source_record_canonical_sha256": "a245af25b744da5a376bf6468c7a6060e6282fcaa697f5ee35d166adde3f6594",
+  "original_manifest_record": {
+    "path": "sequence/nightly-check/should-render-a-sequence-diagram-with-sequence-numbers-that-are-decimals-and-increase-by-a-decimal-value.mmd",
+    "sha256": "57af62686edfb3931ec973330780a11ed12cbdc93c9e65485a1ee7561d28c83b",
+    "git_blob": "2a64eca05e1834e5ac27c3fc849c8eea3f822fb7",
+    "bytes": 374,
+    "raw": {
+      "expected": "source",
+      "reason": "frontmatter",
+      "witness": {
+        "offset": 0,
+        "text": "---\n"
+      }
+    },
+    "diagnostic": {
+      "expected": "source",
+      "reason": "unsupported-sequence-statement",
+      "witness": {
+        "offset": 18,
+        "text": "autonumber 10.1 .01"
+      },
+      "offset": 200,
+      "sha256": "c6e769ceee766c610f2d38a713a81a4d5b9069c7097025112611a74ba31076da"
+    }
+  },
+  "summary": {
+    "official_raw_records": 2145,
+    "official_body_diagnostics": 593,
+    "official_sequence_body_records": 193,
+    "candidate_original_sources": 1,
+    "body_drawing_obligation_models": 1,
+    "actors": 2,
+    "messages": 4,
+    "notes": 0,
+    "regions": 0,
+    "boxes": 0,
+    "order": 4,
+    "visible_numbers": [
+      "10.1",
+      "10.11",
+      "10.12",
+      "10.13"
+    ],
+    "raw_metadata_contains_config": false,
+    "raw_metadata_contains_title": false,
+    "raw_current_admission_kept_source": true,
+    "native_execution_claimed": 0
+  },
+  "cases": [
+    {
+      "id": "sequence/nightly-check/should-render-a-sequence-diagram-with-sequence-numbers-that-are-decimals-and-increase-by-a-decimal-value.mmd",
+      "path": "sequence/nightly-check/should-render-a-sequence-diagram-with-sequence-numbers-that-are-decimals-and-increase-by-a-decimal-value.mmd",
+      "raw_sha256": "57af62686edfb3931ec973330780a11ed12cbdc93c9e65485a1ee7561d28c83b",
+      "raw_bytes": 374,
+      "git_blob": "2a64eca05e1834e5ac27c3fc849c8eea3f822fb7",
+      "raw": "---\ndescription: >-\n  Autonumbering configured with a decimal start value and a decimal step\n  (`autonumber 10.1 .01`), checking that fractional sequence numbers render\n  and increment correctly.\n---\nsequenceDiagram\n  autonumber 10.1 .01\n  Alice->Bob: Hello Bob, how are you?\n  Bob-->Alice: I am good thanks!\n  Alice->Bob: That is good to hear!\n  Bob->Alice: See you later!\n",
+      "raw_physical_witnesses": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "raw_offset_utf8_bytes": 0,
+          "length_utf8_bytes": 4,
+          "text": "---\n",
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 4,
+          "raw_offset_utf8_bytes": 4,
+          "length_utf8_bytes": 16,
+          "text": "description: >-\n",
+          "sha256": "5f74023604c01fa7f354f49384734f4668c37023158331b8fbfc8eb4c5aea2d0"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 20,
+          "raw_offset_utf8_bytes": 20,
+          "length_utf8_bytes": 73,
+          "text": "  Autonumbering configured with a decimal start value and a decimal step\n",
+          "sha256": "64af438a08b7e66604c55207de06c09ce5daebe499aa0df310762f90b7bd6be5"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 93,
+          "raw_offset_utf8_bytes": 93,
+          "length_utf8_bytes": 76,
+          "text": "  (`autonumber 10.1 .01`), checking that fractional sequence numbers render\n",
+          "sha256": "257c1c600d7e734dad1adf7e0ee5b502dad4cb723bc452110c5e8123a744d8f4"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 169,
+          "raw_offset_utf8_bytes": 169,
+          "length_utf8_bytes": 27,
+          "text": "  and increment correctly.\n",
+          "sha256": "684b1009448bdad27f54de4fcb53002defe7c79e164934e547dc2fe01a1f661b"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 196,
+          "raw_offset_utf8_bytes": 196,
+          "length_utf8_bytes": 4,
+          "text": "---\n",
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090"
+        },
+        {
+          "line": 7,
+          "offset_utf8_bytes": 200,
+          "raw_offset_utf8_bytes": 200,
+          "length_utf8_bytes": 16,
+          "text": "sequenceDiagram\n",
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b"
+        },
+        {
+          "line": 8,
+          "offset_utf8_bytes": 216,
+          "raw_offset_utf8_bytes": 216,
+          "length_utf8_bytes": 22,
+          "text": "  autonumber 10.1 .01\n",
+          "sha256": "b23ca2f6f4960e39eb6ef15fb4c880e7f1333c8b6de53d94abd5f0566f9e15e8"
+        },
+        {
+          "line": 9,
+          "offset_utf8_bytes": 238,
+          "raw_offset_utf8_bytes": 238,
+          "length_utf8_bytes": 38,
+          "text": "  Alice->Bob: Hello Bob, how are you?\n",
+          "sha256": "9cd848ff5313c85e6145877a7ecd9194b017c523f285dd6e156376caaad86421"
+        },
+        {
+          "line": 10,
+          "offset_utf8_bytes": 276,
+          "raw_offset_utf8_bytes": 276,
+          "length_utf8_bytes": 33,
+          "text": "  Bob-->Alice: I am good thanks!\n",
+          "sha256": "b2fdff9d6d9a3a36c06a1edb48672d9a039c9fa2f69360ba92ceb7fab64cabca"
+        },
+        {
+          "line": 11,
+          "offset_utf8_bytes": 309,
+          "raw_offset_utf8_bytes": 309,
+          "length_utf8_bytes": 36,
+          "text": "  Alice->Bob: That is good to hear!\n",
+          "sha256": "621c42e4233672ddd19899f0716e3b9ef61763a1b1c97217f23c466daf0e685a"
+        },
+        {
+          "line": 12,
+          "offset_utf8_bytes": 345,
+          "raw_offset_utf8_bytes": 345,
+          "length_utf8_bytes": 29,
+          "text": "  Bob->Alice: See you later!\n",
+          "sha256": "2f9968b98bc50f560f9d89ae82c090e8566829475547cf5ad09fdfa6c073d955"
+        }
+      ],
+      "body_offset_utf8_bytes": 200,
+      "body_sha256": "c6e769ceee766c610f2d38a713a81a4d5b9069c7097025112611a74ba31076da",
+      "body": "sequenceDiagram\n  autonumber 10.1 .01\n  Alice->Bob: Hello Bob, how are you?\n  Bob-->Alice: I am good thanks!\n  Alice->Bob: That is good to hear!\n  Bob->Alice: See you later!\n",
+      "body_physical_witnesses": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "raw_offset_utf8_bytes": 200,
+          "length_utf8_bytes": 16,
+          "text": "sequenceDiagram\n",
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 16,
+          "raw_offset_utf8_bytes": 216,
+          "length_utf8_bytes": 22,
+          "text": "  autonumber 10.1 .01\n",
+          "sha256": "b23ca2f6f4960e39eb6ef15fb4c880e7f1333c8b6de53d94abd5f0566f9e15e8"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 38,
+          "raw_offset_utf8_bytes": 238,
+          "length_utf8_bytes": 38,
+          "text": "  Alice->Bob: Hello Bob, how are you?\n",
+          "sha256": "9cd848ff5313c85e6145877a7ecd9194b017c523f285dd6e156376caaad86421"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 76,
+          "raw_offset_utf8_bytes": 276,
+          "length_utf8_bytes": 33,
+          "text": "  Bob-->Alice: I am good thanks!\n",
+          "sha256": "b2fdff9d6d9a3a36c06a1edb48672d9a039c9fa2f69360ba92ceb7fab64cabca"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 109,
+          "raw_offset_utf8_bytes": 309,
+          "length_utf8_bytes": 36,
+          "text": "  Alice->Bob: That is good to hear!\n",
+          "sha256": "621c42e4233672ddd19899f0716e3b9ef61763a1b1c97217f23c466daf0e685a"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 145,
+          "raw_offset_utf8_bytes": 345,
+          "length_utf8_bytes": 29,
+          "text": "  Bob->Alice: See you later!\n",
+          "sha256": "2f9968b98bc50f560f9d89ae82c090e8566829475547cf5ad09fdfa6c073d955"
+        }
+      ],
+      "raw_frontmatter": {
+        "offset_utf8_bytes": 0,
+        "length_utf8_bytes": 200,
+        "text": "---\ndescription: >-\n  Autonumbering configured with a decimal start value and a decimal step\n  (`autonumber 10.1 .01`), checking that fractional sequence numbers render\n  and increment correctly.\n---\n",
+        "sha256": "eccad34d194de37cae0863eae45e6c01faa9a9e3dcf5a2485824ff1b4a65d737",
+        "metadata": {
+          "description": "Autonumbering configured with a decimal start value and a decimal step (`autonumber 10.1 .01`), checking that fractional sequence numbers render and increment correctly."
+        },
+        "description_style": ">-",
+        "primary_render_metadata_keys": [],
+        "test_tooling_role": "description annotation in generic official fixture runner",
+        "config_not_inferred": true
+      },
+      "model_schema": "sequence_native_full_model_number_text/v1",
+      "body_model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.1"
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.11"
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "label": "That is good to hear!",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.12"
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "See you later!",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.13"
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          }
+        ]
+      },
+      "body_model_sha256": "c179c2a5530eb51d1f977430a1ab1ad622971bd2007b14d5a899d93dc7d76b3a",
+      "raw_graph_semantic_model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.1"
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.11"
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "label": "That is good to hear!",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.12"
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "See you later!",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.13"
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          }
+        ]
+      },
+      "raw_graph_semantic_model_sha256": "c179c2a5530eb51d1f977430a1ab1ad622971bd2007b14d5a899d93dc7d76b3a",
+      "raw_metadata_facts_separate_from_graph_Model": true,
+      "raw_native_profile_obligation": "Whole original description-frontmatter remains separate admitted-grammar/source obligation; no original raw pass or support is inferred from this suffix Model. Do not strip unknown metadata or update raw expectation.",
+      "complete_model_source_bindings": [
+        {
+          "model_pointer": "/actors",
+          "expected": [
+            {
+              "id": "Alice",
+              "label": "Alice",
+              "person": false
+            },
+            {
+              "id": "Bob",
+              "label": "Bob",
+              "person": false
+            }
+          ],
+          "source": {
+            "offset_utf8_bytes": 38,
+            "raw_offset_utf8_bytes": 238,
+            "length_utf8_bytes": 37,
+            "text": "  Alice->Bob: Hello Bob, how are you?",
+            "sha256": "44b8cbc26853499fd5ca0cc77af0673aa40a90bfb292bb19c64d40fe4a7f2f01"
+          },
+          "meaning": "First actual message introduces Alice then Bob, both implicit participants; no actor declaration/alias/metadata exists in any line."
+        },
+        {
+          "model_pointer": "/messages/0",
+          "expected": {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.1"
+          },
+          "source": {
+            "offset_utf8_bytes": 38,
+            "raw_offset_utf8_bytes": 238,
+            "length_utf8_bytes": 37,
+            "text": "  Alice->Bob: Hello Bob, how are you?",
+            "sha256": "44b8cbc26853499fd5ca0cc77af0673aa40a90bfb292bb19c64d40fe4a7f2f01"
+          },
+          "numbering_command": {
+            "offset_utf8_bytes": 16,
+            "raw_offset_utf8_bytes": 216,
+            "length_utf8_bytes": 21,
+            "text": "  autonumber 10.1 .01",
+            "sha256": "ad4cb4490cba6fcc13dfcf0744c03dbec61fc02cac9b23eb4a75f1477c8d87c2"
+          }
+        },
+        {
+          "model_pointer": "/messages/1",
+          "expected": {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.11"
+          },
+          "source": {
+            "offset_utf8_bytes": 76,
+            "raw_offset_utf8_bytes": 276,
+            "length_utf8_bytes": 32,
+            "text": "  Bob-->Alice: I am good thanks!",
+            "sha256": "518a402e01cd91ec275ff23ea107ea286bceed24677b6174859dd9f37933153f"
+          },
+          "numbering_command": {
+            "offset_utf8_bytes": 16,
+            "raw_offset_utf8_bytes": 216,
+            "length_utf8_bytes": 21,
+            "text": "  autonumber 10.1 .01",
+            "sha256": "ad4cb4490cba6fcc13dfcf0744c03dbec61fc02cac9b23eb4a75f1477c8d87c2"
+          }
+        },
+        {
+          "model_pointer": "/messages/2",
+          "expected": {
+            "from": 0,
+            "to": 1,
+            "label": "That is good to hear!",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.12"
+          },
+          "source": {
+            "offset_utf8_bytes": 109,
+            "raw_offset_utf8_bytes": 309,
+            "length_utf8_bytes": 35,
+            "text": "  Alice->Bob: That is good to hear!",
+            "sha256": "2c0d859c3949977fabefb5df8da92507c3cb0458771652d3d12c9025ae4f6763"
+          },
+          "numbering_command": {
+            "offset_utf8_bytes": 16,
+            "raw_offset_utf8_bytes": 216,
+            "length_utf8_bytes": 21,
+            "text": "  autonumber 10.1 .01",
+            "sha256": "ad4cb4490cba6fcc13dfcf0744c03dbec61fc02cac9b23eb4a75f1477c8d87c2"
+          }
+        },
+        {
+          "model_pointer": "/messages/3",
+          "expected": {
+            "from": 1,
+            "to": 0,
+            "label": "See you later!",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "10.13"
+          },
+          "source": {
+            "offset_utf8_bytes": 145,
+            "raw_offset_utf8_bytes": 345,
+            "length_utf8_bytes": 28,
+            "text": "  Bob->Alice: See you later!",
+            "sha256": "17937ccde6d30485a5ea42506432b89c8deaf6f05495c7eeac38f734f0296051"
+          },
+          "numbering_command": {
+            "offset_utf8_bytes": 16,
+            "raw_offset_utf8_bytes": 216,
+            "length_utf8_bytes": 21,
+            "text": "  autonumber 10.1 .01",
+            "sha256": "ad4cb4490cba6fcc13dfcf0744c03dbec61fc02cac9b23eb4a75f1477c8d87c2"
+          }
+        },
+        {
+          "model_pointer": "/title",
+          "expected": "",
+          "meaning": "All six body lines and complete raw frontmatter are inspected; no corresponding source construct exists. Description is test-only metadata, not Model.title."
+        },
+        {
+          "model_pointer": "/notes",
+          "expected": [],
+          "meaning": "All six body lines and complete raw frontmatter are inspected; no corresponding source construct exists. Description is test-only metadata, not Model.title."
+        },
+        {
+          "model_pointer": "/fragments",
+          "expected": [],
+          "meaning": "All six body lines and complete raw frontmatter are inspected; no corresponding source construct exists. Description is test-only metadata, not Model.title."
+        },
+        {
+          "model_pointer": "/boxes",
+          "expected": [],
+          "meaning": "All six body lines and complete raw frontmatter are inspected; no corresponding source construct exists. Description is test-only metadata, not Model.title."
+        },
+        {
+          "model_pointer": "/order",
+          "expected": [
+            {
+              "kind": "Message",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 2,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 3,
+              "part": 0
+            }
+          ],
+          "source_line_order": [
+            3,
+            4,
+            5,
+            6
+          ],
+          "meaning": "Only the four messages are drawable events. The leading autonumber statement affects metadata, not fabricated event geometry."
+        }
+      ],
+      "numbering_trace": [
+        {
+          "message_index": 0,
+          "source": {
+            "offset_utf8_bytes": 38,
+            "raw_offset_utf8_bytes": 238,
+            "length_utf8_bytes": 37,
+            "text": "  Alice->Bob: Hello Bob, how are you?",
+            "sha256": "44b8cbc26853499fd5ca0cc77af0673aa40a90bfb292bb19c64d40fe4a7f2f01"
+          },
+          "visible_number": "10.1",
+          "after_rounded_increment": "10.11"
+        },
+        {
+          "message_index": 1,
+          "source": {
+            "offset_utf8_bytes": 76,
+            "raw_offset_utf8_bytes": 276,
+            "length_utf8_bytes": 32,
+            "text": "  Bob-->Alice: I am good thanks!",
+            "sha256": "518a402e01cd91ec275ff23ea107ea286bceed24677b6174859dd9f37933153f"
+          },
+          "visible_number": "10.11",
+          "after_rounded_increment": "10.12"
+        },
+        {
+          "message_index": 2,
+          "source": {
+            "offset_utf8_bytes": 109,
+            "raw_offset_utf8_bytes": 309,
+            "length_utf8_bytes": 35,
+            "text": "  Alice->Bob: That is good to hear!",
+            "sha256": "2c0d859c3949977fabefb5df8da92507c3cb0458771652d3d12c9025ae4f6763"
+          },
+          "visible_number": "10.12",
+          "after_rounded_increment": "10.13"
+        },
+        {
+          "message_index": 3,
+          "source": {
+            "offset_utf8_bytes": 145,
+            "raw_offset_utf8_bytes": 345,
+            "length_utf8_bytes": 28,
+            "text": "  Bob->Alice: See you later!",
+            "sha256": "17937ccde6d30485a5ea42506432b89c8deaf6f05495c7eeac38f734f0296051"
+          },
+          "visible_number": "10.13",
+          "after_rounded_increment": "10.14"
+        }
+      ],
+      "prior_source_only_audit": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/official-sequence193-numbering-source-audit.json",
+        "bytes": 1409650,
+        "sha256": "09c3777dd4144d25ab2e0ab5fd2eacef892253976b8e1750c6423e56243fc243"
+      },
+      "independent_semantic_authority": "Complete immutable source plus pinned NUM/round-to-two-decimals/message-state rules; no rendered output used to choose Model.",
+      "original_generic_test_mapping": [
+        "official-generic-original-test-registration",
+        "original-generic-helper-profile",
+        "original-render-and-error-conditions",
+        "original-snapshot-conditional-branches",
+        "description-is-test-only-metadata"
+      ],
+      "native_geometry_certified": false,
+      "original_browser_or_snapshot_conditions_certified": false
+    }
+  ],
+  "primary_rules": [
+    {
+      "id": "official-generic-original-test-registration",
+      "meaning": "Complete generic per-fixture registration loads full raw source and records description as annotation; no dedicated inline decimal test function remains at this pin.",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/fractional-official-primary/e2e__rendering__mmd-snapshots.spec.ts",
+        "bytes": 3567,
+        "sha256": "d4cebaf5f811a26f5954681d5e4c0235c28d146bedda1d07fc57bdfdd8364dbf",
+        "line_start": 41,
+        "line_end": 84,
+        "offset_utf8_bytes": 1545,
+        "length_utf8_bytes": 1942,
+        "text": "const registerFixtureNode = (node: FixtureTree): void => {\n  for (const segment of [...node.children.keys()].sort()) {\n    test.describe(segment, () => {\n      registerFixtureNode(node.children.get(segment)!);\n    });\n  }\n\n  for (const relativePath of [...node.fixtures].sort()) {\n    // Read at registration time (sync, like the fixture file itself below):\n    // `tag` has to be a static option on the `test()` call, not something\n    // decided from inside the async test body.\n    const metadata = readFixtureMetadata(relativePath);\n    const tags = metadata?.tags?.map((tag) => (tag.startsWith('@') ? tag : `@${tag}`));\n\n    test(fixtureBaseName(relativePath), { tag: tags }, async ({ page }, testInfo) => {\n      if (metadata?.description) {\n        testInfo.annotations.push({ type: 'description', description: metadata.description });\n      } else {\n        // Not a failure — most fixtures don't have one yet — but flagged in the\n        // report rather than left silent, since a missing sidecar is otherwise\n        // invisible short of opening the fixture's folder directly.\n        testInfo.annotations.push({ type: 'metadata', description: 'No metadata found for test' });\n      }\n\n      let source: string;\n      try {\n        source = readFileSync(fixturePath(relativePath), 'utf8');\n      } catch (error) {\n        throw new Error(\n          `Failed to read mmd fixture ${relativePath}: ${error instanceof Error ? error.message : String(error)}`\n        );\n      }\n      const fixedClock = fixedClockFor(relativePath);\n      if (fixedClock) {\n        await page.clock.install({ time: new Date(fixedClock) });\n      }\n      // Mirror the fixture's storage path so Argos sheets group by diagram\n      // folder (e.g. diagrams/packet) rather than the runner spec file.\n      await imgSnapshotTest(page, testInfo, source, {\n        screenshotPath: `diagrams/${relativePath.replace(/\\.mmd$/i, '')}`,\n      });\n    });\n  }\n};\n",
+        "selected_sha256": "cde186a294faa3bed7d3dfe132df0b34838209c94e020b9decd5aee855e04db1"
+      }
+    },
+    {
+      "id": "original-generic-helper-profile",
+      "meaning": "imgSnapshotTest adds courier fonts and delegates complete raw graph string; its browser/screenshot options are not native geometry.",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/fractional-official-primary/e2e__helpers__util.ts",
+        "bytes": 11590,
+        "sha256": "56fb233e38b19e8d13c1c5e95896e6d786b3e68154a3c8b3bdb5b2dc6286a44d",
+        "line_start": 73,
+        "line_end": 96,
+        "offset_utf8_bytes": 2560,
+        "length_utf8_bytes": 722,
+        "text": "export const imgSnapshotTest = async (\n  page: Page,\n  testInfo: TestInfo,\n  graphStr: string,\n  _options: E2EMermaidConfig = {},\n  api = false,\n  validation?: any\n): Promise<void> => {\n  const options: E2EMermaidConfig = {\n    ..._options,\n    fontFamily: _options.fontFamily ?? 'courier',\n    // @ts-ignore TODO: Fix type of fontSize\n    fontSize: _options.fontSize ?? '16px',\n    sequence: {\n      ...(_options.sequence ?? {}),\n      actorFontFamily: 'courier',\n      noteFontFamily: _options.sequence?.noteFontFamily ?? 'courier',\n      messageFontFamily: 'courier',\n    },\n  };\n\n  const url: string = mermaidUrl(graphStr, options, api);\n  await openURLAndVerifyRendering(page, testInfo, url, options, validation);\n};\n",
+        "selected_sha256": "025bc6ae27325d6dfdaaca3a4cc27e98ba874fb28f415b3ade8f6292b8186394"
+      }
+    },
+    {
+      "id": "original-render-and-error-conditions",
+      "meaning": "Rendered-flag/SVG fallback,visible SVG,case-sensitive viewBox protection,rejectErrorDiagram and optionalvalidation are preserved foreign obligations,not native passes.",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/fractional-official-primary/e2e__helpers__util.ts",
+        "bytes": 11590,
+        "sha256": "56fb233e38b19e8d13c1c5e95896e6d786b3e68154a3c8b3bdb5b2dc6286a44d",
+        "line_start": 124,
+        "line_end": 205,
+        "offset_utf8_bytes": 4114,
+        "length_utf8_bytes": 2742,
+        "text": "export const assertDiagramNotError = async (page: Page): Promise<void> => {\n  const svg = diagramSvg(page).first();\n  await expect(svg).not.toHaveAttribute('aria-roledescription', 'error');\n  await expect(svg.locator('.error-icon')).toHaveCount(0);\n};\n\nexport const openURLAndVerifyRendering = async (\n  page: Page,\n  testInfo: TestInfo,\n  url: string,\n  { screenshot = true, rejectErrorDiagram = true, ...options }: E2EMermaidConfig,\n  validation?: any\n): Promise<void> => {\n  const name: string = shortenScreenshotName(options.name ?? testInfo.titlePath.join(' '));\n\n  // Capture browser-side errors so a render failure reports the real cause\n  // instead of a bare \"svg not visible\" timeout.\n  const pageErrors: string[] = [];\n  const consoleErrors: string[] = [];\n  page.on('pageerror', (error) => pageErrors.push(`[pageerror] ${error.message}`));\n  page.on('console', (msg) => {\n    if (msg.type() === 'error') {\n      consoleErrors.push(`[console.error] ${msg.text()}`);\n    }\n  });\n\n  await startCoverage(page);\n  await page.goto(url);\n\n  // Prefer the explicit rendered flag from viewer.js; fall back to SVG visibility.\n  try {\n    await page.waitForFunction(() => (window as any).rendered === true, undefined, {\n      timeout: 5_000,\n    });\n  } catch {\n    try {\n      await diagramSvg(page).first().waitFor({ state: 'visible', timeout: 15_000 });\n    } catch (error) {\n      const details = [...pageErrors, ...consoleErrors];\n      if (details.length > 0) {\n        throw new Error(\n          `Diagram did not render (window.rendered never set, no SVG). Browser errors:\\n${details.join('\\n')}`\n        );\n      }\n      throw error;\n    }\n  }\n\n  // xssAttack() throws after injecting #the-malware and still leaves an SVG, so a\n  // catch-only check misses it. Do not fail on every pageerror: error-diagram\n  // tests and \"render after error\" cases throw mermaid parse errors on purpose.\n  const xssErrors = pageErrors.filter((msg) => msg.includes('XSS Succeeded'));\n  if (xssErrors.length > 0) {\n    throw new Error(`XSS payload executed during render:\\n${xssErrors.join('\\n')}`);\n  }\n\n  if (options.securityLevel === 'sandbox') {\n    const iframe = page.locator('iframe');\n    await expect(iframe).toBeVisible();\n    if (validation) {\n      await validation(iframe);\n    }\n  } else {\n    const svg = diagramSvg(page).first();\n    await expect(svg).toBeVisible();\n    await expect(svg).not.toHaveAttribute('viewbox'); // cspell:ignore viewbox\n\n    if (rejectErrorDiagram) {\n      await assertDiagramNotError(page);\n    }\n\n    if (validation) {\n      await validation(svg);\n    }\n  }\n\n  if (screenshot) {\n    await verifyScreenshot(page, testInfo, name, options.screenshotPath, url);\n  }\n\n  await collectCoverage(page, testInfo);\n};\n",
+        "selected_sha256": "12dccc7025b80532b7e62b29622c44039ee377445286ddf933b1745619a6333b"
+      }
+    },
+    {
+      "id": "original-snapshot-conditional-branches",
+      "meaning": "Applitools/Argos/baseline screenshot branches remain browser-specific pending; no exact foreign image imported as native expected output.",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/fractional-official-primary/e2e__helpers__util.ts",
+        "bytes": 11590,
+        "sha256": "56fb233e38b19e8d13c1c5e95896e6d786b3e68154a3c8b3bdb5b2dc6286a44d",
+        "line_start": 207,
+        "line_end": 295,
+        "offset_utf8_bytes": 6857,
+        "length_utf8_bytes": 3785,
+        "text": "export const verifyScreenshot = async (\n  page: Page,\n  testInfo: TestInfo,\n  name: string,\n  screenshotPath?: string,\n  pageUrl?: string\n): Promise<void> => {\n  const useAppli = !!process.env.USE_APPLI;\n  const useArgos = process.env.RUN_VISUAL_TEST === 'true';\n\n  // Capture only the rendered diagram SVG so each screenshot is a tight crop of\n  // the diagram rather than the whole viewport (mostly empty space). Fall back\n  // to the full page when there is no top-level diagram SVG — e.g. sandboxed\n  // diagrams (the SVG lives in an iframe) and the iife/xss/external-diagram tests.\n  const svg = diagramSvg(page).first();\n  const hasSvg = (await svg.count()) > 0;\n  const target = hasSvg ? svg : page;\n  const specRelPath = relative(testInfo.project.testDir, testInfo.file).split(sep).join('/');\n\n  if (useAppli) {\n    // One Applitools batch per diagram folder or spec file, a check per screenshot\n    // scoped to the diagram SVG (full window when there is none). API key, branch,\n    // and parent branch are read from the APPLITOOLS_* env vars by the SDK.\n    // Imported lazily so the SDK is only loaded for Applitools runs.\n    const { Eyes, ClassicRunner, Target } = await import('@applitools/eyes-playwright');\n    const runId = process.env.APPLITOOLS_BATCH_ID;\n    if (!runId) {\n      throw new Error(\n        'APPLITOOLS_BATCH_ID is unset; playwright.config.ts should seed it for USE_APPLI runs'\n      );\n    }\n    const eyes = new Eyes(new ClassicRunner());\n    eyes.setConfiguration({\n      appName: 'Mermaid',\n      batch: applitoolsBatch(runId, specRelPath, screenshotPath),\n    });\n    await eyes.open(page, 'Mermaid', applitoolsTestName(name, specRelPath, screenshotPath));\n    await eyes.check(\n      'Click!',\n      hasSvg ? Target.region('svg[aria-roledescription]') : Target.window().fully()\n    );\n    await eyes.close(true);\n    return;\n  }\n\n  if (useArgos) {\n    // Capture a native PNG; a dedicated CI job composites these into sheets\n    // (grouped by folder) and uploads them once.\n    const screenshotDir = process.env.SCREENSHOT_DIR ?? 'e2e/screenshots';\n    const sanitizeSegment = (segment: string) =>\n      segment.replace(/[^\\w.-]+/g, '-').replace(/^-+|-+$/g, '');\n    let outPath: string;\n    if (screenshotPath) {\n      // Mirror the source's storage path (e.g. diagrams/<type>/<name>) so the\n      // sheets group by that folder rather than the runner spec file.\n      const safeSubpath = screenshotPath.split('/').map(sanitizeSegment).join('/');\n      outPath = join(screenshotDir, `${safeSubpath}.png`);\n    } else {\n      // `name` carries the spec path + test title and may contain characters\n      // GitHub artifacts reject (\" : < > | * ?) or path separators; flatten it to\n      // a safe slug. The spec folder lives in specRelPath, which the batch job\n      // groups by, so the filename only needs to be unique within the spec.\n      outPath = join(screenshotDir, specRelPath, `${sanitizeSegment(name)}.png`);\n    }\n    mkdirSync(dirname(outPath), { recursive: true });\n    const buffer = await target.screenshot({ animations: 'disabled', scale: 'device' });\n    writeFileSync(outPath, buffer);\n    await writeArgosMetadataSidecar(\n      outPath,\n      buildCaptureMetadata({\n        testInfo,\n        screenshotPath,\n        url: pageUrl ?? page.url(),\n      })\n    );\n  } else {\n    const snapshotName = `${name}.png`;\n    const snapshotPath = testInfo.snapshotPath(snapshotName, { kind: 'screenshot' });\n\n    if (!existsSync(snapshotPath)) {\n      mkdirSync(dirname(snapshotPath), { recursive: true });\n      const screenshot = await target.screenshot({ animations: 'disabled', scale: 'device' });\n      writeFileSync(snapshotPath, screenshot);\n      return;\n    }\n\n    await expect(target).toHaveScreenshot(snapshotName);\n  }\n};\n",
+        "selected_sha256": "0c9aede6ac081a1a47ff8c4cd1646578e272201c511ac3a4903238ba34529be7"
+      }
+    },
+    {
+      "id": "description-is-test-only-metadata",
+      "meaning": "Fixture metadata description/tags are separate from renderer config/title/displayMode. Description is decoded YAML annotation,not visible sequence title.",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/fractional-official-primary/e2e__helpers__mmd-snapshots.ts",
+        "bytes": 5096,
+        "sha256": "2ff0012b9fce7c7c82a468a7d236cfe09dea2ee1a1f84bf518a4caca59bc0549",
+        "line_start": 1,
+        "line_end": 74,
+        "offset_utf8_bytes": 0,
+        "length_utf8_bytes": 2658,
+        "text": "import { globby } from 'globby';\nimport { readFileSync } from 'node:fs';\nimport { basename, join } from 'node:path';\nimport { load } from 'js-yaml';\n\nexport const DIAGRAMS_DIR = 'e2e/diagrams';\n\n/**\n * Free-form, test-tooling-only metadata read out of a fixture's own mermaid\n * frontmatter, alongside mermaid's own recognized keys (`config`/`title`/\n * `displayMode`, which the renderer consumes and this reader ignores).\n * `description` and `tags` are the two fields the runner currently does\n * anything with, but authors can add others (e.g. `relatedIssue`,\n * `coveredShapes`) for humans reading the file.\n */\nexport interface FixtureMetadata {\n  description?: string;\n  tags?: string[];\n  [key: string]: unknown;\n}\n\nexport const fixturePath = (relativePath: string, diagramsDir = DIAGRAMS_DIR): string =>\n  join(diagramsDir, relativePath);\n\n// Mirrors packages/mermaid/src/diagram-api/regexes.ts frontMatterRegex. Kept\n// independent so this test helper doesn't reach into the mermaid package,\n// but must stay in sync with it.\nconst FRONT_MATTER_RE = /^([^\\S\\n\\r]*)-{3}\\s*[\\n\\r](.*?)[\\n\\r]\\1-{3}\\s*[\\n\\r]+/s;\n\n/**\n * Reads a fixture's own YAML frontmatter, if it has one, and pulls out the\n * test-tooling fields (`description`, `tags`). Returns `undefined` when the\n * fixture has no frontmatter, or its frontmatter carries neither field (e.g.\n * a fixture whose frontmatter only sets mermaid `config`) — that is the\n * expected, unremarkable case for many fixtures, not an error. Frontmatter\n * that isn't a YAML mapping throws rather than being silently ignored, since\n * that means someone got the file wrong and would want to know.\n */\nexport const readFixtureMetadata = (\n  relativePath: string,\n  diagramsDir = DIAGRAMS_DIR\n): FixtureMetadata | undefined => {\n  const path = fixturePath(relativePath, diagramsDir);\n  const match = FRONT_MATTER_RE.exec(readFileSync(path, 'utf8'));\n  if (!match) {\n    return undefined;\n  }\n\n  const indent = match[1];\n  const yamlBody = indent\n    ? match[2]\n        .split('\\n')\n        .map((line) => (line.startsWith(indent) ? line.slice(indent.length) : line))\n        .join('\\n')\n    : match[2];\n\n  const parsed: unknown = load(yamlBody);\n  if (parsed === null || parsed === undefined) {\n    return undefined;\n  }\n  if (typeof parsed !== 'object' || Array.isArray(parsed)) {\n    throw new Error(\n      `Frontmatter at ${path} must be a YAML mapping, got: ${JSON.stringify(parsed)}`\n    );\n  }\n\n  const { description, tags } = parsed as FixtureMetadata;\n  if (description === undefined && tags === undefined) {\n    return undefined;\n  }\n  return { description, tags };\n};\n\nexport interface FixtureTree {\n",
+        "selected_sha256": "45def50d9f4c0144bdd8c7170b44e8ac5997f569a7ee48271ce64fefaa43ae71"
+      }
+    },
+    {
+      "id": "renderer-frontmatter-whitelist",
+      "meaning": "Only truthy displayMode,title,config are returned to diagram preprocessing. This description-only raw has none,so diagram semantic Model equals body Model.",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core12-source-primary/diagram-api__frontmatter.ts",
+        "bytes": 2007,
+        "sha256": "5fe9872a75c7f89bc3edb7876948b9dbbe9a844cabb8dfe57d254d3b0eba9ed1",
+        "line_start": 24,
+        "line_end": 69,
+        "offset_utf8_bytes": 741,
+        "length_utf8_bytes": 1266,
+        "text": "export function extractFrontMatter(text: string): FrontMatterResult {\n  const match = matchFrontMatter(text);\n  if (!match) {\n    return {\n      text,\n      metadata: {},\n    };\n  }\n\n  // Dedent by the captured indent — js-yaml rejects tab-indented documents.\n  const indent = match.indent;\n  const yamlBody = indent\n    ? match.body\n        .split('\\n')\n        .map((line) => (line.startsWith(indent) ? line.slice(indent.length) : line))\n        .join('\\n')\n    : match.body;\n\n  let parsed: FrontMatterMetadata =\n    yaml.load(yamlBody, {\n      // To support config, we need JSON schema.\n      // https://www.yaml.org/spec/1.2/spec.html#id2803231\n      schema: yaml.JSON_SCHEMA,\n    }) ?? {};\n\n  // To handle runtime data type changes\n  parsed = typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};\n\n  const metadata: FrontMatterMetadata = {};\n\n  // Only add properties that are explicitly supported, if they exist\n  if (parsed.displayMode) {\n    metadata.displayMode = parsed.displayMode.toString() as GanttDiagramConfig['displayMode'];\n  }\n  if (parsed.title) {\n    metadata.title = parsed.title.toString();\n  }\n  if (parsed.config) {\n    metadata.config = parsed.config;\n  }\n\n  return {\n    text: text.slice(match.length),\n    metadata,\n  };\n}\n",
+        "selected_sha256": "b26116b38faa92ec5336997dc03f9a8e91fd12c4ae9766f2bfec59fa3e903f1e"
+      }
+    },
+    {
+      "id": "numeric_lexing_and_case",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/sequence-audit/official-sequenceDiagram-12.2.0.jison",
+        "bytes": 20500,
+        "sha256": "f3f21ae48e3c334fc259e3f78ac60ef70cf930ac6df2dd3c43f2b0de6f2b24db",
+        "line_start": 13,
+        "line_end": 31,
+        "offset_utf8_bytes": 281,
+        "length_utf8_bytes": 914,
+        "text": "%options case-insensitive\n\n// Special states for recognizing aliases\n// A special state for grabbing text up to the first comment/newline\n%x ID ALIAS LINE CONFIG CONFIG_DATA\n\n%x acc_title\n%x acc_descr\n%x acc_descr_multiline\n%%\n\n[\\n]+                                                           return 'NEWLINE';\n\\s+                                                             /* skip all whitespace */\n<ID,ALIAS,LINE>((?!\\n)\\s)+                                      /* skip same-line whitespace */\n<INITIAL,ID,ALIAS,LINE>\\#[^\\n]*   \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/* skip comments */\n\\%%(?!\\{)[^\\n]*                                                 /* skip comments */\n[^\\}]\\%\\%[^\\n]*                                                 /* skip comments */\n([0-9]+(\\.[0-9]{1,2})?|\\.[0-9]{1,2})(?=[ \\n]+)    \t\t\t\treturn 'NUM';\n<ID>\\@\\{                                                        { this.begin('CONFIG'); return 'CONFIG_START'; }\n",
+        "selected_sha256": "bf18ae97e33b49abfa2b09b0fd0d86c9e89a844dcc17c9f85fa4aeca157cd478"
+      },
+      "meaning": "Case-insensitive lexer. NUM is unsigned decimal with up to2 decimal digits, including .01, and requires the literal space/newline lookahead. This exact source puts a space between operands and a direct newline after .01."
+    },
+    {
+      "id": "numbering_grammar",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/sequence-audit/official-sequenceDiagram-12.2.0.jison",
+        "bytes": 20500,
+        "sha256": "f3f21ae48e3c334fc259e3f78ac60ef70cf930ac6df2dd3c43f2b0de6f2b24db",
+        "line_start": 174,
+        "line_end": 182,
+        "offset_utf8_bytes": 10309,
+        "length_utf8_bytes": 873,
+        "text": "\t| signal 'NEWLINE'\n\t| autonumber NUM NUM 'NEWLINE' { $$= {type:'sequenceIndex',sequenceIndex: Number($2), sequenceIndexStep:Number($3), sequenceVisible:true, signalType:yy.LINETYPE.AUTONUMBER};}\n\t| autonumber NUM 'NEWLINE' { $$ = {type:'sequenceIndex',sequenceIndex: Number($2), sequenceIndexStep:1, sequenceVisible:true, signalType:yy.LINETYPE.AUTONUMBER};}\n\t| autonumber off 'NEWLINE' { $$ = {type:'sequenceIndex', sequenceVisible:false, signalType:yy.LINETYPE.AUTONUMBER};}\n\t| autonumber 'NEWLINE'  {$$ = {type:'sequenceIndex', sequenceVisible:true, signalType:yy.LINETYPE.AUTONUMBER}; }\n\t| 'activate' actor 'NEWLINE' {$$={type: 'activeStart', signalType: yy.LINETYPE.ACTIVE_START, actor: $2.actor};}\n\t| 'deactivate' actor 'NEWLINE' {$$={type: 'activeEnd', signalType: yy.LINETYPE.ACTIVE_END, actor: $2.actor};}\n\t| note_statement 'NEWLINE'\n\t| links_statement 'NEWLINE'\n",
+        "selected_sha256": "f82f45919b5276751aec378bbb52c2409a88fc5e2b7de2ad73cd0d3cf7658cad"
+      },
+      "meaning": "autonumber NUM NUM makes Number(start)/Number(step), visible=true; the source uses both operands."
+    },
+    {
+      "id": "counter_initialization",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/sequenceRenderer.ts",
+        "bytes": 72435,
+        "sha256": "dc715189fee677a89badd2c2400a99718aaff8e189c81fa07dd28ec5f2aa66af",
+        "line_start": 1137,
+        "line_end": 1146,
+        "offset_utf8_bytes": 36714,
+        "length_utf8_bytes": 289,
+        "text": "    bounds.insert(activationData.startx, verticalPos - 10, activationData.stopx, verticalPos);\n  }\n\n  // Draw the messages/signals\n  let sequenceIndex = 1;\n  let sequenceIndexStep = 1;\n  const messagesToDraw = [];\n  const backgrounds = [];\n  let index = 0;\n  for (const msg of messages) {\n",
+        "selected_sha256": "d0d2e91d09df310fe70275c439ef68816d274d3e92414b485436208a4ca76344"
+      },
+      "meaning": "Initial counter1 and step1 before processing the source command."
+    },
+    {
+      "id": "counter_setter",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/sequenceRenderer.ts",
+        "bytes": 72435,
+        "sha256": "dc715189fee677a89badd2c2400a99718aaff8e189c81fa07dd28ec5f2aa66af",
+        "line_start": 1269,
+        "line_end": 1278,
+        "offset_utf8_bytes": 41459,
+        "length_utf8_bytes": 387,
+        "text": "      case diagObj.db.LINETYPE.AUTONUMBER:\n        sequenceIndex = msg.message.start || sequenceIndex;\n        sequenceIndexStep = msg.message.step || sequenceIndexStep;\n        if (msg.message.visible) {\n          diagObj.db.enableSequenceNumbers();\n        } else {\n          diagObj.db.disableSequenceNumbers();\n        }\n        break;\n      case diagObj.db.LINETYPE.CRITICAL_START:\n",
+        "selected_sha256": "22a545a32b1d6f6ffb732069859b3c527da251c3ec8a1596496adfcc6a6a781a"
+      },
+      "meaning": "Start/step truthy fallback; this source10.1 and.01 are nonzero and replace both."
+    },
+    {
+      "id": "message_counter_assignment",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/sequenceRenderer.ts",
+        "bytes": 72435,
+        "sha256": "dc715189fee677a89badd2c2400a99718aaff8e189c81fa07dd28ec5f2aa66af",
+        "line_start": 1316,
+        "line_end": 1326,
+        "offset_utf8_bytes": 43154,
+        "length_utf8_bytes": 421,
+        "text": "        break;\n      default:\n        try {\n          msgModel = msg.msgModel;\n          msgModel.starty = bounds.getVerticalPos();\n          msgModel.sequenceIndex = sequenceIndex;\n          msgModel.sequenceVisible = diagObj.db.showSequenceNumbers();\n          msgModel.id = msg.id;\n          msgModel.from = msg.from;\n          msgModel.to = msg.to;\n          const lineStartY = await boundMessage(diagram, msgModel);\n",
+        "selected_sha256": "11d703a42cdb3258dc87957fe98b914a1b1a43bed3ae6a9bfd6925027c014510"
+      },
+      "meaning": "Assign the current sequenceIndex and sequence visibility to this complete message before rendering."
+    },
+    {
+      "id": "message_counter_rounded_increment",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/sequenceRenderer.ts",
+        "bytes": 72435,
+        "sha256": "dc715189fee677a89badd2c2400a99718aaff8e189c81fa07dd28ec5f2aa66af",
+        "line_start": 1337,
+        "line_end": 1383,
+        "offset_utf8_bytes": 43871,
+        "length_utf8_bytes": 1722,
+        "text": "          bounds.models.addMessage(msgModel);\n        } catch (e) {\n          log.error('error while drawing message', e);\n        }\n    }\n\n    // Increment sequence counter if msg.type is a line (and not another event like activation or note, etc)\n    if (\n      [\n        diagObj.db.LINETYPE.SOLID_OPEN,\n        diagObj.db.LINETYPE.DOTTED_OPEN,\n        diagObj.db.LINETYPE.SOLID,\n\n        diagObj.db.LINETYPE.SOLID_TOP,\n        diagObj.db.LINETYPE.SOLID_BOTTOM,\n        diagObj.db.LINETYPE.STICK_TOP,\n        diagObj.db.LINETYPE.STICK_BOTTOM,\n\n        diagObj.db.LINETYPE.SOLID_TOP_DOTTED,\n        diagObj.db.LINETYPE.SOLID_BOTTOM_DOTTED,\n        diagObj.db.LINETYPE.STICK_TOP_DOTTED,\n        diagObj.db.LINETYPE.STICK_BOTTOM_DOTTED,\n\n        diagObj.db.LINETYPE.SOLID_ARROW_TOP_REVERSE,\n        diagObj.db.LINETYPE.SOLID_ARROW_BOTTOM_REVERSE,\n        diagObj.db.LINETYPE.STICK_ARROW_TOP_REVERSE,\n        diagObj.db.LINETYPE.STICK_ARROW_BOTTOM_REVERSE,\n\n        diagObj.db.LINETYPE.SOLID_ARROW_TOP_REVERSE_DOTTED,\n        diagObj.db.LINETYPE.SOLID_ARROW_BOTTOM_REVERSE_DOTTED,\n        diagObj.db.LINETYPE.STICK_ARROW_TOP_REVERSE_DOTTED,\n        diagObj.db.LINETYPE.STICK_ARROW_BOTTOM_REVERSE_DOTTED,\n\n        diagObj.db.LINETYPE.DOTTED,\n        diagObj.db.LINETYPE.SOLID_CROSS,\n        diagObj.db.LINETYPE.DOTTED_CROSS,\n        diagObj.db.LINETYPE.SOLID_POINT,\n        diagObj.db.LINETYPE.DOTTED_POINT,\n        diagObj.db.LINETYPE.BIDIRECTIONAL_SOLID,\n        diagObj.db.LINETYPE.BIDIRECTIONAL_DOTTED,\n      ].includes(msg.type)\n    ) {\n      // hitting a floating point number error, so round to 2 decimal places\n      sequenceIndex = Math.round((sequenceIndex + sequenceIndexStep) * 100) / 100;\n    }\n    index++;\n  }\n",
+        "selected_sha256": "49071da0ec0eeb5e18999239cfe2b11c5f12c479a75cc726a43c6de59eb06f97"
+      },
+      "meaning": "Only actual message types advance and the increment is rounded Math.round((counter+step)*100)/100. Standalone source has three ordinary arrow messages."
+    },
+    {
+      "id": "visible_number_text",
+      "source": {
+        "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/sequenceRenderer.ts",
+        "bytes": 72435,
+        "sha256": "dc715189fee677a89badd2c2400a99718aaff8e189c81fa07dd28ec5f2aa66af",
+        "line_start": 708,
+        "line_end": 740,
+        "offset_utf8_bytes": 23584,
+        "length_utf8_bytes": 966,
+        "text": "      autonumberX = isLeftToRight ? msgModel.toBounds - 1 : msgModel.fromBounds + 1;\n    } else {\n      autonumberX = isLeftToRight ? msgModel.fromBounds + 1 : msgModel.toBounds - 1;\n    }\n\n    let fontSize = '12px';\n    const sequenceIndexLength = sequenceIndex.toString().length;\n\n    if (sequenceIndexLength > 5) {\n      fontSize = '7px';\n    } else if (sequenceIndexLength > 3) {\n      fontSize = '9px';\n    }\n\n    diagram\n      .append('line')\n      .attr('x1', autonumberX)\n      .attr('y1', lineStartY)\n      .attr('x2', autonumberX)\n      .attr('y2', lineStartY)\n      .attr('stroke-width', 0)\n      .attr('marker-start', 'url(' + url + '#' + diagramId + '-sequencenumber)');\n\n    diagram\n      .append('text')\n      .attr('x', autonumberX)\n      .attr('y', lineStartY + 4)\n      .attr('font-family', 'sans-serif')\n      .attr('font-size', fontSize)\n      .attr('text-anchor', 'middle')\n      .attr('class', 'sequenceNumber')\n      .text(sequenceIndex);\n  }\n",
+        "selected_sha256": "da4abad1e0741b01104b3cad2a7369786769c42eaa16619815fda684ae2518ad"
+      },
+      "meaning": "Renderer obtains sequenceIndex.toString length and writes .text(sequenceIndex), rather than truncating to integer or padding fixed decimal zeros."
+    }
+  ],
+  "preexisting84_snapshots": {
+    "tests/fixtures/mermaid_official/snapshots/007aa79e8ca6969c.txt": "7e211fb53a2d2915a9336e1431c3df4a554d3e637e34f9c6f99f258095e3a6a7",
+    "tests/fixtures/mermaid_official/snapshots/0297e7473f7b00bc.txt": "c973783ac906f6ec6797fbed6056c87c21da08e1095afa6b965d543f47408e50",
+    "tests/fixtures/mermaid_official/snapshots/0320bdbc44e47972.txt": "e788734fa70bc6b69e13b28e0e8894047af9627f6df14c381e7c4e4f98ca467a",
+    "tests/fixtures/mermaid_official/snapshots/043e3e0765a92318.txt": "7ac83fe06a96a08d51ede7231a0a26aad6087f5144050c5ab7ba49c078c53bc5",
+    "tests/fixtures/mermaid_official/snapshots/0aeb7de559fd28a6.txt": "cd4b07c3780088af25589a49f74b82c7e0b7a5d8065031eff6c0d20a52846bdc",
+    "tests/fixtures/mermaid_official/snapshots/12c4127d93a42189.txt": "315c41d500b93e75e66070ab765e8fe9ffc3b3a2572a239414f73753ada78527",
+    "tests/fixtures/mermaid_official/snapshots/139cfa888e2f08ae.txt": "dc0fb3212efd4275ff556972946c74d77dddca15d251ef3d4980713e7dbeb8c1",
+    "tests/fixtures/mermaid_official/snapshots/13e14f152b0bb612.txt": "cfc16ff39b71be7d10205c24dbf19efc35ad9444ee788311d4e415615cab39cb",
+    "tests/fixtures/mermaid_official/snapshots/17e560d0c71e65e5.txt": "4be23f1d9d50f542b6cf132e27406e3e66e638b3dd829e7ca835253466b62840",
+    "tests/fixtures/mermaid_official/snapshots/1880592aedf50016.txt": "185f903351d4a7f23f81f98c3b7a6ea8aa9cd1732faf2d35c0f53e87f2656848",
+    "tests/fixtures/mermaid_official/snapshots/1e405becf4ce7304.txt": "cfa5b127600e1d6dc610cc1aeb7a1a05946a531a6becb0962487e3205535e792",
+    "tests/fixtures/mermaid_official/snapshots/1f1ce4cee0e10fc8.txt": "2f6b5b53a67ad8f7f0bdc114ff9f48e7d8759a011afd26b2599c1f432ee53db1",
+    "tests/fixtures/mermaid_official/snapshots/20b7dce71c48ea60.txt": "8648dbdc09c0c54e9b6c2a09e7903aea7121242983fcf627ff9852498d4d815d",
+    "tests/fixtures/mermaid_official/snapshots/21532d0994617d28.txt": "b4d181ec8f2665496c23efd7823ba81cac5eb2c13824a92f54fff48f09fbf8c3",
+    "tests/fixtures/mermaid_official/snapshots/2197213194537000.txt": "7b026418693ce7d4277b428457e7b641aeb23052f8a792ad78627065f54f4989",
+    "tests/fixtures/mermaid_official/snapshots/26463354148e9d11.txt": "df9fca1799ee260607054a392225aced3d15f9a234efeb1da7a1f593e8719581",
+    "tests/fixtures/mermaid_official/snapshots/277b6cbc5f939ae7.txt": "85d620087827f7fa8c64b305b7eb6eb9d2fc555fc11a276d933dba48cb1a9bac",
+    "tests/fixtures/mermaid_official/snapshots/29222fe34ff4ff56.txt": "a40610f45f220cf7b241a867a20e8c3d26a59ffda4b1932761f3ded05cebb8ec",
+    "tests/fixtures/mermaid_official/snapshots/29678c9decc9b8e4.txt": "1ec3985a8b247e543445b2aafad266f0607a3765135067fbc2fee8f06875ce19",
+    "tests/fixtures/mermaid_official/snapshots/296de44dd7035dee.txt": "1ec3985a8b247e543445b2aafad266f0607a3765135067fbc2fee8f06875ce19",
+    "tests/fixtures/mermaid_official/snapshots/2bde2f2535edd581.txt": "e8ad7033ab4254f6d6547337cdb62aea809a9aa635bbcb186d60ed1ab3b2f640",
+    "tests/fixtures/mermaid_official/snapshots/2eaebf35d96ff1e3.txt": "cb986adfaaf31ce402c9edef2d763f4072a6cc6909117ea0e3b0a49e7b1e0256",
+    "tests/fixtures/mermaid_official/snapshots/2f083bda5c821324.txt": "96747d34c1fad3cd8ac0f194fabc27a64093673a4d07e3618a155d6ee43cf71b",
+    "tests/fixtures/mermaid_official/snapshots/31aa6b47a417b2f8.txt": "652dcbbf8ddb54a7f51f12f5b7acab8d12faeb198928855f7899a70e18390b0b",
+    "tests/fixtures/mermaid_official/snapshots/323d5b665900bad0.original.txt": "d8173d3584193b9788505c7e169fc1a0c9945e255b34b6e88d099f4a7e0935f2",
+    "tests/fixtures/mermaid_official/snapshots/3305071825cf1b56.txt": "63f57cb63a62451dcf4418749567557c18cca65aac612a300896a8d193d19e22",
+    "tests/fixtures/mermaid_official/snapshots/38e3360fc2d67584.txt": "977514c74f946cd23da903fd1e07acd80f922efc9645d2a297d0c12a2d38ef49",
+    "tests/fixtures/mermaid_official/snapshots/3dd3698e13c4b8ce.txt": "117ad3dbd290a4ecbc066302e4c1596b12832286dea88056f2c87f54ff1e337e",
+    "tests/fixtures/mermaid_official/snapshots/3e7f0869e915c760.txt": "a40ea7b5179356e7e695b115bf4de8595c5c15656d9397608305548a75c9e56f",
+    "tests/fixtures/mermaid_official/snapshots/406e038da4046e53.txt": "7b026418693ce7d4277b428457e7b641aeb23052f8a792ad78627065f54f4989",
+    "tests/fixtures/mermaid_official/snapshots/40c50963c96ded7a.txt": "fcecf936781edd972338d9ff440e0182ce126d16f599262028e4a224d4666873",
+    "tests/fixtures/mermaid_official/snapshots/4a342fc5073eae2e.txt": "e788734fa70bc6b69e13b28e0e8894047af9627f6df14c381e7c4e4f98ca467a",
+    "tests/fixtures/mermaid_official/snapshots/4bac511c8d5013cb.txt": "117ad3dbd290a4ecbc066302e4c1596b12832286dea88056f2c87f54ff1e337e",
+    "tests/fixtures/mermaid_official/snapshots/4f2ea795816d2aa5.txt": "fd9d7c622bc987ab885b078c428eef9d531e799ab748961536c1cb17c488a4c8",
+    "tests/fixtures/mermaid_official/snapshots/5142a24420cee0dd.txt": "b83663c1711a78e96cd8f9fafb3007a21d63c26cf3162a05cfaaeb585e29c8f1",
+    "tests/fixtures/mermaid_official/snapshots/53f40d178c9f963f.txt": "fd9d7c622bc987ab885b078c428eef9d531e799ab748961536c1cb17c488a4c8",
+    "tests/fixtures/mermaid_official/snapshots/58f7bd922bc3db88.txt": "4fcdd77f446f8822065b750e716d144961401935aeb6e5582bde7a580c33e578",
+    "tests/fixtures/mermaid_official/snapshots/597d51afd507c137.txt": "e8ad7033ab4254f6d6547337cdb62aea809a9aa635bbcb186d60ed1ab3b2f640",
+    "tests/fixtures/mermaid_official/snapshots/5f161e2f5c6c0f28.txt": "025fe3447398e33830152422ff3428d83817c12ebf501557dc7d626d90b55989",
+    "tests/fixtures/mermaid_official/snapshots/607aa908fecb2c1d.txt": "50e162b6266bcaf6174ad6f3abff7cd8733b16f2badc3467ebc5a8316fcf3c86",
+    "tests/fixtures/mermaid_official/snapshots/64a567179f1bcfb8.txt": "85d620087827f7fa8c64b305b7eb6eb9d2fc555fc11a276d933dba48cb1a9bac",
+    "tests/fixtures/mermaid_official/snapshots/6d92be5658372bc9.txt": "8e4d6b70b73ecc88b8cab73a7ff5a4f65d77337c0746c271fc23adc4cdf4ac7a",
+    "tests/fixtures/mermaid_official/snapshots/6e15b75a613c8a7e.txt": "69aed31e4beafef8d0d55754273c0ee41f14f8497ca18fe55029d33787eacf91",
+    "tests/fixtures/mermaid_official/snapshots/7552a613fd6c9986.txt": "d6d860bd1ab26b27ac7f7eed21afa701e5c8434b5b5de8df4ea17765c8db9de6",
+    "tests/fixtures/mermaid_official/snapshots/791dbdadcfe3c0d2.txt": "08aac7b7a66d006040149889cd9a135f05819ef02c2154e3c6a5a0b1d5ca7608",
+    "tests/fixtures/mermaid_official/snapshots/7a041659ddd4712f.txt": "973f1fa8a406f5af938066a46499e477f397205565c0b15bceaa831e7cad09ea",
+    "tests/fixtures/mermaid_official/snapshots/8177b3d19ef4f972.txt": "4234ba146a468fef0daed271423651c5c1c9ee828635d8a6c914fab6facfe95f",
+    "tests/fixtures/mermaid_official/snapshots/8c432b62bb2e178e.txt": "4504f8f35d5ac7b26833e9fb0979ac7dde3b4a6bab952fbafea794feeb03fba2",
+    "tests/fixtures/mermaid_official/snapshots/90381e49c297c3bc.txt": "c0357f05444e67f491d15f1123480e1277ecfcbd1997761f05f7a00a7ef833f5",
+    "tests/fixtures/mermaid_official/snapshots/924927429b3687da.txt": "5d45914e791d39edfe796405ad41bc9b14beab0cfae0392b53fb007620d73098",
+    "tests/fixtures/mermaid_official/snapshots/9376ca0d7d03d9e2.txt": "cfc16ff39b71be7d10205c24dbf19efc35ad9444ee788311d4e415615cab39cb",
+    "tests/fixtures/mermaid_official/snapshots/947f41889661cf4d.txt": "a51ec7d20ae0acde38d2aaad2f9e580750efdbbeac9531b8a55ab08c3c9b3aa0",
+    "tests/fixtures/mermaid_official/snapshots/9d144d9eb343c23c.txt": "4be23f1d9d50f542b6cf132e27406e3e66e638b3dd829e7ca835253466b62840",
+    "tests/fixtures/mermaid_official/snapshots/a4b5a476b37b4e4e.txt": "7e20e3d0dd569f05ec326ac020c8903f4e79b679954ba79c382bbd35449eacb3",
+    "tests/fixtures/mermaid_official/snapshots/a7834b5afe21f251.txt": "64bf8f93cd166efa56fa25718724d105142d316e0c7eab5f8fd1eb5f488afd1f",
+    "tests/fixtures/mermaid_official/snapshots/a87a78f17796c988.txt": "85d620087827f7fa8c64b305b7eb6eb9d2fc555fc11a276d933dba48cb1a9bac",
+    "tests/fixtures/mermaid_official/snapshots/a89b83a41a6372f2.txt": "32d041406b18f5e79b0044ee4177f39e9ba4ac9d814a724d2148c12863b9dafe",
+    "tests/fixtures/mermaid_official/snapshots/a914f472046733ed.txt": "973f1fa8a406f5af938066a46499e477f397205565c0b15bceaa831e7cad09ea",
+    "tests/fixtures/mermaid_official/snapshots/ac84f94a5a3b6a13.txt": "3a1cad22fea9d847a6a6a8717bf720f9852074b016c7ae173e0ca9d98a9e39ec",
+    "tests/fixtures/mermaid_official/snapshots/ad799b16bfc0f584.txt": "cfc16ff39b71be7d10205c24dbf19efc35ad9444ee788311d4e415615cab39cb",
+    "tests/fixtures/mermaid_official/snapshots/ada5f0e3229376b4.txt": "c5db6801f6bd8ff4b5dda3ed16017986b68ed25789d25cf206f393985274c3cf",
+    "tests/fixtures/mermaid_official/snapshots/b4507e19c5e07663.txt": "d6d860bd1ab26b27ac7f7eed21afa701e5c8434b5b5de8df4ea17765c8db9de6",
+    "tests/fixtures/mermaid_official/snapshots/b59388cf66a099f4.txt": "e11dbf36661516f3154f6113a935e11413460fd37ca254c418feb643acca9ea0",
+    "tests/fixtures/mermaid_official/snapshots/b5b16982ac514e33.txt": "8631a2205fe87d73423af530b91a9e16d98698c3f988a3c66575b0ce9c57c126",
+    "tests/fixtures/mermaid_official/snapshots/b74a5e354ba64c73.txt": "2c9d7173194dfeda9e792ddda455edd1f90f3d0314dd0e4aec04fc310bd89c87",
+    "tests/fixtures/mermaid_official/snapshots/c23d3902d9cd973a.txt": "2001ca6e652918e405c9e55c3f75aabeeb80cb6756a7344279f3363c20275c4b",
+    "tests/fixtures/mermaid_official/snapshots/c3880a4e1e41ce83.txt": "e75db39e524d991307ea3b5912ff1e967a15db9e8a6423dc5293af936f12a244",
+    "tests/fixtures/mermaid_official/snapshots/c5a0523d8620687c.txt": "f5dcf8824b19e112b38a22ee8297ca217202ed714bb01b7208d9dd6d96f5293f",
+    "tests/fixtures/mermaid_official/snapshots/c752145b278121f8.txt": "8648dbdc09c0c54e9b6c2a09e7903aea7121242983fcf627ff9852498d4d815d",
+    "tests/fixtures/mermaid_official/snapshots/c7eae07f9ee92836.txt": "d8b141e0efbbd4d13b7a8dd394da47f76fae0aeddb6a02e3ba21134c6bb936c5",
+    "tests/fixtures/mermaid_official/snapshots/c83ec07d313521bb.txt": "b551c9e0a7ba585f8afddd1bc86bb0bab9f90ae601ee1f3a1dad84fee3acbe48",
+    "tests/fixtures/mermaid_official/snapshots/c8a2ca2823d6eea1.txt": "fd66ecf257e27880a882957b843af7c719fd1651136d70c59c6f88f9cf22bf95",
+    "tests/fixtures/mermaid_official/snapshots/c8cd57db196bf51e.txt": "403f284eaba77ac901b6b2a68a72b95a5ac0ee8bd69321ebd52024312c28614b",
+    "tests/fixtures/mermaid_official/snapshots/d5ab03a0c5db67e7.txt": "85d620087827f7fa8c64b305b7eb6eb9d2fc555fc11a276d933dba48cb1a9bac",
+    "tests/fixtures/mermaid_official/snapshots/d70619f8443f36fd.txt": "4c2e1bf62c6c4ebbc612c7a5b3cb2fa194c9c833d57fff8d1c5f3698f42f7313",
+    "tests/fixtures/mermaid_official/snapshots/dc14cb03bd6d978c.txt": "e6a867b7df1e6f614caa39dc76e36b85af1575508084e0f84643abae32a3ff02",
+    "tests/fixtures/mermaid_official/snapshots/dec48531c107abec.txt": "1a6a4ac88a862462ad6f4948102ccab2b904d817f47f81e3c5426959ae4172ab",
+    "tests/fixtures/mermaid_official/snapshots/decc623d72591c75.txt": "f874ae88fed50c97595052b88822e2449f784e6ab0554f327955f9b0815769f1",
+    "tests/fixtures/mermaid_official/snapshots/e3ea2424e49c9864.txt": "10704fe3599d5bc2adb4182de26d3cc92ab35ee288b11c9f9fcca3b3577b0f1a",
+    "tests/fixtures/mermaid_official/snapshots/e7d03e43bb63d064.txt": "931b62e435508aae3f70e2499c149e8aae20bebcb520518bdb3c03d9b9739c4e",
+    "tests/fixtures/mermaid_official/snapshots/e879d01357a37f8b.txt": "96747d34c1fad3cd8ac0f194fabc27a64093673a4d07e3618a155d6ee43cf71b",
+    "tests/fixtures/mermaid_official/snapshots/eb42ada39bc04c13.txt": "ecf7679353decb9e90233f6e5fd42ca69d0748f482f128c61128ec81409cf81f",
+    "tests/fixtures/mermaid_official/snapshots/f514c26b3801548b.txt": "5e78a429a9922fbd987e26a0d3e5221b0fe5cbf9e460a945fd701b5616c6fb52",
+    "tests/fixtures/mermaid_official/snapshots/f5e71e36c27851d2.txt": "8631a2205fe87d73423af530b91a9e16d98698c3f988a3c66575b0ce9c57c126"
+  },
+  "official_first_red_history": {
+    "path": "build/mermaid-renderer-research-20261020/sequence-audit/numbering119-official-first-debug-hashes.json",
+    "sha256": "655945a0f4f2b650f2e57c7c3bc145a5d7c22b845e4af61782c63fb1c9450167",
+    "qualification": "Stored provenance only; not used to derive expected fields. Genuine matrix first failure must remain recorded."
+  },
+  "required_decoder": "Require explicit visible-number-text schema and JSON string tokens. Never get_int a decimal or mutate legacy748/bb051 facts.",
+  "required_native_gate": "Complete raw/body byte/spans/SHA and graph semantics,all four unheaded endpoints/styles/labels/numbertokens,240→40→240 restoration/sentinel. Raw still whole-source under current description-frontmatter profile; no raw/body conflation.",
+  "no_fixture_or_manifest_change": true
+}

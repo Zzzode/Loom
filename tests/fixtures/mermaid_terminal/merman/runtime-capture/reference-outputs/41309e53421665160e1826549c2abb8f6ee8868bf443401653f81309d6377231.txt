@@ -1,0 +1,67 @@
++--------------------------+                            
+|                          |                            
+|     browser / agent      |                            
+|                          |                            
++--------------------------+                            
+              |                                         
+              |                                         
+              |                                         
+              |                                         
+              v                                         
++--------------------------+                            
+|                          |                            
+|  *.docs.mysampleapp.net  |                            
+|                          |                            
+|    (Route53 subzone,     |                            
+|                          |-+                          
+|       delegated to       | |                          
+|                          | |                          
+|  mysampleapps account)   | |                          
+|                          | |                          
++--------------------------+ |                          
+              |              |                          
+              |              |                          
+              |              |                          
+              |              |                          
+              v              |                          
++--------------------------+ |                          
+|                          | |                          
+|   upload app (Lambda,    | |                          
+|                          | |                          
+|   Python): GET / form,   | |                          
+|                          |-+writes                    
+|    POST /upload, POST    | |                          
+|                          | |                          
+| /api/deploy (IAM), boto3 | |                          
+|                          | |                          
++--------------------------+ |                          
+              :              |                          
+              :              |                          
+     CreateInvalidation      |reserve / check owner     
+              :              |                          
+              v              |                          
++--------------------------+ | +-----------------------+
+|                          | | |                       |
+| CloudFront distribution: | | |                       |
+|                          | | |                       |
+|      wildcard cert,      | | |                       |
+|                          | | |                       |
+|    Host-to-prefix CF     |<+>| DynamoDB reservations |
+|                          | | |                       |
+|    Function, WAF VPN     | | |                       |
+|                          | | |                       |
+|   allowlist, OAC to S3   | | |                       |
+|                          | | |                       |
++--------------------------+ | +-----------------------+
+              |              |                          
+              |              |                          
+            reads            |                          
+              |              |                          
+              v              |                          
++--------------------------+ |                          
+|                          | |                          
+|  S3 bucket mysampleapp:  | |                          
+|                          |<+                          
+|   sites/subdomain/...    |                            
+|                          |                            
++--------------------------+                            

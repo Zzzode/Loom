@@ -1,0 +1,21 @@
++--------------+     +-----+
+|  Extremely   |     |     |
+| utterly long |     |     |
+|   line of    |     |     |
+|   longness   |     |     |
+|  which had   |     |     |
+|  previously  |     | Bob |
+|  overflown   |     |     |
+|  the actor   |     |     |
+| box as it is |     |     |
+| much longer  |     |     |
+| than what it |     |     |
+|  should be   |     |     |
++-------+------+     +--+--+
+        |               |
+        | Hola          |
+        +-------------->|
+        |               |
+        | Pasten !      |
+        |...............+
+        |               |

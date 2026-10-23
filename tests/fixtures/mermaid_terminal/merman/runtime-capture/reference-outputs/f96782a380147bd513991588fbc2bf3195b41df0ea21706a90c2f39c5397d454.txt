@@ -1,0 +1,11 @@
+# Bar 1  * Line 1
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=3)="jan" value=5000 pointLabel=none clipped=false}, {index=1 x(bytes=3)="feb" value=6000 pointLabel=none clipped=false}, {index=2 x(bytes=3)="mar" value=7500 pointLabel=none clipped=false}, {index=3 x(bytes=3)="apr" value=8200 pointLabel=none clipped=false}, {index=4 x(bytes=3)="may" value=9500 pointLabel=none clipped=false}, {index=5 x(bytes=3)="jun" value=10500 pointLabel=none clipped=false}, {index=6 x(bytes=3)="jul" value=14000 pointLabel=none clipped=false}, {index=7 x(bytes=3)="aug" value=3200 pointLabel=none clipped=false}, {index=8 x(bytes=3)="sep" value=9200 pointLabel=none clipped=false}, {index=9 x(bytes=3)="oct" value=9900 pointLabel=none clipped=false}, {index=10 x(bytes=3)="nov" value=3400 pointLabel=none clipped=false}, {index=11 x(bytes=3)="dec" value=6000 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=1 type=line title=none samples=[{index=0 x(bytes=3)="jan" value=2000 pointLabel=none clipped=false}, {index=1 x(bytes=3)="feb" value=7000 pointLabel=none clipped=false}, {index=2 x(bytes=3)="mar" value=6500 pointLabel=none clipped=false}, {index=3 x(bytes=3)="apr" value=9200 pointLabel=none clipped=false}, {index=4 x(bytes=3)="may" value=9500 pointLabel=none clipped=false}, {index=5 x(bytes=3)="jun" value=7500 pointLabel=none clipped=false}, {index=6 x(bytes=3)="jul" value=11000 pointLabel=none clipped=false}, {index=7 x(bytes=3)="aug" value=10200 pointLabel=none clipped=false}, {index=8 x(bytes=3)="sep" value=3200 pointLabel=none clipped=false}, {index=9 x(bytes=3)="oct" value=8500 pointLabel=none clipped=false}, {index=10 x(bytes=3)="nov" value=7000 pointLabel=none clipped=false}, {index=11 x(bytes=3)="dec" value=8800 pointLabel=none clipped=false}] orphanPointLabels=[]
+14000 +                        ###
+11600 +                    ###+-*-+
+ 9200 +           +-*---*-+###|###+-*-+###+-*-+   +-*
+ 6800 +   +-*---*-+### ###+-*-+###    |###|###+-*-+###
+ 4400 +#*-+### ### ### ### ### ### ###+-*-+### ### ###
+ 2000 +-+---+---+---+---+---+---+---+---+---+---+---+-
+       jan feb mar apr may jun jul aug sep oct nov dec
+titleDisplay: xAxis(bytes=6)="Months"

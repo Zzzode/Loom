@@ -1,0 +1,10 @@
+sequenceDiagram
+box Group
+participant A
+participant B
+end
+loop Work
+A->>+B: Start
+Note over A,B: Wait
+B-->>-A: Done
+end

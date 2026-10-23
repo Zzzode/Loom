@@ -1,0 +1,4 @@
+flowchart LR
+    Source@{ shape: lean-r, label: "Event stream" } --> Load[Normalize]
+    Load --> Store@{ shape: datastore, label: "Warehouse" }
+    Store --> Report@{ shape: doc, label: "Daily report" }

@@ -1,0 +1,29 @@
++-------+
+| Left  |
++-------+
+| +---+ |
+| | A | |
+| +---+ |
+|       |
+| +---+ |
+| | B | |
+| +---+ |
++-------+
+
++-------+
+| Right |
++-------+
+| +---+ |
+| | C | |
+| +---+ |
+|       |
+| +---+ |
+| | D | |
+| +---+ |
++-------+
+
+relations:
+id(bytes=14)="classId-Left-0" endpoint1=[bytes=19 "member(bytes=1)=\"A\""] --> endpoint2=[bytes=19 "member(bytes=1)=\"C\""] id(bytes=15)="classId-Right-1" : ac
+id(bytes=14)="classId-Left-0" endpoint1=[bytes=19 "member(bytes=1)=\"A\""] --> endpoint2=[bytes=19 "member(bytes=1)=\"D\""] id(bytes=15)="classId-Right-1" : ad
+id(bytes=14)="classId-Left-0" endpoint1=[bytes=19 "member(bytes=1)=\"B\""] --> endpoint2=[bytes=19 "member(bytes=1)=\"C\""] id(bytes=15)="classId-Right-1" : bc
+id(bytes=14)="classId-Left-0" endpoint1=[bytes=19 "member(bytes=1)=\"B\""] --> endpoint2=[bytes=19 "member(bytes=1)=\"D\""] id(bytes=15)="classId-Right-1" : bd

@@ -1,0 +1,3 @@
+gitGraph direction(bytes=2)="LR" current(bytes=49)="before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}"
+title(bytes=49)="before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}"
+branches=[bytes=49 "before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}"]

@@ -1,0 +1,11 @@
+titleDisplay: chart(bytes=10)="Plot title"
+titleDisplay: yAxis(bytes=26)="A fairly wide y-axis title"
+xDomain: band categories=[bytes=1="a", bytes=1="b", bytes=1="c"]
+values: # series=0 type=bar title(bytes=6)="series" samples=[{index=0 x(bytes=1)="a" value=10 pointLabel=none clipped=false}, {index=1 x(bytes=1)="b" value=20 pointLabel=none clipped=false}, {index=2 x(bytes=1)="c" value=30 pointLabel=none clipped=false}] orphanPointLabels=[]
+100000 +
+ 80000 +
+ 60000 +
+ 40000 +
+ 20000 +
+     0 +-+---+---+-
+         a   b   c

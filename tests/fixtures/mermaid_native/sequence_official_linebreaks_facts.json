@@ -1,0 +1,1031 @@
+{
+  "schema": 1,
+  "status": "source-only candidate; independent review required; no snapshot/admission",
+  "author": "/root/corpus_oracle",
+  "cases": [
+    {
+      "id": "sequence/nightly-check/should-handle-different-line-breaks.mmd",
+      "path": "sequence/nightly-check/should-handle-different-line-breaks.mmd",
+      "model_schema": "sequence_native_full_model_legacy_integer/v1",
+      "raw": "---\ndescription: >-\n  All accepted HTML line-break tag variants (`<br>`, `<br/>`, `<br />`,\n  `<br\t/>` with a tab) used interchangeably across participant aliases,\n  messages, and notes, verifying each form wraps text identically.\n---\nsequenceDiagram\n  participant 1 as multiline<br>using #lt;br#gt;\n  participant 2 as multiline<br/>using #lt;br/#gt;\n  participant 3 as multiline<br />using #lt;br /#gt;\n  participant 4 as multiline<br \t/>using #lt;br \t/#gt;\n  1->>2: multiline<br>using #lt;br#gt;\n  note right of 2: multiline<br>using #lt;br#gt;\n  2->>3: multiline<br/>using #lt;br/#gt;\n  note right of 3: multiline<br/>using #lt;br/#gt;\n  3->>4: multiline<br />using #lt;br /#gt;\n  note right of 4: multiline<br />using #lt;br /#gt;\n  4->>1: multiline<br />using #lt;br /#gt;\n  note right of 1: multiline<br \t/>using #lt;br \t/#gt;\n",
+      "raw_bytes": 833,
+      "raw_sha256": "ff99e85f3bb50d580ab1efcede852a68cbb42ddf70597a5951f9b2ad53c15f7a",
+      "raw_git_blob": "36f322f4327e4d9a10dfc9d0dab6b2c0e0ce1059",
+      "upstream_path": "e2e/diagrams/sequence/nightly-check/should-handle-different-line-breaks.mmd",
+      "upstream_commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "body_offset_utf8_bytes": 235,
+      "body": "sequenceDiagram\n  participant 1 as multiline<br>using #lt;br#gt;\n  participant 2 as multiline<br/>using #lt;br/#gt;\n  participant 3 as multiline<br />using #lt;br /#gt;\n  participant 4 as multiline<br \t/>using #lt;br \t/#gt;\n  1->>2: multiline<br>using #lt;br#gt;\n  note right of 2: multiline<br>using #lt;br#gt;\n  2->>3: multiline<br/>using #lt;br/#gt;\n  note right of 3: multiline<br/>using #lt;br/#gt;\n  3->>4: multiline<br />using #lt;br /#gt;\n  note right of 4: multiline<br />using #lt;br /#gt;\n  4->>1: multiline<br />using #lt;br /#gt;\n  note right of 1: multiline<br \t/>using #lt;br \t/#gt;\n",
+      "body_bytes": 598,
+      "body_sha256": "1000d9c69cc29c682413001d5724571953ee50310da3956541e5bcd57ae1c35c",
+      "raw_metadata": {
+        "raw_frontmatter": "---\ndescription: >-\n  All accepted HTML line-break tag variants (`<br>`, `<br/>`, `<br />`,\n  `<br\t/>` with a tab) used interchangeably across participant aliases,\n  messages, and notes, verifying each form wraps text identically.\n---\n",
+        "description": {
+          "style": ">-",
+          "raw_content_lines": [
+            "All accepted HTML line-break tag variants (`<br>`, `<br/>`, `<br />`,",
+            "`<br\t/>` with a tab) used interchangeably across participant aliases,",
+            "messages, and notes, verifying each form wraps text identically."
+          ],
+          "folded_value": "All accepted HTML line-break tag variants (`<br>`, `<br/>`, `<br />`, `<br\t/>` with a tab) used interchangeably across participant aliases, messages, and notes, verifying each form wraps text identically."
+        },
+        "title": null,
+        "config": null
+      },
+      "raw_admission": {
+        "expected": "source",
+        "native_status": "unmet metadata projection; body support does not admit full description frontmatter",
+        "original_expectation": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        }
+      },
+      "body_model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "1",
+            "label": "multiline\nusing <br>",
+            "person": false
+          },
+          {
+            "id": "2",
+            "label": "multiline\nusing <br/>",
+            "person": false
+          },
+          {
+            "id": "3",
+            "label": "multiline\nusing <br />",
+            "person": false
+          },
+          {
+            "id": "4",
+            "label": "multiline\nusing <br \\u{0009}/>",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "multiline\nusing <br>",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "multiline\nusing <br/>",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "label": "multiline\nusing <br />",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 3,
+            "to": 0,
+            "label": "multiline\nusing <br />",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              1
+            ],
+            "text": "multiline\nusing <br>",
+            "position": "right",
+            "after": 0
+          },
+          {
+            "actors": [
+              2
+            ],
+            "text": "multiline\nusing <br/>",
+            "position": "right",
+            "after": 1
+          },
+          {
+            "actors": [
+              3
+            ],
+            "text": "multiline\nusing <br />",
+            "position": "right",
+            "after": 2
+          },
+          {
+            "actors": [
+              0
+            ],
+            "text": "multiline\nusing <br \\u{0009}/>",
+            "position": "right",
+            "after": 3
+          }
+        ],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 3,
+            "part": 0
+          }
+        ]
+      },
+      "body_model_sha256": "a0b7b9f0a2c07f5b6da412e29c1aea6cc57af6880f354ed0715338818803c1af",
+      "physical_witnesses": [
+        {
+          "line": 1,
+          "byte_offset": 0,
+          "byte_length": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 2,
+          "byte_offset": 4,
+          "byte_length": 16,
+          "sha256": "5f74023604c01fa7f354f49384734f4668c37023158331b8fbfc8eb4c5aea2d0",
+          "text": "description: >-\n"
+        },
+        {
+          "line": 3,
+          "byte_offset": 20,
+          "byte_length": 72,
+          "sha256": "d99ac81685a77fe05d2eb2971a7d140794910db4222dff1f94065a662f3a1d6e",
+          "text": "  All accepted HTML line-break tag variants (`<br>`, `<br/>`, `<br />`,\n"
+        },
+        {
+          "line": 4,
+          "byte_offset": 92,
+          "byte_length": 72,
+          "sha256": "2e5ce268fc4c13c40eb1e5a4de3630d21e697493b4f58b920b7e52e7b6b34c80",
+          "text": "  `<br\t/>` with a tab) used interchangeably across participant aliases,\n"
+        },
+        {
+          "line": 5,
+          "byte_offset": 164,
+          "byte_length": 67,
+          "sha256": "7c911ea3488c4995d945ad480f14e376b67660eb6d564428f3b1515da0f5424b",
+          "text": "  messages, and notes, verifying each form wraps text identically.\n"
+        },
+        {
+          "line": 6,
+          "byte_offset": 231,
+          "byte_length": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 7,
+          "byte_offset": 235,
+          "byte_length": 16,
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+          "text": "sequenceDiagram\n"
+        },
+        {
+          "line": 8,
+          "byte_offset": 251,
+          "byte_length": 49,
+          "sha256": "bb1d7932e97bf03c395fed87d13d02caa122a505653eb2667e77397bd05b4710",
+          "text": "  participant 1 as multiline<br>using #lt;br#gt;\n"
+        },
+        {
+          "line": 9,
+          "byte_offset": 300,
+          "byte_length": 51,
+          "sha256": "a801d3f5219d84c3d710606fab5e65b2257edc6ac06784e5cadb7a0a6858cff1",
+          "text": "  participant 2 as multiline<br/>using #lt;br/#gt;\n"
+        },
+        {
+          "line": 10,
+          "byte_offset": 351,
+          "byte_length": 53,
+          "sha256": "f0348f3ee375eac086c08401f114d4d837b0ce0aabfe0a7b3c7b230910d2b9ff",
+          "text": "  participant 3 as multiline<br />using #lt;br /#gt;\n"
+        },
+        {
+          "line": 11,
+          "byte_offset": 404,
+          "byte_length": 55,
+          "sha256": "5b62a8fdb2420883d05f744f5d0718b26683732d7795951eaf1068331cfd9cf0",
+          "text": "  participant 4 as multiline<br \t/>using #lt;br \t/#gt;\n"
+        },
+        {
+          "line": 12,
+          "byte_offset": 459,
+          "byte_length": 39,
+          "sha256": "4cce0adcf8551db4772df4ea313cae5b0a4f331c119377d78f9b0e9f4e8d3dab",
+          "text": "  1->>2: multiline<br>using #lt;br#gt;\n"
+        },
+        {
+          "line": 13,
+          "byte_offset": 498,
+          "byte_length": 49,
+          "sha256": "a61f86a7459b4f2e1eae4450ab0c65b855afd35bb127cdbeca06dbf187d574e3",
+          "text": "  note right of 2: multiline<br>using #lt;br#gt;\n"
+        },
+        {
+          "line": 14,
+          "byte_offset": 547,
+          "byte_length": 41,
+          "sha256": "50fd5a3cf01098a13e7f4ab73df3c063ed3495deb3beeaf995f089b4643c1537",
+          "text": "  2->>3: multiline<br/>using #lt;br/#gt;\n"
+        },
+        {
+          "line": 15,
+          "byte_offset": 588,
+          "byte_length": 51,
+          "sha256": "24d51a9be04aea5b0bc077528e80313ed640e0ef4dbd0e861a7a801cadda3f9e",
+          "text": "  note right of 3: multiline<br/>using #lt;br/#gt;\n"
+        },
+        {
+          "line": 16,
+          "byte_offset": 639,
+          "byte_length": 43,
+          "sha256": "ac02c1c823a60c698702ac0c9f5abbb8224e2f5b1051bc1bdfc37aa2fdfe7314",
+          "text": "  3->>4: multiline<br />using #lt;br /#gt;\n"
+        },
+        {
+          "line": 17,
+          "byte_offset": 682,
+          "byte_length": 53,
+          "sha256": "db43bd872fe53b682a9b01de462b9a837d427e79e5eeb8bc2681fc2702fafc6d",
+          "text": "  note right of 4: multiline<br />using #lt;br /#gt;\n"
+        },
+        {
+          "line": 18,
+          "byte_offset": 735,
+          "byte_length": 43,
+          "sha256": "1e627569f57ff5f1110167b3fb4e4b9f250fe5d3c4b3e097db6598ae277ccba3",
+          "text": "  4->>1: multiline<br />using #lt;br /#gt;\n"
+        },
+        {
+          "line": 19,
+          "byte_offset": 778,
+          "byte_length": 55,
+          "sha256": "0f5f1007247e87c2e353778de554947a8c2500704cda3c4b0ac8fc606d1e1cf6",
+          "text": "  note right of 1: multiline<br \t/>using #lt;br \t/#gt;\n"
+        }
+      ],
+      "model_source_bindings": [
+        {
+          "model_pointer": "/actors/0",
+          "source": {
+            "offset_utf8_bytes": 253,
+            "length_utf8_bytes": 46,
+            "text": "participant 1 as multiline<br>using #lt;br#gt;",
+            "sha256": "c509d02da63b43a1df5e78a98267b1861de1c138701bfe92a28f901c34b89124"
+          },
+          "derived_value": {
+            "id": "1",
+            "label": "multiline\nusing <br>",
+            "person": false
+          }
+        },
+        {
+          "model_pointer": "/actors/1",
+          "source": {
+            "offset_utf8_bytes": 302,
+            "length_utf8_bytes": 48,
+            "text": "participant 2 as multiline<br/>using #lt;br/#gt;",
+            "sha256": "e752aae7fc1ec29453bd71cadf084cd8495150c6926dbc1b06d9fcd3cc88e25b"
+          },
+          "derived_value": {
+            "id": "2",
+            "label": "multiline\nusing <br/>",
+            "person": false
+          }
+        },
+        {
+          "model_pointer": "/actors/2",
+          "source": {
+            "offset_utf8_bytes": 353,
+            "length_utf8_bytes": 50,
+            "text": "participant 3 as multiline<br />using #lt;br /#gt;",
+            "sha256": "c055b9d4c824f45e42df5cf5c383be8b782a3447790f9ab588daa19f1fcd9c43"
+          },
+          "derived_value": {
+            "id": "3",
+            "label": "multiline\nusing <br />",
+            "person": false
+          }
+        },
+        {
+          "model_pointer": "/actors/3",
+          "source": {
+            "offset_utf8_bytes": 406,
+            "length_utf8_bytes": 52,
+            "text": "participant 4 as multiline<br \t/>using #lt;br \t/#gt;",
+            "sha256": "b484e407cf6778fbcd243e6c11899746e5581e19478c9dd9bc7b102545324494"
+          },
+          "derived_value": {
+            "id": "4",
+            "label": "multiline\nusing <br \\u{0009}/>",
+            "person": false
+          }
+        },
+        {
+          "model_pointer": "/messages/0",
+          "source": {
+            "offset_utf8_bytes": 461,
+            "length_utf8_bytes": 36,
+            "text": "1->>2: multiline<br>using #lt;br#gt;",
+            "sha256": "2a303edc621548fc82078382f3d7cd0db26ab490a6f74050009eaf3b1ea7fc86"
+          },
+          "derived_value": {
+            "from": 0,
+            "to": 1,
+            "label": "multiline\nusing <br>",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        },
+        {
+          "model_pointer": "/notes/0",
+          "source": {
+            "offset_utf8_bytes": 500,
+            "length_utf8_bytes": 46,
+            "text": "note right of 2: multiline<br>using #lt;br#gt;",
+            "sha256": "e26e10feec72e53835bed72204d56a55a9857c9a35c5f0c88086c01a4532d25a"
+          },
+          "derived_value": {
+            "actors": [
+              1
+            ],
+            "text": "multiline\nusing <br>",
+            "position": "right",
+            "after": 0
+          }
+        },
+        {
+          "model_pointer": "/messages/1",
+          "source": {
+            "offset_utf8_bytes": 549,
+            "length_utf8_bytes": 38,
+            "text": "2->>3: multiline<br/>using #lt;br/#gt;",
+            "sha256": "094c779d7a26f56fab7969548938d092a55f7fae952cf2a644188d5fd4af5b66"
+          },
+          "derived_value": {
+            "from": 1,
+            "to": 2,
+            "label": "multiline\nusing <br/>",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        },
+        {
+          "model_pointer": "/notes/1",
+          "source": {
+            "offset_utf8_bytes": 590,
+            "length_utf8_bytes": 48,
+            "text": "note right of 3: multiline<br/>using #lt;br/#gt;",
+            "sha256": "0c0a2f571fe839d88f5361b4aa63f4dc737f8c0914c810b1cd26fe7b60f5a3db"
+          },
+          "derived_value": {
+            "actors": [
+              2
+            ],
+            "text": "multiline\nusing <br/>",
+            "position": "right",
+            "after": 1
+          }
+        },
+        {
+          "model_pointer": "/messages/2",
+          "source": {
+            "offset_utf8_bytes": 641,
+            "length_utf8_bytes": 40,
+            "text": "3->>4: multiline<br />using #lt;br /#gt;",
+            "sha256": "154264d96e9a5cd45b0d36de918be6f28ff35d04362aa1afe3138af89627f490"
+          },
+          "derived_value": {
+            "from": 2,
+            "to": 3,
+            "label": "multiline\nusing <br />",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        },
+        {
+          "model_pointer": "/notes/2",
+          "source": {
+            "offset_utf8_bytes": 684,
+            "length_utf8_bytes": 50,
+            "text": "note right of 4: multiline<br />using #lt;br /#gt;",
+            "sha256": "0da8d211b7011028d641d518b81f8a50777ab864ac6e4d643bea7f00376449fa"
+          },
+          "derived_value": {
+            "actors": [
+              3
+            ],
+            "text": "multiline\nusing <br />",
+            "position": "right",
+            "after": 2
+          }
+        },
+        {
+          "model_pointer": "/messages/3",
+          "source": {
+            "offset_utf8_bytes": 737,
+            "length_utf8_bytes": 40,
+            "text": "4->>1: multiline<br />using #lt;br /#gt;",
+            "sha256": "bdc702846445119e7f9b9493ebb36a57c50628a4730f97355e8d59e246b1836f"
+          },
+          "derived_value": {
+            "from": 3,
+            "to": 0,
+            "label": "multiline\nusing <br />",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        },
+        {
+          "model_pointer": "/notes/3",
+          "source": {
+            "offset_utf8_bytes": 780,
+            "length_utf8_bytes": 52,
+            "text": "note right of 1: multiline<br \t/>using #lt;br \t/#gt;",
+            "sha256": "5721d5e212f8659bf95ba0d098b45437b98c14f91ab98e413347360574fcb8be"
+          },
+          "derived_value": {
+            "actors": [
+              0
+            ],
+            "text": "multiline\nusing <br \\u{0009}/>",
+            "position": "right",
+            "after": 3
+          }
+        },
+        {
+          "model_pointer": "/order/0",
+          "source": {
+            "offset_utf8_bytes": 461,
+            "length_utf8_bytes": 36,
+            "text": "1->>2: multiline<br>using #lt;br#gt;",
+            "sha256": "2a303edc621548fc82078382f3d7cd0db26ab490a6f74050009eaf3b1ea7fc86"
+          },
+          "derived_value": {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          }
+        },
+        {
+          "model_pointer": "/order/1",
+          "source": {
+            "offset_utf8_bytes": 500,
+            "length_utf8_bytes": 46,
+            "text": "note right of 2: multiline<br>using #lt;br#gt;",
+            "sha256": "e26e10feec72e53835bed72204d56a55a9857c9a35c5f0c88086c01a4532d25a"
+          },
+          "derived_value": {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          }
+        },
+        {
+          "model_pointer": "/order/2",
+          "source": {
+            "offset_utf8_bytes": 549,
+            "length_utf8_bytes": 38,
+            "text": "2->>3: multiline<br/>using #lt;br/#gt;",
+            "sha256": "094c779d7a26f56fab7969548938d092a55f7fae952cf2a644188d5fd4af5b66"
+          },
+          "derived_value": {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          }
+        },
+        {
+          "model_pointer": "/order/3",
+          "source": {
+            "offset_utf8_bytes": 590,
+            "length_utf8_bytes": 48,
+            "text": "note right of 3: multiline<br/>using #lt;br/#gt;",
+            "sha256": "0c0a2f571fe839d88f5361b4aa63f4dc737f8c0914c810b1cd26fe7b60f5a3db"
+          },
+          "derived_value": {
+            "kind": "Note",
+            "index": 1,
+            "part": 0
+          }
+        },
+        {
+          "model_pointer": "/order/4",
+          "source": {
+            "offset_utf8_bytes": 641,
+            "length_utf8_bytes": 40,
+            "text": "3->>4: multiline<br />using #lt;br /#gt;",
+            "sha256": "154264d96e9a5cd45b0d36de918be6f28ff35d04362aa1afe3138af89627f490"
+          },
+          "derived_value": {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          }
+        },
+        {
+          "model_pointer": "/order/5",
+          "source": {
+            "offset_utf8_bytes": 684,
+            "length_utf8_bytes": 50,
+            "text": "note right of 4: multiline<br />using #lt;br /#gt;",
+            "sha256": "0da8d211b7011028d641d518b81f8a50777ab864ac6e4d643bea7f00376449fa"
+          },
+          "derived_value": {
+            "kind": "Note",
+            "index": 2,
+            "part": 0
+          }
+        },
+        {
+          "model_pointer": "/order/6",
+          "source": {
+            "offset_utf8_bytes": 737,
+            "length_utf8_bytes": 40,
+            "text": "4->>1: multiline<br />using #lt;br /#gt;",
+            "sha256": "bdc702846445119e7f9b9493ebb36a57c50628a4730f97355e8d59e246b1836f"
+          },
+          "derived_value": {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          }
+        },
+        {
+          "model_pointer": "/order/7",
+          "source": {
+            "offset_utf8_bytes": 780,
+            "length_utf8_bytes": 52,
+            "text": "note right of 1: multiline<br \t/>using #lt;br \t/#gt;",
+            "sha256": "5721d5e212f8659bf95ba0d098b45437b98c14f91ab98e413347360574fcb8be"
+          },
+          "derived_value": {
+            "kind": "Note",
+            "index": 3,
+            "part": 0
+          }
+        }
+      ],
+      "primary_rules": [
+        {
+          "id": "lexer-context-hash-comments-and-semicolon",
+          "kind": "primary_source",
+          "meaning": "Entity encoding happens before these comment rules; unprotected hash begins a comment in INITIAL/ID/ALIAS/LINE. NUM is unrelated. ID has its own boundaries.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/sequence-audit/official-sequenceDiagram-12.2.0.jison",
+            "file_sha256": "f3f21ae48e3c334fc259e3f78ac60ef70cf930ac6df2dd3c43f2b0de6f2b24db",
+            "line_start": 24,
+            "line_end": 39,
+            "offset_utf8_bytes": 509,
+            "length_utf8_bytes": 1621,
+            "sha256": "b8e2953fac871c0b6bc2a297d47b142f5f2d6d879a8122e0e80f1027f660c1ef",
+            "text": "[\\n]+                                                           return 'NEWLINE';\n\\s+                                                             /* skip all whitespace */\n<ID,ALIAS,LINE>((?!\\n)\\s)+                                      /* skip same-line whitespace */\n<INITIAL,ID,ALIAS,LINE>\\#[^\\n]*   \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/* skip comments */\n\\%%(?!\\{)[^\\n]*                                                 /* skip comments */\n[^\\}]\\%\\%[^\\n]*                                                 /* skip comments */\n([0-9]+(\\.[0-9]{1,2})?|\\.[0-9]{1,2})(?=[ \\n]+)    \t\t\t\treturn 'NUM';\n<ID>\\@\\{                                                        { this.begin('CONFIG'); return 'CONFIG_START'; }\n<CONFIG>[^\\}]+                                                  { return 'CONFIG_CONTENT'; }\n<CONFIG>\\}(?=\\s+as\\s)                                           { this.popState(); this.begin('ALIAS'); return 'CONFIG_END'; }\n<CONFIG>\\}                                                      { this.popState(); this.popState(); return 'CONFIG_END'; }\n<ID>[^<>:\\n,;@\\s]+(?=\\s*\\@\\{)                                   { yytext = yytext.trim(); return 'ACTOR'; }\n<ID>[^<>:\\n,;@\\s]+(?=\\s+as\\s)                                   { yytext = yytext.trim(); this.begin('ALIAS'); return 'ACTOR'; }\n<ID>[^<>:\\n,;@]+(?=\\s*[\\n;#]|$)                                 { yytext = yytext.trim(); this.popState(); return 'ACTOR'; }\n<ID>[^<>:\\n,;@]*\\<[^\\n]*                                        { this.popState(); return 'INVALID'; }\n<ID>[^\\n]+                                                      { yytext = yytext.trim(); this.popState(); return 'INVALID'; }\n"
+          }
+        },
+        {
+          "id": "rest-of-line-before-hash-semicolon",
+          "kind": "primary_source",
+          "meaning": "LINE restOfLine ends at unprotected #, newline or semicolon; both title forms are lexical tokens with whitespace, not starts_with(title) commands.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/sequence-audit/official-sequenceDiagram-12.2.0.jison",
+            "file_sha256": "f3f21ae48e3c334fc259e3f78ac60ef70cf930ac6df2dd3c43f2b0de6f2b24db",
+            "line_start": 53,
+            "line_end": 72,
+            "offset_utf8_bytes": 3461,
+            "length_utf8_bytes": 1806,
+            "sha256": "e5af535780fb9d0d3cc5476749993ddb13b9e787349cc17018dce99636772c79",
+            "text": "\"par_over\" \t\t\t\t\t\t\t\t\t\t\t\t\t\t{ this.begin('LINE'); return 'par_over'; }\n\"and\"                                                           { this.begin('LINE'); return 'and'; }\n\"critical\"                                                      { this.begin('LINE'); return 'critical'; }\n\"option\"                                                        { this.begin('LINE'); return 'option'; }\n\"break\"                                                         { this.begin('LINE'); return 'break'; }\n<LINE>(?:[:]?(?:no)?wrap:)?[^#\\n;]*                             { this.popState(); return 'restOfLine'; }\n\"end\"                                                           return 'end';\n\"left of\"                                                       return 'left_of';\n\"right of\"                                                      return 'right_of';\n\"links\"(?=[ \\t]+[^\\/\\\\\\+\\(\\)<>:\\n,;\\s\\-])                      return 'links';\n\"link\"(?=[ \\t]+[^\\/\\\\\\+\\(\\)<>:\\n,;\\s\\-])                       return 'link';\n\"properties\"(?=[ \\t]+[^\\/\\\\\\+\\(\\)<>:\\n,;\\s\\-])                 return 'properties';\n\"details\"(?=[ \\t]+[^\\/\\\\\\+\\(\\)<>:\\n,;\\s\\-])                    return 'details';\n\"over\"                                                          return 'over';\n\"note\"                                                          return 'note';\n\"activate\"                                                      { this.begin('ID'); return 'activate'; }\n\"deactivate\"                                                    { this.begin('ID'); return 'deactivate'; }\n\"title\"\\s[^#\\n;]+                                               return 'title';\n\"title:\"\\s[^#\\n;]+                                              return 'legacy_title';\naccTitle\\s*\":\"\\s*                                               { this.begin(\"acc_title\");return 'acc_title'; }\n"
+          }
+        },
+        {
+          "id": "semicolon-and-message-text-token",
+          "kind": "primary_source",
+          "meaning": "Semicolon is NEWLINE; actor syntax is separate from message markers.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/sequence-audit/official-sequenceDiagram-12.2.0.jison",
+            "file_sha256": "f3f21ae48e3c334fc259e3f78ac60ef70cf930ac6df2dd3c43f2b0de6f2b24db",
+            "line_start": 79,
+            "line_end": 87,
+            "offset_utf8_bytes": 5841,
+            "length_utf8_bytes": 864,
+            "sha256": "a3271feae91a199764b13d6662d1f5e60a4d05c5510d1f98e33447032d345572",
+            "text": "\"sequenceDiagram\"                                               return 'SD';\n\"autonumber\"                                                    return 'autonumber';\n\"off\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\treturn 'off';\n\",\"                                                             return ',';\n\";\"                                                             return 'NEWLINE';\n[^\\/\\\\\\+\\()\\+<\\->\\->:\\n,;]+((?!(\\-x|\\-\\-x|\\-\\)|\\-\\-\\)|\\-\\|\\\\|\\-\\\\|\\-\\/|\\-\\/\\/|\\-\\|\\/|\\/\\|\\-|\\\\\\|\\-|\\/\\/\\-|\\\\\\\\\\-|\\/\\|\\-|\\-\\-\\|\\\\|\\-\\-|\\(\\)))[\\-]*[^\\+<\\->\\->:\\n,;]+)*             { yytext = yytext.trim(); return 'ACTOR'; } //final_4.11\n\"->>\"                                                           return 'SOLID_ARROW';\n\"<<->>\"                                                           return 'BIDIRECTIONAL_SOLID_ARROW';\n\"-->>\"                                                          return 'DOTTED_ARROW';\n"
+          }
+        },
+        {
+          "id": "txt-unprotected-delimiters",
+          "kind": "primary_source",
+          "meaning": "TXT consumes ordinary text until unprotected #/newline/semicolon. Encoding protects atom semicolons first.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/sequence-audit/official-sequenceDiagram-12.2.0.jison",
+            "file_sha256": "f3f21ae48e3c334fc259e3f78ac60ef70cf930ac6df2dd3c43f2b0de6f2b24db",
+            "line_start": 116,
+            "line_end": 128,
+            "offset_utf8_bytes": 8685,
+            "length_utf8_bytes": 832,
+            "sha256": "4499a536204f4c564e2aa21666eb8faf978b25f360fa4ec068bde5f295991465",
+            "text": "\\\\\\|\\-                                                          return 'SOLID_ARROW_BOTTOM_REVERSE';\n\\/\\/\\-                                                          return 'STICK_ARROW_TOP_REVERSE';\n\\\\\\\\\\-                                                          return 'STICK_ARROW_BOTTOM_REVERSE';\n\n\":\"(?:(?:no)?wrap:)?[^#\\n;]*                                    return 'TXT';\n\":\"                             \t\t\t\t\t\t\t\treturn 'TXT';\n\"+\"                                                             return '+';\n\"-\"                                                             return '-';\n\"()\"                                                            return '()';\n<<EOF>>                                                         return 'NEWLINE';\n.                                                               return 'INVALID';\n\n/lex\n"
+          }
+        },
+        {
+          "id": "participant-alias-and-note-bindings",
+          "kind": "primary_source",
+          "meaning": "Participant AS and notes feed their complete text fields through parseMessage/text2; entity/BR processing must retain identity and note order.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/sequence-audit/official-sequenceDiagram-12.2.0.jison",
+            "file_sha256": "f3f21ae48e3c334fc259e3f78ac60ef70cf930ac6df2dd3c43f2b0de6f2b24db",
+            "line_start": 263,
+            "line_end": 287,
+            "offset_utf8_bytes": 14285,
+            "length_utf8_bytes": 1477,
+            "sha256": "60b73e5699c97c17fb56d0ba196644fd943e951cd21d17a5e3f133b22bd7edd9",
+            "text": "participant_statement\n\t: 'participant' actor 'AS' restOfLine 'NEWLINE' {$2.draw='participant'; $2.type='addParticipant';$2.description=yy.parseMessage($4); $$=$2;}\n\t| 'participant' actor 'NEWLINE' {$2.draw='participant'; $2.type='addParticipant';$$=$2;}\n\t| 'participant_actor' actor 'AS' restOfLine 'NEWLINE' {$2.draw='actor'; $2.type='addParticipant';$2.description=yy.parseMessage($4); $$=$2;}\n\t| 'participant_actor' actor 'NEWLINE' {$2.draw='actor'; $2.type='addParticipant'; $$=$2;}\n\t| 'destroy' actor 'NEWLINE' {$2.type='destroyParticipant'; $$=$2;}\n    | 'participant' actor_with_config 'AS' restOfLine 'NEWLINE' {$2.draw='participant'; $2.type='addParticipant'; $2.description=yy.parseMessage($4); $$=$2;}\n    | 'participant' actor_with_config 'NEWLINE' {$2.draw='participant'; $2.type='addParticipant'; $$=$2;}\n    | 'participant_actor' actor_with_config 'AS' restOfLine 'NEWLINE' {$2.draw='actor'; $2.type='addParticipant'; $2.description=yy.parseMessage($4); $$=$2;}\n    | 'participant_actor' actor_with_config 'NEWLINE' {$2.draw='actor'; $2.type='addParticipant'; $$=$2;}\n\n\t;\n\nnote_statement\n\t: 'note' placement actor text2\n\t{\n\t\t$$ = [$3, {type:'addNote', placement:$2, actor:$3.actor, text:$4}];}\n\t| 'note' 'over' actor_pair text2\n\t{\n\t\t// Coerce actor_pair into a [to, from, ...] array\n\t\t$2 = [].concat($3, $3).slice(0, 2);\n\t\t$2[0] = $2[0].actor;\n\t\t$2[1] = $2[1].actor;\n\t\t$$ = [$3, {type:'addNote', placement:yy.PLACEMENT.OVER, actor:$2.slice(0, 2), text:$4}];}\n\t;\n"
+          }
+        },
+        {
+          "id": "entity-shield-and-final-unshield",
+          "kind": "primary_source",
+          "meaning": "Shield ASCII #\\w+; before lexer; only all-decimal inner spelling is numeric. This is not arbitrary HTML support, signed numeric support or hex character-reference support.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/utils.ts",
+            "file_sha256": "4880a24ada719172bc45652cefa9a2defd6e8aaeba9ebbd7862108dd930baca9",
+            "line_start": 891,
+            "line_end": 927,
+            "offset_utf8_bytes": 26852,
+            "length_utf8_bytes": 928,
+            "sha256": "643e3f204aa9f19f8c4bfe545517f6e2bdbc46c73a495eadb6474d341b7abeb2",
+            "text": "/**\n * @param  text - text to be encoded\n * @returns\n */\nexport const encodeEntities = function (text: string): string {\n  let txt = text;\n\n  txt = txt.replace(/style.*:\\S*#.*;/g, function (s): string {\n    return s.substring(0, s.length - 1);\n  });\n  txt = txt.replace(/classDef.*:\\S*#.*;/g, function (s): string {\n    return s.substring(0, s.length - 1);\n  });\n\n  txt = txt.replace(/#\\w+;/g, function (s) {\n    const innerTxt = s.substring(1, s.length - 1);\n\n    const isInt = /^\\+?\\d+$/.test(innerTxt);\n    if (isInt) {\n      return 'ﬂ°°' + innerTxt + '¶ß';\n    } else {\n      return 'ﬂ°' + innerTxt + '¶ß';\n    }\n  });\n\n  return txt;\n};\n\n/**\n * Partially reverts encoding done via {@link encodeEntities}\n *\n * @param  text - text to be decoded\n * @returns\n */\nexport const decodeEntities = function (text: string): string {\n  return text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');\n};\n"
+          }
+        },
+        {
+          "id": "frontmatter-title-extraction",
+          "kind": "primary_source",
+          "meaning": "Primary uses js-yaml JSON_SCHEMA and truthy title.toString. Existing native title-only plain profile remains separate from whole YAML compatibility.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core12-source-primary/diagram-api__frontmatter.ts",
+            "file_sha256": "5fe9872a75c7f89bc3edb7876948b9dbbe9a844cabb8dfe57d254d3b0eba9ed1",
+            "line_start": 24,
+            "line_end": 69,
+            "offset_utf8_bytes": 741,
+            "length_utf8_bytes": 1266,
+            "sha256": "b26116b38faa92ec5336997dc03f9a8e91fd12c4ae9766f2bfec59fa3e903f1e",
+            "text": "export function extractFrontMatter(text: string): FrontMatterResult {\n  const match = matchFrontMatter(text);\n  if (!match) {\n    return {\n      text,\n      metadata: {},\n    };\n  }\n\n  // Dedent by the captured indent — js-yaml rejects tab-indented documents.\n  const indent = match.indent;\n  const yamlBody = indent\n    ? match.body\n        .split('\\n')\n        .map((line) => (line.startsWith(indent) ? line.slice(indent.length) : line))\n        .join('\\n')\n    : match.body;\n\n  let parsed: FrontMatterMetadata =\n    yaml.load(yamlBody, {\n      // To support config, we need JSON schema.\n      // https://www.yaml.org/spec/1.2/spec.html#id2803231\n      schema: yaml.JSON_SCHEMA,\n    }) ?? {};\n\n  // To handle runtime data type changes\n  parsed = typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};\n\n  const metadata: FrontMatterMetadata = {};\n\n  // Only add properties that are explicitly supported, if they exist\n  if (parsed.displayMode) {\n    metadata.displayMode = parsed.displayMode.toString() as GanttDiagramConfig['displayMode'];\n  }\n  if (parsed.title) {\n    metadata.title = parsed.title.toString();\n  }\n  if (parsed.config) {\n    metadata.config = parsed.config;\n  }\n\n  return {\n    text: text.slice(match.length),\n    metadata,\n  };\n}\n"
+          }
+        },
+        {
+          "id": "preprocess-order",
+          "kind": "primary_source",
+          "meaning": "CRLF normalization and frontmatter extraction precede directives/comments and entity encoding.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core12-source-primary/preprocess.ts",
+            "file_sha256": "8a58dda4b0f5481c743704c2c16512d9326e9153a637abdd1b943df1c4410052",
+            "line_start": 1,
+            "line_end": 30,
+            "offset_utf8_bytes": 0,
+            "length_utf8_bytes": 1057,
+            "sha256": "459064d9bd470ed4764de641874781f37d8e7e9567ef1e628732ab2d62e4bebd",
+            "text": "import { cleanupComments } from './diagram-api/comments.js';\nimport { extractFrontMatter } from './diagram-api/frontmatter.js';\nimport type { DiagramCode, DiagramMetadata } from './diagram-api/types.js';\nimport utils, { cleanAndMerge, removeDirectives } from './utils.js';\n\nconst cleanupText = (code: string) => {\n  return (\n    code\n      // parser problems on CRLF ignore all CR and leave LF;;\n      .replace(/\\r\\n?/g, '\\n')\n      // clean up html tags so that all attributes use single quotes, parser throws error on double quotes\n      .replace(\n        /<(\\w+)([^>]*)>/g,\n        (match, tag, attributes) => '<' + tag + attributes.replace(/=\"([^\"]*)\"/g, \"='$1'\") + '>'\n      )\n  );\n};\n\nconst processFrontmatter = (code: string) => {\n  const { text, metadata } = extractFrontMatter(code);\n  const { displayMode, title, config = {} } = metadata;\n  if (displayMode) {\n    // Needs to be supported for legacy reasons\n    if (!config.gantt) {\n      config.gantt = {};\n    }\n    config.gantt.displayMode = displayMode;\n  }\n\n  return { title, config, text };\n"
+          }
+        },
+        {
+          "id": "rows-and-br-regex",
+          "kind": "primary_source",
+          "meaning": "Primary case-insensitive regex </?br\\s*/?> recognizes BR whitespace; getRows also converts literal backslash-n in its own helper. Only actual BR spellings required by these twelve sources are included here.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/common.ts",
+            "file_sha256": "bf6a0cc85de418bb8171735a7317fd7e84f8ad79f4e975e378130f11728efb67",
+            "line_start": 1,
+            "line_end": 24,
+            "offset_utf8_bytes": 0,
+            "length_utf8_bytes": 846,
+            "sha256": "1cedf1f50a496f83529f2274df1b8abc334b55b913405ad377c41d3bc5ceaa82",
+            "text": "import DOMPurify from 'dompurify';\nimport { evaluate, getEffectiveHtmlLabels } from '../../config.js';\nimport type { MermaidConfig } from '../../config.type.js';\n\n// Remove and ignore br:s. The optional leading slash accepts the malformed-but-common\n// `</br>`, which HTML parsers already treat as a `<br>`; without it the tag survived as\n// literal text wherever labels are rendered as plain SVG text instead of HTML.\nexport const lineBreakRegex = /<\\/?br\\s*\\/?>/gi;\nconst lineBreakTestRegex = new RegExp(lineBreakRegex.source, 'i');\n\n/**\n * Gets the rows of lines in a string\n *\n * @param s - The string to check the lines for\n * @returns The rows in that string\n */\nexport const getRows = (s?: string): string[] => {\n  if (!s) {\n    return [''];\n  }\n  const str = breakToPlaceholder(s).replace(/\\\\n/g, '#br#');\n  return str.split('#br#');\n};\n\n"
+          }
+        },
+        {
+          "id": "br-placeholder-operation",
+          "kind": "primary_source",
+          "meaning": "Break replacement is on original markup, before final entity unshield.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/common.ts",
+            "file_sha256": "bf6a0cc85de418bb8171735a7317fd7e84f8ad79f4e975e378130f11728efb67",
+            "line_start": 130,
+            "line_end": 150,
+            "offset_utf8_bytes": 3787,
+            "length_utf8_bytes": 489,
+            "sha256": "3ed0d025608922f2be3878a15acccff0e039af2ae3747fc4b395d6e8d5fbb5b8",
+            "text": "};\n\n/**\n * Converts placeholders to line breaks in HTML\n *\n * @param s - HTML with placeholders\n * @returns HTML with breaks instead of placeholders\n */\nconst placeholderToBreak = (s: string): string => {\n  return s.replace(/#br#/g, '<br/>');\n};\n\n/**\n * Opposite of `placeholderToBreak`, converts breaks to placeholders\n *\n * @param s - HTML string\n * @returns String with placeholders\n */\nconst breakToPlaceholder = (s: string): string => {\n  return s.replace(lineBreakRegex, '#br#');\n};\n"
+          }
+        },
+        {
+          "id": "text-trimming-and-wrap-extraction",
+          "kind": "primary_source",
+          "meaning": "parseMessage/extractWrap trim field boundaries and preserve inner content; wrapping prefixes are not silently discarded by this cohort contract.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/sequenceDb.ts",
+            "file_sha256": "55b87176caa3e548be11a1582bd1c30317014f7d135ad34deff66a725b40b8e1",
+            "line_start": 355,
+            "line_end": 389,
+            "offset_utf8_bytes": 9520,
+            "length_utf8_bytes": 1124,
+            "sha256": "330a82a3fa57463352312e2f58c0f732b941d1c091331470ed11957f9e8add2e",
+            "text": "  private extractWrap(text?: string): { cleanedText?: string; wrap?: boolean } {\n    if (text === undefined) {\n      return {};\n    }\n    text = text.trim();\n    const wrap =\n      /^:?wrap:/.exec(text) !== null ? true : /^:?nowrap:/.exec(text) !== null ? false : undefined;\n    const cleanedText = (wrap === undefined ? text : text.replace(/^:?(?:no)?wrap:/, '')).trim();\n    return { cleanedText, wrap };\n  }\n\n  public autoWrap() {\n    // if setWrap has been called, use that value, otherwise use the value from the config\n    // TODO: refactor, always use the config value let setWrap update the config value\n    if (this.state.records.wrapEnabled !== undefined) {\n      return this.state.records.wrapEnabled;\n    }\n    return getConfig().sequence?.wrap ?? false;\n  }\n\n  public clear() {\n    this.state.reset();\n    commonClear();\n  }\n\n  public parseMessage(str: string) {\n    const trimmedStr = str.trim();\n    const { wrap, cleanedText } = this.extractWrap(trimmedStr);\n    const message = {\n      text: cleanedText,\n      wrap,\n    };\n    log.debug(`parseMessage: ${JSON.stringify(message)}`);\n    return message;\n  }\n"
+          }
+        },
+        {
+          "id": "draw-sequence-text-rows",
+          "kind": "primary_source",
+          "meaning": "Sequence text is split on actual BR regex before each SVG text node is populated.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/svgDraw.js",
+            "file_sha256": "002f90315d0e921a4212cc3a8e02ad4747e5d497243dc8bd83a934a41921fa3c",
+            "line_start": 192,
+            "line_end": 198,
+            "offset_utf8_bytes": 7147,
+            "length_utf8_bytes": 239,
+            "sha256": "d6027399b058afd7369c3fae363ddb39f4ace52fabbd42276481a5896e2d1844",
+            "text": "export const drawText = function (elem, textData) {\n  let prevTextHeight = 0;\n  let textHeight = 0;\n  const lines = textData.text.split(common.lineBreakRegex);\n\n  const [_textFontSize, _textFontSizePx] = parseFontSize(textData.fontSize);\n\n"
+          }
+        },
+        {
+          "id": "draw-sequence-text-safe-node",
+          "kind": "primary_source",
+          "meaning": "Text node assignment keeps escaped BR characters as text, not recursively parsed BR markup.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/svgDraw.js",
+            "file_sha256": "002f90315d0e921a4212cc3a8e02ad4747e5d497243dc8bd83a934a41921fa3c",
+            "line_start": 297,
+            "line_end": 309,
+            "offset_utf8_bytes": 10273,
+            "length_utf8_bytes": 318,
+            "sha256": "d466dc378e0c41019626108ec7772b4036ee38124425cb6eae818610e392cb7d",
+            "text": "\n    const text = line || ZERO_WIDTH_SPACE;\n    if (textData.tspan) {\n      const span = textElem.append('tspan');\n      span.attr('x', textData.x);\n      if (textData.fill !== undefined) {\n        span.attr('fill', textData.fill);\n      }\n      span.text(text);\n    } else {\n      textElem.text(text);\n    }\n    if (\n"
+          }
+        },
+        {
+          "id": "sanitize-text-boundary",
+          "kind": "primary_source",
+          "meaning": "Foreign sanitization/HTML policy is distinct from native strict plain text and visible unsafe-scalar disclosure; no arbitrary tag stripping is authorized.",
+          "source": {
+            "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/core153-next-source-primary/common.ts",
+            "file_sha256": "bf6a0cc85de418bb8171735a7317fd7e84f8ad79f4e975e378130f11728efb67",
+            "line_start": 66,
+            "line_end": 98,
+            "offset_utf8_bytes": 1959,
+            "length_utf8_bytes": 920,
+            "sha256": "2fbeff4afca8cd7a60e5a7a16ec02f2106f7c33c4b70a5e2d2c980391f951173",
+            "text": "\n  return sanitizedText;\n};\n\nconst sanitizeMore = (text: string, config: MermaidConfig) => {\n  if (getEffectiveHtmlLabels(config)) {\n    const level = config.securityLevel;\n    if (level === 'antiscript' || level === 'strict' || level === 'sandbox') {\n      text = removeScript(text);\n    } else if (level !== 'loose') {\n      text = breakToPlaceholder(text);\n      text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');\n      text = text.replace(/=/g, '&equals;');\n      text = placeholderToBreak(text);\n    }\n  }\n  return text;\n};\n\nexport const sanitizeText = (text: string, config: MermaidConfig): string => {\n  if (!text) {\n    return text;\n  }\n  if (config.dompurifyConfig) {\n    text = DOMPurify.sanitize(sanitizeMore(text, config), config.dompurifyConfig).toString();\n  } else {\n    text = DOMPurify.sanitize(sanitizeMore(text, config), {\n      FORBID_TAGS: ['style'],\n    }).toString();\n  }\n  return text;\n};\n\n"
+          }
+        }
+      ],
+      "original_runner_source_bindings": [
+        {
+          "path": "e2e/rendering/mmd-snapshots.spec.ts",
+          "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+          "full_sha256": "d4cebaf5f811a26f5954681d5e4c0235c28d146bedda1d07fc57bdfdd8364dbf",
+          "first_line": 41,
+          "last_line": 84,
+          "byte_offset": 1545,
+          "byte_length": 1942,
+          "span_sha256": "cde186a294faa3bed7d3dfe132df0b34838209c94e020b9decd5aee855e04db1",
+          "text": "const registerFixtureNode = (node: FixtureTree): void => {\n  for (const segment of [...node.children.keys()].sort()) {\n    test.describe(segment, () => {\n      registerFixtureNode(node.children.get(segment)!);\n    });\n  }\n\n  for (const relativePath of [...node.fixtures].sort()) {\n    // Read at registration time (sync, like the fixture file itself below):\n    // `tag` has to be a static option on the `test()` call, not something\n    // decided from inside the async test body.\n    const metadata = readFixtureMetadata(relativePath);\n    const tags = metadata?.tags?.map((tag) => (tag.startsWith('@') ? tag : `@${tag}`));\n\n    test(fixtureBaseName(relativePath), { tag: tags }, async ({ page }, testInfo) => {\n      if (metadata?.description) {\n        testInfo.annotations.push({ type: 'description', description: metadata.description });\n      } else {\n        // Not a failure — most fixtures don't have one yet — but flagged in the\n        // report rather than left silent, since a missing sidecar is otherwise\n        // invisible short of opening the fixture's folder directly.\n        testInfo.annotations.push({ type: 'metadata', description: 'No metadata found for test' });\n      }\n\n      let source: string;\n      try {\n        source = readFileSync(fixturePath(relativePath), 'utf8');\n      } catch (error) {\n        throw new Error(\n          `Failed to read mmd fixture ${relativePath}: ${error instanceof Error ? error.message : String(error)}`\n        );\n      }\n      const fixedClock = fixedClockFor(relativePath);\n      if (fixedClock) {\n        await page.clock.install({ time: new Date(fixedClock) });\n      }\n      // Mirror the fixture's storage path so Argos sheets group by diagram\n      // folder (e.g. diagrams/packet) rather than the runner spec file.\n      await imgSnapshotTest(page, testInfo, source, {\n        screenshotPath: `diagrams/${relativePath.replace(/\\.mmd$/i, '')}`,\n      });\n    });\n  }\n};\n",
+          "meaning": "Generic original full-source fixture runner; screenshot comparison is the original case obligation."
+        },
+        {
+          "path": "e2e/helpers/util.ts",
+          "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+          "full_sha256": "56fb233e38b19e8d13c1c5e95896e6d786b3e68154a3c8b3bdb5b2dc6286a44d",
+          "first_line": 73,
+          "last_line": 96,
+          "byte_offset": 2560,
+          "byte_length": 722,
+          "span_sha256": "025bc6ae27325d6dfdaaca3a4cc27e98ba874fb28f415b3ade8f6292b8186394",
+          "text": "export const imgSnapshotTest = async (\n  page: Page,\n  testInfo: TestInfo,\n  graphStr: string,\n  _options: E2EMermaidConfig = {},\n  api = false,\n  validation?: any\n): Promise<void> => {\n  const options: E2EMermaidConfig = {\n    ..._options,\n    fontFamily: _options.fontFamily ?? 'courier',\n    // @ts-ignore TODO: Fix type of fontSize\n    fontSize: _options.fontSize ?? '16px',\n    sequence: {\n      ...(_options.sequence ?? {}),\n      actorFontFamily: 'courier',\n      noteFontFamily: _options.sequence?.noteFontFamily ?? 'courier',\n      messageFontFamily: 'courier',\n    },\n  };\n\n  const url: string = mermaidUrl(graphStr, options, api);\n  await openURLAndVerifyRendering(page, testInfo, url, options, validation);\n};\n",
+          "meaning": "Browser font setup affects exact SVG measurement."
+        },
+        {
+          "path": "e2e/helpers/util.ts",
+          "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+          "full_sha256": "56fb233e38b19e8d13c1c5e95896e6d786b3e68154a3c8b3bdb5b2dc6286a44d",
+          "first_line": 124,
+          "last_line": 205,
+          "byte_offset": 4114,
+          "byte_length": 2742,
+          "span_sha256": "12dccc7025b80532b7e62b29622c44039ee377445286ddf933b1745619a6333b",
+          "text": "export const assertDiagramNotError = async (page: Page): Promise<void> => {\n  const svg = diagramSvg(page).first();\n  await expect(svg).not.toHaveAttribute('aria-roledescription', 'error');\n  await expect(svg.locator('.error-icon')).toHaveCount(0);\n};\n\nexport const openURLAndVerifyRendering = async (\n  page: Page,\n  testInfo: TestInfo,\n  url: string,\n  { screenshot = true, rejectErrorDiagram = true, ...options }: E2EMermaidConfig,\n  validation?: any\n): Promise<void> => {\n  const name: string = shortenScreenshotName(options.name ?? testInfo.titlePath.join(' '));\n\n  // Capture browser-side errors so a render failure reports the real cause\n  // instead of a bare \"svg not visible\" timeout.\n  const pageErrors: string[] = [];\n  const consoleErrors: string[] = [];\n  page.on('pageerror', (error) => pageErrors.push(`[pageerror] ${error.message}`));\n  page.on('console', (msg) => {\n    if (msg.type() === 'error') {\n      consoleErrors.push(`[console.error] ${msg.text()}`);\n    }\n  });\n\n  await startCoverage(page);\n  await page.goto(url);\n\n  // Prefer the explicit rendered flag from viewer.js; fall back to SVG visibility.\n  try {\n    await page.waitForFunction(() => (window as any).rendered === true, undefined, {\n      timeout: 5_000,\n    });\n  } catch {\n    try {\n      await diagramSvg(page).first().waitFor({ state: 'visible', timeout: 15_000 });\n    } catch (error) {\n      const details = [...pageErrors, ...consoleErrors];\n      if (details.length > 0) {\n        throw new Error(\n          `Diagram did not render (window.rendered never set, no SVG). Browser errors:\\n${details.join('\\n')}`\n        );\n      }\n      throw error;\n    }\n  }\n\n  // xssAttack() throws after injecting #the-malware and still leaves an SVG, so a\n  // catch-only check misses it. Do not fail on every pageerror: error-diagram\n  // tests and \"render after error\" cases throw mermaid parse errors on purpose.\n  const xssErrors = pageErrors.filter((msg) => msg.includes('XSS Succeeded'));\n  if (xssErrors.length > 0) {\n    throw new Error(`XSS payload executed during render:\\n${xssErrors.join('\\n')}`);\n  }\n\n  if (options.securityLevel === 'sandbox') {\n    const iframe = page.locator('iframe');\n    await expect(iframe).toBeVisible();\n    if (validation) {\n      await validation(iframe);\n    }\n  } else {\n    const svg = diagramSvg(page).first();\n    await expect(svg).toBeVisible();\n    await expect(svg).not.toHaveAttribute('viewbox'); // cspell:ignore viewbox\n\n    if (rejectErrorDiagram) {\n      await assertDiagramNotError(page);\n    }\n\n    if (validation) {\n      await validation(svg);\n    }\n  }\n\n  if (screenshot) {\n    await verifyScreenshot(page, testInfo, name, options.screenshotPath, url);\n  }\n\n  await collectCoverage(page, testInfo);\n};\n",
+          "meaning": "Original renderer invocation and render/error checks."
+        },
+        {
+          "path": "e2e/helpers/util.ts",
+          "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+          "full_sha256": "56fb233e38b19e8d13c1c5e95896e6d786b3e68154a3c8b3bdb5b2dc6286a44d",
+          "first_line": 207,
+          "last_line": 295,
+          "byte_offset": 6857,
+          "byte_length": 3785,
+          "span_sha256": "0c9aede6ac081a1a47ff8c4cd1646578e272201c511ac3a4903238ba34529be7",
+          "text": "export const verifyScreenshot = async (\n  page: Page,\n  testInfo: TestInfo,\n  name: string,\n  screenshotPath?: string,\n  pageUrl?: string\n): Promise<void> => {\n  const useAppli = !!process.env.USE_APPLI;\n  const useArgos = process.env.RUN_VISUAL_TEST === 'true';\n\n  // Capture only the rendered diagram SVG so each screenshot is a tight crop of\n  // the diagram rather than the whole viewport (mostly empty space). Fall back\n  // to the full page when there is no top-level diagram SVG — e.g. sandboxed\n  // diagrams (the SVG lives in an iframe) and the iife/xss/external-diagram tests.\n  const svg = diagramSvg(page).first();\n  const hasSvg = (await svg.count()) > 0;\n  const target = hasSvg ? svg : page;\n  const specRelPath = relative(testInfo.project.testDir, testInfo.file).split(sep).join('/');\n\n  if (useAppli) {\n    // One Applitools batch per diagram folder or spec file, a check per screenshot\n    // scoped to the diagram SVG (full window when there is none). API key, branch,\n    // and parent branch are read from the APPLITOOLS_* env vars by the SDK.\n    // Imported lazily so the SDK is only loaded for Applitools runs.\n    const { Eyes, ClassicRunner, Target } = await import('@applitools/eyes-playwright');\n    const runId = process.env.APPLITOOLS_BATCH_ID;\n    if (!runId) {\n      throw new Error(\n        'APPLITOOLS_BATCH_ID is unset; playwright.config.ts should seed it for USE_APPLI runs'\n      );\n    }\n    const eyes = new Eyes(new ClassicRunner());\n    eyes.setConfiguration({\n      appName: 'Mermaid',\n      batch: applitoolsBatch(runId, specRelPath, screenshotPath),\n    });\n    await eyes.open(page, 'Mermaid', applitoolsTestName(name, specRelPath, screenshotPath));\n    await eyes.check(\n      'Click!',\n      hasSvg ? Target.region('svg[aria-roledescription]') : Target.window().fully()\n    );\n    await eyes.close(true);\n    return;\n  }\n\n  if (useArgos) {\n    // Capture a native PNG; a dedicated CI job composites these into sheets\n    // (grouped by folder) and uploads them once.\n    const screenshotDir = process.env.SCREENSHOT_DIR ?? 'e2e/screenshots';\n    const sanitizeSegment = (segment: string) =>\n      segment.replace(/[^\\w.-]+/g, '-').replace(/^-+|-+$/g, '');\n    let outPath: string;\n    if (screenshotPath) {\n      // Mirror the source's storage path (e.g. diagrams/<type>/<name>) so the\n      // sheets group by that folder rather than the runner spec file.\n      const safeSubpath = screenshotPath.split('/').map(sanitizeSegment).join('/');\n      outPath = join(screenshotDir, `${safeSubpath}.png`);\n    } else {\n      // `name` carries the spec path + test title and may contain characters\n      // GitHub artifacts reject (\" : < > | * ?) or path separators; flatten it to\n      // a safe slug. The spec folder lives in specRelPath, which the batch job\n      // groups by, so the filename only needs to be unique within the spec.\n      outPath = join(screenshotDir, specRelPath, `${sanitizeSegment(name)}.png`);\n    }\n    mkdirSync(dirname(outPath), { recursive: true });\n    const buffer = await target.screenshot({ animations: 'disabled', scale: 'device' });\n    writeFileSync(outPath, buffer);\n    await writeArgosMetadataSidecar(\n      outPath,\n      buildCaptureMetadata({\n        testInfo,\n        screenshotPath,\n        url: pageUrl ?? page.url(),\n      })\n    );\n  } else {\n    const snapshotName = `${name}.png`;\n    const snapshotPath = testInfo.snapshotPath(snapshotName, { kind: 'screenshot' });\n\n    if (!existsSync(snapshotPath)) {\n      mkdirSync(dirname(snapshotPath), { recursive: true });\n      const screenshot = await target.screenshot({ animations: 'disabled', scale: 'device' });\n      writeFileSync(snapshotPath, screenshot);\n      return;\n    }\n\n    await expect(target).toHaveScreenshot(snapshotName);\n  }\n};\n",
+          "meaning": "Conditional Applitools/Argos/local snapshot comparison profiles; no native execution claimed."
+        }
+      ],
+      "reviewed_source_variant": {
+        "id": "merman/6579c50cc8f483180d03",
+        "input": "sequenceDiagram\nparticipant 1 as multiline<br>using #lt;br#gt;\nparticipant 2 as multiline<br/>using #lt;br/#gt;\nparticipant 3 as multiline<br />using #lt;br /#gt;\nparticipant 4 as multiline<br \t/>using #lt;br \t/#gt;\n1->>2: multiline<br>using #lt;br#gt;\nnote right of 2: multiline<br>using #lt;br#gt;\n2->>3: multiline<br/>using #lt;br/#gt;\nnote right of 3: multiline<br/>using #lt;br/#gt;\n3->>4: multiline<br />using #lt;br /#gt;\nnote right of 4: multiline<br />using #lt;br /#gt;\n4->>1: multiline<br />using #lt;br /#gt;\nnote right of 1: multiline<br \t/>using #lt;br \t/#gt;\n    \n",
+        "input_sha256": "6579c50cc8f483180d03105707dda79694bfe1c4412c35cdb6ddbc9c869f6d39",
+        "model_sha256": "a0b7b9f0a2c07f5b6da412e29c1aea6cc57af6880f354ed0715338818803c1af",
+        "manifest": "tests/fixtures/mermaid_terminal/merman/cases.json",
+        "manifest_sha256": "89ce2ef6ad779481285ce61b771a64fd059b17a824eb2c292934ff13393562db",
+        "json_pointer": "/cases/728",
+        "case_sha256": "3d6778760846bff0aacddeb9efb4451f7ce0ac346c423fe6bd94922868ad57e1",
+        "original_assertion_unit_ids": [
+          "cf0fc4100c19aff8d64457e47324432a90e9297f984a91a15fd93f5e2f73b540"
+        ],
+        "equality_rule": "Only remove leading horizontal indentation per physical statement and terminal empty lines. Preserve every inner space, TAB, tag, entity atom and statement order. Never use this normalization in production."
+      },
+      "source_comparison": [
+        {
+          "statement_index": 0,
+          "official_statement": "sequenceDiagram",
+          "reviewed_variant_statement": "sequenceDiagram",
+          "equal": true
+        },
+        {
+          "statement_index": 1,
+          "official_statement": "participant 1 as multiline<br>using #lt;br#gt;",
+          "reviewed_variant_statement": "participant 1 as multiline<br>using #lt;br#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 2,
+          "official_statement": "participant 2 as multiline<br/>using #lt;br/#gt;",
+          "reviewed_variant_statement": "participant 2 as multiline<br/>using #lt;br/#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 3,
+          "official_statement": "participant 3 as multiline<br />using #lt;br /#gt;",
+          "reviewed_variant_statement": "participant 3 as multiline<br />using #lt;br /#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 4,
+          "official_statement": "participant 4 as multiline<br \t/>using #lt;br \t/#gt;",
+          "reviewed_variant_statement": "participant 4 as multiline<br \t/>using #lt;br \t/#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 5,
+          "official_statement": "1->>2: multiline<br>using #lt;br#gt;",
+          "reviewed_variant_statement": "1->>2: multiline<br>using #lt;br#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 6,
+          "official_statement": "note right of 2: multiline<br>using #lt;br#gt;",
+          "reviewed_variant_statement": "note right of 2: multiline<br>using #lt;br#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 7,
+          "official_statement": "2->>3: multiline<br/>using #lt;br/#gt;",
+          "reviewed_variant_statement": "2->>3: multiline<br/>using #lt;br/#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 8,
+          "official_statement": "note right of 3: multiline<br/>using #lt;br/#gt;",
+          "reviewed_variant_statement": "note right of 3: multiline<br/>using #lt;br/#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 9,
+          "official_statement": "3->>4: multiline<br />using #lt;br /#gt;",
+          "reviewed_variant_statement": "3->>4: multiline<br />using #lt;br /#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 10,
+          "official_statement": "note right of 4: multiline<br />using #lt;br /#gt;",
+          "reviewed_variant_statement": "note right of 4: multiline<br />using #lt;br /#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 11,
+          "official_statement": "4->>1: multiline<br />using #lt;br /#gt;",
+          "reviewed_variant_statement": "4->>1: multiline<br />using #lt;br /#gt;",
+          "equal": true
+        },
+        {
+          "statement_index": 12,
+          "official_statement": "note right of 1: multiline<br \t/>using #lt;br \t/#gt;",
+          "reviewed_variant_statement": "note right of 1: multiline<br \t/>using #lt;br \t/#gt;",
+          "equal": true
+        }
+      ],
+      "non_equivalent_variants": [
+        {
+          "id": "merman/b33649b1fa7c310d2968",
+          "model_sha256": "3249572a355a0dea41a9c7f498c18410eed05dd822d4b2fd52f718b4f9672239",
+          "exact_statement_variant": false
+        },
+        {
+          "id": "merman/d12515ef8b36ea7be7cf",
+          "model_sha256": "ab81cb1338aea2d53443edd9f79a826544c434c937554612cd976ac20b09e39f",
+          "exact_statement_variant": false
+        }
+      ]
+    }
+  ],
+  "source_contract": {
+    "path": "sequence-core12-text-syntax-source-contract.json",
+    "sha256": "77bb245f06c2c9109107c6c43f8d9b5edac1cb870bfecbb1d75e7b316fc46e7b"
+  },
+  "denominators_unchanged": {
+    "official_raw": 2145,
+    "official_body": 593,
+    "official_matrix": 2738,
+    "sequence_body": 193,
+    "vendor_sequence_records": 683,
+    "vendor_sequence_exact_inputs": 667
+  },
+  "counts": {
+    "actors": 4,
+    "messages": 4,
+    "notes": 4,
+    "events": 8,
+    "raw_candidate_admissions": 0,
+    "body_source_candidates": 1
+  }
+}

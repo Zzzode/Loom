@@ -1,0 +1,4 @@
+title(bytes=49)="before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}"
+actors=[bytes=5 "Alice"]
+section(bytes=4)="Work"
+  - task(bytes=4)="Task" score=5 people=[bytes=5 "Alice"]

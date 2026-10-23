@@ -1,0 +1,18 @@
+                 |o-|
+                 |  |
+                 |  |
++---------------+|  |+-----------+
+| <<interface>> ||  || Dog       |
+| Animal        ||  |+-----------+
++---------------+   || bark()    |
+                     | species() |
+                     +-----------+
+
++---------------+    +-----------------------------+    +-----+
+| <<interface>> |    | note                        |    | Cat |
+| Animal        |    | should have no members area |    +-----+
++---------------+    +-----------------------------+
+
+relations:
+id(bytes=10)="interface1" interfaceRef(id(bytes=10)="interface1" label(bytes=6)="Animal" target(bytes=3)="Cat" ordinal=2 ()-- id(bytes=3)="Cat"
+id(bytes=5)="note0"                                                                                                      ..   id(bytes=3)="Cat"

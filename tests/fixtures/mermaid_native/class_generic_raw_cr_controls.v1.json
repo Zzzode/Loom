@@ -1,0 +1,138 @@
+{
+  "cases": [
+    {
+      "authority": "Initial native whole-source profile boundary. Bare CR is an owning statement delimiter in fixed preprocess/lexer; no upstream-invalid blanket assertion or partial graph.",
+      "name": "CR_after_generic_before_edge",
+      "source": "classDiagram\nA~T~\r--> B\n",
+      "source_sha256": "232d5c9624451ef0a851d784840f664eff566b872ac64d7c59f9677f644498f4",
+      "whole_native_model": null,
+      "whole_native_model_sha256": null
+    },
+    {
+      "authority": "Initial native whole-source profile boundary. Bare CR is an owning statement delimiter in fixed preprocess/lexer; no upstream-invalid blanket assertion or partial graph.",
+      "name": "CR_in_prior_statement",
+      "source": "classDiagram\nclass A\r{}\nclass B~T~\n",
+      "source_sha256": "e8ed51eb35c0d910c56a95b617d27e47f00f8dfbf0aebe8f2e8d5214acb42d09",
+      "whole_native_model": null,
+      "whole_native_model_sha256": null
+    },
+    {
+      "authority": "Initial native whole-source profile boundary. Bare CR is an owning statement delimiter in fixed preprocess/lexer; no upstream-invalid blanket assertion or partial graph.",
+      "name": "CR_after_declaration",
+      "source": "classDiagram\nclass A~U~\rclass B\n",
+      "source_sha256": "1ed965063bb7318175c673681ca77870e2c2cdf0db16def33d0b2aa878e59307",
+      "whole_native_model": null,
+      "whole_native_model_sha256": null
+    },
+    {
+      "authority": "Initial native whole-source profile boundary. Bare CR is an owning statement delimiter in fixed preprocess/lexer; no upstream-invalid blanket assertion or partial graph.",
+      "name": "CR_after_operator",
+      "source": "classDiagram\nA~U~ -->\r B\n",
+      "source_sha256": "63c4918ce98df59da6259edf43afe97493824a018730f8406e692c0b35be8883",
+      "whole_native_model": null,
+      "whole_native_model_sha256": null
+    },
+    {
+      "authority": "Initial native whole-source profile boundary. Bare CR is an owning statement delimiter in fixed preprocess/lexer; no upstream-invalid blanket assertion or partial graph.",
+      "name": "CR_before_central_label",
+      "source": "classDiagram\nA --> B~V~\r: caption\n",
+      "source_sha256": "acf6705bf85febd7779ab18e4bedc41c37541cfb6f2d71c3f55ed117f2327093",
+      "whole_native_model": null,
+      "whole_native_model_sha256": null
+    },
+    {
+      "authority": {
+        "LF_source_sha256": "2ed8556d8a0ef0af3195d0abdf484e62cf13e05ad3f958e1aa79d3fd9ebdfb07",
+        "complete_LF_source": "classDiagram\nclass A~U~\n",
+        "parent_file": "build/mermaid-renderer-research-20261020/relations-audit/class481-source-contract/null192-source-closure/remaining163-next-source-audit/generic-header-source-design/native-test-first/paper-control-r1/class_generic13_source_native_facts.r1.json",
+        "parent_sha256": "1ba75c3739a0141f06c0773362c860db3f6b0efcd620a2f683cf97b48bf97311",
+        "pointer": "/papers/0",
+        "rule": "Fixed preprocess cleanUpText normalizes CRLF to LF; only physical line endings differ, all terminal semantic facts remain exact. No rendering-derived Model."
+      },
+      "name": "CRLF_single_generic",
+      "source": "classDiagram\r\nclass A~U~\r\n",
+      "source_sha256": "c68a59295d5e8f4716390a9976eaf4f631eb3dcca5a5f573d2fcf95db78d591e",
+      "whole_native_model": {
+        "direction": "TB",
+        "entities": [
+          {
+            "headers": [
+              [
+                "A<U>"
+              ]
+            ],
+            "id": "class:41",
+            "label": "A<U>",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [],
+        "notes": [],
+        "relations": []
+      },
+      "whole_native_model_sha256": "49854305e6afd1bb47890609a0ba7d4b44479a5aadb72614c153b1a8e4efd1de"
+    },
+    {
+      "authority": {
+        "LF_source_sha256": "1a4393c676cdfdfcbee18029366442ee25d99681f9c83c815e3a4e0a70061181",
+        "complete_LF_source": "classDiagram\nA~Key~ --> B~Value~ : uses\n",
+        "parent_file": "build/mermaid-renderer-research-20261020/relations-audit/class481-source-contract/null192-source-closure/remaining163-next-source-audit/generic-header-source-design/producer-design-v1/type-origin-r1/branch-controls/class_generic_branch_controls.v1.json",
+        "parent_sha256": "bb4581aece9a14c14923ad7c74d97f13e977d79dfc1d08d1cf25dc439f941027",
+        "pointer": "/cases/6",
+        "rule": "Fixed preprocess cleanUpText normalizes CRLF to LF; only physical line endings differ, all terminal semantic facts remain exact. No rendering-derived Model."
+      },
+      "name": "CRLF_two_typed_endpoints",
+      "source": "classDiagram\r\nA~Key~ --> B~Value~ : uses\r\n",
+      "source_sha256": "8d58fa7e1af36271b444bfb1f2d08cb98d374a1bc772caea3e66d68ba3056ae7",
+      "whole_native_model": {
+        "direction": "TB",
+        "entities": [
+          {
+            "headers": [
+              [
+                "A<Key>"
+              ]
+            ],
+            "id": "class:41",
+            "label": "A<Key>",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "B<Value>"
+              ]
+            ],
+            "id": "class:42",
+            "label": "B<Value>",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [],
+        "notes": [],
+        "relations": [
+          {
+            "end": "arrow",
+            "label": "uses",
+            "order": 0,
+            "source": "class:41",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:42"
+          }
+        ]
+      },
+      "whole_native_model_sha256": "7451215e015d77909df65623b5b519036fee36b5f838994a1b54524a7f8a8685"
+    }
+  ],
+  "qualification": "Root authored source control proposal; preserve original R1 P1 and all frozen sources. No execution/Model admission.",
+  "schema": "class_generic_source_origin_native_controls/v1"
+}

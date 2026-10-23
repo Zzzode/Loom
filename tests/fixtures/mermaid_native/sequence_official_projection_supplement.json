@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "baseline_manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+  "source_facts": {
+    "path": "sequence_official_fractional1_facts.json",
+    "sha256": "66e42d2d47f8e7cbdb70b001c48c861061ffd77fb020bcf429bf4bbb36178958",
+    "schema": 1,
+    "model_schema": "sequence_native_full_model_number_text/v1",
+    "case_index": 0
+  },
+  "promotions": [
+    {
+      "path": "sequence/nightly-check/should-render-a-sequence-diagram-with-sequence-numbers-that-are-decimals-and-increase-by-a-decimal-value.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "57af62686edfb3931ec973330780a11ed12cbdc93c9e65485a1ee7561d28c83b",
+      "body_offset_utf8_bytes": 200,
+      "body_sha256": "c6e769ceee766c610f2d38a713a81a4d5b9069c7097025112611a74ba31076da",
+      "full_model_sha256": "c179c2a5530eb51d1f977430a1ab1ad622971bd2007b14d5a899d93dc7d76b3a",
+      "baseline_expectation_sha256": "e548c5084d4b1d74e15460b54a76be4f11a59388cb91588e67764da08ef50000",
+      "effective": {
+        "expected": "drawn",
+        "reason": "reviewed-native-sequence-fractional-number-text-body",
+        "checks": {
+          "labels": [
+            "Alice",
+            "Bob",
+            "10.1. Hello Bob, how are you?",
+            "10.11. I am good thanks!",
+            "10.12. That is good to hear!",
+            "10.13. See you later!"
+          ],
+          "arrows": 0,
+          "ordering": [
+            {
+              "before": "Alice",
+              "after": "Bob",
+              "axis": "x"
+            },
+            {
+              "before": "10.1. Hello Bob, how are you?",
+              "after": "10.11. I am good thanks!",
+              "axis": "y"
+            },
+            {
+              "before": "10.11. I am good thanks!",
+              "after": "10.12. That is good to hear!",
+              "axis": "y"
+            },
+            {
+              "before": "10.12. That is good to hear!",
+              "after": "10.13. See you later!",
+              "axis": "y"
+            }
+          ]
+        },
+        "snapshot": "sequence_official_fractional1_body.txt"
+      },
+      "snapshot_sha256": "1b756422b696fe5e874867fe105d248bee5ef182f59331bd6b0b28fca82a5c8d",
+      "reason": "Body-only reviewed native projection with complete source-Model binding; original description-frontmatter admission remains separate source metadata."
+    }
+  ]
+}

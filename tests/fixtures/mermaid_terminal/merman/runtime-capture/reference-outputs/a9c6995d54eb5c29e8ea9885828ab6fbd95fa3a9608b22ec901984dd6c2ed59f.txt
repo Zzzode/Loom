@@ -1,0 +1,11 @@
+titleDisplay: yAxis(bytes=9)="yAxisName"
+xDomain: linear authored=[1,3] resolved=[1,3]
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=1)="1" value=23 pointLabel=none clipped=false}, {index=1 x(bytes=1)="2" value=-45 pointLabel=none clipped=false}, {index=2 x(bytes=1)="3" value=56.6 pointLabel=none clipped=false}] orphanPointLabels=[]
+  56.6 +        ###
+ 36.28 +        ###
+ 15.96 +###     ###
+ -4.36 +###     ###
+-24.68 +###     ###
+   -45 +-+---+---+-
+         1   2   3
+titleDisplay: xAxis(bytes=9)="xAxisName"

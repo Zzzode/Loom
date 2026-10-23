@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "basis": "Independent source-only all101 title inventory and complete pinned frontmatter function catalog. No production/output/oracle parser was used to select facts. Native production/fixtures untouched.",
+  "upstream": {
+    "commit": "5f00e3d9ac9fc96a19859d502333e35b87d2ffea",
+    "license": "MIT",
+    "repository": "https://github.com/AlexanderGrooff/mermaid-ascii",
+    "tag": "1.6.1"
+  },
+  "counts": {
+    "cases": 1,
+    "actors": 2,
+    "messages": 1,
+    "order": 1,
+    "titles": 1
+  },
+  "cases": [
+    {
+      "id": "mermaid_ascii_c3b1faed91d6f5f6",
+      "input": "---\ntitle: Login flow\n---\nsequenceDiagram\nAlice->>Bob: Hi",
+      "input_sha256": "c3b1faed91d6f5f60c28f61811f4ffd11a2c46b11e67958855ea26d436e2c4f9",
+      "original_model_sha256": "2a7833f187d15807d3d860eec8b11cca43edb86dd8cf8d838db385ca4d7079a6",
+      "existing_source_supplement": {
+        "id": "mermaid_ascii_c3b1faed91d6f5f6",
+        "input_sha256": "c3b1faed91d6f5f60c28f61811f4ffd11a2c46b11e67958855ea26d436e2c4f9",
+        "model_sha256": "2a7833f187d15807d3d860eec8b11cca43edb86dd8cf8d838db385ca4d7079a6",
+        "actor_declarations": [],
+        "implicit_role": "participant",
+        "authored_titles": [
+          {
+            "text": "Login flow",
+            "byte_offset": 4,
+            "source": "title: Login flow"
+          }
+        ],
+        "color_regions": [],
+        "display_sensitive_source_fields": [],
+        "profile_extensions": [],
+        "explicit_break_fields": []
+      },
+      "model": {
+        "title": "Login flow",
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hi",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          }
+        ]
+      },
+      "source_witnesses": [
+        {
+          "offset_utf8_bytes": 4,
+          "text": "title: Login flow"
+        },
+        {
+          "offset_utf8_bytes": 26,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 42,
+          "text": "Alice->>Bob: Hi"
+        }
+      ],
+      "native_geometry_obligations": [
+        "Exact full title row above all participant headers, figures and box/fragment ink.",
+        "One complete blank row separating title from diagram.",
+        "Exactly two participant identities and one complete Alice->Bob Filled solid Hi message with no extra ink.",
+        "Title, actors, routes, following Markdown sentinel and same-node wide/narrow/restored semantics must all be preserved."
+      ],
+      "qualification": "Source-only complete title property cohort1, not a cross-family/frontmatter parser implementation or original API/ASCII graduation."
+    }
+  ]
+}

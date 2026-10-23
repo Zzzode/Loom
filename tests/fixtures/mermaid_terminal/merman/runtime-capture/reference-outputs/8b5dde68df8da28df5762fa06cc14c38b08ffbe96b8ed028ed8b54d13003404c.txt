@@ -1,0 +1,10 @@
++----------------------------------------------------------------------------------------+
+| HOSPITAL                                                                               |
++----------------------------------------------------------------------------------------+
+| type(bytes=3)="int" name(bytes=2)="id" keys=[bytes=2 "PK"] comment(bytes=0)=""         |
+| type(bytes=3)="int" name(bytes=9)="doctor_id" keys=[bytes=2 "FK"] comment(bytes=0)=""  |
+| type(bytes=6)="string" name(bytes=7)="address" keys=[bytes=2 "UK"] comment(bytes=0)="" |
+| type(bytes=6)="string" name(bytes=4)="name" keys=[] comment(bytes=0)=""                |
+| type(bytes=6)="string" name(bytes=12)="phone_number" keys=[] comment(bytes=0)=""       |
+| type(bytes=6)="string" name(bytes=10)="fax_number" keys=[] comment(bytes=0)=""         |
++----------------------------------------------------------------------------------------+

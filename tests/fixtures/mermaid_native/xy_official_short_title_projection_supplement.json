@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "baseline_manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+  "source_facts": {
+    "path": "xy_official_short_title_source_facts.json",
+    "sha256": "00dd7b8d32638825d990f4bd5aaec1e2dda1bd0cc37c875d0f052ff7939d3db5",
+    "model_schema": "xy_source_full_semantics_with_foreign_layout/v1"
+  },
+  "promotions": [
+    {
+      "path": "xychart/nightly-check/should-drop-the-title-when-the-chart-is-too-short.mmd",
+      "track": "original",
+      "raw_sha256": "b2735f4436f20e52fddbae28ae5cf087f6a8023ae7b1f137a27d6b114e2e28c9",
+      "raw_bytes": 222,
+      "body_offset_utf8_bytes": 58,
+      "body_sha256": "3dd99189de46ead1997dea307b9012f58abd9fbe9e1d6ce43e04ce003ed95178",
+      "full_model_sha256": "3018f9355d47cb2d5a464d5f6b3cdac7dbdf71c61284132f58cb47e1f0060d0a",
+      "baseline_expectation_sha256": "bea4343d2e21b8af94cfa40208dea3e272061db74bfe18224a5e696eff599dd3",
+      "effective": {
+        "expected": "drawn",
+        "reason": "reviewed-native-xy-fixed-cell-title-preserving-projection",
+        "checks": {
+          "labels": [
+            "Too short for a title",
+            "Elapsed Time",
+            "Percentage (%)",
+            "CPU"
+          ],
+          "arrows": 0,
+          "ordering": []
+        },
+        "snapshot": "xy_official_short_title_raw.txt"
+      },
+      "snapshot_sha256": "07d0d64f26307abb2a5846ed4bd82131d3801f2de5135354813af4d3bd22af4c",
+      "reason": "Complete raw source and metadata are bound. Fixed-cell native projection preserves the authored title; original height60 SVG title-omission/font/pixel predicates remain non-equivalent pending."
+    }
+  ]
+}

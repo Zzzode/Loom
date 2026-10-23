@@ -1,0 +1,12 @@
+ ┌───┐
+ │ A │
+ └───┘
+   │
+this is a very long label
+   that might overflow
+   │
+   │
+   ▼
+ ┌───┐
+ │ B │
+ └───┘

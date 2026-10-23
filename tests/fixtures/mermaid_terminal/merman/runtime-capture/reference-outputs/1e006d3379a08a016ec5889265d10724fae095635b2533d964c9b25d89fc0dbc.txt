@@ -1,0 +1,39 @@
++------------+     +------+
+| Alice, the |     |      |
+| talkative  |     | John |
+|    one     |     |      |
++------+-----+     +---+--+
+       |               |
+       | Hello John,   |
+       | how are you   |
+       | today? I'm    |
+       | feeling quite |
+       | verbose       |
+       | today.        |
+       +-------------->|
+       |               |
+       | John, can you |
+       | hear me? If   |
+       | you are not   |
+       | available, we |
+       | can talk      |
+       | later.        |
+       +-------------->|
+       |               |
+       | Hi Alice, I   |
+       | can hear you! |
+       | I was         |
+       | finishing up  |
+       | an important  |
+       | meeting.      |
+       |<..............+
+       |               |
+       | I feel great! |
+       | I was not     |
+       | ignoring you. |
+       | I am sorry    |
+       | you had to    |
+       | wait for a    |
+       | response.     |
+       |<..............+
+       |               |

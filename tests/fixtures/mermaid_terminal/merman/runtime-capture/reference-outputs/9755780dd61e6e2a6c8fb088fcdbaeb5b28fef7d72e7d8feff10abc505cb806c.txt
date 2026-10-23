@@ -1,0 +1,8 @@
++---+    +---+    +---+
+| A |    | B |    | C |
++---+    +---+    +---+
+
+relations:
+id(bytes=1)="A" ||--o{ id(bytes=1)="B" : owns
+id(bytes=1)="A" |o..|{ id(bytes=1)="B" : may own
+id(bytes=1)="B" ||--|| id(bytes=1)="C" : joins

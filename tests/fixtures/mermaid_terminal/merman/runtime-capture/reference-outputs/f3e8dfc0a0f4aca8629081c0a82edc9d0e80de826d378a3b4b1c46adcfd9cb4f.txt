@@ -1,0 +1,8 @@
++---+    +---+    +---+    +---+
+| A |    | B |    | C |    | D |
++---+    +---+    +---+    +---+
+
+relations:
+id(bytes=1)="A" --> id(bytes=1)="C" : first
+id(bytes=1)="B" ..> id(bytes=1)="D" : second
+id(bytes=1)="A" --> id(bytes=1)="B" : bridge

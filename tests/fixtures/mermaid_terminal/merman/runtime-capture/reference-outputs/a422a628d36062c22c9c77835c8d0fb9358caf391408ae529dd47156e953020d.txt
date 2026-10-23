@@ -1,0 +1,8 @@
+titleDisplay: chart(bytes=27)="Decimal and Negative Values"
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=1)="A" value=-2.5 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=0.75 pointLabel=none clipped=false}, {index=2 x(bytes=1)="C" value=5.1 pointLabel=none clipped=false}] orphanPointLabels=[]
+A +-2.5
+B +#0.75
+C +#####5.1
+  ++--------+
+   -10     10
+titleDisplay: xAxis(bytes=10)="Categories"

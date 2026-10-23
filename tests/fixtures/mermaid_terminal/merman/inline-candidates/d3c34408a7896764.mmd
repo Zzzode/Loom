@@ -1,0 +1,14 @@
+sequenceDiagram
+    participant Client
+    participant API
+    participant Worker
+    Client->>API: Submit job
+    alt Valid request
+      API->>Worker: Queue work
+      loop Poll status
+        Client->>API: GET /jobs/123
+        API-->>Client: Running
+      end
+    else Invalid request
+      API-->>Client: 400 Bad Request
+    end

@@ -1,0 +1,11 @@
+<span style="color:#101010">+--------+</span>
+<span style="color:#101010">|</span> <span style="color:#202020">Animal</span> <span style="color:#101010">|</span>
+<span style="color:#101010">+--------+</span>
+
+<span style="color:#101010">+-----+</span>
+<span style="color:#101010">|</span> <span style="color:#202020">Dog</span> <span style="color:#101010">|</span>
+<span style="color:#101010">+-----+</span>
+
+<span style="color:#7c3aed">relations:</span>
+<span style="color:#505050">id(bytes=6)=&quot;Animal&quot; &lt;|-- id(bytes=3)=&quot;Dog&quot; : parent</span>
+<span style="color:#505050">id(bytes=6)=&quot;Animal&quot; &lt;|-- id(bytes=3)=&quot;Dog&quot; : base</span>

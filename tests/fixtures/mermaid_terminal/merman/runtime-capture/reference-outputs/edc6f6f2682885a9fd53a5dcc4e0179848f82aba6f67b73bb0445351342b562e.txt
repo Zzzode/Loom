@@ -1,0 +1,22 @@
++---------+
+| Service |
++---------+
+
++------+
+| Repo |
++------+
+
++-------+
+| Cache |
++-------+
+
++--------+
+| Logger |
++--------+
+
+relations:
+id(bytes=7)="Service" --> id(bytes=4)="Repo"   : fetch
+id(bytes=7)="Service" --> id(bytes=5)="Cache"  : read
+id(bytes=7)="Service" --> id(bytes=6)="Logger" : trace
+id(bytes=4)="Repo"    --> id(bytes=6)="Logger" : log
+id(bytes=5)="Cache"   --> id(bytes=6)="Logger" : log

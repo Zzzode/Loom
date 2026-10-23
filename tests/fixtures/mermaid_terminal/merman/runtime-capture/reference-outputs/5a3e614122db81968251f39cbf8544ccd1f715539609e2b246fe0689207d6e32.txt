@@ -1,0 +1,8 @@
+gitGraph direction(bytes=2)="TB" current(bytes=4)="main"
+title(bytes=18)="Repository history"
+accTitle(bytes=9)="Git title"
+accDescr(bytes=15)="Git description"
+branches=[bytes=4 "main", bytes=7 "feature"]
+  - seq=0 branch(bytes=4)="main" id(bytes=2)="c0" kind=highlight message(bytes=4)="init" tags=[bytes=2 "v1"] parents=[bytes=4 "seed"] typeOverride=7 idSource=explicit
+warnings:
+  - message(bytes=14)="duplicate head"

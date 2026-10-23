@@ -1,0 +1,94 @@
+{
+  "asset_promotion_plan": [
+    {
+      "action": "keep",
+      "note": "Original handoff provenance remains immutable; parent must create a separate reviewed promotion lock.",
+      "path": "existing Merman vendor assets, original models/assertions/licenses, manifest and handoff-lock"
+    },
+    {
+      "action": "copy_unmodified",
+      "from": "merman-runtime-import/runtime-capture/",
+      "source_provenance_sha256": "285ded2dce74ca61308eda7800a3f02d2d9ae8a7766425eb323e2e6b7441108b",
+      "to": "merman/runtime-capture/"
+    },
+    {
+      "action": "overlay_candidate_files",
+      "note": "Review before any copy; this script never edits the real vendor or root inventory.",
+      "paths": [
+        "cases.json",
+        "runtime-capture/promotion-obligations.json",
+        "runtime-capture/full-public-capabilities.json",
+        "runtime-capture/PROMOTION.md",
+        "maintenance/merge_runtime_cases.py"
+      ]
+    }
+  ],
+  "counts": {
+    "additional_exact_inputs": 1532,
+    "correct_fallback_obligations": 4,
+    "drawing_obligations": 1605,
+    "legacy_ids_preserved": 100,
+    "negative_inputs": 5,
+    "structured_text_obligations": 18,
+    "total_exact_inputs": 1632
+  },
+  "files": [
+    {
+      "bytes": 16326956,
+      "path": "cases.json",
+      "sha256": "89ce2ef6ad779481285ce61b771a64fd059b17a824eb2c292934ff13393562db"
+    },
+    {
+      "bytes": 16851,
+      "path": "maintenance/merge_runtime_cases.py",
+      "sha256": "5123b51d1ed4b3792dfb4bdd1c04846c4560685bd5716fe65214a93d4d196b2e"
+    },
+    {
+      "bytes": 4360,
+      "path": "runtime-capture/PROMOTION.md",
+      "sha256": "bd5ed93a16c94c9e35fab5ec9be3947f5a17564510b1cff2272e1a377d2ab2be"
+    },
+    {
+      "bytes": 27767,
+      "path": "runtime-capture/full-public-capabilities.json",
+      "sha256": "ad7200afd3117832110f168e60bb40e6fa47c729cb9ed0c4ca7c61df654e1bae"
+    },
+    {
+      "bytes": 841284,
+      "path": "runtime-capture/promotion-obligations.json",
+      "sha256": "7baf0f07174c99a9aad4618f11df8e873c6d627eeaa9df6d71219d47f4af3838"
+    }
+  ],
+  "merge_invariants": [
+    "Preserve all100legacycaseIDsandalloriginalexpectationfacts",
+    "ExactsourceSHAidentityonly; merge100overlapsandappend1532newcases",
+    "Do not claim String or fallback observations as diagrammatic passes",
+    "Typed-model-only and lexical non-input data are outside source denominator",
+    "No production/runtime/foreign-language dependency in native tests"
+  ],
+  "schema_version": 1,
+  "source_admission_counts": {
+    "public_text_negative_probe": 5,
+    "strict_public_source_accepted": 1627
+  },
+  "source_hashes": {
+    "immutable_runtime_cases": "fbd5c52af432d222848b41a8cbd703093ed2280f3585e410621f779e641ddbc8",
+    "legacy_cases": "12b6085a9ff8926c2822dd7db4441c4938d96f194addb839b3bb278bc9b1fe87",
+    "public_cli_capabilities": "ad7200afd3117832110f168e60bb40e6fa47c729cb9ed0c4ca7c61df654e1bae"
+  },
+  "status": "scratch_candidate_waiting_for_independent_review_and_atomic_promotion",
+  "terminal_text_policy_counts": {
+    "combining_source_cases": 2,
+    "control_or_bidi_source_cases": 1
+  },
+  "upstream_observation_counts": {
+    "fallback_only": 7,
+    "foreign_policy_or_render_error": 21,
+    "parse_error": 5,
+    "parsed_source_no_unambiguous_ascii_binding": 213,
+    "primary_diagrammatic_report": 11,
+    "primary_structured_text_report": 1,
+    "string_output_declared_structured_family": 8,
+    "string_output_projection_unresolved": 1366
+  }
+}

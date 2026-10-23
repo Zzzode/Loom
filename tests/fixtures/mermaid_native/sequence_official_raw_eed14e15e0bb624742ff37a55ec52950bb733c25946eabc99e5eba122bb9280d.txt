@@ -1,0 +1,39 @@
+┌───────┐                                                                  ┌─────┐                                                                  ┌─────────┐
+│ Alice │                                                                  │ Bob │                                                                  │ Charlie │
+└───────┘                                                                  └─────┘                                                                  └─────────┘
+    │                                                                         │                                                                          │
+    │                                                                         │                                                                          │
+    │ 1. Circles at both ends with solid top reverse (LTR)                    │                                                                          │
+    ○────────────────────────────────────────────────────────────────────────◢○                                                                          │
+    │                                                                         │                                                                          │
+    │                                                                         │                                                                          │
+    │ 2. Circles at both ends with solid bottom reverse (LTR)                 │                                                                          │
+    ○────────────────────────────────────────────────────────────────────────◥○                                                                          │
+    │                                                                         │                                                                          │
+    │                                                                         │                                                                          │
+    │ 3. Circles at both ends with stick top reverse (LTR)                    │                                                                          │
+    ○────────────────────────────────────────────────────────────────────────╲○                                                                          │
+    │                                                                         │                                                                          │
+    │                                                                         │                                                                          │
+    │ 4. Circles at both ends with stick bottom reverse (LTR)                 │                                                                          │
+    ○────────────────────────────────────────────────────────────────────────╱○                                                                          │
+    │                                                                         │                                                                          │
+    │                                                                         │                                                                          │
+    │ 5. Circles at both ends with dotted solid top reverse (LTR)             │                                                                          │
+    ○┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◢○                                                                          │
+    │                                                                         │                                                                          │
+    │                                                                         │                                                                          │
+    │ 6. Circles at both ends with dotted solid bottom reverse (LTR)          │                                                                          │
+    ○┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◥○                                                                          │
+    │                                                                         │                                                                          │
+    │                                                                         │                                                                          │
+    │ 7. Circles at both ends with dotted stick top reverse (LTR)             │                                                                          │
+    ○┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╲○                                                                          │
+    │                                                                         │                                                                          │
+    │                                                                         │                                                                          │
+    │ 8. Circles at both ends with dotted stick bottom reverse (LTR)          │                                                                          │
+    ○┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╱○                                                                          │
+    │                                                                         │                                                                          │
+    │                                                                         │                                                                          │
+
+AFTER_MERMAID

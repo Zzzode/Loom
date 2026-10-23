@@ -1,0 +1,129 @@
+{
+  "schema": "flow_native_typed_shapes_controls/v1",
+  "qualification": "Synthetic native regression controls only; zero original-corpus, terminal, official, or foreign credit. Original000 is a separate source-authored model proof and is never counted as a positive runtime admission.",
+  "source_design_manifest_sha256": "8069aef5c5a0fcf030d1b878254b61dabf70b3c15352d1403505f609d973e614",
+  "counts": {
+    "synthetic_all": 9,
+    "synthetic_expected_complete": 8,
+    "synthetic_required_first_red": 1,
+    "original_proofs": 1,
+    "original_corpus_credit": 0
+  },
+  "synthetic_controls": [
+    {
+      "id": "three_shapes",
+      "provenance": "synthetic_native_regression_not_original_corpus",
+      "source": "flowchart TB\nA[Box] --> B(Round)\nB --> C{Pick}\n",
+      "source_bytes": 47,
+      "source_sha256": "3f9d8577123ba5a311dbd4c4bda774dc64bcb9a48d7b46d91f4faf39729b727a",
+      "model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Box\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Round\",\"shape\":\"rounded\"}],[\"C\",{\"id\":\"C\",\"label\":\"Pick\",\"shape\":\"diamond\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "9ba8909b00017441c9e94a43ddcc4bd54556e4696b0a79bf31219cfd26ca81cd",
+      "required_first_red": null
+    },
+    {
+      "id": "three_shapes_same_label",
+      "provenance": "synthetic_native_regression_not_original_corpus",
+      "source": "flowchart TB\nA[Same] --> B(Same)\nB --> C{Same}\n",
+      "source_bytes": 47,
+      "source_sha256": "8d1df96ae7cf890d2bb66620f39bf57e46011c1ff52262ab61ed0f16f8b766d5",
+      "model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Same\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Same\",\"shape\":\"rounded\"}],[\"C\",{\"id\":\"C\",\"label\":\"Same\",\"shape\":\"diamond\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "12cd7ecd564b9efa009b4ba6471b85d0ab316814b62a3020544adb5b637ae2f6",
+      "required_first_red": null
+    },
+    {
+      "id": "repeated_captions",
+      "provenance": "synthetic_native_regression_not_original_corpus",
+      "source": "flowchart TB\nA -->|Yes| B\nC -->|No| D\nE -->|Yes| F\nG -->|No| H\n",
+      "source_bytes": 63,
+      "source_sha256": "5b898ea97f13a7f06720cff7483d00a71482fa23afea6e28442a00143c63d33a",
+      "model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"B\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"C\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"D\",\"shape\":\"rectangle\"}],[\"E\",{\"id\":\"E\",\"label\":\"E\",\"shape\":\"rectangle\"}],[\"F\",{\"id\":\"F\",\"label\":\"F\",\"shape\":\"rectangle\"}],[\"G\",{\"id\":\"G\",\"label\":\"G\",\"shape\":\"rectangle\"}],[\"H\",{\"id\":\"H\",\"label\":\"H\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"Yes\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"No\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"E\",\"target\":\"F\",\"label\":\"Yes\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"G\",\"target\":\"H\",\"label\":\"No\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "036eb6e2b89e33bc22118372e1ccbb89eecb2d143d24bde8304a05e595ccab9d",
+      "required_first_red": null
+    },
+    {
+      "id": "equal_width_caption_swap",
+      "provenance": "synthetic_native_regression_not_original_corpus",
+      "source": "flowchart TB\nA -->|YES| B\nC -->|NOT| D\n",
+      "source_bytes": 39,
+      "source_sha256": "0b72d0a29802934310f6d576c38a1f7478d87367fd1214166e626ef3304deed4",
+      "model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"B\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"C\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"D\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"YES\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"NOT\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "0f8a512e12d45744dea9dc52eea37c5063578837c243bd8a994ad1756de6ffed",
+      "required_first_red": null
+    },
+    {
+      "id": "four_line_decision",
+      "provenance": "synthetic_native_regression_not_original_corpus",
+      "source": "flowchart TB\nA --> B{One<br>Two<br>Three<br>Four}\nB --> C\n",
+      "source_bytes": 58,
+      "source_sha256": "113a96eea7b72839f7eb4bc3923c373fd08de7c14dabcc18cfa2a466ea11a994",
+      "model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"One\\nTwo\\nThree\\nFour\",\"shape\":\"diamond\"}],[\"C\",{\"id\":\"C\",\"label\":\"C\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "2d0ecd69a039d8a69d3e799ced5389de513f38ec8d4cb4a05ba9b0953559340a",
+      "required_first_red": {
+        "qualification": "Expected unchanged-producer geometry failure after reviewed shape codec/oracle permits decode; no execution is claimed. Must publish actual five frames before bind/decode.",
+        "category": "complete_decision_contour_or_label_containment_failure",
+        "reason": "Existing node_box fixes diagonal bottom at local y4 while allocated box grows with four label rows; full contour/content cannot satisfy below general odd-height contract."
+      }
+    },
+    {
+      "id": "ports_LR",
+      "provenance": "synthetic_native_regression_not_original_corpus",
+      "source": "flowchart LR\nA(Round) --> B{Choice}\nB --> C[End]\n",
+      "source_bytes": 49,
+      "source_sha256": "aeb5cf9cf333074dd01eceeac740b4048360c41577701db4c6e48b6b97759581",
+      "model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Round\",\"shape\":\"rounded\"}],[\"B\",{\"id\":\"B\",\"label\":\"Choice\",\"shape\":\"diamond\"}],[\"C\",{\"id\":\"C\",\"label\":\"End\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "1c5977bc79c262c93c0af4334b5cbf7cb0665ee422f8914824f70dd4e7890207",
+      "required_first_red": null
+    },
+    {
+      "id": "ports_RL",
+      "provenance": "synthetic_native_regression_not_original_corpus",
+      "source": "flowchart RL\nA(Round) --> B{Choice}\nB --> C[End]\n",
+      "source_bytes": 49,
+      "source_sha256": "7b0f3f00553ca86d07cd16d5dfe64876e8f7593b8b470ebc78b62729626d6fa3",
+      "model_json": "{\"direction\":\"RL\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Round\",\"shape\":\"rounded\"}],[\"B\",{\"id\":\"B\",\"label\":\"Choice\",\"shape\":\"diamond\"}],[\"C\",{\"id\":\"C\",\"label\":\"End\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "168d2cca86b8139d9853eab494b9b4522786baeb2afedad0415dc2ce3d35a15c",
+      "required_first_red": null
+    },
+    {
+      "id": "ports_TB",
+      "provenance": "synthetic_native_regression_not_original_corpus",
+      "source": "flowchart TB\nA(Round) --> B{Choice}\nB --> C[End]\n",
+      "source_bytes": 49,
+      "source_sha256": "74f95fdf8e26dab2b57c8a344003f05b06b328c05534c591273078d4107d94f7",
+      "model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Round\",\"shape\":\"rounded\"}],[\"B\",{\"id\":\"B\",\"label\":\"Choice\",\"shape\":\"diamond\"}],[\"C\",{\"id\":\"C\",\"label\":\"End\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "6bfef8eba884721304a29b0d2bb0a84a172a5b7f9d581cf53cde570523536ead",
+      "required_first_red": null
+    },
+    {
+      "id": "ports_BT",
+      "provenance": "synthetic_native_regression_not_original_corpus",
+      "source": "flowchart BT\nA(Round) --> B{Choice}\nB --> C[End]\n",
+      "source_bytes": 49,
+      "source_sha256": "a17269827f75e2e172fd2ef8c705bcb8bfbf4fcd1352698e4b6f3c9599a313a3",
+      "model_json": "{\"direction\":\"BT\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Round\",\"shape\":\"rounded\"}],[\"B\",{\"id\":\"B\",\"label\":\"Choice\",\"shape\":\"diamond\"}],[\"C\",{\"id\":\"C\",\"label\":\"End\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "0004b897745a0eab35e2616a0a0f5844d38ee22d7583bf53f563d499fc26578a",
+      "required_first_red": null
+    }
+  ],
+  "original000_proof": {
+    "provenance": "source_authored_complete_model_separate_nonmatrix",
+    "source": "flowchart TD\n    A --> B{Decision}\n    B -- Yes --> C[Done]\n    B -- No --> D[Step 1]\n    D --> E{Again?}\n    E -- Yes --> C\n    E -- No --> F[Stop]\n",
+    "source_bytes": 149,
+    "source_sha256": "af4fad7f61b975e02078172e5c2e2782dd5c6b4edb3fc23b86b5afae16ac9fc0",
+    "source_identity": {
+      "adaptation": null,
+      "fixture": "flowchart/nightly-check/8292-elk-edge-label-jog.mmd",
+      "manifest_global_ordinal": 661,
+      "model_json": null,
+      "model_sha256": null,
+      "oracle_record_sha256": "1e275b61ea487ee7233b7c15141274b92ff7002b88cad632b867171972bfcd30",
+      "ordinal": 0,
+      "source_bytes": 149,
+      "source_git_blob": "e87f734d8e25ad77d76dc1004709fbb65b7d3be4",
+      "source_sha256": "af4fad7f61b975e02078172e5c2e2782dd5c6b4edb3fc23b86b5afae16ac9fc0"
+    },
+    "model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Decision\",\"shape\":\"diamond\"}],[\"C\",{\"id\":\"C\",\"label\":\"Done\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"Step 1\",\"shape\":\"rectangle\"}],[\"E\",{\"id\":\"E\",\"label\":\"Again?\",\"shape\":\"diamond\"}],[\"F\",{\"id\":\"F\",\"label\":\"Stop\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"Yes\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"D\",\"label\":\"No\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"D\",\"target\":\"E\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"E\",\"target\":\"C\",\"label\":\"Yes\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"E\",\"target\":\"F\",\"label\":\"No\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+    "model_sha256": "7326cff128906544e46970d1a45b355b2d2de1fc55afcf9256dbe454ff053016",
+    "qualification": "Source-authored complete six-node/six-edge Model only. No native decode/drawing/formal admission/foreign assertion claim. Node and edge order are lexical first insertion/statement order; TD-to-TB follows primary FlowDb.setDirection."
+  }
+}

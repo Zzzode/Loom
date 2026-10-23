@@ -1,0 +1,10 @@
+sequenceDiagram
+participant A
+participant B
+alt Primary path
+A->>B: First
+else Secondary path
+Note over A,B: Wait
+else Tertiary path
+B-->>A: Third
+end

@@ -1,0 +1,2 @@
+- card(bytes=4)="Card" [id(bytes=4)="card", ticket(bytes=3)="K-1",
+  priority(bytes=4)="high"]

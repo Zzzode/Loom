@@ -1,0 +1,16 @@
++---+
+| A |
++---+
+
++---+
+| B |
++---+
+
++---+
+| C |
++---+
+
+relations:
+id(bytes=1)="A" --> id(bytes=1)="B" : ab
+id(bytes=1)="B" --> id(bytes=1)="C" : bc
+id(bytes=1)="C" --> id(bytes=1)="A" : ca

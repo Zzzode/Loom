@@ -1,0 +1,10 @@
+flowchart TD
+subgraph left [Left Group]
+    direction LR
+    A[Alpha] --> B[Beta]
+end
+subgraph right [Right Group]
+    direction RL
+    C[Gamma] --> D[Delta]
+end
+B -- handoff --> C

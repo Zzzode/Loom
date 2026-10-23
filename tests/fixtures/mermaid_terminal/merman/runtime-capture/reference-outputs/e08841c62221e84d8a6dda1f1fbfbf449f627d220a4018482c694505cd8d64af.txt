@@ -1,0 +1,9 @@
++--------+    +--------+     +--------+
+| classA |    | classC |     | classE |
++--------+    +--------+     +--------+
+     ^             *              o
+implements    composition    aggregation
+     |             |              |
++--------+    +--------+     +--------+
+| classB |    | classD |     | classF |
++--------+    +--------+     +--------+

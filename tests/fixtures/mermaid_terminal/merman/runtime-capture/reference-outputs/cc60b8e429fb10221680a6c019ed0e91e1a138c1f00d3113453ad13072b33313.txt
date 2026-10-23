@@ -1,0 +1,79 @@
+ +---------------+
+ | <<interface>> |
+ | Class01       |
+ +---------------+
+ | int chimp     |
+ | int gorilla   |
+ +---------------+
+ | size()        |
+ +---------------+
+         1
+         ^
+       Cool
+         v
+         *
++----------------+
+| AveryLongClass |
++----------------+
+
++---------+
+| Class03 |
++---------+
+     1
+     *
+     |
+     *
++---------+
+| Class04 |
++---------+
+
++---------+
+| Class05 |
++---------+
+     1
+     o
+     |
+   many
++---------+
+| Class06 |
++---------+
+
++----------------------+
+| Class07              |
++----------------------+
+| Object[] elementData |
++----------------------+
+| equals()             |
++----------------------+
+
++---------+
+| Class08 |
++---------+
+
++---------+
+| Class09 |
++---------+
+
++----+
+| C2 |
++----+
+
++----+
+| C3 |
++----+
+
+relations:
+id(bytes=7)="Class07" endpoint1=[bytes=1 "1"] .. endpoint2=[bytes=1 "*"]   id(bytes=7)="Class08"
+id(bytes=7)="Class09" endpoint1=[bytes=1 "1"] --> endpoint2=[bytes=1 "*"]  id(bytes=2)="C2"      : Where am i?
+id(bytes=7)="Class09" endpoint1=[bytes=1 "*"] --* endpoint2=[bytes=1 "*"]  id(bytes=2)="C3"
+id(bytes=7)="Class07" endpoint2=[bytes=1 "1"] <|-- endpoint1=[bytes=1 "1"] id(bytes=7)="Class09"
+id(bytes=7)="Class08" endpoint1=[bytes=1 "1"] <--> endpoint2=[bytes=1 "*"] id(bytes=2)="C2"      : Cool label
+
++-------------+
+| <<service>> |
+| Class10     |
++-------------+
+| int id      |
++-------------+
+| test()      |
++-------------+

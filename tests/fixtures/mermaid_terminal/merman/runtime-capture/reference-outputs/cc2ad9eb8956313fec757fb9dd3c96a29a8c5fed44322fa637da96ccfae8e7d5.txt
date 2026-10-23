@@ -1,0 +1,11 @@
+[38;2;1;1;1mtitleDisplay: chart(bytes=5)="Sales"[0m
+[38;2;1;1;1mtitleDisplay: yAxis(bytes=7)="Revenue"[0m
+[38;2;1;1;1mvalues: [0m[38;2;3;3;3m#[0m[38;2;1;1;1m series=0 type=bar title=none samples=[{index=0 x(bytes=3)="Jan" value=2 pointLabel=none clipped=false}, {index=1 x(bytes=3)="Feb" value=5 pointLabel=none clipped=false}, {index=2 x(bytes=3)="Mar" value=8 pointLabel=none clipped=false}] orphanPointLabels=[][0m
+[38;2;1;1;1m10[0m [38;2;2;2;2m+[0m
+ [38;2;1;1;1m8[0m [38;2;2;2;2m+[0m        [38;2;3;3;3m###[0m
+ [38;2;1;1;1m6[0m [38;2;2;2;2m+[0m    [38;2;3;3;3m###[0m [38;2;3;3;3m###[0m
+ [38;2;1;1;1m4[0m [38;2;2;2;2m+[0m    [38;2;3;3;3m###[0m [38;2;3;3;3m###[0m
+ [38;2;1;1;1m2[0m [38;2;2;2;2m+[0m[38;2;3;3;3m###[0m [38;2;3;3;3m###[0m [38;2;3;3;3m###[0m
+ [38;2;1;1;1m0[0m [38;2;2;2;2m+-+---+---+-[0m
+    [38;2;1;1;1mJan Feb Mar[0m
+[38;2;1;1;1mtitleDisplay: xAxis(bytes=5)="Month"[0m

@@ -1,0 +1,7 @@
+<span style="color:#a1a1aa">┌───────────────────────────────────────────────────────────────────────────────────────┐</span>
+<span style="color:#a1a1aa">│</span> <span style="color:#27272a">before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}</span>                   <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">│</span> <span style="color:#27272a">label(bytes=49)=&quot;before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}&quot;</span> <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">│</span> <span style="color:#27272a">id(bytes=1)=&quot;A&quot;</span>                                                                       <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">├───────────────────────────────────────────────────────────────────────────────────────┤</span>
+<span style="color:#a1a1aa">│</span> <span style="color:#27272a">type(bytes=6)=&quot;string&quot; name(bytes=4)=&quot;name&quot; keys=[] comment(bytes=0)=&quot;&quot;</span>               <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">└───────────────────────────────────────────────────────────────────────────────────────┘</span>

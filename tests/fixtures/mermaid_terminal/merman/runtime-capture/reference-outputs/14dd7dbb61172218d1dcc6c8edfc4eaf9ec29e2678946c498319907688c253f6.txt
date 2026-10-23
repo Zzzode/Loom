@@ -1,0 +1,8 @@
+titleDisplay: chart(bytes=18)="Multiple Bar Plots"
+titleDisplay: yAxis(bytes=6)="Values"
+A +#          10
+B +###50
+C +#######90
+  ++--------+
+   0      100
+titleDisplay: xAxis(bytes=10)="Categories"

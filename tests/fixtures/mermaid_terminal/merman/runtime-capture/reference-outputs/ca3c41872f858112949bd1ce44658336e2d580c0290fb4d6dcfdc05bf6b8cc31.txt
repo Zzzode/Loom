@@ -1,0 +1,7 @@
+title(bytes=7)="Journey"
+accTitle(bytes=13)="Journey title"
+accDescr(bytes=19)="Journey description"
+actors=[bytes=5 "Alice", bytes=3 "Bob"]
+section(bytes=9)="Discovery"
+  - task(bytes=8)="Research" score=5 people=[bytes=5 "Alice", bytes=3 "Bob"]
+  - task(bytes=4)="Ship" score=3 people=[bytes=3 "Bob"]

@@ -1,0 +1,60 @@
++-----+
+| CAR |
++-----+
+
++--------+
+| DRIVER |
++--------+
+
++---------+
+| LICENSE |
++---------+
+
++--------+
+| PERSON |
++--------+
+
+relations:
+id(bytes=3)="CAR"    ||--o{ id(bytes=6)="DRIVER"  : insured for
+id(bytes=6)="DRIVER" ||--|| id(bytes=7)="LICENSE" : has
+id(bytes=3)="CAR"    ||--o{ id(bytes=6)="PERSON"  : insured for
+id(bytes=3)="CAR"    }o--|| id(bytes=6)="PERSON"  : owned by
+
++------+
+| NODE |---||
++------+   |
+ leads to  |
+    o{-----+
+
+ +---+
+ | A |
+ +---+
+  |{
+hasMany
+   |
+  o{
+ +---+
+ | B |
+ +---+
+
++---+
+| C |
++---+
+ o{
+uses
+  :
+ |{
++---+
+| D |
++---+
+
++---+
+| E |
++---+
+ o|
+owns
+  |
+ |{
++---+
+| F |
++---+

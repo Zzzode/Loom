@@ -1,0 +1,11 @@
++---+
+| B |
++---+
+
++---+
+| A |
++---+
+
+relations:
+id(bytes=1)="A" endpoint1=[bytes=6 "source"] <|--|> endpoint2=[bytes=6 "target"]   id(bytes=1)="B" : first
+id(bytes=1)="A" endpoint1=[bytes=7 "source2"] <|--|> endpoint2=[bytes=7 "target2"] id(bytes=1)="B" : second

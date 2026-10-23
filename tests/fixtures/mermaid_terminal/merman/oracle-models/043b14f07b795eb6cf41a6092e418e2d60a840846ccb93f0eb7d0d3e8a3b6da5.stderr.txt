@@ -1,0 +1,1 @@
+Diagram parse error (classDiagram): unexpected struct start; expected name

@@ -1,0 +1,9 @@
+titleDisplay: chart(bytes=27)="Café 👩‍💻 🇺🇸"
+xDomain: band categories=[bytes=1="A"]
+  1 ┤███
+0.8 ┤███
+0.6 ┤███
+0.4 ┤███
+0.2 ┤███
+  0 ┼─┬─
+      A

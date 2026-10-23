@@ -1,0 +1,8 @@
+     Authentication Flow
+
++-------+            +-----+
+| Alice |            | Bob |
++---+---+            +--+--+
+    |                   |
+    |-Login request---->|
+    |                   |

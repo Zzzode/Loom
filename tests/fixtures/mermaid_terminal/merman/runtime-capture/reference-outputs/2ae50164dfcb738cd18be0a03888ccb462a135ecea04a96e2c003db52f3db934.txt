@@ -1,0 +1,12 @@
+title(bytes=5)="Gantt"
+accTitle(bytes=11)="Gantt title"
+accDescr(bytes=17)="Gantt description"
+dateFormat(bytes=10)="YYYY-MM-DD"
+axisFormat(bytes=2)="%d"
+section(bytes=5)="Empty"
+section(bytes=5)="Empty"
+section(bytes=5)="Build"
+  - task(bytes=9)="Implement" [id(bytes=6)="task-1", order=0,
+    range=+292278994-08-17T07:12:55.000 -> +292278994-08-17T07:12:55.001,
+    renderEnd=+292278994-08-17T07:12:55.002, flags=milestone, active, done,
+    crit, vert]

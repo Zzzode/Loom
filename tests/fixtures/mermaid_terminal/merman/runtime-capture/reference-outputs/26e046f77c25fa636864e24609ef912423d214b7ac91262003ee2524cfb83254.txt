@@ -1,0 +1,15 @@
+titleDisplay: yAxis(bytes=9)="yAxisName"
+# barTitle1  * lineTitle1  # barTitle2  * lineTitle2
+xDomain: linear authored=[1,3] resolved=[1,3]
+values: # series=0 type=bar title(bytes=9)="barTitle1" samples=[{index=0 x(bytes=1)="1" value=23 pointLabel=none clipped=false}, {index=1 x(bytes=1)="2" value=45 pointLabel=none clipped=false}, {index=2 x(bytes=1)="3" value=56.6 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=1 type=line title(bytes=10)="lineTitle1" samples=[{index=0 x(bytes=1)="1" value=11 pointLabel=none clipped=false}, {index=1 x(bytes=18)="1.6666666666666665" value=45.5 pointLabel=none clipped=false}, {index=2 x(bytes=17)="2.333333333333333" value=67 pointLabel=none clipped=false}, {index=3 x(bytes=1)="3" value=23 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: # series=2 type=bar title(bytes=9)="barTitle2" samples=[{index=0 x(bytes=1)="1" value=13 pointLabel=none clipped=false}, {index=1 x(bytes=1)="2" value=42 pointLabel=none clipped=false}, {index=2 x(bytes=1)="3" value=56.89 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=3 type=line title(bytes=10)="lineTitle2" samples=[{index=0 x(bytes=1)="1" value=45 pointLabel=none clipped=false}, {index=1 x(bytes=1)="2" value=99 pointLabel=none clipped=false}, {index=2 x(bytes=1)="3" value=12 pointLabel=none clipped=false}] orphanPointLabels=[]
+  99 +    +--*--+
+81.4 +    |     |
+63.8 +    |  +-*|+##
+46.2 + *--+*-+  ||##
+28.6 +#*-+  ##  +--*
+  11 +-+---+---+---+-
+       1  1.6 2.3  3
+titleDisplay: xAxis(bytes=9)="xAxisName"

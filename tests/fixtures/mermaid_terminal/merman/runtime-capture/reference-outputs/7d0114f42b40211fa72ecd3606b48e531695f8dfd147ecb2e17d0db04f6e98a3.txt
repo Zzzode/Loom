@@ -1,0 +1,24 @@
++-------+     +-----+
+| Alice |     | Bob |
++---+---+     +--+--+
+    |            |
+    | A long     |
+    | message    |
+    | with an    |
+    | explicit<b |
+    | r/>line    |
+    | break and  |
+    | more words |
+    | to wrap    |
+    | nicely     |
+    +----------->|
+    |            |
+   +------------------------+
+   |       first line       |
+   | second line with plain |
+   |          text          |
+   +------------------------+
+    |            |
+    | ok         |
+    |<...........+
+    |            |

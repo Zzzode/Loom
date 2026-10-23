@@ -1,0 +1,34 @@
+{
+  "schema": "requirement11_native_test_authority/v1",
+  "qualification": "TEST_FIRST_CANDIDATE_ONLY. Eleven complete immutable Requirement sources, their source-derived Models and envelope bindings. No runtime pass, official admission, foreign certification, or production dispatch claim.",
+  "reviewer_identity": "requirement11-native-concrete-author-r2",
+  "supersedes_native_candidate": "requirement11-native-concrete-author-r1",
+  "native_independent_review_r1_raw_sha256": "505aebfa141cef441d0039b97753c6a0e268897abd8f6e6afc28c58d0c7d0f75",
+  "locked_design_r2_hashes_raw_sha256": "a6aff5c76afc8f3fab002f12f6f2fa978e23b589335cbbabc28e70a66e8b900f",
+  "official_commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+  "inventory172_raw_sha256": "864279c0bb53025ab55a2aa682f0b0ec8a2bf65dd5af6ab2fcf17d98df112440",
+  "assets": {
+    "models": {"path":"requirement11_models.proposed.json","bytes":13702,"raw_sha256":"fbf7b6b432c8185f046e95e43fa6da83d3a15b0ce7a39daba4a7ad334ae7fd2d"},
+    "envelopes": {"path":"requirement11_source_envelopes.proposed.json","bytes":17276,"raw_sha256":"2731b7e8e35e7cb85bf05e7b9b5e9ba3925d1b01172020ee979c8a0b41578f58"}
+  },
+  "cohort": {"ordinals":[12,18,21,24,27,30,33,96,99,111,168],"source_bytes":5474,"requirements":18,"elements":14,"relations":17},
+  "cases": [
+    {"ordinal":12,"source":"sources/012.mmd","bytes":1566,"sha256":"0d663c6f705c243b7938a610b414942ca159053a8ef3e4dd0338b5cd3e81528e"},
+    {"ordinal":18,"source":"sources/018.mmd","bytes":372,"sha256":"4c5bd8f6e4d37eb38b652b44910fbcd19d341947439b5198dce072d98dba7062"},
+    {"ordinal":21,"source":"sources/021.mmd","bytes":207,"sha256":"29e1dbfc28307c32d863b8f87912d6009ed98a313a1fc19eb0fa2449dadc8321"},
+    {"ordinal":24,"source":"sources/024.mmd","bytes":372,"sha256":"f950ce72b3330c7d431c25159856576c6203f01cd7ea74f84ab37d6b681f8cd3"},
+    {"ordinal":27,"source":"sources/027.mmd","bytes":372,"sha256":"c80dcf6db0a78fd625b0518119ba53558fde7542866c72febebfdea924b29740"},
+    {"ordinal":30,"source":"sources/030.mmd","bytes":350,"sha256":"2c597fd583728204b1454c54f9645449c639e533b0c425085933360a0a86ecc6"},
+    {"ordinal":33,"source":"sources/033.mmd","bytes":334,"sha256":"33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20"},
+    {"ordinal":96,"source":"sources/096.mmd","bytes":265,"sha256":"de9241221c9e39174077a3ae6cd94f8b90e06efeb41388eed27ae5b6b0affd73"},
+    {"ordinal":99,"source":"sources/099.mmd","bytes":356,"sha256":"f1a7236f3f3ac0e6bf621046f1cced10c65535bdb7d265226999888a3278136c"},
+    {"ordinal":111,"source":"sources/111.mmd","bytes":371,"sha256":"1fbeae16c5c88aacc7dca198913f9e0278ef876c123274b6cb286035eb74d8b5"},
+    {"ordinal":168,"source":"sources/168.mmd","bytes":909,"sha256":"b8d798507c5cf892622bd855d64770381eab6d3aa4e7c3c21a4e8d7a60eefa82"}
+  ],
+  "locks": {
+    "grid_authority": "ftxui::Screen::PixelAt(x,y).character; published rows are evidence only",
+    "geometry_inputs": "actual Grid plus source-derived Requirement-private records only; no Canvas/path/claimed-ownership producer seam",
+    "resource": "one 128000000 Work ledger per source and one 8000000 setup ledger; no refund, retry, or cap increase",
+    "non_goals": "No Class/ER surrogate, no existing Model/Grid/public record/shared-fee mutation, no source-tree installation in this package"
+  }
+}

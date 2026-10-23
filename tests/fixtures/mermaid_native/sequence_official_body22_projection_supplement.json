@@ -1,0 +1,1070 @@
+{
+  "schema": 1,
+  "kind": "SequenceWholeBody22",
+  "baseline_manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+  "source_facts": {
+    "path": "sequence_official_body22_refs.json",
+    "sha256": "0d8731566810e98f7d8520d43bfdba20f3d33b41f3176aa60b282182b883f9a5",
+    "protocol": "explicit_body_source_and_active_model/v1"
+  },
+  "scope": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+  "promotions": [
+    {
+      "case_index": 0,
+      "case_id": "official-body22/be627f8a42ab98c0ee9c40974218640edd5dbc0cc4366f298b295425f00ab19f",
+      "path": "sequence/nightly-check/should-handle-line-breaks-and-wrap-annotations.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "d9b81f9d4163cfd42fd67db90283313501ffa8f4e2e4322449ae4a5ff2cad4d7",
+      "body_offset_utf8_bytes": 226,
+      "body_sha256": "be627f8a42ab98c0ee9c40974218640edd5dbc0cc4366f298b295425f00ab19f",
+      "full_model_sha256": "1560fa8d385a9656654c7c6904248146c08a5f6a41d5c80503b8f5209c55dc58",
+      "baseline_expectation_sha256": "84bed260507f13eeb9c345b08a7d802a8d8af615fd649621c40eb86b2d782a46",
+      "snapshot_sha256": "1ddf9fb680c5b6bd832640bdc9c7ca71930c192ecd7fce8832b1dfd6ff300d6f",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_be627f8a42ab98c0ee9c40974218640edd5dbc0cc4366f298b295425f00ab19f.txt",
+        "checks": {
+          "arrows": 2,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 0,
+        "native_row_canonical_sha256": "886c9bfbcc12b8ab678ae5dc7313ce50617023385ea9d8d33a4e1b75e12f272b",
+        "wide_physical_sha256": "81df82b3032c3156bcd1241d04a5a3f3967694cd068c733fcd9ead35cadb1cc5",
+        "narrow_physical_sha256": "df269d883dffe21e1d16836d92456b5ef99933fa9533a63fd3fa79da6a1d5218",
+        "restored_physical_sha256": "81df82b3032c3156bcd1241d04a5a3f3967694cd068c733fcd9ead35cadb1cc5",
+        "frame_height": 69,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": true,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 1,
+      "case_id": "official-body22/1d9779c59590fa397daa730ce07449612b264dde0354b24b42d17ce31ca6686b",
+      "path": "sequence/nightly-check/should-render-a-sequence-diagram-with-actor-creation-and-destruction-coupled-with-backgrounds-loops-and-notes.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "940d653f5e3caa5d09e601a271576b7ba2d744c5a17b95a3a3414a0e89e4d22f",
+      "body_offset_utf8_bytes": 363,
+      "body_sha256": "1d9779c59590fa397daa730ce07449612b264dde0354b24b42d17ce31ca6686b",
+      "full_model_sha256": "8acd71eb7e2d818553869a15fd874b4f5e340a75f9c28b113a259f99dea7c101",
+      "baseline_expectation_sha256": "2164b24c62eef8a3292868c3092211ddd9f8ab7a7431ce1b81394a071decf3d9",
+      "snapshot_sha256": "4b66159640550d4cfeaf9e415b7b8eb8922c465c8d535700f51b0cd4fdbf285b",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_1d9779c59590fa397daa730ce07449612b264dde0354b24b42d17ce31ca6686b.txt",
+        "checks": {
+          "arrows": 7,
+          "labels": [
+            "Alice",
+            "Bob",
+            "Lola"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 1,
+        "native_row_canonical_sha256": "107e83e89214196c5be2baa8051fd59b439f423cdf46ef81c7ebd778ffd3af4d",
+        "wide_physical_sha256": "e3d9af41f536c15546a678df68134c9f9a9a240b0307645797dda62d7c79bf74",
+        "narrow_physical_sha256": "3772bb7065b388c950bb0142659e2dfb5e8e03a40b24a7d5705144d0adf507cb",
+        "restored_physical_sha256": "e3d9af41f536c15546a678df68134c9f9a9a240b0307645797dda62d7c79bf74",
+        "frame_height": 152,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": true,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 2,
+      "case_id": "official-body22/9cb16846d8c4669aace16a26f780b8446205a4d9f58361303a97b557434d7778",
+      "path": "sequence/nightly-check/should-render-a-sequence-diagram-with-par-over.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "488468b95499d59dc50f6f57e19601e76260c8299663b15b23c63873233bd765",
+      "body_offset_utf8_bytes": 227,
+      "body_sha256": "9cb16846d8c4669aace16a26f780b8446205a4d9f58361303a97b557434d7778",
+      "full_model_sha256": "a1de9f6ff7dc39654bd72df044ce97bebaa75a6f093b6416be95d2b1abc33e66",
+      "baseline_expectation_sha256": "0ad93313ecd64840e8c31d50358b3242d1733ba7be1d39251b77fb1f90d7ef7b",
+      "snapshot_sha256": "64bbadab1c6d059f07ebac2263713ef3e4e443c29939188c6b4bd495e324281e",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_9cb16846d8c4669aace16a26f780b8446205a4d9f58361303a97b557434d7778.txt",
+        "checks": {
+          "arrows": 3,
+          "labels": [
+            "Alice",
+            "Bob",
+            "John",
+            "Message 1",
+            "Second line",
+            "Message 2",
+            "Alice note",
+            "Bob note",
+            "John note",
+            "Alice/Bob Note",
+            "par_over Section title",
+            "par_over Two line",
+            "section title",
+            "par_over Mixed section"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 2,
+        "native_row_canonical_sha256": "37666995d9cc297bec2828f9cd5305e2561bc4452f7615661e8a10799776443e",
+        "wide_physical_sha256": "97107fd891740a83129f1270ffd85c51339d071e22b353bf9529b90decfdbca6",
+        "narrow_physical_sha256": "f86becb7e31f45b156071aafe455f3076e2d0c380e46234bc83fb779049820a9",
+        "restored_physical_sha256": "97107fd891740a83129f1270ffd85c51339d071e22b353bf9529b90decfdbca6",
+        "frame_height": 75,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": true,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 3,
+      "case_id": "official-body22/92188be1daee3ebea8addc18f214f81467c19ee766be3d4c7f5406033efa26c6",
+      "path": "sequence/nightly-check/should-render-a-single-and-nested-opt-with-long-test-wrapping.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "ef566a213f4d6318bf9921e98ea70d97bb67bce19ba25a025a4c79aa83b85dde",
+      "body_offset_utf8_bytes": 223,
+      "body_sha256": "92188be1daee3ebea8addc18f214f81467c19ee766be3d4c7f5406033efa26c6",
+      "full_model_sha256": "55763ccd81b545f76cf35346f12f6ec26dc4223d4aa42e148846227f2ea67b89",
+      "baseline_expectation_sha256": "97fd08c9886c2334ab18fa4fac0f87054cfdbabb6f72030c3d229eaab1d88887",
+      "snapshot_sha256": "f01177d17c3d66b701d2ac99fd844ad709cb0a3e0906afa829e201333a3a9d3d",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_92188be1daee3ebea8addc18f214f81467c19ee766be3d4c7f5406033efa26c6.txt",
+        "checks": {
+          "arrows": 9,
+          "labels": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "G"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 3,
+        "native_row_canonical_sha256": "472f607fe009b53d7ade325233e05f03e1a1ce2b3a99b6a58eb3b9cffa9b2dd0",
+        "wide_physical_sha256": "3f070f8f9de2bdb096394172003cef3a1148f2a6c788e50661a465c2e201299b",
+        "narrow_physical_sha256": "93a34632cfb0cabab17b70ba8c7338a84466d48cea95136981b6b7d405722fe9",
+        "restored_physical_sha256": "3f070f8f9de2bdb096394172003cef3a1148f2a6c788e50661a465c2e201299b",
+        "frame_height": 86,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": true,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 4,
+      "case_id": "official-body22/f6a5aaa3f1f3c6f6405f859622da0c0253a63d74a57c5ae815ab42918b0be287",
+      "path": "sequence/nightly-check/should-render-all-arrow-types-with-autonumbering-left-to-right-only.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "d887fd7185a26d667847a395bc72d118de690ba0d1914a68d4b8ffc84e8708df",
+      "body_offset_utf8_bytes": 452,
+      "body_sha256": "f6a5aaa3f1f3c6f6405f859622da0c0253a63d74a57c5ae815ab42918b0be287",
+      "full_model_sha256": "83555ed7b0f0f398cd63d011c35bbe317a2f2f2739e18a9dd99f97ca8ca12b6f",
+      "baseline_expectation_sha256": "2cdac3906d11e7e50a2b66ba52923ccc4d772eff9929366a9f432aee2f262207",
+      "snapshot_sha256": "da0cd2b6929c85e5ca7eb7abb4b23cf5c89e8bf9c1488e1333faea83e34a3f98",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_f6a5aaa3f1f3c6f6405f859622da0c0253a63d74a57c5ae815ab42918b0be287.txt",
+        "checks": {
+          "arrows": 9,
+          "labels": [
+            "Alice",
+            "Bob",
+            "1. Solid arrow (->>)",
+            "2. Dotted arrow (-->>)",
+            "3. Solid open arrow (->)",
+            "4. Dotted open arrow (-->)",
+            "5. Solid cross (-x)",
+            "6. Dotted cross (--x)",
+            "7. Solid point async (-)",
+            "8. Dotted point async (--)",
+            "9. Bidirectional solid (<<->>)",
+            "10. Bidirectional dotted (<<-->>)",
+            "11. Solid top half (-|\\\\)",
+            "12. Solid bottom half (-|/)",
+            "13. Stick top half (-\\\\\\\\)",
+            "14. Stick bottom half (-//)",
+            "15. Solid top reverse (/|-)",
+            "16. Solid bottom reverse (\\\\|-)",
+            "17. Stick top reverse (//-)",
+            "18. Stick bottom reverse (\\\\\\\\-)",
+            "19. Dotted solid top (--|\\\\)",
+            "20. Dotted solid bottom (--|/)",
+            "21. Dotted stick top (--\\\\\\\\)",
+            "22. Dotted stick bottom (--//)",
+            "23. Dotted solid top reverse (/|--)",
+            "24. Dotted solid bottom reverse (\\\\|--)",
+            "25. Dotted stick top reverse (//--)",
+            "26. Dotted stick bottom reverse (\\\\\\\\--)",
+            "27. Solid with central connection",
+            "28. Dotted with reverse central",
+            "29. Dual central connections"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 4,
+        "native_row_canonical_sha256": "270a3174a4c89d08e75a4b1a65c791563c4ccc9193c8bee31e544907aeed94b7",
+        "wide_physical_sha256": "f228438eaff5d616fb5006ced7bf6d2d9bd0f02c6d87a69e79563b82939c840e",
+        "narrow_physical_sha256": "2547bd3b10894d1ac34a447f2b555f2e84fdb6b05729f271129ad4bb482e59d2",
+        "restored_physical_sha256": "f228438eaff5d616fb5006ced7bf6d2d9bd0f02c6d87a69e79563b82939c840e",
+        "frame_height": 135,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": true,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 5,
+      "case_id": "official-body22/7c00deb2dc26921247f947989b14439944a68bf2d467e78a2ed29b5c3ab0bda6",
+      "path": "sequence/nightly-check/should-render-all-arrow-types-with-autonumbering.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "1184eb58dee0ba0bb2c7abdde9c99d451e6156c015c4dd99794ccfe8574d13a8",
+      "body_offset_utf8_bytes": 517,
+      "body_sha256": "7c00deb2dc26921247f947989b14439944a68bf2d467e78a2ed29b5c3ab0bda6",
+      "full_model_sha256": "23f3fbe2024c625d579ce97947457b838c669021c45b4d7bc67dbe550db999ff",
+      "baseline_expectation_sha256": "166b0794b91c762c8a644d6a9ccb1a507559f9e3c16f3612a3c00a864f9aa00b",
+      "snapshot_sha256": "ae7fe9eca757de0c05f321ee42430b7e4f09327d1d185886f1605fc075886d49",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_7c00deb2dc26921247f947989b14439944a68bf2d467e78a2ed29b5c3ab0bda6.txt",
+        "checks": {
+          "arrows": 9,
+          "labels": [
+            "Alice",
+            "Bob",
+            "Charlie",
+            "Dave",
+            "1. Solid arrow (->>)",
+            "2. Dotted arrow (-->>)",
+            "3. Solid open arrow (->)",
+            "4. Dotted open arrow (-->)",
+            "5. Solid cross (-x)",
+            "6. Dotted cross (--x)",
+            "7. Solid point async (-)",
+            "8. Dotted point async (--)",
+            "9. Bidirectional solid (<<->>)",
+            "10. Bidirectional dotted (<<-->>)",
+            "11. Solid top half (-|\\\\)",
+            "12. Solid bottom half (-|/)",
+            "13. Stick top half (-\\\\\\\\)",
+            "14. Stick bottom half (-//)",
+            "15. Solid top reverse (/|-)",
+            "16. Solid bottom reverse (\\\\|-)",
+            "17. Stick top reverse (//-)",
+            "18. Stick bottom reverse (\\\\\\\\-)",
+            "19. Dotted solid top (--|\\\\)",
+            "20. Dotted solid bottom (--|/)",
+            "21. Dotted stick top (--\\\\\\\\)",
+            "22. Dotted stick bottom (--//)",
+            "23. Dotted solid top reverse (/|--)",
+            "24. Dotted solid bottom reverse (\\\\|--)",
+            "25. Dotted stick top reverse (//--)",
+            "26. Dotted stick bottom reverse (\\\\\\\\--)",
+            "27. Solid with central connection",
+            "28. Dotted with reverse central",
+            "29. Dual central connections"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 5,
+        "native_row_canonical_sha256": "ebd77485276bfb47351710bd886e1bad66d75fe5124b4480bf14ad8d0a7ef4d3",
+        "wide_physical_sha256": "4aeec829665f599fdfe202ba79629c36523a704ddedee03ea3122c0b19c60189",
+        "narrow_physical_sha256": "20487e8497522ecbc36218190c8854370af49ad7f82222a681ebeed555a9d9a0",
+        "restored_physical_sha256": "4aeec829665f599fdfe202ba79629c36523a704ddedee03ea3122c0b19c60189",
+        "frame_height": 135,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": true,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 6,
+      "case_id": "official-body22/e7a8185cd9c81fa6e61c520c54629e52e70409aba9b9a8cc63f8ade65e13db75",
+      "path": "sequence/nightly-check/should-render-all-message-types-and-arrow-types-in-a-single-comprehensive-test.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "9b5192218252a0ec408e752c4a626444cb32303dc29b80babb103942b2e16800",
+      "body_offset_utf8_bytes": 539,
+      "body_sha256": "e7a8185cd9c81fa6e61c520c54629e52e70409aba9b9a8cc63f8ade65e13db75",
+      "full_model_sha256": "425d6ae65c30274420af4534642571840753269cb864790d948ab05ccbcab4dc",
+      "baseline_expectation_sha256": "0749538a90360a8401877791a4cfced8b43089add309e3e9e3857a2b053b669c",
+      "snapshot_sha256": "dcdec0879b52338bf812faf7434df0eb0d4dd119f62eb88e12b182b9062b1e8a",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_e7a8185cd9c81fa6e61c520c54629e52e70409aba9b9a8cc63f8ade65e13db75.txt",
+        "checks": {
+          "arrows": 29,
+          "labels": [
+            "Alice",
+            "Bob",
+            "Charlie",
+            "David",
+            "1. Solid arrow (->>)",
+            "2. Solid open arrow (->)",
+            "3. Solid cross (-x)",
+            "4. Solid point async (-)",
+            "5. Dotted arrow (-->>)",
+            "6. Dotted open arrow (-->)",
+            "7. Dotted cross (--x)",
+            "8. Dotted point async (--)",
+            "9. Bidirectional solid (<<->>)",
+            "10. Bidirectional dotted (<<-->>)",
+            "11. Solid top reverse (/|-)",
+            "12. Solid bottom reverse (\\\\|-)",
+            "13. Stick top reverse (//)",
+            "14. Stick bottom reverse (\\\\\\\\-)",
+            "15. Dotted solid top reverse (/|--)",
+            "16. Dotted solid bottom reverse (\\\\|--)",
+            "17. Dotted stick top reverse (//--)",
+            "18. Dotted stick bottom reverse (\\\\\\\\--)",
+            "19. Solid with circle at destination",
+            "20. Dotted with circle at destination",
+            "21. Open with circle at destination",
+            "22. Cross with circle at destination",
+            "23. Circle at source with solid",
+            "24. Circle at source with dotted",
+            "25. Circle at source with open",
+            "26. Circle at source with cross",
+            "27. Dual circles with solid",
+            "28. Dual circles with dotted",
+            "29. Dual circles with open",
+            "30. Dual circles with cross",
+            "31. Dual circles with bidirectional solid",
+            "32. Dual circles with bidirectional dotted",
+            "33. Self-reference solid",
+            "34. Self-reference dotted",
+            "35. Self-reference open",
+            "36. Self-reference cross",
+            "37. Self-ref reverse solid top",
+            "38. Self-ref reverse solid bottom",
+            "39. Self-ref reverse stick top",
+            "40. Self-ref reverse stick bottom",
+            "41. Self-ref bidirectional solid",
+            "42. Self-ref bidirectional dotted",
+            "43. Regular message",
+            "44. Central dual connection",
+            "45. Dotted response",
+            "46. Reverse arrow",
+            "47. Bidirectional back",
+            "48. Cross message",
+            "49. Central reverse",
+            "50. Dotted with circle",
+            "SOLID ARROWS (Filled arrowhead)",
+            "DOTTED ARROWS (Dashed line)",
+            "BIDIRECTIONAL ARROWS",
+            "REVERSE ARROWS (Half arrows)",
+            "DOTTED REVERSE ARROWS",
+            "CENTRAL CONNECTIONS (Circle at destination)",
+            "CENTRAL CONNECTIONS REVERSE (Circle at source)",
+            "CENTRAL CONNECTIONS DUAL (Circles at both ends)",
+            "BIDIRECTIONAL WITH CENTRAL CONNECTIONS",
+            "SELF-REFERENCES (Same participant)",
+            "SELF-REFERENCES WITH REVERSE ARROWS",
+            "SELF-REFERENCES BIDIRECTIONAL",
+            "MIXED COMPLEX SCENARIO"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 6,
+        "native_row_canonical_sha256": "82837394fc6d7a8a9bef976a3a5e408479d9e28abb171636b50b60d1842a24e3",
+        "wide_physical_sha256": "38a1403a5b9c7452aa22bddbe4879e2a774da41c90eb8c934d2ed6e9069af37e",
+        "narrow_physical_sha256": "e2242943926d990f424856f75f0856f9ed6150b239ab55c9a967875dda2fa48c",
+        "restored_physical_sha256": "38a1403a5b9c7452aa22bddbe4879e2a774da41c90eb8c934d2ed6e9069af37e",
+        "frame_height": 304,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": true,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 7,
+      "case_id": "official-body22/4964e1d779b65b4bc5e12c434321e747adcadb731e4aac6465464002c7e825e1",
+      "path": "sequence/nightly-check/should-render-long-messages-wrapped-inline-from-an-actor-to-the-left-to-one-to-the-right.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "2d0a01e1ddf1e96eba9d9a0d4f96ba29cde7ded9fe5aeb9148d2e555e0add783",
+      "body_offset_utf8_bytes": 333,
+      "body_sha256": "4964e1d779b65b4bc5e12c434321e747adcadb731e4aac6465464002c7e825e1",
+      "full_model_sha256": "9f14bb3e0c9abac703e71e7a99febfad076f990e051ee3abffd8f56f9b0a0bb3",
+      "baseline_expectation_sha256": "5fe3f3a3b1318808bcac9f72adf722ad94f176a8c60a093c4c79532abc079aa8",
+      "snapshot_sha256": "107a9951c2d5249257966a6377d7985fed8099f8ae7bc7314a9e981f004333b0",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_4964e1d779b65b4bc5e12c434321e747adcadb731e4aac6465464002c7e825e1.txt",
+        "checks": {
+          "arrows": 2,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 7,
+        "native_row_canonical_sha256": "49c7cfd71dd8b533adf9ce900b37ee6bc35ca6fef76f705f104ab2d853aa72fc",
+        "wide_physical_sha256": "b01d06c31b5cc012652568a2e27fe091107386c71b47dad03ad722ea23f1848a",
+        "narrow_physical_sha256": "0a1363009a32c9e7e934ef782a11457513ca969719cf706cdb61c103f2e76170",
+        "restored_physical_sha256": "b01d06c31b5cc012652568a2e27fe091107386c71b47dad03ad722ea23f1848a",
+        "frame_height": 40,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 8,
+      "case_id": "official-body22/7fb29243e894c0b68e9c2af2069ba586670e7158bdf729ba46c025a6f546996b",
+      "path": "sequence/nightly-check/should-render-long-messages-wrapped-inline-from-an-actor-to-the-right-to-one-to-the-left.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "78e3807c85293e2d5067ed6ccf84caecce5aad93465088c96a6ad9e1c02a5dca",
+      "body_offset_utf8_bytes": 372,
+      "body_sha256": "7fb29243e894c0b68e9c2af2069ba586670e7158bdf729ba46c025a6f546996b",
+      "full_model_sha256": "c327c5c59c13cc751611f9ebe4a84412b8dcdcf131294ada7deffa3cc890263a",
+      "baseline_expectation_sha256": "e8d75acf0345e39af06d05db77c5b4a1d56672169b136ec074a015c8223f0bc0",
+      "snapshot_sha256": "86105a64e9744333b11faf91d6c7a4076c18111c5e3c1c3a9d5fab418ae2a62a",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_7fb29243e894c0b68e9c2af2069ba586670e7158bdf729ba46c025a6f546996b.txt",
+        "checks": {
+          "arrows": 2,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 8,
+        "native_row_canonical_sha256": "1e3ff25629b7c7a46a8457431640efe0ce3e01eb8d9d7c233cc6110592c374f1",
+        "wide_physical_sha256": "b54c2d9c883ecbc6c191bbccb78ad92e64e243b32d9326629312732dfb7f1b48",
+        "narrow_physical_sha256": "fa37cdde6dbe91b74f2d1772d971da629602709cd6177d33e6d72035de8d903f",
+        "restored_physical_sha256": "b54c2d9c883ecbc6c191bbccb78ad92e64e243b32d9326629312732dfb7f1b48",
+        "frame_height": 40,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 9,
+      "case_id": "official-body22/a94976d0765a154f267ae79a90600a08d824c6fb0ec510b7518c7a362892a08b",
+      "path": "sequence/nightly-check/should-render-long-notes-wrapped-inline-left-of-actor.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "29a2888ba9a8b3e655c4ec948b987033d93d54bcd2e0923ce8086ba6caed41c4",
+      "body_offset_utf8_bytes": 222,
+      "body_sha256": "a94976d0765a154f267ae79a90600a08d824c6fb0ec510b7518c7a362892a08b",
+      "full_model_sha256": "9702ddfbdc3323955a26f8d85e086bd8fc0fad7d8c2f902f0703c0b2ed0a26ef",
+      "baseline_expectation_sha256": "070e6abf6f6d5dc327d7939cbb95d1f74452c0811ad42eb2f9228db9bb172598",
+      "snapshot_sha256": "cafe7ae13bb7d934dd0d2bfe256ae3978662f643510cf6b56346c9006ad274f2",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_a94976d0765a154f267ae79a90600a08d824c6fb0ec510b7518c7a362892a08b.txt",
+        "checks": {
+          "arrows": 2,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 9,
+        "native_row_canonical_sha256": "27b989e0077a1223bbaa3b151fae4178e2da8fa0b720c9b646ae24958c407b80",
+        "wide_physical_sha256": "60ff7dfa518b38710f811b6e7351ad95d310f83e2369dacd0153f11e25ce68c5",
+        "narrow_physical_sha256": "6a30f8c0cf2241e9f6a92e92db4c8581c3a8813d46396eb177a883bfc827aba2",
+        "restored_physical_sha256": "60ff7dfa518b38710f811b6e7351ad95d310f83e2369dacd0153f11e25ce68c5",
+        "frame_height": 40,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": true,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 10,
+      "case_id": "official-body22/69cf5f1944db6cf8bbd262f202d96bbf50c091ad4492db3dcc52f35177e9fa91",
+      "path": "sequence/nightly-check/should-render-long-notes-wrapped-inline-over-actor.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "fa34ba45786350173d7b85b381b14beb4dfa08409826f73edc2649d622e71f80",
+      "body_offset_utf8_bytes": 219,
+      "body_sha256": "69cf5f1944db6cf8bbd262f202d96bbf50c091ad4492db3dcc52f35177e9fa91",
+      "full_model_sha256": "a62a4a139b1c3eb2a2ba62ed94b51925ce678a4253eaba5bba038b346938a1a7",
+      "baseline_expectation_sha256": "578c6730dfc95dd57c48e8fab682931958bb1c9c7549ac221f468d51f7c8dc60",
+      "snapshot_sha256": "bbde6f7190e6af3184828a1a10054e74c8e4fe2e4c15a5740b3230db0358d6fb",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_69cf5f1944db6cf8bbd262f202d96bbf50c091ad4492db3dcc52f35177e9fa91.txt",
+        "checks": {
+          "arrows": 2,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 10,
+        "native_row_canonical_sha256": "844f6547600c2ede436f6a73d575c2036f9a9d2f1e8dcbf41e133eafa221515b",
+        "wide_physical_sha256": "0b7d75465be4ab9369d24482447a88310b665942d0a49637c6ecf4a480fc7bb9",
+        "narrow_physical_sha256": "09732816884f6474c74aadb812b5bc2c763d5c1102a187a9a5e59e728263a839",
+        "restored_physical_sha256": "0b7d75465be4ab9369d24482447a88310b665942d0a49637c6ecf4a480fc7bb9",
+        "frame_height": 40,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 11,
+      "case_id": "official-body22/eec0cc3f7a1eb979803db4932d4e29d519e4acb4f3b2efa20d34a5b831ae6114",
+      "path": "sequence/nightly-check/should-render-long-notes-wrapped-inline-right-of-actor.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "aaa3b9b03326d22de8d5d3abf496fc2439a5f94d6032725d4e7d155048663b72",
+      "body_offset_utf8_bytes": 223,
+      "body_sha256": "eec0cc3f7a1eb979803db4932d4e29d519e4acb4f3b2efa20d34a5b831ae6114",
+      "full_model_sha256": "473cc77f40d946947efc75260a6df18ca959057379f0c8997b8b85ef53acb68a",
+      "baseline_expectation_sha256": "fd8dcbc7e06056e926eade4d0cbe5275ee5e7df7f6ee30fc941e159a6f45cd0f",
+      "snapshot_sha256": "8cc022bf06e8a58a47f80dbc6fcea28a3b1f5466d11713fd30f130a3cd9a891c",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_eec0cc3f7a1eb979803db4932d4e29d519e4acb4f3b2efa20d34a5b831ae6114.txt",
+        "checks": {
+          "arrows": 2,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 11,
+        "native_row_canonical_sha256": "27fc6469c98c733c497af695a0f1bcda4e28a4a794ca26e244bc04dafa026654",
+        "wide_physical_sha256": "786c52bbc7e721a077d04f1abf5f3b8bdf21330f76699ba671bb5c77a35e8c37",
+        "narrow_physical_sha256": "c3674b571cbe38bab1621f8ee941de5ecd4ca7529df6c50f6ac004690f2130c4",
+        "restored_physical_sha256": "786c52bbc7e721a077d04f1abf5f3b8bdf21330f76699ba671bb5c77a35e8c37",
+        "frame_height": 40,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 12,
+      "case_id": "official-body22/ee18abc5e350ce38a2e1584c7152d8068840780aed184925bf51e534680c2693",
+      "path": "sequence/nightly-check/should-render-with-an-init-directive.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "6bda3d80a0079fe49cface23d8e2b36f89f9d099585f1086ade751a782f42241",
+      "body_offset_utf8_bytes": 223,
+      "body_sha256": "ee18abc5e350ce38a2e1584c7152d8068840780aed184925bf51e534680c2693",
+      "full_model_sha256": "408a054728f8e2981c591a9c1dd6e0e3b279e2636081002f675e288e895c6d81",
+      "baseline_expectation_sha256": "1cbd7e08bff3e155317d488a1f915e97997d531e704cb96062912bd48e21f562",
+      "snapshot_sha256": "9a4fff2286ef66d0ec7649f00e612e46667b2092bd0027f15a62180792f16fb6",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_ee18abc5e350ce38a2e1584c7152d8068840780aed184925bf51e534680c2693.txt",
+        "checks": {
+          "arrows": 2,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 12,
+        "native_row_canonical_sha256": "4e498475ec409ef4984751b692c5b75cf2ffb13c2b66bd3c03f7ba2d11706dda",
+        "wide_physical_sha256": "29d89d1b00d984a0cf46318950db8c01a9936d709c5ebb97d975963c2a135ab0",
+        "narrow_physical_sha256": "d59543f1d902c00393662a280829f1948c97018e52e3381322b92d4a35dbb4d3",
+        "restored_physical_sha256": "29d89d1b00d984a0cf46318950db8c01a9936d709c5ebb97d975963c2a135ab0",
+        "frame_height": 44,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 13,
+      "case_id": "official-body22/0c072457b050af96a8d780729650def78ae5a5d5cb91283750d35dd8f50a7e1c",
+      "path": "sequence/nightly-check/should-render-with-wrapping-enabled.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "523a58a98fa46f9e48e9285d2a5b20b94e43a4ffad6bdac697b7fea05ace92c1",
+      "body_offset_utf8_bytes": 232,
+      "body_sha256": "0c072457b050af96a8d780729650def78ae5a5d5cb91283750d35dd8f50a7e1c",
+      "full_model_sha256": "db5cee6aef75a75e948e1e38f9814bae44dfdc6d9c3b4751efcb69ecf5071227",
+      "baseline_expectation_sha256": "e28c54fd804e4d070f0e50afc170d87b92a87c2ccbc2cbe31617d56352193e9d",
+      "snapshot_sha256": "ac8f7af562ba3cfbf0186ebf443e7efcdc44745868965e6bb416537a5f47f070",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_0c072457b050af96a8d780729650def78ae5a5d5cb91283750d35dd8f50a7e1c.txt",
+        "checks": {
+          "arrows": 4,
+          "labels": [
+            "John"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 13,
+        "native_row_canonical_sha256": "462be12319d033bf3c77895446220b616095052a83c9718f99ba0e0426b805ab",
+        "wide_physical_sha256": "0d8d1e194e08a479a96f1331f2a0bd9ca918ec6cb3a36dfdd42e936b794bfaba",
+        "narrow_physical_sha256": "74411c9d8acd7697b1761789577ff7b7d41810e8ea6ac143da108135398a2148",
+        "restored_physical_sha256": "0d8d1e194e08a479a96f1331f2a0bd9ca918ec6cb3a36dfdd42e936b794bfaba",
+        "frame_height": 54,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 14,
+      "case_id": "official-body22/63a7669039d39a0dd1866b67632b04da3aecc21c45a82f84e6aa5831c3b64d18",
+      "path": "sequence/nightly-check/should-render-wrapped-long-messages-from-actor-to-database.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "1c369588ae62785a201681993fc71157e324796e5b1561ed75caf5433ef63ed2",
+      "body_offset_utf8_bytes": 217,
+      "body_sha256": "63a7669039d39a0dd1866b67632b04da3aecc21c45a82f84e6aa5831c3b64d18",
+      "full_model_sha256": "384c1a60101387d82cf2916173eafd22206271d43184ce34f1499295a4abaff1",
+      "baseline_expectation_sha256": "986642a2cb0bd8ae00d86346455235e78acc239f99ad36ec58a928411051f71c",
+      "snapshot_sha256": "d6ccd13151a610442c933b754c563304dfc24ab2f7a0c266d319698c0aa64832",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_63a7669039d39a0dd1866b67632b04da3aecc21c45a82f84e6aa5831c3b64d18.txt",
+        "checks": {
+          "arrows": 2,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 14,
+        "native_row_canonical_sha256": "4f21ff59ebcfe87ae69bed0bce4dd243123f8deed5578dbfaed4ea2c91a4d9f5",
+        "wide_physical_sha256": "6f8e1ed364746bbc7bbac2070cc319f778963410b406ba21807f5add6bbbca32",
+        "narrow_physical_sha256": "0574cd03ab9edb93e22f99b443c60493553fd4ef0bdd986949671d780d728fb4",
+        "restored_physical_sha256": "6f8e1ed364746bbc7bbac2070cc319f778963410b406ba21807f5add6bbbca32",
+        "frame_height": 42,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 15,
+      "case_id": "official-body22/6bee26a55ee63eeae02ca26b4f4eae4812d5784a127dfbdf2ff64f37dc643fc1",
+      "path": "sequence/nightly-check/should-render-wrapped-long-messages-from-control-to-entity.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "38668db18bc4e989d396223aab602232888fa5656988c8f6bb088483f3642d99",
+      "body_offset_utf8_bytes": 185,
+      "body_sha256": "6bee26a55ee63eeae02ca26b4f4eae4812d5784a127dfbdf2ff64f37dc643fc1",
+      "full_model_sha256": "2784f4283db3017f2382d37941142e36aaf929fc6b65bc3d5673ec655a485092",
+      "baseline_expectation_sha256": "712a145338d3be161ded0c10103e5efb73a7855bfc2209182af5d3ec0ef6f512",
+      "snapshot_sha256": "ef36d55fec987e910148d5b30e4a8d5889de1e01e236736dcb585720c8943b8f",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_6bee26a55ee63eeae02ca26b4f4eae4812d5784a127dfbdf2ff64f37dc643fc1.txt",
+        "checks": {
+          "arrows": 3,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 15,
+        "native_row_canonical_sha256": "fca312c20ca9b9d36e9fc21186940077cd0c5e86ac1b5a8c4ffcce0b694b0864",
+        "wide_physical_sha256": "5bdd3296844850fe890024d84cb6d6f46a1048900594aa98a6e79bd086a0aed8",
+        "narrow_physical_sha256": "214fc9199b649bff93d7c78ce71746159dbb82509ae1415a62e9446d73d25f50",
+        "restored_physical_sha256": "5bdd3296844850fe890024d84cb6d6f46a1048900594aa98a6e79bd086a0aed8",
+        "frame_height": 40,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 16,
+      "case_id": "official-body22/7c4c5f6e333736ea11db4dd6b4eb8379539c6dede759049d0bdf765a2e12198f",
+      "path": "sequence/nightly-check/should-render-wrapped-long-notes-left-of-control.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "213bd56c1c20fbbab8fc0cdf3c72b458ad0a7897a58a9cdfbec2f6205eee30ff",
+      "body_offset_utf8_bytes": 182,
+      "body_sha256": "7c4c5f6e333736ea11db4dd6b4eb8379539c6dede759049d0bdf765a2e12198f",
+      "full_model_sha256": "d6e6aa47683d7a7b97ea15997143794e570f2af2c7f328acce30e24e805113e9",
+      "baseline_expectation_sha256": "e3cd50c57e51369e3c15881b93795670e18862d77f371753e6989c2510f69dba",
+      "snapshot_sha256": "87fb9f48f4bbcf00313979381dd75928c7062d2be744059735bc4e82c8e01620",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_7c4c5f6e333736ea11db4dd6b4eb8379539c6dede759049d0bdf765a2e12198f.txt",
+        "checks": {
+          "arrows": 3,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 16,
+        "native_row_canonical_sha256": "37be13ff45a5ec6e857c62d12754999c124a121c284b3facbe146af820226a60",
+        "wide_physical_sha256": "44832a5a612df761183080aedee265c520194d191141d9c819c7a3f05b37677f",
+        "narrow_physical_sha256": "66edc9707e8085141be50fd5c69fcee2067b7bcfafbbbd16e7fcea66a9e7c9c8",
+        "restored_physical_sha256": "44832a5a612df761183080aedee265c520194d191141d9c819c7a3f05b37677f",
+        "frame_height": 41,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": true,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 17,
+      "case_id": "official-body22/1fb54b552e7799d198b19838e0d634170ac81ae7436b7f6fd63be32fe2f6a918",
+      "path": "sequence/nightly-check/should-render-wrapped-long-notes-over-queue.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "d4c78e11257d39a44371dc91b54965ae95594e2b52c27091f5ae9fcf9542af87",
+      "body_offset_utf8_bytes": 125,
+      "body_sha256": "1fb54b552e7799d198b19838e0d634170ac81ae7436b7f6fd63be32fe2f6a918",
+      "full_model_sha256": "f301994b8cd7f9c8648281086e38448763309fb73c8799421b42c26de8f0d608",
+      "baseline_expectation_sha256": "bff438271a94bf9da3462b33914a3c785f3de73e00d0ece5b2c7784106742038",
+      "snapshot_sha256": "5ff795a168eaa583c606d1c0218d41d3c8ebe6413f55f2e7eeb102abce26fb84",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_1fb54b552e7799d198b19838e0d634170ac81ae7436b7f6fd63be32fe2f6a918.txt",
+        "checks": {
+          "arrows": 2,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 17,
+        "native_row_canonical_sha256": "3d7efb623ab3bf8629482c5dc79d69d8ed497afcbba113865865f6fe51d6b720",
+        "wide_physical_sha256": "e89587f8e45c3b29158db8ceabdfc010f1386eb1acfb127110cb4174977964b4",
+        "narrow_physical_sha256": "3ac3f1506051a70d2b8bdf5fc020490c755eed7e97576276eac6b343f57f29fd",
+        "restored_physical_sha256": "e89587f8e45c3b29158db8ceabdfc010f1386eb1acfb127110cb4174977964b4",
+        "frame_height": 40,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 18,
+      "case_id": "official-body22/b7aefe94a8a3308124a92315f9876c9c22ea88496ec66deb43ff8e8597ccf3e2",
+      "path": "sequence/nightly-check/should-render-wrapped-long-notes-right-of-database.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "7c3001dc1a7f885a50c70cd46b52340e8975822dcba46616e61b46de661f5546",
+      "body_offset_utf8_bytes": 132,
+      "body_sha256": "b7aefe94a8a3308124a92315f9876c9c22ea88496ec66deb43ff8e8597ccf3e2",
+      "full_model_sha256": "8fc0115259e10899142b10f491a42119c0e0918fd4671f0b4d681c55260f224c",
+      "baseline_expectation_sha256": "15bbddb18c025c303e3143d0d304d2c330c5531b296b10674b57df25001b3a4f",
+      "snapshot_sha256": "e115b8e8a4ec4b8be02f6a8bd189e035dd42159cd11b5c562dcdf9b9f7cbaad9",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_b7aefe94a8a3308124a92315f9876c9c22ea88496ec66deb43ff8e8597ccf3e2.txt",
+        "checks": {
+          "arrows": 2,
+          "labels": [
+            "Alice",
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 18,
+        "native_row_canonical_sha256": "642d4e69446182cea02addeb539959d77af625b3e0b1f5fbc03a0c97feed3983",
+        "wide_physical_sha256": "08b547055cb544a2111edd67819e726a2329e09e9938a73e964b16756c61a5ba",
+        "narrow_physical_sha256": "6cffec24b59c36d08863b27749bf57965abe156aecdeedf4f44bf9ef5d23778d",
+        "restored_physical_sha256": "08b547055cb544a2111edd67819e726a2329e09e9938a73e964b16756c61a5ba",
+        "frame_height": 41,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 19,
+      "case_id": "official-body22/60acb5e9eb023d310fd94c83bb29f2592a2cf72965fcf8a8ea807df9b280cf78",
+      "path": "sequence/nightly-check/should-wrap-directive-long-actor-descriptions.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "e0289c31d46ab57dd6a173d1ddf6cce6fbdc540b66b11963f91775ff86f5a980",
+      "body_offset_utf8_bytes": 214,
+      "body_sha256": "60acb5e9eb023d310fd94c83bb29f2592a2cf72965fcf8a8ea807df9b280cf78",
+      "full_model_sha256": "41d746f0ef3d742d96b8b82efe12983bab8fb16e232bf6a211c80a68bbe66859",
+      "baseline_expectation_sha256": "ad0c020cf29d60e5f31ee3d214f14b6a5ddf8e386e99472eb17774438529c289",
+      "snapshot_sha256": "2ccfa382f71c511c537073fc688ecb11ed8e13b2410111b3608d95b05220d545",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_60acb5e9eb023d310fd94c83bb29f2592a2cf72965fcf8a8ea807df9b280cf78.txt",
+        "checks": {
+          "arrows": 1,
+          "labels": [
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 19,
+        "native_row_canonical_sha256": "457cf69af60c40a9ea6bd1dbee070b3b6d624374818f037c17cf8bf1da081e59",
+        "wide_physical_sha256": "2c28c83e05835d1860ec0f667bd7c0e87d377f0d5672ec5a9d7412e75d5c57b2",
+        "narrow_physical_sha256": "60c6c1a0dbf060f03f916f4f1f8b9ead769fc17b6ca55e881478433828ea2df0",
+        "restored_physical_sha256": "2c28c83e05835d1860ec0f667bd7c0e87d377f0d5672ec5a9d7412e75d5c57b2",
+        "frame_height": 40,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 20,
+      "case_id": "official-body22/e2da2f8af60e9dfdb2c8f3de5f8762e0d3d5ab053c711d31d26574713d9f9351",
+      "path": "sequence/nightly-check/should-wrap-inline-long-actor-descriptions.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "d30a3cce85917e843f46507c00ab6dd40fb4b4645e9a588e73712f5f12f8e44a",
+      "body_offset_utf8_bytes": 247,
+      "body_sha256": "e2da2f8af60e9dfdb2c8f3de5f8762e0d3d5ab053c711d31d26574713d9f9351",
+      "full_model_sha256": "9f0b8c20a33551b89f394640431ed6bac58ea970d1970d39189c765fcabc02ab",
+      "baseline_expectation_sha256": "0cf34f86f41e56152d2e1ec8ca87bde24c8862289f2fa73b482ccf061a4d96a0",
+      "snapshot_sha256": "4365171956276f1d94a6166bb03afeee754284076b9ef63d68733606df9c3220",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_e2da2f8af60e9dfdb2c8f3de5f8762e0d3d5ab053c711d31d26574713d9f9351.txt",
+        "checks": {
+          "arrows": 1,
+          "labels": [
+            "Bob"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 20,
+        "native_row_canonical_sha256": "4468e12dd519e4d8958715923211654559dbfbd2fe23c82bd98d4d06abf44dc2",
+        "wide_physical_sha256": "2db2dede8289c3b04016ae6b853597307c79f4284413e3164338a72a31f2dc4a",
+        "narrow_physical_sha256": "b54fe561aeb5be23275db7e45f94d067016785699085126318a1d469328cdbe6",
+        "restored_physical_sha256": "2db2dede8289c3b04016ae6b853597307c79f4284413e3164338a72a31f2dc4a",
+        "frame_height": 40,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": false,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    },
+    {
+      "case_index": 21,
+      "case_id": "official-body22/acf8179406d9fbcfaaceb09f5d728b552838d7d61a14d2f25583b78800fad74e",
+      "path": "sequence/nightly-check/v2-classic-participant-creation-and-destruction.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "8ab33aac1388155585c1d7f386c029a65b82b0f94b4d956950e0098f94dfcdad",
+      "body_offset_utf8_bytes": 268,
+      "body_sha256": "acf8179406d9fbcfaaceb09f5d728b552838d7d61a14d2f25583b78800fad74e",
+      "full_model_sha256": "46ce3bfdedcf3ed5a01d001f9001a92bdba50089517f93ee79412b0794204e14",
+      "baseline_expectation_sha256": "8ffdf906e9d9e8157b55771f020e6b7ccb928fb7275b7696af80647a05a659e4",
+      "snapshot_sha256": "d70dc8cd56db4ca33bb74487298eb843fe0da7db7f7d0f49bbb4edf95e0571ae",
+      "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+      "effective": {
+        "expected": "drawn",
+        "reason": "Reviewed complete diagnostic-body native terminal projection; raw metadata and original API/SVG/CSS/font/HTML/browser/ASCII exact predicates remain pending.",
+        "snapshot": "sequence_official_body22_acf8179406d9fbcfaaceb09f5d728b552838d7d61a14d2f25583b78800fad74e.txt",
+        "checks": {
+          "arrows": 9,
+          "labels": [
+            "A",
+            "B",
+            "participant0",
+            "actor1",
+            "boundary2",
+            "control3",
+            "entity4",
+            "database5",
+            "collections6",
+            "queue7",
+            "Hello participant",
+            "Hello actor",
+            "Hello boundary",
+            "Hello control",
+            "Hello entity",
+            "Hello database",
+            "Hello collections",
+            "Hello queue"
+          ],
+          "ordering": []
+        }
+      },
+      "native_evidence": {
+        "source_review_sha256": "f8f363f99ee278730652b8c88454ba3751168fbe60249243a3001c6f2b7b8dc7",
+        "native_source_sha256": "8fcc2e677b0b8461e7409e1be5ed69d2dc84481340ae637d8091d29bc03fe36f",
+        "native_report_sha256": "8933c15978358caf2d861250c7cec7952fda96693b7cf0a9a5a770b9c90eaaa1",
+        "native_row_index": 21,
+        "native_row_canonical_sha256": "26469c70bb0b12ca1cbc97bf8efb63123a42ab5894efa76167d151baa2886ad1",
+        "wide_physical_sha256": "d329feef903c20df98cd565f16f28f51c8241d14ad31fa6730db1e86c0c3e05e",
+        "narrow_physical_sha256": "e31677584db63b7265285483fe4b1734b786f02133fa47d6821a69aa0475b40e",
+        "restored_physical_sha256": "d329feef903c20df98cd565f16f28f51c8241d14ad31fa6730db1e86c0c3e05e",
+        "frame_height": 63,
+        "full_geometry_and_meaningful_mutants": true,
+        "narrow_source_fallback": true,
+        "independent_first_release_review_sha256": "2031af1a8b2c625499183f97666c2649a0b30cbc807923e325661ecd02ab43c6",
+        "first_dual_parity_sha256": "1e46644ce12e638499c0ca4d01fa51687bd14fda8bc99d97040d1b823bb6b57f"
+      }
+    }
+  ]
+}

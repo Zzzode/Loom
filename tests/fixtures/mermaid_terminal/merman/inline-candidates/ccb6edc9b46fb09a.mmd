@@ -1,0 +1,10 @@
+sequenceDiagram
+participant A
+participant B
+loop Setup
+create participant C
+B->>C: Hello C
+C->>B: Still here
+destroy C
+B--xC: Bye C
+end

@@ -1,0 +1,10 @@
+dateFormat(bytes=10)="YYYY-MM-DD"
+section(bytes=1)="A"
+  - task(bytes=5)="First" [id(bytes=5)="first", order=0, range=2026-01-01 ->
+    2026-01-02, start(bytes=10)="2026-01-01", duration(bytes=2)="1d"]
+section(bytes=1)="B"
+  - task(bytes=6)="Middle" [id(bytes=6)="middle", order=1, range=2026-01-02 ->
+    2026-01-03, start(bytes=10)="2026-01-02", duration(bytes=2)="1d"]
+section(bytes=1)="A"
+  - task(bytes=4)="Last" [id(bytes=4)="last", order=2, range=2026-01-03 ->
+    2026-01-04, start(bytes=10)="2026-01-03", duration(bytes=2)="1d"]

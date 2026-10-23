@@ -1,0 +1,10 @@
+sequenceDiagram
+participant A
+participant B
+autonumber 10 5
+A->>B: Visible first
+autonumber off
+A->>B: Hidden first
+B-->>A: Hidden second
+autonumber
+A->>B: Visible resumed

@@ -1,0 +1,16 @@
++----------+
+| CUSTOMER |
++----------+
+
++-------+
+| ORDER |
++-------+
+
++---------+
+| INVOICE |
++---------+
+
+relations:
+id(bytes=8)="CUSTOMER" ||--o{ id(bytes=5)="ORDER"   : places
+id(bytes=8)="CUSTOMER" ||--o{ id(bytes=7)="INVOICE" : billed
+id(bytes=5)="ORDER"    ||--|| id(bytes=7)="INVOICE" : invoices

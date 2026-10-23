@@ -1,0 +1,9 @@
++------+    +---------+    +------+    +------+
+| User |    | Payment |    | Cart |    | Item |
++------+    +---------+    +------+    +------+
+
+relations:
+id(bytes=4)="User"    endpoint1=[bytes=1 "1"] o-- endpoint2=[bytes=1 "1"] id(bytes=4)="Cart"    : owns
+id(bytes=4)="Cart"    endpoint1=[bytes=1 "1"] *-- endpoint2=[bytes=1 "*"] id(bytes=4)="Item"    : contains
+id(bytes=4)="User"    ..>                                                 id(bytes=7)="Payment" : initiates
+id(bytes=7)="Payment" -->                                                 id(bytes=4)="Cart"    : charges for

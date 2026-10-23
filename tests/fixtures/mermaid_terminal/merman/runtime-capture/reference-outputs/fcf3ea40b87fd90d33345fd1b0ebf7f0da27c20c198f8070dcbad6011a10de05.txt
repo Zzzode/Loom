@@ -1,0 +1,5 @@
+node(bytes=8)="The root" id(bytes=4)="root" shape(bytes=4)="rect"
+|-- node(bytes=6)="child1" id(bytes=5)="theId" shape(bytes=7)="rounded"
+    section=0
+|   \-- node(bytes=5)="leaf1" id(bytes=5)="leaf1" section=0
+\-- node(bytes=6)="child2" id(bytes=6)="child2" section=1

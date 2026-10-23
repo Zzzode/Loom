@@ -59,6 +59,17 @@ width. The host-only AST fence-closure field defaults to false and does not
 change HTML, session or wire formats. Screen selection copies visible diagram
 cells; message Copy retains original Markdown. No external runtime, graph
 service, terminal image protocol or shared selection changes are introduced.
+The offline official-corpus matrix pins complete upstream files separately from
+body-only diagnostics. Independent semantic declarations and reviewed terminal
+glyph snapshots distinguish faithful drawings from exact ordinary-code fallback
+and errors. Source fallback is not full Mermaid compatibility; metadata-stripped
+diagnostics never count as original-file drawing passes. Complementary terminal
+test imports preserve upstream input/assertion/model provenance without linking
+foreign rendering implementations. Their execution baseline reports unverified
+drawings separately from semantic conformance; a source fallback never satisfies
+a positive drawing obligation. Exact source deduplication preserves option and
+assertion variants, and native integrity anchors reject altered inventories. See
+`docs/dev/mermaid-conformance.md` for provenance and reproduction.
 
 **Server model capacities (RFC 0029).** The configured service's
 `data[].context_length` is read once per runtime root, before native tool policy

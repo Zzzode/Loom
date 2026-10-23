@@ -13,6 +13,10 @@
 
 import std;
 import loom.ui.visual.markdown;
+import loom.serdes.json;
+import loom.crypto.crypto;
+
+#include "mermaid_flow400_authority.hpp"
 
 using namespace loom::ui;
 
@@ -672,12 +676,20 @@ TEST(MarkdownMermaid, SequenceSolidAndDashedMessagesAreVisuallyDistinct) {
     EXPECT_NE(solid, dashed);
 }
 
+TEST(MarkdownMermaid, SequenceUnclosedActivationRetainsItsOwnedTail) {
+    const auto rendered = mermaid_document("sequenceDiagram\nA->>B: Request\nactivate B");
+    expect_diagram(rendered, "sequenceDiagram");
+    for (const auto* label : {"A", "B", "Request"})
+        EXPECT_NE(rendered.find(label), std::string::npos);
+    EXPECT_EQ(diagram_arrows(rendered), 1);
+    EXPECT_NE(rendered.find("╺╋╸"), std::string::npos);
+    EXPECT_NE(rendered.find("┃"), std::string::npos);
+}
+
 TEST(MarkdownMermaid, UnsupportedConstructsKeepEntireOriginalSource) {
     for (const std::string source : {
-            "classDiagram\nclass PreservedClass",
-            "flowchart TD\nA --> B\nsubgraph PreservedGroup\nC\nend",
+            "classDiagram\nclass PreservedClass\nclick PreservedClass \"https://example.com\"",
             "flowchart TD\nA --> B\nclick A \"https://example.com\"",
-            "flowchart TD\nA[before<br/>after] --> B",
             "flowchart TD\nA[before &amp; after] --> B",
             "flowchart TD\nA[`rich`] --> B",
             "flowchart TD\nA[\"#quot;\"] --> B",
@@ -690,29 +702,26 @@ TEST(MarkdownMermaid, UnsupportedConstructsKeepEntireOriginalSource) {
             "flowchart TD\nA --> B\nA[one]\nA[two]",
             "flowchart TD\n%%{init: {}}%%\nA --> B",
             "flowchart TD\nA --> B residual",
-            "sequenceDiagram\nA->>B: Request\nactivate B",
             "sequenceDiagram\nloop->>A: Ping",
             "sequenceDiagram\nEND->>A: Ping",
             "sequenceDiagram\nparticipant Loop\nLoop->>A: Ping",
-            "sequenceDiagram\nA->>B: Request\nnote over B: retained",
-            "sequenceDiagram\nparticipant A as \"#quot;\"\nA->>B: Request",
-            "sequenceDiagram\nparticipant A as \"Client\"\nA->>B: Request",
-            "sequenceDiagram\nA->>B: \"Hello\"",
-            "sequenceDiagram\nA->>B: wrap: Hello",
-            "sequenceDiagram\nA->>B: nowrap: Hello",
-            "sequenceDiagram\nA->>B: :wrap: Hello",
-            "sequenceDiagram\nA->>B: :nowrap: Hello",
-            "sequenceDiagram\nA->>B: \"#35;\"",
-            "sequenceDiagram\nA->>B: before #59; A->>B: after",
-            "sequenceDiagram\nparticipant A as \"a\u200fb\"\nA->>B: Request",
-            "sequenceDiagram\nA->>B: \"a\u061cb\"",
-            "sequenceDiagram\nparticipant A as One\nparticipant A as Two\nA->>B: Request"}) {
+            "sequenceDiagram\nA->>B: Request\nnote left of B: retained\nunknown directive",
+            "sequenceDiagram\nparticipant A as \"#quot;\"\nA->>B: Request"}) {
         SCOPED_TRACE(source);
         const auto expected = render_document(render_markdown("```text\n" + source + "\n```"));
         EXPECT_EQ(mermaid_document(source), expected);
     }
+    expect_diagram(mermaid_document("flowchart TD\nA --> B\nsubgraph PreservedGroup\nC\nend"), "flowchart TD");
+    expect_diagram(mermaid_document("flowchart TD\nA[before<br/>after] --> B"), "flowchart TD");
     expect_diagram(mermaid_document("flowchart TD\nA[\"end\"] --> B[Finish]"), "flowchart TD");
     expect_diagram(mermaid_document("sequenceDiagram\nparticipant A as loop\nA->>B: end"), "sequenceDiagram");
+    // The source-identical semicolon case is now supported; the decoded
+    // delimiter remains one message label rather than a second statement.
+    const auto semicolon = mermaid_document("sequenceDiagram\nA->>B: before #59; A->>B: after");
+    expect_diagram(semicolon,"sequenceDiagram");
+    EXPECT_NE(semicolon.find("before ; A->>B: after"),std::string::npos);
+    EXPECT_EQ(semicolon.find("#59;"),std::string::npos);
+    EXPECT_EQ(diagram_arrows(semicolon),1);
 }
 
 TEST(MarkdownMermaid, MalformedOrIncompleteSyntaxKeepsSource) {
@@ -849,4 +858,124 @@ TEST(MarkdownMermaid, FullSyntaxScanHandlesLongNumericRunsAndNumericPrefaces) {
     EXPECT_EQ(diagram_arrows(rendered), 1);
     EXPECT_TRUE(detail::has_markdown_syntax(digits + ". item"));
     EXPECT_TRUE(detail::has_markdown_syntax(digits + "\\"));
+}
+
+// RFC 0030 Phase B: these minimized regressions are derived from the pinned
+// official corpus/grammar. They are not original upstream fixture passes.
+TEST(MarkdownMermaid, OfficialFontAwesomeLabelsKeepSourceRatherThanLiteralIcons) {
+    for (const auto* family : {"fa", "fab", "fak", "fal", "far", "fas"}) {
+        for (const auto& source : {
+                std::string("flowchart LR\nA[") + family + ":fa-car Car] --> B[Done]",
+                std::string("flowchart LR\nA[\"") + family + ":fa-car Car\"] --> B[Done]",
+                std::string("flowchart LR\nA -->|prefix ") + family + ":fa-car Car| B"}) {
+            SCOPED_TRACE(source);
+            EXPECT_EQ(mermaid_document(source),
+                      render_document(render_markdown("```text\n" + source + "\n```")));
+        }
+    }
+    expect_diagram(mermaid_document("flowchart LR\nA[fa:description] --> B[fa:fa-]"), "flowchart LR");
+}
+
+// Preserve the exact four former fallback controls as mandatory drawing
+// controls when their classic shapes become supported. Models are authored
+// directly from each full source; ordinary text never earns drawing credit.
+TEST(MarkdownMermaid, FormerClassicShapeFallbacksRequireCompleteGeometry) {
+    namespace flow = loom::test::mermaid_flow;
+    struct Example { std::string_view source, label; flow::Shape shape; };
+    constexpr std::array<Example,4> cases{{
+        {"flowchart LR\nA[/Lean right/] --> B","Lean right",flow::Shape::Parallelogram},
+        {"flowchart LR\nA[\\Lean left\\] --> B","Lean left",flow::Shape::ParallelogramAlt},
+        {"flowchart LR\nA[/Trapezoid\\] --> B","Trapezoid",flow::Shape::Trapezoid},
+        {"flowchart LR\nA[\\Inverse trapezoid/] --> B","Inverse trapezoid",flow::Shape::TrapezoidAlt},
+    }};
+    for (const auto& item:cases) {
+        SCOPED_TRACE(item.source);
+        flow::OracleWork work{flow::kFlow400SceneLimit};
+        work.spend(65536u+32u*sizeof(flow::Grid)+32u*sizeof(flow::Model)+256u*sizeof(std::string));
+        const auto fenced=[&](std::string_view language) {
+            return "```"+std::string(language)+"\n"+std::string(item.source)+"\n```\n"+std::string(flow::kSentinel);
+        };
+        work.product(item.source.size(),32u);
+        auto element=render_markdown(fenced("mermaid"));
+        auto ordinary=render_markdown(fenced("text"));
+        std::array<flow::Grid,5> frames;
+        constexpr std::array<int,5> widths{{120,40,120,120,40}};
+        for (std::size_t n=0;n<frames.size();++n)
+            frames[n]=flow::capture(n<3u?element:ordinary,widths[n],32,&work);
+        for (const auto& frame:frames) static_cast<void>(flow::flow400_following(frame,work));
+        ASSERT_FALSE(flow::flow400_same(frames[0],frames[3],work));
+        ASSERT_TRUE(flow::flow400_same(frames[0],frames[2],work));
+        const flow::Model model{"LR",{{"A",std::string(item.label),item.shape},{"B","B",flow::Shape::Rectangle}},{{0,1,"","solid",false,true}},{}};
+        for (std::size_t n=0;n<3u;++n) {
+            if (n==1u&&flow::flow400_same(frames[1],frames[4],work)) continue;
+            const auto errors=flow::flow400_geometry(frames[n],model,work);
+            ASSERT_TRUE(errors.empty()) << flow::errors_text(errors);
+        }
+        flow::flow_typed_expect_model_rejected(frames[0],model,work,[](flow::Model& bad){bad.nodes[0].shape=flow::Shape::Rectangle;},"former fallback shape");
+        flow::flow_typed_expect_model_rejected(frames[0],model,work,[](flow::Model& bad){bad.nodes[0].label+="x";},"former fallback caption");
+        flow::flow_typed_expect_model_rejected(frames[0],model,work,[](flow::Model& bad){bad.edges[0].to=0;},"former fallback endpoint");
+        ASSERT_EQ(frames[0].at({119,0})," ");
+        flow::flow_typed_expect_rejected(frames[0],model,work,[](flow::Grid& bad){bad.put({119,0},"X");},"former fallback unowned physical ink");
+    }
+    RecordProperty("retained_complete_sources",4);
+    RecordProperty("semantic_mutations",12);
+    RecordProperty("physical_mutations",4);
+}
+
+TEST(MarkdownMermaid, OfficialUnsupportedShapeOpenersKeepSource) {
+    const auto* source="flowchart LR\nA(-Ellipse-) --> B";
+    EXPECT_EQ(mermaid_document(source),
+              render_document(render_markdown(std::string("```text\n")+source+"\n```")));
+    expect_diagram(mermaid_document("flowchart LR\nA[\"/data/\"] --> B(\"-literal-\")"),"flowchart LR");
+}
+
+TEST(MarkdownMermaid, SequenceWrapPrefixesRespectSourceCase) {
+    for (const auto* prefix : {"WRAP:", "NoWrap:", ":WRAP:", ":NoWrap:"}) {
+        for (const bool actor : {false, true}) {
+            const std::string label = std::string(prefix) + (actor ? " Client" : " Message");
+            const std::string source = actor
+                ? "sequenceDiagram\nparticipant A as " + label + "\nA->>B: Request"
+                : "sequenceDiagram\nA->>B: " + label;
+            SCOPED_TRACE(source);
+            const auto element = render_markdown(mermaid_fence(source));
+            const auto rendered = render_document(element);
+            expect_diagram(rendered, "sequenceDiagram");
+            EXPECT_EQ(render_document(element, 12),
+                      render_document(render_markdown("```text\n" + source + "\n```"), 12));
+            EXPECT_EQ(render_document(element), rendered);
+            EXPECT_NE(rendered.find(label), std::string::npos);
+            EXPECT_EQ(diagram_arrows(rendered), 1);
+        }
+    }
+    expect_diagram(mermaid_document("sequenceDiagram\nA->>B: Ordinary WRAP word"), "sequenceDiagram");
+}
+
+TEST(MarkdownMermaid, ReviewedSequenceTextAndReplacementRulesDrawCompleteLabels) {
+    struct Example { std::string source, text, absent; };
+    const std::array<Example, 10> examples{{
+        {"sequenceDiagram\nparticipant A as \"Client\"\nA->>B: Request", "\"Client\"", ""},
+        {"sequenceDiagram\nA->>B: \"Hello\"", "\"Hello\"", ""},
+        {"sequenceDiagram\nA->>B: wrap: Hello", "Hello", "wrap:"},
+        {"sequenceDiagram\nA->>B: nowrap: Hello", "Hello", "nowrap:"},
+        {"sequenceDiagram\nA->>B: :wrap: Hello", "Hello", ":wrap:"},
+        {"sequenceDiagram\nA->>B: :nowrap: Hello", "Hello", ":nowrap:"},
+        {"sequenceDiagram\nA->>B: \"#35;\"", "\"#\"", "#35;"},
+        {"sequenceDiagram\nparticipant A as \"a\u200fb\"\nA->>B: Request", "\"a\\u{200F}b\"", "a\u200fb"},
+        {"sequenceDiagram\nA->>B: \"a\u061cb\"", "\"a\\u{061C}b\"", "a\u061cb"},
+        {"sequenceDiagram\nparticipant A as One\nparticipant A as Two\nA->>B: Request", "Two", "One"},
+    }};
+    for (const auto& example : examples) {
+        SCOPED_TRACE(example.source);
+        const auto element = render_markdown(mermaid_fence(example.source));
+        const auto rendered = render_document(element);
+        expect_diagram(rendered, "sequenceDiagram");
+        EXPECT_EQ(render_document(element, 12),
+                  render_document(render_markdown("```text\n" + example.source + "\n```"), 12));
+        EXPECT_EQ(render_document(element), rendered);
+        EXPECT_NE(rendered.find(example.text), std::string::npos);
+        if (!example.absent.empty()) EXPECT_EQ(rendered.find(example.absent), std::string::npos);
+        EXPECT_EQ(diagram_arrows(rendered), 1);
+        if (example.source.find("Request") != std::string::npos)
+            EXPECT_NE(rendered.find("Request"), std::string::npos);
+    }
 }

@@ -1,0 +1,5 @@
+xDomain: linear authored=[0,1] resolved=[0,1]
+0 +
+1 +##########
+  ++--------+
+   0        1

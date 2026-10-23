@@ -1,0 +1,5 @@
+<span style="color:#a1a1aa">+--------------------------------------------------------------------------------------+</span>
+<span style="color:#a1a1aa">|</span> <span style="color:#27272a">before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}</span>                  <span style="color:#a1a1aa">|</span>
+<span style="color:#a1a1aa">|</span> <span style="color:#27272a">text(bytes=49)=&quot;before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}&quot;</span> <span style="color:#a1a1aa">|</span>
+<span style="color:#a1a1aa">|</span> <span style="color:#27272a">id(bytes=1)=&quot;A&quot;</span>                                                                      <span style="color:#a1a1aa">|</span>
+<span style="color:#a1a1aa">+--------------------------------------------------------------------------------------+</span>

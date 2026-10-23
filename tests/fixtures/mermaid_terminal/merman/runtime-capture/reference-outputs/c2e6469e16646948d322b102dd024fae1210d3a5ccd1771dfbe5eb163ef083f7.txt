@@ -1,0 +1,7 @@
++---+    +---+
+| A |    | B |
++---+    +---+
+
+relations:
+id(bytes=1)="A" ||--o{ id(bytes=1)="A" : self
+id(bytes=1)="A" }o--|| id(bytes=1)="B" : next

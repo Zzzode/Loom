@@ -1,0 +1,4 @@
+gitGraph direction(bytes=2)=&quot;LR&quot; current(bytes=4)=&quot;main&quot;
+title(bytes=49)=&quot;before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}&quot;
+branches=[bytes=4 &quot;main&quot;]
+  - seq=0 branch(bytes=4)=&quot;main&quot; id(bytes=9)=&quot;0-93ba65d&quot; kind=normal message(bytes=0)=&quot;&quot;

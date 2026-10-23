@@ -1,0 +1,419 @@
+{
+  "schema": "requirement_overflow_peer_source_design_proposals/v1",
+  "qualification": "Two complete synthetic sources only; no original/foreign/matrix credit. Full source-derived Models, not rendered output.",
+  "models": [
+    {
+      "ordinal": 0,
+      "path": "synthetic/overflow-scc-peers-LR.mmd",
+      "source_bytes": 911,
+      "source_sha256": "e434b33109d9edcc809b342b2c71ce502edbab6393f571da448db93d6d98b6fa",
+      "direction": "LR",
+      "nodes": [
+        {
+          "role": "requirement",
+          "logical_name": "R",
+          "stereotype": "Requirement",
+          "metadata": {
+            "id": "R-1",
+            "text": "owner requirement",
+            "risk": "High",
+            "verification": "Test",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "F",
+          "stereotype": "Functional Requirement",
+          "metadata": {
+            "id": "F-1",
+            "text": "child requirement",
+            "risk": "Low",
+            "verification": "Inspection",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "I",
+          "stereotype": "Interface Requirement",
+          "metadata": {
+            "id": "I-1",
+            "text": "endpoint requirement",
+            "risk": "Medium",
+            "verification": "Analysis",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "P",
+          "stereotype": "Performance Requirement",
+          "metadata": {
+            "id": "P-1",
+            "text": "performance requirement",
+            "risk": "Medium",
+            "verification": "Demonstration",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "H",
+          "stereotype": "Physical Requirement",
+          "metadata": {
+            "id": "H-1",
+            "text": "physical requirement",
+            "risk": "Low",
+            "verification": "Test",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "D",
+          "stereotype": "Design Constraint",
+          "metadata": {
+            "id": "D-1",
+            "text": "constraint requirement",
+            "risk": "High",
+            "verification": "Inspection",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "element",
+          "logical_name": "E",
+          "stereotype": "Element",
+          "metadata": {
+            "id": null,
+            "text": null,
+            "risk": null,
+            "verification": null,
+            "type": "test system",
+            "doc_ref": "docs/e"
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "PeerX",
+          "stereotype": "Requirement",
+          "metadata": {
+            "id": null,
+            "text": null,
+            "risk": null,
+            "verification": null,
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "PeerY",
+          "stereotype": "Requirement",
+          "metadata": {
+            "id": null,
+            "text": null,
+            "risk": null,
+            "verification": null,
+            "type": null,
+            "doc_ref": null
+          }
+        }
+      ],
+      "relations": [
+        {
+          "order": 0,
+          "source": "requirement:R",
+          "target": "requirement:F",
+          "kind": "contains",
+          "source_syntax": "R - contains -> F"
+        },
+        {
+          "order": 1,
+          "source": "requirement:F",
+          "target": "requirement:I",
+          "kind": "contains",
+          "source_syntax": "F - contains -> I"
+        },
+        {
+          "order": 2,
+          "source": "element:E",
+          "target": "requirement:R",
+          "kind": "copies",
+          "source_syntax": "E - copies -> R"
+        },
+        {
+          "order": 3,
+          "source": "requirement:R",
+          "target": "requirement:F",
+          "kind": "traces",
+          "source_syntax": "R - traces -> F"
+        },
+        {
+          "order": 4,
+          "source": "requirement:R",
+          "target": "requirement:F",
+          "kind": "traces",
+          "source_syntax": "R - traces -> F"
+        },
+        {
+          "order": 5,
+          "source": "requirement:F",
+          "target": "requirement:P",
+          "kind": "derives",
+          "source_syntax": "F - derives -> P"
+        },
+        {
+          "order": 6,
+          "source": "requirement:P",
+          "target": "requirement:H",
+          "kind": "satisfies",
+          "source_syntax": "P - satisfies -> H"
+        },
+        {
+          "order": 7,
+          "source": "requirement:H",
+          "target": "requirement:D",
+          "kind": "verifies",
+          "source_syntax": "H - verifies -> D"
+        },
+        {
+          "order": 8,
+          "source": "requirement:D",
+          "target": "requirement:R",
+          "kind": "refines",
+          "source_syntax": "D - refines -> R"
+        },
+        {
+          "order": 9,
+          "source": "element:E",
+          "target": "requirement:I",
+          "kind": "copies",
+          "source_syntax": "I <- copies - E"
+        }
+      ]
+    },
+    {
+      "ordinal": 0,
+      "path": "synthetic/overflow-scc-peers-RL.mmd",
+      "source_bytes": 911,
+      "source_sha256": "da1541384f6b4cd6d52719dd80a7ad89307e7a9dd289d58b357775c12358624c",
+      "direction": "RL",
+      "nodes": [
+        {
+          "role": "requirement",
+          "logical_name": "R",
+          "stereotype": "Requirement",
+          "metadata": {
+            "id": "R-1",
+            "text": "owner requirement",
+            "risk": "High",
+            "verification": "Test",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "F",
+          "stereotype": "Functional Requirement",
+          "metadata": {
+            "id": "F-1",
+            "text": "child requirement",
+            "risk": "Low",
+            "verification": "Inspection",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "I",
+          "stereotype": "Interface Requirement",
+          "metadata": {
+            "id": "I-1",
+            "text": "endpoint requirement",
+            "risk": "Medium",
+            "verification": "Analysis",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "P",
+          "stereotype": "Performance Requirement",
+          "metadata": {
+            "id": "P-1",
+            "text": "performance requirement",
+            "risk": "Medium",
+            "verification": "Demonstration",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "H",
+          "stereotype": "Physical Requirement",
+          "metadata": {
+            "id": "H-1",
+            "text": "physical requirement",
+            "risk": "Low",
+            "verification": "Test",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "D",
+          "stereotype": "Design Constraint",
+          "metadata": {
+            "id": "D-1",
+            "text": "constraint requirement",
+            "risk": "High",
+            "verification": "Inspection",
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "element",
+          "logical_name": "E",
+          "stereotype": "Element",
+          "metadata": {
+            "id": null,
+            "text": null,
+            "risk": null,
+            "verification": null,
+            "type": "test system",
+            "doc_ref": "docs/e"
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "PeerX",
+          "stereotype": "Requirement",
+          "metadata": {
+            "id": null,
+            "text": null,
+            "risk": null,
+            "verification": null,
+            "type": null,
+            "doc_ref": null
+          }
+        },
+        {
+          "role": "requirement",
+          "logical_name": "PeerY",
+          "stereotype": "Requirement",
+          "metadata": {
+            "id": null,
+            "text": null,
+            "risk": null,
+            "verification": null,
+            "type": null,
+            "doc_ref": null
+          }
+        }
+      ],
+      "relations": [
+        {
+          "order": 0,
+          "source": "requirement:R",
+          "target": "requirement:F",
+          "kind": "contains",
+          "source_syntax": "R - contains -> F"
+        },
+        {
+          "order": 1,
+          "source": "requirement:F",
+          "target": "requirement:I",
+          "kind": "contains",
+          "source_syntax": "F - contains -> I"
+        },
+        {
+          "order": 2,
+          "source": "element:E",
+          "target": "requirement:R",
+          "kind": "copies",
+          "source_syntax": "E - copies -> R"
+        },
+        {
+          "order": 3,
+          "source": "requirement:R",
+          "target": "requirement:F",
+          "kind": "traces",
+          "source_syntax": "R - traces -> F"
+        },
+        {
+          "order": 4,
+          "source": "requirement:R",
+          "target": "requirement:F",
+          "kind": "traces",
+          "source_syntax": "R - traces -> F"
+        },
+        {
+          "order": 5,
+          "source": "requirement:F",
+          "target": "requirement:P",
+          "kind": "derives",
+          "source_syntax": "F - derives -> P"
+        },
+        {
+          "order": 6,
+          "source": "requirement:P",
+          "target": "requirement:H",
+          "kind": "satisfies",
+          "source_syntax": "P - satisfies -> H"
+        },
+        {
+          "order": 7,
+          "source": "requirement:H",
+          "target": "requirement:D",
+          "kind": "verifies",
+          "source_syntax": "H - verifies -> D"
+        },
+        {
+          "order": 8,
+          "source": "requirement:D",
+          "target": "requirement:R",
+          "kind": "refines",
+          "source_syntax": "D - refines -> R"
+        },
+        {
+          "order": 9,
+          "source": "element:E",
+          "target": "requirement:I",
+          "kind": "copies",
+          "source_syntax": "I <- copies - E"
+        }
+      ]
+    }
+  ],
+  "expected_partial_order_columns": [
+    [
+      "element:E",
+      "requirement:PeerX",
+      "requirement:PeerY"
+    ],
+    [
+      "requirement:R",
+      "requirement:F",
+      "requirement:P",
+      "requirement:H",
+      "requirement:D"
+    ],
+    [
+      "requirement:I"
+    ]
+  ]
+}

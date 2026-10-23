@@ -1,0 +1,1366 @@
+{
+  "schema": "loom_termaid_gitgraph39_original_assertions/v1",
+  "upstream_source": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+  "upstream_source_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+  "complete_functions": 39,
+  "original_assertion_sites": 81,
+  "functions_with_ascii_option": 2,
+  "qualification": "Exact complete original functions and literal API arguments. AST sites are source inventory, not runtime applications or semantic passes. No upstream renderer/parser is executed or linked.",
+  "cases": [
+    {
+      "id": "TestGitGraphParser.test_basic_commits",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 12,
+      "function_line_end": 20,
+      "function_start_byte": 414,
+      "function_end_byte": 673,
+      "function_source": "def test_basic_commits(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  commit\\n\"\n            \"  commit\"\n        )\n        assert len(d.commits) == 3\n        assert all(c.branch == \"main\" for c in d.commits)",
+      "function_sha256": "8e5cfe5fa4899f34cd8bd281ea4aab131d410674e087d0e0ed38912187da7d34",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit\n  commit\n  commit",
+      "raw_bytes": 35,
+      "raw_sha256": "5b5ceecdf8bb5131d51da3993fa887c5815b1f77d5d2efda3e4ff8e246201a88",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 19,
+          "line_end": 19,
+          "start_byte": 589,
+          "end_byte": 615,
+          "source": "assert len(d.commits) == 3",
+          "sha256": "62575bcdaf691279ddc47ae9bc0077d7ea5e35a27786e9c2359ad64bfa144a0a"
+        },
+        {
+          "line_start": 20,
+          "line_end": 20,
+          "start_byte": 624,
+          "end_byte": 673,
+          "source": "assert all(c.branch == \"main\" for c in d.commits)",
+          "sha256": "150ddb6b089db012f6bcc6b290055f6567b1faeff8dbb3fdd8f391887abff9b9"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_commit_auto_ids",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 22,
+      "function_line_end": 27,
+      "function_start_byte": 679,
+      "function_end_byte": 868,
+      "function_source": "def test_commit_auto_ids(self):\n        d = parse_git_graph(\n            \"gitGraph\\n  commit\\n  commit\"\n        )\n        assert d.commits[0].id == \"0\"\n        assert d.commits[1].id == \"1\"",
+      "function_sha256": "2c3f420be46e95931549bed9412203387e3ed75e664978e5d949b1d5636213b4",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit\n  commit",
+      "raw_bytes": 26,
+      "raw_sha256": "e9314a053cd3cb590829a62b9467cd2671d331f4182accdb222f3ecdb58bb278",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 26,
+          "line_end": 26,
+          "start_byte": 801,
+          "end_byte": 830,
+          "source": "assert d.commits[0].id == \"0\"",
+          "sha256": "e239ded2d3a4f93800a91c69071543901543d41d1626df97173fdfe0dd6cefab"
+        },
+        {
+          "line_start": 27,
+          "line_end": 27,
+          "start_byte": 839,
+          "end_byte": 868,
+          "source": "assert d.commits[1].id == \"1\"",
+          "sha256": "eb2baa52edee489b28ac4633b016e78513f9ac5743b5d7ddba508bef1eeee892"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_commit_explicit_id",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 29,
+      "function_line_end": 33,
+      "function_start_byte": 874,
+      "function_end_byte": 1030,
+      "function_source": "def test_commit_explicit_id(self):\n        d = parse_git_graph(\n            'gitGraph\\n  commit id: \"abc\"'\n        )\n        assert d.commits[0].id == \"abc\"",
+      "function_sha256": "b72196dc8880c35f6a697e399d04311bcaf13f82d9db6a6f703cd441257495ce",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit id: \"abc\"",
+      "raw_bytes": 27,
+      "raw_sha256": "ff0822d819ad7911d974626812cb5f90310de5892037aba815e1d35ffd3b1de1",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 33,
+          "line_end": 33,
+          "start_byte": 999,
+          "end_byte": 1030,
+          "source": "assert d.commits[0].id == \"abc\"",
+          "sha256": "c7930c47d6e4b1fea48e054b83bce26b37a08eb7a6777c0923747f13db45db65"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_commit_type",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 35,
+      "function_line_end": 44,
+      "function_start_byte": 1036,
+      "function_end_byte": 1406,
+      "function_source": "def test_commit_type(self):\n        d = parse_git_graph(\n            'gitGraph\\n'\n            '  commit id: \"a\" type: NORMAL\\n'\n            '  commit id: \"b\" type: REVERSE\\n'\n            '  commit id: \"c\" type: HIGHLIGHT'\n        )\n        assert d.commits[0].type == \"NORMAL\"\n        assert d.commits[1].type == \"REVERSE\"\n        assert d.commits[2].type == \"HIGHLIGHT\"",
+      "function_sha256": "b99255d5b58d5669b71fae70336387aa14196d4cad4e9c8fceeb7f9e30229785",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit id: \"a\" type: NORMAL\n  commit id: \"b\" type: REVERSE\n  commit id: \"c\" type: HIGHLIGHT",
+      "raw_bytes": 102,
+      "raw_sha256": "61e3e590b27636582c84535c838b6f03f918a4f7d005afe492d680e8b9bff4e2",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 42,
+          "line_end": 42,
+          "start_byte": 1276,
+          "end_byte": 1312,
+          "source": "assert d.commits[0].type == \"NORMAL\"",
+          "sha256": "41466c77323001bee96489a890a6009694205ec619f46bad2d19b3f6b2f30f8d"
+        },
+        {
+          "line_start": 43,
+          "line_end": 43,
+          "start_byte": 1321,
+          "end_byte": 1358,
+          "source": "assert d.commits[1].type == \"REVERSE\"",
+          "sha256": "655ac5709accf51d852deaf158aab6c5abb7750cdcde2c1c7bbbbdb958d809dd"
+        },
+        {
+          "line_start": 44,
+          "line_end": 44,
+          "start_byte": 1367,
+          "end_byte": 1406,
+          "source": "assert d.commits[2].type == \"HIGHLIGHT\"",
+          "sha256": "8b00193566f8b63564805af6813ce2523e00342a6dd6478d49f82158243e9da7"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_commit_tag",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 46,
+      "function_line_end": 50,
+      "function_start_byte": 1412,
+      "function_end_byte": 1572,
+      "function_source": "def test_commit_tag(self):\n        d = parse_git_graph(\n            'gitGraph\\n  commit id: \"a\" tag: \"v1.0\"'\n        )\n        assert d.commits[0].tag == \"v1.0\"",
+      "function_sha256": "ed6b78e6b90a6e72c00867257ec247c225d3a4c576a783e0fb95d0d8a70a3c82",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit id: \"a\" tag: \"v1.0\"",
+      "raw_bytes": 37,
+      "raw_sha256": "85daa4fc18aa6ed69ff749e602622ce7cb51711a9c26bd96a89c0d617d85b348",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 50,
+          "line_end": 50,
+          "start_byte": 1539,
+          "end_byte": 1572,
+          "source": "assert d.commits[0].tag == \"v1.0\"",
+          "sha256": "c384c7dd82920da43bcf8e6d2d05c650e3e79e71441da1ff44d2c3d6a70b75b7"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_branch",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 52,
+      "function_line_end": 62,
+      "function_start_byte": 1578,
+      "function_end_byte": 1920,
+      "function_source": "def test_branch(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch develop\\n\"\n            \"  commit\"\n        )\n        assert len(d.branches) == 2\n        assert d.branches[0].name == \"main\"\n        assert d.branches[1].name == \"develop\"\n        assert d.commits[1].branch == \"develop\"",
+      "function_sha256": "5915f19f60d0ca838f16df01a878105f0278eb20b4fe9ce1e1399bbfd9340714",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit\n  branch develop\n  commit",
+      "raw_bytes": 43,
+      "raw_sha256": "175d7e50e25e54e978ae6cac46cf5f2627278ab557b0bdebaff9b9e09d7d0a81",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 59,
+          "line_end": 59,
+          "start_byte": 1754,
+          "end_byte": 1781,
+          "source": "assert len(d.branches) == 2",
+          "sha256": "411bc2f3101c53769b47e6a3dd865f47468ab6f0117515c0b96e1bfb131fffda"
+        },
+        {
+          "line_start": 60,
+          "line_end": 60,
+          "start_byte": 1790,
+          "end_byte": 1825,
+          "source": "assert d.branches[0].name == \"main\"",
+          "sha256": "1d0223fd5a1af1688e634ef1f5b6d00fdc830178cd33585b92dc47efdaf2f636"
+        },
+        {
+          "line_start": 61,
+          "line_end": 61,
+          "start_byte": 1834,
+          "end_byte": 1872,
+          "source": "assert d.branches[1].name == \"develop\"",
+          "sha256": "ac442f0beefc2a2ccfc4cc090bb23d1a4cb85fa2d10374c838b0df21bcab4f0e"
+        },
+        {
+          "line_start": 62,
+          "line_end": 62,
+          "start_byte": 1881,
+          "end_byte": 1920,
+          "source": "assert d.commits[1].branch == \"develop\"",
+          "sha256": "d99806b3689f7a189cc9de090f40fadc4efc5e5124464ae752f7406dce89812c"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_checkout",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 64,
+      "function_line_end": 75,
+      "function_start_byte": 1926,
+      "function_end_byte": 2290,
+      "function_source": "def test_checkout(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch develop\\n\"\n            \"  commit\\n\"\n            \"  checkout main\\n\"\n            \"  commit\"\n        )\n        assert d.commits[0].branch == \"main\"\n        assert d.commits[1].branch == \"develop\"\n        assert d.commits[2].branch == \"main\"",
+      "function_sha256": "c817a9fbcaf4971ec233df1be3ff2db4ea67c33c59a050bae80dee64fbe96b9c",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit\n  branch develop\n  commit\n  checkout main\n  commit",
+      "raw_bytes": 68,
+      "raw_sha256": "15a5298f9b17310e8aad4e8fc13af3baf29b0d3ca23c3104134e9c48682552c8",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 73,
+          "line_end": 73,
+          "start_byte": 2161,
+          "end_byte": 2197,
+          "source": "assert d.commits[0].branch == \"main\"",
+          "sha256": "574d251ade59e82efa9fc9aef4829752b1696e00358eb48ad461ff7fec522954"
+        },
+        {
+          "line_start": 74,
+          "line_end": 74,
+          "start_byte": 2206,
+          "end_byte": 2245,
+          "source": "assert d.commits[1].branch == \"develop\"",
+          "sha256": "d99806b3689f7a189cc9de090f40fadc4efc5e5124464ae752f7406dce89812c"
+        },
+        {
+          "line_start": 75,
+          "line_end": 75,
+          "start_byte": 2254,
+          "end_byte": 2290,
+          "source": "assert d.commits[2].branch == \"main\"",
+          "sha256": "4c6ca0f02be3d47945668dddd7c58af5b70430877f75828f70f0afa1898a3483"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_switch",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 77,
+      "function_line_end": 86,
+      "function_start_byte": 2296,
+      "function_end_byte": 2563,
+      "function_source": "def test_switch(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch develop\\n\"\n            \"  commit\\n\"\n            \"  switch main\\n\"\n            \"  commit\"\n        )\n        assert d.commits[2].branch == \"main\"",
+      "function_sha256": "ce1cfefa9c72f03c45052c464461db919d55741ed595f1aa88474b1ba8713ba2",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit\n  branch develop\n  commit\n  switch main\n  commit",
+      "raw_bytes": 66,
+      "raw_sha256": "3a3853b89bd640f513478b04aa0104036b28eaed6d00f147b5deada02b30962d",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 86,
+          "line_end": 86,
+          "start_byte": 2527,
+          "end_byte": 2563,
+          "source": "assert d.commits[2].branch == \"main\"",
+          "sha256": "4c6ca0f02be3d47945668dddd7c58af5b70430877f75828f70f0afa1898a3483"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_merge",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 88,
+      "function_line_end": 100,
+      "function_start_byte": 2569,
+      "function_end_byte": 2945,
+      "function_source": "def test_merge(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch develop\\n\"\n            \"  commit\\n\"\n            \"  checkout main\\n\"\n            '  merge develop id: \"m\"'\n        )\n        merge = d.commits[-1]\n        assert merge.id == \"m\"\n        assert merge.branch == \"main\"\n        assert len(merge.parents) == 2",
+      "function_sha256": "265629217e0cf498648c5cb073ad438d23a817b5d2413bd9de0986533bd1f611",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit\n  branch develop\n  commit\n  checkout main\n  merge develop id: \"m\"",
+      "raw_bytes": 83,
+      "raw_sha256": "840f4f7d48e52fcf46e86d80b3e433a2f1e9772f3d130e3f6e46e4551f534a22",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 98,
+          "line_end": 98,
+          "start_byte": 2846,
+          "end_byte": 2868,
+          "source": "assert merge.id == \"m\"",
+          "sha256": "008f5a4e9dbbdb18e6ad8ef180063227cba04b6de1aac76095596ba79345a7db"
+        },
+        {
+          "line_start": 99,
+          "line_end": 99,
+          "start_byte": 2877,
+          "end_byte": 2906,
+          "source": "assert merge.branch == \"main\"",
+          "sha256": "007ec732b14e811e23aff8f42f44c267f38cb407e4e563d2d0ca0981ce596abf"
+        },
+        {
+          "line_start": 100,
+          "line_end": 100,
+          "start_byte": 2915,
+          "end_byte": 2945,
+          "source": "assert len(merge.parents) == 2",
+          "sha256": "9406919f1a87ec5d3e677ce6f37074dcf20a40d5a07cde151fbe6a591a3a0017"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_merge_parents",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 102,
+      "function_line_end": 113,
+      "function_start_byte": 2951,
+      "function_end_byte": 3320,
+      "function_source": "def test_merge_parents(self):\n        d = parse_git_graph(\n            'gitGraph\\n'\n            '  commit id: \"a\"\\n'\n            '  branch dev\\n'\n            '  commit id: \"b\"\\n'\n            '  checkout main\\n'\n            '  merge dev id: \"m\"'\n        )\n        merge = d.commits[-1]\n        assert \"a\" in merge.parents  # main head\n        assert \"b\" in merge.parents",
+      "function_sha256": "b035115a3149929e42199756b90ee3ee16b750d668841f0172ab32419546076b",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit id: \"a\"\n  branch dev\n  commit id: \"b\"\n  checkout main\n  merge dev id: \"m\"",
+      "raw_bytes": 91,
+      "raw_sha256": "517fbbc376947d09538d73b2d47943d92b29b428990ef25b54a152b9d26bd584",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 112,
+          "line_end": 112,
+          "start_byte": 3244,
+          "end_byte": 3271,
+          "source": "assert \"a\" in merge.parents",
+          "sha256": "c7b60f71a7b53520d5a8cc5d8bf13b3f6a71b5cf37215f7c4dfecdd012fc8d80"
+        },
+        {
+          "line_start": 113,
+          "line_end": 113,
+          "start_byte": 3293,
+          "end_byte": 3320,
+          "source": "assert \"b\" in merge.parents",
+          "sha256": "95bcec2fa0efd9c4a2bf63a5ae24826b3962fb1dc5f30e9cc5d52734cdc06e09"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_cherry_pick",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 115,
+      "function_line_end": 126,
+      "function_start_byte": 3338,
+      "function_end_byte": 3691,
+      "function_source": "def test_cherry_pick(self):\n        d = parse_git_graph(\n            'gitGraph\\n'\n            '  commit id: \"A\"\\n'\n            '  branch develop\\n'\n            '  commit id: \"B\"\\n'\n            '  checkout main\\n'\n            '  cherry-pick id: \"B\"'\n        )\n        cp = d.commits[-1]\n        assert \"B\" in cp.parents\n        assert cp.branch == \"main\"",
+      "function_sha256": "afbc9f9f8a94bcfda979864dc084ac9aa3494d53f0ac788f1422c099dea602a3",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit id: \"A\"\n  branch develop\n  commit id: \"B\"\n  checkout main\n  cherry-pick id: \"B\"",
+      "raw_bytes": 97,
+      "raw_sha256": "7e777589f9d95bc71f5482d38253cd12430d570d10b7c00f33caabe2bf420100",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 125,
+          "line_end": 125,
+          "start_byte": 3632,
+          "end_byte": 3656,
+          "source": "assert \"B\" in cp.parents",
+          "sha256": "c763680d8827afd2ff122e379e07ad74ef13e8b5e3d839f34269c291e06ea174"
+        },
+        {
+          "line_start": 126,
+          "line_end": 126,
+          "start_byte": 3665,
+          "end_byte": 3691,
+          "source": "assert cp.branch == \"main\"",
+          "sha256": "ec3976749c4a0b885fda98a8e9af357fe7e2cf36706c997aa736cb027efb97da"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_direction_lr",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 128,
+      "function_line_end": 130,
+      "function_start_byte": 3697,
+      "function_end_byte": 3810,
+      "function_source": "def test_direction_lr(self):\n        d = parse_git_graph(\"gitGraph\\n  commit\")\n        assert d.direction == \"LR\"",
+      "function_sha256": "bcfd9c4e715030cb65562e1091319b2ea80d3e49fb5319b81943093bf21999de",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit",
+      "raw_bytes": 17,
+      "raw_sha256": "adc71f6fe897db3584d3bb240d34244747a12f9b9277966850bad5d6df1c6856",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 130,
+          "line_end": 130,
+          "start_byte": 3784,
+          "end_byte": 3810,
+          "source": "assert d.direction == \"LR\"",
+          "sha256": "b4915ee5a32aa3186ee55bf67d36b0d195e33b0597fd3e20f894a699c4583ddf"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_direction_tb",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 132,
+      "function_line_end": 134,
+      "function_start_byte": 3816,
+      "function_end_byte": 3933,
+      "function_source": "def test_direction_tb(self):\n        d = parse_git_graph(\"gitGraph TB:\\n  commit\")\n        assert d.direction == \"TB\"",
+      "function_sha256": "95745779f4f459ff5cc9cfc4cab4e9408e8a6f2a3dae4d8b984f1cd5ede5a4c3",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph TB:\n  commit",
+      "raw_bytes": 21,
+      "raw_sha256": "c5f515a6e945c61e8708494accc9d99fcd0a7d1658a6fd40209ae98d7dbad91e",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 134,
+          "line_end": 134,
+          "start_byte": 3907,
+          "end_byte": 3933,
+          "source": "assert d.direction == \"TB\"",
+          "sha256": "51b23fccb72e79106c08c0bdeb8d46c61518acd6591e0f9e2d3b91f24361b58c"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_direction_bt",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 136,
+      "function_line_end": 138,
+      "function_start_byte": 3939,
+      "function_end_byte": 4056,
+      "function_source": "def test_direction_bt(self):\n        d = parse_git_graph(\"gitGraph BT:\\n  commit\")\n        assert d.direction == \"BT\"",
+      "function_sha256": "084621be59c5eacbde6b0af55d05879d2c3d5e41469d4c4a9351c0f261f4e31b",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph BT:\n  commit",
+      "raw_bytes": 21,
+      "raw_sha256": "aa7629323b5e6aa6f6fe053c3618403fe030ade99b74aa7fa2e96ccdb7e313d6",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 138,
+          "line_end": 138,
+          "start_byte": 4030,
+          "end_byte": 4056,
+          "source": "assert d.direction == \"BT\"",
+          "sha256": "2933f7016a8be13137c8b2ceb99445c513c7991db5bcccfccb6425f091c7d182"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_branch_order",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 140,
+      "function_line_end": 147,
+      "function_start_byte": 4062,
+      "function_end_byte": 4280,
+      "function_source": "def test_branch_order(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch dev order: 1\\n\"\n            \"  commit\"\n        )\n        assert d.branches[1].order == 1",
+      "function_sha256": "55a742f835f7caa899a35fe98432aacc7f6a3ba9206b9491caa63b84d16f16ba",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit\n  branch dev order: 1\n  commit",
+      "raw_bytes": 48,
+      "raw_sha256": "ae05b96937ce482aacfd53aa8f5a356cb278362731d9e2c8a34ead46aa3c95c4",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 147,
+          "line_end": 147,
+          "start_byte": 4249,
+          "end_byte": 4280,
+          "source": "assert d.branches[1].order == 1",
+          "sha256": "dcc4c2905044a527326486c85d1c609bc12a8eb2fe46480b062a559b914ba968"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_init_config",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 149,
+      "function_line_end": 156,
+      "function_start_byte": 4286,
+      "function_end_byte": 4564,
+      "function_source": "def test_init_config(self):\n        d = parse_git_graph(\n            '%%{init: {\"gitGraph\": {\"mainBranchName\": \"master\"}}}%%\\n'\n            \"gitGraph\\n\"\n            \"  commit\"\n        )\n        assert d.main_branch_name == \"master\"\n        assert d.commits[0].branch == \"master\"",
+      "function_sha256": "768d865eb728b59f3be342e14e406d71f2d4fbc2644b9d8ddfabc53bdc370da5",
+      "api": "parse_git_graph",
+      "raw_source": "%%{init: {\"gitGraph\": {\"mainBranchName\": \"master\"}}}%%\ngitGraph\n  commit",
+      "raw_bytes": 72,
+      "raw_sha256": "568b62dd2ca480524ef7bcb4ecb804c3cb6241d95c91298a81ba1ad4ed244431",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 155,
+          "line_end": 155,
+          "start_byte": 4480,
+          "end_byte": 4517,
+          "source": "assert d.main_branch_name == \"master\"",
+          "sha256": "9961df8e42950411113bc7a560f70e0cca71a92084f8f7652a55d9d7474b7b0f"
+        },
+        {
+          "line_start": 156,
+          "line_end": 156,
+          "start_byte": 4526,
+          "end_byte": 4564,
+          "source": "assert d.commits[0].branch == \"master\"",
+          "sha256": "60f58b5c04154d62dbabfd2595e7f44ac723945258f6f0dddca0c0d45efbf45b"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_commit_sequence_numbers",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 158,
+      "function_line_end": 167,
+      "function_start_byte": 4570,
+      "function_end_byte": 4857,
+      "function_source": "def test_commit_sequence_numbers(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  commit\\n\"\n            \"  commit\"\n        )\n        assert d.commits[0].seq == 0\n        assert d.commits[1].seq == 1\n        assert d.commits[2].seq == 2",
+      "function_sha256": "8318f49284953967fcc0a6fd34cd9e2178d635b74926f8e359a478203d29e299",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit\n  commit\n  commit",
+      "raw_bytes": 35,
+      "raw_sha256": "5b5ceecdf8bb5131d51da3993fa887c5815b1f77d5d2efda3e4ff8e246201a88",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 165,
+          "line_end": 165,
+          "start_byte": 4755,
+          "end_byte": 4783,
+          "source": "assert d.commits[0].seq == 0",
+          "sha256": "2ce99a1f54ac2512b2101ca5acad20c7910a488808261b04e82af049c74aa52a"
+        },
+        {
+          "line_start": 166,
+          "line_end": 166,
+          "start_byte": 4792,
+          "end_byte": 4820,
+          "source": "assert d.commits[1].seq == 1",
+          "sha256": "a55cce9076320c34ed2938a49448fb1373084b55a8244d52fb88f7a4ddf86369"
+        },
+        {
+          "line_start": 167,
+          "line_end": 167,
+          "start_byte": 4829,
+          "end_byte": 4857,
+          "source": "assert d.commits[2].seq == 2",
+          "sha256": "8102468376f56282189795e9b6a92b725a972cdda274b66b06d7851ded8cae88"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_branch_start_commit",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 169,
+      "function_line_end": 175,
+      "function_start_byte": 4863,
+      "function_end_byte": 5071,
+      "function_source": "def test_branch_start_commit(self):\n        d = parse_git_graph(\n            'gitGraph\\n'\n            '  commit id: \"a\"\\n'\n            '  branch dev'\n        )\n        assert d.branches[1].start_commit == \"a\"",
+      "function_sha256": "7efc791688263c3e31813c2d76c2e9295bb16c3152dfe321481dac6d6a8d3a69",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit id: \"a\"\n  branch dev",
+      "raw_bytes": 38,
+      "raw_sha256": "fed2192b7847619fcd5817898499d63185be3ab9982eb5c3d39fa858181427a6",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 175,
+          "line_end": 175,
+          "start_byte": 5031,
+          "end_byte": 5071,
+          "source": "assert d.branches[1].start_commit == \"a\"",
+          "sha256": "cd3d677a825de82482cbe978d62efc12896156f4b2b5dc65b499bdc6fa5e7e09"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_comments_ignored",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 177,
+      "function_line_end": 185,
+      "function_start_byte": 5077,
+      "function_end_byte": 5332,
+      "function_source": "def test_comments_ignored(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  %% this is a comment\\n\"\n            \"  commit\\n\"\n            \"  %% another comment\\n\"\n            \"  commit\"\n        )\n        assert len(d.commits) == 2",
+      "function_sha256": "426f73e702bdb78e3edc67909e154832013142b328b340f9512cfb34ccf3eb89",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  %% this is a comment\n  commit\n  %% another comment\n  commit",
+      "raw_bytes": 70,
+      "raw_sha256": "7a5dd2b2c68dc94d992b17304ee37b29c8f13e351bfb278eb3d36b7c384f1bff",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 185,
+          "line_end": 185,
+          "start_byte": 5306,
+          "end_byte": 5332,
+          "source": "assert len(d.commits) == 2",
+          "sha256": "8118983bf6196b9c67af7e0a287db98cbe567781e280fb7e41f2dcc2368a79ea"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_frontmatter_stripped",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 187,
+      "function_line_end": 193,
+      "function_start_byte": 5338,
+      "function_end_byte": 5564,
+      "function_source": "def test_frontmatter_stripped(self):\n        d = parse_git_graph(\n            '%%{init: {\"gitGraph\": {\"showCommitLabel\": true}}}%%\\n'\n            \"gitGraph\\n\"\n            \"  commit\"\n        )\n        assert len(d.commits) == 1",
+      "function_sha256": "dc2b6ef44dc73f12859e4fb204070faef27ea63ead97c259d33e452b34f6b0f8",
+      "api": "parse_git_graph",
+      "raw_source": "%%{init: {\"gitGraph\": {\"showCommitLabel\": true}}}%%\ngitGraph\n  commit",
+      "raw_bytes": 69,
+      "raw_sha256": "3ea229ea232f975dbc0f226a7aae9a26d01f4aa76382d1ff997ee8195c39c539",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 193,
+          "line_end": 193,
+          "start_byte": 5538,
+          "end_byte": 5564,
+          "source": "assert len(d.commits) == 1",
+          "sha256": "00e006a471d52094c34981d1f3fc3b2bd097ea0c29e6208fb839a6dcba48d071"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_multiple_branches",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 195,
+      "function_line_end": 208,
+      "function_start_byte": 5570,
+      "function_end_byte": 6012,
+      "function_source": "def test_multiple_branches(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch feature\\n\"\n            \"  commit\\n\"\n            \"  branch hotfix\\n\"\n            \"  commit\"\n        )\n        assert len(d.branches) == 3\n        branch_names = [b.name for b in d.branches]\n        assert \"main\" in branch_names\n        assert \"feature\" in branch_names\n        assert \"hotfix\" in branch_names",
+      "function_sha256": "1d8c5f12858299a1663227fc861943dd71297c71c6a0cbe8d3b3aea93234e730",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit\n  branch feature\n  commit\n  branch hotfix\n  commit",
+      "raw_bytes": 68,
+      "raw_sha256": "0338070459486a71bf6732cd59c46f3353562c6cbf292b834271be58201b1b09",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 204,
+          "line_end": 204,
+          "start_byte": 5814,
+          "end_byte": 5841,
+          "source": "assert len(d.branches) == 3",
+          "sha256": "b09dc48915f1ac1cc660ec5aadae8eaa84ce55c060c753f13f7f09cdacf65216"
+        },
+        {
+          "line_start": 206,
+          "line_end": 206,
+          "start_byte": 5902,
+          "end_byte": 5931,
+          "source": "assert \"main\" in branch_names",
+          "sha256": "372bed3f6c7e455cfd848edce674537a27d9bdf98804c23a018dd7f581c2613f"
+        },
+        {
+          "line_start": 207,
+          "line_end": 207,
+          "start_byte": 5940,
+          "end_byte": 5972,
+          "source": "assert \"feature\" in branch_names",
+          "sha256": "c692594624172cbd9ba0ff33da627faaf7f83e31b4ddcc59e95da20ad596d761"
+        },
+        {
+          "line_start": 208,
+          "line_end": 208,
+          "start_byte": 5981,
+          "end_byte": 6012,
+          "source": "assert \"hotfix\" in branch_names",
+          "sha256": "1db40d797c06a383cc2c7c18eab648dd25c382ae1ba6125ff7084e238234d3d8"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_reset_to_branch",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 210,
+      "function_line_end": 228,
+      "function_start_byte": 6018,
+      "function_end_byte": 6645,
+      "function_source": "def test_reset_to_branch(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch dev\\n\"\n            \"  commit\\n\"\n            \"  checkout main\\n\"\n            \"  reset dev\\n\"\n            \"  commit\"\n        )\n        # After reset dev, main's HEAD moves to dev's HEAD\n        # So the last commit's parent should be dev's last commit\n        dev_head = None\n        for c in d.commits:\n            if c.branch == \"dev\":\n                dev_head = c.id\n        last_commit = d.commits[-1]\n        assert last_commit.branch == \"main\"\n        assert dev_head in last_commit.parents",
+      "function_sha256": "c9c2504d396896fed9a28c4c94cd0b9a194979f70dbd3de6f7eeabe7f021a142",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit\n  branch dev\n  commit\n  checkout main\n  reset dev\n  commit",
+      "raw_bytes": 76,
+      "raw_sha256": "2bc48b407817dcc93109b8c23d110e6e762a3484965f0436c54bc23479140dfe",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 227,
+          "line_end": 227,
+          "start_byte": 6563,
+          "end_byte": 6598,
+          "source": "assert last_commit.branch == \"main\"",
+          "sha256": "6a71041f4485ba81db11769ae21d52448405269325c97b81b38fdd3b0762048f"
+        },
+        {
+          "line_start": 228,
+          "line_end": 228,
+          "start_byte": 6607,
+          "end_byte": 6645,
+          "source": "assert dev_head in last_commit.parents",
+          "sha256": "737138a00bcc83fff8ab24e3ec6ad10fe1b6972a8a003251eed50ef2bd1b887d"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphParser.test_reset_ancestor",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 230,
+      "function_line_end": 240,
+      "function_start_byte": 6651,
+      "function_end_byte": 7001,
+      "function_source": "def test_reset_ancestor(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            '  commit id: \"c1\"\\n'\n            '  commit id: \"c2\"\\n'\n            '  commit id: \"c3\"\\n'\n            \"  reset main~2\\n\"\n            '  commit id: \"c4\"'\n        )\n        c4 = [c for c in d.commits if c.id == \"c4\"][0]\n        assert c4.parents == [\"c1\"]",
+      "function_sha256": "55038fc58038c3ed52bf4ddc9c8419160990b8f63c158c9b0085db2131057288",
+      "api": "parse_git_graph",
+      "raw_source": "gitGraph\n  commit id: \"c1\"\n  commit id: \"c2\"\n  commit id: \"c3\"\n  reset main~2\n  commit id: \"c4\"",
+      "raw_bytes": 95,
+      "raw_sha256": "dd4fdc555bb485a6d8336d3c93a13a18980be444b1be27e1b523c66e3df60f1b",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 240,
+          "line_end": 240,
+          "start_byte": 6974,
+          "end_byte": 7001,
+          "source": "assert c4.parents == [\"c1\"]",
+          "sha256": "786ed394ff7c8834ae41536676033757ab52e172212d3f39f7ccad3753c76c32"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_basic_linear",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 247,
+      "function_line_end": 252,
+      "function_start_byte": 7264,
+      "function_end_byte": 7443,
+      "function_source": "def test_basic_linear(self):\n        output = render(\n            \"gitGraph\\n  commit\\n  commit\\n  commit\"\n        )\n        assert \"main\" in output\n        assert \"●\" in output",
+      "function_sha256": "48c525aa8078e9fcbb0ade817b4e77ce68395e78d2227e6df9ad1af02eace104",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit\n  commit\n  commit",
+      "raw_bytes": 35,
+      "raw_sha256": "5b5ceecdf8bb5131d51da3993fa887c5815b1f77d5d2efda3e4ff8e246201a88",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 251,
+          "line_end": 251,
+          "start_byte": 7389,
+          "end_byte": 7412,
+          "source": "assert \"main\" in output",
+          "sha256": "1441a012d2948a3a31c924268f83cb375a99923679016bb6d1c235ac25ee4595"
+        },
+        {
+          "line_start": 252,
+          "line_end": 252,
+          "start_byte": 7421,
+          "end_byte": 7443,
+          "source": "assert \"●\" in output",
+          "sha256": "8ff25f306ff2f74ef39c3ab0e0698a05800d6889a678ec3d568f166a0f63960e"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_commit_ids_displayed",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 254,
+      "function_line_end": 261,
+      "function_start_byte": 7449,
+      "function_end_byte": 7679,
+      "function_source": "def test_commit_ids_displayed(self):\n        output = render(\n            'gitGraph\\n'\n            '  commit id: \"init\"\\n'\n            '  commit id: \"feat\"'\n        )\n        assert \"init\" in output\n        assert \"feat\" in output",
+      "function_sha256": "d83cfddb3d8371c2e62daa115d9026861a471636c252414f5c062284636e8d15",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit id: \"init\"\n  commit id: \"feat\"",
+      "raw_bytes": 48,
+      "raw_sha256": "47b28fe860e298cf7c66d2c0820c6e52b46dd490b5480285b2a84e1079e20c7a",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 260,
+          "line_end": 260,
+          "start_byte": 7624,
+          "end_byte": 7647,
+          "source": "assert \"init\" in output",
+          "sha256": "a8abb1252cda03fa2e6f76bb9ba565cc87756840648da972e00e39854dff37e1"
+        },
+        {
+          "line_start": 261,
+          "line_end": 261,
+          "start_byte": 7656,
+          "end_byte": 7679,
+          "source": "assert \"feat\" in output",
+          "sha256": "d0ece8666f39f380cedb413d11e0b9a1b407da9ac54243194d8291bc973caa75"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_branch_label_displayed",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 263,
+      "function_line_end": 271,
+      "function_start_byte": 7685,
+      "function_end_byte": 7931,
+      "function_source": "def test_branch_label_displayed(self):\n        output = render(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch develop\\n\"\n            \"  commit\"\n        )\n        assert \"main\" in output\n        assert \"develop\" in output",
+      "function_sha256": "10e13a33ccb63e06d77fc7a2b469464b3b1e82897f9597bd0e8b68682576198c",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit\n  branch develop\n  commit",
+      "raw_bytes": 43,
+      "raw_sha256": "175d7e50e25e54e978ae6cac46cf5f2627278ab557b0bdebaff9b9e09d7d0a81",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 270,
+          "line_end": 270,
+          "start_byte": 7873,
+          "end_byte": 7896,
+          "source": "assert \"main\" in output",
+          "sha256": "1441a012d2948a3a31c924268f83cb375a99923679016bb6d1c235ac25ee4595"
+        },
+        {
+          "line_start": 271,
+          "line_end": 271,
+          "start_byte": 7905,
+          "end_byte": 7931,
+          "source": "assert \"develop\" in output",
+          "sha256": "c839a479d07b436a0df3e2c1015550f03ac4a2e2e4505f1c04a8eb65a1562d90"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_branch_line_drawn",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 273,
+      "function_line_end": 280,
+      "function_start_byte": 7937,
+      "function_end_byte": 8142,
+      "function_source": "def test_branch_line_drawn(self):\n        output = render(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch develop\\n\"\n            \"  commit\"\n        )\n        assert \"─\" in output",
+      "function_sha256": "d4b30b196b02956e76ed43e2ad528d24900715a2da651fc8001428fc6cabc9c1",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit\n  branch develop\n  commit",
+      "raw_bytes": 43,
+      "raw_sha256": "175d7e50e25e54e978ae6cac46cf5f2627278ab557b0bdebaff9b9e09d7d0a81",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 280,
+          "line_end": 280,
+          "start_byte": 8120,
+          "end_byte": 8142,
+          "source": "assert \"─\" in output",
+          "sha256": "150a00767f81d8c41d040038abf269bd6c7fc13df34e16fe18b02c15006ff0b6"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_merge_vertical_line",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 282,
+      "function_line_end": 291,
+      "function_start_byte": 8167,
+      "function_end_byte": 8481,
+      "function_source": "def test_merge_vertical_line(self):\n        output = render(\n            \"gitGraph\\n\"\n            '  commit id: \"a\"\\n'\n            \"  branch develop\\n\"\n            '  commit id: \"b\"\\n'\n            \"  checkout main\\n\"\n            '  merge develop id: \"m\"'\n        )\n        assert \"│\" in output or \"┼\" in output",
+      "function_sha256": "f98c8e596051f4e19d2b8e6e9126d0eaee6100cef1297cf4cecac7e97e1d2923",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit id: \"a\"\n  branch develop\n  commit id: \"b\"\n  checkout main\n  merge develop id: \"m\"",
+      "raw_bytes": 99,
+      "raw_sha256": "bde40dfd922a5727462d3c338f032694a1fb4e4bf7fd6a51075330cbb59f2236",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 291,
+          "line_end": 291,
+          "start_byte": 8440,
+          "end_byte": 8481,
+          "source": "assert \"│\" in output or \"┼\" in output",
+          "sha256": "b2434384ad63b8a2940477fef320622b69714daadbd28ce5761f546b612b109d"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_commit_type_markers",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 293,
+      "function_line_end": 302,
+      "function_start_byte": 8510,
+      "function_end_byte": 8859,
+      "function_source": "def test_commit_type_markers(self):\n        output = render(\n            'gitGraph\\n'\n            '  commit id: \"n\" type: NORMAL\\n'\n            '  commit id: \"r\" type: REVERSE\\n'\n            '  commit id: \"h\" type: HIGHLIGHT'\n        )\n        assert \"●\" in output  # NORMAL\n        assert \"✖\" in output  # REVERSE\n        assert \"■\" in output",
+      "function_sha256": "0c1318cfad5103a5efb6e85ded81acef88d6da20661ecb82e7d9ae9aba6725ac",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit id: \"n\" type: NORMAL\n  commit id: \"r\" type: REVERSE\n  commit id: \"h\" type: HIGHLIGHT",
+      "raw_bytes": 102,
+      "raw_sha256": "9e2a25608139b9ff969a3fc9dca8de0ed15e60504a811a27f5e6efc46339f920",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 300,
+          "line_end": 300,
+          "start_byte": 8754,
+          "end_byte": 8776,
+          "source": "assert \"●\" in output",
+          "sha256": "8ff25f306ff2f74ef39c3ab0e0698a05800d6889a678ec3d568f166a0f63960e"
+        },
+        {
+          "line_start": 301,
+          "line_end": 301,
+          "start_byte": 8795,
+          "end_byte": 8817,
+          "source": "assert \"✖\" in output",
+          "sha256": "959dd7112a523365d2ba6bb3cb6c847e6b186d5d86e82e1aa01dd5aaa06231e3"
+        },
+        {
+          "line_start": 302,
+          "line_end": 302,
+          "start_byte": 8837,
+          "end_byte": 8859,
+          "source": "assert \"■\" in output",
+          "sha256": "5f22ab4fe482cb163a4ba8c39a8455c1c6facdf2c4fd1bb6d5d33c63c0558fac"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_tag_displayed",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 304,
+      "function_line_end": 309,
+      "function_start_byte": 8878,
+      "function_end_byte": 9044,
+      "function_source": "def test_tag_displayed(self):\n        output = render(\n            'gitGraph\\n'\n            '  commit id: \"a\" tag: \"v1.0\"'\n        )\n        assert \"[v1.0]\" in output",
+      "function_sha256": "3d7d4600d38145f050fe757cbae2d8b1fb24486b690c2c38c2bbdaaf01d3811a",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit id: \"a\" tag: \"v1.0\"",
+      "raw_bytes": 37,
+      "raw_sha256": "85daa4fc18aa6ed69ff749e602622ce7cb51711a9c26bd96a89c0d617d85b348",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 309,
+          "line_end": 309,
+          "start_byte": 9019,
+          "end_byte": 9044,
+          "source": "assert \"[v1.0]\" in output",
+          "sha256": "aadbfcb8355b926edab79f4041bba93dc8b6d832b37c37c92a9e187335f54a13"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_tb_orientation",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 311,
+      "function_line_end": 327,
+      "function_start_byte": 9050,
+      "function_end_byte": 9686,
+      "function_source": "def test_tb_orientation(self):\n        output = render(\n            \"gitGraph TB:\\n\"\n            \"  commit\\n\"\n            \"  branch develop\\n\"\n            \"  commit\\n\"\n            \"  checkout main\\n\"\n            \"  merge develop\"\n        )\n        assert \"main\" in output\n        assert \"develop\" in output\n        # In TB, branch names should be above commits\n        lines = output.split(\"\\n\")\n        main_row = next(i for i, l in enumerate(lines) if \"main\" in l)\n        # The first commit marker should be below the label\n        marker_rows = [i for i, l in enumerate(lines) if \"●\" in l]\n        assert marker_rows[0] > main_row",
+      "function_sha256": "acc0c0f934864de9b8936134f9096fed8663d04ceb42f5d0a9dbdccf6bf37917",
+      "api": "render",
+      "raw_source": "gitGraph TB:\n  commit\n  branch develop\n  commit\n  checkout main\n  merge develop",
+      "raw_bytes": 79,
+      "raw_sha256": "30e6d87f4d35bc271aaf6cd01c4277c9c9e01dbcfea39cff356cbe2e045afc4d",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 320,
+          "line_end": 320,
+          "start_byte": 9298,
+          "end_byte": 9321,
+          "source": "assert \"main\" in output",
+          "sha256": "1441a012d2948a3a31c924268f83cb375a99923679016bb6d1c235ac25ee4595"
+        },
+        {
+          "line_start": 321,
+          "line_end": 321,
+          "start_byte": 9330,
+          "end_byte": 9356,
+          "source": "assert \"develop\" in output",
+          "sha256": "c839a479d07b436a0df3e2c1015550f03ac4a2e2e4505f1c04a8eb65a1562d90"
+        },
+        {
+          "line_start": 327,
+          "line_end": 327,
+          "start_byte": 9654,
+          "end_byte": 9686,
+          "source": "assert marker_rows[0] > main_row",
+          "sha256": "8495a640adccfda4395644932125c0f324850f651bd3304cb6f9b339460cdbda"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_bt_orientation",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 329,
+      "function_line_end": 342,
+      "function_start_byte": 9692,
+      "function_end_byte": 10204,
+      "function_source": "def test_bt_orientation(self):\n        output = render(\n            \"gitGraph BT:\\n\"\n            \"  commit\\n\"\n            \"  branch develop\\n\"\n            \"  commit\"\n        )\n        assert \"main\" in output\n        assert \"develop\" in output\n        # In BT, branch names should be below commits\n        lines = output.split(\"\\n\")\n        main_row = next(i for i, l in enumerate(lines) if \"main\" in l)\n        marker_rows = [i for i, l in enumerate(lines) if \"●\" in l]\n        assert marker_rows[0] < main_row",
+      "function_sha256": "96c25b6738c129a57bb1b599e525fa6b1063d4823110acbcb470d3e250dcfc54",
+      "api": "render",
+      "raw_source": "gitGraph BT:\n  commit\n  branch develop\n  commit",
+      "raw_bytes": 47,
+      "raw_sha256": "e9a62759b1449c7feb79ccc9b3223249ebc6a756ca038d8d2185f69ce79f855c",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 336,
+          "line_end": 336,
+          "start_byte": 9876,
+          "end_byte": 9899,
+          "source": "assert \"main\" in output",
+          "sha256": "1441a012d2948a3a31c924268f83cb375a99923679016bb6d1c235ac25ee4595"
+        },
+        {
+          "line_start": 337,
+          "line_end": 337,
+          "start_byte": 9908,
+          "end_byte": 9934,
+          "source": "assert \"develop\" in output",
+          "sha256": "c839a479d07b436a0df3e2c1015550f03ac4a2e2e4505f1c04a8eb65a1562d90"
+        },
+        {
+          "line_start": 342,
+          "line_end": 342,
+          "start_byte": 10172,
+          "end_byte": 10204,
+          "source": "assert marker_rows[0] < main_row",
+          "sha256": "fdf93b831f7f58a143a30fe9001e23c67cd97061c129d0deb4a77f93ce463962"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_cherry_pick_rendered",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 344,
+      "function_line_end": 356,
+      "function_start_byte": 10210,
+      "function_end_byte": 10598,
+      "function_source": "def test_cherry_pick_rendered(self):\n        output = render(\n            'gitGraph\\n'\n            '  commit id: \"A\"\\n'\n            '  branch develop\\n'\n            '  commit id: \"B\"\\n'\n            '  checkout main\\n'\n            '  cherry-pick id: \"B\"'\n        )\n        assert \"A\" in output\n        assert \"B\" in output\n        assert \"main\" in output\n        assert \"develop\" in output",
+      "function_sha256": "f7cd77d8ef8359864c2fd4ceb719ccf5e0ab4d7a657622db842181ef8e701c1c",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit id: \"A\"\n  branch develop\n  commit id: \"B\"\n  checkout main\n  cherry-pick id: \"B\"",
+      "raw_bytes": 97,
+      "raw_sha256": "7e777589f9d95bc71f5482d38253cd12430d570d10b7c00f33caabe2bf420100",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 353,
+          "line_end": 353,
+          "start_byte": 10482,
+          "end_byte": 10502,
+          "source": "assert \"A\" in output",
+          "sha256": "b15c328829462d8155934e090d66693c41797f19747f8968ce278175ba0ba2c1"
+        },
+        {
+          "line_start": 354,
+          "line_end": 354,
+          "start_byte": 10511,
+          "end_byte": 10531,
+          "source": "assert \"B\" in output",
+          "sha256": "57fbf4edc4ee6b2bbb92aaaeb86970a7a338d36d991441df843229fceb19a298"
+        },
+        {
+          "line_start": 355,
+          "line_end": 355,
+          "start_byte": 10540,
+          "end_byte": 10563,
+          "source": "assert \"main\" in output",
+          "sha256": "1441a012d2948a3a31c924268f83cb375a99923679016bb6d1c235ac25ee4595"
+        },
+        {
+          "line_start": 356,
+          "line_end": 356,
+          "start_byte": 10572,
+          "end_byte": 10598,
+          "source": "assert \"develop\" in output",
+          "sha256": "c839a479d07b436a0df3e2c1015550f03ac4a2e2e4505f1c04a8eb65a1562d90"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_ascii_mode",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 358,
+      "function_line_end": 367,
+      "function_start_byte": 10604,
+      "function_end_byte": 11003,
+      "function_source": "def test_ascii_mode(self):\n        output = render(\n            \"gitGraph\\n  commit\\n  commit\",\n            use_ascii=True,\n        )\n        assert \"o\" in output  # ASCII commit marker\n        assert \"main\" in output\n        unicode_chars = set(\"┌┐└┘─│├┤┬┴┼╭╮╰╯►◄▲▼┄┆━┃╋●✖■\")\n        for ch in output:\n            assert ch not in unicode_chars",
+      "function_sha256": "2babaed11ff7598b80e3e99d0a4e2e2f5c0e4688acd70b7e9a8f038b4f279c64",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit\n  commit",
+      "raw_bytes": 26,
+      "raw_sha256": "e9314a053cd3cb590829a62b9467cd2671d331f4182accdb222f3ecdb58bb278",
+      "original_options": {
+        "use_ascii": true
+      },
+      "assertion_sites": [
+        {
+          "line_start": 363,
+          "line_end": 363,
+          "start_byte": 10746,
+          "end_byte": 10766,
+          "source": "assert \"o\" in output",
+          "sha256": "8f8b3ff28b2869ded2ae22207b1994ca084a08fa92e3b9ad61f15c0cd7c6c2de"
+        },
+        {
+          "line_start": 364,
+          "line_end": 364,
+          "start_byte": 10798,
+          "end_byte": 10821,
+          "source": "assert \"main\" in output",
+          "sha256": "1441a012d2948a3a31c924268f83cb375a99923679016bb6d1c235ac25ee4595"
+        },
+        {
+          "line_start": 367,
+          "line_end": 367,
+          "start_byte": 10973,
+          "end_byte": 11003,
+          "source": "assert ch not in unicode_chars",
+          "sha256": "983e045505687b21adfee1c3c9d152c0cdd152e8fb2c7cddf265385a02af0f04"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_ascii_commit_types",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 369,
+      "function_line_end": 379,
+      "function_start_byte": 11009,
+      "function_end_byte": 11356,
+      "function_source": "def test_ascii_commit_types(self):\n        output = render(\n            'gitGraph\\n'\n            '  commit type: NORMAL\\n'\n            '  commit type: REVERSE\\n'\n            '  commit type: HIGHLIGHT',\n            use_ascii=True,\n        )\n        assert \"o\" in output  # NORMAL\n        assert \"X\" in output  # REVERSE\n        assert \"#\" in output",
+      "function_sha256": "9a4df138c6582c8a1306a785c8257486b5e419c153d8268806f096a1ab200fc2",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit type: NORMAL\n  commit type: REVERSE\n  commit type: HIGHLIGHT",
+      "raw_bytes": 78,
+      "raw_sha256": "b4d92966dedf0c493344459c5019c793a996d7fe77a8935aae5ac7545bed71c3",
+      "original_options": {
+        "use_ascii": true
+      },
+      "assertion_sites": [
+        {
+          "line_start": 377,
+          "line_end": 377,
+          "start_byte": 11257,
+          "end_byte": 11277,
+          "source": "assert \"o\" in output",
+          "sha256": "8f8b3ff28b2869ded2ae22207b1994ca084a08fa92e3b9ad61f15c0cd7c6c2de"
+        },
+        {
+          "line_start": 378,
+          "line_end": 378,
+          "start_byte": 11296,
+          "end_byte": 11316,
+          "source": "assert \"X\" in output",
+          "sha256": "e988e8f33430943157b4e32699ba164969b152212cc852855ae314eaedb715b8"
+        },
+        {
+          "line_start": 379,
+          "line_end": 379,
+          "start_byte": 11336,
+          "end_byte": 11356,
+          "source": "assert \"#\" in output",
+          "sha256": "e45e875276bd5bdfa9cdeef9ccfd20b571585f73a6eb6ae03896ed5c5aa1f333"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_init_config_rendering",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 381,
+      "function_line_end": 390,
+      "function_start_byte": 11375,
+      "function_end_byte": 11685,
+      "function_source": "def test_init_config_rendering(self):\n        output = render(\n            '%%{init: {\"gitGraph\": {\"mainBranchName\": \"master\"}}}%%\\n'\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch dev\\n\"\n            \"  commit\"\n        )\n        assert \"master\" in output\n        assert \"dev\" in output",
+      "function_sha256": "3b4d46146cc773fa9194a902cf366f29e6f9a2f8a909b1adc02269d19cf4a652",
+      "api": "render",
+      "raw_source": "%%{init: {\"gitGraph\": {\"mainBranchName\": \"master\"}}}%%\ngitGraph\n  commit\n  branch dev\n  commit",
+      "raw_bytes": 94,
+      "raw_sha256": "cc1e88c81f5d534b95d185ce26dc4a149cb4f126e3c2e8076e663684ac12aa77",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 389,
+          "line_end": 389,
+          "start_byte": 11629,
+          "end_byte": 11654,
+          "source": "assert \"master\" in output",
+          "sha256": "673823e3a08ebe48120c86fef3d86b1cd39a1f87b59a48c8b68355ffbd522b18"
+        },
+        {
+          "line_start": 390,
+          "line_end": 390,
+          "start_byte": 11663,
+          "end_byte": 11685,
+          "source": "assert \"dev\" in output",
+          "sha256": "af450eb7d8db81789af47dfcb9726cd6d3eda6a9d0906e3b484ba3457cf1ad60"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_adaptive_spacing",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 392,
+      "function_line_end": 402,
+      "function_start_byte": 11691,
+      "function_end_byte": 12083,
+      "function_source": "def test_adaptive_spacing(self):\n        \"\"\"Long labels should get more space, short labels less.\"\"\"\n        output = render(\n            'gitGraph\\n'\n            '  commit id: \"a\"\\n'\n            '  commit id: \"this-is-a-very-long-label\"\\n'\n            '  commit id: \"b\"'\n        )\n        assert \"a\" in output\n        assert \"this-is-a-very-long-label\" in output\n        assert \"b\" in output",
+      "function_sha256": "608b3a46bb900006b51e4c22d833632cd74ba2d4ba56851fd6657d03dd8a15f8",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit id: \"a\"\n  commit id: \"this-is-a-very-long-label\"\n  commit id: \"b\"",
+      "raw_bytes": 83,
+      "raw_sha256": "63e0dd7471188b49aacdf138a9fa01cef47078922c8889502485e3d97decbbd6",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 400,
+          "line_end": 400,
+          "start_byte": 11981,
+          "end_byte": 12001,
+          "source": "assert \"a\" in output",
+          "sha256": "297d50c5e2665257d5ce36572a3074516adf069ef7c0f18371d60c976d66e3f9"
+        },
+        {
+          "line_start": 401,
+          "line_end": 401,
+          "start_byte": 12010,
+          "end_byte": 12054,
+          "source": "assert \"this-is-a-very-long-label\" in output",
+          "sha256": "4f32fd84a5d11ce1de5078e3397af3d57dc1f73f11cc8dd30f195ae7bfd8a347"
+        },
+        {
+          "line_start": 402,
+          "line_end": 402,
+          "start_byte": 12063,
+          "end_byte": 12083,
+          "source": "assert \"b\" in output",
+          "sha256": "0fc02155e0a0486ad4c284f88d8c1c580cc8a0ebd918257d6248344591d7c55e"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_feature_branch_workflow",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 404,
+      "function_line_end": 420,
+      "function_start_byte": 12089,
+      "function_end_byte": 12645,
+      "function_source": "def test_feature_branch_workflow(self):\n        output = render(\n            'gitGraph\\n'\n            '  commit id: \"1\"\\n'\n            '  commit id: \"2\"\\n'\n            '  branch develop\\n'\n            '  commit id: \"3\"\\n'\n            '  commit id: \"4\"\\n'\n            '  checkout main\\n'\n            '  commit id: \"5\"\\n'\n            '  merge develop id: \"6\"\\n'\n            '  commit id: \"7\"'\n        )\n        for cid in [\"1\", \"2\", \"3\", \"4\", \"5\", \"6\", \"7\"]:\n            assert cid in output\n        assert \"main\" in output\n        assert \"develop\" in output",
+      "function_sha256": "5b73948d622a7b86f1feb8f99eb3cac816042a5abc2658f65028244103b54239",
+      "api": "render",
+      "raw_source": "gitGraph\n  commit id: \"1\"\n  commit id: \"2\"\n  branch develop\n  commit id: \"3\"\n  commit id: \"4\"\n  checkout main\n  commit id: \"5\"\n  merge develop id: \"6\"\n  commit id: \"7\"",
+      "raw_bytes": 167,
+      "raw_sha256": "77316ab9a484dda9bb0eb3d7898555d760f6fc37bbb9def2729a0b53803f73bf",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 419,
+          "line_end": 419,
+          "start_byte": 12587,
+          "end_byte": 12610,
+          "source": "assert \"main\" in output",
+          "sha256": "1441a012d2948a3a31c924268f83cb375a99923679016bb6d1c235ac25ee4595"
+        },
+        {
+          "line_start": 420,
+          "line_end": 420,
+          "start_byte": 12619,
+          "end_byte": 12645,
+          "source": "assert \"develop\" in output",
+          "sha256": "c839a479d07b436a0df3e2c1015550f03ac4a2e2e4505f1c04a8eb65a1562d90"
+        },
+        {
+          "line_start": 418,
+          "line_end": 418,
+          "start_byte": 12558,
+          "end_byte": 12578,
+          "source": "assert cid in output",
+          "sha256": "b0185c0b27c7a490fdf0798c570cc7ae199c0bef18d07a1e72e17c88120e7334"
+        }
+      ]
+    },
+    {
+      "id": "TestGitGraphRendering.test_empty_graph",
+      "source_file": "tests/fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "source_file_sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "function_line_start": 422,
+      "function_line_end": 425,
+      "function_start_byte": 12651,
+      "function_end_byte": 12781,
+      "function_source": "def test_empty_graph(self):\n        output = render(\"gitGraph\")\n        assert isinstance(output, str)\n        assert output == \"\"",
+      "function_sha256": "3f3a59c71c89a56f504c070c281f745b101e81bcc8eeadd6481fb30f1027b53e",
+      "api": "render",
+      "raw_source": "gitGraph",
+      "raw_bytes": 8,
+      "raw_sha256": "a0655f0ceb954df5ace678113540df69d72898311d00edefa56ba2bfa13fff8a",
+      "original_options": {},
+      "assertion_sites": [
+        {
+          "line_start": 424,
+          "line_end": 424,
+          "start_byte": 12723,
+          "end_byte": 12753,
+          "source": "assert isinstance(output, str)",
+          "sha256": "c24d272477e2e902ee916a3c18a8d0e182906cf590f7828c1faa76ca2591f6fa"
+        },
+        {
+          "line_start": 425,
+          "line_end": 425,
+          "start_byte": 12762,
+          "end_byte": 12781,
+          "source": "assert output == \"\"",
+          "sha256": "a00d15521da37d4800f757303358114e11ca2dff4dd5329202b46a4f27c9861f"
+        }
+      ]
+    }
+  ],
+  "functions_without_nondefault_api_options": 37
+}

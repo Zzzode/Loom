@@ -1,0 +1,4170 @@
+{
+  "schema": "loom_gitgraph30_terminal_source_models/v1",
+  "qualification": "Thirty complete positive sources are locked for a future private terminal test. This asset grants no native, official, or full-suite credit before actual PixelAt captures, source binding including exact reset source functions, decode, geometry, and meaningful good-first controls succeed.",
+  "source_design_r3_hash": "6d9588bfd904c87849b89ea6285c128ceb4bd2261936c3d57f85b3f6a6976028",
+  "source_model_inputs": {
+    "termaid_cases_models_sha256": "2943bd67ebbca327d4f1b04424c3d04ef189dc40fe11cb9fb42765a343b62487",
+    "reset_models_sha256": "08e42a6cba0ff952f0d7a7a99cf2a08c4b0082caefcf48fde50bf906082ac24a",
+    "installed_cases_json_sha256": "f828e1939c15c0ea44cec661119f2606a993e4538b531fee59e5b73757170094",
+    "reset_test_gitgraph": {
+      "path": "fixtures/mermaid_terminal/termaid/upstream/tests/test_gitgraph.py",
+      "sha256": "a235082e5e9b5172b4cd1a883fd5f3015fd84f168266adc494b359774029eec8",
+      "functions": [
+        {
+          "case_id": "termaid_test_reset_to_branch",
+          "function_name": "test_reset_to_branch",
+          "line_start": 210,
+          "line_end": 228,
+          "source_text": "    def test_reset_to_branch(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            \"  commit\\n\"\n            \"  branch dev\\n\"\n            \"  commit\\n\"\n            \"  checkout main\\n\"\n            \"  reset dev\\n\"\n            \"  commit\"\n        )\n        # After reset dev, main's HEAD moves to dev's HEAD\n        # So the last commit's parent should be dev's last commit\n        dev_head = None\n        for c in d.commits:\n            if c.branch == \"dev\":\n                dev_head = c.id\n        last_commit = d.commits[-1]\n        assert last_commit.branch == \"main\"\n        assert dev_head in last_commit.parents\n",
+          "source_bytes": 632,
+          "source_sha256": "db07827f2e7d9462c2908a7b9d15e985f978b931baf01abc8a5d152b53f55890"
+        },
+        {
+          "case_id": "termaid_test_reset_ancestor",
+          "function_name": "test_reset_ancestor",
+          "line_start": 230,
+          "line_end": 240,
+          "source_text": "    def test_reset_ancestor(self):\n        d = parse_git_graph(\n            \"gitGraph\\n\"\n            '  commit id: \"c1\"\\n'\n            '  commit id: \"c2\"\\n'\n            '  commit id: \"c3\"\\n'\n            \"  reset main~2\\n\"\n            '  commit id: \"c4\"'\n        )\n        c4 = [c for c in d.commits if c.id == \"c4\"][0]\n        assert c4.parents == [\"c1\"]  # walked back 2 from c3\n",
+          "source_bytes": 380,
+          "source_sha256": "5da087ad7db62b7660c4b44641d1fe155803dd090be6e1ad41a79f0f4b901548"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "case_id": "termaid/c64d9c102f509905e22a",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n    commit id: \"A\"\n    branch develop\n    commit id: \"B\"\n    checkout main\n    cherry-pick id: \"B\"\n",
+      "raw_bytes": 108,
+      "raw_sha256": "c64d9c102f509905e22a19cbe0f5ca253426727f7bb86d22249581941f31a935",
+      "provenance": [
+        {
+          "path": "tests/fixtures/gitgraph/cherry_pick.mmd",
+          "line_start": 1,
+          "line_end": 6,
+          "kind": "fixture"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "A",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "B",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "B-cherry",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A",
+              "B"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "A"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "B-cherry"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "A",
+            "head": "B"
+          }
+        ],
+        "commits": [
+          {
+            "id": "A",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"A\""
+          },
+          {
+            "id": "B",
+            "sequence": 1,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"B\""
+          },
+          {
+            "id": "B-cherry",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A",
+              "B"
+            ],
+            "source_line": 6,
+            "source_operation": "cherry_pick",
+            "source_text": "cherry-pick id: \"B\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/2de46680eaa50fc52e0e",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n    commit id: \"1\"\n    commit id: \"2\"\n    branch develop\n    commit id: \"3\"\n    commit id: \"4\"\n    checkout main\n    commit id: \"5\"\n    merge develop id: \"6\"\n",
+      "raw_bytes": 167,
+      "raw_sha256": "2de46680eaa50fc52e0eece46367cda6147e7691f26934cebb6de7314daa3100",
+      "provenance": [
+        {
+          "path": "tests/fixtures/gitgraph/feature_branch.mmd",
+          "line_start": 1,
+          "line_end": 9,
+          "kind": "fixture"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "2",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "3",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "seq": 2
+          },
+          {
+            "__type__": "Commit",
+            "id": "4",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3"
+            ],
+            "seq": 3
+          },
+          {
+            "__type__": "Commit",
+            "id": "5",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "seq": 4
+          },
+          {
+            "__type__": "Commit",
+            "id": "6",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "5",
+              "4"
+            ],
+            "seq": 5
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "2"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "6"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "2",
+            "head": "4"
+          }
+        ],
+        "commits": [
+          {
+            "id": "1",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"1\""
+          },
+          {
+            "id": "2",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit id: \"2\""
+          },
+          {
+            "id": "3",
+            "sequence": 2,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "source_line": 5,
+            "source_operation": "commit",
+            "source_text": "commit id: \"3\""
+          },
+          {
+            "id": "4",
+            "sequence": 3,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3"
+            ],
+            "source_line": 6,
+            "source_operation": "commit",
+            "source_text": "commit id: \"4\""
+          },
+          {
+            "id": "5",
+            "sequence": 4,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "source_line": 8,
+            "source_operation": "commit",
+            "source_text": "commit id: \"5\""
+          },
+          {
+            "id": "6",
+            "sequence": 5,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "5",
+              "4"
+            ],
+            "source_line": 9,
+            "source_operation": "merge",
+            "source_text": "merge develop id: \"6\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/d57f8ce599f521dd97f9",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n    commit id: \"init\"\n    commit id: \"feat\"\n    commit id: \"fix\"\n",
+      "raw_bytes": 74,
+      "raw_sha256": "d57f8ce599f521dd97f9600cc0af29a5ecf3e04ce28c57eaeb5f39b374ccf1e5",
+      "provenance": [
+        {
+          "path": "tests/fixtures/gitgraph/linear.mmd",
+          "line_start": 1,
+          "line_end": 4,
+          "kind": "fixture"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "init",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "feat",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "init"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "fix",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "feat"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "fix"
+          }
+        ],
+        "commits": [
+          {
+            "id": "init",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"init\""
+          },
+          {
+            "id": "feat",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "init"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit id: \"feat\""
+          },
+          {
+            "id": "fix",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "feat"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"fix\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/701844683e72ab5d9c56",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n    commit id: \"init\" tag: \"v0.1\"\n    commit id: \"feat\"\n    commit id: \"release\" tag: \"v1.0\"\n",
+      "raw_bytes": 102,
+      "raw_sha256": "701844683e72ab5d9c5607f918b55b29a1df59f0c3ec2ea81b4dbdbf1be2fd9c",
+      "provenance": [
+        {
+          "path": "tests/fixtures/gitgraph/tags.mmd",
+          "line_start": 1,
+          "line_end": 4,
+          "kind": "fixture"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "init",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "v0.1",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "feat",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "init"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "release",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "v1.0",
+            "parents": [
+              "feat"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "release"
+          }
+        ],
+        "commits": [
+          {
+            "id": "init",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "v0.1",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"init\" tag: \"v0.1\""
+          },
+          {
+            "id": "feat",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "init"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit id: \"feat\""
+          },
+          {
+            "id": "release",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "v1.0",
+            "parents": [
+              "feat"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"release\" tag: \"v1.0\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/e919401d8d8e85c5a348",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph TB:\n    commit id: \"1\"\n    branch develop\n    commit id: \"2\"\n    checkout main\n    commit id: \"3\"\n    merge develop\n",
+      "raw_bytes": 125,
+      "raw_sha256": "e919401d8d8e85c5a348b3833902ebcf5a63d1346b2d57a9326eb72e7d547539",
+      "provenance": [
+        {
+          "path": "tests/fixtures/gitgraph/tb_direction.mmd",
+          "line_start": 1,
+          "line_end": 7,
+          "kind": "fixture"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "2",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "3",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 2
+          },
+          {
+            "__type__": "Commit",
+            "id": "0",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3",
+              "2"
+            ],
+            "seq": 3
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "1"
+          }
+        ],
+        "direction": "TB",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "TB",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "0"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "1",
+            "head": "2"
+          }
+        ],
+        "commits": [
+          {
+            "id": "1",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"1\""
+          },
+          {
+            "id": "2",
+            "sequence": 1,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"2\""
+          },
+          {
+            "id": "3",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 6,
+            "source_operation": "commit",
+            "source_text": "commit id: \"3\""
+          },
+          {
+            "id": "0",
+            "sequence": 3,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3",
+              "2"
+            ],
+            "source_line": 7,
+            "source_operation": "merge",
+            "source_text": "merge develop"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/9afcd38f94d9c185418d",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit\n  branch a\n  commit\n  branch b\n  commit\n  branch c\n  commit\n  branch d\n  commit\n  branch e\n  commit",
+      "raw_bytes": 117,
+      "raw_sha256": "9afcd38f94d9c185418d8ffb33d0ef8ddf6a7c11e1f9274e6fbeb1e6161f17bc",
+      "provenance": [
+        {
+          "path": "tests/test_corner_cases.py",
+          "line_start": 481,
+          "line_end": 481,
+          "test_name": "TestGitGraphEdgeCases.test_many_branches",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "9afcd38f94d9c185418d8ffb33d0ef8ddf6a7c11e1f9274e6fbeb1e6161f17bc",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "0",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "a",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "2",
+            "branch": "b",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 2
+          },
+          {
+            "__type__": "Commit",
+            "id": "3",
+            "branch": "c",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "seq": 3
+          },
+          {
+            "__type__": "Commit",
+            "id": "4",
+            "branch": "d",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3"
+            ],
+            "seq": 4
+          },
+          {
+            "__type__": "Commit",
+            "id": "5",
+            "branch": "e",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "4"
+            ],
+            "seq": 5
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "a",
+            "order": -1,
+            "start_commit": "0"
+          },
+          {
+            "__type__": "Branch",
+            "name": "b",
+            "order": -1,
+            "start_commit": "1"
+          },
+          {
+            "__type__": "Branch",
+            "name": "c",
+            "order": -1,
+            "start_commit": "2"
+          },
+          {
+            "__type__": "Branch",
+            "name": "d",
+            "order": -1,
+            "start_commit": "3"
+          },
+          {
+            "__type__": "Branch",
+            "name": "e",
+            "order": -1,
+            "start_commit": "4"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "e",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "0"
+          },
+          {
+            "name": "a",
+            "declaration_ordinal": 1,
+            "start": "0",
+            "head": "1"
+          },
+          {
+            "name": "b",
+            "declaration_ordinal": 2,
+            "start": "1",
+            "head": "2"
+          },
+          {
+            "name": "c",
+            "declaration_ordinal": 3,
+            "start": "2",
+            "head": "3"
+          },
+          {
+            "name": "d",
+            "declaration_ordinal": 4,
+            "start": "3",
+            "head": "4"
+          },
+          {
+            "name": "e",
+            "declaration_ordinal": 5,
+            "start": "4",
+            "head": "5"
+          }
+        ],
+        "commits": [
+          {
+            "id": "0",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "1",
+            "sequence": 1,
+            "branch": "a",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "2",
+            "sequence": 2,
+            "branch": "b",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 6,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "3",
+            "sequence": 3,
+            "branch": "c",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "source_line": 8,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "4",
+            "sequence": 4,
+            "branch": "d",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3"
+            ],
+            "source_line": 10,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "5",
+            "sequence": 5,
+            "branch": "e",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "4"
+            ],
+            "source_line": 12,
+            "source_operation": "commit",
+            "source_text": "commit"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/dedc2cf59ac516acea9f",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit id: \"1\"\n  branch feature\n  commit id: \"2\"\n  commit id: \"3\"\n  checkout main\n  commit id: \"4\"\n  merge feature id: \"5\"",
+      "raw_bytes": 133,
+      "raw_sha256": "dedc2cf59ac516acea9f0375d88ecd7f56817627a5d86b294d1403f2927d6428",
+      "provenance": [
+        {
+          "path": "tests/test_corner_cases.py",
+          "line_start": 495,
+          "line_end": 495,
+          "test_name": "TestGitGraphEdgeCases.test_merge_back_to_main",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "dedc2cf59ac516acea9f0375d88ecd7f56817627a5d86b294d1403f2927d6428",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "2",
+            "branch": "feature",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "3",
+            "branch": "feature",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "seq": 2
+          },
+          {
+            "__type__": "Commit",
+            "id": "4",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 3
+          },
+          {
+            "__type__": "Commit",
+            "id": "5",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "4",
+              "3"
+            ],
+            "seq": 4
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "feature",
+            "order": -1,
+            "start_commit": "1"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "5"
+          },
+          {
+            "name": "feature",
+            "declaration_ordinal": 1,
+            "start": "1",
+            "head": "3"
+          }
+        ],
+        "commits": [
+          {
+            "id": "1",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"1\""
+          },
+          {
+            "id": "2",
+            "sequence": 1,
+            "branch": "feature",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"2\""
+          },
+          {
+            "id": "3",
+            "sequence": 2,
+            "branch": "feature",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "source_line": 5,
+            "source_operation": "commit",
+            "source_text": "commit id: \"3\""
+          },
+          {
+            "id": "4",
+            "sequence": 3,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 7,
+            "source_operation": "commit",
+            "source_text": "commit id: \"4\""
+          },
+          {
+            "id": "5",
+            "sequence": 4,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "4",
+              "3"
+            ],
+            "source_line": 8,
+            "source_operation": "merge",
+            "source_text": "merge feature id: \"5\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/e0db2a4da6c76860560c",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit id: \"release\" type: HIGHLIGHT tag: \"v2.0\"",
+      "raw_bytes": 59,
+      "raw_sha256": "e0db2a4da6c76860560c7fd0eaac5c989dbc25fd1b9e2b1239392b223e7a5bde",
+      "provenance": [
+        {
+          "path": "tests/test_corner_cases.py",
+          "line_start": 510,
+          "line_end": 510,
+          "test_name": "TestGitGraphEdgeCases.test_commit_with_all_attributes",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "e0db2a4da6c76860560c7fd0eaac5c989dbc25fd1b9e2b1239392b223e7a5bde",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "release",
+            "branch": "main",
+            "type": "HIGHLIGHT",
+            "tag": "v2.0",
+            "parents": [],
+            "seq": 0
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "release"
+          }
+        ],
+        "commits": [
+          {
+            "id": "release",
+            "sequence": 0,
+            "branch": "main",
+            "type": "HIGHLIGHT",
+            "tag": "v2.0",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"release\" type: HIGHLIGHT tag: \"v2.0\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/5b5ceecdf8bb5131d51d",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit\n  commit\n  commit",
+      "raw_bytes": 35,
+      "raw_sha256": "5b5ceecdf8bb5131d51da3993fa887c5815b1f77d5d2efda3e4ff8e246201a88",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 248,
+          "line_end": 248,
+          "test_name": "TestGitGraphRendering.test_basic_linear",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "5b5ceecdf8bb5131d51da3993fa887c5815b1f77d5d2efda3e4ff8e246201a88",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "0",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "2",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "2"
+          }
+        ],
+        "commits": [
+          {
+            "id": "0",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "1",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "2",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/47b28fe860e298cf7c66",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit id: \"init\"\n  commit id: \"feat\"",
+      "raw_bytes": 48,
+      "raw_sha256": "47b28fe860e298cf7c66d2c0820c6e52b46dd490b5480285b2a84e1079e20c7a",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 255,
+          "line_end": 255,
+          "test_name": "TestGitGraphRendering.test_commit_ids_displayed",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "47b28fe860e298cf7c66d2c0820c6e52b46dd490b5480285b2a84e1079e20c7a",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "init",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "feat",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "init"
+            ],
+            "seq": 1
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "feat"
+          }
+        ],
+        "commits": [
+          {
+            "id": "init",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"init\""
+          },
+          {
+            "id": "feat",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "init"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit id: \"feat\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/175d7e50e25e54e978ae",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit\n  branch develop\n  commit",
+      "raw_bytes": 43,
+      "raw_sha256": "175d7e50e25e54e978ae6cac46cf5f2627278ab557b0bdebaff9b9e09d7d0a81",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 264,
+          "line_end": 264,
+          "test_name": "TestGitGraphRendering.test_branch_label_displayed",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "175d7e50e25e54e978ae6cac46cf5f2627278ab557b0bdebaff9b9e09d7d0a81",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 274,
+          "line_end": 274,
+          "test_name": "TestGitGraphRendering.test_branch_line_drawn",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "175d7e50e25e54e978ae6cac46cf5f2627278ab557b0bdebaff9b9e09d7d0a81",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "0",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "seq": 1
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "0"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "develop",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "0"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "0",
+            "head": "1"
+          }
+        ],
+        "commits": [
+          {
+            "id": "0",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "1",
+            "sequence": 1,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/bde40dfd922a5727462d",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit id: \"a\"\n  branch develop\n  commit id: \"b\"\n  checkout main\n  merge develop id: \"m\"",
+      "raw_bytes": 99,
+      "raw_sha256": "bde40dfd922a5727462d3c338f032694a1fb4e4bf7fd6a51075330cbb59f2236",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 283,
+          "line_end": 283,
+          "test_name": "TestGitGraphRendering.test_merge_vertical_line",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "bde40dfd922a5727462d3c338f032694a1fb4e4bf7fd6a51075330cbb59f2236",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "a",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "b",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "a"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "m",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "a",
+              "b"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "a"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "m"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "a",
+            "head": "b"
+          }
+        ],
+        "commits": [
+          {
+            "id": "a",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"a\""
+          },
+          {
+            "id": "b",
+            "sequence": 1,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "a"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"b\""
+          },
+          {
+            "id": "m",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "a",
+              "b"
+            ],
+            "source_line": 6,
+            "source_operation": "merge",
+            "source_text": "merge develop id: \"m\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/9e2a25608139b9ff969a",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit id: \"n\" type: NORMAL\n  commit id: \"r\" type: REVERSE\n  commit id: \"h\" type: HIGHLIGHT",
+      "raw_bytes": 102,
+      "raw_sha256": "9e2a25608139b9ff969a3fc9dca8de0ed15e60504a811a27f5e6efc46339f920",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 294,
+          "line_end": 294,
+          "test_name": "TestGitGraphRendering.test_commit_type_markers",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "9e2a25608139b9ff969a3fc9dca8de0ed15e60504a811a27f5e6efc46339f920",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "n",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "r",
+            "branch": "main",
+            "type": "REVERSE",
+            "tag": "",
+            "parents": [
+              "n"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "h",
+            "branch": "main",
+            "type": "HIGHLIGHT",
+            "tag": "",
+            "parents": [
+              "r"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "h"
+          }
+        ],
+        "commits": [
+          {
+            "id": "n",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"n\" type: NORMAL"
+          },
+          {
+            "id": "r",
+            "sequence": 1,
+            "branch": "main",
+            "type": "REVERSE",
+            "tag": "",
+            "parents": [
+              "n"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit id: \"r\" type: REVERSE"
+          },
+          {
+            "id": "h",
+            "sequence": 2,
+            "branch": "main",
+            "type": "HIGHLIGHT",
+            "tag": "",
+            "parents": [
+              "r"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"h\" type: HIGHLIGHT"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/85daa4fc18aa6ed69ff7",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit id: \"a\" tag: \"v1.0\"",
+      "raw_bytes": 37,
+      "raw_sha256": "85daa4fc18aa6ed69ff749e602622ce7cb51711a9c26bd96a89c0d617d85b348",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 305,
+          "line_end": 305,
+          "test_name": "TestGitGraphRendering.test_tag_displayed",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "85daa4fc18aa6ed69ff749e602622ce7cb51711a9c26bd96a89c0d617d85b348",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "a",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "v1.0",
+            "parents": [],
+            "seq": 0
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "a"
+          }
+        ],
+        "commits": [
+          {
+            "id": "a",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "v1.0",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"a\" tag: \"v1.0\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/30e6d87f4d35bc271aaf",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph TB:\n  commit\n  branch develop\n  commit\n  checkout main\n  merge develop",
+      "raw_bytes": 79,
+      "raw_sha256": "30e6d87f4d35bc271aaf6cd01c4277c9c9e01dbcfea39cff356cbe2e045afc4d",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 312,
+          "line_end": 312,
+          "test_name": "TestGitGraphRendering.test_tb_orientation",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "30e6d87f4d35bc271aaf6cd01c4277c9c9e01dbcfea39cff356cbe2e045afc4d",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "0",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "2",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0",
+              "1"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "0"
+          }
+        ],
+        "direction": "TB",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "TB",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "2"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "0",
+            "head": "1"
+          }
+        ],
+        "commits": [
+          {
+            "id": "0",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "1",
+            "sequence": 1,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "2",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0",
+              "1"
+            ],
+            "source_line": 6,
+            "source_operation": "merge",
+            "source_text": "merge develop"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/e9a62759b1449c7feb79",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph BT:\n  commit\n  branch develop\n  commit",
+      "raw_bytes": 47,
+      "raw_sha256": "e9a62759b1449c7feb79ccc9b3223249ebc6a756ca038d8d2185f69ce79f855c",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 330,
+          "line_end": 330,
+          "test_name": "TestGitGraphRendering.test_bt_orientation",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "e9a62759b1449c7feb79ccc9b3223249ebc6a756ca038d8d2185f69ce79f855c",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "0",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "seq": 1
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "0"
+          }
+        ],
+        "direction": "BT",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "BT",
+        "main_branch": "main",
+        "current_branch": "develop",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "0"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "0",
+            "head": "1"
+          }
+        ],
+        "commits": [
+          {
+            "id": "0",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "1",
+            "sequence": 1,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/7e777589f9d95bc71f54",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit id: \"A\"\n  branch develop\n  commit id: \"B\"\n  checkout main\n  cherry-pick id: \"B\"",
+      "raw_bytes": 97,
+      "raw_sha256": "7e777589f9d95bc71f5482d38253cd12430d570d10b7c00f33caabe2bf420100",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 345,
+          "line_end": 345,
+          "test_name": "TestGitGraphRendering.test_cherry_pick_rendered",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "7e777589f9d95bc71f5482d38253cd12430d570d10b7c00f33caabe2bf420100",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "A",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "B",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "B-cherry",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A",
+              "B"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "A"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "B-cherry"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "A",
+            "head": "B"
+          }
+        ],
+        "commits": [
+          {
+            "id": "A",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"A\""
+          },
+          {
+            "id": "B",
+            "sequence": 1,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"B\""
+          },
+          {
+            "id": "B-cherry",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A",
+              "B"
+            ],
+            "source_line": 6,
+            "source_operation": "cherry_pick",
+            "source_text": "cherry-pick id: \"B\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/e9314a053cd3cb590829",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit\n  commit",
+      "raw_bytes": 26,
+      "raw_sha256": "e9314a053cd3cb590829a62b9467cd2671d331f4182accdb222f3ecdb58bb278",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 359,
+          "line_end": 359,
+          "test_name": "TestGitGraphRendering.test_ascii_mode",
+          "kind": "executed_public_render",
+          "options": {
+            "use_ascii": true
+          },
+          "executed_input_sha256": "e9314a053cd3cb590829a62b9467cd2671d331f4182accdb222f3ecdb58bb278",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "0",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "seq": 1
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "1"
+          }
+        ],
+        "commits": [
+          {
+            "id": "0",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "1",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/b4d92966dedf0c493344",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit type: NORMAL\n  commit type: REVERSE\n  commit type: HIGHLIGHT",
+      "raw_bytes": 78,
+      "raw_sha256": "b4d92966dedf0c493344459c5019c793a996d7fe77a8935aae5ac7545bed71c3",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 370,
+          "line_end": 370,
+          "test_name": "TestGitGraphRendering.test_ascii_commit_types",
+          "kind": "executed_public_render",
+          "options": {
+            "use_ascii": true
+          },
+          "executed_input_sha256": "b4d92966dedf0c493344459c5019c793a996d7fe77a8935aae5ac7545bed71c3",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "0",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "main",
+            "type": "REVERSE",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "2",
+            "branch": "main",
+            "type": "HIGHLIGHT",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "2"
+          }
+        ],
+        "commits": [
+          {
+            "id": "0",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit type: NORMAL"
+          },
+          {
+            "id": "1",
+            "sequence": 1,
+            "branch": "main",
+            "type": "REVERSE",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit type: REVERSE"
+          },
+          {
+            "id": "2",
+            "sequence": 2,
+            "branch": "main",
+            "type": "HIGHLIGHT",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit type: HIGHLIGHT"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/cc1e88c81f5d534b95d1",
+      "origin": "termaid_cases_json",
+      "raw_source": "%%{init: {\"gitGraph\": {\"mainBranchName\": \"master\"}}}%%\ngitGraph\n  commit\n  branch dev\n  commit",
+      "raw_bytes": 94,
+      "raw_sha256": "cc1e88c81f5d534b95d185ce26dc4a149cb4f126e3c2e8076e663684ac12aa77",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 382,
+          "line_end": 382,
+          "test_name": "TestGitGraphRendering.test_init_config_rendering",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "cc1e88c81f5d534b95d185ce26dc4a149cb4f126e3c2e8076e663684ac12aa77",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "0",
+            "branch": "master",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "dev",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "seq": 1
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "master",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "dev",
+            "order": -1,
+            "start_commit": "0"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "master",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "master",
+        "current_branch": "dev",
+        "branches": [
+          {
+            "name": "master",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "0"
+          },
+          {
+            "name": "dev",
+            "declaration_ordinal": 1,
+            "start": "0",
+            "head": "1"
+          }
+        ],
+        "commits": [
+          {
+            "id": "0",
+            "sequence": 0,
+            "branch": "master",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit"
+          },
+          {
+            "id": "1",
+            "sequence": 1,
+            "branch": "dev",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "source_line": 5,
+            "source_operation": "commit",
+            "source_text": "commit"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/63e0dd7471188b49aacd",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit id: \"a\"\n  commit id: \"this-is-a-very-long-label\"\n  commit id: \"b\"",
+      "raw_bytes": 83,
+      "raw_sha256": "63e0dd7471188b49aacdf138a9fa01cef47078922c8889502485e3d97decbbd6",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 394,
+          "line_end": 394,
+          "test_name": "TestGitGraphRendering.test_adaptive_spacing",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "63e0dd7471188b49aacdf138a9fa01cef47078922c8889502485e3d97decbbd6",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "a",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "this-is-a-very-long-label",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "a"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "b",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "this-is-a-very-long-label"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "b"
+          }
+        ],
+        "commits": [
+          {
+            "id": "a",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"a\""
+          },
+          {
+            "id": "this-is-a-very-long-label",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "a"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit id: \"this-is-a-very-long-label\""
+          },
+          {
+            "id": "b",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "this-is-a-very-long-label"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"b\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/77316ab9a484dda9bb0e",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n  commit id: \"1\"\n  commit id: \"2\"\n  branch develop\n  commit id: \"3\"\n  commit id: \"4\"\n  checkout main\n  commit id: \"5\"\n  merge develop id: \"6\"\n  commit id: \"7\"",
+      "raw_bytes": 167,
+      "raw_sha256": "77316ab9a484dda9bb0eb3d7898555d760f6fc37bbb9def2729a0b53803f73bf",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 405,
+          "line_end": 405,
+          "test_name": "TestGitGraphRendering.test_feature_branch_workflow",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "77316ab9a484dda9bb0eb3d7898555d760f6fc37bbb9def2729a0b53803f73bf",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "2",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "3",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "seq": 2
+          },
+          {
+            "__type__": "Commit",
+            "id": "4",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3"
+            ],
+            "seq": 3
+          },
+          {
+            "__type__": "Commit",
+            "id": "5",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "seq": 4
+          },
+          {
+            "__type__": "Commit",
+            "id": "6",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "5",
+              "4"
+            ],
+            "seq": 5
+          },
+          {
+            "__type__": "Commit",
+            "id": "7",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "6"
+            ],
+            "seq": 6
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "2"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "7"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "2",
+            "head": "4"
+          }
+        ],
+        "commits": [
+          {
+            "id": "1",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"1\""
+          },
+          {
+            "id": "2",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit id: \"2\""
+          },
+          {
+            "id": "3",
+            "sequence": 2,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "source_line": 5,
+            "source_operation": "commit",
+            "source_text": "commit id: \"3\""
+          },
+          {
+            "id": "4",
+            "sequence": 3,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3"
+            ],
+            "source_line": 6,
+            "source_operation": "commit",
+            "source_text": "commit id: \"4\""
+          },
+          {
+            "id": "5",
+            "sequence": 4,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "source_line": 8,
+            "source_operation": "commit",
+            "source_text": "commit id: \"5\""
+          },
+          {
+            "id": "6",
+            "sequence": 5,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "5",
+              "4"
+            ],
+            "source_line": 9,
+            "source_operation": "merge",
+            "source_text": "merge develop id: \"6\""
+          },
+          {
+            "id": "7",
+            "sequence": 6,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "6"
+            ],
+            "source_line": 10,
+            "source_operation": "commit",
+            "source_text": "commit id: \"7\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/a0655f0ceb954df5ace6",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph",
+      "raw_bytes": 8,
+      "raw_sha256": "a0655f0ceb954df5ace678113540df69d72898311d00edefa56ba2bfa13fff8a",
+      "provenance": [
+        {
+          "path": "tests/test_gitgraph.py",
+          "line_start": 423,
+          "line_end": 423,
+          "test_name": "TestGitGraphRendering.test_empty_graph",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "a0655f0ceb954df5ace678113540df69d72898311d00edefa56ba2bfa13fff8a",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "∅"
+          }
+        ],
+        "commits": [],
+        "empty_zero_ink_exception": true
+      }
+    },
+    {
+      "case_id": "termaid/fd1b46f29f3a213de57e",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n    commit id: \"A\"\n    branch develop\n    commit id: \"B\"\n    checkout main\n    cherry-pick id: \"B\"",
+      "raw_bytes": 107,
+      "raw_sha256": "fd1b46f29f3a213de57e14b68841e4079dd5983f43c67c172aea31825c324c99",
+      "provenance": [
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 40,
+          "line_end": 40,
+          "test_name": "TestAllDiagramSnapshots.test_snapshot",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "fd1b46f29f3a213de57e14b68841e4079dd5983f43c67c172aea31825c324c99",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 68,
+          "line_end": 68,
+          "test_name": "TestAllDiagramInvariants.test_valid_unicode",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "fd1b46f29f3a213de57e14b68841e4079dd5983f43c67c172aea31825c324c99",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 78,
+          "line_end": 78,
+          "test_name": "TestAllDiagramInvariants.test_reasonable_dimensions",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "fd1b46f29f3a213de57e14b68841e4079dd5983f43c67c172aea31825c324c99",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 88,
+          "line_end": 88,
+          "test_name": "TestAllDiagramInvariants.test_ascii_mode",
+          "kind": "executed_public_render",
+          "options": {
+            "use_ascii": true
+          },
+          "executed_input_sha256": "fd1b46f29f3a213de57e14b68841e4079dd5983f43c67c172aea31825c324c99",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "A",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "B",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "B-cherry",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A",
+              "B"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "A"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "B-cherry"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "A",
+            "head": "B"
+          }
+        ],
+        "commits": [
+          {
+            "id": "A",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"A\""
+          },
+          {
+            "id": "B",
+            "sequence": 1,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"B\""
+          },
+          {
+            "id": "B-cherry",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "A",
+              "B"
+            ],
+            "source_line": 6,
+            "source_operation": "cherry_pick",
+            "source_text": "cherry-pick id: \"B\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/249587f7ce233a0e34b9",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n    commit id: \"1\"\n    commit id: \"2\"\n    branch develop\n    commit id: \"3\"\n    commit id: \"4\"\n    checkout main\n    commit id: \"5\"\n    merge develop id: \"6\"",
+      "raw_bytes": 166,
+      "raw_sha256": "249587f7ce233a0e34b95988a0415b1b4051856a14bd821aec595b700762bf3c",
+      "provenance": [
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 40,
+          "line_end": 40,
+          "test_name": "TestAllDiagramSnapshots.test_snapshot",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "249587f7ce233a0e34b95988a0415b1b4051856a14bd821aec595b700762bf3c",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 68,
+          "line_end": 68,
+          "test_name": "TestAllDiagramInvariants.test_valid_unicode",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "249587f7ce233a0e34b95988a0415b1b4051856a14bd821aec595b700762bf3c",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 78,
+          "line_end": 78,
+          "test_name": "TestAllDiagramInvariants.test_reasonable_dimensions",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "249587f7ce233a0e34b95988a0415b1b4051856a14bd821aec595b700762bf3c",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 88,
+          "line_end": 88,
+          "test_name": "TestAllDiagramInvariants.test_ascii_mode",
+          "kind": "executed_public_render",
+          "options": {
+            "use_ascii": true
+          },
+          "executed_input_sha256": "249587f7ce233a0e34b95988a0415b1b4051856a14bd821aec595b700762bf3c",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "2",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "3",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "seq": 2
+          },
+          {
+            "__type__": "Commit",
+            "id": "4",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3"
+            ],
+            "seq": 3
+          },
+          {
+            "__type__": "Commit",
+            "id": "5",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "seq": 4
+          },
+          {
+            "__type__": "Commit",
+            "id": "6",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "5",
+              "4"
+            ],
+            "seq": 5
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "2"
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "6"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "2",
+            "head": "4"
+          }
+        ],
+        "commits": [
+          {
+            "id": "1",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"1\""
+          },
+          {
+            "id": "2",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit id: \"2\""
+          },
+          {
+            "id": "3",
+            "sequence": 2,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "source_line": 5,
+            "source_operation": "commit",
+            "source_text": "commit id: \"3\""
+          },
+          {
+            "id": "4",
+            "sequence": 3,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3"
+            ],
+            "source_line": 6,
+            "source_operation": "commit",
+            "source_text": "commit id: \"4\""
+          },
+          {
+            "id": "5",
+            "sequence": 4,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "2"
+            ],
+            "source_line": 8,
+            "source_operation": "commit",
+            "source_text": "commit id: \"5\""
+          },
+          {
+            "id": "6",
+            "sequence": 5,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "5",
+              "4"
+            ],
+            "source_line": 9,
+            "source_operation": "merge",
+            "source_text": "merge develop id: \"6\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/d164419fd407cc5b1ae9",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n    commit id: \"init\"\n    commit id: \"feat\"\n    commit id: \"fix\"",
+      "raw_bytes": 73,
+      "raw_sha256": "d164419fd407cc5b1ae93b0027f8e86ac9a0c73d3a4136ace4dbbae81e82fcd3",
+      "provenance": [
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 40,
+          "line_end": 40,
+          "test_name": "TestAllDiagramSnapshots.test_snapshot",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "d164419fd407cc5b1ae93b0027f8e86ac9a0c73d3a4136ace4dbbae81e82fcd3",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 68,
+          "line_end": 68,
+          "test_name": "TestAllDiagramInvariants.test_valid_unicode",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "d164419fd407cc5b1ae93b0027f8e86ac9a0c73d3a4136ace4dbbae81e82fcd3",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 78,
+          "line_end": 78,
+          "test_name": "TestAllDiagramInvariants.test_reasonable_dimensions",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "d164419fd407cc5b1ae93b0027f8e86ac9a0c73d3a4136ace4dbbae81e82fcd3",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 88,
+          "line_end": 88,
+          "test_name": "TestAllDiagramInvariants.test_ascii_mode",
+          "kind": "executed_public_render",
+          "options": {
+            "use_ascii": true
+          },
+          "executed_input_sha256": "d164419fd407cc5b1ae93b0027f8e86ac9a0c73d3a4136ace4dbbae81e82fcd3",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "init",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "feat",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "init"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "fix",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "feat"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "fix"
+          }
+        ],
+        "commits": [
+          {
+            "id": "init",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"init\""
+          },
+          {
+            "id": "feat",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "init"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit id: \"feat\""
+          },
+          {
+            "id": "fix",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "feat"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"fix\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/0adbbfe5a06408aaceec",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph\n    commit id: \"init\" tag: \"v0.1\"\n    commit id: \"feat\"\n    commit id: \"release\" tag: \"v1.0\"",
+      "raw_bytes": 101,
+      "raw_sha256": "0adbbfe5a06408aaceec852afd2351f4651588a1fb1a64b14928f19d76461011",
+      "provenance": [
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 40,
+          "line_end": 40,
+          "test_name": "TestAllDiagramSnapshots.test_snapshot",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "0adbbfe5a06408aaceec852afd2351f4651588a1fb1a64b14928f19d76461011",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 68,
+          "line_end": 68,
+          "test_name": "TestAllDiagramInvariants.test_valid_unicode",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "0adbbfe5a06408aaceec852afd2351f4651588a1fb1a64b14928f19d76461011",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 78,
+          "line_end": 78,
+          "test_name": "TestAllDiagramInvariants.test_reasonable_dimensions",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "0adbbfe5a06408aaceec852afd2351f4651588a1fb1a64b14928f19d76461011",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 88,
+          "line_end": 88,
+          "test_name": "TestAllDiagramInvariants.test_ascii_mode",
+          "kind": "executed_public_render",
+          "options": {
+            "use_ascii": true
+          },
+          "executed_input_sha256": "0adbbfe5a06408aaceec852afd2351f4651588a1fb1a64b14928f19d76461011",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "init",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "v0.1",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "feat",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "init"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "release",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "v1.0",
+            "parents": [
+              "feat"
+            ],
+            "seq": 2
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          }
+        ],
+        "direction": "LR",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "release"
+          }
+        ],
+        "commits": [
+          {
+            "id": "init",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "v0.1",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"init\" tag: \"v0.1\""
+          },
+          {
+            "id": "feat",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "init"
+            ],
+            "source_line": 3,
+            "source_operation": "commit",
+            "source_text": "commit id: \"feat\""
+          },
+          {
+            "id": "release",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "v1.0",
+            "parents": [
+              "feat"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"release\" tag: \"v1.0\""
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid/fea89368d018095a874e",
+      "origin": "termaid_cases_json",
+      "raw_source": "gitGraph TB:\n    commit id: \"1\"\n    branch develop\n    commit id: \"2\"\n    checkout main\n    commit id: \"3\"\n    merge develop",
+      "raw_bytes": 124,
+      "raw_sha256": "fea89368d018095a874e2ff8851bb45a2b1cebd9d774fc568773d265f634afe5",
+      "provenance": [
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 40,
+          "line_end": 40,
+          "test_name": "TestAllDiagramSnapshots.test_snapshot",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "fea89368d018095a874e2ff8851bb45a2b1cebd9d774fc568773d265f634afe5",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 68,
+          "line_end": 68,
+          "test_name": "TestAllDiagramInvariants.test_valid_unicode",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "fea89368d018095a874e2ff8851bb45a2b1cebd9d774fc568773d265f634afe5",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 78,
+          "line_end": 78,
+          "test_name": "TestAllDiagramInvariants.test_reasonable_dimensions",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "fea89368d018095a874e2ff8851bb45a2b1cebd9d774fc568773d265f634afe5",
+          "input_preprocessing": "none"
+        },
+        {
+          "path": "tests/test_snapshots.py",
+          "line_start": 88,
+          "line_end": 88,
+          "test_name": "TestAllDiagramInvariants.test_ascii_mode",
+          "kind": "executed_public_render",
+          "options": {
+            "use_ascii": true
+          },
+          "executed_input_sha256": "fea89368d018095a874e2ff8851bb45a2b1cebd9d774fc568773d265f634afe5",
+          "input_preprocessing": "none"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "commits": [
+          {
+            "__type__": "Commit",
+            "id": "1",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "seq": 0
+          },
+          {
+            "__type__": "Commit",
+            "id": "2",
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 1
+          },
+          {
+            "__type__": "Commit",
+            "id": "3",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "seq": 2
+          },
+          {
+            "__type__": "Commit",
+            "id": "0",
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3",
+              "2"
+            ],
+            "seq": 3
+          }
+        ],
+        "branches": [
+          {
+            "__type__": "Branch",
+            "name": "main",
+            "order": -1,
+            "start_commit": ""
+          },
+          {
+            "__type__": "Branch",
+            "name": "develop",
+            "order": -1,
+            "start_commit": "1"
+          }
+        ],
+        "direction": "TB",
+        "main_branch_name": "main",
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "TB",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "0"
+          },
+          {
+            "name": "develop",
+            "declaration_ordinal": 1,
+            "start": "1",
+            "head": "2"
+          }
+        ],
+        "commits": [
+          {
+            "id": "1",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_line": 2,
+            "source_operation": "commit",
+            "source_text": "commit id: \"1\""
+          },
+          {
+            "id": "2",
+            "sequence": 1,
+            "branch": "develop",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 4,
+            "source_operation": "commit",
+            "source_text": "commit id: \"2\""
+          },
+          {
+            "id": "3",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_line": 6,
+            "source_operation": "commit",
+            "source_text": "commit id: \"3\""
+          },
+          {
+            "id": "0",
+            "sequence": 3,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "3",
+              "2"
+            ],
+            "source_line": 7,
+            "source_operation": "merge",
+            "source_text": "merge develop"
+          }
+        ],
+        "empty_zero_ink_exception": false
+      }
+    },
+    {
+      "case_id": "termaid_test_reset_to_branch",
+      "origin": "termaid_reset_test",
+      "raw_source": "gitGraph\n  commit\n  branch dev\n  commit\n  checkout main\n  reset dev\n  commit",
+      "raw_bytes": 76,
+      "raw_sha256": "2bc48b407817dcc93109b8c23d110e6e762a3484965f0436c54bc23479140dfe",
+      "provenance": [
+        {
+          "path": "termaid/test_gitgraph.py",
+          "function_lines": "210-228",
+          "kind": "upstream_test"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "direction": "LR",
+        "main_branch_name": "main",
+        "commits": [
+          {
+            "id": "0",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_operation": "commit"
+          },
+          {
+            "id": "1",
+            "sequence": 1,
+            "branch": "dev",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "source_operation": "commit"
+          },
+          {
+            "id": "2",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_operation": "commit_after_reset"
+          }
+        ],
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "2"
+          },
+          {
+            "name": "dev",
+            "declaration_ordinal": 1,
+            "start": "0",
+            "head": "1"
+          }
+        ],
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "2"
+          },
+          {
+            "name": "dev",
+            "declaration_ordinal": 1,
+            "start": "0",
+            "head": "1"
+          }
+        ],
+        "commits": [
+          {
+            "id": "0",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_operation": "commit"
+          },
+          {
+            "id": "1",
+            "sequence": 1,
+            "branch": "dev",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "0"
+            ],
+            "source_operation": "commit"
+          },
+          {
+            "id": "2",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "1"
+            ],
+            "source_operation": "commit_after_reset"
+          }
+        ],
+        "reset": {
+          "current_branch": "main",
+          "target": "dev",
+          "ancestor_depth": 0,
+          "created_entity_count": 0,
+          "warning_count": 0
+        },
+        "empty_zero_ink_exception": false,
+        "required_mutation_categories": [
+          "final_parent_to_pre_reset_main",
+          "final_parent_path_to_pre_reset_main",
+          "invented_reset_ink"
+        ]
+      }
+    },
+    {
+      "case_id": "termaid_test_reset_ancestor",
+      "origin": "termaid_reset_test",
+      "raw_source": "gitGraph\n  commit id: \"c1\"\n  commit id: \"c2\"\n  commit id: \"c3\"\n  reset main~2\n  commit id: \"c4\"",
+      "raw_bytes": 95,
+      "raw_sha256": "dd4fdc555bb485a6d8336d3c93a13a18980be444b1be27e1b523c66e3df60f1b",
+      "provenance": [
+        {
+          "path": "termaid/test_gitgraph.py",
+          "function_lines": "230-244",
+          "kind": "upstream_test"
+        }
+      ],
+      "upstream_semantic_model": {
+        "__type__": "GitGraph",
+        "direction": "LR",
+        "main_branch_name": "main",
+        "commits": [
+          {
+            "id": "c1",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_operation": "commit"
+          },
+          {
+            "id": "c2",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "c1"
+            ],
+            "source_operation": "commit"
+          },
+          {
+            "id": "c3",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "c2"
+            ],
+            "source_operation": "commit"
+          },
+          {
+            "id": "c4",
+            "sequence": 3,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "c1"
+            ],
+            "source_operation": "commit_after_reset"
+          }
+        ],
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "c4"
+          }
+        ],
+        "warnings": []
+      },
+      "state_projection": {
+        "direction": "LR",
+        "main_branch": "main",
+        "current_branch": "main",
+        "branches": [
+          {
+            "name": "main",
+            "declaration_ordinal": 0,
+            "start": "∅",
+            "head": "c4"
+          }
+        ],
+        "commits": [
+          {
+            "id": "c1",
+            "sequence": 0,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [],
+            "source_operation": "commit"
+          },
+          {
+            "id": "c2",
+            "sequence": 1,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "c1"
+            ],
+            "source_operation": "commit"
+          },
+          {
+            "id": "c3",
+            "sequence": 2,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "c2"
+            ],
+            "source_operation": "commit"
+          },
+          {
+            "id": "c4",
+            "sequence": 3,
+            "branch": "main",
+            "type": "NORMAL",
+            "tag": "",
+            "parents": [
+              "c1"
+            ],
+            "source_operation": "commit_after_reset"
+          }
+        ],
+        "reset": {
+          "current_branch": "main",
+          "target": "main",
+          "ancestor_depth": 2,
+          "resolved_head_before_commit": "c1",
+          "created_entity_count": 0,
+          "warning_count": 0
+        },
+        "empty_zero_ink_exception": false,
+        "required_mutation_categories": [
+          "c4_parent_to_c3",
+          "c4_parent_to_c2",
+          "c4_parent_path_to_c3",
+          "invented_reset_ink"
+        ]
+      }
+    }
+  ]
+}

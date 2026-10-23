@@ -1,0 +1,36 @@
+{
+  "schema": "five_suite_full_declared_input_closure/v1",
+  "qualification": "Static source identity closure only. It binds all declared raw sources and private-predicate provenance to durable fixtures; it does not confer runtime, parser, semantic, drawing, or denominator credit.",
+  "inputs": [
+    {
+      "path": "tests/fixtures/mermaid_terminal/assertion_index/v4_full_declared/source-inputs/FULL_AST_SOURCE_INDEX.r3.json",
+      "sha256": "2984e7e788624f5a3723e128d9d9eb50424e6ded6ee920e408be4c861268732e",
+      "bytes": 16534382
+    },
+    {
+      "path": "tests/fixtures/mermaid_terminal/assertion_index/v4_full_declared/source-inputs/SOURCE_SITE_COUNTS.r4.json",
+      "sha256": "7592d8c215f0f280dbe10e7189f6180b613c172f8f74d099d9815a44f866bada",
+      "bytes": 88986
+    },
+    {
+      "path": "tests/fixtures/mermaid_terminal/assertion_index/v4_full_declared/source-inputs/SOURCE_RECOVERY.r3.json",
+      "sha256": "faeb6300a5b9192dfda3529765ef6ec14bb4109de8322428d7987aebca9b612d",
+      "bytes": 989034
+    },
+    {
+      "path": "tests/fixtures/mermaid_terminal/assertion_index/v4_full_declared/source-inputs/FULL_DECLARED_SOURCE_PATH_MAP.v1.json",
+      "sha256": "e08d5fdc2d2e2179c2f5cbb0c1b9e140691c01ea8fca32888a23a469e8294eab",
+      "bytes": 220267
+    }
+  ],
+  "durable_mmdflux_manifest": {
+    "path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/SOURCE_MANIFEST.v1.json",
+    "sha256": "e1cef48b111f3b85e6e81dda27d31eb6d23d4fd0b7220a1644c5bb5fc049f444",
+    "bytes": 67586
+  },
+  "provenance_lock": {
+    "path": "tests/fixtures/mermaid_terminal/assertion_index/v4_full_declared/full-declared-input.lock.json",
+    "sha256": "95c0f19a08b247a500669ce734af07ece9a7f624a562d5047a94889497ef8edb",
+    "bytes": 2433
+  }
+}

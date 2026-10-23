@@ -1,0 +1,209 @@
+{
+  "schema": "flow400_typed_source4_formal_supplement/v1",
+  "qualification": "Design-only typed source/Model supplement. It grants no admission and is not a Native report input.",
+  "base_authority": {
+    "asset_sha256": "f03178a8c6b3872abf1a3d2693fc1841b31492961f7a7a632424860d6a8d884c",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+    "all_sources": 400,
+    "complete_models": 8,
+    "pending": 392
+  },
+  "config21_authority": {
+    "asset_sha256": "6011a1ff418dcb2491e65e3a77205237d5b24483d755a9826dbbe32fd537c9e6",
+    "cases": 21,
+    "aggregate_complete_before_source4": 29,
+    "aggregate_pending_before_source4": 371
+  },
+  "formal_counts": {
+    "cases": 4,
+    "aggregate_complete_after_all_official_runs": 33,
+    "aggregate_pending_after_all_official_runs": 367,
+    "ultimate_complete_required": 400,
+    "ultimate_pending_required": 0,
+    "official_credit_before_execution": 0
+  },
+  "cases": [
+    {
+      "case_id": "original_000",
+      "base_authority": {
+        "adaptation": null,
+        "fixture": "flowchart/nightly-check/8292-elk-edge-label-jog.mmd",
+        "manifest_global_ordinal": 661,
+        "model_json": null,
+        "model_sha256": null,
+        "oracle_record_sha256": "1e275b61ea487ee7233b7c15141274b92ff7002b88cad632b867171972bfcd30",
+        "ordinal": 0,
+        "source_bytes": 149,
+        "source_git_blob": "e87f734d8e25ad77d76dc1004709fbb65b7d3be4",
+        "source_sha256": "af4fad7f61b975e02078172e5c2e2782dd5c6b4edb3fc23b86b5afae16ac9fc0"
+      },
+      "source": "flowchart TD\n    A --> B{Decision}\n    B -- Yes --> C[Done]\n    B -- No --> D[Step 1]\n    D --> E{Again?}\n    E -- Yes --> C\n    E -- No --> F[Stop]\n",
+      "source_sha256": "af4fad7f61b975e02078172e5c2e2782dd5c6b4edb3fc23b86b5afae16ac9fc0",
+      "typed_model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Decision\",\"shape\":\"diamond\"}],[\"C\",{\"id\":\"C\",\"label\":\"Done\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"Step 1\",\"shape\":\"rectangle\"}],[\"E\",{\"id\":\"E\",\"label\":\"Again?\",\"shape\":\"diamond\"}],[\"F\",{\"id\":\"F\",\"label\":\"Stop\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"Yes\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"D\",\"label\":\"No\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"D\",\"target\":\"E\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"E\",\"target\":\"C\",\"label\":\"Yes\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"E\",\"target\":\"F\",\"label\":\"No\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "typed_model_sha256": "7326cff128906544e46970d1a45b355b2d2de1fc55afcf9256dbe454ff053016",
+      "envelope": {
+        "kind": "none",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "text": "",
+        "description_form": "none",
+        "root_keys": [],
+        "config": null,
+        "body_header": "flowchart TD",
+        "body_sha256": "af4fad7f61b975e02078172e5c2e2782dd5c6b4edb3fc23b86b5afae16ac9fc0"
+      },
+      "native_requirement": {
+        "native_test": "MermaidFlowOriginal000NativeFullScene.SourceBoundTypedSceneHasCompleteGeometryAndMutants",
+        "existing_native_asset": "flow_native_typed_shapes_controls.v1.json",
+        "exact_rejections": 8,
+        "mutations": [
+          "legacy_three",
+          "B_diamond_to_rectangle",
+          "E_diamond_to_rectangle",
+          "Yes_No_model_swap",
+          "erase_one_Yes",
+          "move_one_No_preserving_count_off_owner_path"
+        ]
+      },
+      "formal_status": "unadmitted_design_only"
+    },
+    {
+      "case_id": "original_282",
+      "base_authority": {
+        "adaptation": null,
+        "fixture": "flowchart/visual-check/3-should-render-a-simple-flowchart-with-line-breaks.mmd",
+        "manifest_global_ordinal": 943,
+        "model_json": null,
+        "model_sha256": null,
+        "oracle_record_sha256": "6fe3a273bea344ec7175c0f046fceb9d7df74ca4d302a038f4f34bbea6e29f5f",
+        "ordinal": 282,
+        "source_bytes": 450,
+        "source_git_blob": "4250bc6015a1be34a505f3939b72cd284858f7d0",
+        "source_sha256": "845e89889403844746759bedeccc08829139d57b9156eb0732521fda1ee2398c"
+      },
+      "source": "---\ndescription:\n  Verifies that a decision-diamond node label containing multiple `<br/>` line\n  breaks with long text per line renders correctly and wraps without distorting\n  the diamond shape's layout.\nconfig:\n  fontFamily: courier\n---\ngraph TD\n  A[Christmas] -->|Get money| B(Go shopping)\n  B --> C{Let me thinksssss<br/>ssssssssssssssssssssss<br/>sssssssssssssssssssssssssss}\n  C -->|One| D[Laptop]\n  C -->|Two| E[iPhone]\n  C -->|Three| F[Car]\n",
+      "source_sha256": "845e89889403844746759bedeccc08829139d57b9156eb0732521fda1ee2398c",
+      "typed_model_json": "{\"direction\":\"TD\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Christmas\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Go shopping\",\"shape\":\"rounded\"}],[\"C\",{\"id\":\"C\",\"label\":\"Let me thinksssss\\nssssssssssssssssssssss\\nsssssssssssssssssssssssssss\",\"shape\":\"diamond\"}],[\"D\",{\"id\":\"D\",\"label\":\"Laptop\",\"shape\":\"rectangle\"}],[\"E\",{\"id\":\"E\",\"label\":\"iPhone\",\"shape\":\"rectangle\"}],[\"F\",{\"id\":\"F\",\"label\":\"Car\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"Get money\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"One\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"E\",\"label\":\"Two\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"F\",\"label\":\"Three\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "typed_model_sha256": "8a5673c8bd4182914c69172d99f80cee8d623a785797fc761f2e47e6b1fac2fa",
+      "envelope": {
+        "kind": "frontmatter",
+        "bytes": 240,
+        "sha256": "8860dc3841a5e4a3125b1d81392e053fb0422a6578b98d1eeff13790b224b7eb",
+        "text": "---\ndescription:\n  Verifies that a decision-diamond node label containing multiple `<br/>` line\n  breaks with long text per line renders correctly and wraps without distorting\n  the diamond shape's layout.\nconfig:\n  fontFamily: courier\n---\n",
+        "description_form": "plain_multiline",
+        "root_keys": [
+          "description",
+          "config"
+        ],
+        "config": {
+          "fontFamily": "courier"
+        },
+        "body_header": "graph TD",
+        "body_sha256": "6da261f10448e07d8626834c4b8dd980faf7955526292f8e1c929b6740078d69"
+      },
+      "native_requirement": {
+        "native_test": "MermaidFlowOriginal282NativeFullScene.SourceBoundTypedConfigAndMultilineDecisionHasCompleteGeometryAndMutants",
+        "existing_native_asset": null,
+        "exact_rejections": 9,
+        "mutations": [
+          "legacy_three",
+          "B_rounded_to_rectangle",
+          "B_mixed_corner",
+          "C_diamond_to_rectangle",
+          "C_missing_diagonal",
+          "C_flattened_three_line_Model",
+          "C_middle_label_glyph_erased"
+        ]
+      },
+      "formal_status": "unadmitted_design_only"
+    },
+    {
+      "case_id": "original_374",
+      "base_authority": {
+        "adaptation": null,
+        "fixture": "flowchart/visual-check/should-render-a-diamond-shaped-node-using-shape-config.mmd",
+        "manifest_global_ordinal": 1035,
+        "model_json": null,
+        "model_sha256": null,
+        "oracle_record_sha256": "9da48fa53b00be3580150273c76f33b544285ee6d515c19a4cd9e6275dbf47ea",
+        "ordinal": 374,
+        "source_bytes": 277,
+        "source_git_blob": "baf444189639caf9796271db2977b19cb27bb10c",
+        "source_sha256": "10a38ba8df398ccaf36e51e7f84dccc2a71af21c005e177d30d2c304ea209890"
+      },
+      "source": "---\ndescription: >-\n  Verifies that the new-syntax shape-data directive @{ shape: diam } renders a\n  node as a diamond/decision shape, as an alternative to the legacy {..}\n  node-syntax for diamonds.\n---\nflowchart BT\n  n2[\"Untitled Node\"] --> n1[\"Diamond\"]\n  n1@{ shape: diam}\n",
+      "source_sha256": "10a38ba8df398ccaf36e51e7f84dccc2a71af21c005e177d30d2c304ea209890",
+      "typed_model_json": "{\"direction\":\"BT\",\"edges\":[{\"source\":\"n2\",\"target\":\"n1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"nodes\":[[\"n2\",{\"id\":\"n2\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}],[\"n1\",{\"id\":\"n1\",\"label\":\"Diamond\",\"shape\":\"diamond\"}]],\"subgraphs\":[]}",
+      "typed_model_sha256": "b580c648a889affd342d095d4a5336a48ac6d9ee9cc9d011befda50dfec1117b",
+      "envelope": {
+        "kind": "frontmatter",
+        "bytes": 204,
+        "sha256": "e9ef57dc3f535a30b0836ac62fae80eba9942f2c4e54f350c0f28715914ef90c",
+        "text": "---\ndescription: >-\n  Verifies that the new-syntax shape-data directive @{ shape: diam } renders a\n  node as a diamond/decision shape, as an alternative to the legacy {..}\n  node-syntax for diamonds.\n---\n",
+        "description_form": "folded",
+        "root_keys": [
+          "description"
+        ],
+        "config": null,
+        "body_header": "flowchart BT",
+        "body_sha256": "dc00402de707305e3e893bf29bf5e082c66ec66c939de87183bcf3b8ae6e8449"
+      },
+      "native_requirement": {
+        "native_test": "MermaidFlowFoldedShapeData.CompleteModelsCoverIndependentAndCombinedEnvelopeGrammar[original_374]",
+        "existing_native_asset": "flow_folded_shape_data_native_controls.v1.json",
+        "exact_rejections": 5,
+        "mutations": [
+          "legacy_three",
+          "n1_diamond_to_rectangle",
+          "n1_missing_diagonal"
+        ]
+      },
+      "formal_status": "unadmitted_design_only"
+    },
+    {
+      "case_id": "original_375",
+      "base_authority": {
+        "adaptation": null,
+        "fixture": "flowchart/visual-check/should-render-a-rounded-rectangle-and-a-normal-rectangle.mmd",
+        "manifest_global_ordinal": 1036,
+        "model_json": null,
+        "model_sha256": null,
+        "oracle_record_sha256": "58f59cd6151bdd0733d375178b7208a5e48092edfbbb61d5cca7088d2db51e0d",
+        "ordinal": 375,
+        "source_bytes": 427,
+        "source_git_blob": "7a59c8f325e3ae4354e6253ba951e61063999f9f",
+        "source_sha256": "1384844adca4511a7a6f7917ebd6a9563d7dc877e5a4208f7acfc5e32abafacb"
+      },
+      "source": "---\ndescription: >-\n  Verifies that the shape-data directives @{ shape: rounded } and @{ shape: rect\n  } correctly render a rounded-corner rectangle and a plain square-corner\n  rectangle side by side, distinguishing the two rectangle variants introduced\n  by the new shape config syntax.\n---\nflowchart BT\n  n2[\"Untitled Node\"] --> n1[\"Rounded Rectangle\"]\n  n3[\"Untitled Node\"] --> n1\n  n1@{ shape: rounded}\n  n3@{ shape: rect}\n",
+      "source_sha256": "1384844adca4511a7a6f7917ebd6a9563d7dc877e5a4208f7acfc5e32abafacb",
+      "typed_model_json": "{\"direction\":\"BT\",\"edges\":[{\"source\":\"n2\",\"target\":\"n1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"n3\",\"target\":\"n1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"nodes\":[[\"n2\",{\"id\":\"n2\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}],[\"n1\",{\"id\":\"n1\",\"label\":\"Rounded Rectangle\",\"shape\":\"rounded\"}],[\"n3\",{\"id\":\"n3\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}]],\"subgraphs\":[]}",
+      "typed_model_sha256": "96c6b1c9ab633e2525646bfe1769fa0495a03095019f84236487b9a88bad05ec",
+      "envelope": {
+        "kind": "frontmatter",
+        "bytes": 292,
+        "sha256": "97f4a9707d49c798f4654a3afd2db21f484c031de9f53a051383776c63b61097",
+        "text": "---\ndescription: >-\n  Verifies that the shape-data directives @{ shape: rounded } and @{ shape: rect\n  } correctly render a rounded-corner rectangle and a plain square-corner\n  rectangle side by side, distinguishing the two rectangle variants introduced\n  by the new shape config syntax.\n---\n",
+        "description_form": "folded",
+        "root_keys": [
+          "description"
+        ],
+        "config": null,
+        "body_header": "flowchart BT",
+        "body_sha256": "5341bc310d86c8ffa5f50e0c153c99722f0b0bc6de662d277d9a5c8e82a89b3f"
+      },
+      "native_requirement": {
+        "native_test": "MermaidFlowFoldedShapeData.CompleteModelsCoverIndependentAndCombinedEnvelopeGrammar[original_375]",
+        "existing_native_asset": "flow_folded_shape_data_native_controls.v1.json",
+        "exact_rejections": 7,
+        "mutations": [
+          "legacy_three",
+          "n1_rounded_to_rectangle",
+          "n1_mixed_rounded_corner",
+          "n3_rectangle_to_rounded",
+          "n3_mixed_rectangle_corner"
+        ]
+      },
+      "formal_status": "unadmitted_design_only"
+    }
+  ]
+}

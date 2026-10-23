@@ -1,0 +1,51 @@
+{
+  "schema": "five_suite_full_declared_input_lock/v1",
+  "qualification": "Immutable source-provenance lock for v4 static maintenance only. It does not establish execution, renderer, native, semantic, or denominator credit.",
+  "audit_packages": [
+    {
+      "id": "full_ast_all_declared_r3",
+      "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/five-suite-full-ast-all-declared-internal-root-r3/HASHES.json",
+      "sha256": "12792024a47ccaac160e8b5273c985acde2b97450d04f321855a85d9c2879589",
+      "bytes": 543
+    },
+    {
+      "id": "full_ast_site_identity_r4",
+      "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/five-suite-full-ast-site-identity-root-r4/HASHES.json",
+      "sha256": "636168d0587e691d6e60c374428a1d46a6052561c7457ff642f47502d2ef93a7",
+      "bytes": 279
+    },
+    {
+      "id": "mmdflux_full_source_recovery_r3",
+      "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/five-suite-mmdflux-all-internal-source-root-r3/HASHES.json",
+      "sha256": "ebf0d67d9b1140c4e71da4ebff91b7d0b6e34991f545421037b75efb1537703e",
+      "bytes": 17080
+    }
+  ],
+  "fixture_inputs": [
+    {
+      "path": "tests/fixtures/mermaid_terminal/assertion_index/v4_full_declared/source-inputs/FULL_AST_SOURCE_INDEX.r3.json",
+      "sha256": "2984e7e788624f5a3723e128d9d9eb50424e6ded6ee920e408be4c861268732e",
+      "bytes": 16534382
+    },
+    {
+      "path": "tests/fixtures/mermaid_terminal/assertion_index/v4_full_declared/source-inputs/FULL_DECLARED_SOURCE_PATH_MAP.v1.json",
+      "sha256": "e08d5fdc2d2e2179c2f5cbb0c1b9e140691c01ea8fca32888a23a469e8294eab",
+      "bytes": 220267
+    },
+    {
+      "path": "tests/fixtures/mermaid_terminal/assertion_index/v4_full_declared/source-inputs/SOURCE_RECOVERY.r3.json",
+      "sha256": "faeb6300a5b9192dfda3529765ef6ec14bb4109de8322428d7987aebca9b612d",
+      "bytes": 989034
+    },
+    {
+      "path": "tests/fixtures/mermaid_terminal/assertion_index/v4_full_declared/source-inputs/SOURCE_SITE_COUNTS.r4.json",
+      "sha256": "7592d8c215f0f280dbe10e7189f6180b613c172f8f74d099d9815a44f866bada",
+      "bytes": 88986
+    }
+  ],
+  "durable_mmdflux_manifest": {
+    "path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/SOURCE_MANIFEST.v1.json",
+    "sha256": "e1cef48b111f3b85e6e81dda27d31eb6d23d4fd0b7220a1644c5bb5fc049f444",
+    "bytes": 67586
+  }
+}

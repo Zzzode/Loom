@@ -1,0 +1,6 @@
+group(bytes=7)="Backlog" [id(bytes=7)="backlog"]
+  - card(bytes=5)="Known" [id(bytes=5)="known"]
+Unassigned
+  - card(bytes=5)="Loose" [id(bytes=5)="loose"]
+  - card(bytes=7)="Unknown" [id(bytes=7)="unknown", parent(bytes=7)="missing",
+    ticket(bytes=5)="K-404"]

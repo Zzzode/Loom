@@ -1,0 +1,16 @@
++---+
+| A |
++---+
+
++---+
+| B |
++---+
+
++---+
+| C |
++---+
+
+relations:
+id(bytes=1)="A" ||--|| id(bytes=1)="B" : owns
+id(bytes=1)="B" ||--|| id(bytes=1)="C" : owns
+id(bytes=1)="C" ||--|| id(bytes=1)="A" : owns

@@ -1,0 +1,6 @@
+node(bytes=4)="Root" id(bytes=4)="root"
+\-- node(bytes=5)="Child" id(bytes=5)="child"
+
+node(bytes=1)="A" id(bytes=1)="a"
+\-- node(bytes=1)="B" id(bytes=1)="b"
+    \-- node(bytes=1)="A" id(bytes=1)="a" (cycle)

@@ -1,0 +1,2456 @@
+{
+  "schema": 1,
+  "qualification": "Source-only hand-authored typed expectations by agent:/root/corpus_oracle, before viewing rendered candidates. Only exact body suffixes are reviewed; raw frontmatter/configuration remains a separate source obligation. No renderer/parser runtime or output is used to derive these models.",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b"
+  },
+  "scope": [
+    "15 records / 14 exact body projections; raw inputs immutable",
+    "Body autonumber is present only in the keyword case; configured-autonumber raw config is removed from the other body",
+    "Explicit br forms decode to multiline fields; no automatic wrapping is required for long plain rows",
+    "Rect color is exact structural header metadata, not foreign background-paint parity",
+    "No removed max-width, font, classic-look, margins, label-box backgrounds, alignment or layout options are certified"
+  ],
+  "counts": {
+    "actors": 43,
+    "messages": 79,
+    "notes": 7,
+    "fragments": 34,
+    "order": 169,
+    "records": 15,
+    "distinct_bodies": 14,
+    "central_endpoints": 7,
+    "numbered_messages": 5
+  },
+  "cases": [
+    {
+      "path": "sequence/nightly-check/should-render-a-simple-sequence-diagram.mmd",
+      "raw_sha256": "0ded530f019f911aaa68a761410eadec465ccea9dd2961abdcccc4365d0c55f4",
+      "body_offset_utf8_bytes": 293,
+      "body_sha256": "91d87ff6a6880f49ad0992f03d822ff074ffaf87e5a424cac6e4c4401a767480",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  participant John as John<br/>Second Line\n  Alice ->> Bob: Hello Bob, how are you?\n  Bob-->>John: How about you John?\n  Bob--x Alice: I am good thanks!\n  Bob-x John: I am good thanks!\n  Note right of John: Bob thinks a long<br/>long time, so long<br/>that the text does<br/>not fit on a row.\n  Bob-->Alice: Checking with John...\n  alt either this\n  Alice->>John: Yes\n  else or this\n  Alice->>John: No\n  else or this will happen\n  Alice->John: Maybe\n  end\n  par this happens in parallel\n  Alice -->> Bob: Parallel message 1\n  and\n  Alice -->> John: Parallel message 2\n  end\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          },
+          {
+            "id": "John",
+            "label": "John\nSecond Line",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "How about you John?",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "I am good thanks!",
+            "dashed": true,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 2,
+            "label": "I am good thanks!",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "Checking with John...",
+            "dashed": true,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 2,
+            "label": "Yes",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "No",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Maybe",
+            "dashed": false,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": "Parallel message 1",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Parallel message 2",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              2
+            ],
+            "text": "Bob thinks a long\nlong time, so long\nthat the text does\nnot fit on a row.",
+            "position": "right",
+            "after": 3
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "alt",
+            "label": "either this",
+            "parent": -1,
+            "dividers": [
+              "or this",
+              "or this will happen"
+            ]
+          },
+          {
+            "kind": "par",
+            "label": "this happens in parallel",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 1
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 9,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-alt-else-section-titles-with-label-box-backgrounds.mmd",
+      "raw_sha256": "83fc377ad23dee2c0e8b19288050a008e0d8a5d8a26acc01ce26d223b18df39b",
+      "body_offset_utf8_bytes": 388,
+      "body_sha256": "69544b8d9cf99b4e6934b5151152fe64ef1ce6c43799772c8a32920e765174c9",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  opt Outer\n  alt Command A\n    Alice->>Bob: Request A\n  else Command B\n    Alice->>Bob: Request B\n  else Command C\n    Alice->>Bob: Request C\n  end\n  end\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Request A",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": "Request B",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": "Request C",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "opt",
+            "label": "Outer",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "alt",
+            "label": "Command A",
+            "parent": 0,
+            "dividers": [
+              "Command B",
+              "Command C"
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 1
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-autonumber-when-autonumber-keyword-is-used.mmd",
+      "raw_sha256": "c52fbb72a1e291efedb97aebf5065af705a309aa6feca0a9bd448fecad6bf333",
+      "body_offset_utf8_bytes": 299,
+      "body_sha256": "ac09b8d9d34c020ba9aa0c3b7037949090094a988d91e3e74910c92ebf04279f",
+      "body": "sequenceDiagram\n  autonumber\n  Alice->>John: Hello John, how are you?\n  loop Healthcheck\n  John->>John: Fight against hypochondria\n  end\n  Note right of John: Rational thoughts!\n  John-->>Alice: Great!\n  John->>Bob: How about you?\n  Bob-->>John: Jolly good!\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "John",
+            "label": "John",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Hello John, how are you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 1,
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": "Fight against hypochondria",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 2,
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "Great!",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 3,
+            "from": 1
+          },
+          {
+            "to": 2,
+            "label": "How about you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 4,
+            "from": 1
+          },
+          {
+            "to": 1,
+            "label": "Jolly good!",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 5,
+            "from": 2
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              1
+            ],
+            "text": "Rational thoughts!",
+            "position": "right",
+            "after": 1
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "loop",
+            "label": "Healthcheck",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-autonumber-when-configured-with-such.mmd",
+      "raw_sha256": "2ccafa1db615e1aa57b95e957552288dab66c64db9fa05f2f52f7334dda9c95e",
+      "body_offset_utf8_bytes": 352,
+      "body_sha256": "7fc835e67e2f75fa45291457d41610d2f43fea1341b93a6e4973ac2d0bb83cb9",
+      "body": "sequenceDiagram\n  Alice->>John: Hello John, how are you?\n  loop Healthcheck\n  John->>John: Fight against hypochondria\n  end\n  Note right of John: Rational thoughts!\n  John-->>Alice: Great!\n  John->>Bob: How about you?\n  Bob-->>John: Jolly good!\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "John",
+            "label": "John",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Hello John, how are you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": "Fight against hypochondria",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "Great!",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 2,
+            "label": "How about you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 1,
+            "label": "Jolly good!",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              1
+            ],
+            "text": "Rational thoughts!",
+            "position": "right",
+            "after": 1
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "loop",
+            "label": "Healthcheck",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-loops-with-a-slight-margin.mmd",
+      "raw_sha256": "623cbfacbed8eeb6506838788f285a351f523aa6a684c3923be5a69a4dcf73d5",
+      "body_offset_utf8_bytes": 280,
+      "body_sha256": "2a8aa69b76a4620011cebed5f9e3d555e5cd5671656987b16b34a2109da0c4ec",
+      "body": "sequenceDiagram\n  Alice->>Bob: Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be\n  loop Loopy\n  Bob->>Alice: Pasten\n  end\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 0,
+            "label": "Pasten",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "loop",
+            "label": "Loopy",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-rect-around-and-inside-alts.mmd",
+      "raw_sha256": "35ce6aece545bd5c279a07b12e4cfd17c0f2e940cd43e90e83233e5ebd0933fd",
+      "body_offset_utf8_bytes": 306,
+      "body_sha256": "d91cbfbf8d0fd97ff5f8a25e424dd6fd181d27b6eff8a3ac50348dc7c08ee469",
+      "body": "sequenceDiagram\n  A ->> B: 1\n  rect rgb(204, 0, 102)\n  alt yes\n    C ->> C: 1\n  else no\n    rect rgb(0, 204, 204)\n      C ->> C: 0\n    end\n  end\n  end\n  B ->> A: Return\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "1",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "1",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 2,
+            "label": "0",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 0,
+            "label": "Return",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "rect",
+            "label": "rgb(204, 0, 102)",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "alt",
+            "label": "yes",
+            "parent": 0,
+            "dividers": [
+              "no"
+            ]
+          },
+          {
+            "kind": "rect",
+            "label": "rgb(0, 204, 204)",
+            "parent": 1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-rect-around-and-inside-breaks.mmd",
+      "raw_sha256": "2e8cf328c177eb45b4b2b97a9bedbe4ef264c323dff611a9b6f7bef76cf0af7a",
+      "body_offset_utf8_bytes": 304,
+      "body_sha256": "9da6358b25baacd5a0169028afd5c758dbceb14b3e99c7d389212a606f5e4546",
+      "body": "sequenceDiagram\n  A ->> B: 1\n  rect rgb(204, 0, 102)\n  break yes\n    rect rgb(0, 204, 204)\n      C ->> C: 0\n    end\n  end\n  end\n  B ->> A: Return\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "1",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "0",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 0,
+            "label": "Return",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "rect",
+            "label": "rgb(204, 0, 102)",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "break",
+            "label": "yes",
+            "parent": 0,
+            "dividers": []
+          },
+          {
+            "kind": "rect",
+            "label": "rgb(0, 204, 204)",
+            "parent": 1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-rect-around-and-inside-criticals.mmd",
+      "raw_sha256": "94669fa45a654bbd8b6818436182f4b2ee6b11d35e1b811c7f521ba107260b4e",
+      "body_offset_utf8_bytes": 335,
+      "body_sha256": "b0e2ab25231880be037c08f2735a579a35b95d589a86b349c9b919774f30ce50",
+      "body": "sequenceDiagram\n  A ->> B: 1\n  rect rgb(204, 0, 102)\n  critical yes\n    C ->> C: 1\n  option no\n    rect rgb(0, 204, 204)\n      C ->> C: 0\n    end\n  end\n  end\n  B ->> A: Return\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "1",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "1",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 2,
+            "label": "0",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 0,
+            "label": "Return",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "rect",
+            "label": "rgb(204, 0, 102)",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "critical",
+            "label": "yes",
+            "parent": 0,
+            "dividers": [
+              "no"
+            ]
+          },
+          {
+            "kind": "rect",
+            "label": "rgb(0, 204, 204)",
+            "parent": 1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-rect-around-and-inside-opts.mmd",
+      "raw_sha256": "c4d4a397105ee0fcd3c1dcd5aaa674ec8d29134945470b9939e09b3883ebc48c",
+      "body_offset_utf8_bytes": 352,
+      "body_sha256": "feae73eab05a206dacfd946011041ec888bf8ae94120170838cb814134f54875",
+      "body": "sequenceDiagram\n  A ->> B: 1\n  rect rgb(204, 0, 102)\n  opt maybe\n    C -->> D: Do something\n    rect rgb(0, 204, 204)\n      C ->> C: 0\n    end\n  end\n  end\n\n  opt possibly\n  rect rgb(0, 204, 204)\n    C ->> C: 0\n  end\n  end\n  B ->> A: Return\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          },
+          {
+            "id": "D",
+            "label": "D",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "1",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 3,
+            "label": "Do something",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 2,
+            "label": "0",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 2,
+            "label": "0",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 0,
+            "label": "Return",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "rect",
+            "label": "rgb(204, 0, 102)",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "opt",
+            "label": "maybe",
+            "parent": 0,
+            "dividers": []
+          },
+          {
+            "kind": "rect",
+            "label": "rgb(0, 204, 204)",
+            "parent": 1,
+            "dividers": []
+          },
+          {
+            "kind": "opt",
+            "label": "possibly",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "rect",
+            "label": "rgb(0, 204, 204)",
+            "parent": 3,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-sequence-rect-with-theme-aware-default-background.mmd",
+      "raw_sha256": "a866c9bcabd986870f4c8c479b2e61eb5fb327feecf9dcfcdbe1f4ce81239d56",
+      "body_offset_utf8_bytes": 242,
+      "body_sha256": "34bef6b8d06e29ca32f82e170ece96adcb135a73e2b493fa4795342e253eabd9",
+      "body": "sequenceDiagram\n  rect\n  Alice->>John: Hello John, how are you?\n  Alice->>John: John, can you hear me?\n  John-->>Alice: Hi Alice, I can hear you!\n  John-->>Alice: I feel great!\n  end\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "John",
+            "label": "John",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Hello John, how are you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": "John, can you hear me?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 0,
+            "label": "Hi Alice, I can hear you!",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "I feel great!",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "rect",
+            "label": "",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/v2-with-wrapped-messages-and-notes.mmd",
+      "raw_sha256": "d534cb78203b61cc8d0709bf2670015b36d06c06a75b9c72db5fa2db934f78ca",
+      "body_offset_utf8_bytes": 218,
+      "body_sha256": "ad967963208c3ff834bcdbb1cbdca1c54d796de8dbcbab7628505dffc81675ca",
+      "body": "sequenceDiagram\n  participant A\n  participant B\n\n  A ->> B: This is a very long message that should wrap properly in the diagram rendering\n  Note over A,B: This is a very long note that should also wrap properly when rendered in the diagram\n\n  par Wrapped parallel\n    A ->> B: Parallel message 1<br>with explicit line break\n    and\n    B ->> A: Parallel message 2<br>with explicit line break\n  end\n\n  loop Wrapped loop\n    Note right of B: This is a long note<br>in a loop\n    A ->> B: Message in loop\n  end\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "This is a very long message that should wrap properly in the diagram rendering",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": "Parallel message 1\nwith explicit line break",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 0,
+            "label": "Parallel message 2\nwith explicit line break",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 1,
+            "label": "Message in loop",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0,
+              1
+            ],
+            "text": "This is a very long note that should also wrap properly when rendered in the diagram",
+            "position": "over",
+            "after": 0
+          },
+          {
+            "actors": [
+              1
+            ],
+            "text": "This is a long note\nin a loop",
+            "position": "right",
+            "after": 2
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "par",
+            "label": "Wrapped parallel",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          },
+          {
+            "kind": "loop",
+            "label": "Wrapped loop",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/pr-check/should-render-central-connections-with-loops-and-alternatives.mmd",
+      "raw_sha256": "673a341fcd4d8019bd959e63e8960cc85ac4069fe3bc1379fcd6c9d5bdba50b6",
+      "body_offset_utf8_bytes": 322,
+      "body_sha256": "e5d62e6b2b34f5a0229d37f7967eadaaa395e0d0d18aef10f83fa8fde5449c39",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  participant Charlie\n  loop Every minute\n  Alice ()->>() Bob: Central heartbeat\n  Bob ()-->> Charlie: Forward heartbeat\n  end\n  alt Success\n  Charlie ()<<-->>() Alice: Success response\n  else Failure\n  Charlie ()-x() Alice: Failure response\n  end\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          },
+          {
+            "id": "Charlie",
+            "label": "Charlie",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Central heartbeat",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": true,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Forward heartbeat",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "Success response",
+            "dashed": true,
+            "arrow": "Both",
+            "central_from": true,
+            "central_to": true,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 0,
+            "label": "Failure response",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": true,
+            "central_to": true,
+            "number": 0,
+            "from": 2
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "loop",
+            "label": "Every minute",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "alt",
+            "label": "Success",
+            "parent": -1,
+            "dividers": [
+              "Failure"
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/pr-check/should-render-rect-around-and-inside-loops.mmd",
+      "raw_sha256": "48b2750863e9be17f36ed29c41ac2c3c0c5dbe5e6855a4a22eb9d0c3a94aaae9",
+      "body_offset_utf8_bytes": 176,
+      "body_sha256": "113e9b6229c649311f4bb140e1bd80415a4a9a05edf5a0e6c4b1b3ab7e706172",
+      "body": "sequenceDiagram\n  A ->> B: 1\n  rect rgb(204, 0, 102)\n  loop check C\n    C ->> C: Every 10 seconds\n  end\n  end\n  A ->> B: 2\n  loop check D\n  C ->> D: 3\n  rect rgb(153, 153, 255)\n  D -->> D: 5\n  D --> C: 4\n  end\n  end\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          },
+          {
+            "id": "D",
+            "label": "D",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "1",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Every 10 seconds",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 1,
+            "label": "2",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 3,
+            "label": "3",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 2
+          },
+          {
+            "to": 3,
+            "label": "5",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 3
+          },
+          {
+            "to": 2,
+            "label": "4",
+            "dashed": true,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 3
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "rect",
+            "label": "rgb(204, 0, 102)",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "loop",
+            "label": "check C",
+            "parent": 0,
+            "dividers": []
+          },
+          {
+            "kind": "loop",
+            "label": "check D",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "rect",
+            "label": "rgb(153, 153, 255)",
+            "parent": 2,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 2,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/visual-check/usemaxwidth-false.mmd",
+      "raw_sha256": "b6c588fc1119c01f1ebf20a9e5d5e3864994e2dcec76239477469d82e17404f0",
+      "body_offset_utf8_bytes": 256,
+      "body_sha256": "e7247cee94166ee8f31cdb89c3946607ba40fd8c2de153a43e61827e287c1d62",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  participant John as John<br/>Second Line\n  Alice ->> Bob: Hello Bob, how are you?\n  Bob-->>John: How about you John?\n  Bob--x Alice: I am good thanks!\n  Bob-x John: I am good thanks!\n  Note right of John: Bob thinks a long<br/>long time, so long<br/>that the text does<br/>not fit on a row.\n  Bob-->Alice: Checking with John...\n  alt either this\n    Alice->>John: Yes\n  else or this\n    Alice->>John: No\n  else or this will happen\n    Alice->John: Maybe\n  end\n  par this happens in parallel\n    Alice -->> Bob: Parallel message 1\n  and\n    Alice -->> John: Parallel message 2\n  end\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          },
+          {
+            "id": "John",
+            "label": "John\nSecond Line",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "How about you John?",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "I am good thanks!",
+            "dashed": true,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 2,
+            "label": "I am good thanks!",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "Checking with John...",
+            "dashed": true,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 2,
+            "label": "Yes",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "No",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Maybe",
+            "dashed": false,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": "Parallel message 1",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Parallel message 2",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              2
+            ],
+            "text": "Bob thinks a long\nlong time, so long\nthat the text does\nnot fit on a row.",
+            "position": "right",
+            "after": 3
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "alt",
+            "label": "either this",
+            "parent": -1,
+            "dividers": [
+              "or this",
+              "or this will happen"
+            ]
+          },
+          {
+            "kind": "par",
+            "label": "this happens in parallel",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 1
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 9,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/visual-check/usemaxwidth-true.mmd",
+      "raw_sha256": "71d316733ce73fe992ec43519e12f073392a4350d76c7165620ada37832d4c54",
+      "body_offset_utf8_bytes": 352,
+      "body_sha256": "e7247cee94166ee8f31cdb89c3946607ba40fd8c2de153a43e61827e287c1d62",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  participant John as John<br/>Second Line\n  Alice ->> Bob: Hello Bob, how are you?\n  Bob-->>John: How about you John?\n  Bob--x Alice: I am good thanks!\n  Bob-x John: I am good thanks!\n  Note right of John: Bob thinks a long<br/>long time, so long<br/>that the text does<br/>not fit on a row.\n  Bob-->Alice: Checking with John...\n  alt either this\n    Alice->>John: Yes\n  else or this\n    Alice->>John: No\n  else or this will happen\n    Alice->John: Maybe\n  end\n  par this happens in parallel\n    Alice -->> Bob: Parallel message 1\n  and\n    Alice -->> John: Parallel message 2\n  end\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          },
+          {
+            "id": "John",
+            "label": "John\nSecond Line",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "How about you John?",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "I am good thanks!",
+            "dashed": true,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 2,
+            "label": "I am good thanks!",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "Checking with John...",
+            "dashed": true,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 1
+          },
+          {
+            "to": 2,
+            "label": "Yes",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "No",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Maybe",
+            "dashed": false,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": "Parallel message 1",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Parallel message 2",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0,
+            "from": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              2
+            ],
+            "text": "Bob thinks a long\nlong time, so long\nthat the text does\nnot fit on a row.",
+            "position": "right",
+            "after": 3
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "alt",
+            "label": "either this",
+            "parent": -1,
+            "dividers": [
+              "or this",
+              "or this will happen"
+            ]
+          },
+          {
+            "kind": "par",
+            "label": "this happens in parallel",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 1
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 9,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      }
+    }
+  ]
+}

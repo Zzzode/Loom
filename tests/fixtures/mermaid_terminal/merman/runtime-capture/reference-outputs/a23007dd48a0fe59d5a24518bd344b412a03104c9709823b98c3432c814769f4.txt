@@ -1,0 +1,11 @@
++----------+
+| CUSTOMER |
++----------+
+
++---------+
+| ADDRESS |
++---------+
+
+relations:
+id(bytes=8)="CUSTOMER" ||--|{ id(bytes=7)="ADDRESS" : invoiced at
+id(bytes=8)="CUSTOMER" ||--|{ id(bytes=7)="ADDRESS" : receives goods at

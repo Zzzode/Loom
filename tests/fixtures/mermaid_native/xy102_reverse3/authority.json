@@ -1,0 +1,137 @@
+{
+  "facts_file": "tests/fixtures/mermaid_native/merman_xy102_facts.json",
+  "facts_file_sha256": "eeb3c1508b25202838fb175fac8757e4428d2d41e76a0901b6373b04a3f3a3a8",
+  "original_smoke_callsite": {
+    "callsites": 1,
+    "name": "xychart_imported_fixture_matrix_remains_smoke_green",
+    "runtime_applications": 3
+  },
+  "schema": "xy102_reverse_domain3_test_only_authority/v2",
+  "selected_sources": [
+    {
+      "assertion_byte_end": 36505,
+      "assertion_byte_start": 35063,
+      "assertion_original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+      "assertion_path": "runtime-capture/assertions/533970a6d958eba6ce093e9140741b2acd64ccc25f873fdc2f7db394d1cf2bd8.rs",
+      "assertion_sha256": "533970a6d958eba6ce093e9140741b2acd64ccc25f873fdc2f7db394d1cf2bd8",
+      "expected_clipped_last": true,
+      "id": "merman/8b87d96bf3d739887fc7",
+      "model_bytes": 23888,
+      "model_path": "runtime-capture/oracle-models/27be21ff981962ca18d73a9b7a43234d24b64a7ce0ca028ce8dae9a4256b8c01.json",
+      "model_sha256": "27be21ff981962ca18d73a9b7a43234d24b64a7ce0ca028ce8dae9a4256b8c01",
+      "reference_output_bytes": 251,
+      "reference_output_path": "runtime-capture/reference-outputs/b94cc5923c9835371a583896b3584cc2b7e8b460e737220c099239a9bc9f075f.txt",
+      "reference_output_sha256": "b94cc5923c9835371a583896b3584cc2b7e8b460e737220c099239a9bc9f075f",
+      "source_bytes": 57,
+      "source_path": "sources/8b87d96bf3d739887fc7.mmd",
+      "source_sha256": "8b87d96bf3d739887fc7b181411a1383abd6e0278dea7246d859cdf044a227ae"
+    },
+    {
+      "assertion_byte_end": 36505,
+      "assertion_byte_start": 35063,
+      "assertion_original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+      "assertion_path": "runtime-capture/assertions/533970a6d958eba6ce093e9140741b2acd64ccc25f873fdc2f7db394d1cf2bd8.rs",
+      "assertion_sha256": "533970a6d958eba6ce093e9140741b2acd64ccc25f873fdc2f7db394d1cf2bd8",
+      "expected_clipped_last": false,
+      "id": "merman/95713fa70777f7bda028",
+      "model_bytes": 23937,
+      "model_path": "runtime-capture/oracle-models/b3ed46b1f497389b9114460c05a7dc4c35fa6bc0751dfde312a50cb48b078b6d.json",
+      "model_sha256": "b3ed46b1f497389b9114460c05a7dc4c35fa6bc0751dfde312a50cb48b078b6d",
+      "reference_output_bytes": 435,
+      "reference_output_path": "runtime-capture/reference-outputs/8dc6a39e2c759e178180d9facc72dea56ad7613e6399af7c24b2487aa63bef1b.txt",
+      "reference_output_sha256": "8dc6a39e2c759e178180d9facc72dea56ad7613e6399af7c24b2487aa63bef1b",
+      "source_bytes": 80,
+      "source_path": "sources/95713fa70777f7bda028.mmd",
+      "source_sha256": "95713fa70777f7bda028a846b3c19e2eada414c4ab8a10dd4240998eb65ab21b"
+    },
+    {
+      "assertion_byte_end": 36505,
+      "assertion_byte_start": 35063,
+      "assertion_original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+      "assertion_path": "runtime-capture/assertions/533970a6d958eba6ce093e9140741b2acd64ccc25f873fdc2f7db394d1cf2bd8.rs",
+      "assertion_sha256": "533970a6d958eba6ce093e9140741b2acd64ccc25f873fdc2f7db394d1cf2bd8",
+      "expected_clipped_last": true,
+      "id": "merman/f6e1865fc70d2c098e9c",
+      "model_bytes": 23882,
+      "model_path": "runtime-capture/oracle-models/2b231cce31563bd2300c00b69bd34ea2e2611dbf0b30ca0f449236c268494c57.json",
+      "model_sha256": "2b231cce31563bd2300c00b69bd34ea2e2611dbf0b30ca0f449236c268494c57",
+      "reference_output_bytes": 247,
+      "reference_output_path": "runtime-capture/reference-outputs/0bb96d1bd8ec8736881f3b82823f32d6480e3db4d1bc7878363d61e8c7f4f603.txt",
+      "reference_output_sha256": "0bb96d1bd8ec8736881f3b82823f32d6480e3db4d1bc7878363d61e8c7f4f603",
+      "source_bytes": 35,
+      "source_path": "sources/f6e1865fc70d2c098e9c.mmd",
+      "source_sha256": "f6e1865fc70d2c098e9ccd2d249a2631237074a3b893d18df6296371de9a96fb"
+    }
+  ],
+  "source_case_file": "tests/fixtures/mermaid_terminal/merman/cases.json",
+  "source_case_file_sha256": "89ce2ef6ad779481285ce61b771a64fd059b17a824eb2c292934ff13393562db",
+  "status": "test_only_candidate_pending_independent_concrete_review",
+  "synthetic_positive": [
+    {
+      "model_bytes": 226,
+      "model_path": "synthetic/p1_endpoints.model.json",
+      "model_sha256": "d87c4795eb0322331fda77ed9b8a5790ec952dd51667812cbd4c53def2574517",
+      "name": "p1_endpoints",
+      "source_bytes": 53,
+      "source_path": "synthetic/p1_endpoints.mmd",
+      "source_sha256": "8b051323274e3a6a58ef1860416495092e3bc97faa33878ac056d732fd49de12"
+    },
+    {
+      "model_bytes": 225,
+      "model_path": "synthetic/p2_zero.model.json",
+      "model_sha256": "978a3091d692c88c3fcdafc865bc40ee0297a21a58aeef8016ada5fed52e0de2",
+      "name": "p2_zero",
+      "source_bytes": 52,
+      "source_path": "synthetic/p2_zero.mmd",
+      "source_sha256": "945673029cfdef28ee62e06204f7f5ebaf8b232d0547e1c59278c5c8d9c86687"
+    },
+    {
+      "model_bytes": 206,
+      "model_path": "synthetic/p3_clipped_bar.model.json",
+      "model_sha256": "3849c34fc895820572c130b60336ac892cdea8a730f492002b9058dd013cb38b",
+      "name": "p3_clipped_bar",
+      "source_bytes": 31,
+      "source_path": "synthetic/p3_clipped_bar.mmd",
+      "source_sha256": "d91ac362122c815320fa709cb1fd18693d9a3ee9269362e98618ee9d83eef347"
+    }
+  ],
+  "upstream_test_path": "upstream/tests/xychart_model.rs",
+  "upstream_test_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+  "whole_source_fallback_controls": [
+    {
+      "classification": "local_malformed_or_closed_valid_unsupported",
+      "name": "n1_degenerate_y",
+      "source_bytes": 32,
+      "source_path": "synthetic/n1_degenerate_y.mmd",
+      "source_sha256": "fb444cd8da23b1268fe377bfa7ed83a7a04e0f244b5f06384870ef18b6df2841"
+    },
+    {
+      "classification": "local_malformed_or_closed_valid_unsupported",
+      "name": "n2_degenerate_numeric_x",
+      "source_bytes": 50,
+      "source_path": "synthetic/n2_degenerate_numeric_x.mmd",
+      "source_sha256": "d95677bead795da532846b17326dd5f53b13bc13612b1ada2a89cb0df03a6b31"
+    },
+    {
+      "classification": "local_malformed_or_closed_valid_unsupported",
+      "name": "n3_nonfinite_axis",
+      "source_bytes": 34,
+      "source_path": "synthetic/n3_nonfinite_axis.mmd",
+      "source_sha256": "d04412a16abb02c4cc5298478e0e1b8f33ff950bfa7ab2dd4c59664e895d06cc"
+    },
+    {
+      "classification": "local_malformed_or_closed_valid_unsupported",
+      "name": "n4_nonfinite_sample",
+      "source_bytes": 35,
+      "source_path": "synthetic/n4_nonfinite_sample.mmd",
+      "source_sha256": "05ca9b6b2a198b658aafcd0e075ac9f4c9f1022781168f9dfc9fb60afc529685"
+    },
+    {
+      "classification": "local_malformed_or_closed_valid_unsupported",
+      "name": "n5_horizontal_reverse",
+      "source_bytes": 43,
+      "source_path": "synthetic/n5_horizontal_reverse.mmd",
+      "source_sha256": "b11e94812778b5403e8a283303734a8cf767ee02112ed6c2b18e212b43029729"
+    }
+  ]
+}

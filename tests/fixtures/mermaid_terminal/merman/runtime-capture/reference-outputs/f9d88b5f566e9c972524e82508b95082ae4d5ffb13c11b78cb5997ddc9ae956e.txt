@@ -1,0 +1,7 @@
+direction: LR
+section(bytes=5)="Known"
+  - task(bytes=8)="Declared"
+section(bytes=7)="Missing" status=undeclared
+  - task(bytes=7)="Unknown"
+section(bytes=0)="" status=unsectioned
+  - task(bytes=5)="Loose"

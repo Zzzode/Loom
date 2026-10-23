@@ -1,0 +1,13 @@
+titleDisplay: yAxis(bytes=9)="yAxisName"
+* lineTitle with space  # barTitle
+xDomain: linear authored=[1,3] resolved=[1,3]
+values: * series=0 type=line title(bytes=20)="lineTitle with space" samples=[{index=0 x(bytes=1)="1" value=23 pointLabel=none clipped=false}, {index=1 x(bytes=1)="2" value=-45 pointLabel=none clipped=false}, {index=2 x(bytes=1)="3" value=56.6 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: # series=1 type=bar title(bytes=8)="barTitle" samples=[{index=0 x(bytes=1)="1" value=23 pointLabel=none clipped=false}, {index=1 x(bytes=18)="1.6666666666666665" value=45 pointLabel=none clipped=false}, {index=2 x(bytes=17)="2.333333333333333" value=56.6 pointLabel=none clipped=false}, {index=3 x(bytes=1)="3" value=0.22 pointLabel=none clipped=false}] orphanPointLabels=[]
+  56.6 +        ##+--*
+ 36.28 +    ### ##|
+ 15.96 +#*--+## ##|
+ -4.36 +### |## ##| ###
+-24.68 +### +--*--+ ###
+   -45 +-+---+---+---+-
+         1  1.6 2.3  3
+titleDisplay: xAxis(bytes=9)="xAxisName"

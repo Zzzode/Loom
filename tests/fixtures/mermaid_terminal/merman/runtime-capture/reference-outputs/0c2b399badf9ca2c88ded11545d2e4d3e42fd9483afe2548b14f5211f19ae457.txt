@@ -1,0 +1,42 @@
++-------------------+
+| Person . CUSTOMER |
++-------------------+
+
++-------+
+| ORDER |
++-------+
+
++-----------------------------------------------------------------------------------------+
+| €£LINE_ITEM ¥                                                                           |
++-----------------------------------------------------------------------------------------+
+| type(bytes=3)="int" name(bytes=7)="orderID" keys=[bytes=2 "FK"] comment(bytes=0)=""     |
+| type(bytes=3)="int" name(bytes=10)="currencyId" keys=[bytes=2 "FK"] comment(bytes=0)="" |
+| type(bytes=6)="number" name(bytes=5)="price" keys=[] comment(bytes=0)=""                |
+| type(bytes=6)="number" name(bytes=8)="quantity" keys=[] comment(bytes=0)=""             |
+| type(bytes=6)="number" name(bytes=10)="adjustment" keys=[] comment(bytes=0)=""          |
+| type(bytes=6)="number" name(bytes=11)="final_price" keys=[] comment(bytes=0)=""         |
++-----------------------------------------------------------------------------------------+
+
++-----------------------------------------------------------------------------------------------------------------+
+| Address//StreetAddress::[DELIVERY ADDRESS]                                                                      |
++-----------------------------------------------------------------------------------------------------------------+
+| type(bytes=3)="int" name(bytes=10)="customerID" keys=[bytes=2 "FK"] comment(bytes=0)=""                         |
+| type(bytes=6)="string" name(bytes=5)="line1" keys=[] comment(bytes=38)="this is the first address line comment" |
+| type(bytes=6)="string" name(bytes=5)="line2" keys=[] comment(bytes=0)=""                                        |
+| type(bytes=6)="string" name(bytes=4)="city" keys=[] comment(bytes=0)=""                                         |
+| type(bytes=6)="string" name(bytes=6)="region" keys=[] comment(bytes=0)=""                                       |
+| type(bytes=6)="string" name(bytes=5)="state" keys=[] comment(bytes=0)=""                                        |
+| type(bytes=9)="string(5)" name(bytes=11)="postal_code" keys=[] comment(bytes=0)=""                              |
+| type(bytes=6)="string" name(bytes=7)="country" keys=[] comment(bytes=0)=""                                      |
++-----------------------------------------------------------------------------------------------------------------+
+
+relations:
+id(bytes=17)="Person . CUSTOMER" ||--o{ id(bytes=5)="ORDER"                                       : places
+id(bytes=5)="ORDER"              ||--|{ id(bytes=17)="€£LINE_ITEM ¥"                              : contains
+id(bytes=17)="Person . CUSTOMER" }|..|{ id(bytes=42)="Address//StreetAddress::[DELIVERY ADDRESS]" : uses
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| a_~`!@#$^&*()-_=+[]{}|/;:'.?¡⁄™€£‹¢›∞ﬁ§‡•°ª·º‚≠±œŒ∑„®†ˇ¥Á¨ˆˆØπ∏“«»åÅßÍ∂ÎƒÏ©˙Ó∆Ô˚¬Ò…ÚæÆΩ¸≈π˛çÇ√◊∫ı˜µÂ≤¯≥˘÷¿                                                                                            |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| type(bytes=6)="string" name(bytes=4)="name" keys=[] comment(bytes=125)="this is an entity with an absurd name just to show characters that are now acceptable as long as the name is in double quotes" |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+

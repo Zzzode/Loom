@@ -1,0 +1,3188 @@
+{
+  "schema": 1,
+  "qualification": "ROOT source-authored official6 body closure proposal only; no output/model generation, runtime pass or original policy rewrite",
+  "author": "/root",
+  "independent_reviewer_requested": true,
+  "upstream": {
+    "repository": "https://github.com/mermaid-js/mermaid",
+    "tag": "mermaid@12.2.0",
+    "tag_object": "ee1fdbcebe057cae346232efb6df066215565bec",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "tree": "58f6617da68d7f2b8a58161175db5db5a971cd82",
+    "root": "e2e/diagrams",
+    "license_sha256": "ec9fb67dcb25eccc416ed56e1aab819222c805a2a4bfe4cb19e7556bf2ffde80"
+  },
+  "immutable_manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+  "native_model_schema": "sequence_native_single_role_number_text/v1",
+  "counts": {
+    "cases": 3,
+    "original_applications": 6,
+    "actors": 21,
+    "messages": 31,
+    "fragments": 3,
+    "ordered_events": 40,
+    "old_role38_unchanged": 38,
+    "remaining_official_source_denominators_unchanged": 193
+  },
+  "cases": [
+    {
+      "id": "official-role-body/72ca9299abd383ce",
+      "body_sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83",
+      "body_bytes": 831,
+      "body": "sequenceDiagram\n  participant Customer@{ \"type\": \"actor\" }\n  participant Frontend@{ \"type\": \"participant\" }\n  participant PaymentService@{ \"type\": \"boundary\" }\n  participant InventoryManager@{ \"type\": \"control\" }\n  participant Order@{ \"type\": \"entity\" }\n  participant OrdersDB@{ \"type\": \"database\" }\n  participant NotificationQueue@{ \"type\": \"queue\" }\n\n  Customer ->> Frontend: Place order\n  Frontend ->> Order: Create order\n  par Parallel Processing\n    Order ->> PaymentService: Process payment\n    and\n    Order ->> InventoryManager: Reserve items\n  end\n  PaymentService -->> Order: Payment confirmed\n  InventoryManager -->> Order: Items reserved\n  Order ->> OrdersDB: Save finalized order\n  OrdersDB -->> Order: Order saved\n  Order ->> NotificationQueue: Send confirmation\n  NotificationQueue -->> Customer: Order confirmation\n",
+      "profile": "source_positive_complete_body_native_projection_pending_independent_review",
+      "number_encoding": "DisplayText",
+      "model": {
+        "actors": [
+          {
+            "id": "Customer",
+            "label": "Customer",
+            "role": "Actor"
+          },
+          {
+            "id": "Frontend",
+            "label": "Frontend",
+            "role": "Participant"
+          },
+          {
+            "id": "PaymentService",
+            "label": "PaymentService",
+            "role": "Boundary"
+          },
+          {
+            "id": "InventoryManager",
+            "label": "InventoryManager",
+            "role": "Control"
+          },
+          {
+            "id": "Order",
+            "label": "Order",
+            "role": "Entity"
+          },
+          {
+            "id": "OrdersDB",
+            "label": "OrdersDB",
+            "role": "Database"
+          },
+          {
+            "id": "NotificationQueue",
+            "label": "NotificationQueue",
+            "role": "Queue"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Place order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 4,
+            "label": "Create order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 4,
+            "to": 2,
+            "label": "Process payment",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 4,
+            "to": 3,
+            "label": "Reserve items",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 2,
+            "to": 4,
+            "label": "Payment confirmed",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "label": "Items reserved",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "label": "Save finalized order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 5,
+            "to": 4,
+            "label": "Order saved",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 4,
+            "to": 6,
+            "label": "Send confirmation",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 6,
+            "to": 0,
+            "label": "Order confirmation",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "par",
+            "label": "Parallel Processing",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 9,
+            "part": 0
+          }
+        ],
+        "boxes": [],
+        "title": ""
+      },
+      "model_canonical_sha256": "bfcf9e93566630fe566e26a27fbacf66ac9bb39a3eb13c0168630cdafa637c34",
+      "complete_statement_bindings": [
+        {
+          "physical_source": {
+            "line": 1,
+            "offset_utf8_bytes": 0,
+            "byte_length": 16,
+            "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+            "text": "sequenceDiagram\n"
+          },
+          "source_statement": "sequenceDiagram",
+          "model_pointers": [],
+          "semantic_source_fields": {},
+          "kind": "header",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 2,
+            "offset_utf8_bytes": 16,
+            "byte_length": 43,
+            "sha256": "a9097ad748545edc3a9405221c86bcfcc04470362adb5aa9c5eefb70c4bb20fc",
+            "text": "  participant Customer@{ \"type\": \"actor\" }\n"
+          },
+          "source_statement": "participant Customer@{ \"type\": \"actor\" }",
+          "model_pointers": [
+            "/actors/0"
+          ],
+          "semantic_source_fields": {
+            "id": "Customer",
+            "label": "Customer",
+            "role": "Actor"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 3,
+            "offset_utf8_bytes": 59,
+            "byte_length": 49,
+            "sha256": "a8b6d2593e0fce303c26e607b4ae1f3ac7c823cbcff55d493503796aa57466db",
+            "text": "  participant Frontend@{ \"type\": \"participant\" }\n"
+          },
+          "source_statement": "participant Frontend@{ \"type\": \"participant\" }",
+          "model_pointers": [
+            "/actors/1"
+          ],
+          "semantic_source_fields": {
+            "id": "Frontend",
+            "label": "Frontend",
+            "role": "Participant"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 4,
+            "offset_utf8_bytes": 108,
+            "byte_length": 52,
+            "sha256": "7940029bbd12b140044e09bffb3be5ded8664d2cd7cf59840d05df52f33145b4",
+            "text": "  participant PaymentService@{ \"type\": \"boundary\" }\n"
+          },
+          "source_statement": "participant PaymentService@{ \"type\": \"boundary\" }",
+          "model_pointers": [
+            "/actors/2"
+          ],
+          "semantic_source_fields": {
+            "id": "PaymentService",
+            "label": "PaymentService",
+            "role": "Boundary"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 5,
+            "offset_utf8_bytes": 160,
+            "byte_length": 53,
+            "sha256": "3f47269035b8a93f79d0524dc79f64593bcbd7560cc03b6b45fc85ad6a2e3b5c",
+            "text": "  participant InventoryManager@{ \"type\": \"control\" }\n"
+          },
+          "source_statement": "participant InventoryManager@{ \"type\": \"control\" }",
+          "model_pointers": [
+            "/actors/3"
+          ],
+          "semantic_source_fields": {
+            "id": "InventoryManager",
+            "label": "InventoryManager",
+            "role": "Control"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 6,
+            "offset_utf8_bytes": 213,
+            "byte_length": 41,
+            "sha256": "47723ef206ac546e40da9bcaf5d526d63ab46b49cab72ca6cab90c3dda0f405a",
+            "text": "  participant Order@{ \"type\": \"entity\" }\n"
+          },
+          "source_statement": "participant Order@{ \"type\": \"entity\" }",
+          "model_pointers": [
+            "/actors/4"
+          ],
+          "semantic_source_fields": {
+            "id": "Order",
+            "label": "Order",
+            "role": "Entity"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 7,
+            "offset_utf8_bytes": 254,
+            "byte_length": 46,
+            "sha256": "ed5f533caf62de52a04e7247151d8267d2a322342976d0d8b813526e13d7559f",
+            "text": "  participant OrdersDB@{ \"type\": \"database\" }\n"
+          },
+          "source_statement": "participant OrdersDB@{ \"type\": \"database\" }",
+          "model_pointers": [
+            "/actors/5"
+          ],
+          "semantic_source_fields": {
+            "id": "OrdersDB",
+            "label": "OrdersDB",
+            "role": "Database"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 8,
+            "offset_utf8_bytes": 300,
+            "byte_length": 52,
+            "sha256": "e00d3f4966c079a086ccbca1616ef375638e1aea1ab17f83985119c8f6382261",
+            "text": "  participant NotificationQueue@{ \"type\": \"queue\" }\n"
+          },
+          "source_statement": "participant NotificationQueue@{ \"type\": \"queue\" }",
+          "model_pointers": [
+            "/actors/6"
+          ],
+          "semantic_source_fields": {
+            "id": "NotificationQueue",
+            "label": "NotificationQueue",
+            "role": "Queue"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 10,
+            "offset_utf8_bytes": 353,
+            "byte_length": 37,
+            "sha256": "026b447bfdf875c6811681661320920ffa070fc9e8706d8718aedc15ae27a2a4",
+            "text": "  Customer ->> Frontend: Place order\n"
+          },
+          "source_statement": "Customer ->> Frontend: Place order",
+          "model_pointers": [
+            "/order/0",
+            "/messages/0"
+          ],
+          "semantic_source_fields": {
+            "from": 0,
+            "to": 1,
+            "label": "Place order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            0,
+            1
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 11,
+            "offset_utf8_bytes": 390,
+            "byte_length": 35,
+            "sha256": "8651975d853cb13459b2f105ed290538613310adc5f4b75478e6acd44fea5a26",
+            "text": "  Frontend ->> Order: Create order\n"
+          },
+          "source_statement": "Frontend ->> Order: Create order",
+          "model_pointers": [
+            "/order/1",
+            "/messages/1"
+          ],
+          "semantic_source_fields": {
+            "from": 1,
+            "to": 4,
+            "label": "Create order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            1,
+            2
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 12,
+            "offset_utf8_bytes": 425,
+            "byte_length": 26,
+            "sha256": "c55435e13e0495710fa77d5fc4b032b211fac8b7832174480217ca05fbee0101",
+            "text": "  par Parallel Processing\n"
+          },
+          "source_statement": "par Parallel Processing",
+          "model_pointers": [
+            "/order/2",
+            "/fragments/0"
+          ],
+          "semantic_source_fields": {
+            "kind": "par",
+            "label": "Parallel Processing",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          },
+          "kind": "Open",
+          "order_range": [
+            2,
+            3
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 13,
+            "offset_utf8_bytes": 451,
+            "byte_length": 46,
+            "sha256": "96ea66155e8a157b49b7621efc553cbac9e381f55738510d4c03c2544bea87fe",
+            "text": "    Order ->> PaymentService: Process payment\n"
+          },
+          "source_statement": "Order ->> PaymentService: Process payment",
+          "model_pointers": [
+            "/order/3",
+            "/messages/2"
+          ],
+          "semantic_source_fields": {
+            "from": 4,
+            "to": 2,
+            "label": "Process payment",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            3,
+            4
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 14,
+            "offset_utf8_bytes": 497,
+            "byte_length": 8,
+            "sha256": "bedcefa59c10a05aa9ce523f0f1f15436566876dcdbe62877ada89d983fc4c24",
+            "text": "    and\n"
+          },
+          "source_statement": "and",
+          "model_pointers": [
+            "/order/4",
+            "/fragments/0"
+          ],
+          "semantic_source_fields": {
+            "kind": "par",
+            "label": "Parallel Processing",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          },
+          "kind": "Divide",
+          "order_range": [
+            4,
+            5
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 15,
+            "offset_utf8_bytes": 505,
+            "byte_length": 46,
+            "sha256": "c50870b88518a2dfddbeea454492342de42157b349fded52add45b974a622b9a",
+            "text": "    Order ->> InventoryManager: Reserve items\n"
+          },
+          "source_statement": "Order ->> InventoryManager: Reserve items",
+          "model_pointers": [
+            "/order/5",
+            "/messages/3"
+          ],
+          "semantic_source_fields": {
+            "from": 4,
+            "to": 3,
+            "label": "Reserve items",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            5,
+            6
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 16,
+            "offset_utf8_bytes": 551,
+            "byte_length": 6,
+            "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+            "text": "  end\n"
+          },
+          "source_statement": "end",
+          "model_pointers": [
+            "/order/6",
+            "/fragments/0"
+          ],
+          "semantic_source_fields": {
+            "kind": "par",
+            "label": "Parallel Processing",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          },
+          "kind": "Close",
+          "order_range": [
+            6,
+            7
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 17,
+            "offset_utf8_bytes": 557,
+            "byte_length": 47,
+            "sha256": "41312f757e8c82abd05cee39011bb4e0c8de4cbc1ac242c8220c51992b04e7da",
+            "text": "  PaymentService -->> Order: Payment confirmed\n"
+          },
+          "source_statement": "PaymentService -->> Order: Payment confirmed",
+          "model_pointers": [
+            "/order/7",
+            "/messages/4"
+          ],
+          "semantic_source_fields": {
+            "from": 2,
+            "to": 4,
+            "label": "Payment confirmed",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            7,
+            8
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 18,
+            "offset_utf8_bytes": 604,
+            "byte_length": 46,
+            "sha256": "8025e3a3e094301dea56214da62d64542d4841e2d361c2ba5c22bf06fd566e84",
+            "text": "  InventoryManager -->> Order: Items reserved\n"
+          },
+          "source_statement": "InventoryManager -->> Order: Items reserved",
+          "model_pointers": [
+            "/order/8",
+            "/messages/5"
+          ],
+          "semantic_source_fields": {
+            "from": 3,
+            "to": 4,
+            "label": "Items reserved",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            8,
+            9
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 19,
+            "offset_utf8_bytes": 650,
+            "byte_length": 43,
+            "sha256": "7fcebd7209da56305752c318d6d25ebab8505b9751884b02df7a219b0bd68a87",
+            "text": "  Order ->> OrdersDB: Save finalized order\n"
+          },
+          "source_statement": "Order ->> OrdersDB: Save finalized order",
+          "model_pointers": [
+            "/order/9",
+            "/messages/6"
+          ],
+          "semantic_source_fields": {
+            "from": 4,
+            "to": 5,
+            "label": "Save finalized order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            9,
+            10
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 20,
+            "offset_utf8_bytes": 693,
+            "byte_length": 35,
+            "sha256": "2192d17c18ca52fb94853033e90d979825bc3e536019d3f1148f5a8ccb9b7497",
+            "text": "  OrdersDB -->> Order: Order saved\n"
+          },
+          "source_statement": "OrdersDB -->> Order: Order saved",
+          "model_pointers": [
+            "/order/10",
+            "/messages/7"
+          ],
+          "semantic_source_fields": {
+            "from": 5,
+            "to": 4,
+            "label": "Order saved",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            10,
+            11
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 21,
+            "offset_utf8_bytes": 728,
+            "byte_length": 49,
+            "sha256": "41e9aea0363019124e9d075ccc436a5ac29d1b234673d626a8850237384de56d",
+            "text": "  Order ->> NotificationQueue: Send confirmation\n"
+          },
+          "source_statement": "Order ->> NotificationQueue: Send confirmation",
+          "model_pointers": [
+            "/order/11",
+            "/messages/8"
+          ],
+          "semantic_source_fields": {
+            "from": 4,
+            "to": 6,
+            "label": "Send confirmation",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            11,
+            12
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 22,
+            "offset_utf8_bytes": 777,
+            "byte_length": 54,
+            "sha256": "3fdebcfdd53248192b5f69fd7d78b15d1c727180f03bf094b47c46114890ce62",
+            "text": "  NotificationQueue -->> Customer: Order confirmation\n"
+          },
+          "source_statement": "NotificationQueue -->> Customer: Order confirmation",
+          "model_pointers": [
+            "/order/12",
+            "/messages/9"
+          ],
+          "semantic_source_fields": {
+            "from": 6,
+            "to": 0,
+            "label": "Order confirmation",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            12,
+            13
+          ]
+        }
+      ],
+      "complete_physical_source_witnesses": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "byte_length": 16,
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+          "text": "sequenceDiagram\n"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 16,
+          "byte_length": 43,
+          "sha256": "a9097ad748545edc3a9405221c86bcfcc04470362adb5aa9c5eefb70c4bb20fc",
+          "text": "  participant Customer@{ \"type\": \"actor\" }\n"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 59,
+          "byte_length": 49,
+          "sha256": "a8b6d2593e0fce303c26e607b4ae1f3ac7c823cbcff55d493503796aa57466db",
+          "text": "  participant Frontend@{ \"type\": \"participant\" }\n"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 108,
+          "byte_length": 52,
+          "sha256": "7940029bbd12b140044e09bffb3be5ded8664d2cd7cf59840d05df52f33145b4",
+          "text": "  participant PaymentService@{ \"type\": \"boundary\" }\n"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 160,
+          "byte_length": 53,
+          "sha256": "3f47269035b8a93f79d0524dc79f64593bcbd7560cc03b6b45fc85ad6a2e3b5c",
+          "text": "  participant InventoryManager@{ \"type\": \"control\" }\n"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 213,
+          "byte_length": 41,
+          "sha256": "47723ef206ac546e40da9bcaf5d526d63ab46b49cab72ca6cab90c3dda0f405a",
+          "text": "  participant Order@{ \"type\": \"entity\" }\n"
+        },
+        {
+          "line": 7,
+          "offset_utf8_bytes": 254,
+          "byte_length": 46,
+          "sha256": "ed5f533caf62de52a04e7247151d8267d2a322342976d0d8b813526e13d7559f",
+          "text": "  participant OrdersDB@{ \"type\": \"database\" }\n"
+        },
+        {
+          "line": 8,
+          "offset_utf8_bytes": 300,
+          "byte_length": 52,
+          "sha256": "e00d3f4966c079a086ccbca1616ef375638e1aea1ab17f83985119c8f6382261",
+          "text": "  participant NotificationQueue@{ \"type\": \"queue\" }\n"
+        },
+        {
+          "line": 9,
+          "offset_utf8_bytes": 352,
+          "byte_length": 1,
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "text": "\n"
+        },
+        {
+          "line": 10,
+          "offset_utf8_bytes": 353,
+          "byte_length": 37,
+          "sha256": "026b447bfdf875c6811681661320920ffa070fc9e8706d8718aedc15ae27a2a4",
+          "text": "  Customer ->> Frontend: Place order\n"
+        },
+        {
+          "line": 11,
+          "offset_utf8_bytes": 390,
+          "byte_length": 35,
+          "sha256": "8651975d853cb13459b2f105ed290538613310adc5f4b75478e6acd44fea5a26",
+          "text": "  Frontend ->> Order: Create order\n"
+        },
+        {
+          "line": 12,
+          "offset_utf8_bytes": 425,
+          "byte_length": 26,
+          "sha256": "c55435e13e0495710fa77d5fc4b032b211fac8b7832174480217ca05fbee0101",
+          "text": "  par Parallel Processing\n"
+        },
+        {
+          "line": 13,
+          "offset_utf8_bytes": 451,
+          "byte_length": 46,
+          "sha256": "96ea66155e8a157b49b7621efc553cbac9e381f55738510d4c03c2544bea87fe",
+          "text": "    Order ->> PaymentService: Process payment\n"
+        },
+        {
+          "line": 14,
+          "offset_utf8_bytes": 497,
+          "byte_length": 8,
+          "sha256": "bedcefa59c10a05aa9ce523f0f1f15436566876dcdbe62877ada89d983fc4c24",
+          "text": "    and\n"
+        },
+        {
+          "line": 15,
+          "offset_utf8_bytes": 505,
+          "byte_length": 46,
+          "sha256": "c50870b88518a2dfddbeea454492342de42157b349fded52add45b974a622b9a",
+          "text": "    Order ->> InventoryManager: Reserve items\n"
+        },
+        {
+          "line": 16,
+          "offset_utf8_bytes": 551,
+          "byte_length": 6,
+          "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+          "text": "  end\n"
+        },
+        {
+          "line": 17,
+          "offset_utf8_bytes": 557,
+          "byte_length": 47,
+          "sha256": "41312f757e8c82abd05cee39011bb4e0c8de4cbc1ac242c8220c51992b04e7da",
+          "text": "  PaymentService -->> Order: Payment confirmed\n"
+        },
+        {
+          "line": 18,
+          "offset_utf8_bytes": 604,
+          "byte_length": 46,
+          "sha256": "8025e3a3e094301dea56214da62d64542d4841e2d361c2ba5c22bf06fd566e84",
+          "text": "  InventoryManager -->> Order: Items reserved\n"
+        },
+        {
+          "line": 19,
+          "offset_utf8_bytes": 650,
+          "byte_length": 43,
+          "sha256": "7fcebd7209da56305752c318d6d25ebab8505b9751884b02df7a219b0bd68a87",
+          "text": "  Order ->> OrdersDB: Save finalized order\n"
+        },
+        {
+          "line": 20,
+          "offset_utf8_bytes": 693,
+          "byte_length": 35,
+          "sha256": "2192d17c18ca52fb94853033e90d979825bc3e536019d3f1148f5a8ccb9b7497",
+          "text": "  OrdersDB -->> Order: Order saved\n"
+        },
+        {
+          "line": 21,
+          "offset_utf8_bytes": 728,
+          "byte_length": 49,
+          "sha256": "41e9aea0363019124e9d075ccc436a5ac29d1b234673d626a8850237384de56d",
+          "text": "  Order ->> NotificationQueue: Send confirmation\n"
+        },
+        {
+          "line": 22,
+          "offset_utf8_bytes": 777,
+          "byte_length": 54,
+          "sha256": "3fdebcfdd53248192b5f69fd7d78b15d1c727180f03bf094b47c46114890ce62",
+          "text": "  NotificationQueue -->> Customer: Order confirmation\n"
+        }
+      ],
+      "source_semantic_summary": {
+        "created_actor_indices": [],
+        "terminal_activation_depths": {},
+        "dead_actor_indices": []
+      },
+      "original_bindings": [
+        {
+          "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-color-theme.mmd",
+          "raw_path": "tests/fixtures/mermaid_official/cases/sequence/nightly-check/redux-neo-parallel-processes-redux-color-theme.mmd",
+          "raw_sha256": "df9133c99dfd05bd2fe05392580fb91ccbfeda0d47e6201d0205fb318708eea8",
+          "raw_bytes": 1086,
+          "raw_git_blob": "c2a8b8cb2805b429bb0286e399dac5c68513d12b",
+          "raw_text": "---\ndescription: >-\n  Sequence diagram covering a `par` block (parallel payment/inventory\n  processing) inside a larger order-fulfillment workflow, rendered under the\n  \"neo\" look with the \"redux-color\" theme.\nconfig:\n  theme: redux-color\n  look: neo\n---\nsequenceDiagram\n  participant Customer@{ \"type\": \"actor\" }\n  participant Frontend@{ \"type\": \"participant\" }\n  participant PaymentService@{ \"type\": \"boundary\" }\n  participant InventoryManager@{ \"type\": \"control\" }\n  participant Order@{ \"type\": \"entity\" }\n  participant OrdersDB@{ \"type\": \"database\" }\n  participant NotificationQueue@{ \"type\": \"queue\" }\n\n  Customer ->> Frontend: Place order\n  Frontend ->> Order: Create order\n  par Parallel Processing\n    Order ->> PaymentService: Process payment\n    and\n    Order ->> InventoryManager: Reserve items\n  end\n  PaymentService -->> Order: Payment confirmed\n  InventoryManager -->> Order: Items reserved\n  Order ->> OrdersDB: Save finalized order\n  OrdersDB -->> Order: Order saved\n  Order ->> NotificationQueue: Send confirmation\n  NotificationQueue -->> Customer: Order confirmation\n",
+          "body_offset_utf8_bytes": 255,
+          "body_bytes": 831,
+          "body_sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83",
+          "raw_metadata_prefix": "---\ndescription: >-\n  Sequence diagram covering a `par` block (parallel payment/inventory\n  processing) inside a larger order-fulfillment workflow, rendered under the\n  \"neo\" look with the \"redux-color\" theme.\nconfig:\n  theme: redux-color\n  look: neo\n---\n",
+          "original_manifest_record": {
+            "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-color-theme.mmd",
+            "sha256": "df9133c99dfd05bd2fe05392580fb91ccbfeda0d47e6201d0205fb318708eea8",
+            "git_blob": "c2a8b8cb2805b429bb0286e399dac5c68513d12b",
+            "bytes": 1086,
+            "raw": {
+              "expected": "source",
+              "reason": "frontmatter",
+              "witness": {
+                "offset": 0,
+                "text": "---\n"
+              }
+            },
+            "diagnostic": {
+              "expected": "source",
+              "reason": "unsupported-sequence-statement",
+              "witness": {
+                "offset": 427,
+                "text": "par Parallel Processing"
+              },
+              "offset": 255,
+              "sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83"
+            }
+          },
+          "raw_admission": "unchanged_source_expected; complete original metadata/config predicates are not promoted",
+          "body_admission": "whole-source source facts only; no independent review/native pass/snapshot/promotion yet",
+          "source_primary_rules_ref": "existing pinned first19 role/fragment source contract and identical physical statement tokens"
+        },
+        {
+          "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-dark-color-theme.mmd",
+          "raw_path": "tests/fixtures/mermaid_official/cases/sequence/nightly-check/redux-neo-parallel-processes-redux-dark-color-theme.mmd",
+          "raw_sha256": "d3aada2c6d5e1f7196fd9b2562ad7160ca3750c5abc0f3d802f845105fc24f08",
+          "raw_bytes": 1096,
+          "raw_git_blob": "1d6323b8fd0460b14ac69cd639db749e91715c78",
+          "raw_text": "---\ndescription: >-\n  Sequence diagram covering a `par` block (parallel payment/inventory\n  processing) inside a larger order-fulfillment workflow, rendered under the\n  \"neo\" look with the \"redux-dark-color\" theme.\nconfig:\n  theme: redux-dark-color\n  look: neo\n---\nsequenceDiagram\n  participant Customer@{ \"type\": \"actor\" }\n  participant Frontend@{ \"type\": \"participant\" }\n  participant PaymentService@{ \"type\": \"boundary\" }\n  participant InventoryManager@{ \"type\": \"control\" }\n  participant Order@{ \"type\": \"entity\" }\n  participant OrdersDB@{ \"type\": \"database\" }\n  participant NotificationQueue@{ \"type\": \"queue\" }\n\n  Customer ->> Frontend: Place order\n  Frontend ->> Order: Create order\n  par Parallel Processing\n    Order ->> PaymentService: Process payment\n    and\n    Order ->> InventoryManager: Reserve items\n  end\n  PaymentService -->> Order: Payment confirmed\n  InventoryManager -->> Order: Items reserved\n  Order ->> OrdersDB: Save finalized order\n  OrdersDB -->> Order: Order saved\n  Order ->> NotificationQueue: Send confirmation\n  NotificationQueue -->> Customer: Order confirmation\n",
+          "body_offset_utf8_bytes": 265,
+          "body_bytes": 831,
+          "body_sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83",
+          "raw_metadata_prefix": "---\ndescription: >-\n  Sequence diagram covering a `par` block (parallel payment/inventory\n  processing) inside a larger order-fulfillment workflow, rendered under the\n  \"neo\" look with the \"redux-dark-color\" theme.\nconfig:\n  theme: redux-dark-color\n  look: neo\n---\n",
+          "original_manifest_record": {
+            "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-dark-color-theme.mmd",
+            "sha256": "d3aada2c6d5e1f7196fd9b2562ad7160ca3750c5abc0f3d802f845105fc24f08",
+            "git_blob": "1d6323b8fd0460b14ac69cd639db749e91715c78",
+            "bytes": 1096,
+            "raw": {
+              "expected": "source",
+              "reason": "frontmatter",
+              "witness": {
+                "offset": 0,
+                "text": "---\n"
+              }
+            },
+            "diagnostic": {
+              "expected": "source",
+              "reason": "unsupported-sequence-statement",
+              "witness": {
+                "offset": 427,
+                "text": "par Parallel Processing"
+              },
+              "offset": 265,
+              "sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83"
+            }
+          },
+          "raw_admission": "unchanged_source_expected; complete original metadata/config predicates are not promoted",
+          "body_admission": "whole-source source facts only; no independent review/native pass/snapshot/promotion yet",
+          "source_primary_rules_ref": "existing pinned first19 role/fragment source contract and identical physical statement tokens"
+        },
+        {
+          "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-dark-theme.mmd",
+          "raw_path": "tests/fixtures/mermaid_official/cases/sequence/nightly-check/redux-neo-parallel-processes-redux-dark-theme.mmd",
+          "raw_sha256": "de9e10d692bc0e9e71628957a17d4b6959b0d2cf1ac9cf7c020ed8e76036d252",
+          "raw_bytes": 1084,
+          "raw_git_blob": "2cbb6de1db091b015b138002e129000d761323d2",
+          "raw_text": "---\ndescription: >-\n  Sequence diagram covering a `par` block (parallel payment/inventory\n  processing) inside a larger order-fulfillment workflow, rendered under the\n  \"neo\" look with the \"redux-dark\" theme.\nconfig:\n  theme: redux-dark\n  look: neo\n---\nsequenceDiagram\n  participant Customer@{ \"type\": \"actor\" }\n  participant Frontend@{ \"type\": \"participant\" }\n  participant PaymentService@{ \"type\": \"boundary\" }\n  participant InventoryManager@{ \"type\": \"control\" }\n  participant Order@{ \"type\": \"entity\" }\n  participant OrdersDB@{ \"type\": \"database\" }\n  participant NotificationQueue@{ \"type\": \"queue\" }\n\n  Customer ->> Frontend: Place order\n  Frontend ->> Order: Create order\n  par Parallel Processing\n    Order ->> PaymentService: Process payment\n    and\n    Order ->> InventoryManager: Reserve items\n  end\n  PaymentService -->> Order: Payment confirmed\n  InventoryManager -->> Order: Items reserved\n  Order ->> OrdersDB: Save finalized order\n  OrdersDB -->> Order: Order saved\n  Order ->> NotificationQueue: Send confirmation\n  NotificationQueue -->> Customer: Order confirmation\n",
+          "body_offset_utf8_bytes": 253,
+          "body_bytes": 831,
+          "body_sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83",
+          "raw_metadata_prefix": "---\ndescription: >-\n  Sequence diagram covering a `par` block (parallel payment/inventory\n  processing) inside a larger order-fulfillment workflow, rendered under the\n  \"neo\" look with the \"redux-dark\" theme.\nconfig:\n  theme: redux-dark\n  look: neo\n---\n",
+          "original_manifest_record": {
+            "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-dark-theme.mmd",
+            "sha256": "de9e10d692bc0e9e71628957a17d4b6959b0d2cf1ac9cf7c020ed8e76036d252",
+            "git_blob": "2cbb6de1db091b015b138002e129000d761323d2",
+            "bytes": 1084,
+            "raw": {
+              "expected": "source",
+              "reason": "frontmatter",
+              "witness": {
+                "offset": 0,
+                "text": "---\n"
+              }
+            },
+            "diagnostic": {
+              "expected": "source",
+              "reason": "unsupported-sequence-statement",
+              "witness": {
+                "offset": 427,
+                "text": "par Parallel Processing"
+              },
+              "offset": 253,
+              "sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83"
+            }
+          },
+          "raw_admission": "unchanged_source_expected; complete original metadata/config predicates are not promoted",
+          "body_admission": "whole-source source facts only; no independent review/native pass/snapshot/promotion yet",
+          "source_primary_rules_ref": "existing pinned first19 role/fragment source contract and identical physical statement tokens"
+        },
+        {
+          "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-theme.mmd",
+          "raw_path": "tests/fixtures/mermaid_official/cases/sequence/nightly-check/redux-neo-parallel-processes-redux-theme.mmd",
+          "raw_sha256": "bfc6693b6338b8667e4f8748ff4955597f72afe2f1db09253f6209440ae6f5fd",
+          "raw_bytes": 1074,
+          "raw_git_blob": "464d929cd3bd008905a2d5773bd22c40f059bda0",
+          "raw_text": "---\ndescription: >-\n  Sequence diagram covering a `par` block (parallel payment/inventory\n  processing) inside a larger order-fulfillment workflow, rendered under the\n  \"neo\" look with the \"redux\" theme.\nconfig:\n  theme: redux\n  look: neo\n---\nsequenceDiagram\n  participant Customer@{ \"type\": \"actor\" }\n  participant Frontend@{ \"type\": \"participant\" }\n  participant PaymentService@{ \"type\": \"boundary\" }\n  participant InventoryManager@{ \"type\": \"control\" }\n  participant Order@{ \"type\": \"entity\" }\n  participant OrdersDB@{ \"type\": \"database\" }\n  participant NotificationQueue@{ \"type\": \"queue\" }\n\n  Customer ->> Frontend: Place order\n  Frontend ->> Order: Create order\n  par Parallel Processing\n    Order ->> PaymentService: Process payment\n    and\n    Order ->> InventoryManager: Reserve items\n  end\n  PaymentService -->> Order: Payment confirmed\n  InventoryManager -->> Order: Items reserved\n  Order ->> OrdersDB: Save finalized order\n  OrdersDB -->> Order: Order saved\n  Order ->> NotificationQueue: Send confirmation\n  NotificationQueue -->> Customer: Order confirmation\n",
+          "body_offset_utf8_bytes": 243,
+          "body_bytes": 831,
+          "body_sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83",
+          "raw_metadata_prefix": "---\ndescription: >-\n  Sequence diagram covering a `par` block (parallel payment/inventory\n  processing) inside a larger order-fulfillment workflow, rendered under the\n  \"neo\" look with the \"redux\" theme.\nconfig:\n  theme: redux\n  look: neo\n---\n",
+          "original_manifest_record": {
+            "path": "sequence/nightly-check/redux-neo-parallel-processes-redux-theme.mmd",
+            "sha256": "bfc6693b6338b8667e4f8748ff4955597f72afe2f1db09253f6209440ae6f5fd",
+            "git_blob": "464d929cd3bd008905a2d5773bd22c40f059bda0",
+            "bytes": 1074,
+            "raw": {
+              "expected": "source",
+              "reason": "frontmatter",
+              "witness": {
+                "offset": 0,
+                "text": "---\n"
+              }
+            },
+            "diagnostic": {
+              "expected": "source",
+              "reason": "unsupported-sequence-statement",
+              "witness": {
+                "offset": 427,
+                "text": "par Parallel Processing"
+              },
+              "offset": 243,
+              "sha256": "72ca9299abd383cea51f768a3d1e109c6648efe5ff4b82dffc62472dcb1d6f83"
+            }
+          },
+          "raw_admission": "unchanged_source_expected; complete original metadata/config predicates are not promoted",
+          "body_admission": "whole-source source facts only; no independent review/native pass/snapshot/promotion yet",
+          "source_primary_rules_ref": "existing pinned first19 role/fragment source contract and identical physical statement tokens"
+        }
+      ],
+      "exact_frozen_vendor_source_hints": [
+        {
+          "id": "merman/3d6e92aa21e620a186c7",
+          "input_sha256": "3d6e92aa21e620a186c7f0ebee20c98eb49f190ffef7ffc35022aa92afd596ec",
+          "model_sha256": "bfcf9e93566630fe566e26a27fbacf66ac9bb39a3eb13c0168630cdafa637c34",
+          "native_facts_path": "tests/fixtures/mermaid_native/sequence_merman280_native_facts.json",
+          "native_facts_sha256": "596a7131f300b455bc6c6b22e7b6282c11b5a376fb26cd4554e05efee9f0d97b",
+          "all_nonblank_physical_statement_bytes_equal_after_outer_whitespace": true,
+          "model_copied_exactly_from_prior_independently_source_reviewed_complete_Model": true
+        }
+      ],
+      "original_conditions_status": "Only whole diagnostic suffix native geometry is proposed; original raw config/look/theme/description, foreign SVG/font/layout/wrapping/API/exact pixel conditions remain separate and pending."
+    },
+    {
+      "id": "official-role-body/dbfcb2258bed074f",
+      "body_sha256": "dbfcb2258bed074f122bf1ee144890b5da8411c216db6fa73fbb0083bf4a9af1",
+      "body_bytes": 842,
+      "body": "sequenceDiagram\n  actor Client\n  participant MobileApp\n  participant CloudService@{ \"type\" : \"boundary\" }\n  participant DataProcessor@{ \"type\" : \"control\" }\n  participant Transaction@{ \"type\" : \"entity\" }\n  participant TransactionsDB@{ \"type\" : \"database\" }\n  participant EventBus@{ \"type\" : \"queue\" }\n\n  Client ->> MobileApp: Initiate transaction\n  MobileApp ->> CloudService: Authenticate\n  alt Authentication successful\n  CloudService -->> MobileApp: Auth token\n  MobileApp ->> DataProcessor: Process data\n  DataProcessor ->> Transaction: Create transaction\n  Transaction ->> TransactionsDB: Save record\n  TransactionsDB -->> Transaction: Confirmation\n  Transaction ->> EventBus: Publish event\n  EventBus -->> Client: Notification\n  else Authentication failed\n  CloudService -->> MobileApp: Error\n  MobileApp -->> Client: Show error\n  end\n",
+      "profile": "source_positive_complete_body_native_projection_pending_independent_review",
+      "number_encoding": "DisplayText",
+      "model": {
+        "actors": [
+          {
+            "id": "Client",
+            "label": "Client",
+            "role": "Actor"
+          },
+          {
+            "id": "MobileApp",
+            "label": "MobileApp",
+            "role": "Participant"
+          },
+          {
+            "id": "CloudService",
+            "label": "CloudService",
+            "role": "Boundary"
+          },
+          {
+            "id": "DataProcessor",
+            "label": "DataProcessor",
+            "role": "Control"
+          },
+          {
+            "id": "Transaction",
+            "label": "Transaction",
+            "role": "Entity"
+          },
+          {
+            "id": "TransactionsDB",
+            "label": "TransactionsDB",
+            "role": "Database"
+          },
+          {
+            "id": "EventBus",
+            "label": "EventBus",
+            "role": "Queue"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Initiate transaction",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Authenticate",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 2,
+            "to": 1,
+            "label": "Auth token",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 3,
+            "label": "Process data",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "label": "Create transaction",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "label": "Save record",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 5,
+            "to": 4,
+            "label": "Confirmation",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 4,
+            "to": 6,
+            "label": "Publish event",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 6,
+            "to": 0,
+            "label": "Notification",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 2,
+            "to": 1,
+            "label": "Error",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Show error",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "alt",
+            "label": "Authentication successful",
+            "parent": -1,
+            "dividers": [
+              "Authentication failed"
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 9,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 10,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          }
+        ],
+        "boxes": [],
+        "title": ""
+      },
+      "model_canonical_sha256": "2d7e9ec1d27258191226793d66199d90256d21c736c79965d393b84ee4a6a1f7",
+      "complete_statement_bindings": [
+        {
+          "physical_source": {
+            "line": 1,
+            "offset_utf8_bytes": 0,
+            "byte_length": 16,
+            "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+            "text": "sequenceDiagram\n"
+          },
+          "source_statement": "sequenceDiagram",
+          "model_pointers": [],
+          "semantic_source_fields": {},
+          "kind": "header",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 2,
+            "offset_utf8_bytes": 16,
+            "byte_length": 15,
+            "sha256": "27be9482063818074ecae813671d39f6c91c3221c36a8b5d3b20f97f562af3fd",
+            "text": "  actor Client\n"
+          },
+          "source_statement": "actor Client",
+          "model_pointers": [
+            "/actors/0"
+          ],
+          "semantic_source_fields": {
+            "id": "Client",
+            "label": "Client",
+            "role": "Actor"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 3,
+            "offset_utf8_bytes": 31,
+            "byte_length": 24,
+            "sha256": "69452ab8b38cdadb222680afbf7a73c870c50b1e7b94f3062ad6ecd0cdfbb3f6",
+            "text": "  participant MobileApp\n"
+          },
+          "source_statement": "participant MobileApp",
+          "model_pointers": [
+            "/actors/1"
+          ],
+          "semantic_source_fields": {
+            "id": "MobileApp",
+            "label": "MobileApp",
+            "role": "Participant"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 4,
+            "offset_utf8_bytes": 55,
+            "byte_length": 51,
+            "sha256": "f220c75a2f7285549199690e166fb87e9c88079259100263ec18af2dd7a72235",
+            "text": "  participant CloudService@{ \"type\" : \"boundary\" }\n"
+          },
+          "source_statement": "participant CloudService@{ \"type\" : \"boundary\" }",
+          "model_pointers": [
+            "/actors/2"
+          ],
+          "semantic_source_fields": {
+            "id": "CloudService",
+            "label": "CloudService",
+            "role": "Boundary"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 5,
+            "offset_utf8_bytes": 106,
+            "byte_length": 51,
+            "sha256": "4f35f6b46daa9cbb469a80cecb89673e0a8231d39add94d6bfca96daf9a63b64",
+            "text": "  participant DataProcessor@{ \"type\" : \"control\" }\n"
+          },
+          "source_statement": "participant DataProcessor@{ \"type\" : \"control\" }",
+          "model_pointers": [
+            "/actors/3"
+          ],
+          "semantic_source_fields": {
+            "id": "DataProcessor",
+            "label": "DataProcessor",
+            "role": "Control"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 6,
+            "offset_utf8_bytes": 157,
+            "byte_length": 48,
+            "sha256": "633642ca510d55dce6398aff0be1755867615d29513a08596e1acf86becb1bd1",
+            "text": "  participant Transaction@{ \"type\" : \"entity\" }\n"
+          },
+          "source_statement": "participant Transaction@{ \"type\" : \"entity\" }",
+          "model_pointers": [
+            "/actors/4"
+          ],
+          "semantic_source_fields": {
+            "id": "Transaction",
+            "label": "Transaction",
+            "role": "Entity"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 7,
+            "offset_utf8_bytes": 205,
+            "byte_length": 53,
+            "sha256": "67c00f34a8c2e85e8b0e4731ec77f9ebaa9ea1e75ed2de3de2074836b129c101",
+            "text": "  participant TransactionsDB@{ \"type\" : \"database\" }\n"
+          },
+          "source_statement": "participant TransactionsDB@{ \"type\" : \"database\" }",
+          "model_pointers": [
+            "/actors/5"
+          ],
+          "semantic_source_fields": {
+            "id": "TransactionsDB",
+            "label": "TransactionsDB",
+            "role": "Database"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 8,
+            "offset_utf8_bytes": 258,
+            "byte_length": 44,
+            "sha256": "f4ab1a8e3de1079e353e902fe5f0d36f6a8a2805a744bbbabb49bcdb1346a459",
+            "text": "  participant EventBus@{ \"type\" : \"queue\" }\n"
+          },
+          "source_statement": "participant EventBus@{ \"type\" : \"queue\" }",
+          "model_pointers": [
+            "/actors/6"
+          ],
+          "semantic_source_fields": {
+            "id": "EventBus",
+            "label": "EventBus",
+            "role": "Queue"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 10,
+            "offset_utf8_bytes": 303,
+            "byte_length": 45,
+            "sha256": "a5fcb2722332ffd2d3d9cff4177a49fdddaf57e9e6d9b85daca2a244eaa51f2f",
+            "text": "  Client ->> MobileApp: Initiate transaction\n"
+          },
+          "source_statement": "Client ->> MobileApp: Initiate transaction",
+          "model_pointers": [
+            "/order/0",
+            "/messages/0"
+          ],
+          "semantic_source_fields": {
+            "from": 0,
+            "to": 1,
+            "label": "Initiate transaction",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            0,
+            1
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 11,
+            "offset_utf8_bytes": 348,
+            "byte_length": 43,
+            "sha256": "7a41175aa41cce41d4754562bb4ab7eefcd48a0488584fe708af238ec05ee268",
+            "text": "  MobileApp ->> CloudService: Authenticate\n"
+          },
+          "source_statement": "MobileApp ->> CloudService: Authenticate",
+          "model_pointers": [
+            "/order/1",
+            "/messages/1"
+          ],
+          "semantic_source_fields": {
+            "from": 1,
+            "to": 2,
+            "label": "Authenticate",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            1,
+            2
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 12,
+            "offset_utf8_bytes": 391,
+            "byte_length": 32,
+            "sha256": "33476e198f97fecd2decd0ba193c17300bf8c681f99dd4ea57d32c9c7bc285ff",
+            "text": "  alt Authentication successful\n"
+          },
+          "source_statement": "alt Authentication successful",
+          "model_pointers": [
+            "/order/2",
+            "/fragments/0"
+          ],
+          "semantic_source_fields": {
+            "kind": "alt",
+            "label": "Authentication successful",
+            "parent": -1,
+            "dividers": [
+              "Authentication failed"
+            ]
+          },
+          "kind": "Open",
+          "order_range": [
+            2,
+            3
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 13,
+            "offset_utf8_bytes": 423,
+            "byte_length": 42,
+            "sha256": "e7874c81fa265a2e862bee9c191ccbcd8004f3914aea79553d3c9b63715d195d",
+            "text": "  CloudService -->> MobileApp: Auth token\n"
+          },
+          "source_statement": "CloudService -->> MobileApp: Auth token",
+          "model_pointers": [
+            "/order/3",
+            "/messages/2"
+          ],
+          "semantic_source_fields": {
+            "from": 2,
+            "to": 1,
+            "label": "Auth token",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            3,
+            4
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 14,
+            "offset_utf8_bytes": 465,
+            "byte_length": 44,
+            "sha256": "53de09ffa11f3b3e688c505349a143f687e0253ffebd55266fdaf4645cf37fd1",
+            "text": "  MobileApp ->> DataProcessor: Process data\n"
+          },
+          "source_statement": "MobileApp ->> DataProcessor: Process data",
+          "model_pointers": [
+            "/order/4",
+            "/messages/3"
+          ],
+          "semantic_source_fields": {
+            "from": 1,
+            "to": 3,
+            "label": "Process data",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            4,
+            5
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 15,
+            "offset_utf8_bytes": 509,
+            "byte_length": 52,
+            "sha256": "9d0959e4be348417292aa925d2f8686cb174d6b6ec6076ca170e981cfb142c79",
+            "text": "  DataProcessor ->> Transaction: Create transaction\n"
+          },
+          "source_statement": "DataProcessor ->> Transaction: Create transaction",
+          "model_pointers": [
+            "/order/5",
+            "/messages/4"
+          ],
+          "semantic_source_fields": {
+            "from": 3,
+            "to": 4,
+            "label": "Create transaction",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            5,
+            6
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 16,
+            "offset_utf8_bytes": 561,
+            "byte_length": 46,
+            "sha256": "ee08e3e0f8c2ca6ddd480320083c4aa4f8bdc841dccf8d7c2a9dcce62df6aa0c",
+            "text": "  Transaction ->> TransactionsDB: Save record\n"
+          },
+          "source_statement": "Transaction ->> TransactionsDB: Save record",
+          "model_pointers": [
+            "/order/6",
+            "/messages/5"
+          ],
+          "semantic_source_fields": {
+            "from": 4,
+            "to": 5,
+            "label": "Save record",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            6,
+            7
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 17,
+            "offset_utf8_bytes": 607,
+            "byte_length": 48,
+            "sha256": "31533a6d81b0e1ec1a64c99e1ca18b2b7f009c0f3adfc9f38f0f423e5ee4ac6f",
+            "text": "  TransactionsDB -->> Transaction: Confirmation\n"
+          },
+          "source_statement": "TransactionsDB -->> Transaction: Confirmation",
+          "model_pointers": [
+            "/order/7",
+            "/messages/6"
+          ],
+          "semantic_source_fields": {
+            "from": 5,
+            "to": 4,
+            "label": "Confirmation",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            7,
+            8
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 18,
+            "offset_utf8_bytes": 655,
+            "byte_length": 42,
+            "sha256": "d444438e3412d70c799f4fc0601e638d88077af64016e6bb92a8409268e2ec82",
+            "text": "  Transaction ->> EventBus: Publish event\n"
+          },
+          "source_statement": "Transaction ->> EventBus: Publish event",
+          "model_pointers": [
+            "/order/8",
+            "/messages/7"
+          ],
+          "semantic_source_fields": {
+            "from": 4,
+            "to": 6,
+            "label": "Publish event",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            8,
+            9
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 19,
+            "offset_utf8_bytes": 697,
+            "byte_length": 37,
+            "sha256": "94d81df563d26cef5ace59544f2eb75a441d26f1f2a0bd5ccf8ac56998e70848",
+            "text": "  EventBus -->> Client: Notification\n"
+          },
+          "source_statement": "EventBus -->> Client: Notification",
+          "model_pointers": [
+            "/order/9",
+            "/messages/8"
+          ],
+          "semantic_source_fields": {
+            "from": 6,
+            "to": 0,
+            "label": "Notification",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            9,
+            10
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 20,
+            "offset_utf8_bytes": 734,
+            "byte_length": 29,
+            "sha256": "b70b4d67cad9d32d43ceeecca612c2a5a4f05539a4af4c4edbd6cb072765503b",
+            "text": "  else Authentication failed\n"
+          },
+          "source_statement": "else Authentication failed",
+          "model_pointers": [
+            "/order/10",
+            "/fragments/0"
+          ],
+          "semantic_source_fields": {
+            "kind": "alt",
+            "label": "Authentication successful",
+            "parent": -1,
+            "dividers": [
+              "Authentication failed"
+            ]
+          },
+          "kind": "Divide",
+          "order_range": [
+            10,
+            11
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 21,
+            "offset_utf8_bytes": 763,
+            "byte_length": 37,
+            "sha256": "f170f9fa2afe526d2b64a55228ac56b4275f78f8b92024cc6e20af505eaf07fc",
+            "text": "  CloudService -->> MobileApp: Error\n"
+          },
+          "source_statement": "CloudService -->> MobileApp: Error",
+          "model_pointers": [
+            "/order/11",
+            "/messages/9"
+          ],
+          "semantic_source_fields": {
+            "from": 2,
+            "to": 1,
+            "label": "Error",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            11,
+            12
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 22,
+            "offset_utf8_bytes": 800,
+            "byte_length": 36,
+            "sha256": "d48a7ebefd9f1cc9b4683d83bc39a96fcdd8a9b75061b147e1dbbf863ae4d27f",
+            "text": "  MobileApp -->> Client: Show error\n"
+          },
+          "source_statement": "MobileApp -->> Client: Show error",
+          "model_pointers": [
+            "/order/12",
+            "/messages/10"
+          ],
+          "semantic_source_fields": {
+            "from": 1,
+            "to": 0,
+            "label": "Show error",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            12,
+            13
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 23,
+            "offset_utf8_bytes": 836,
+            "byte_length": 6,
+            "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+            "text": "  end\n"
+          },
+          "source_statement": "end",
+          "model_pointers": [
+            "/order/13",
+            "/fragments/0"
+          ],
+          "semantic_source_fields": {
+            "kind": "alt",
+            "label": "Authentication successful",
+            "parent": -1,
+            "dividers": [
+              "Authentication failed"
+            ]
+          },
+          "kind": "Close",
+          "order_range": [
+            13,
+            14
+          ]
+        }
+      ],
+      "complete_physical_source_witnesses": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "byte_length": 16,
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+          "text": "sequenceDiagram\n"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 16,
+          "byte_length": 15,
+          "sha256": "27be9482063818074ecae813671d39f6c91c3221c36a8b5d3b20f97f562af3fd",
+          "text": "  actor Client\n"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 31,
+          "byte_length": 24,
+          "sha256": "69452ab8b38cdadb222680afbf7a73c870c50b1e7b94f3062ad6ecd0cdfbb3f6",
+          "text": "  participant MobileApp\n"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 55,
+          "byte_length": 51,
+          "sha256": "f220c75a2f7285549199690e166fb87e9c88079259100263ec18af2dd7a72235",
+          "text": "  participant CloudService@{ \"type\" : \"boundary\" }\n"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 106,
+          "byte_length": 51,
+          "sha256": "4f35f6b46daa9cbb469a80cecb89673e0a8231d39add94d6bfca96daf9a63b64",
+          "text": "  participant DataProcessor@{ \"type\" : \"control\" }\n"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 157,
+          "byte_length": 48,
+          "sha256": "633642ca510d55dce6398aff0be1755867615d29513a08596e1acf86becb1bd1",
+          "text": "  participant Transaction@{ \"type\" : \"entity\" }\n"
+        },
+        {
+          "line": 7,
+          "offset_utf8_bytes": 205,
+          "byte_length": 53,
+          "sha256": "67c00f34a8c2e85e8b0e4731ec77f9ebaa9ea1e75ed2de3de2074836b129c101",
+          "text": "  participant TransactionsDB@{ \"type\" : \"database\" }\n"
+        },
+        {
+          "line": 8,
+          "offset_utf8_bytes": 258,
+          "byte_length": 44,
+          "sha256": "f4ab1a8e3de1079e353e902fe5f0d36f6a8a2805a744bbbabb49bcdb1346a459",
+          "text": "  participant EventBus@{ \"type\" : \"queue\" }\n"
+        },
+        {
+          "line": 9,
+          "offset_utf8_bytes": 302,
+          "byte_length": 1,
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "text": "\n"
+        },
+        {
+          "line": 10,
+          "offset_utf8_bytes": 303,
+          "byte_length": 45,
+          "sha256": "a5fcb2722332ffd2d3d9cff4177a49fdddaf57e9e6d9b85daca2a244eaa51f2f",
+          "text": "  Client ->> MobileApp: Initiate transaction\n"
+        },
+        {
+          "line": 11,
+          "offset_utf8_bytes": 348,
+          "byte_length": 43,
+          "sha256": "7a41175aa41cce41d4754562bb4ab7eefcd48a0488584fe708af238ec05ee268",
+          "text": "  MobileApp ->> CloudService: Authenticate\n"
+        },
+        {
+          "line": 12,
+          "offset_utf8_bytes": 391,
+          "byte_length": 32,
+          "sha256": "33476e198f97fecd2decd0ba193c17300bf8c681f99dd4ea57d32c9c7bc285ff",
+          "text": "  alt Authentication successful\n"
+        },
+        {
+          "line": 13,
+          "offset_utf8_bytes": 423,
+          "byte_length": 42,
+          "sha256": "e7874c81fa265a2e862bee9c191ccbcd8004f3914aea79553d3c9b63715d195d",
+          "text": "  CloudService -->> MobileApp: Auth token\n"
+        },
+        {
+          "line": 14,
+          "offset_utf8_bytes": 465,
+          "byte_length": 44,
+          "sha256": "53de09ffa11f3b3e688c505349a143f687e0253ffebd55266fdaf4645cf37fd1",
+          "text": "  MobileApp ->> DataProcessor: Process data\n"
+        },
+        {
+          "line": 15,
+          "offset_utf8_bytes": 509,
+          "byte_length": 52,
+          "sha256": "9d0959e4be348417292aa925d2f8686cb174d6b6ec6076ca170e981cfb142c79",
+          "text": "  DataProcessor ->> Transaction: Create transaction\n"
+        },
+        {
+          "line": 16,
+          "offset_utf8_bytes": 561,
+          "byte_length": 46,
+          "sha256": "ee08e3e0f8c2ca6ddd480320083c4aa4f8bdc841dccf8d7c2a9dcce62df6aa0c",
+          "text": "  Transaction ->> TransactionsDB: Save record\n"
+        },
+        {
+          "line": 17,
+          "offset_utf8_bytes": 607,
+          "byte_length": 48,
+          "sha256": "31533a6d81b0e1ec1a64c99e1ca18b2b7f009c0f3adfc9f38f0f423e5ee4ac6f",
+          "text": "  TransactionsDB -->> Transaction: Confirmation\n"
+        },
+        {
+          "line": 18,
+          "offset_utf8_bytes": 655,
+          "byte_length": 42,
+          "sha256": "d444438e3412d70c799f4fc0601e638d88077af64016e6bb92a8409268e2ec82",
+          "text": "  Transaction ->> EventBus: Publish event\n"
+        },
+        {
+          "line": 19,
+          "offset_utf8_bytes": 697,
+          "byte_length": 37,
+          "sha256": "94d81df563d26cef5ace59544f2eb75a441d26f1f2a0bd5ccf8ac56998e70848",
+          "text": "  EventBus -->> Client: Notification\n"
+        },
+        {
+          "line": 20,
+          "offset_utf8_bytes": 734,
+          "byte_length": 29,
+          "sha256": "b70b4d67cad9d32d43ceeecca612c2a5a4f05539a4af4c4edbd6cb072765503b",
+          "text": "  else Authentication failed\n"
+        },
+        {
+          "line": 21,
+          "offset_utf8_bytes": 763,
+          "byte_length": 37,
+          "sha256": "f170f9fa2afe526d2b64a55228ac56b4275f78f8b92024cc6e20af505eaf07fc",
+          "text": "  CloudService -->> MobileApp: Error\n"
+        },
+        {
+          "line": 22,
+          "offset_utf8_bytes": 800,
+          "byte_length": 36,
+          "sha256": "d48a7ebefd9f1cc9b4683d83bc39a96fcdd8a9b75061b147e1dbbf863ae4d27f",
+          "text": "  MobileApp -->> Client: Show error\n"
+        },
+        {
+          "line": 23,
+          "offset_utf8_bytes": 836,
+          "byte_length": 6,
+          "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+          "text": "  end\n"
+        }
+      ],
+      "source_semantic_summary": {
+        "created_actor_indices": [],
+        "terminal_activation_depths": {},
+        "dead_actor_indices": []
+      },
+      "original_bindings": [
+        {
+          "path": "sequence/nightly-check/should-render-different-participant-types-with-alternative-flows.mmd",
+          "raw_path": "tests/fixtures/mermaid_official/cases/sequence/nightly-check/should-render-different-participant-types-with-alternative-flows.mmd",
+          "raw_sha256": "20f32830793e5aa3635757d24ebe19d4e04bb02d36648a59278cb45261eea1fa",
+          "raw_bytes": 1172,
+          "raw_git_blob": "e82fefa108a797debf75c27feb94f303d05f9884",
+          "raw_text": "---\ndescription: >-\n  No-frontmatter sequence diagram with no config overrides. Combines the\n  typed participant kinds (`actor`, `boundary`, `control`, `entity`,\n  `database`, `queue`) with an `alt`/`else` block modeling an\n  authentication-success vs. authentication-failure flow through a\n  transaction-processing scenario.\n---\nsequenceDiagram\n  actor Client\n  participant MobileApp\n  participant CloudService@{ \"type\" : \"boundary\" }\n  participant DataProcessor@{ \"type\" : \"control\" }\n  participant Transaction@{ \"type\" : \"entity\" }\n  participant TransactionsDB@{ \"type\" : \"database\" }\n  participant EventBus@{ \"type\" : \"queue\" }\n\n  Client ->> MobileApp: Initiate transaction\n  MobileApp ->> CloudService: Authenticate\n  alt Authentication successful\n  CloudService -->> MobileApp: Auth token\n  MobileApp ->> DataProcessor: Process data\n  DataProcessor ->> Transaction: Create transaction\n  Transaction ->> TransactionsDB: Save record\n  TransactionsDB -->> Transaction: Confirmation\n  Transaction ->> EventBus: Publish event\n  EventBus -->> Client: Notification\n  else Authentication failed\n  CloudService -->> MobileApp: Error\n  MobileApp -->> Client: Show error\n  end\n",
+          "body_offset_utf8_bytes": 330,
+          "body_bytes": 842,
+          "body_sha256": "dbfcb2258bed074f122bf1ee144890b5da8411c216db6fa73fbb0083bf4a9af1",
+          "raw_metadata_prefix": "---\ndescription: >-\n  No-frontmatter sequence diagram with no config overrides. Combines the\n  typed participant kinds (`actor`, `boundary`, `control`, `entity`,\n  `database`, `queue`) with an `alt`/`else` block modeling an\n  authentication-success vs. authentication-failure flow through a\n  transaction-processing scenario.\n---\n",
+          "original_manifest_record": {
+            "path": "sequence/nightly-check/should-render-different-participant-types-with-alternative-flows.mmd",
+            "sha256": "20f32830793e5aa3635757d24ebe19d4e04bb02d36648a59278cb45261eea1fa",
+            "git_blob": "e82fefa108a797debf75c27feb94f303d05f9884",
+            "bytes": 1172,
+            "raw": {
+              "expected": "source",
+              "reason": "frontmatter",
+              "witness": {
+                "offset": 0,
+                "text": "---\n"
+              }
+            },
+            "diagnostic": {
+              "expected": "source",
+              "reason": "unsupported-sequence-statement",
+              "witness": {
+                "offset": 18,
+                "text": "actor Client"
+              },
+              "offset": 330,
+              "sha256": "dbfcb2258bed074f122bf1ee144890b5da8411c216db6fa73fbb0083bf4a9af1"
+            }
+          },
+          "raw_admission": "unchanged_source_expected; complete original metadata/config predicates are not promoted",
+          "body_admission": "whole-source source facts only; no independent review/native pass/snapshot/promotion yet",
+          "source_primary_rules_ref": "existing pinned first19 role/fragment source contract and identical physical statement tokens"
+        }
+      ],
+      "exact_frozen_vendor_source_hints": [
+        {
+          "id": "merman/79fb247e7a978ef6637f",
+          "input_sha256": "79fb247e7a978ef6637fd5bc891d154e19d31ecd4b0ac5109b8fa2e791f8cd05",
+          "model_sha256": "2d7e9ec1d27258191226793d66199d90256d21c736c79965d393b84ee4a6a1f7",
+          "native_facts_path": "tests/fixtures/mermaid_native/sequence_merman280_native_facts.json",
+          "native_facts_sha256": "596a7131f300b455bc6c6b22e7b6282c11b5a376fb26cd4554e05efee9f0d97b",
+          "all_nonblank_physical_statement_bytes_equal_after_outer_whitespace": true,
+          "model_copied_exactly_from_prior_independently_source_reviewed_complete_Model": true
+        }
+      ],
+      "original_conditions_status": "Only whole diagnostic suffix native geometry is proposed; original raw config/look/theme/description, foreign SVG/font/layout/wrapping/API/exact pixel conditions remain separate and pending."
+    },
+    {
+      "id": "official-role-body/e1ed6eec0ceb1b6c",
+      "body_sha256": "e1ed6eec0ceb1b6c5b73b8f26a067b0e9e923dc5d41cc1f8e701630bf9e787b7",
+      "body_bytes": 825,
+      "body": "sequenceDiagram\n  participant Customer@{ \"type\": \"actor\" }\n  participant Frontend@{ \"type\": \"participant\" }\n  participant PaymentService@{ \"type\": \"boundary\" }\n  participant InventoryManager@{ \"type\": \"control\" }\n  participant Order@{ \"type\": \"entity\" }\n  participant OrdersDB@{ \"type\": \"database\" }\n  participant NotificationQueue@{ \"type\": \"queue\" }\n\n  Customer ->> Frontend: Place order\n  Frontend ->> Order: Create order\n  par Parallel Processing\n  Order ->> PaymentService: Process payment\n  and\n  Order ->> InventoryManager: Reserve items\n  end\n  PaymentService -->> Order: Payment confirmed\n  InventoryManager -->> Order: Items reserved\n  Order ->> OrdersDB: Save finalized order\n  OrdersDB -->> Order: Order saved\n  Order ->> NotificationQueue: Send confirmation\n  NotificationQueue -->> Customer: Order confirmation\n",
+      "profile": "source_positive_complete_body_native_projection_pending_independent_review",
+      "number_encoding": "DisplayText",
+      "model": {
+        "actors": [
+          {
+            "id": "Customer",
+            "label": "Customer",
+            "role": "Actor"
+          },
+          {
+            "id": "Frontend",
+            "label": "Frontend",
+            "role": "Participant"
+          },
+          {
+            "id": "PaymentService",
+            "label": "PaymentService",
+            "role": "Boundary"
+          },
+          {
+            "id": "InventoryManager",
+            "label": "InventoryManager",
+            "role": "Control"
+          },
+          {
+            "id": "Order",
+            "label": "Order",
+            "role": "Entity"
+          },
+          {
+            "id": "OrdersDB",
+            "label": "OrdersDB",
+            "role": "Database"
+          },
+          {
+            "id": "NotificationQueue",
+            "label": "NotificationQueue",
+            "role": "Queue"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Place order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 4,
+            "label": "Create order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 4,
+            "to": 2,
+            "label": "Process payment",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 4,
+            "to": 3,
+            "label": "Reserve items",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 2,
+            "to": 4,
+            "label": "Payment confirmed",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "label": "Items reserved",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "label": "Save finalized order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 5,
+            "to": 4,
+            "label": "Order saved",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 4,
+            "to": 6,
+            "label": "Send confirmation",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 6,
+            "to": 0,
+            "label": "Order confirmation",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "par",
+            "label": "Parallel Processing",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 9,
+            "part": 0
+          }
+        ],
+        "boxes": [],
+        "title": ""
+      },
+      "model_canonical_sha256": "bfcf9e93566630fe566e26a27fbacf66ac9bb39a3eb13c0168630cdafa637c34",
+      "complete_statement_bindings": [
+        {
+          "physical_source": {
+            "line": 1,
+            "offset_utf8_bytes": 0,
+            "byte_length": 16,
+            "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+            "text": "sequenceDiagram\n"
+          },
+          "source_statement": "sequenceDiagram",
+          "model_pointers": [],
+          "semantic_source_fields": {},
+          "kind": "header",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 2,
+            "offset_utf8_bytes": 16,
+            "byte_length": 43,
+            "sha256": "a9097ad748545edc3a9405221c86bcfcc04470362adb5aa9c5eefb70c4bb20fc",
+            "text": "  participant Customer@{ \"type\": \"actor\" }\n"
+          },
+          "source_statement": "participant Customer@{ \"type\": \"actor\" }",
+          "model_pointers": [
+            "/actors/0"
+          ],
+          "semantic_source_fields": {
+            "id": "Customer",
+            "label": "Customer",
+            "role": "Actor"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 3,
+            "offset_utf8_bytes": 59,
+            "byte_length": 49,
+            "sha256": "a8b6d2593e0fce303c26e607b4ae1f3ac7c823cbcff55d493503796aa57466db",
+            "text": "  participant Frontend@{ \"type\": \"participant\" }\n"
+          },
+          "source_statement": "participant Frontend@{ \"type\": \"participant\" }",
+          "model_pointers": [
+            "/actors/1"
+          ],
+          "semantic_source_fields": {
+            "id": "Frontend",
+            "label": "Frontend",
+            "role": "Participant"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 4,
+            "offset_utf8_bytes": 108,
+            "byte_length": 52,
+            "sha256": "7940029bbd12b140044e09bffb3be5ded8664d2cd7cf59840d05df52f33145b4",
+            "text": "  participant PaymentService@{ \"type\": \"boundary\" }\n"
+          },
+          "source_statement": "participant PaymentService@{ \"type\": \"boundary\" }",
+          "model_pointers": [
+            "/actors/2"
+          ],
+          "semantic_source_fields": {
+            "id": "PaymentService",
+            "label": "PaymentService",
+            "role": "Boundary"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 5,
+            "offset_utf8_bytes": 160,
+            "byte_length": 53,
+            "sha256": "3f47269035b8a93f79d0524dc79f64593bcbd7560cc03b6b45fc85ad6a2e3b5c",
+            "text": "  participant InventoryManager@{ \"type\": \"control\" }\n"
+          },
+          "source_statement": "participant InventoryManager@{ \"type\": \"control\" }",
+          "model_pointers": [
+            "/actors/3"
+          ],
+          "semantic_source_fields": {
+            "id": "InventoryManager",
+            "label": "InventoryManager",
+            "role": "Control"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 6,
+            "offset_utf8_bytes": 213,
+            "byte_length": 41,
+            "sha256": "47723ef206ac546e40da9bcaf5d526d63ab46b49cab72ca6cab90c3dda0f405a",
+            "text": "  participant Order@{ \"type\": \"entity\" }\n"
+          },
+          "source_statement": "participant Order@{ \"type\": \"entity\" }",
+          "model_pointers": [
+            "/actors/4"
+          ],
+          "semantic_source_fields": {
+            "id": "Order",
+            "label": "Order",
+            "role": "Entity"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 7,
+            "offset_utf8_bytes": 254,
+            "byte_length": 46,
+            "sha256": "ed5f533caf62de52a04e7247151d8267d2a322342976d0d8b813526e13d7559f",
+            "text": "  participant OrdersDB@{ \"type\": \"database\" }\n"
+          },
+          "source_statement": "participant OrdersDB@{ \"type\": \"database\" }",
+          "model_pointers": [
+            "/actors/5"
+          ],
+          "semantic_source_fields": {
+            "id": "OrdersDB",
+            "label": "OrdersDB",
+            "role": "Database"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 8,
+            "offset_utf8_bytes": 300,
+            "byte_length": 52,
+            "sha256": "e00d3f4966c079a086ccbca1616ef375638e1aea1ab17f83985119c8f6382261",
+            "text": "  participant NotificationQueue@{ \"type\": \"queue\" }\n"
+          },
+          "source_statement": "participant NotificationQueue@{ \"type\": \"queue\" }",
+          "model_pointers": [
+            "/actors/6"
+          ],
+          "semantic_source_fields": {
+            "id": "NotificationQueue",
+            "label": "NotificationQueue",
+            "role": "Queue"
+          },
+          "kind": "participant",
+          "order_range": [
+            0,
+            0
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 10,
+            "offset_utf8_bytes": 353,
+            "byte_length": 37,
+            "sha256": "026b447bfdf875c6811681661320920ffa070fc9e8706d8718aedc15ae27a2a4",
+            "text": "  Customer ->> Frontend: Place order\n"
+          },
+          "source_statement": "Customer ->> Frontend: Place order",
+          "model_pointers": [
+            "/order/0",
+            "/messages/0"
+          ],
+          "semantic_source_fields": {
+            "from": 0,
+            "to": 1,
+            "label": "Place order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            0,
+            1
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 11,
+            "offset_utf8_bytes": 390,
+            "byte_length": 35,
+            "sha256": "8651975d853cb13459b2f105ed290538613310adc5f4b75478e6acd44fea5a26",
+            "text": "  Frontend ->> Order: Create order\n"
+          },
+          "source_statement": "Frontend ->> Order: Create order",
+          "model_pointers": [
+            "/order/1",
+            "/messages/1"
+          ],
+          "semantic_source_fields": {
+            "from": 1,
+            "to": 4,
+            "label": "Create order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            1,
+            2
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 12,
+            "offset_utf8_bytes": 425,
+            "byte_length": 26,
+            "sha256": "c55435e13e0495710fa77d5fc4b032b211fac8b7832174480217ca05fbee0101",
+            "text": "  par Parallel Processing\n"
+          },
+          "source_statement": "par Parallel Processing",
+          "model_pointers": [
+            "/order/2",
+            "/fragments/0"
+          ],
+          "semantic_source_fields": {
+            "kind": "par",
+            "label": "Parallel Processing",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          },
+          "kind": "Open",
+          "order_range": [
+            2,
+            3
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 13,
+            "offset_utf8_bytes": 451,
+            "byte_length": 44,
+            "sha256": "fed873bef28d78b19b316e9ec3e256f75a07a04c6b3af84d394594f5d1fe9191",
+            "text": "  Order ->> PaymentService: Process payment\n"
+          },
+          "source_statement": "Order ->> PaymentService: Process payment",
+          "model_pointers": [
+            "/order/3",
+            "/messages/2"
+          ],
+          "semantic_source_fields": {
+            "from": 4,
+            "to": 2,
+            "label": "Process payment",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            3,
+            4
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 14,
+            "offset_utf8_bytes": 495,
+            "byte_length": 6,
+            "sha256": "81538f1174e85b86a9a6541c1b4d13b494d83e490a708f7553b9db2dc8615336",
+            "text": "  and\n"
+          },
+          "source_statement": "and",
+          "model_pointers": [
+            "/order/4",
+            "/fragments/0"
+          ],
+          "semantic_source_fields": {
+            "kind": "par",
+            "label": "Parallel Processing",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          },
+          "kind": "Divide",
+          "order_range": [
+            4,
+            5
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 15,
+            "offset_utf8_bytes": 501,
+            "byte_length": 44,
+            "sha256": "d8837fcb18079e6bf643b13a361d3728d9f72cdbf6fd2d98438ce45c7a996ab5",
+            "text": "  Order ->> InventoryManager: Reserve items\n"
+          },
+          "source_statement": "Order ->> InventoryManager: Reserve items",
+          "model_pointers": [
+            "/order/5",
+            "/messages/3"
+          ],
+          "semantic_source_fields": {
+            "from": 4,
+            "to": 3,
+            "label": "Reserve items",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            5,
+            6
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 16,
+            "offset_utf8_bytes": 545,
+            "byte_length": 6,
+            "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+            "text": "  end\n"
+          },
+          "source_statement": "end",
+          "model_pointers": [
+            "/order/6",
+            "/fragments/0"
+          ],
+          "semantic_source_fields": {
+            "kind": "par",
+            "label": "Parallel Processing",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          },
+          "kind": "Close",
+          "order_range": [
+            6,
+            7
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 17,
+            "offset_utf8_bytes": 551,
+            "byte_length": 47,
+            "sha256": "41312f757e8c82abd05cee39011bb4e0c8de4cbc1ac242c8220c51992b04e7da",
+            "text": "  PaymentService -->> Order: Payment confirmed\n"
+          },
+          "source_statement": "PaymentService -->> Order: Payment confirmed",
+          "model_pointers": [
+            "/order/7",
+            "/messages/4"
+          ],
+          "semantic_source_fields": {
+            "from": 2,
+            "to": 4,
+            "label": "Payment confirmed",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            7,
+            8
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 18,
+            "offset_utf8_bytes": 598,
+            "byte_length": 46,
+            "sha256": "8025e3a3e094301dea56214da62d64542d4841e2d361c2ba5c22bf06fd566e84",
+            "text": "  InventoryManager -->> Order: Items reserved\n"
+          },
+          "source_statement": "InventoryManager -->> Order: Items reserved",
+          "model_pointers": [
+            "/order/8",
+            "/messages/5"
+          ],
+          "semantic_source_fields": {
+            "from": 3,
+            "to": 4,
+            "label": "Items reserved",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            8,
+            9
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 19,
+            "offset_utf8_bytes": 644,
+            "byte_length": 43,
+            "sha256": "7fcebd7209da56305752c318d6d25ebab8505b9751884b02df7a219b0bd68a87",
+            "text": "  Order ->> OrdersDB: Save finalized order\n"
+          },
+          "source_statement": "Order ->> OrdersDB: Save finalized order",
+          "model_pointers": [
+            "/order/9",
+            "/messages/6"
+          ],
+          "semantic_source_fields": {
+            "from": 4,
+            "to": 5,
+            "label": "Save finalized order",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            9,
+            10
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 20,
+            "offset_utf8_bytes": 687,
+            "byte_length": 35,
+            "sha256": "2192d17c18ca52fb94853033e90d979825bc3e536019d3f1148f5a8ccb9b7497",
+            "text": "  OrdersDB -->> Order: Order saved\n"
+          },
+          "source_statement": "OrdersDB -->> Order: Order saved",
+          "model_pointers": [
+            "/order/10",
+            "/messages/7"
+          ],
+          "semantic_source_fields": {
+            "from": 5,
+            "to": 4,
+            "label": "Order saved",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            10,
+            11
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 21,
+            "offset_utf8_bytes": 722,
+            "byte_length": 49,
+            "sha256": "41e9aea0363019124e9d075ccc436a5ac29d1b234673d626a8850237384de56d",
+            "text": "  Order ->> NotificationQueue: Send confirmation\n"
+          },
+          "source_statement": "Order ->> NotificationQueue: Send confirmation",
+          "model_pointers": [
+            "/order/11",
+            "/messages/8"
+          ],
+          "semantic_source_fields": {
+            "from": 4,
+            "to": 6,
+            "label": "Send confirmation",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            11,
+            12
+          ]
+        },
+        {
+          "physical_source": {
+            "line": 22,
+            "offset_utf8_bytes": 771,
+            "byte_length": 54,
+            "sha256": "3fdebcfdd53248192b5f69fd7d78b15d1c727180f03bf094b47c46114890ce62",
+            "text": "  NotificationQueue -->> Customer: Order confirmation\n"
+          },
+          "source_statement": "NotificationQueue -->> Customer: Order confirmation",
+          "model_pointers": [
+            "/order/12",
+            "/messages/9"
+          ],
+          "semantic_source_fields": {
+            "from": 6,
+            "to": 0,
+            "label": "Order confirmation",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          "kind": "Message",
+          "order_range": [
+            12,
+            13
+          ]
+        }
+      ],
+      "complete_physical_source_witnesses": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "byte_length": 16,
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+          "text": "sequenceDiagram\n"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 16,
+          "byte_length": 43,
+          "sha256": "a9097ad748545edc3a9405221c86bcfcc04470362adb5aa9c5eefb70c4bb20fc",
+          "text": "  participant Customer@{ \"type\": \"actor\" }\n"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 59,
+          "byte_length": 49,
+          "sha256": "a8b6d2593e0fce303c26e607b4ae1f3ac7c823cbcff55d493503796aa57466db",
+          "text": "  participant Frontend@{ \"type\": \"participant\" }\n"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 108,
+          "byte_length": 52,
+          "sha256": "7940029bbd12b140044e09bffb3be5ded8664d2cd7cf59840d05df52f33145b4",
+          "text": "  participant PaymentService@{ \"type\": \"boundary\" }\n"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 160,
+          "byte_length": 53,
+          "sha256": "3f47269035b8a93f79d0524dc79f64593bcbd7560cc03b6b45fc85ad6a2e3b5c",
+          "text": "  participant InventoryManager@{ \"type\": \"control\" }\n"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 213,
+          "byte_length": 41,
+          "sha256": "47723ef206ac546e40da9bcaf5d526d63ab46b49cab72ca6cab90c3dda0f405a",
+          "text": "  participant Order@{ \"type\": \"entity\" }\n"
+        },
+        {
+          "line": 7,
+          "offset_utf8_bytes": 254,
+          "byte_length": 46,
+          "sha256": "ed5f533caf62de52a04e7247151d8267d2a322342976d0d8b813526e13d7559f",
+          "text": "  participant OrdersDB@{ \"type\": \"database\" }\n"
+        },
+        {
+          "line": 8,
+          "offset_utf8_bytes": 300,
+          "byte_length": 52,
+          "sha256": "e00d3f4966c079a086ccbca1616ef375638e1aea1ab17f83985119c8f6382261",
+          "text": "  participant NotificationQueue@{ \"type\": \"queue\" }\n"
+        },
+        {
+          "line": 9,
+          "offset_utf8_bytes": 352,
+          "byte_length": 1,
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "text": "\n"
+        },
+        {
+          "line": 10,
+          "offset_utf8_bytes": 353,
+          "byte_length": 37,
+          "sha256": "026b447bfdf875c6811681661320920ffa070fc9e8706d8718aedc15ae27a2a4",
+          "text": "  Customer ->> Frontend: Place order\n"
+        },
+        {
+          "line": 11,
+          "offset_utf8_bytes": 390,
+          "byte_length": 35,
+          "sha256": "8651975d853cb13459b2f105ed290538613310adc5f4b75478e6acd44fea5a26",
+          "text": "  Frontend ->> Order: Create order\n"
+        },
+        {
+          "line": 12,
+          "offset_utf8_bytes": 425,
+          "byte_length": 26,
+          "sha256": "c55435e13e0495710fa77d5fc4b032b211fac8b7832174480217ca05fbee0101",
+          "text": "  par Parallel Processing\n"
+        },
+        {
+          "line": 13,
+          "offset_utf8_bytes": 451,
+          "byte_length": 44,
+          "sha256": "fed873bef28d78b19b316e9ec3e256f75a07a04c6b3af84d394594f5d1fe9191",
+          "text": "  Order ->> PaymentService: Process payment\n"
+        },
+        {
+          "line": 14,
+          "offset_utf8_bytes": 495,
+          "byte_length": 6,
+          "sha256": "81538f1174e85b86a9a6541c1b4d13b494d83e490a708f7553b9db2dc8615336",
+          "text": "  and\n"
+        },
+        {
+          "line": 15,
+          "offset_utf8_bytes": 501,
+          "byte_length": 44,
+          "sha256": "d8837fcb18079e6bf643b13a361d3728d9f72cdbf6fd2d98438ce45c7a996ab5",
+          "text": "  Order ->> InventoryManager: Reserve items\n"
+        },
+        {
+          "line": 16,
+          "offset_utf8_bytes": 545,
+          "byte_length": 6,
+          "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+          "text": "  end\n"
+        },
+        {
+          "line": 17,
+          "offset_utf8_bytes": 551,
+          "byte_length": 47,
+          "sha256": "41312f757e8c82abd05cee39011bb4e0c8de4cbc1ac242c8220c51992b04e7da",
+          "text": "  PaymentService -->> Order: Payment confirmed\n"
+        },
+        {
+          "line": 18,
+          "offset_utf8_bytes": 598,
+          "byte_length": 46,
+          "sha256": "8025e3a3e094301dea56214da62d64542d4841e2d361c2ba5c22bf06fd566e84",
+          "text": "  InventoryManager -->> Order: Items reserved\n"
+        },
+        {
+          "line": 19,
+          "offset_utf8_bytes": 644,
+          "byte_length": 43,
+          "sha256": "7fcebd7209da56305752c318d6d25ebab8505b9751884b02df7a219b0bd68a87",
+          "text": "  Order ->> OrdersDB: Save finalized order\n"
+        },
+        {
+          "line": 20,
+          "offset_utf8_bytes": 687,
+          "byte_length": 35,
+          "sha256": "2192d17c18ca52fb94853033e90d979825bc3e536019d3f1148f5a8ccb9b7497",
+          "text": "  OrdersDB -->> Order: Order saved\n"
+        },
+        {
+          "line": 21,
+          "offset_utf8_bytes": 722,
+          "byte_length": 49,
+          "sha256": "41e9aea0363019124e9d075ccc436a5ac29d1b234673d626a8850237384de56d",
+          "text": "  Order ->> NotificationQueue: Send confirmation\n"
+        },
+        {
+          "line": 22,
+          "offset_utf8_bytes": 771,
+          "byte_length": 54,
+          "sha256": "3fdebcfdd53248192b5f69fd7d78b15d1c727180f03bf094b47c46114890ce62",
+          "text": "  NotificationQueue -->> Customer: Order confirmation\n"
+        }
+      ],
+      "source_semantic_summary": {
+        "created_actor_indices": [],
+        "terminal_activation_depths": {},
+        "dead_actor_indices": []
+      },
+      "original_bindings": [
+        {
+          "path": "sequence/nightly-check/should-render-parallel-processes-with-different-participant-types.mmd",
+          "raw_path": "tests/fixtures/mermaid_official/cases/sequence/nightly-check/should-render-parallel-processes-with-different-participant-types.mmd",
+          "raw_sha256": "efd1a08d05338d0410719ea3d74ebac215d49dd131bce46294c40e872197505c",
+          "raw_bytes": 1159,
+          "raw_git_blob": "6f735a881fd3296963d2d1d6e605d9c67bb8b7ff",
+          "raw_text": "---\ndescription: >-\n  No-frontmatter sequence diagram combining all the typed participant\n  kinds (`actor`, plain `participant`, `boundary`, `control`, `entity`,\n  `database`, `queue`) with a `par ... and ... end` parallel block (payment\n  processing and inventory reservation running concurrently) in an\n  order-processing flow.\n---\nsequenceDiagram\n  participant Customer@{ \"type\": \"actor\" }\n  participant Frontend@{ \"type\": \"participant\" }\n  participant PaymentService@{ \"type\": \"boundary\" }\n  participant InventoryManager@{ \"type\": \"control\" }\n  participant Order@{ \"type\": \"entity\" }\n  participant OrdersDB@{ \"type\": \"database\" }\n  participant NotificationQueue@{ \"type\": \"queue\" }\n\n  Customer ->> Frontend: Place order\n  Frontend ->> Order: Create order\n  par Parallel Processing\n  Order ->> PaymentService: Process payment\n  and\n  Order ->> InventoryManager: Reserve items\n  end\n  PaymentService -->> Order: Payment confirmed\n  InventoryManager -->> Order: Items reserved\n  Order ->> OrdersDB: Save finalized order\n  OrdersDB -->> Order: Order saved\n  Order ->> NotificationQueue: Send confirmation\n  NotificationQueue -->> Customer: Order confirmation\n",
+          "body_offset_utf8_bytes": 334,
+          "body_bytes": 825,
+          "body_sha256": "e1ed6eec0ceb1b6c5b73b8f26a067b0e9e923dc5d41cc1f8e701630bf9e787b7",
+          "raw_metadata_prefix": "---\ndescription: >-\n  No-frontmatter sequence diagram combining all the typed participant\n  kinds (`actor`, plain `participant`, `boundary`, `control`, `entity`,\n  `database`, `queue`) with a `par ... and ... end` parallel block (payment\n  processing and inventory reservation running concurrently) in an\n  order-processing flow.\n---\n",
+          "original_manifest_record": {
+            "path": "sequence/nightly-check/should-render-parallel-processes-with-different-participant-types.mmd",
+            "sha256": "efd1a08d05338d0410719ea3d74ebac215d49dd131bce46294c40e872197505c",
+            "git_blob": "6f735a881fd3296963d2d1d6e605d9c67bb8b7ff",
+            "bytes": 1159,
+            "raw": {
+              "expected": "source",
+              "reason": "frontmatter",
+              "witness": {
+                "offset": 0,
+                "text": "---\n"
+              }
+            },
+            "diagnostic": {
+              "expected": "source",
+              "reason": "unsupported-sequence-statement",
+              "witness": {
+                "offset": 427,
+                "text": "par Parallel Processing"
+              },
+              "offset": 334,
+              "sha256": "e1ed6eec0ceb1b6c5b73b8f26a067b0e9e923dc5d41cc1f8e701630bf9e787b7"
+            }
+          },
+          "raw_admission": "unchanged_source_expected; complete original metadata/config predicates are not promoted",
+          "body_admission": "whole-source source facts only; no independent review/native pass/snapshot/promotion yet",
+          "source_primary_rules_ref": "existing pinned first19 role/fragment source contract and identical physical statement tokens"
+        }
+      ],
+      "exact_frozen_vendor_source_hints": [
+        {
+          "id": "merman/3d6e92aa21e620a186c7",
+          "input_sha256": "3d6e92aa21e620a186c7f0ebee20c98eb49f190ffef7ffc35022aa92afd596ec",
+          "model_sha256": "bfcf9e93566630fe566e26a27fbacf66ac9bb39a3eb13c0168630cdafa637c34",
+          "native_facts_path": "tests/fixtures/mermaid_native/sequence_merman280_native_facts.json",
+          "native_facts_sha256": "596a7131f300b455bc6c6b22e7b6282c11b5a376fb26cd4554e05efee9f0d97b",
+          "all_nonblank_physical_statement_bytes_equal_after_outer_whitespace": true,
+          "model_copied_exactly_from_prior_independently_source_reviewed_complete_Model": true
+        }
+      ],
+      "original_conditions_status": "Only whole diagnostic suffix native geometry is proposed; original raw config/look/theme/description, foreign SVG/font/layout/wrapping/API/exact pixel conditions remain separate and pending."
+    }
+  ],
+  "not_certified": [
+    "Original raw whole-source frontmatter/config/look/theme admission",
+    "Browser SVG/fonts/layout and exact browser output predicates",
+    "Original upstream private APIs",
+    "Pixel goldens from model output"
+  ]
+}

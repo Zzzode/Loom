@@ -1,0 +1,752 @@
+{
+  "schema": "er_final9_v3_source_partners/proposed",
+  "author": "agent:/root/corpus_oracle",
+  "qualification": "Source-authored controls only, not native execution and not new original-source denominator admission. Root independently authors/reviews actual native composition. V3 appends exactly one finite legacy-noop partner; original30 case dictionaries remain exact.",
+  "body": "erDiagram\nA { int id }\n",
+  "body_sha256": "79f90319a9bb20dda09401dc80c1a42f641ce5bfafde21f1293f04c4f1c38c99",
+  "counts": {
+    "whole_scene": 13,
+    "whole_source": 18
+  },
+  "cases": [
+    {
+      "name": "different-positive-root-font",
+      "source": "---\nconfig:\n  fontSize: 17.5\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "2d6c5e8eba2aee25acdd5406c7a52e19ac48f666e65a1de933cf3631874313f6",
+      "expected": "whole_scene",
+      "title": null,
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Schema numeric font metric substituted by native fixed cells; not a fixture value.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "different-positive-json-fonts",
+      "source": "%%{init: {\"fontSize\": 18, \"themeVariables\": {\"fontSize\": \"1.25rem\"}}}%%\nerDiagram\nA { int id }\n",
+      "source_sha256": "489ad25f1d42b131cc78e4a66965f294f972d3ea1c63980451bf9f6a0abda0b1",
+      "expected": "whole_scene",
+      "title": null,
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Root finite positive numeric and themeVariables CSSFontSize string are independently typed.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "different-numeric-theme-font",
+      "source": "---\nconfig:\n  themeVariables:\n    fontSize: 19\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "115a25682e31760642155a72af5fa707db68e3c7b7839936f9c17a0c8bc2e45b",
+      "expected": "whole_scene",
+      "title": null,
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "CSSFontSize permits string or number; positive numeric partner.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "different-css-over-former64",
+      "source": "---\nconfig:\n  themeCSS: |\n    rect { fill: blue; stroke: green; }\n    text { font-family: monospace; letter-spacing: 2px; }\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "8ddcfbf97f41a6f9278b4f41236bdc3e995c4727b873d468cd4177344dee5005",
+      "expected": "whole_scene",
+      "title": null,
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Complete opaque stylesheet of 90 bytes exceeds former arbitrary64B bound; fixed terminal omits CSS.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "json-css-whitespace",
+      "source": "%%{init: {\"themeCSS\": \"rect {\\tfill: #456789; }\\n\"}}%%\nerDiagram\nA { int id }\n",
+      "source_sha256": "ac6b5c2f565bf83f05be13c83087c285454b9ffce24ccaed150321ae905a7b67",
+      "expected": "whole_scene",
+      "title": null,
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Decoded tab/newline stylesheet separators are data; complete safe UTF8 checked.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "literal-title-yes",
+      "source": "---\ntitle: yes\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "ea59ff2aca8effb07a55419384c05cbea0d9bf06fb2c5ee25d604ef38cfb946f",
+      "expected": "whole_scene",
+      "title": "yes",
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Pinned JSON_SCHEMA4.3.0 string; quoted typed spelling is literal. No backend run.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "literal-title-on",
+      "source": "---\ntitle: on\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "75ba92b2830590bab2f8e9a89eb09f1a3ce0c0bc2e836954a8ef1b96c258c3bb",
+      "expected": "whole_scene",
+      "title": "on",
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Pinned JSON_SCHEMA4.3.0 string; quoted typed spelling is literal. No backend run.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "literal-title-off",
+      "source": "---\ntitle: off\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "9d97c531f72be72b6d7a7072b0b01a806c2dbf505339df2f0faa931d3ad7e8b9",
+      "expected": "whole_scene",
+      "title": "off",
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Pinned JSON_SCHEMA4.3.0 string; quoted typed spelling is literal. No backend run.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "literal-title-1_0",
+      "source": "---\ntitle: 1_0\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "04b838aabda14d992165d48bc6a5ad7795cf1c95639510264be14d9414525dac",
+      "expected": "whole_scene",
+      "title": "1_0",
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Pinned JSON_SCHEMA4.3.0 string; quoted typed spelling is literal. No backend run.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "literal-title-True",
+      "source": "---\ntitle: 'True'\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "8f61456f8bb29197fe0465661d583e6e56d0151c29584b07bfc668073b9f93d9",
+      "expected": "whole_scene",
+      "title": "True",
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Pinned JSON_SCHEMA4.3.0 string; quoted typed spelling is literal. No backend run.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "literal-title-Null",
+      "source": "---\ntitle: \"Null\"\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "2cce2b641a03d527f5596454cd84b2f23b40f7fef2518f9c663b6259de293e71",
+      "expected": "whole_scene",
+      "title": "Null",
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Pinned JSON_SCHEMA4.3.0 string; quoted typed spelling is literal. No backend run.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "literal-title-Bad: title",
+      "source": "---\ntitle: 'Bad: title'\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "3ad8a84f5c3fdbfb4d29628d7960f747056c442d8eea7fdde798f82f67638b9b",
+      "expected": "whole_scene",
+      "title": "Bad: title",
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Pinned JSON_SCHEMA4.3.0 string; quoted typed spelling is literal. No backend run.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "closed-title-True",
+      "source": "---\ntitle: True\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "fa933241fe3ca4a27b84e71e7f3424c8eb3db86de702036f9261b4829315b89e",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Non-string or malformed mapping is outside safe-string title profile; preserve whole input, not a rendered raw spelling.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "closed-title-FALSE",
+      "source": "---\ntitle: FALSE\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "330ec277b2228040fdabbc35613e420371f1036c18bef91a027b275fc335a9b3",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Non-string or malformed mapping is outside safe-string title profile; preserve whole input, not a rendered raw spelling.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "closed-title-Null",
+      "source": "---\ntitle: Null\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "52d65c97db079a2a7af9a0d0af237d58c4ecd76e27062e3041bf56e64305b578",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Non-string or malformed mapping is outside safe-string title profile; preserve whole input, not a rendered raw spelling.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "closed-title-NULL",
+      "source": "---\ntitle: NULL\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "e9dd26dcd3d1771d3ac359fc88e01e22c6588da8b3e6451308d63abceb9793b4",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Non-string or malformed mapping is outside safe-string title profile; preserve whole input, not a rendered raw spelling.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "closed-title-0x10",
+      "source": "---\ntitle: 0x10\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "eb4dff841ef6846b40f478901a6fc4d32617b1d63ec0ad37a44a4d646c87a6ac",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Non-string or malformed mapping is outside safe-string title profile; preserve whole input, not a rendered raw spelling.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "closed-title-0o17",
+      "source": "---\ntitle: 0o17\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "c561c44d19a2b7fe0e8483fce6d049ba2a6d91aa093d688395f1c05051761c88",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Non-string or malformed mapping is outside safe-string title profile; preserve whole input, not a rendered raw spelling.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "closed-title-0b11",
+      "source": "---\ntitle: 0b11\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "7fa6f20d815e2f1cef98d38c08c248287a575d8e1f363c9baa9ce4af5dee789f",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Non-string or malformed mapping is outside safe-string title profile; preserve whole input, not a rendered raw spelling.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "closed-title-.Inf",
+      "source": "---\ntitle: .Inf\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "d0c53f21c90c4e542dc91bc00e35694986fcd9102a25e1ec04cfb4bc9acab912",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Non-string or malformed mapping is outside safe-string title profile; preserve whole input, not a rendered raw spelling.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "closed-title-.NaN",
+      "source": "---\ntitle: .NaN\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "59f1d990b0978943dd80df1641079e74279e83b7d9d49b479db6ea81c0ea36f1",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Non-string or malformed mapping is outside safe-string title profile; preserve whole input, not a rendered raw spelling.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "closed-title-Bad: title",
+      "source": "---\ntitle: Bad: title\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "a309e0879fc2981345c42916bc01f147b2d49f6817ec2e5310c86c610ea8dbfd",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Non-string or malformed mapping is outside safe-string title profile; preserve whole input, not a rendered raw spelling.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "css-bool",
+      "source": "%%{init: {\"themeCSS\": false}}%%\nerDiagram\nA { int id }\n",
+      "source_sha256": "bf2b4f491096526b87e51fdcbd1a2219d7569e27913f0d0ca88d7b3b1a990ebf",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Wrong typed leaf, nonpositive numeric native metric, or existing unsafe-text policy; complete source retained.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "root-font-string",
+      "source": "%%{init: {\"fontSize\": \"17px\"}}%%\nerDiagram\nA { int id }\n",
+      "source_sha256": "8b09b63f0f39a90821bae1a399d23cbd98858b8cd5f2bc0d81f3a3375ad3a3ad",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Wrong typed leaf, nonpositive numeric native metric, or existing unsafe-text policy; complete source retained.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "root-font-zero",
+      "source": "%%{init: {\"fontSize\": 0}}%%\nerDiagram\nA { int id }\n",
+      "source_sha256": "49a814559fbd8f59c79b3ae0d2d0565c0ea368a3bb055f8ec3e3bf3b64f0fd94",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Wrong typed leaf, nonpositive numeric native metric, or existing unsafe-text policy; complete source retained.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "theme-font-bool",
+      "source": "%%{init: {\"themeVariables\": {\"fontSize\": true}}}%%\nerDiagram\nA { int id }\n",
+      "source_sha256": "3e3911f6e421c3da1bf48d1542359f6943ae4b2ffebefac3b7e818066f5affcf",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Wrong typed leaf, nonpositive numeric native metric, or existing unsafe-text policy; complete source retained.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "css-unsafe",
+      "source": "%%{init: {\"themeCSS\": \"rect {‮ fill: blue; }\"}}%%\nerDiagram\nA { int id }\n",
+      "source_sha256": "517fcc6198756516c99d09f298ccd3de602f629e62b6abbefbad9425ffb584b3",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Wrong typed leaf, nonpositive numeric native metric, or existing unsafe-text policy; complete source retained.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "css-nul",
+      "source": "%%{init: {\"themeCSS\": \"x\\u0000y\"}}%%\nerDiagram\nA { int id }\n",
+      "source_sha256": "fa325044d71144dbb53bf9f80ba0b14d46ece9d381913c9f19f4728b2c30aa4d",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Wrong typed leaf, nonpositive numeric native metric, or existing unsafe-text policy; complete source retained.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "yaml-typed-False-themeCSS",
+      "source": "---\nconfig:\n  themeCSS: False\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "f7ff462825b8697efcb83e5c44306c9120dfc2f27233af3f2c21dc2036adf712",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Common YAML scalar classification must not downgrade booleans into stylesheet/font strings.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "yaml-typed-True-themeVariables:\n    fontSize",
+      "source": "---\nconfig:\n  themeVariables:\n    fontSize: True\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "1d61a7709712623cef53f03e813aab4be2d25a1a3491bf039a202412e90471eb",
+      "expected": "whole_source",
+      "title": null,
+      "complete_graph": null,
+      "reason": "Common YAML scalar classification must not downgrade booleans into stylesheet/font strings.",
+      "runtime_status": "not_executed"
+    },
+    {
+      "name": "different-legacy-unknown-case-finite-number",
+      "source": "---\nconfig:\n  loglevel: 17.5\n---\nerDiagram\nA { int id }\n",
+      "source_sha256": "d4b74679523bf943dba2a83989627efb87602312dd5416cdda1e97ba8a5bdddc",
+      "expected": "whole_scene",
+      "title": null,
+      "complete_graph": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int id"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "id",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "reason": "Exact legacy unknown-case key is a terminal no-op for finite numeric values, never a canonical logLevel alias. Value is not used in geometry.",
+      "runtime_status": "not_executed"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+titleDisplay: chart(bytes=6)="营收"
+titleDisplay: yAxis(bytes=6)="分数"
+# Bar 1  * Line 1
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=6)="北区" value=2 pointLabel=none clipped=false}, {index=1 x(bytes=6)="南区" value=5 pointLabel=none clipped=false}, {index=2 x(bytes=6)="东区" value=3 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=1 type=line title=none samples=[{index=0 x(bytes=6)="北区" value=4 pointLabel=none clipped=false}, {index=1 x(bytes=6)="南区" value=1 pointLabel=none clipped=false}, {index=2 x(bytes=6)="东区" value=6 pointLabel=none clipped=false}] orphanPointLabels=[]
+北区 +#+-*
+南区 +*++##
+东区 +##+--*
+     ++--------+
+      0       10

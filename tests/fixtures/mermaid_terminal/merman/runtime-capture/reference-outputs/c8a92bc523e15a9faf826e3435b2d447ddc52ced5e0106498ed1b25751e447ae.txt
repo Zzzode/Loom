@@ -1,0 +1,11 @@
+<span style="color:#303030">#</span> <span style="color:#101010">Bar 1</span>  <span style="color:#404040">*</span> <span style="color:#101010">Line 1</span>
+<span style="color:#101010">xDomain: band categories=[bytes=1=&quot;A&quot;, bytes=1=&quot;B&quot;]</span>
+<span style="color:#101010">values: </span><span style="color:#303030">#</span><span style="color:#101010"> series=0 type=bar title=none samples=[{index=0 x(bytes=1)=&quot;A&quot; value=2 pointLabel=none clipped=false}, {index=1 x(bytes=1)=&quot;B&quot; value=8 pointLabel=none clipped=false}] orphanPointLabels=[]</span>
+<span style="color:#101010">values: </span><span style="color:#404040">*</span><span style="color:#101010"> series=1 type=line title=none samples=[{index=0 x(bytes=1)=&quot;A&quot; value=8 pointLabel=none clipped=false}, {index=1 x(bytes=1)=&quot;B&quot; value=2 pointLabel=none clipped=false}] orphanPointLabels=[]</span>
+<span style="color:#101010">10</span> <span style="color:#202020">+</span>
+ <span style="color:#101010">8</span> <span style="color:#202020">+</span> <span style="color:#404040">*-+</span><span style="color:#303030">###</span>
+ <span style="color:#101010">6</span> <span style="color:#202020">+</span>   <span style="color:#404040">|</span><span style="color:#303030">###</span>
+ <span style="color:#101010">4</span> <span style="color:#202020">+</span>   <span style="color:#404040">|</span><span style="color:#303030">###</span>
+ <span style="color:#101010">2</span> <span style="color:#202020">+</span><span style="color:#303030">###</span><span style="color:#404040">+-*</span><span style="color:#303030">#</span>
+ <span style="color:#101010">0</span> <span style="color:#202020">+-+---+-</span>
+    <span style="color:#101010"> A   B</span>

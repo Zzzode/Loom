@@ -1,0 +1,16 @@
+titleDisplay: chart(bytes=27)="Different Colors in xyChart"
+titleDisplay: yAxis(bytes=7)="valuesY"
+* Line 1  # Bar 1  # Bar 2  * Line 2
+xDomain: band categories=[bytes=10="Category 1", bytes=10="Category 2", bytes=10="Category 3", bytes=10="Category 4"]
+values: * series=0 type=line title=none samples=[{index=0 x(bytes=10)="Category 1" value=10 pointLabel=none clipped=false}, {index=1 x(bytes=10)="Category 2" value=20 pointLabel=none clipped=false}, {index=2 x(bytes=10)="Category 3" value=30 pointLabel=none clipped=false}, {index=3 x(bytes=10)="Category 4" value=40 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: # series=1 type=bar title=none samples=[{index=0 x(bytes=10)="Category 1" value=20 pointLabel=none clipped=false}, {index=1 x(bytes=10)="Category 2" value=30 pointLabel=none clipped=false}, {index=2 x(bytes=10)="Category 3" value=25 pointLabel=none clipped=false}, {index=3 x(bytes=10)="Category 4" value=35 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: # series=2 type=bar title=none samples=[{index=0 x(bytes=10)="Category 1" value=15 pointLabel=none clipped=false}, {index=1 x(bytes=10)="Category 2" value=25 pointLabel=none clipped=false}, {index=2 x(bytes=10)="Category 3" value=20 pointLabel=none clipped=false}, {index=3 x(bytes=10)="Category 4" value=30 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=3 type=line title=none samples=[{index=0 x(bytes=10)="Category 1" value=5 pointLabel=none clipped=false}, {index=1 x(bytes=10)="Category 2" value=15 pointLabel=none clipped=false}, {index=2 x(bytes=10)="Category 3" value=25 pointLabel=none clipped=false}, {index=3 x(bytes=10)="Category 4" value=35 pointLabel=none clipped=false}] orphanPointLabels=[]
+50 +
+40 +           +-*
+30 +    ###+-*-+###
+20 +###+-*-+### ###
+10 +#*-+### ### ###
+ 0 +-+---+---+---+-
+    Cat Cat Cat Cat
+titleDisplay: xAxis(bytes=11)="categoriesX"

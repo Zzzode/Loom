@@ -1,0 +1,9 @@
+<span style="color:#27272a">titleDisplay: chart(bytes=49)=&quot;before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}&quot;</span>
+<span style="color:#27272a">xDomain: band categories=[bytes=1=&quot;A&quot;]</span>
+  <span style="color:#27272a">1</span> <span style="color:#71717a">┤</span><span style="color:#2563eb">███</span>
+<span style="color:#27272a">0.8</span> <span style="color:#71717a">┤</span><span style="color:#2563eb">███</span>
+<span style="color:#27272a">0.6</span> <span style="color:#71717a">┤</span><span style="color:#2563eb">███</span>
+<span style="color:#27272a">0.4</span> <span style="color:#71717a">┤</span><span style="color:#2563eb">███</span>
+<span style="color:#27272a">0.2</span> <span style="color:#71717a">┤</span><span style="color:#2563eb">███</span>
+  <span style="color:#27272a">0</span> <span style="color:#71717a">┼─┬─</span>
+     <span style="color:#27272a"> A</span>

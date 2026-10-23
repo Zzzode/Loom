@@ -1,0 +1,12 @@
+ ┌───┐
+ │ A │
+ └───┘
+   │
+a deliberately long label
+   │
+   │
+   │
+   ▼
+ ┌───┐
+ │ B │
+ └───┘

@@ -1,0 +1,5 @@
+title(bytes=49)="before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}"
+dateFormat(bytes=10)="YYYY-MM-DD"
+section(bytes=4)="Work"
+  - task(bytes=5)="Task " [id(bytes=4)="task", order=0, range=2024-01-01 ->
+    2024-01-02, start(bytes=10)="2024-01-01", duration(bytes=2)="1d"]

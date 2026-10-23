@@ -1,0 +1,984 @@
+{
+  "schema": "mmdflux_full_declared_source_manifest/v1",
+  "qualification": "Durable byte-exact copies of the 121 mmdflux internal sources declared by the reviewed all-387 static AST closure. This is source provenance only, not runtime, semantic, or coverage credit.",
+  "repository": "https://github.com/kevinswiber/mmdflux",
+  "commit": "c7405b64865938b2df4d33d26389d51691409913",
+  "source_count": 121,
+  "source_bytes": 3714466,
+  "license": {
+    "spdx": "MIT",
+    "durable_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/LICENSE",
+    "sha256": "b25d519deb4c92e9d79a00b0af889a39f759c2c251b9786da4062c67dc7056e3",
+    "bytes": 1069
+  },
+  "sources": [
+    {
+      "upstream_path": "src/diagrams/class/compiler.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/class/compiler.rs",
+      "sha256": "88dcb6103a381a8d0710b4d8da944cf8143334dd5b1657430e636bc1eaadf2b4",
+      "bytes": 19021,
+      "git_blob": "a50ecd32f0a20ab2b61300bff18fb0ff06751243",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/class/compiler.rs"
+    },
+    {
+      "upstream_path": "src/diagrams/class/instance.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/class/instance.rs",
+      "sha256": "28c0b719ed174d27e24d4293c01143a3cc0092f4ff95036fe282975a0aa984c7",
+      "bytes": 2305,
+      "git_blob": "11f8070cc65bcb416816cb4061fa64f0abfbd538",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/class/instance.rs"
+    },
+    {
+      "upstream_path": "src/diagrams/flowchart/compiler.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/flowchart/compiler.rs",
+      "sha256": "e136524b05a415be821efa2351e1ddea99e4be7ab17f85e50c5cb9168f279ffc",
+      "bytes": 79647,
+      "git_blob": "15776bb2822a2be6cb16bcf667b8595a901446cb",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/flowchart/compiler.rs"
+    },
+    {
+      "upstream_path": "src/diagrams/flowchart/instance.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/flowchart/instance.rs",
+      "sha256": "c9c8ea72d8fc006b17bac57048d3e0c5ccb6d481f45786fa6ef66382ada60342",
+      "bytes": 2325,
+      "git_blob": "a0865cb610fcbdcd6ab8475f928bc8113d26b417",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/flowchart/instance.rs"
+    },
+    {
+      "upstream_path": "src/diagrams/flowchart/validation.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/flowchart/validation.rs",
+      "sha256": "770fa236709b982036b0ea48cb049367a0ab9c9e85e8532225205cf1bb552096",
+      "bytes": 22872,
+      "git_blob": "92e2a2b00e4db8951c08939f4d5f1d7b2df432b2",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/flowchart/validation.rs"
+    },
+    {
+      "upstream_path": "src/diagrams/sequence/compiler.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/sequence/compiler.rs",
+      "sha256": "bba8c21f200f54ac8bdc49c1e88fbe7f1b92e860f2e6300b7ea0e352d9b2c1f2",
+      "bytes": 41400,
+      "git_blob": "94563f638ee5388a552eaad2cdf08944a4208543",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/sequence/compiler.rs"
+    },
+    {
+      "upstream_path": "src/diagrams/sequence/instance.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/sequence/instance.rs",
+      "sha256": "b5eab0b426d0f67d1b9ac00446b8f23c05f076f4d2a70be1544653099cce0f6c",
+      "bytes": 3835,
+      "git_blob": "2ffcfc4b62fb07027b9923303e309d3cd0515203",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/sequence/instance.rs"
+    },
+    {
+      "upstream_path": "src/diagrams/state/compiler.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/state/compiler.rs",
+      "sha256": "b24913f50a42d6e214fd8ee7e9fc3efee6be83b1c9726106f8316f3253c49c81",
+      "bytes": 42059,
+      "git_blob": "378e025e6171f2cd45e730daf871857bb76b7ae7",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/state/compiler.rs"
+    },
+    {
+      "upstream_path": "src/diagrams/state/instance.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/state/instance.rs",
+      "sha256": "49fc1d41a1022bb38e26816f98f6856e5e3493ee6ec2ce6232b8c432a7917f8a",
+      "bytes": 2252,
+      "git_blob": "aa7f6848e8e6eae22ceb965934ea15edfb7b2ce4",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/diagrams/state/instance.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/float_layout.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/float_layout.rs",
+      "sha256": "c9f03a9ac16b2fd193e8c3ca50ca31c1b27e1f8bdcd94357cf6237e7257e0762",
+      "bytes": 25150,
+      "git_blob": "0c169aca0729e649c18afc50da08253173ef6e61",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/float_layout.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/float_router.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/float_router.rs",
+      "sha256": "eee6ee76b8c9e9519d0193763102ca6f2c2a904e7d1311de8c2e7861e19726d8",
+      "bytes": 28954,
+      "git_blob": "f155d631b500c01e4b03d1536cc654e5ca25e22b",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/float_router.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/acyclic.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/acyclic.rs",
+      "sha256": "66af277d68627178ffa2513eb13f662c70e8c22a6ace37d9b143bd75186bd40c",
+      "bytes": 14319,
+      "git_blob": "2becb060e7a9f106ae793e2a81cb75682be785e1",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/acyclic.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/bk.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/bk.rs",
+      "sha256": "d63cc78386996c87a8037b9dcf77967507fcd9e3633cf24fad14927ae998d508",
+      "bytes": 93611,
+      "git_blob": "7005b6b0be8720a244685c0117d0b0241fcd4760",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/bk.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/border.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/border.rs",
+      "sha256": "769bdafbe551b09e005f818a316921af4a5ddc7896068ae5602004c6e6b14b97",
+      "bytes": 15404,
+      "git_blob": "af9cc41ef1c060cbbdd7645cbb2695c12e530a8e",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/border.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/compartment_spacing.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/compartment_spacing.rs",
+      "sha256": "0bc1aef3efd9e337c449b5b6910f2d3ba852b9ac66f368c7a6519a22ba6a4ba8",
+      "bytes": 23908,
+      "git_blob": "92e42987270d3eb450f162b78558b3fd5e904250",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/compartment_spacing.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/dagre_parity_tests.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/dagre_parity_tests.rs",
+      "sha256": "40aba178cf9e96e52792eea529a4ba62780b284189c07d5a6698088bfcb3d78c",
+      "bytes": 25654,
+      "git_blob": "edcb2df1c8bb51575e164131cf7b144dddaf007e",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/dagre_parity_tests.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/graph.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/graph.rs",
+      "sha256": "6c8c28d15db1ea9d5738cca946bf4d465690c8199a036776126f4365a93bd9c8",
+      "bytes": 34164,
+      "git_blob": "8729a5136777c61ff2f8deb19eccc29b6e682ce6",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/graph.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/model_order_tests.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/model_order_tests.rs",
+      "sha256": "facef7f1e1c2e7cf2e9425e594637f842420ca29be738f1f54ede5afef401fc1",
+      "bytes": 13717,
+      "git_blob": "c69f2639c937d867be31c237ee782ad36cfb6975",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/model_order_tests.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/nesting.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/nesting.rs",
+      "sha256": "7a985212838b1d9368327f25e1d99bdbde82abc3d27af14291fd731b29ba39c5",
+      "bytes": 33045,
+      "git_blob": "d88b151d7b3983c64fd26c7c7b4e73dedb6b5ae8",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/nesting.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/network_simplex.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/network_simplex.rs",
+      "sha256": "766490e1d7cf096e666deff9bf80cd29a1ae89ef868e6db4fdf524c4315ae6f0",
+      "bytes": 35791,
+      "git_blob": "11f556d6c349170904ae7b792ef34a814caf53ec",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/network_simplex.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/normalize.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/normalize.rs",
+      "sha256": "0752df6238b461e67e4284f3bb85d9f334dd74fb4a2415c108175d2cc0d523b5",
+      "bytes": 35662,
+      "git_blob": "e1df182d052a946b6d9ebd4ae204344a278f78ea",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/normalize.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/order.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/order.rs",
+      "sha256": "bdc5ec3af8f1ee1b74008d7d530f2a7c67be676e2adfa1cae22782d02713c6bf",
+      "bytes": 130866,
+      "git_blob": "fcb7f191f1ce4efe56b15cefb29973c188f38d6e",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/order.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/parent_dummy_chains.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/parent_dummy_chains.rs",
+      "sha256": "d65f721f77653832b5a3dff205c6ade128fc3d9d2b736a942b649d6f6b1f36e4",
+      "bytes": 22617,
+      "git_blob": "f6c4e14dd63605eca141237c0d5baaacb176817e",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/parent_dummy_chains.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/position.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/position.rs",
+      "sha256": "0b4ad88b7a818b8b3ee3f408d9321eb26c9c32e26fe2c0be869ea8c2745ba5b8",
+      "bytes": 29837,
+      "git_blob": "7b96d8dcf19ba8fb92f87622c8d5e1c763cb8c86",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/position.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/rank.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/rank.rs",
+      "sha256": "04f043429adf880941b1652947e518bbad21c1d3baa137debf04d4afa2f0be19",
+      "bytes": 7885,
+      "git_blob": "a84c69ea35078222b371d4a714730f9d56022e0c",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/rank.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/regression_tests.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/regression_tests.rs",
+      "sha256": "99c3b25f4f4ac40ce4bf8a946ed3219b6db4905c87c6895c14f92155d5d44726",
+      "bytes": 63170,
+      "git_blob": "65203c64b6c6d848d51b52196a2cdd1e9ce27d35",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/regression_tests.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/trace.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/trace.rs",
+      "sha256": "156fe919a065688a4dd4032cb89e58cbbd850dbab0b3d60b7832386b17577a75",
+      "bytes": 7606,
+      "git_blob": "21713b5ddc24538fdcc420c9917525975ff29944",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/trace.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/kernel/types.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/types.rs",
+      "sha256": "b39469600bd467f083bb25d71c7690a7fc5eacd7586b44f92cb64102c94f72ab",
+      "bytes": 21916,
+      "git_blob": "e1bceadd6561d26e2c3cbb9af6624c7976297030",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/kernel/types.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/algorithms/layered/layout_building_tests.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/layout_building_tests.rs",
+      "sha256": "54f9f07865cf1ee218ff71663850279937bb80bed28174e53cbc077218221e12",
+      "bytes": 25381,
+      "git_blob": "039faa32636002952826c1432104ab9db174fc2b",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/algorithms/layered/layout_building_tests.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/elk.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/elk.rs",
+      "sha256": "3915bf1c54920f71179e1fde504003ba996bb77e992f812bb813da4ba558b63c",
+      "bytes": 18472,
+      "git_blob": "c551cb153b5231cb809d647ed2af1761601b6ebb",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/elk.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/registry.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/registry.rs",
+      "sha256": "c8aa59d1ec9439b07a8f2991c4bb3c975b45398ed452ac7d7a6fe9377543ec93",
+      "bytes": 2530,
+      "git_blob": "41210d3fd02726084e4a0681429e04c8eb9bf4a0",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/registry.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/selection.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/selection.rs",
+      "sha256": "3c8887114a05369c43b8ed60894fe020bf32c3b73b1c5339285f82a060e88856",
+      "bytes": 10054,
+      "git_blob": "6eaf10a8b17f06f2551979fe5ee91b6410a051ee",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/selection.rs"
+    },
+    {
+      "upstream_path": "src/engines/graph/tests.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/tests.rs",
+      "sha256": "0172c72fe529814deaaec1b9f94c945f8db43e7063d92c13d469342102f34fd2",
+      "bytes": 48704,
+      "git_blob": "1cda2220d063831ff0f6863213919b0581fc3c2f",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/engines/graph/tests.rs"
+    },
+    {
+      "upstream_path": "src/graph/attachment.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/attachment.rs",
+      "sha256": "e4ebc0155acfcf93c68b701263307d955c8e238ba43dfeac9e31fb855855179b",
+      "bytes": 15716,
+      "git_blob": "3cfc23f46e3bd1a8819618a7349e07dcfd82d613",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/attachment.rs"
+    },
+    {
+      "upstream_path": "src/graph/diagram.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/diagram.rs",
+      "sha256": "f9f36f1577370b50cbb3bee84f82f3327391c81489ce3762f4f8dbd06e344a2d",
+      "bytes": 17908,
+      "git_blob": "87f01e054c6544cb9d49c8629a40612456334043",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/diagram.rs"
+    },
+    {
+      "upstream_path": "src/graph/direction_policy.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/direction_policy.rs",
+      "sha256": "426a8cb6f605aaec7ddc9cfbb9112d1180d915559f71d0e50f54a450d89a604d",
+      "bytes": 6241,
+      "git_blob": "4b18c0355244512460f3efa17d6cb0a9c56a6a4d",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/direction_policy.rs"
+    },
+    {
+      "upstream_path": "src/graph/edge.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/edge.rs",
+      "sha256": "e2d5e733eda9380d1f2217a43e252cd18801c9ba66bf499d7fb4bca0146b7848",
+      "bytes": 6471,
+      "git_blob": "c15b518c23dceb86fd27da035465cd3fa4940964",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/edge.rs"
+    },
+    {
+      "upstream_path": "src/graph/edge_marker.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/edge_marker.rs",
+      "sha256": "d2df4d57994d10ad1f57674bc95a11e87741d2b42deebeb5deb1e1ea6a8f7569",
+      "bytes": 7987,
+      "git_blob": "db0db4ede54aa3cb148778ef243147eb56142f46",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/edge_marker.rs"
+    },
+    {
+      "upstream_path": "src/graph/geometry.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/geometry.rs",
+      "sha256": "5cc24e99620c22092f984da761ca25346ce4f7c98095bec9e5193c685320e8e7",
+      "bytes": 20076,
+      "git_blob": "daa9e057019b14dbed235589e9b3fdba8024614b",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/geometry.rs"
+    },
+    {
+      "upstream_path": "src/graph/grid/derive/tests.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/grid/derive/tests.rs",
+      "sha256": "e5a68afe13bc00c74758acb87d42ae7ab9430f30474027873884bc182b0ddbe4",
+      "bytes": 29496,
+      "git_blob": "91097ef05ca0a2d3d0ff318a543285be9c98dc3f",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/graph/grid/intersect.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/grid/intersect.rs",
+      "sha256": "9fdeea9c5f2349b36f5c2e9a7578fb4074567e9d4040e239d8b9b15e9dd8701b",
+      "bytes": 32997,
+      "git_blob": "3b3490980faa3c8278fe5962b809ef82e30714f5",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/grid/intersect.rs"
+    },
+    {
+      "upstream_path": "src/graph/grid/label_placement.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/grid/label_placement.rs",
+      "sha256": "3b360d8b1e3fbafc17878af998029a55f73fe00fb5567441f489ad166d8e4a4c",
+      "bytes": 36551,
+      "git_blob": "b9bf8beb5bdf83a4a020bed93c5cb6dc80ea7357",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/grid/label_placement.rs"
+    },
+    {
+      "upstream_path": "src/graph/grid/layout.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/grid/layout.rs",
+      "sha256": "b4ac1ecfa0d328c948a8d5bb22b5da2816b79067704d6b0241ffd6327e846b67",
+      "bytes": 14540,
+      "git_blob": "75efd07fcf1d82535b780e0f207e9b9169c64a0d",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/grid/layout.rs"
+    },
+    {
+      "upstream_path": "src/graph/grid/routing_tests.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/grid/routing_tests.rs",
+      "sha256": "e251ecb5909b7b5e9e98e0f2a45a9df39962a3f69a9dbaaf413e3bf4c78adece",
+      "bytes": 52805,
+      "git_blob": "0d04aac06f2f6690bdfdd863f20282c33a6551fd",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/grid/routing_tests.rs"
+    },
+    {
+      "upstream_path": "src/graph/label_wrap.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/label_wrap.rs",
+      "sha256": "3ef7532e56ff8b55746d557f24960a7ea765241da7e81759a7ca79d42b7c3d3e",
+      "bytes": 6988,
+      "git_blob": "49342aec190c94611163021f0b1dc8973b23f4b9",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/label_wrap.rs"
+    },
+    {
+      "upstream_path": "src/graph/measure.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/measure.rs",
+      "sha256": "ba94548eebf0295158092e82d668c08ed7a31532d700cabeaba043491860490d",
+      "bytes": 55338,
+      "git_blob": "b346658cb1df89ffc8ca7838b714fc22002c510c",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/measure.rs"
+    },
+    {
+      "upstream_path": "src/graph/node.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/node.rs",
+      "sha256": "31e6f48cc42314b2b3d10d80ad3b7d825634f5fd8cef1df39e1c62f6299afb54",
+      "bytes": 5327,
+      "git_blob": "1bb4b9aa9e54316653092a3067be792a7e3dc018",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/node.rs"
+    },
+    {
+      "upstream_path": "src/graph/routing/backward_corridor.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/backward_corridor.rs",
+      "sha256": "85e91750648aeee67cd07840b3b3cf2b515067f50eb4a01dd0b38aa50ff41f19",
+      "bytes": 29059,
+      "git_blob": "a7182a1d8aa3a5ccc0c585b728be3b1afbf8d8eb",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/backward_corridor.rs"
+    },
+    {
+      "upstream_path": "src/graph/routing/label_clamp.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/label_clamp.rs",
+      "sha256": "4c93f01707b5f9077f8b53538928ec7a771dec7063d794e39ce9ca8f02affcc2",
+      "bytes": 22922,
+      "git_blob": "41a7cffb46cab1b3635e7eea16a431991152b3fe",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/label_clamp.rs"
+    },
+    {
+      "upstream_path": "src/graph/routing/label_gap.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/label_gap.rs",
+      "sha256": "9ca7e927287672466347071e6c7518a5ba571980c5f1573a81e178f7ea517c6d",
+      "bytes": 16415,
+      "git_blob": "100562ae7760d8be90fc19b46f0a37c8fd40141f",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/label_gap.rs"
+    },
+    {
+      "upstream_path": "src/graph/routing/label_lanes.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/label_lanes.rs",
+      "sha256": "76debae802ac6b7d9fc8a627047ecba20ed03ac92d5b29062af69c43d05b79b1",
+      "bytes": 56294,
+      "git_blob": "05602e079f89bfb17cd0e5a2e414973a02d0f174",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/label_lanes.rs"
+    },
+    {
+      "upstream_path": "src/graph/routing/label_rewrap.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/label_rewrap.rs",
+      "sha256": "fc081dc591ae4f14ad08f5d3a95c88d3db3a827fb08cb912d9700f8e1cb4b6b0",
+      "bytes": 31350,
+      "git_blob": "fb6d476acf4867f039634cbd48da80e7e54abc5d",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/label_rewrap.rs"
+    },
+    {
+      "upstream_path": "src/graph/routing/mod.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/mod.rs",
+      "sha256": "5c014b1dbe4357ebcbb450765ba9605ed9b82911a736c982f516aa40a306c1ef",
+      "bytes": 66994,
+      "git_blob": "c39d8054e546b6774390bc11a9e597c3a6c1a909",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/mod.rs"
+    },
+    {
+      "upstream_path": "src/graph/routing/stage.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/stage.rs",
+      "sha256": "fddb7a4977b5480981ee8850054f034690748941128955e4a2562663a4df677b",
+      "bytes": 46044,
+      "git_blob": "211843ef4a3d7f3193741f327e267cd6c3699f4d",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/stage.rs"
+    },
+    {
+      "upstream_path": "src/graph/routing/trace.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/trace.rs",
+      "sha256": "b82de7959a5646279a63cb32ba7b09f6ee70b1e055a60d55f10b267e299ce82e",
+      "bytes": 18622,
+      "git_blob": "4f719e796364855b999236a6bc6b20dff35a315a",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/routing/trace.rs"
+    },
+    {
+      "upstream_path": "src/graph/space.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/space.rs",
+      "sha256": "b8cbe37fa700cfa6286eebb8d1d837e6cb33c55dd46cd6cd396993a9fdf60d6f",
+      "bytes": 1513,
+      "git_blob": "df407c670416570dd870a8d5a0b3f2890470fa4c",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/space.rs"
+    },
+    {
+      "upstream_path": "src/graph/style.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/graph/style.rs",
+      "sha256": "42be61626ac46d6f660aed110947791f8678534eb5085ef0f1c5b4261cd33d49",
+      "bytes": 37123,
+      "git_blob": "193200323e31ba5a7bc4dba76a2014b0755b2e13",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/graph/style.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/composition_probe.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/composition_probe.rs",
+      "sha256": "b78556fa00f60e1dc214658d7ce83ba8444da4aba91ef3678005ca24d202eff9",
+      "bytes": 24101,
+      "git_blob": "1c41f84a8ca863434be40bd890872efdbf8f5151",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/composition_probe.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/cross_pipeline.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/cross_pipeline.rs",
+      "sha256": "763ccc29ad92e7c47c1d7ef1fe391a4506fff0d5152dda7b7cf471a31db5ba91",
+      "bytes": 116011,
+      "git_blob": "76a91cf39f3375f2e7b59dd3efc69eeb9a4a152c",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/internal_tests/direction_policy_cross.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/direction_policy_cross.rs",
+      "sha256": "34200fb4de4c9f0d643bff92e1197735fd50d77ced70a7abe0d1658fa73cac8c",
+      "bytes": 1051,
+      "git_blob": "97bec5ed279e2609becea63c61054eb826588405",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/direction_policy_cross.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/edge_endpoint_invariant.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/edge_endpoint_invariant.rs",
+      "sha256": "9d28269f6e0fe2fa28ed7c9ad496f491248806e34f4703102723cecce104cf28",
+      "bytes": 3788,
+      "git_blob": "eeb543fd976a0b79fc003611c7d7d7fc1399bd64",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/edge_endpoint_invariant.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/float_router_direction.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/float_router_direction.rs",
+      "sha256": "010ac7f968f0e8d7f96be853a3badce9139c8c5b6381d9d99a474071be69d7e8",
+      "bytes": 2925,
+      "git_blob": "ad193d810b592e4a3ea984c58804074c6c3c9790",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/float_router_direction.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/graph_diagram_cross.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/graph_diagram_cross.rs",
+      "sha256": "d3af19ef0cfcd52e8fe3dd732a975cc036f0c4acc0996e6c7c904a42f7107e63",
+      "bytes": 2791,
+      "git_blob": "7bede26b1d2e67ad268297f7cb00517741361806",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/graph_diagram_cross.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/graph_routing_pipeline.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/graph_routing_pipeline.rs",
+      "sha256": "dca7162cda3784c8b6e885be839d58be5a11a0a5d4a0d84f4a4ad4622e8f0f6d",
+      "bytes": 204579,
+      "git_blob": "771b869553a4a8973ebfff24fb4470fe3139eef0",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/internal_tests/grid_routing_regression.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/grid_routing_regression.rs",
+      "sha256": "a8e90b9f1ff83f012a08c82d6b1ea755f15f526deeec51aa44655181f27c19fd",
+      "bytes": 40365,
+      "git_blob": "8d55d62e44c8d9b2ab2dce435dd9154b0fdf1e94",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/internal_tests/label_node_overlap.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/label_node_overlap.rs",
+      "sha256": "3a28b2d8929209ee6e98932670ab907c4d943aeb2d1b46c9a179ac10a3280881",
+      "bytes": 12571,
+      "git_blob": "55ddf8d297ec39389ea6056011e0000a9370f65d",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/label_node_overlap.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/layered_adapter_pipeline.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/layered_adapter_pipeline.rs",
+      "sha256": "c98a43f4211b346e90c6e02bf4da5e95a2d5cc35a79d2e79c86a8398218018ea",
+      "bytes": 9762,
+      "git_blob": "77a6b5c4de3ab5a67c71251a67cba68c499894d1",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/layered_adapter_pipeline.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/layered_kernel_bend.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/layered_kernel_bend.rs",
+      "sha256": "047f251ee801232ee15823fecc14577d2cd1acf710df1bf82edc7517b400267f",
+      "bytes": 12984,
+      "git_blob": "0668f309f78ca2d9bdf081dd162e37e9b8f8852c",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/internal_tests/layout_stability/mod.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/layout_stability/mod.rs",
+      "sha256": "0c6fc19a3780cf3fe23cc6c12499a10fbac02694ec2fdb52adb0b687bb20d9f2",
+      "bytes": 64135,
+      "git_blob": "cb74cb978cd7d2b208f2c62039412fd4ef015619",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/internal_tests/layout_stability/phase_attribution.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/layout_stability/phase_attribution.rs",
+      "sha256": "1fb124897c997f2a8c0f99bf17d739c10b296519624b001e02c98e08439aae0c",
+      "bytes": 9266,
+      "git_blob": "847f635a752e7e32836e55f39cfdbf0f17446347",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/layout_stability/phase_attribution.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/layout_stability/report.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/layout_stability/report.rs",
+      "sha256": "c347d614c9e353c32b94ccd3235b2ea345d489975d7817fc34c06b35cd659125",
+      "bytes": 10934,
+      "git_blob": "c549caff044ccf9727bfe6005c95780663c21a03",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/layout_stability/report.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/mmds_commands.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/mmds_commands.rs",
+      "sha256": "9114b97344cbaf0d6e7a4b9eb3b0e51e5fbea3b8e3fd20e9d228d9445994e056",
+      "bytes": 79639,
+      "git_blob": "f4d76536668a6d9aaa637644c1c97b2fcefc0aa1",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/mmds_commands.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/mmds_diff.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/mmds_diff.rs",
+      "sha256": "5ba1a467d977d4aca856f57a5fa379bda8921eb0694268e763301c0acdbdaa88",
+      "bytes": 15928,
+      "git_blob": "f873a68cf99b8891dacfc9376ab2a5fb2d5fedc1",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/mmds_diff.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/mmds_document_serialization.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/mmds_document_serialization.rs",
+      "sha256": "ae228418d4f34740c50ca089581c95fc3c237c4f440220c6ebb883a894a09068",
+      "bytes": 12989,
+      "git_blob": "44aefa6ac2e18b2973a47a98fc4aac1dc5d2096d",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/mmds_document_serialization.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/mmds_roundtrip.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/mmds_roundtrip.rs",
+      "sha256": "1c5ddf7385a766078427e45ad87f4cb15c6f5828e679948f21852466bfad806b",
+      "bytes": 658,
+      "git_blob": "364b4c02ed5a869f13db95a6e5c05fd3403ef120",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/mmds_roundtrip.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/port_attachment_observation.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/port_attachment_observation.rs",
+      "sha256": "8e0dfcca950a8535e4dd857a2da62a97dbc1e5a2c6a423ff9e528ff2afa0f1a1",
+      "bytes": 19971,
+      "git_blob": "e35bae967ac94029dd8096070374aba2561a403f",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/port_attachment_observation.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/render_time_placer.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/render_time_placer.rs",
+      "sha256": "0c7c55332401628ac22a2bcd785354427ffff2e78d6842fe275879198b2f01d4",
+      "bytes": 47272,
+      "git_blob": "206f45344f37f7c4f0b552589de3f9f1d1a6dd21",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/internal_tests/sequence_layout.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/sequence_layout.rs",
+      "sha256": "03e2d338a05104d5a407e8ab59d08bf6858ed2b51400510d3ab4b778c5aa9c79",
+      "bytes": 6039,
+      "git_blob": "c794bc4c3fccd9101b6b5f9713422adf7301dafc",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/sequence_layout.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/singleton_centering_observation.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/singleton_centering_observation.rs",
+      "sha256": "f28c410ddb1c695d08d09bd9952c79ada09d1e54fc87133db5a7fe1b4d202089",
+      "bytes": 23744,
+      "git_blob": "c2c1f4db838b4c79104fe24f37424e2009bdb88d",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/singleton_centering_observation.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/subgraph_render_fixture.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/subgraph_render_fixture.rs",
+      "sha256": "edccd92c5754e777e113eee954151b08436a42862d889de92683b15a94a4ae34",
+      "bytes": 5398,
+      "git_blob": "60f6b15e60e8dca7acaa3acf438530d18030bd16",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/internal_tests/svg_render_pipeline.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/svg_render_pipeline.rs",
+      "sha256": "1740a33520487aa90b91821d83fb9471d0d796145cfeb02676ac81578b1f263b",
+      "bytes": 263931,
+      "git_blob": "f0594513c326a96ad8120b84bedf908f4b35c703",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/svg_render_pipeline.rs"
+    },
+    {
+      "upstream_path": "src/internal_tests/text_render_pipeline.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/text_render_pipeline.rs",
+      "sha256": "39aa81c8f07f1aab606fc08bf98d6686a74ec8d807644c27e39dee9905fc7ae8",
+      "bytes": 72551,
+      "git_blob": "fb41763711dd8f62860443a18ccc2314dd925408",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/internal_tests/wrap_pipeline.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/wrap_pipeline.rs",
+      "sha256": "0a983cd9f9e15c1eba209e5eab1a6e568717f9d6f280583ad80d0cd65fc39272",
+      "bytes": 4434,
+      "git_blob": "c39547cde75c8e4655751e5971639bbb887c88e6",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/internal_tests/wrap_pipeline.rs"
+    },
+    {
+      "upstream_path": "src/main.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/main.rs",
+      "sha256": "e524f890236bcaa84038f21d70b4d3cd5376478fa88cbce0386ccc1645e61e7e",
+      "bytes": 31251,
+      "git_blob": "b3053532c212d42767af153f65fe1df2d2f0c549",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/main.rs"
+    },
+    {
+      "upstream_path": "src/mermaid/ast.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/ast.rs",
+      "sha256": "9352e0c520a38dab968a21597b4b0048d1400d5441d9cdb2e0df68ee8fbfb0b8",
+      "bytes": 9117,
+      "git_blob": "9d5d6b27a32053375a720a07d6fa1ad9a8e285d1",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/ast.rs"
+    },
+    {
+      "upstream_path": "src/mermaid/class/mod.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/class/mod.rs",
+      "sha256": "3d47c274831f6de99a8d90be80eaf5682782df105ebbdc5b42ea08935e0286b4",
+      "bytes": 35287,
+      "git_blob": "7ef1e827d708f10facece74acd661bd88c32693c",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/class/mod.rs"
+    },
+    {
+      "upstream_path": "src/mermaid/error.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/error.rs",
+      "sha256": "fda4eb4ccaf6895c2d3e680ae38de077f5bcc05b11de4d1b8119f3d0c9f67c36",
+      "bytes": 5910,
+      "git_blob": "02f081110c0ead3e64fadaa39b814f9866417739",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/error.rs"
+    },
+    {
+      "upstream_path": "src/mermaid/flowchart.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/flowchart.rs",
+      "sha256": "9ffd5a90ac06272fd42022002a36dd5502c696cd424aa1f432c9dd623dcb14f4",
+      "bytes": 75652,
+      "git_blob": "5ffbfbbbeada4903fa84b4fe0df1c24f06d6af81",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/flowchart.rs"
+    },
+    {
+      "upstream_path": "src/mermaid/mod.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/mod.rs",
+      "sha256": "50bc03dd825970368140d4f2ed81241462d38c215d51c0a651248c8d425c75c1",
+      "bytes": 2237,
+      "git_blob": "9d7975a9bfd9617e430233144f669bb96990b719",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/mod.rs"
+    },
+    {
+      "upstream_path": "src/mermaid/sequence/mod.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/sequence/mod.rs",
+      "sha256": "f33f9ea5f7ce4b085994ada500e75e01672a4ce87457690ca21cec778d93f11f",
+      "bytes": 43741,
+      "git_blob": "7ab776ba9407d341d52707ca1fdec1b1a27b243a",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/sequence/mod.rs"
+    },
+    {
+      "upstream_path": "src/mermaid/state/mod.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/state/mod.rs",
+      "sha256": "67ac4d24829b98e58057f8290d5513a49ece6f53702dcb4c059644cc847e987c",
+      "bytes": 35552,
+      "git_blob": "bfe000181be21a059ebcf672740f3a3598a372e1",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/state/mod.rs"
+    },
+    {
+      "upstream_path": "src/mermaid/theme_hint.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/theme_hint.rs",
+      "sha256": "c413a4dcf302ac1e257adadbcd7362999f3db9ce2b8a84d039ab2e6aa23a9bb2",
+      "bytes": 9235,
+      "git_blob": "2fe898cffba01c7bfce0daaa75c9b930fcb661fe",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mermaid/theme_hint.rs"
+    },
+    {
+      "upstream_path": "src/mmds/document.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mmds/document.rs",
+      "sha256": "7cdbb1f54ab7a49d44f50719f1daf27bf5e7841ee1bd26ee7d23d8a0835dd1df",
+      "bytes": 52846,
+      "git_blob": "e77c57cd41fcce5b96e294bdfd9237e46e1e5561",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mmds/document.rs"
+    },
+    {
+      "upstream_path": "src/mmds/hydrate.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mmds/hydrate.rs",
+      "sha256": "7ff5a72ae540a7b62450fb9e0728ef771aada226c52b3f4a17a3eb6a5446e0e0",
+      "bytes": 41398,
+      "git_blob": "893e0bca696981f857f0fddf00775d93241cbb18",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mmds/hydrate.rs"
+    },
+    {
+      "upstream_path": "src/mmds/regression_tests.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mmds/regression_tests.rs",
+      "sha256": "10ece4dad40014bb06683b6b15de795014791891f4e0445825d74860cbc18611",
+      "bytes": 10000,
+      "git_blob": "6f17039549022553aaeae31da238feaa7074ce5c",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mmds/regression_tests.rs"
+    },
+    {
+      "upstream_path": "src/mmds/token.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/mmds/token.rs",
+      "sha256": "8eda49cf67d0265bedac536bba87eae9ac4f1220fb5553218f3e325c0ed0d7ca",
+      "bytes": 11626,
+      "git_blob": "3cf2716604b4d9402aa2f92105172eb81ef1f4f7",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/mmds/token.rs"
+    },
+    {
+      "upstream_path": "src/render/graph/svg/bounds.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/svg/bounds.rs",
+      "sha256": "f6951da7e9eedfcba76c003f3d44ff222cd3f051ddb6bdd02d3b3b727e948053",
+      "bytes": 7718,
+      "git_blob": "3badb5de29dd8ba414612a29f9d61de8d0cd3c98",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/svg/bounds.rs"
+    },
+    {
+      "upstream_path": "src/render/graph/svg/edges/path_emit.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/svg/edges/path_emit.rs",
+      "sha256": "f82035cf63f67d15633efb23ecdbd13f05bca61d7538ccd7cdda2f7f73229413",
+      "bytes": 17212,
+      "git_blob": "87227f262c0aae552a4321ae85cc66883b035ded",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/svg/edges/path_emit.rs"
+    },
+    {
+      "upstream_path": "src/render/graph/svg/labels.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/svg/labels.rs",
+      "sha256": "126e50a824e7187d780e8a1a7a289f7d8c6564f5985eb52376fc53e91f507b1a",
+      "bytes": 18612,
+      "git_blob": "06362ef2819951ac947dad33e1cc61d3ff1b299b",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/svg/labels.rs"
+    },
+    {
+      "upstream_path": "src/render/graph/svg/nodes.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/svg/nodes.rs",
+      "sha256": "a9bada3a0289f73fff5c271008d8f06ad4fe71fc13c911105c82f8556a5414f0",
+      "bytes": 41482,
+      "git_blob": "6baaf2cd864ede0d605aebd349aea5d32f37d774",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/svg/nodes.rs"
+    },
+    {
+      "upstream_path": "src/render/graph/svg/self_edges.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/svg/self_edges.rs",
+      "sha256": "aaa98f8a4b5014b56bf2db27cd75bb27f9dac07bf4709e7e01ef3ac76394fbbc",
+      "bytes": 11910,
+      "git_blob": "f31c0851db1f5681e5c46636df991351718baec0",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/svg/self_edges.rs"
+    },
+    {
+      "upstream_path": "src/render/graph/text/edge.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/text/edge.rs",
+      "sha256": "54fd77c9fabe9073d178f3cf4303dd0b07308a27076020f8641a3b1ce770cd28",
+      "bytes": 60188,
+      "git_blob": "b3b23eaa8ed5aace9708ea25126de15be52f174c",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/text/edge.rs"
+    },
+    {
+      "upstream_path": "src/render/graph/text/regression_tests.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/text/regression_tests.rs",
+      "sha256": "b6f8fad7b43275665009e60c5fdf01916ab10760ce5789ed506a591c9edab372",
+      "bytes": 3636,
+      "git_blob": "53af29bc06b931bbfd7f468a825488354dd274db",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/text/regression_tests.rs"
+    },
+    {
+      "upstream_path": "src/render/graph/text/shape.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/text/shape.rs",
+      "sha256": "a23c048889c528c74bbfc2089c6f7f5f8c7aaf0bea16ecaf28a6113ea36a20da",
+      "bytes": 37158,
+      "git_blob": "254dc544638b1752be0d4e0b231f311d7df94a70",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/text/shape.rs"
+    },
+    {
+      "upstream_path": "src/render/graph/text/subgraph.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/text/subgraph.rs",
+      "sha256": "bff4c1c44898c38599748a91a38f9909470bb839186d2def3064b04277171cd3",
+      "bytes": 15169,
+      "git_blob": "445c26abe0008bf094035356b4e96b39bba09d87",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/graph/text/subgraph.rs"
+    },
+    {
+      "upstream_path": "src/render/svg/mod.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/svg/mod.rs",
+      "sha256": "16adebd16108d23d198c5003cdb6db621df9ac2b3fa953c05fb722e0df60cd70",
+      "bytes": 5252,
+      "git_blob": "c74453e2a09f389f5449b2d78febfae7a3431a5b",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/svg/mod.rs"
+    },
+    {
+      "upstream_path": "src/render/svg/theme.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/svg/theme.rs",
+      "sha256": "bf0981846c82efcf08ce0ac08f4ba6d000ea88f89d5bc4fb8587105d02bca58b",
+      "bytes": 25760,
+      "git_blob": "ac71c97b899a60365993bc6d0977b0af61f49388",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/svg/theme.rs"
+    },
+    {
+      "upstream_path": "src/render/text/canvas.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/text/canvas.rs",
+      "sha256": "7dcb5e1ba64270b2335b80bb1c635b58ea829167a5a2f78c2c9dc942f6f2d695",
+      "bytes": 29366,
+      "git_blob": "dce0e6f149175153c484fb39797965ccd33c7162",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/text/canvas.rs"
+    },
+    {
+      "upstream_path": "src/render/text/chars.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/text/chars.rs",
+      "sha256": "9180764850a8516c049f187b7ef00e6af8bf746a482e279e0b6a091b9e428455",
+      "bytes": 20121,
+      "git_blob": "dda1e96a931561531ebbe7fe5bbf89b3914dc421",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/text/chars.rs"
+    },
+    {
+      "upstream_path": "src/render/timeline/svg_layout.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/render/timeline/svg_layout.rs",
+      "sha256": "64bd3d191b1d91f0abdabb6409ca6a9a41a238c7b81c044573a37be764863bc0",
+      "bytes": 47082,
+      "git_blob": "b4f2a16a708ccab221abb7726cd0fb33f598f838",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/render/timeline/svg_layout.rs"
+    },
+    {
+      "upstream_path": "src/runtime/config.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/runtime/config.rs",
+      "sha256": "c318ce950d80fad1f1ce92a382de354537aa8e869814cfc18e13c1a171fd709a",
+      "bytes": 10752,
+      "git_blob": "dbe6c609be133ae1f7a59e16933b6c337daf0950",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/runtime/config.rs"
+    },
+    {
+      "upstream_path": "src/runtime/config_input.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/runtime/config_input.rs",
+      "sha256": "8e9d5b8aa7adde7feb005e96d5a09ebbf4ba049d81673a8221d6efa9a41b20eb",
+      "bytes": 16519,
+      "git_blob": "5d19ed5dd552e26bb9b5e885203dfaf94bfa1e7d",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/runtime/config_input.rs"
+    },
+    {
+      "upstream_path": "src/runtime/dynamic_text_metrics.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/runtime/dynamic_text_metrics.rs",
+      "sha256": "eebeb654175df3d81d1a8b170a08ae442a41189bd6843254ee7669da7f987cfd",
+      "bytes": 110624,
+      "git_blob": "4e222a07ed17a9653e17be31a22d2a7400a585a4",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/runtime/dynamic_text_metrics.rs"
+    },
+    {
+      "upstream_path": "src/runtime/graph_family.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/runtime/graph_family.rs",
+      "sha256": "810b6b1470923a35772c89346344a980f7e28a8d9dee8916ab476487db9cc658",
+      "bytes": 22935,
+      "git_blob": "b2f1c9c73bc73bae7f1faf57f309d31d667edbb3",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/runtime/graph_family.rs"
+    },
+    {
+      "upstream_path": "src/runtime/layout.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/runtime/layout.rs",
+      "sha256": "8b197e24a703305a837eb66827b6cf69d9babaffaf6772ca5548fd29221a769d",
+      "bytes": 15536,
+      "git_blob": "1cd86f604eea179fa571db71549c0aecc24de237",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/runtime/layout.rs"
+    },
+    {
+      "upstream_path": "src/runtime/mmds.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/runtime/mmds.rs",
+      "sha256": "0b60e3f5388ff3ad115adc0c94841ff2b8407d9a5af200594e72fd9121fc4aa5",
+      "bytes": 55459,
+      "git_blob": "61de785aed31810995d10b07df20857c4d043cdc",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/runtime/mmds.rs"
+    },
+    {
+      "upstream_path": "src/runtime/mod.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/runtime/mod.rs",
+      "sha256": "668afa82da03a25ae14b97ad333a6463e285da249d88400413b0ec942a093bbb",
+      "bytes": 19088,
+      "git_blob": "e6f377562e640e19f2dceecbdbb199af66110c53",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/runtime/payload.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/runtime/payload.rs",
+      "sha256": "75c642a28c0e1c8d952063c0728abddbd5654412f34ab9bec8e31500279aea68",
+      "bytes": 5610,
+      "git_blob": "f8452c3f3c08b3543ebc7fe77a3b609023925475",
+      "origin": "verified predecessor cache"
+    },
+    {
+      "upstream_path": "src/svg_theme_auto.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/svg_theme_auto.rs",
+      "sha256": "5627115a8101bcca6e6297aeb23fbe323f4ebaabffda39e3c2a53d1ba6a332f5",
+      "bytes": 5156,
+      "git_blob": "90bd29d3b290fc3200b504efd09662470cacbdf5",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/svg_theme_auto.rs"
+    },
+    {
+      "upstream_path": "src/terminal_appearance.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/terminal_appearance.rs",
+      "sha256": "2ab4c371cfc64655ab03cfe3237a2866b2beb45abc21fd4736e24a9de5395781",
+      "bytes": 35161,
+      "git_blob": "fdfcfe2548ea25a9261f29ef1d833f9b45883900",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/terminal_appearance.rs"
+    },
+    {
+      "upstream_path": "src/timeline/sequence/layout.rs",
+      "durable_source_path": "tests/fixtures/mermaid_terminal/mmdflux/full_declared_sources/c7405b64865938b2df4d33d26389d51691409913/src/timeline/sequence/layout.rs",
+      "sha256": "8a4399ccb717109710face2ce53d46791747c58747caebeef2969ce1a022c224",
+      "bytes": 26381,
+      "git_blob": "b5805ade15c3ea91d51ba8c1394d438d681dda63",
+      "origin": "https://raw.githubusercontent.com/kevinswiber/mmdflux/c7405b64865938b2df4d33d26389d51691409913/src/timeline/sequence/layout.rs"
+    }
+  ]
+}

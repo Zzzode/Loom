@@ -1,0 +1,11 @@
++---+
+| B |
++---+
+
++---+
+| A |
++---+
+
+relations:
+id(bytes=1)="A" ||--o{ id(bytes=1)="B" : first
+id(bytes=1)="A" ||--o{ id(bytes=1)="B" : second

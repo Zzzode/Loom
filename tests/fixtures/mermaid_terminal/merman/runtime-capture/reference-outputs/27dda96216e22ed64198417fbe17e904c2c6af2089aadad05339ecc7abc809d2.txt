@@ -1,0 +1,6 @@
+title(bytes=16)="Repeated journey"
+actors=[bytes=5 "Alice", bytes=3 "Bob"]
+section(bytes=8)="Repeated"
+  - task(bytes=7)="  First" score=5 people=[bytes=5 "Alice"]
+section(bytes=8)="Repeated"
+  - task(bytes=8)="  Second" score=3 people=[bytes=3 "Bob"]

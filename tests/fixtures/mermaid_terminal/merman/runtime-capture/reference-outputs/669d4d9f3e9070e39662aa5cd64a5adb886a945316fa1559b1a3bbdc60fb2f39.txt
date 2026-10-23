@@ -1,0 +1,91 @@
+family: sequ
+ence
+model.accDes
+cr: null
+model.accTit
+le: null
+model.actorO
+rder[0]: "A"
+model.actorO
+rder[1]: "B"
+model.actors
+.A.descripti
+on: "A"
+model.actors
+.A.links: {}
+model.actors
+.A.name: "A"
+model.actors
+.A.propertie
+s.payload: {
+}
+model.actors
+.A.type: "pa
+rticipant"
+model.actors
+.A.wrap: fal
+se
+model.actors
+.B.descripti
+on: "B"
+model.actors
+.B.links: {}
+model.actors
+.B.name: "B"
+model.actors
+.B.propertie
+s: {}
+model.actors
+.B.type: "pa
+rticipant"
+model.actors
+.B.wrap: fal
+se
+model.boxes:
+ []
+model.consta
+nts.placemen
+t.leftOf: 0
+model.consta
+nts.placemen
+t.over: 2
+model.consta
+nts.placemen
+t.rightOf: 1
+model.create
+dActors: {}
+model.destro
+yedActors: {
+}
+model.messag
+es[0].activa
+te: false
+model.messag
+es[0].from: 
+"A"
+model.messag
+es[0].id: "0
+"
+model.messag
+es[0].messag
+e: "A long a
+uthored mess
+age forcing 
+a wide prima
+ry projectio
+n"
+model.messag
+es[0].to: "B
+"
+model.messag
+es[0].type: 
+0
+model.messag
+es[0].wrap: 
+false
+model.notes:
+ []
+model.title:
+ null
+model.type: 
+"sequence"

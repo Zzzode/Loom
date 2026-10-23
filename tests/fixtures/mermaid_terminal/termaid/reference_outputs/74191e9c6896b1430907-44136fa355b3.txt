@@ -1,0 +1,33 @@
+
+
+              ┌─────────────────────┐
+              │        USER         │
+              ├─────────────────────┤
+              │ int id  PK          │
+              │ string username  UK │
+              │ string email  UK    │
+              │ date joined         │
+              └─────────────────────┘
+                       │1  │1
+            ┌─writes───┘   └─authors────┐
+            │                           │
+            │0..*                       │0..*
+  ┌───────────────────┐        ┌─────────────────┐
+  │       POST        │        │     COMMENT     │
+  ├───────────────────┤        ├─────────────────┤
+  │ int id  PK        │ 1 0..* │ int id  PK      │
+  │ string title      │────────│ text body       │
+  │ text content      │  has   │ int post_id  FK │
+  │ int author_id  FK │        │ int user_id  FK │
+  │ date published    │        │ date created    │
+  └───────────────────┘        └─────────────────┘
+            │1..*
+            └─tagged-with┐
+                         │
+                         │0..*
+                ┌─────────────────┐
+                │       TAG       │
+                ├─────────────────┤
+                │ int id  PK      │
+                │ string name  UK │
+                └─────────────────┘

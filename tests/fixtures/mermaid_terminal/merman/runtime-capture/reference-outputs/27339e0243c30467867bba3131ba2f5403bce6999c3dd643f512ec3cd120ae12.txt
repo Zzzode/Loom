@@ -1,0 +1,5 @@
+xDomain: band categories=[bytes=1="A", bytes=1="B", bytes=1="C"]
+yDomain: linear authored=[0,10] resolved=[0,10]
+ *--+
+    ++-*
+   *-+

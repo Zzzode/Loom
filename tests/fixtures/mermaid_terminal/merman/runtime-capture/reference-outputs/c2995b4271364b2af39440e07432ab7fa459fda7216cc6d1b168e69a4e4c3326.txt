@@ -1,0 +1,6 @@
+section(bytes=0)=""
+  - task(bytes=5)="Fixed" [id(bytes=5)="fixed", order=0, range=1970-01-01 ->
+    1970-01-01, start(bytes=16)="2026-01-01 08:30",
+    end(bytes=16)="2026-01-01 10:45"]
+  - task(bytes=8)="Relative" [id(bytes=8)="relative", order=0, range=1970-01-01
+    -> 1970-01-01, after(bytes=5)="fixed", duration(bytes=4)="2.5h"]

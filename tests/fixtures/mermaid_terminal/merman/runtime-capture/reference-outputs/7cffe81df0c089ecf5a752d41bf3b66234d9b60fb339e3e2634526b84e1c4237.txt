@@ -1,0 +1,13 @@
+# Bar 1  # Bar 2  * Line 1  * Line 2
+xDomain: band categories=[bytes=1="A", bytes=1="B"]
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=1)="A" value=2 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=8 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: # series=1 type=bar title=none samples=[{index=0 x(bytes=1)="A" value=5 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=6 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=2 type=line title=none samples=[{index=0 x(bytes=1)="A" value=8 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=2 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=3 type=line title=none samples=[{index=0 x(bytes=1)="A" value=4 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=4 pointLabel=none clipped=false}] orphanPointLabels=[]
+10 +
+ 8 + *-+##
+ 6 +  #|###
+ 4 + *---*#
+ 2 +###+-*#
+ 0 +-+---+-
+     A   B

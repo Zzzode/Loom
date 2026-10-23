@@ -1,0 +1,100 @@
+{
+  "class": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "Diagrammatic",
+    "source_line_start": 264,
+    "upstream_family": "class"
+  },
+  "er": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "Diagrammatic",
+    "source_line_start": 324,
+    "upstream_family": "er"
+  },
+  "flowchart": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "Diagrammatic",
+    "source_line_start": 381,
+    "upstream_family": "flowchart"
+  },
+  "gantt": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "StructuredText",
+    "source_line_start": 425,
+    "upstream_family": "gantt"
+  },
+  "gitgraph": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "StructuredText",
+    "source_line_start": 463,
+    "upstream_family": "gitgraph"
+  },
+  "journey": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "StructuredText",
+    "source_line_start": 497,
+    "upstream_family": "journey"
+  },
+  "kanban": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "StructuredText",
+    "source_line_start": 524,
+    "upstream_family": "kanban"
+  },
+  "mindmap": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "StructuredText",
+    "source_line_start": 558,
+    "upstream_family": "mindmap"
+  },
+  "packet": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "StructuredText",
+    "source_line_start": 593,
+    "upstream_family": "packet"
+  },
+  "sequence": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "Diagrammatic",
+    "source_line_start": 617,
+    "upstream_family": "sequence"
+  },
+  "state": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "Diagrammatic",
+    "source_line_start": 657,
+    "upstream_family": "state"
+  },
+  "timeline": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "StructuredText",
+    "source_line_start": 694,
+    "upstream_family": "timeline"
+  },
+  "treeview": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "StructuredText",
+    "source_line_start": 724,
+    "upstream_family": "treeView"
+  },
+  "xychart": {
+    "evidence_scope": "declared primary family capability; not proof of per-render projection or semantic correctness",
+    "original_file_sha256": "15a86580e96239a531125a01c3d46fb7d481f386dd8c8208d070a61eb0da2a2e",
+    "primary_projection": "Diagrammatic",
+    "source_line_start": 757,
+    "upstream_family": "xychart"
+  }
+}

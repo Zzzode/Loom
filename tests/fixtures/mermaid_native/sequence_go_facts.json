@@ -1,0 +1,2143 @@
+{
+  "schema": 1,
+  "basis": "Source-only supplemental facts before new Loom output; upstream models/inputs unchanged.",
+  "cases": [
+    {
+      "id": "mermaid_ascii_dfdc4b579e72b7ec",
+      "input_sha256": "dfdc4b579e72b7ec77fbff13130977078ac47c37bc5c1603bd49cfece6a4b1e1",
+      "model_sha256": "109089949937704d2715e95336507ef0ed3a5cd1c96318e5324fb3e51c911d4e",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_220d346a1fc97f51",
+      "input_sha256": "220d346a1fc97f51e743d720d4a49c9ea9b2614f24afc544a523ae4f01f8fc43",
+      "model_sha256": "a0fceb4044555df3576b1e44edb80ca4b501749c9e42bdd642f1c4c898edad9a",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_bba6f7a3923f98b6",
+      "input_sha256": "bba6f7a3923f98b62d945e41311b24a04fe5b35ecfe49f91fb5f2f09b6645bd3",
+      "model_sha256": "561dafdd5163ffd0315fd1873b5937499525db4798ebf49d23dc1c641283d9fa",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_cc6bebb141d49f5d",
+      "input_sha256": "cc6bebb141d49f5ded1bef65732bf63766bcb87c81410de48e3cfe0c8c657763",
+      "model_sha256": "1fe92292c1c7e8882b8b2edec0bd64831e4d0eaf4ae7cf27b80ab2ad00632aed",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "actor",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    actor A as Alice"
+        },
+        {
+          "id": "B",
+          "role": "actor",
+          "created": false,
+          "byte_offset": 37,
+          "source": "    actor B as Bob"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_49bb0743c48ee6f8",
+      "input_sha256": "49bb0743c48ee6f8b3c807316b88dabe0d83a7553bcad41406813f201bd6c540",
+      "model_sha256": "5aaeb34ce8e4a193cbc1fbebdfd2336002a813aa70ce0702706f33bbc90d1f82",
+      "actor_declarations": [
+        {
+          "id": "Alice",
+          "role": "actor",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    actor Alice as Alice2"
+        },
+        {
+          "id": "John",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 42,
+          "source": "    participant John as John2"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_db18458b5957c010",
+      "input_sha256": "db18458b5957c0108388c7eaeebcdf69cbe5eba5d694b140cf9117de63834377",
+      "model_sha256": "d5358705f11b05ea70c63c86dc61dd31fe7ba8b85811a0a922c38f83ea344a73",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        },
+        {
+          "id": "C",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 52,
+          "source": "    participant C"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_6ca8da80ee7cdd8b",
+      "input_sha256": "6ca8da80ee7cdd8baab8dceeafe7c163b1f5007da805a04c8df096c55abf45e5",
+      "model_sha256": "9de684a6522b7974ef82f98f81a29b8343c0ef2300bd9e2611912c3e4cc690da",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_57f2c6e3e97da654",
+      "input_sha256": "57f2c6e3e97da654b727351bb15ca001ff1d314dbea0ed4545e82ad066e8a019",
+      "model_sha256": "fb744b438fe87113c4c7e27427894ecb7dd812924e1cfe70ff722ce5b5f6aeca",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_d5dc6be902919a5b",
+      "input_sha256": "d5dc6be902919a5bebcf89bcc6c5d6ba409805dffac3838ce29e735e345c0f40",
+      "model_sha256": "3045302ca6f73b4300d0b042cd54b88d5c5f6f71d03d81aa4631c1d60f0ed670",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_6541260f19342c7c",
+      "input_sha256": "6541260f19342c7c1e51bc52f8f43fb6a1f1957a4047569db1d75020d34222cd",
+      "model_sha256": "1aec634d945f03bc53866751dab77064666cd951e29b7e16789a6f9858fcec18",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_395b974388506bb8",
+      "input_sha256": "395b974388506bb878f9bd3e89b88e2754e32f95ccd1cdfe9dca09a091c7c72e",
+      "model_sha256": "a5658d2fa2ec3038ab7fa00bb5605e4b7f48c8f02549db5f371a4be47655930d",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_481f883ced3e6dd7",
+      "input_sha256": "481f883ced3e6dd76f78a5c8414b977d06af9bb8632796e6134b3f1a32e2cdfc",
+      "model_sha256": "d62066ac263dd08a84d29747a8eff57bfb2e045551277485c621999dde6d247a",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_e3f201c4583e29c7",
+      "input_sha256": "e3f201c4583e29c70a66a7ee54c9a9764cbe4108c2b1d87d24543ba820a4777f",
+      "model_sha256": "71a0b29c320f0d4866e905052cac66c1173353e609f1727aad358458b1e68ac0",
+      "actor_declarations": [
+        {
+          "id": "Client",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant Client"
+        },
+        {
+          "id": "Server",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 39,
+          "source": "    participant Server"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_97f309bce1ebf31a",
+      "input_sha256": "97f309bce1ebf31a2a537d1325c21fe47965bf8d7dd3bc7ec49434516e3fb9db",
+      "model_sha256": "d4b6a609e7751e97c417a0153a07a8a86f0245d8766acbfa97e4fe7fda00c641",
+      "actor_declarations": [
+        {
+          "id": "GW",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 33,
+          "source": "    participant GW"
+        },
+        {
+          "id": "PAY",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 52,
+          "source": "    participant PAY"
+        },
+        {
+          "id": "S",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 80,
+          "source": "    participant S as Shop"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [
+        {
+          "kind": "box",
+          "source": "    box Payments",
+          "byte_offset": 16,
+          "declaration": "Payments",
+          "box_index": 0,
+          "title": "Payments",
+          "color": ""
+        }
+      ],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_fabd2d61d807220b",
+      "input_sha256": "fabd2d61d807220b9e7cb0636290f4ee015946faba7fa5f49f58c06397f0f536",
+      "model_sha256": "8ce345b204e148d17b6d3aea831fe3f06a3b8ed978e47c2515f6195f651f3b14",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 51,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 69,
+          "source": "    participant B"
+        },
+        {
+          "id": "C",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 120,
+          "source": "    participant C"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [
+        {
+          "kind": "box",
+          "source": "    box rgb(23, 124, 207) Profiles",
+          "byte_offset": 16,
+          "declaration": "rgb(23, 124, 207) Profiles",
+          "box_index": 0,
+          "title": "Profiles",
+          "color": "rgb(23, 124, 207)"
+        },
+        {
+          "kind": "box",
+          "source": "    box Green New serwis",
+          "byte_offset": 95,
+          "declaration": "Green New serwis",
+          "box_index": 1,
+          "title": "New serwis",
+          "color": "Green"
+        }
+      ],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_26685005a4e4541d",
+      "input_sha256": "26685005a4e4541dee028a6b0d2c2dffe3ddb31355108b8dca419aa5e66c9ebd",
+      "model_sha256": "713b131a2a0aac2423d150f74cd0cdb17bf851a33cdc71d41c7c27b6b576f92d",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [
+        {
+          "kind": "rect",
+          "source": "    rect rgb(0,255,0)",
+          "byte_offset": 63,
+          "declaration": "rgb(0,255,0)",
+          "color": "rgb(0,255,0)",
+          "fragment_type": "rect"
+        }
+      ],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_0f8f991f296faee2",
+      "input_sha256": "0f8f991f296faee212a8cdf3b77fec2d8d074d9ebf421900351a6c035e150d8a",
+      "model_sha256": "e644f5e352babdc224aaae2ce91cb9a9588c67934f0fa937a3f7ff3f65ebca29",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_d3d21dde99277265",
+      "input_sha256": "d3d21dde9927726525f74203d8959ce22731deef13d661321a5b0e4fc4e3a5b7",
+      "model_sha256": "61441dd7f7a0eaea3845b960176a93540025171fd5cb7f18723c0374a7e4f863",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_36a046f4f16ca55b",
+      "input_sha256": "36a046f4f16ca55b23a4a69e513ff04d5bbdd7418c7993841c921430a5398aa3",
+      "model_sha256": "3141c2012ba7f8ac04fb8565ab0f6dd0a022237f132dd38085e9077751a7a26a",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_ab1b07038e2dae74",
+      "input_sha256": "ab1b07038e2dae74a8dc9c49978c64241bec3a3fc4c30b28e9c42dad82ec49ba",
+      "model_sha256": "28c239549ff86093b8e90252e9234701e79e11482551bed603993d6f6ad9e6ab",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 42,
+          "source": "participant A as 顧客"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 66,
+          "source": "participant B as 服务"
+        },
+        {
+          "id": "C",
+          "role": "actor",
+          "created": false,
+          "byte_offset": 94,
+          "source": "actor C as 監査"
+        },
+        {
+          "id": "D",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 112,
+          "source": "participant D as 数据库"
+        },
+        {
+          "id": "E",
+          "role": "participant",
+          "created": true,
+          "byte_offset": 334,
+          "source": "create participant E as 新規"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [
+        {
+          "kind": "box",
+          "source": "box 日本語サービス",
+          "byte_offset": 16,
+          "declaration": "日本語サービス",
+          "box_index": 0,
+          "title": "日本語サービス",
+          "color": ""
+        }
+      ],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_f3da90a3d057c4aa",
+      "input_sha256": "f3da90a3d057c4aaf27d298750cd4c673052ea5f63b57583b01c83c0520aa778",
+      "model_sha256": "a8992c2253140ff450d0edd02584938fb1ccd03e23a74227011de7a422fa1e81",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "participant A as 顧客"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 40,
+          "source": "participant B as サービス"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_c6afb616d2887c43",
+      "input_sha256": "c6afb616d2887c438a65092acbf550f75c734f65df630a62a6d17bd7a35810c1",
+      "model_sha256": "d63b62a779a215afc7f6e342d6cf04aa233e8a59b470d62996f3faec3780f890",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "participant A as 用户́"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 42,
+          "source": "participant B as Service"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_ca955ce25ff3f24a",
+      "input_sha256": "ca955ce25ff3f24a141944715f6ecea9021717b9bbbea38c18b480e79d6b2564",
+      "model_sha256": "015bfcd78cbe89c993dc5596023b269179ff1b1ab05b58ea969793765a85ad5c",
+      "actor_declarations": [
+        {
+          "id": "a",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant a as Alice"
+        },
+        {
+          "id": "d",
+          "role": "actor",
+          "created": true,
+          "byte_offset": 65,
+          "source": "    create actor d as Donald"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_46133bc51991c2eb",
+      "input_sha256": "46133bc51991c2ebf0771327d7d0f2490a7cc3d870fd0aad04368d3e357f0736",
+      "model_sha256": "594e9e58419de1c12a0a1a39b0e9fd01ecf6239773d6d0111a83e25e849b678a",
+      "actor_declarations": [
+        {
+          "id": "Carl",
+          "role": "participant",
+          "created": true,
+          "byte_offset": 43,
+          "source": "    create participant Carl"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_6e7c4ee6fac7e9f5",
+      "input_sha256": "6e7c4ee6fac7e9f5b0adcd1aeeedc0c182eb81f0e5ac9bcb629234c3f9898cdc",
+      "model_sha256": "6172aaefea927b14647969c39713262e670ce095d745793f43a25a3dae081022",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_a0c1a29a8cd88ff1",
+      "input_sha256": "a0c1a29a8cd88ff1aedd0ac1da0b29ff467a42810866e833dd94b6c4434d9ab9",
+      "model_sha256": "6c3692b40f23df427d59d943117e700fb13c05303a5f851067d03d01d70c156f",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_48b83420b303b64e",
+      "input_sha256": "48b83420b303b64ed486cb5d042e25db12c2c52b27c218190a2367b5d4981c1d",
+      "model_sha256": "bdaeac0f4e87d519e64826bb28ccd2b5e4875915354ad6af7fd536da79dfe275",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_5bb5adee61ec3250",
+      "input_sha256": "5bb5adee61ec325042c92c605b2bd99ced1f89b0f47205d9cc0b21e890b3333f",
+      "model_sha256": "4beede8c02a6956d60273f1e879e37cc3921c86852b6126ef002d15b4fcb2670",
+      "actor_declarations": [
+        {
+          "id": "C",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "participant C as 客户"
+        },
+        {
+          "id": "J",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 40,
+          "source": "participant J as サーバー"
+        },
+        {
+          "id": "K",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 70,
+          "source": "participant K as 데이터베이스"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_4d6979e2876bca60",
+      "input_sha256": "4d6979e2876bca607a346e91662f3f498a55da79f9c024cb293d5b8baac7c81a",
+      "model_sha256": "ae330957b8873a3170fdbf10383a1e273a5956a0fe84d645ed069abc0b282646",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        },
+        {
+          "id": "C",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 52,
+          "source": "    participant C"
+        },
+        {
+          "id": "D",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 70,
+          "source": "    participant D"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_b175d2485320e920",
+      "input_sha256": "b175d2485320e920201d1f49bbe5d4b29288b7133261ee1bf436f13df6a7b311",
+      "model_sha256": "111821832a37d81441ec6b97b8a83beb10355ce180b163a908d85ef9b016da3a",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        },
+        {
+          "id": "C",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 52,
+          "source": "    participant C"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_84ac52b90fbbd210",
+      "input_sha256": "84ac52b90fbbd210fd349edebaedb4f0fea38a469143ef72836377135946e5fe",
+      "model_sha256": "a17fe5bc5b0b5d363fab3deee3ff3ea89a857c4de76dda4a519c792c51f15316",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_e6f86ec86a87b4af",
+      "input_sha256": "e6f86ec86a87b4afd645ded43d7a5003e404112c6a00cbce32cb24ed7356634a",
+      "model_sha256": "2660c07e09f10b02226331a896abfee56dd3f2383687e0258f4848357aa8c359",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 26,
+          "source": "participant A as ́Alpha"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 51,
+          "source": "participant B as ́用户"
+        },
+        {
+          "id": "C",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 81,
+          "source": "participant C as ​C"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [
+        {
+          "kind": "box",
+          "source": "box ́箱",
+          "byte_offset": 16,
+          "declaration": "́箱",
+          "box_index": 0,
+          "title": "́箱",
+          "color": ""
+        }
+      ],
+      "display_sensitive_source_fields": [
+        {
+          "model_path": "/actors/0/label",
+          "raw": "́Alpha",
+          "display": "\\u{0301}Alpha",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/actors/1/label",
+          "raw": "́用户",
+          "display": "\\u{0301}用户",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/actors/2/label",
+          "raw": "​C",
+          "display": "\\u{200B}C",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/boxes/0/Title",
+          "raw": "́箱",
+          "display": "\\u{0301}箱",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/events/0/message/label",
+          "raw": "́ASCIÍ",
+          "display": "\\u{0301}ASCIÍ",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/events/1/message/label",
+          "raw": "​用́",
+          "display": "\\u{200B}用́",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/events/2/message/label",
+          "raw": "́自́ self",
+          "display": "\\u{0301}自́ self",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/events/3/note/text",
+          "raw": "​注́ note",
+          "display": "\\u{200B}注́ note",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/events/4/fragment/label",
+          "raw": "́ループ",
+          "display": "\\u{0301}ループ",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/events/5/message/label",
+          "raw": "́往復",
+          "display": "\\u{0301}往復",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/messages/0/label",
+          "raw": "́ASCIÍ",
+          "display": "\\u{0301}ASCIÍ",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/messages/1/label",
+          "raw": "​用́",
+          "display": "\\u{200B}用́",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/messages/2/label",
+          "raw": "́自́ self",
+          "display": "\\u{0301}自́ self",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/messages/3/label",
+          "raw": "́往復",
+          "display": "\\u{0301}往復",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        }
+      ],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_e3cac7c4914da176",
+      "input_sha256": "e3cac7c4914da176eaea07df59a9b54ec5bfc53b000b53514d1b612b217faef9",
+      "model_sha256": "04609703a5f8c20a50dee1b39a2f71f681acfc16d78bee82018e31e3824b57f0",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "participant A as A\u0001ctor"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 40,
+          "source": "participant B"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [
+        {
+          "model_path": "/actors/0/label",
+          "raw": "A\u0001ctor",
+          "display": "A\\u{0001}ctor",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/events/0/message/label",
+          "raw": "send\u0001message",
+          "display": "send\\u{0001}message",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        },
+        {
+          "model_path": "/messages/0/label",
+          "raw": "send\u0001message",
+          "display": "send\\u{0001}message",
+          "basis": "Proposed generic safe-display contract, before new Loom production output."
+        }
+      ],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_1661788cca140b45",
+      "input_sha256": "1661788cca140b45e6f4f185f17b1c0badfeba7ad7549fd4e8b654d125313b9b",
+      "model_sha256": "c714d79b5d07add10938a251c161251753db10e4948d915ca9eaa686e8dd8722",
+      "actor_declarations": [
+        {
+          "id": "UserInterface",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant UserInterface"
+        },
+        {
+          "id": "BackendAPI",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 46,
+          "source": "    participant BackendAPI"
+        },
+        {
+          "id": "DatabaseServer",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 73,
+          "source": "    participant DatabaseServer"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_6880fafd69ff8641",
+      "input_sha256": "6880fafd69ff8641bbd9e23f839f147e2fe614175526131e5ee6d8a763ab1a91",
+      "model_sha256": "c335e8aa9468f0091e0ff6d283fc36b2a3fa5ee78cc5c35c4615a8106b736e06",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_f4ee277934737231",
+      "input_sha256": "f4ee277934737231287e915ce0f6694dfbdb15ad42da1516fd2b16543e7f9b44",
+      "model_sha256": "2da5379cac0f82d222f15b2929bdd78f24f1a6ff86a0b64e20dd1e1f1565cf7a",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_43cff63e4e26a1bc",
+      "input_sha256": "43cff63e4e26a1bc3012dacda1d82b0925040b31340cec1afe148663fac593b2",
+      "model_sha256": "a3837195268835b53d9571799851b7f2ca3184d8d3984ba9291318ed4b08ffea",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_3ab122ff7e75e3ea",
+      "input_sha256": "3ab122ff7e75e3eaaf0b9e1f2e14da0909ddc5b105c1a1e5d8f11a43f749c131",
+      "model_sha256": "6a2f2b5fdea98bb55550c3084458663660ff37b2604e3e3ce205d6eae976d726",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_b2be91acd4fbf755",
+      "input_sha256": "b2be91acd4fbf7555cb62f1dd4efc815acbb9eaf3b2133dce83fae3cdefd8ac1",
+      "model_sha256": "a976888b6cac288fa0d3b95cd2fc54ff7074b5cf57213adf20a5f4575af6ac6e",
+      "actor_declarations": [
+        {
+          "id": "用户",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "participant 用户 as 用户"
+        },
+        {
+          "id": "服务",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 45,
+          "source": "participant 服务 as 服务"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_afc50b7a9d73b85a",
+      "input_sha256": "afc50b7a9d73b85a8b73b2f59b39dc431f4f295c21e8a4f69486e377c43ad6aa",
+      "model_sha256": "d3b340669d809a24c79edee856488c63003480f1159849ff11a7f3faf9b4948d",
+      "actor_declarations": [
+        {
+          "id": "User",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant User"
+        },
+        {
+          "id": "System",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 37,
+          "source": "    participant System"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_1ee62bbcfff32e91",
+      "input_sha256": "1ee62bbcfff32e919a2dc790bb7d1d92f7204049882564ed344749fe387fba2a",
+      "model_sha256": "380ee6fce2ecdf28c5ec5332c98ee1ad8e9e23ab59b1bb92f37b8dc61fcd419c",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_a8c766ae24fbc832",
+      "input_sha256": "a8c766ae24fbc832e19c2eaa136c6c77c90d356cb63c89ed17147fff7029e77d",
+      "model_sha256": "616f771f2d67d077671e510f5cf705a700df85922fda0e6cd47df3f6861d2341",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_4ee7e2bea5e82f5b",
+      "input_sha256": "4ee7e2bea5e82f5bd3098ab62398d0ad6edd6768c216ff62eb1b2b8fd394395c",
+      "model_sha256": "abe54dcb6360aceb252f8bf6c2f4099357cabdb40dc28c083cacb294c97e42df",
+      "actor_declarations": [
+        {
+          "id": "cron job",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant cron job"
+        },
+        {
+          "id": "data svc",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 41,
+          "source": "    participant data svc"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_b4dbc01eadc2ebaa",
+      "input_sha256": "b4dbc01eadc2ebaae3fa1678674abad3a749bfce13ec8a0847c5bef093cc309e",
+      "model_sha256": "a763e331c6242b6b556633e4ac29ba7ad2f268261b7a7dbb0e69b435632cb09d",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_daa04720f9c252b6",
+      "input_sha256": "daa04720f9c252b647f0cf1f8841dac3aa0b48bde5deaea5e1e37dcb64ed05f4",
+      "model_sha256": "9d02ecc3011ea5f284faadd8fd5ca038149b4a4a676e6f4bf481b226ee9f0a5b",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_988cee1971f94292",
+      "input_sha256": "988cee1971f94292bbfbc527d5e786da086b44000b95fe7199e391ea53f9a84e",
+      "model_sha256": "6f6db29916b8a3ce22361e89f4cef7d166caa9020cfeb1db59e4a02ed486bbf0",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_48a8db76e14e3ce6",
+      "input_sha256": "48a8db76e14e3ce68f93f6ce6538a8026b14f59f037a08361e0b2981623c2b85",
+      "model_sha256": "82b64fdd0f33448fc893f5757d5ab8d065efeea2008c50b5b64af05d0581d5a1",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_58a05b938f6565a7",
+      "input_sha256": "58a05b938f6565a70c1ade3723e90328c329e81bfb70618531e57e04937cb6e7",
+      "model_sha256": "9982de544110aaddf5b8e340f753a6375e4700d339e5c005ae389887933ab596",
+      "actor_declarations": [
+        {
+          "id": "cron job",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant cron job as Cron"
+        },
+        {
+          "id": "data=svc",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 49,
+          "source": "    participant data=svc as DS"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_0aace34658399f87",
+      "input_sha256": "0aace34658399f874953781339b902852d956a259081cdcc9e096ae30beb3163",
+      "model_sha256": "22d62dfeef22e1d77c1a914691215515db868b86dee277bd48bdd370ff1132c7",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_0d03d310d3c5a532",
+      "input_sha256": "0d03d310d3c5a532b8e42b1802b92ff10fba14932ed100470dc650e24f98cdff",
+      "model_sha256": "4170ce431b5301c075fb30cf82a297337000278c0f2e49dda1817c8339241012",
+      "actor_declarations": [
+        {
+          "id": "cron job",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant cron job"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_4f8c957de514a643",
+      "input_sha256": "4f8c957de514a6439f93ba7158b202fa6a936b998eae05da781ab82c89139e38",
+      "model_sha256": "c8c67c76f89c87e1f6699aca63fcd42a0e027ef37abf729b1f3abb21880a33f5",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [
+        {
+          "kind": "quoted_endpoint_identifier",
+          "source": "\"A->B\"",
+          "basis": "Preserved upstream Go parser-profile assertion, not claimed official quoted-name grammar."
+        }
+      ],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_77acbda506e517f4",
+      "input_sha256": "77acbda506e517f4996d720dd67013cc6a1f9d2aa4dd9287185aca969b86f644",
+      "model_sha256": "26b0511ba1e2d7e475103201d2718ea95a74ba2ae6635b921c1135900d185de3",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_99bd73b8f3ea1a42",
+      "input_sha256": "99bd73b8f3ea1a42a5f2509a84055663d00a0f90802f19240e61400509f689b7",
+      "model_sha256": "b649d1a91c824be92eb29d03f1ef115ae237a631fabbe1c97f4736d8c7c101f2",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_8bfe29f74af8c24a",
+      "input_sha256": "8bfe29f74af8c24ad078dc66fadc6327784ec2928b1d69925aaa161751a13d9e",
+      "model_sha256": "751caa3d1c8c0299ad29aa214851106d738e96c799cff09bdd770cc25d78adcf",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_ec39b4ef597a7386",
+      "input_sha256": "ec39b4ef597a7386f7b8a039abb28f791d33c1bdf6a06231b937f8c422d54cba",
+      "model_sha256": "44aae0c5a4772823383b6ea36b971e3a3459f6b48c45b3661aa54d3fadad550e",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_850b31c8b5fce1d6",
+      "input_sha256": "850b31c8b5fce1d61ca32520e5d624d78afefd77ed361def8c5feaffc13f26ed",
+      "model_sha256": "acc883081e4e1f36d7f6fcf762b9ca1ddd72ac1beba001e4b4506cb95d7e4a85",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 34,
+          "source": "    participant B"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_3c9206e956a8c4eb",
+      "input_sha256": "3c9206e956a8c4ebde71526e7e3670424dee0be2452b283c14425eaf8c188df9",
+      "model_sha256": "d4542add493221bf7607c94ffbb77b51dfbc175fd0fe0b342d2454d8c14fca08",
+      "actor_declarations": [
+        {
+          "id": "User",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant User"
+        },
+        {
+          "id": "WebApp",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 37,
+          "source": "    participant WebApp"
+        },
+        {
+          "id": "Database",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 60,
+          "source": "    participant Database"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_935270fb8e940df0",
+      "input_sha256": "935270fb8e940df016e698d154aa0675d60d13e1782d389b5acc8ef76f4d08b4",
+      "model_sha256": "be4bf6d7648f1fbeb841645b90bf3a00a7c8869dd6cc5f3ca92d5747849134b6",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_fcb67de07e1820d0",
+      "input_sha256": "fcb67de07e1820d0738f300b996944ceeac30f3208334c7c3d8ddf8589c8aeeb",
+      "model_sha256": "0079df257fa78174b4aa3b622d6b02df96da1602b2da1301fdcf74576b16387c",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_0c244d469e0eb7b1",
+      "input_sha256": "0c244d469e0eb7b18af6c25c5f8c8719aaad9fd1dc28cecdd47c1508b7069195",
+      "model_sha256": "6d7106001b197fdc53519ea740b662bdee429adfa1d57fde71bf031c623dff70",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_c3b1faed91d6f5f6",
+      "input_sha256": "c3b1faed91d6f5f60c28f61811f4ffd11a2c46b11e67958855ea26d436e2c4f9",
+      "model_sha256": "2a7833f187d15807d3d860eec8b11cca43edb86dd8cf8d838db385ca4d7079a6",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [
+        {
+          "text": "Login flow",
+          "byte_offset": 4,
+          "source": "title: Login flow"
+        }
+      ],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_ac72b430d01bb568",
+      "input_sha256": "ac72b430d01bb5681d254d715a377caf983bf685d076a960d6a322cbeef32c77",
+      "model_sha256": "285451c2e2aedfc8fb763699f478a0b8f6319880b99783375cfac46ae172c7f0",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_2a25ed1852ec14e7",
+      "input_sha256": "2a25ed1852ec14e7fa55dbc73e0d522dd9c753dabadc952a1fa5525bc20fc98a",
+      "model_sha256": "3a9a2634153561f7c6c5bc99d744f9490125069ad401280ca00259a2b1ae3f42",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_d057a0e50bbfcb40",
+      "input_sha256": "d057a0e50bbfcb400af9dc3035219a34150bb7dc20c0104815c19f350e59d394",
+      "model_sha256": "be1e28fb12d76a3f5f305c2be2fc9fb668ab35fa06bb7ba2023dd5b7a3422fd7",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "    participant A as Alice"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 43,
+          "source": "    participant B as Bob"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_fd3a0e3e6113f804",
+      "input_sha256": "fd3a0e3e6113f8049520cc1883518e9d4291eaea999e0b0effdccc28a3c14e47",
+      "model_sha256": "5cbcb759128af3d5b882b7849221c876d2923864051c70df6f81cce46c8c330c",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_e9e6abe06cfc8f2d",
+      "input_sha256": "e9e6abe06cfc8f2dbeb19095ebcc7c1b8b1c1d97cbce3dc48e5e5ed0423d973b",
+      "model_sha256": "5cbcb759128af3d5b882b7849221c876d2923864051c70df6f81cce46c8c330c",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_9a017c7a2d7b6356",
+      "input_sha256": "9a017c7a2d7b63563afd63d02a7f4225e8297c6253ab8f0d755e79f3452b3854",
+      "model_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "native_source_correction": {
+        "outcome": "valid_empty",
+        "basis": "Pinned official sequence grammar SD document and empty document production; ordinary percent comments are discarded. Original foreign parser error remains immutable.",
+        "authority": "https://github.com/mermaid-js/mermaid/blob/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/diagrams/sequence/parser/sequenceDiagram.jison#L128"
+      },
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_b5c4b5629c34f6f5",
+      "input_sha256": "b5c4b5629c34f6f513f35b95f65a69930f754f93d516e6356413f275053310c4",
+      "model_sha256": "ab41a11339465628407be10abc9b56a268bb210d1b9327f785b35fe991a03650",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_a25a5768435f0c05",
+      "input_sha256": "a25a5768435f0c05cb23e9831ef6d4e9c41fae787c375e68d26d698433d76c24",
+      "model_sha256": "5cbcb759128af3d5b882b7849221c876d2923864051c70df6f81cce46c8c330c",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_36d14dad6ee4a36e",
+      "input_sha256": "36d14dad6ee4a36eb855238294da8c0b59b548f62245d00461216fe006150ff8",
+      "model_sha256": "f3274644ecc7eea431f2f4577f847a3e2456d888d2963866032df90ebd83bcf6",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_4cf40fe74e307e67",
+      "input_sha256": "4cf40fe74e307e67dfc6c077a2b2c3f51856580eb006174bb082e9c06b0d321f",
+      "model_sha256": "f42c678590dc82918bb97eaa830c0887f91e7486ecd27ee8176c37208aab77b7",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_e4f114afd0e88d4c",
+      "input_sha256": "e4f114afd0e88d4cbeb82720956439981f6cc578baf63e52000ac1da077304ed",
+      "model_sha256": "34526e89920ef5082ce1b84293825de3081d20fec975bb2a5e93977de29dc37d",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_93f43ab022fd1778",
+      "input_sha256": "93f43ab022fd1778c78824e0333e555fe8021bcc5fadbf85a09d653ac92c3891",
+      "model_sha256": "6855f845d18c1c4f0af74e8ff128649173ee71ea9d3169e534ab2e8a5b5eb355",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_20c3f0f6cb7abd5a",
+      "input_sha256": "20c3f0f6cb7abd5a85c90ce9e57ca96207cc4227be05877a1332aad8cb20e6cb",
+      "model_sha256": "7ce7032b0d6502fc7d41a8b777db465220e27b2ddf76a53f4c65ccdd57df45bf",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_45e3e11a5e6faedb",
+      "input_sha256": "45e3e11a5e6faedbb9631835b252a9a9b8a79b2a96089f85547801aa4520b28b",
+      "model_sha256": "09c8adad5231f8240c635461dd25ea649139a83f294936f26f0c4765b65127fc",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "actor",
+          "created": false,
+          "byte_offset": 16,
+          "source": "actor A as Alice"
+        },
+        {
+          "id": "B",
+          "role": "actor",
+          "created": false,
+          "byte_offset": 33,
+          "source": "actor B as Bob"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_bdcad0b44bddefe0",
+      "input_sha256": "bdcad0b44bddefe047a92058f77eb7184b479d90c5003aeabb9b2f61fa21729a",
+      "model_sha256": "d427803e62e87f32c99290ae0b4803b8c67364b6159565028f390e7136f521b9",
+      "actor_declarations": [
+        {
+          "id": "Alice",
+          "role": "actor",
+          "created": false,
+          "byte_offset": 16,
+          "source": "actor Alice"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_0fee35eefd23d433",
+      "input_sha256": "0fee35eefd23d433ffc03bc44d4548be6b448e9f13cbfe1a0a2d33a8141b1113",
+      "model_sha256": "d9bb8fc2ad08e94fd8e8ab0f8e9cbbd862c901519927074f0187609990207347",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "actor",
+          "created": false,
+          "byte_offset": 16,
+          "source": "actor A AS Database Server"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_3f91a9423d54181d",
+      "input_sha256": "3f91a9423d54181d80a298fe8e926c230dace39ab71d7a8127f82d3278b71263",
+      "model_sha256": "0c2fa3870c51c38c8bb3ca7016a71f302beb360882a5693a70d95e279ef80a75",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "actor",
+          "created": false,
+          "byte_offset": 16,
+          "source": "Actor A as Alice"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_93e4c8134887bb3a",
+      "input_sha256": "93e4c8134887bb3ac38611ec050cc928ea79c7a14415d63f9536a10ef5604537",
+      "model_sha256": "4f186467768dff16c45d16f981f92e980dad4301651dad2c7a64ee77ef9fa1b0",
+      "actor_declarations": [
+        {
+          "id": "cron job",
+          "role": "actor",
+          "created": false,
+          "byte_offset": 16,
+          "source": "actor cron job as Cron"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_3656b52532b514e6",
+      "input_sha256": "3656b52532b514e69f584ff2512901147d3b960c0dc64d4820a956c952fac9c7",
+      "model_sha256": "7020f76d853add10cc990c21fdb8ea775c1607d2341f120294d28b9e9889dd34",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_6d704ddfe14f4cf8",
+      "input_sha256": "6d704ddfe14f4cf8136cc7589b6cb8b56007b47e080fef2583ace21cdf9b18da",
+      "model_sha256": "537c3cdc0651a159575f3a29968e2692be67bb6d4e5d0ce3d4ee4ff622f5751d",
+      "actor_declarations": [
+        {
+          "id": "GW",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 35,
+          "source": "participant GW"
+        },
+        {
+          "id": "PAY",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 50,
+          "source": "participant PAY"
+        },
+        {
+          "id": "S",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 70,
+          "source": "participant S as Shop"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [
+        {
+          "kind": "box",
+          "source": "box Payments Group",
+          "byte_offset": 16,
+          "declaration": "Payments Group",
+          "box_index": 0,
+          "title": "Payments Group",
+          "color": ""
+        }
+      ],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_254409c5bf321a07",
+      "input_sha256": "254409c5bf321a07eda7191eadaed85b905ad4db29eab27c09bfe0dfea2ba717",
+      "model_sha256": "18477e6777ad8f652bf57db00caefcdc2272fecd8fd1b8fda4b1593b89cdc671",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "participant A"
+        },
+        {
+          "id": "B",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 30,
+          "source": "participant B"
+        },
+        {
+          "id": "C",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 44,
+          "source": "participant C"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_e6b23a6c33cb0234",
+      "input_sha256": "e6b23a6c33cb02344b4645ebe83927b149a734dec694bb020a0c7f28e7ceed29",
+      "model_sha256": "bf68c4a9871f39943367e008a7c57b9d5e84e62865a177de4ab408df84377e4d",
+      "actor_declarations": [
+        {
+          "id": "Carl",
+          "role": "participant",
+          "created": true,
+          "byte_offset": 35,
+          "source": "create participant Carl"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_da929b472803be2b",
+      "input_sha256": "da929b472803be2b8d53be6acf33fcfb3cf660a3b35bee330c58ccff4570c55d",
+      "model_sha256": "613171b2420afaf3e9b0d605118c9ba64361baeb425b29cfeeccc19b80457840",
+      "actor_declarations": [
+        {
+          "id": "C",
+          "role": "participant",
+          "created": true,
+          "byte_offset": 25,
+          "source": "create participant C"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_359f1410c15d3adc",
+      "input_sha256": "359f1410c15d3adc2c1d4112dc7b6781b0c90ef31f2b536ab64e89e23896ed50",
+      "model_sha256": "551067f729ad0186e9610cd20a7167acae9e0e6134ac4ab7d9578298238c47a3",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_6fe5598c27c6f42e",
+      "input_sha256": "6fe5598c27c6f42e96bae6cb2e450a50dd886f994636abdd1e46aa134cd678b5",
+      "model_sha256": "4593cfeac099d431332b54f918b5811749d1ee5ba8d75aedde000aa20868c1d0",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": [
+        {
+          "model_path": "/events/1/note/text",
+          "raw": "a<br/>b",
+          "display": "a\nb",
+          "source_byte_offset": 42,
+          "basis": "Literal br/ break in authored note; two ordered rows, before native production extension."
+        }
+      ]
+    },
+    {
+      "id": "mermaid_ascii_ede755696f0a4eda",
+      "input_sha256": "ede755696f0a4eda9145f83f53351837b7af25ec6e78338e53286f50c2f12c42",
+      "model_sha256": "fb7454517391e825b511273e2d9df19f3b4cd77c114b5e51f094c311db0a4878",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_606fadf8ebb426c5",
+      "input_sha256": "606fadf8ebb426c5aafd75ae025df4498eb521a29d9e5c146a6a438b01949e2a",
+      "model_sha256": "35dd8dcc6e27bb37e0e2477433ad9237fb46cc21c0ff30f5ce206ee6cc3fa16f",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_7348b1b916974995",
+      "input_sha256": "7348b1b916974995e066180eac95aba565defa02dbdac1d984c0b50e310a7e3e",
+      "model_sha256": "2996d889d42cf860175b02364c15d480ae32b1a34e925c486d5ded46cb67a620",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_6299186e239f829e",
+      "input_sha256": "6299186e239f829e1cca1389764d6d7af8d2ef474af6ee44d6b5f8b45f1c9331",
+      "model_sha256": "e548634d3bb2aac219f18d910fa7d0c994834086d13a8f1cdcee32a19d31b408",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_c0115d5f2859d2d4",
+      "input_sha256": "c0115d5f2859d2d430b86d4fb0d17b4ca7053593e04fc21d39178ed96bf180fa",
+      "model_sha256": "a587bc98f6bbc0608dba4ccd10c7152462010a330e5547247aca8b7b0672f107",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_d8d98488a7804101",
+      "input_sha256": "d8d98488a780410199a05f89343560d0e399f75b2614f7b84b7f7f80548dce1c",
+      "model_sha256": "4fdb011923e2f6463f6c610bb56142620e9623ab03b608cb3bcc0b2bf788ec48",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_c7b6ae9cdb76415a",
+      "input_sha256": "c7b6ae9cdb76415a40784fabf6be23af1442c33e326bceff80f0635414e3e781",
+      "model_sha256": "8e28d794161bb7242bfe6828aea4829bd9b2ebef4b7f4c4e22eae4d39b64065e",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [
+        {
+          "kind": "rect",
+          "source": " rect rgb(0,255,0)",
+          "byte_offset": 16,
+          "declaration": "rgb(0,255,0)",
+          "color": "rgb(0,255,0)",
+          "fragment_type": "rect"
+        }
+      ],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_6cf75e34804c6cf7",
+      "input_sha256": "6cf75e34804c6cf774223e25afcccb00b1e5caddcb21c92dfafd91c8ee64a6c5",
+      "model_sha256": "f1ba94f18b8a6ba20d64bce98248f178befd43662ac08b1ec4a5a0b8f84217ee",
+      "actor_declarations": [
+        {
+          "id": "A",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "participant A as Alice"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_8190736c4a135ea3",
+      "input_sha256": "8190736c4a135ea36e493ea994733d96b4131964837a84a027e67951656dd5f0",
+      "model_sha256": "d427803e62e87f32c99290ae0b4803b8c67364b6159565028f390e7136f521b9",
+      "actor_declarations": [
+        {
+          "id": "Alice",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "participant Alice"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_73613963fee75b6f",
+      "input_sha256": "73613963fee75b6f5d006d6429fa2cce03db4a58c0b5c42ca4fe85224438fdc9",
+      "model_sha256": "44aae0c5a4772823383b6ea36b971e3a3459f6b48c45b3661aa54d3fadad550e",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_d0a16638ad5ad56d",
+      "input_sha256": "d0a16638ad5ad56d01ce6cb12273a0fa969fe125759c954d60d668fe49d1fc8d",
+      "model_sha256": "2a7833f187d15807d3d860eec8b11cca43edb86dd8cf8d838db385ca4d7079a6",
+      "actor_declarations": [
+        {
+          "id": "Alice",
+          "role": "participant",
+          "created": false,
+          "byte_offset": 16,
+          "source": "participant Alice"
+        }
+      ],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_8643fe5d7fa88721",
+      "input_sha256": "8643fe5d7fa88721229178413d44e812a9e261fa17bf60f71e2b9275a08e8bfd",
+      "model_sha256": "f9e873999c13470d4cdfc06e62b4296cbe5388afb79a4f238b6b63f480b4427f",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_dad539a5af58b56d",
+      "input_sha256": "dad539a5af58b56dcd5a75405cc9dd4c12e984ee04a231987c5d5cb515938df3",
+      "model_sha256": "07721bb8fb9c63d7cfd69cf6ac9637aee62412dcf342ebd4a732ec9d21354ace",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_cdc445d27ca63531",
+      "input_sha256": "cdc445d27ca6353138db23f122cf5d26f762df7650c50998355a7bc127213044",
+      "model_sha256": "ab41a11339465628407be10abc9b56a268bb210d1b9327f785b35fe991a03650",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    },
+    {
+      "id": "mermaid_ascii_d052c9e8ef572df4",
+      "input_sha256": "d052c9e8ef572df4e00c860cb988dec9257a30fc42f9f13fe10a11c94d946bfa",
+      "model_sha256": "163dd09e5cc1c2ff342358c33fff46c11c09b17698349f49d12a5d2c4ae0b0ea",
+      "actor_declarations": [],
+      "implicit_role": "participant",
+      "authored_titles": [],
+      "color_regions": [],
+      "display_sensitive_source_fields": [],
+      "profile_extensions": [],
+      "explicit_break_fields": []
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+<span style="color:#101010">+---+</span>
+<span style="color:#101010">|</span> <span style="color:#202020">A</span> <span style="color:#101010">|</span>
+<span style="color:#101010">+---+</span>
+
+<span style="color:#101010">+---+</span>
+<span style="color:#101010">|</span> <span style="color:#202020">B</span> <span style="color:#101010">|</span>
+<span style="color:#101010">+---+</span>
+
+<span style="color:#101010">+---+</span>
+<span style="color:#101010">|</span> <span style="color:#202020">C</span> <span style="color:#101010">|</span>
+<span style="color:#101010">+---+</span>
+
+<span style="color:#303030">relations:</span>
+<span style="color:#505050">id(bytes=1)=&quot;A&quot; ||--|| id(bytes=1)=&quot;B&quot; : ab</span>
+<span style="color:#505050">id(bytes=1)=&quot;B&quot; ||--|| id(bytes=1)=&quot;A&quot; : ba</span>
+<span style="color:#505050">id(bytes=1)=&quot;A&quot; ||--|| id(bytes=1)=&quot;C&quot; : ac</span>
+<span style="color:#505050">id(bytes=1)=&quot;C&quot; ||--|| id(bytes=1)=&quot;A&quot; : ca</span>
+<span style="color:#505050">id(bytes=1)=&quot;B&quot; ||--|| id(bytes=1)=&quot;C&quot; : bc</span>
+<span style="color:#505050">id(bytes=1)=&quot;C&quot; ||--|| id(bytes=1)=&quot;B&quot; : cb</span>

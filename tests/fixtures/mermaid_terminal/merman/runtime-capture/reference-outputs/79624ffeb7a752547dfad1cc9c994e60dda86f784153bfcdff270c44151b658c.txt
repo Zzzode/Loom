@@ -1,0 +1,18 @@
+<span style="color:#202020">+-</span><span style="color:#101010"> Group </span><span style="color:#202020">----------+</span>
+<span style="color:#202020">|</span> <span style="color:#202020">+---+</span>     <span style="color:#202020">+---+</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">|</span> <span style="color:#101010">A</span> <span style="color:#202020">|</span>     <span style="color:#202020">|</span> <span style="color:#101010">B</span> <span style="color:#202020">|</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">+-+-+</span>     <span style="color:#202020">+-+-+</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">+</span><span style="color:#101010"> loop Work </span><span style="color:#202020">--+</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">|</span> <span style="color:#303030">|</span>         <span style="color:#303030">|</span> <span style="color:#202020">|</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">|</span> <span style="color:#303030">|</span> <span style="color:#707070">Start</span>   <span style="color:#303030">|</span> <span style="color:#202020">|</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">|</span> <span style="color:#808080">+</span><span style="color:#505050">--------</span><span style="color:#606060">&gt;</span><span style="color:#303030">|</span> <span style="color:#202020">|</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">|</span> <span style="color:#303030">|</span>         <span style="color:#404040">#</span> <span style="color:#202020">|</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">|+-----------+|</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">||</span>   <span style="color:#101010">Wait</span>    <span style="color:#202020">||</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">|+-----------+|</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">|</span> <span style="color:#303030">|</span>         <span style="color:#404040">#</span> <span style="color:#202020">|</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">|</span> <span style="color:#303030">|</span> <span style="color:#707070">Done</span>    <span style="color:#404040">#</span> <span style="color:#202020">|</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">|</span> <span style="color:#303030">|</span><span style="color:#606060">&lt;</span><span style="color:#505050">........</span><span style="color:#808080">+</span> <span style="color:#202020">|</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span> <span style="color:#202020">+-------------+</span>  <span style="color:#202020">|</span>
+<span style="color:#202020">|</span>   <span style="color:#303030">|</span>         <span style="color:#303030">|</span>    <span style="color:#202020">|</span>
+<span style="color:#202020">+------------------+</span>

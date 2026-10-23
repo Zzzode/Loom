@@ -1,0 +1,2 @@
+gitGraph direction(bytes=2)="TB" current(bytes=0)=""
+  - seq=0 branch(bytes=7)="main c0" id(bytes=1)="x" kind=normal message(bytes=0)=""

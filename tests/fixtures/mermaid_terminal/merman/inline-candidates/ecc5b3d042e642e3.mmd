@@ -1,0 +1,10 @@
+flowchart TD
+subgraph outer
+    direction LR
+    A
+    subgraph inner
+        direction TD
+        B --> C
+    end
+    A --> B
+end

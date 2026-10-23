@@ -1,0 +1,24 @@
++-------+     +-----+
+| Alice |     | Bob |
++---+---+     +--+--+
+    |            |
+    | I'm short  |
+    +----------->|
+    |            |
+    | Extremely  |
+    | utterly    |
+    | long line  |
+    | of         |
+    | longness   |
+    | which had  |
+    | previously |
+    | overflown  |
+    | the actor  |
+    | box as it  |
+    | is much    |
+    | longer     |
+    | than what  |
+    | it should  |
+    | be         |
+    |<-----------+
+    |            |

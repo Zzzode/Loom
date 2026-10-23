@@ -1,0 +1,9 @@
+xDomain: linear authored=[1,1] resolved=[1,1]
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=1)="1" value=1 pointLabel=none clipped=true}] orphanPointLabels=[]
+  33 +###
+35.5 +###
+  38 +###
+40.5 +###
+  43 +###
+45.5 +-+-
+       1

@@ -1,0 +1,181 @@
+{
+  "schema": "requirement11_source_semantic_model/v1",
+  "status": "PROPOSED_SOURCE_DERIVED_NOT_NATIVE_GRID_NOT_ADMITTED",
+  "authority": {
+    "official_commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "inventory_sha256": "864279c0bb53025ab55a2aa682f0b0ec8a2bf65dd5af6ab2fcf17d98df112440",
+    "ordering": "RequirementDB.getData(): requirements insertion order, then elements insertion order; relations statement order"
+  },
+  "cohort": {
+    "ordinals": [12, 18, 21, 24, 27, 30, 33, 96, 99, 111, 168],
+    "source_bytes": 5474,
+    "requirements": 18,
+    "elements": 14,
+    "relations": 17,
+    "requirement_kinds": ["Requirement", "Functional Requirement", "Interface Requirement", "Performance Requirement", "Physical Requirement", "Design Constraint"],
+    "relation_kinds": ["contains", "copies", "derives", "satisfies", "verifies", "refines", "traces"],
+    "directions": ["TB", "BT", "LR", "RL"]
+  },
+  "edge_presentation": {
+    "contains": {"stroke": "solid", "source_marker": "circle_plus", "target_marker": "none", "label": "<<contains>>"},
+    "other_six": {"stroke": "dashed", "source_marker": "none", "target_marker": "open_arrow", "label": "<<kind>>"}
+  },
+  "models": [
+    {
+      "ordinal": 12,
+      "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-default.mmd",
+      "source_bytes": 1566,
+      "source_sha256": "0d663c6f705c243b7938a610b414942ca159053a8ef3e4dd0338b5cd3e81528e",
+      "direction": "TB",
+      "nodes": [
+        {"role":"requirement","logical_name":"test_req","stereotype":"Requirement","metadata":{"id":"1","text":"the test text.","risk":"High","verification":"Test","type":null,"doc_ref":null}},
+        {"role":"requirement","logical_name":"test_req2","stereotype":"Functional Requirement","metadata":{"id":"1.1","text":"the second test text.","risk":"Low","verification":"Inspection","type":null,"doc_ref":null}},
+        {"role":"requirement","logical_name":"test_req3","stereotype":"Performance Requirement","metadata":{"id":"1.2","text":"the third test text.","risk":"Medium","verification":"Demonstration","type":null,"doc_ref":null}},
+        {"role":"requirement","logical_name":"test_req4","stereotype":"Interface Requirement","metadata":{"id":"1.2.1","text":"the fourth test text.","risk":"Medium","verification":"Analysis","type":null,"doc_ref":null}},
+        {"role":"requirement","logical_name":"test_req5","stereotype":"Physical Requirement","metadata":{"id":"1.2.2","text":"the fifth test text.","risk":"Medium","verification":"Analysis","type":null,"doc_ref":null}},
+        {"role":"requirement","logical_name":"test_req6","stereotype":"Design Constraint","metadata":{"id":"1.2.3","text":"the sixth test text.","risk":"Medium","verification":"Analysis","type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test_entity","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":"simulation","doc_ref":null}},
+        {"role":"element","logical_name":"test_entity2","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":"word doc","doc_ref":"reqs/test_entity"}},
+        {"role":"element","logical_name":"test_entity3","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":"test suite","doc_ref":"github.com/all_the_tests"}}
+      ],
+      "relations": [
+        {"order":0,"source":"element:test_entity","target":"requirement:test_req2","kind":"satisfies","source_syntax":"test_entity - satisfies -> test_req2"},
+        {"order":1,"source":"requirement:test_req","target":"requirement:test_req2","kind":"traces","source_syntax":"test_req - traces -> test_req2"},
+        {"order":2,"source":"requirement:test_req","target":"requirement:test_req3","kind":"contains","source_syntax":"test_req - contains -> test_req3"},
+        {"order":3,"source":"requirement:test_req3","target":"requirement:test_req4","kind":"contains","source_syntax":"test_req3 - contains -> test_req4"},
+        {"order":4,"source":"requirement:test_req4","target":"requirement:test_req5","kind":"derives","source_syntax":"test_req4 - derives -> test_req5"},
+        {"order":5,"source":"requirement:test_req5","target":"requirement:test_req6","kind":"refines","source_syntax":"test_req5 - refines -> test_req6"},
+        {"order":6,"source":"element:test_entity3","target":"requirement:test_req5","kind":"verifies","source_syntax":"test_entity3 - verifies -> test_req5"},
+        {"order":7,"source":"element:test_entity2","target":"requirement:test_req","kind":"copies","source_syntax":"test_req <- copies - test_entity2"}
+      ]
+    },
+    {
+      "ordinal": 18,
+      "path": "requirement/nightly-check/a-requirement-diagram-with-bt-direction-default.mmd",
+      "source_bytes": 372,
+      "source_sha256": "4c5bd8f6e4d37eb38b652b44910fbcd19d341947439b5198dce072d98dba7062",
+      "direction": "BT",
+      "nodes": [
+        {"role":"requirement","logical_name":"test_req","stereotype":"Requirement","metadata":{"id":"1","text":"the test text.","risk":"High","verification":"Test","type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test_entity","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":"simulation","doc_ref":null}}
+      ],
+      "relations": [{"order":0,"source":"element:test_entity","target":"requirement:test_req","kind":"satisfies","source_syntax":"test_entity - satisfies -> test_req"}]
+    },
+    {
+      "ordinal": 21,
+      "path": "requirement/nightly-check/a-requirement-diagram-with-empty-information-default.mmd",
+      "source_bytes": 207,
+      "source_sha256": "29e1dbfc28307c32d863b8f87912d6009ed98a313a1fc19eb0fa2449dadc8321",
+      "direction": "TB",
+      "nodes": [
+        {"role":"requirement","logical_name":"test_req","stereotype":"Requirement","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test_entity","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":null,"doc_ref":null}}
+      ],
+      "relations": []
+    },
+    {
+      "ordinal": 24,
+      "path": "requirement/nightly-check/a-requirement-diagram-with-lr-direction-default.mmd",
+      "source_bytes": 372,
+      "source_sha256": "f950ce72b3330c7d431c25159856576c6203f01cd7ea74f84ab37d6b681f8cd3",
+      "direction": "LR",
+      "nodes": [
+        {"role":"requirement","logical_name":"test_req","stereotype":"Requirement","metadata":{"id":"1","text":"the test text.","risk":"High","verification":"Test","type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test_entity","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":"simulation","doc_ref":null}}
+      ],
+      "relations": [{"order":0,"source":"element:test_entity","target":"requirement:test_req","kind":"satisfies","source_syntax":"test_entity - satisfies -> test_req"}]
+    },
+    {
+      "ordinal": 27,
+      "path": "requirement/nightly-check/a-requirement-diagram-with-rl-direction-default.mmd",
+      "source_bytes": 372,
+      "source_sha256": "c80dcf6db0a78fd625b0518119ba53558fde7542866c72febebfdea924b29740",
+      "direction": "RL",
+      "nodes": [
+        {"role":"requirement","logical_name":"test_req","stereotype":"Requirement","metadata":{"id":"1","text":"the test text.","risk":"High","verification":"Test","type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test_entity","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":"simulation","doc_ref":null}}
+      ],
+      "relations": [{"order":0,"source":"element:test_entity","target":"requirement:test_req","kind":"satisfies","source_syntax":"test_entity - satisfies -> test_req"}]
+    },
+    {
+      "ordinal": 30,
+      "path": "requirement/nightly-check/a-requirement-diagram-with-tb-direction-default.mmd",
+      "source_bytes": 350,
+      "source_sha256": "2c597fd583728204b1454c54f9645449c639e533b0c425085933360a0a86ecc6",
+      "direction": "TB",
+      "nodes": [
+        {"role":"requirement","logical_name":"test_req","stereotype":"Requirement","metadata":{"id":"1","text":"the test text.","risk":"High","verification":"Test","type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test_entity","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":"simulation","doc_ref":null}}
+      ],
+      "relations": [{"order":0,"source":"element:test_entity","target":"requirement:test_req","kind":"satisfies","source_syntax":"test_entity - satisfies -> test_req"}]
+    },
+    {
+      "ordinal": 33,
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+      "source_bytes": 334,
+      "source_sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20",
+      "direction": "TB",
+      "nodes": [
+        {"role":"requirement","logical_name":"test_req","stereotype":"Requirement","metadata":{"id":"1","text":"the test text.","risk":"High","verification":"Test","type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test_entity","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":"simulation","doc_ref":null}}
+      ],
+      "relations": [{"order":0,"source":"element:test_entity","target":"requirement:test_req","kind":"satisfies","source_syntax":"test_entity - satisfies -> test_req"}]
+    },
+    {
+      "ordinal": 96,
+      "path": "requirement/nightly-check/requirements-and-elements-with-and-without-information-default.mmd",
+      "source_bytes": 265,
+      "source_sha256": "de9241221c9e39174077a3ae6cd94f8b90e06efeb41388eed27ae5b6b0affd73",
+      "direction": "TB",
+      "nodes": [
+        {"role":"requirement","logical_name":"test_req","stereotype":"Requirement","metadata":{"id":"1","text":"the test text.","risk":"High","verification":"Test","type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test_entity","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":null,"doc_ref":null}}
+      ],
+      "relations": []
+    },
+    {
+      "ordinal": 99,
+      "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-default.mmd",
+      "source_bytes": 356,
+      "source_sha256": "f1a7236f3f3ac0e6bf621046f1cced10c65535bdb7d265226999888a3278136c",
+      "direction": "TB",
+      "nodes": [
+        {"role":"requirement","logical_name":"test_req","stereotype":"Requirement","metadata":{"id":"1","text":"the test text that is long and takes up a lot of space.","risk":"High","verification":"Test","type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test_entity_name_that_is_extra_long","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":null,"doc_ref":null}}
+      ],
+      "relations": []
+    },
+    {
+      "ordinal": 111,
+      "path": "requirement/nightly-check/requirements-and-elements-with-quoted-text-for-spaces-default.mmd",
+      "source_bytes": 371,
+      "source_sha256": "1fbeae16c5c88aacc7dca198913f9e0278ef876c123274b6cb286035eb74d8b5",
+      "direction": "TB",
+      "nodes": [
+        {"role":"requirement","logical_name":"test req name with spaces","stereotype":"Requirement","metadata":{"id":"1","text":"the test text that is long and takes up a lot of space.","risk":"High","verification":"Test","type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test entity name that is extra long with spaces","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":null,"doc_ref":null}}
+      ],
+      "relations": []
+    },
+    {
+      "ordinal": 168,
+      "path": "requirement/pr-check/sample.mmd",
+      "source_bytes": 909,
+      "source_sha256": "b8d798507c5cf892622bd855d64770381eab6d3aa4e7c3c21a4e8d7a60eefa82",
+      "direction": "TB",
+      "nodes": [
+        {"role":"requirement","logical_name":"test_req","stereotype":"Requirement","metadata":{"id":"1","text":"the test text.","risk":"High","verification":"Test","type":null,"doc_ref":null}},
+        {"role":"requirement","logical_name":"test_req2","stereotype":"Functional Requirement","metadata":{"id":"1.1","text":"the second test text.","risk":"Low","verification":"Inspection","type":null,"doc_ref":null}},
+        {"role":"requirement","logical_name":"test_req3","stereotype":"Performance Requirement","metadata":{"id":"1.2","text":"the third test text.","risk":"Medium","verification":"Demonstration","type":null,"doc_ref":null}},
+        {"role":"element","logical_name":"test_entity","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":"simulation","doc_ref":null}},
+        {"role":"element","logical_name":"test_entity2","stereotype":"Element","metadata":{"id":null,"text":null,"risk":null,"verification":null,"type":"word doc","doc_ref":"reqs/test_entity"}}
+      ],
+      "relations": [
+        {"order":0,"source":"element:test_entity","target":"requirement:test_req2","kind":"satisfies","source_syntax":"test_entity - satisfies -> test_req2"},
+        {"order":1,"source":"requirement:test_req","target":"requirement:test_req2","kind":"traces","source_syntax":"test_req - traces -> test_req2"},
+        {"order":2,"source":"requirement:test_req","target":"requirement:test_req3","kind":"contains","source_syntax":"test_req - contains -> test_req3"},
+        {"order":3,"source":"element:test_entity2","target":"requirement:test_req","kind":"copies","source_syntax":"test_req <- copies - test_entity2"}
+      ]
+    }
+  ]
+}

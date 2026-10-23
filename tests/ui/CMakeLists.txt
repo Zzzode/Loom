@@ -115,6 +115,80 @@ target_link_libraries(test_markdown_render
 )
 gtest_discover_tests(test_markdown_render DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
+# RFC 0030: pinned upstream Mermaid corpus through the native terminal renderer.
+add_executable(test_mermaid_official test_mermaid_official.cpp)
+target_link_libraries(test_mermaid_official
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_official PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_official
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 180)
+
+add_executable(test_mermaid_terminal test_mermaid_terminal.cpp)
+target_link_libraries(test_mermaid_terminal
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_terminal PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_terminal
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300)
+
+add_executable(test_mermaid_flow_semantics test_mermaid_flow_semantics.cpp)
+target_link_libraries(test_mermaid_flow_semantics
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_flow_semantics PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_flow_semantics
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300)
+
+# RFC 0030: GitGraph source-bound terminal first-red assertions.
+add_executable(test_mermaid_gitgraph_semantics
+    test_mermaid_gitgraph_semantics.cpp
+    test_mermaid_gitgraph_upstream.cpp)
+target_link_libraries(test_mermaid_gitgraph_semantics
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_gitgraph_semantics PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_gitgraph_semantics
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300)
+
+add_executable(test_mermaid_charts_semantics test_mermaid_charts_semantics.cpp)
+target_link_libraries(test_mermaid_charts_semantics
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_charts_semantics PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_charts_semantics
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300)
+
+add_executable(test_mermaid_sequence_semantics test_mermaid_sequence_semantics.cpp)
+target_link_libraries(test_mermaid_sequence_semantics
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_sequence_semantics PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_sequence_semantics
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300)
+
+add_executable(test_mermaid_relations_semantics test_mermaid_relations_semantics.cpp)
+target_link_libraries(test_mermaid_relations_semantics
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_relations_semantics PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_relations_semantics
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300)
+
+add_executable(test_mermaid_envelope test_mermaid_envelope.cpp)
+target_link_libraries(test_mermaid_envelope
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_envelope
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 120)
+
 # ---------------------------------------------------------------------------
 # Text-content property tests for the FTXUI terminal renderer.
 # ---------------------------------------------------------------------------
@@ -272,3 +346,21 @@ add_executable(test_runtime_agents
     ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_runtime_agents ${_ui_test_libs})
 gtest_discover_tests(test_runtime_agents DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# Closed classic Flowchart shape first-red target: three full upstream sources,
+# test-private Models, five-frame native capture, and no admission fallback.
+add_executable(test_mermaid_flow_classic_shapes test_mermaid_flow_classic_shapes.cpp)
+target_link_libraries(test_mermaid_flow_classic_shapes
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_flow_classic_shapes PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_flow_classic_shapes
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300)
+
+# ASCII Flow Grid18 source-first public profile. It remains in the existing
+# Flow semantic target so its Flow400 authority and per-source ledgers stay local.
+target_sources(test_mermaid_flow_semantics PRIVATE test_mermaid_flow_ascii.cpp)
+
+# Source-bound group endpoints share the existing Flow semantic target.
+target_sources(test_mermaid_flow_semantics PRIVATE test_mermaid_flow_group_endpoints.cpp)

@@ -1,0 +1,2503 @@
+{
+  "schema": "merman_flow_grid18_original_assertions/v1",
+  "status": "source_fact_asset; no rendered snapshot or Loom result is an expected output",
+  "scope": {
+    "functions": 18,
+    "direct_assertions": 44,
+    "case_bindings": 61,
+    "distinct_case_inputs": 59,
+    "helpers": [
+      "assert_rectangular_char_grid",
+      "assert_rectangular_terminal_grid",
+      "assert_rectangular_terminal_grid_with_profile"
+    ],
+    "excluded_adjacent_function": {
+      "name": "direction_and_labels::flowchart_issue_53_long_node_labels_wrap_before_layout",
+      "reason": "also invokes assert_issue_53_semantics; it is not among the three-helper closed cohort",
+      "direct_assertions": 1
+    }
+  },
+  "mapping_contract": {
+    "captures": "Five actual public Markdown frames (wide drawing, narrow drawing, restored drawing, wide ordinary source control, narrow ordinary source control) are acquired before source binding.",
+    "option_policy": "Every original AsciiRenderOptions requirement is explicit. An unavailable Loom public mapping is an unmet error, never a default-render substitution or a skipped assertion.",
+    "helper_policy": "The three source helper algorithms are retained and self-negative-tested. PixelAt fixed viewport rows do not expose Merman serialized-row padding; until a public non-vacuous bridge exists, helper obligations remain unmet and cannot admit a source function.",
+    "credit_policy": "No upstream snapshot, upstream runtime output, native report, source fallback, resource exhaustion, or C2 geometry credit may make a source function pass.",
+    "source_binding_limit": "The test does not read the 16,326,956-byte cases.json under the fixed 8,000,000-unit setup cap. It binds asset input SHA-256 and each original complete Rust function after capture; this is intentionally not live-ledger revalidation."
+  },
+  "helpers": [
+    {
+      "name": "assert_rectangular_char_grid",
+      "upstream_path": "tests/flowchart_model.rs",
+      "file_sha256": "f5aa9bd6ab1235e9bebe384f31ef50a828aa3814f51894251e0ac5ed4c414f4d",
+      "file_bytes": 12230,
+      "function_text": "fn assert_rectangular_char_grid(rendered: &str) {\n    let mut lines = rendered.lines();\n    let Some(first) = lines.next() else {\n        return;\n    };\n    let width = first.chars().count();\n    for line in lines {\n        assert_eq!(\n            line.chars().count(),\n            width,\n            \"rendered lines should stay aligned:\\n{rendered}\"\n        );\n    }\n}",
+      "function_sha256": "f27223447dfa23a4f0ada8974822916c5144ea4134b63502db7b8569e35d67e7",
+      "function_bytes": 369
+    },
+    {
+      "name": "assert_rectangular_terminal_grid",
+      "upstream_path": "tests/flowchart_model.rs",
+      "file_sha256": "f5aa9bd6ab1235e9bebe384f31ef50a828aa3814f51894251e0ac5ed4c414f4d",
+      "file_bytes": 12230,
+      "function_text": "fn assert_rectangular_terminal_grid(rendered: &str) {\n    let mut lines = rendered.lines();\n    let Some(first) = lines.next() else {\n        return;\n    };\n    let width = terminal_test_width(first);\n    for line in lines {\n        assert_eq!(\n            terminal_test_width(line),\n            width,\n            \"rendered lines should stay terminal-cell aligned:\\n{rendered}\"\n        );\n    }\n}",
+      "function_sha256": "62336698dceb47af8fc6728ce1198627cfaa316860e63d0e2eda8c7d52610fa0",
+      "function_bytes": 397
+    },
+    {
+      "name": "assert_rectangular_terminal_grid_with_profile",
+      "upstream_path": "tests/support/mod.rs",
+      "file_sha256": "9d2a6fa854ff4a4411400a6164e05becf3addd1725bd0e30a482a49dd1313d12",
+      "file_bytes": 5079,
+      "function_text": "fn assert_rectangular_terminal_grid_with_profile(\n    rendered: &str,\n    profile: TerminalWidthProfile,\n) {\n    let mut lines = rendered.lines();\n    let Some(first) = lines.next() else {\n        return;\n    };\n    let width = terminal_line_width(first, profile);\n    for line in lines {\n        assert_eq!(\n            terminal_line_width(line, profile),\n            width,\n            \"rendered lines should stay terminal-cell aligned:\\n{rendered}\"\n        );\n    }\n}",
+      "function_sha256": "de037d583800ad29764fcaed86b6639c04809b4c90874a47e7787a191304c9ff",
+      "function_bytes": 470
+    }
+  ],
+  "functions": [
+    {
+      "name": "appearance::issue_53_compact_plain_and_ansi16_share_one_flowchart_geometry",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/23c1773faba92cfd31bd4f03da5aa26822d83c2f53b65487ae679730656b75e9.rs",
+        "captured_sha256": "23c1773faba92cfd31bd4f03da5aa26822d83c2f53b65487ae679730656b75e9",
+        "captured_bytes": 828,
+        "captured_text": "fn issue_53_compact_plain_and_ansi16_share_one_flowchart_geometry() {\n    let input = local_semantic_input(\"flowchart/issue_53_long_node_labels.mmd\");\n    let compact = AsciiRenderOptions::ascii().with_layout_profile(AsciiLayoutProfile::Compact);\n    let plain = render_flowchart(&input, &compact).expect(\"compact plain fixture should render\");\n    let ansi16 = render_flowchart(&input, &compact.with_color_mode(AsciiColorMode::Ansi16))\n        .expect(\"compact ANSI16 fixture should render\");\n\n    assert_eq!(strip_ansi(&ansi16), plain);\n    assert_rectangular_terminal_grid(&plain);\n    assert_eq!(\n        (\n            plain\n                .lines()\n                .map(terminal_test_width)\n                .max()\n                .unwrap_or_default(),\n            plain.lines().count(),\n        ),\n        (56, 67)\n    );\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/appearance.rs",
+        "original_file_sha256": "211c0dbb70b7b793a5acaa9a450e192200e851eeb907b1c2208cc26235f865cc",
+        "original_byte_start": 732,
+        "original_byte_end": 1560,
+        "original_line_start": 25,
+        "original_line_end": 45
+      },
+      "helper": "assert_rectangular_terminal_grid",
+      "options": [
+        "encoding:ascii",
+        "layout_profile:compact",
+        "color_mode:ansi16"
+      ],
+      "case_ids": [
+        "merman/df7eab99901e5629859e"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(strip_ansi(&ansi16), plain)",
+          "source_sha256": "ea9654d85e36b3ada611aee821df2c4b444372af36a7a1b10953666b0519fa97",
+          "predicate_kind": "ansi16_stripped_equals_plain",
+          "predicate": {}
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n        (\n            plain\n                .lines()\n                .map(terminal_test_width)\n                .max()\n                .unwrap_or_default(),\n            plain.lines().count(),\n        ),\n        (56, 67)\n    )",
+          "source_sha256": "237885dbc1e505cc28e604423c483288ad8880a0a9045cb0c62c6eee6bc50a58",
+          "predicate_kind": "terminal_extent_equals",
+          "predicate": {
+            "width": 56,
+            "height": 67
+          }
+        }
+      ]
+    },
+    {
+      "name": "boundary_routes::flowchart_local_semantic_fixture_covers_disconnected_subgraphs",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/64cf9a5a53125062dcca7b675b4514fde5fd5b56019669d87dab097d39a49bd4.rs",
+        "captured_sha256": "64cf9a5a53125062dcca7b675b4514fde5fd5b56019669d87dab097d39a49bd4",
+        "captured_bytes": 1468,
+        "captured_text": "fn flowchart_local_semantic_fixture_covers_disconnected_subgraphs() {\n    let input = local_semantic_input(\"flowchart/disconnected_subgraphs.mmd\");\n    let rendered = render_flowchart(&input, &AsciiRenderOptions::ascii())\n        .expect(\"local semantic disconnected-subgraphs flowchart fixture should render\");\n\n    for expected in [\n        \"Today\",\n        \"Next Wave\",\n        \"Today AI\",\n        \"Today Markdown\",\n        \"Today Reads\",\n        \"Next AI\",\n        \"Next Widget\",\n        \"Next Acts\",\n    ] {\n        assert!(\n            rendered.contains(expected),\n            \"disconnected-subgraphs fixture should keep {expected:?} visible:\\n{rendered}\"\n        );\n    }\n\n    assert_rectangular_char_grid(&rendered);\n\n    let line_index = |needle: &str| first_line_index_containing(&rendered, needle);\n    assert_ne!(\n        line_index(\"Today\"),\n        line_index(\"Next Wave\"),\n        \"disconnected subgraphs should remain separate visible groups:\\n{rendered}\"\n    );\n    assert!(\n        line_index(\"Today AI\") < line_index(\"Today Markdown\")\n            && line_index(\"Today Markdown\") < line_index(\"Today Reads\"),\n        \"an implicit isolated group under LR should use Mermaid's vertical default:\\n{rendered}\"\n    );\n    assert!(\n        line_index(\"Next AI\") < line_index(\"Next Widget\")\n            && line_index(\"Next Widget\") < line_index(\"Next Acts\"),\n        \"each implicit isolated group should use Mermaid's vertical default:\\n{rendered}\"\n    );\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/boundary_routes.rs",
+        "original_file_sha256": "771b700580c2b2814a22a401c607bb64cf787ea3ece94214748e854a9b57a926",
+        "original_byte_start": 10553,
+        "original_byte_end": 12021,
+        "original_line_start": 304,
+        "original_line_end": 343
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/be5d32a24d6cc1fcd0d3"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(\n            rendered.contains(expected),\n            \"disconnected-subgraphs fixture should keep {expected:?} visible:\\n{rendered}\"\n        )",
+          "source_sha256": "b68ff4d307d4210a2d509e3cd86bdce8837654bce31f6621b99bacfcf1b2db40",
+          "predicate_kind": "contains_all",
+          "predicate": {
+            "labels": [
+              "Today",
+              "Next Wave",
+              "Today AI",
+              "Today Markdown",
+              "Today Reads",
+              "Next AI",
+              "Next Widget",
+              "Next Acts"
+            ]
+          }
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert_ne",
+          "source_text": "assert_ne!(\n        line_index(\"Today\"),\n        line_index(\"Next Wave\"),\n        \"disconnected subgraphs should remain separate visible groups:\\n{rendered}\"\n    )",
+          "source_sha256": "3ad4a899ce4e114df4ab78dafb444187357ca768725cb07d58aa7ad1a861b63a",
+          "predicate_kind": "different_rows",
+          "predicate": {
+            "left": "Today",
+            "right": "Next Wave"
+          }
+        },
+        {
+          "ordinal": 3,
+          "macro": "assert",
+          "source_text": "assert!(\n        line_index(\"Today AI\") < line_index(\"Today Markdown\")\n            && line_index(\"Today Markdown\") < line_index(\"Today Reads\"),\n        \"an implicit isolated group under LR should use Mermaid's vertical default:\\n{rendered}\"\n    )",
+          "source_sha256": "80c8d7a80e672e4f6901cd704eda089a3e6ff0f4042384b173513554549a1561",
+          "predicate_kind": "row_chain",
+          "predicate": {
+            "labels": [
+              "Today AI",
+              "Today Markdown",
+              "Today Reads"
+            ]
+          }
+        },
+        {
+          "ordinal": 4,
+          "macro": "assert",
+          "source_text": "assert!(\n        line_index(\"Next AI\") < line_index(\"Next Widget\")\n            && line_index(\"Next Widget\") < line_index(\"Next Acts\"),\n        \"each implicit isolated group should use Mermaid's vertical default:\\n{rendered}\"\n    )",
+          "source_sha256": "34f9b9c8b6c4a13757929777bf8b0b6a2dce2aa66f9d21c4bfc9b9cbdd20e12c",
+          "predicate_kind": "row_chain",
+          "predicate": {
+            "labels": [
+              "Next AI",
+              "Next Widget",
+              "Next Acts"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "compact_flowchart_route_and_group_corpus_preserves_authored_fields",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/3dbef76bd2970954133d729bc17d99858400c4dd7856941592c6b98634b7d590.rs",
+        "captured_sha256": "3dbef76bd2970954133d729bc17d99858400c4dd7856941592c6b98634b7d590",
+        "captured_bytes": 2558,
+        "captured_text": "fn compact_flowchart_route_and_group_corpus_preserves_authored_fields() {\n    let cases: [(&str, &[&str]); 9] = [\n        (\n            \"flowchart/ampersand_fanin_fanout.mmd\",\n            &[\n                \"SourceA\", \"SourceB\", \"Merge\", \"Fanout\", \"TargetA\", \"TargetB\",\n            ],\n        ),\n        (\n            \"flowchart/back_edge_labels.mmd\",\n            &[\"back to top\", \"back to middle\"],\n        ),\n        (\n            \"flowchart/boundary_label_lane.mmd\",\n            &[\"Pipeline\", \"boundaryLabelWithEnoughWidth\", \"Success\"],\n        ),\n        (\n            \"flowchart/cjk_boundary_routes.mmd\",\n            &[\"入口\", \"流程中枢\", \"校验层\", \"验证\", \"发布\", \"完成\"],\n        ),\n        (\n            \"flowchart/disconnected_subgraphs.mmd\",\n            &[\"Today\", \"Today Markdown\", \"Next Wave\", \"Next Widget\"],\n        ),\n        (\n            \"flowchart/multi_boundary_routes.mmd\",\n            &[\"load\", \"check\", \"Pipeline\", \"ok\", \"fail\", \"Retry\"],\n        ),\n        (\"flowchart/multiline_edge_label.mmd\", &[\"north\", \"south\"]),\n        (\n            \"flowchart/nested_direction_boundary.mmd\",\n            &[\n                \"Outer Pipeline\",\n                \"Inner Steps\",\n                \"Validate\",\n                \"Persist\",\n                \"Done\",\n            ],\n        ),\n        (\n            \"flowchart/sibling_boundary_routes.mmd\",\n            &[\"Left Group\", \"Right Group\", \"Alpha\", \"Delta\", \"handoff\"],\n        ),\n    ];\n    let profiles = [\n        AsciiRenderOptions::ascii(),\n        AsciiRenderOptions::unicode(),\n        AsciiRenderOptions::ascii().with_terminal_width_profile(TerminalWidthProfile::Cjk),\n        AsciiRenderOptions::unicode().with_terminal_width_profile(TerminalWidthProfile::Cjk),\n    ];\n\n    for (fixture, expected_fields) in cases {\n        let model = parse_model(&local_semantic_input(fixture));\n        for options in profiles {\n            let options = options.with_layout_profile(AsciiLayoutProfile::Compact);\n            let rendered = render_model(&model, &options).unwrap_or_else(|error| {\n                panic!(\"compact {fixture} render failed for {options:?}: {error}\")\n            });\n            assert_rectangular_terminal_grid_with_profile(\n                &rendered,\n                options.terminal_width_profile,\n            );\n            for field in expected_fields {\n                assert!(\n                    rendered.contains(field),\n                    \"compact {fixture} lost authored field {field:?}:\\n{rendered}\"\n                );\n            }\n        }\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/viewport_characterization.rs",
+        "original_file_sha256": "688c9ca79ced8ea6e1eb8050d5666de70fda66ea3bbaf7a88c9fc46fd5b99755",
+        "original_byte_start": 24799,
+        "original_byte_end": 27357,
+        "original_line_start": 636,
+        "original_line_end": 706
+      },
+      "helper": "assert_rectangular_terminal_grid_with_profile",
+      "options": [
+        "encoding:ascii",
+        "encoding:unicode",
+        "layout_profile:compact",
+        "terminal_width_profile:unicode",
+        "terminal_width_profile:cjk"
+      ],
+      "case_ids": [
+        "merman/0bcc5747ff20c3c9062e",
+        "merman/17bd23abc724be96454c",
+        "merman/193b6e6ea37ca60d33e8",
+        "merman/4a4d0e05db2afd4bc83a",
+        "merman/61d76783bbe819d1efd4",
+        "merman/8971d0c2f790764f4134",
+        "merman/a1944e348f8826959ce8",
+        "merman/be5d32a24d6cc1fcd0d3",
+        "merman/bf9642a4ab479973d222"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(\n                    rendered.contains(field),\n                    \"compact {fixture} lost authored field {field:?}:\\n{rendered}\"\n                )",
+          "source_sha256": "759561c35b66a0253081c5d8c6f7f82f6a56d29e36da335fa02bb4a0110f85e2",
+          "predicate_kind": "contains_all_by_case",
+          "predicate": {
+            "merman/bf9642a4ab479973d222": [
+              "SourceA",
+              "SourceB",
+              "Merge",
+              "Fanout",
+              "TargetA",
+              "TargetB"
+            ],
+            "merman/a1944e348f8826959ce8": [
+              "back to top",
+              "back to middle"
+            ],
+            "merman/0bcc5747ff20c3c9062e": [
+              "Pipeline",
+              "boundaryLabelWithEnoughWidth",
+              "Success"
+            ],
+            "merman/61d76783bbe819d1efd4": [
+              "入口",
+              "流程中枢",
+              "校验层",
+              "验证",
+              "发布",
+              "完成"
+            ],
+            "merman/be5d32a24d6cc1fcd0d3": [
+              "Today",
+              "Today Markdown",
+              "Next Wave",
+              "Next Widget"
+            ],
+            "merman/8971d0c2f790764f4134": [
+              "load",
+              "check",
+              "Pipeline",
+              "ok",
+              "fail",
+              "Retry"
+            ],
+            "merman/193b6e6ea37ca60d33e8": [
+              "north",
+              "south"
+            ],
+            "merman/4a4d0e05db2afd4bc83a": [
+              "Outer Pipeline",
+              "Inner Steps",
+              "Validate",
+              "Persist",
+              "Done"
+            ],
+            "merman/17bd23abc724be96454c": [
+              "Left Group",
+              "Right Group",
+              "Alpha",
+              "Delta",
+              "handoff"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "direction_and_labels::flowchart_issue_132_edge_labels_leave_visible_line_segments",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/98fbbe580fd00bae92ad8a221ececb66060e500d623dd6b332a063bbb70db5b3.rs",
+        "captured_sha256": "98fbbe580fd00bae92ad8a221ececb66060e500d623dd6b332a063bbb70db5b3",
+        "captured_bytes": 1446,
+        "captured_text": "fn flowchart_issue_132_edge_labels_leave_visible_line_segments() {\n    for direction in [\"LR\", \"RL\"] {\n        for arrow in [\"-->\", \"<-->\"] {\n            for label in [\n                \"very long description\",\n                \"very long descriptions\",\n                \"很长的连接说明文字\",\n            ] {\n                for (options, line) in [\n                    (AsciiRenderOptions::ascii(), \"--\"),\n                    (AsciiRenderOptions::unicode(), \"──\"),\n                ] {\n                    let input = format!(\n                        \"flowchart {direction}\\nfirst {arrow}|{label}| second\\nsecond --> third[many words are too much sometime]\"\n                    );\n                    let rendered =\n                        render_flowchart(&input, &options).expect(\"diagram should render\");\n                    let row = rendered\n                        .lines()\n                        .find(|row| row.contains(label))\n                        .expect(\"edge label\");\n                    let (before, after) = row.split_once(label).expect(\"complete edge label\");\n                    assert!(\n                        before.ends_with(line) && after.starts_with(line),\n                        \"label must leave at least two line cells on each side ({direction}, {arrow}):\\n{rendered}\"\n                    );\n                    assert_rectangular_terminal_grid(&rendered);\n                }\n            }\n        }\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/direction_and_labels.rs",
+        "original_file_sha256": "4290fd499e0a05a5303250b179ba94ffbefbf28a15b5c7f0c636fd3ddd53d952",
+        "original_byte_start": 15195,
+        "original_byte_end": 16641,
+        "original_line_start": 474,
+        "original_line_end": 505
+      },
+      "helper": "assert_rectangular_terminal_grid",
+      "options": [
+        "encoding:ascii",
+        "encoding:unicode"
+      ],
+      "case_ids": [
+        "merman/479ae2e3ad93e2d2df27",
+        "merman/523ee5e670264b0ac740",
+        "merman/8d96d47269f502eac572",
+        "merman/92f1fb7617acb7e8357d",
+        "merman/9b625df2033a6c7d7cef",
+        "merman/afffee93849d0272e787",
+        "merman/b48924dee54791d54c68",
+        "merman/dd83b17024967dd326c2",
+        "merman/df3b10d57858170126f0",
+        "merman/e2f394a333efee719902",
+        "merman/ec0b18557bd1af513445",
+        "merman/f3598bdfd8b4dd7393e5"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(\n                        before.ends_with(line) && after.starts_with(line),\n                        \"label must leave at least two line cells on each side ({direction}, {arrow}):\\n{rendered}\"\n                    )",
+          "source_sha256": "68e312de4ab521489ac07b2b84bfed696ee312446d65250944377855bd9a41bd",
+          "predicate_kind": "edge_label_two_segments",
+          "predicate": {
+            "labels": [
+              "very long description",
+              "very long descriptions",
+              "很长的连接说明文字"
+            ],
+            "ascii": "--",
+            "unicode": "──"
+          }
+        }
+      ]
+    },
+    {
+      "name": "direction_and_labels::flowchart_node_label_wrapping_preserves_authored_breaks_and_graphemes",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/47b67f1dd618d898ff3d5e0350c649b94cca671daa66f509ba900bdc140b2e67.rs",
+        "captured_sha256": "47b67f1dd618d898ff3d5e0350c649b94cca671daa66f509ba900bdc140b2e67",
+        "captured_bytes": 1000,
+        "captured_text": "fn flowchart_node_label_wrapping_preserves_authored_breaks_and_graphemes() {\n    let input = \"flowchart TD\\nA[\\\"é team 👩‍💻<br>超長標籤 abcdefghijklmnop\\\"] --> B[Done]\";\n    let options = AsciiRenderOptions::unicode().with_flowchart_node_label_wrap_width(8);\n    let rendered = render_flowchart(input, &options).expect(\"wrapped Unicode label should render\");\n\n    for expected in [\n        \"é\",\n        \"team\",\n        \"👩‍💻\",\n        \"超長標籤\",\n        \"abcdefgh\",\n        \"ijklmnop\",\n        \"Done\",\n    ] {\n        assert!(\n            rendered.contains(expected),\n            \"missing complete grapheme/text fragment {expected:?}:\\n{rendered}\"\n        );\n    }\n    let emoji_row = first_line_index_containing(&rendered, \"👩‍💻\");\n    let cjk_row = first_line_index_containing(&rendered, \"超長\");\n    assert!(\n        cjk_row > emoji_row,\n        \"the authored <br> must remain a hard break:\\n{rendered}\"\n    );\n    assert_rectangular_terminal_grid(&rendered);\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/direction_and_labels.rs",
+        "original_file_sha256": "4290fd499e0a05a5303250b179ba94ffbefbf28a15b5c7f0c636fd3ddd53d952",
+        "original_byte_start": 2782,
+        "original_byte_end": 3782,
+        "original_line_start": 89,
+        "original_line_end": 115
+      },
+      "helper": "assert_rectangular_terminal_grid",
+      "options": [
+        "encoding:unicode",
+        "flowchart_node_label_wrap_width:8"
+      ],
+      "case_ids": [
+        "merman/2f0e9f3414f35f544b04"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(\n            rendered.contains(expected),\n            \"missing complete grapheme/text fragment {expected:?}:\\n{rendered}\"\n        )",
+          "source_sha256": "196e866f297de5b922ee1980bf6f12e072b5349afa64e42030a85c2860615ff2",
+          "predicate_kind": "contains_all",
+          "predicate": {
+            "labels": [
+              "é",
+              "team",
+              "👩‍💻",
+              "超長標籤",
+              "abcdefgh",
+              "ijklmnop",
+              "Done"
+            ]
+          }
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert",
+          "source_text": "assert!(\n        cjk_row > emoji_row,\n        \"the authored <br> must remain a hard break:\\n{rendered}\"\n    )",
+          "source_sha256": "5705757b902d67d1a5142e34ff9053830f9b48c0a3f9cd508f665d6b94014cce",
+          "predicate_kind": "row_after",
+          "predicate": {
+            "later": "超長標籤",
+            "earlier": "👩‍💻"
+          }
+        }
+      ]
+    },
+    {
+      "name": "direction_and_labels::flowchart_node_label_wrapping_renders_for_shapes_and_root_directions",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/947004d4f5c8c8226d7d26e779d50de69dd60ff034886ec6229666687e1f05c5.rs",
+        "captured_sha256": "947004d4f5c8c8226d7d26e779d50de69dd60ff034886ec6229666687e1f05c5",
+        "captured_bytes": 811,
+        "captured_text": "fn flowchart_node_label_wrapping_renders_for_shapes_and_root_directions() {\n    for direction in [\"TD\", \"LR\", \"RL\", \"BT\"] {\n        let input = format!(\n            \"flowchart {direction}\\nA@{{ shape: stadium, label: \\\"Alpha Beta Gamma Delta\\\" }} --> B[Done]\"\n        );\n        let rendered = render_flowchart(\n            &input,\n            &AsciiRenderOptions::unicode().with_flowchart_node_label_wrap_width(8),\n        )\n        .unwrap_or_else(|error| panic!(\"{direction} wrapped stadium should render: {error}\"));\n\n        for expected in [\"Alpha\", \"Beta\", \"Gamma\", \"Delta\", \"Done\"] {\n            assert!(\n                rendered.contains(expected),\n                \"missing {expected:?} for {direction}:\\n{rendered}\"\n            );\n        }\n        assert_rectangular_terminal_grid(&rendered);\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/direction_and_labels.rs",
+        "original_file_sha256": "4290fd499e0a05a5303250b179ba94ffbefbf28a15b5c7f0c636fd3ddd53d952",
+        "original_byte_start": 5270,
+        "original_byte_end": 6081,
+        "original_line_start": 146,
+        "original_line_end": 165
+      },
+      "helper": "assert_rectangular_terminal_grid",
+      "options": [
+        "encoding:unicode",
+        "flowchart_node_label_wrap_width:8"
+      ],
+      "case_ids": [
+        "merman/6474365faa3aab7b7f7c",
+        "merman/9937150556fdf630caef",
+        "merman/c793f1d6eeb4d90003d3",
+        "merman/cd2887e0cee84f646d4e"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(\n                rendered.contains(expected),\n                \"missing {expected:?} for {direction}:\\n{rendered}\"\n            )",
+          "source_sha256": "ebe9a7b33baef95a669db246ef651414bb9c6f4e75a4646444993ba97a25402c",
+          "predicate_kind": "contains_all",
+          "predicate": {
+            "labels": [
+              "Alpha",
+              "Beta",
+              "Gamma",
+              "Delta",
+              "Done"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "direction_and_labels::flowchart_parser_cjk_and_emoji_labels_reserve_terminal_cells",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/51404d513246129a3e2a6e7edfabfda2446c9cec006da4304b6c4dd5e06a1779.rs",
+        "captured_sha256": "51404d513246129a3e2a6e7edfabfda2446c9cec006da4304b6c4dd5e06a1779",
+        "captured_bytes": 479,
+        "captured_text": "fn flowchart_parser_cjk_and_emoji_labels_reserve_terminal_cells() {\n    let rendered = render_flowchart(\n        \"flowchart LR\\nA[开始] -->|处理🚀| B[完成]\",\n        &AsciiRenderOptions::ascii(),\n    )\n    .unwrap();\n\n    for expected in [\"开始\", \"处理🚀\", \"完成\"] {\n        assert!(\n            rendered.contains(expected),\n            \"wide label {expected:?} should stay visible:\\n{rendered}\"\n        );\n    }\n    assert_rectangular_terminal_grid(&rendered);\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/direction_and_labels.rs",
+        "original_file_sha256": "4290fd499e0a05a5303250b179ba94ffbefbf28a15b5c7f0c636fd3ddd53d952",
+        "original_byte_start": 12584,
+        "original_byte_end": 13063,
+        "original_line_start": 373,
+        "original_line_end": 387
+      },
+      "helper": "assert_rectangular_terminal_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/0beda8865b7ddb3532e4"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(\n            rendered.contains(expected),\n            \"wide label {expected:?} should stay visible:\\n{rendered}\"\n        )",
+          "source_sha256": "8c52098dc1174e7e8b6d43000b670414b8e1ae2375f210e4c6c2c39d0e07e6fd",
+          "predicate_kind": "contains_all",
+          "predicate": {
+            "labels": [
+              "开始",
+              "处理🚀",
+              "完成"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "direction_and_labels::flowchart_parser_multibyte_reference_labels_render_readably",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/10a678499fad6d6a18d01896daf3e67721d154b39d30ebef03f980c1ce80780a.rs",
+        "captured_sha256": "10a678499fad6d6a18d01896daf3e67721d154b39d30ebef03f980c1ce80780a",
+        "captured_bytes": 889,
+        "captured_text": "fn flowchart_parser_multibyte_reference_labels_render_readably() {\n    let cases = [\n        (\n            \"graph LR\\nA[Café]-->|résumé|B[Über]\",\n            [\"Café\", \"résumé\", \"Über\"],\n        ),\n        (\n            \"graph LR\\nA[Γειά]-->|ετικέτα|B[Κόσμος]\",\n            [\"Γειά\", \"ετικέτα\", \"Κόσμος\"],\n        ),\n        (\n            \"graph LR\\nA[Привет]-->|метка|B[Мир]\",\n            [\"Привет\", \"метка\", \"Мир\"],\n        ),\n    ];\n\n    for (input, expected_labels) in cases {\n        let rendered = render_flowchart(input, &AsciiRenderOptions::ascii()).unwrap();\n\n        for label in expected_labels {\n            assert!(\n                rendered.contains(label),\n                \"missing {label:?} in rendered fixture:\\n{rendered}\"\n            );\n        }\n        assert_rectangular_char_grid(&rendered);\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/direction_and_labels.rs",
+        "original_file_sha256": "4290fd499e0a05a5303250b179ba94ffbefbf28a15b5c7f0c636fd3ddd53d952",
+        "original_byte_start": 11685,
+        "original_byte_end": 12574,
+        "original_line_start": 343,
+        "original_line_end": 370
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/13713ab9c4d1b5d28ae2",
+        "merman/c19fc56efeca30ef862e",
+        "merman/c6b88bede9f8e643f263"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(\n                rendered.contains(label),\n                \"missing {label:?} in rendered fixture:\\n{rendered}\"\n            )",
+          "source_sha256": "8b375b0b0a6ef1f1ab0f6124913e7cffcf2077dc50b6d738b858de193537283c",
+          "predicate_kind": "contains_all_by_case",
+          "predicate": {
+            "merman/c19fc56efeca30ef862e": [
+              "Café",
+              "résumé",
+              "Über"
+            ],
+            "merman/13713ab9c4d1b5d28ae2": [
+              "Γειά",
+              "ετικέτα",
+              "Κόσμος"
+            ],
+            "merman/c6b88bede9f8e643f263": [
+              "Привет",
+              "метка",
+              "Мир"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "edges::flowchart_parser_parallel_self_loops_keep_independent_lanes_in_all_directions",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/490f51770c668e24a4869c3590ccab601883f19a48bff5279695f8655ccc2964.rs",
+        "captured_sha256": "490f51770c668e24a4869c3590ccab601883f19a48bff5279695f8655ccc2964",
+        "captured_bytes": 2821,
+        "captured_text": "fn flowchart_parser_parallel_self_loops_keep_independent_lanes_in_all_directions() {\n    for direction in [\"TD\", \"BT\", \"LR\", \"RL\"] {\n        let rendered = render_flowchart(\n            &format!(\"flowchart {direction}\\nA -->|alpha| A\\nA -- beta --o A\\nA -- gamma --x A\"),\n            &AsciiRenderOptions::ascii(),\n        )\n        .unwrap_or_else(|error| panic!(\"{direction} parallel self-loops should render: {error:?}\"));\n\n        for label in [\"alpha\", \"beta\", \"gamma\"] {\n            assert_eq!(\n                rendered.matches(label).count(),\n                1,\n                \"{direction} should preserve self-loop label {label:?}:\\n{rendered}\"\n            );\n        }\n\n        let marker_cells = rendered\n            .lines()\n            .enumerate()\n            .flat_map(|(y, line)| {\n                line.chars().enumerate().filter_map(move |(x, ch)| {\n                    matches!(ch, '>' | '<' | '^' | 'v' | 'o' | 'x').then_some((x, y, ch))\n                })\n            })\n            .collect::<Vec<_>>();\n        assert_eq!(\n            marker_cells.len(),\n            3,\n            \"{direction} should retain exactly one marker per self-loop:\\n{rendered}\"\n        );\n        assert!(\n            marker_cells.iter().any(|(_, _, ch)| *ch == 'o'),\n            \"{direction} should retain the circle marker:\\n{rendered}\"\n        );\n        assert!(\n            marker_cells.iter().any(|(_, _, ch)| *ch == 'x'),\n            \"{direction} should retain the cross marker:\\n{rendered}\"\n        );\n        assert!(\n            marker_cells\n                .iter()\n                .any(|(_, _, ch)| matches!(*ch, '>' | '<' | '^' | 'v')),\n            \"{direction} should retain the point marker:\\n{rendered}\"\n        );\n        let mut marker_coords = marker_cells\n            .iter()\n            .map(|(x, y, _)| (*x, *y))\n            .collect::<Vec<_>>();\n        marker_coords.sort_unstable();\n        marker_coords.dedup();\n        assert_eq!(\n            marker_coords.len(),\n            3,\n            \"{direction} self-loop markers must occupy independent coordinates:\\n{rendered}\"\n        );\n\n        let mut label_coords = [\"alpha\", \"beta\", \"gamma\"]\n            .into_iter()\n            .map(|label| {\n                rendered\n                    .lines()\n                    .enumerate()\n                    .find_map(|(y, line)| line.find(label).map(|x| (x, y)))\n                    .unwrap_or_else(|| panic!(\"missing {label:?} in rendered fixture:\\n{rendered}\"))\n            })\n            .collect::<Vec<_>>();\n        label_coords.sort_unstable();\n        label_coords.dedup();\n        assert_eq!(\n            label_coords.len(),\n            3,\n            \"{direction} self-loop labels must occupy independent lanes:\\n{rendered}\"\n        );\n        assert_rectangular_char_grid(&rendered);\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/edges.rs",
+        "original_file_sha256": "d3dfe815636d5f0888f497d498fa83b2ff3f0809144cf1554f84a712f7243172",
+        "original_byte_start": 2834,
+        "original_byte_end": 5655,
+        "original_line_start": 79,
+        "original_line_end": 154
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/408b0c72ba9c2c5c5d7d",
+        "merman/7c3251a038ac4cc30c0b",
+        "merman/89815b0e3b4c435c5d68",
+        "merman/aa5b580c7f38170402b7"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n                rendered.matches(label).count(),\n                1,\n                \"{direction} should preserve self-loop label {label:?}:\\n{rendered}\"\n            )",
+          "source_sha256": "3e4816d419636b7d5b733706865b3b89a6a974992dfba41172f6d0de6572d14a",
+          "predicate_kind": "each_label_once",
+          "predicate": {
+            "labels": [
+              "alpha",
+              "beta",
+              "gamma"
+            ]
+          }
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n            marker_cells.len(),\n            3,\n            \"{direction} should retain exactly one marker per self-loop:\\n{rendered}\"\n        )",
+          "source_sha256": "ea655af5e13e482225cb728d694a18795cdea8571cab1592ce4583f6091be1d5",
+          "predicate_kind": "marker_count",
+          "predicate": {
+            "count": 3
+          }
+        },
+        {
+          "ordinal": 3,
+          "macro": "assert",
+          "source_text": "assert!(\n            marker_cells.iter().any(|(_, _, ch)| *ch == 'o'),\n            \"{direction} should retain the circle marker:\\n{rendered}\"\n        )",
+          "source_sha256": "0c9ccb33dbf59ffd7e9d221d3622881c41200740aaede3709a2a8653c9eb9d32",
+          "predicate_kind": "marker_any",
+          "predicate": {
+            "glyphs": [
+              "o"
+            ]
+          }
+        },
+        {
+          "ordinal": 4,
+          "macro": "assert",
+          "source_text": "assert!(\n            marker_cells.iter().any(|(_, _, ch)| *ch == 'x'),\n            \"{direction} should retain the cross marker:\\n{rendered}\"\n        )",
+          "source_sha256": "be3007c46c722e0bdb99523fba5725b2cdc88a431988c4fe8b7acc856794d9c7",
+          "predicate_kind": "marker_any",
+          "predicate": {
+            "glyphs": [
+              "x"
+            ]
+          }
+        },
+        {
+          "ordinal": 5,
+          "macro": "assert",
+          "source_text": "assert!(\n            marker_cells\n                .iter()\n                .any(|(_, _, ch)| matches!(*ch, '>' | '<' | '^' | 'v')),\n            \"{direction} should retain the point marker:\\n{rendered}\"\n        )",
+          "source_sha256": "f2815ccc78bae390fb46137d30023f1622cbddee38fc7ed76a05e7028bf7ac7d",
+          "predicate_kind": "marker_any",
+          "predicate": {
+            "glyphs": [
+              ">",
+              "<",
+              "^",
+              "v"
+            ]
+          }
+        },
+        {
+          "ordinal": 6,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n            marker_coords.len(),\n            3,\n            \"{direction} self-loop markers must occupy independent coordinates:\\n{rendered}\"\n        )",
+          "source_sha256": "82c1981f82317bbba879765add1c470025074c943f6d9c5433648cc0988469d3",
+          "predicate_kind": "marker_positions_distinct",
+          "predicate": {
+            "count": 3
+          }
+        },
+        {
+          "ordinal": 7,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n            label_coords.len(),\n            3,\n            \"{direction} self-loop labels must occupy independent lanes:\\n{rendered}\"\n        )",
+          "source_sha256": "5159d8579ef7967b51337f6873ed71469a96e9e138a25fca7eaea11e9533924e",
+          "predicate_kind": "label_positions_distinct",
+          "predicate": {
+            "labels": [
+              "alpha",
+              "beta",
+              "gamma"
+            ],
+            "count": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "edges::flowchart_parser_self_loops_preserve_independent_source_and_target_markers",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/4f2b9373c780df87bd28c53744c47f4d5ecf7faa6bf839e260c1f9df9da32c42.rs",
+        "captured_sha256": "4f2b9373c780df87bd28c53744c47f4d5ecf7faa6bf839e260c1f9df9da32c42",
+        "captured_bytes": 1306,
+        "captured_text": "fn flowchart_parser_self_loops_preserve_independent_source_and_target_markers() {\n    for direction in [\"TD\", \"BT\", \"LR\", \"RL\"] {\n        for (options, circle_marker, cross_marker) in [\n            (AsciiRenderOptions::ascii(), 'o', 'x'),\n            (AsciiRenderOptions::unicode(), '○', '×'),\n        ] {\n            let rendered = render_flowchart(&format!(\"flowchart {direction}\\nA o--x A\"), &options)\n                .unwrap_or_else(|error| {\n                    panic!(\"{direction} double-ended self-loop should render: {error:?}\")\n                });\n\n            let circle = rendered\n                .lines()\n                .enumerate()\n                .find_map(|(y, line)| line.find(circle_marker).map(|x| (x, y)))\n                .unwrap_or_else(|| panic!(\"missing source circle marker:\\n{rendered}\"));\n            let cross = rendered\n                .lines()\n                .enumerate()\n                .find_map(|(y, line)| line.find(cross_marker).map(|x| (x, y)))\n                .unwrap_or_else(|| panic!(\"missing target cross marker:\\n{rendered}\"));\n            assert_ne!(\n                circle, cross,\n                \"{direction} self-loop endpoint markers need independent berths:\\n{rendered}\"\n            );\n            assert_rectangular_char_grid(&rendered);\n        }\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/edges.rs",
+        "original_file_sha256": "d3dfe815636d5f0888f497d498fa83b2ff3f0809144cf1554f84a712f7243172",
+        "original_byte_start": 1518,
+        "original_byte_end": 2824,
+        "original_line_start": 48,
+        "original_line_end": 76
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii",
+        "encoding:unicode"
+      ],
+      "case_ids": [
+        "merman/09b425a6af14a7aa6546",
+        "merman/4603bd5736ff910df87a",
+        "merman/b33b925515990d94c0fd",
+        "merman/f305a51f06157b713e8c"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert_ne",
+          "source_text": "assert_ne!(\n                circle, cross,\n                \"{direction} self-loop endpoint markers need independent berths:\\n{rendered}\"\n            )",
+          "source_sha256": "46731f04c3389e78e65bc2086842fb5a28466ac04399f645a554d222fd40861f",
+          "predicate_kind": "marker_positions_not_equal",
+          "predicate": {
+            "ascii": [
+              "o",
+              "x"
+            ],
+            "unicode": [
+              "○",
+              "×"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "graph_routing::flowchart_parser_bt_skip_edge_preserves_dagre_chain_after_vertical_flip",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/1e6090c8dd9fc7d1e2df891e90693d3dacb54da8036bafcf0ce90e4e3093c767.rs",
+        "captured_sha256": "1e6090c8dd9fc7d1e2df891e90693d3dacb54da8036bafcf0ce90e4e3093c767",
+        "captured_bytes": 775,
+        "captured_text": "fn flowchart_parser_bt_skip_edge_preserves_dagre_chain_after_vertical_flip() {\n    let rendered = render_flowchart(\n        \"flowchart BT\\n  A --> C\\n  A --> B\\n  B --> C\\n\",\n        &AsciiRenderOptions::ascii(),\n    )\n    .expect(\"same-rank bottom-up skip edge should route\");\n\n    let line_index = |needle: &str| first_line_index_containing(&rendered, needle);\n    assert!(line_index(\"C\") < line_index(\"B\"), \"{rendered}\");\n    assert!(line_index(\"B\") < line_index(\"A\"), \"{rendered}\");\n    assert_eq!(\n        rendered\n            .chars()\n            .filter(|ch| matches!(ch, '>' | '<' | 'v' | '^'))\n            .count(),\n        3,\n        \"the two chain edges and skip edge should survive the BT mirror:\\n{rendered}\"\n    );\n    assert_rectangular_char_grid(&rendered);\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/graph_routing.rs",
+        "original_file_sha256": "038427706a4f8e552dec14ac3824183c01dbef2222b07e09e74dff6ef9c3c8bd",
+        "original_byte_start": 7133,
+        "original_byte_end": 7908,
+        "original_line_start": 187,
+        "original_line_end": 206
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/afd506b9ce56199b0e47"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(line_index(\"C\") < line_index(\"B\"), \"{rendered}\")",
+          "source_sha256": "87ada4092cb106b330211c7641f5235bb761731b08397c2b41d8fab028e75c56",
+          "predicate_kind": "row_before",
+          "predicate": {
+            "left": "C",
+            "right": "B"
+          }
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert",
+          "source_text": "assert!(line_index(\"B\") < line_index(\"A\"), \"{rendered}\")",
+          "source_sha256": "ceaa26149d11b9036c033c9383417c2ddbd864e6a8ac7868bc5c9c045f1895e1",
+          "predicate_kind": "row_before",
+          "predicate": {
+            "left": "B",
+            "right": "A"
+          }
+        },
+        {
+          "ordinal": 3,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n        rendered\n            .chars()\n            .filter(|ch| matches!(ch, '>' | '<' | 'v' | '^'))\n            .count(),\n        3,\n        \"the two chain edges and skip edge should survive the BT mirror:\\n{rendered}\"\n    )",
+          "source_sha256": "a67f41fbf11fda83e74ae998bbda9537765d9451e17ddad75e9f89e0f5d60d93",
+          "predicate_kind": "marker_count",
+          "predicate": {
+            "count": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "graph_routing::flowchart_parser_top_down_skip_edge_preserves_dagre_chain_ranks",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/3c6cf6f429830bb61d4d8eacedf242248cbd923069bb18410df6a4c61dff10a0.rs",
+        "captured_sha256": "3c6cf6f429830bb61d4d8eacedf242248cbd923069bb18410df6a4c61dff10a0",
+        "captured_bytes": 850,
+        "captured_text": "fn flowchart_parser_top_down_skip_edge_preserves_dagre_chain_ranks() {\n    let rendered = render_flowchart(\n        concat!(\n            \"flowchart TD\\n\",\n            \"  A --> C\\n\",\n            \"  A --> B\\n\",\n            \"  B --> C\\n\",\n        ),\n        &AsciiRenderOptions::ascii(),\n    )\n    .expect(\"same-rank top-down skip edge should route\");\n\n    let line_index = |needle: &str| first_line_index_containing(&rendered, needle);\n    assert!(line_index(\"A\") < line_index(\"B\"), \"{rendered}\");\n    assert!(line_index(\"B\") < line_index(\"C\"), \"{rendered}\");\n    assert_eq!(\n        rendered\n            .chars()\n            .filter(|ch| matches!(ch, '>' | '<' | 'v' | '^'))\n            .count(),\n        3,\n        \"the two chain edges and skip edge should all retain target markers:\\n{rendered}\"\n    );\n    assert_rectangular_char_grid(&rendered);\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/graph_routing.rs",
+        "original_file_sha256": "038427706a4f8e552dec14ac3824183c01dbef2222b07e09e74dff6ef9c3c8bd",
+        "original_byte_start": 1229,
+        "original_byte_end": 2079,
+        "original_line_start": 41,
+        "original_line_end": 65
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/d0f6a5fc989a2b62eed3"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(line_index(\"A\") < line_index(\"B\"), \"{rendered}\")",
+          "source_sha256": "857db480732eedb71af14879a602b411abc332076115fbf75f124e38b4b75f72",
+          "predicate_kind": "row_before",
+          "predicate": {
+            "left": "A",
+            "right": "B"
+          }
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert",
+          "source_text": "assert!(line_index(\"B\") < line_index(\"C\"), \"{rendered}\")",
+          "source_sha256": "62a62f6951f793ddd0a79852d243d893a1d69e8e6877ededa050c8291b30daf6",
+          "predicate_kind": "row_before",
+          "predicate": {
+            "left": "B",
+            "right": "C"
+          }
+        },
+        {
+          "ordinal": 3,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n        rendered\n            .chars()\n            .filter(|ch| matches!(ch, '>' | '<' | 'v' | '^'))\n            .count(),\n        3,\n        \"the two chain edges and skip edge should all retain target markers:\\n{rendered}\"\n    )",
+          "source_sha256": "2905f2b1e2a832b03c420ac626e7892efda2173b091fbc20bbe1e74a81ac717e",
+          "predicate_kind": "marker_count",
+          "predicate": {
+            "count": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "graph_routing::flowchart_parser_top_down_skip_edge_routes_for_every_declaration_order",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/cc0be2baacef661cd4dc4f1a7466817e948eca6574a0659d62a7e5cae6a9c2b8.rs",
+        "captured_sha256": "cc0be2baacef661cd4dc4f1a7466817e948eca6574a0659d62a7e5cae6a9c2b8",
+        "captured_bytes": 1452,
+        "captured_text": "fn flowchart_parser_top_down_skip_edge_routes_for_every_declaration_order() {\n    // Dagre ranking owns topology before terminal routing. Equivalent edge declaration orders must\n    // therefore keep the semantic A -> B -> C ranks even though route paint order can still vary.\n    for input in [\n        \"flowchart TD\\n  A --> B\\n  B --> C\\n  A --> C\\n\",\n        \"flowchart TD\\n  A --> B\\n  A --> C\\n  B --> C\\n\",\n        \"flowchart TD\\n  B --> C\\n  A --> B\\n  A --> C\\n\",\n        \"flowchart TD\\n  B --> C\\n  A --> C\\n  A --> B\\n\",\n        \"flowchart TD\\n  A --> C\\n  A --> B\\n  B --> C\\n\",\n        \"flowchart TD\\n  A --> C\\n  B --> C\\n  A --> B\\n\",\n    ] {\n        let rendered = render_flowchart(input, &AsciiRenderOptions::ascii())\n            .unwrap_or_else(|err| panic!(\"top-down skip edge should route for {input:?}: {err}\"));\n\n        for node in [\"A\", \"B\", \"C\"] {\n            assert!(\n                rendered.contains(node),\n                \"node {node} should stay visible for {input:?}:\\n{rendered}\"\n            );\n        }\n        let a_line = first_line_index_containing(&rendered, \"| A |\");\n        let b_line = first_line_index_containing(&rendered, \"| B |\");\n        let c_line = first_line_index_containing(&rendered, \"| C |\");\n        assert!(\n            a_line < b_line && b_line < c_line,\n            \"Dagre ranks must stay invariant for {input:?}:\\n{rendered}\"\n        );\n        assert_rectangular_char_grid(&rendered);\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/graph_routing.rs",
+        "original_file_sha256": "038427706a4f8e552dec14ac3824183c01dbef2222b07e09e74dff6ef9c3c8bd",
+        "original_byte_start": 2089,
+        "original_byte_end": 3541,
+        "original_line_start": 68,
+        "original_line_end": 97
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/6076bbe5559b6e7bbc1a",
+        "merman/6f88bb68ebab648be15e",
+        "merman/7219ab0f72686b982ac3",
+        "merman/b15e78b38be58540d7ca",
+        "merman/c9b5922a340c4dc35e50",
+        "merman/d0f6a5fc989a2b62eed3"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(\n                rendered.contains(node),\n                \"node {node} should stay visible for {input:?}:\\n{rendered}\"\n            )",
+          "source_sha256": "46831579392550c07c2a55c81edf23d5e51db42d138a82939359f5b46684668b",
+          "predicate_kind": "contains_all",
+          "predicate": {
+            "labels": [
+              "A",
+              "B",
+              "C"
+            ]
+          }
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert",
+          "source_text": "assert!(\n            a_line < b_line && b_line < c_line,\n            \"Dagre ranks must stay invariant for {input:?}:\\n{rendered}\"\n        )",
+          "source_sha256": "ad2039cc36e0693674e51c3c4b3086953868759369a344a630ab043fda460e7e",
+          "predicate_kind": "row_chain",
+          "predicate": {
+            "labels": [
+              "| A |",
+              "| B |",
+              "| C |"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "subgraphs::flowchart_parser_cross_subgraph_routes_follow_compound_parent_topology",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/c0af73643fc6e777b5a175421ceed0fc28a56c94e518a386eb0a0f61a98a61af.rs",
+        "captured_sha256": "c0af73643fc6e777b5a175421ceed0fc28a56c94e518a386eb0a0f61a98a61af",
+        "captured_bytes": 986,
+        "captured_text": "fn flowchart_parser_cross_subgraph_routes_follow_compound_parent_topology() {\n    for (name, input, expected_nodes) in [\n        (\n            \"directionless sibling groups\",\n            \"flowchart LR\\nsubgraph left\\nA\\nend\\nsubgraph right\\nB\\nend\\nA --> B\",\n            &[\"A\", \"B\"][..],\n        ),\n        (\n            \"first parent for a repeated node reference\",\n            \"flowchart TD\\nsubgraph first\\nA --> B\\nend\\nsubgraph second\\nB --> C\\nend\",\n            &[\"A\", \"B\", \"C\"][..],\n        ),\n    ] {\n        let rendered =\n            render_flowchart(input, &AsciiRenderOptions::ascii()).unwrap_or_else(|error| {\n                panic!(\"{name} should route across owned group borders: {error}\")\n            });\n\n        for node in expected_nodes.iter().copied() {\n            assert!(\n                rendered.contains(node),\n                \"{name} should preserve node {node:?}:\\n{rendered}\"\n            );\n        }\n        assert_rectangular_char_grid(&rendered);\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/subgraphs.rs",
+        "original_file_sha256": "a4ece27de2baf4e2a8193d03d1e58f6e3446b2738508c3aa5e37bf5f9726d206",
+        "original_byte_start": 8084,
+        "original_byte_end": 9070,
+        "original_line_start": 245,
+        "original_line_end": 271
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/6a74625d8c0f4ff3626b",
+        "merman/bfd21ff9b4b75bf4d178"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(\n                rendered.contains(node),\n                \"{name} should preserve node {node:?}:\\n{rendered}\"\n            )",
+          "source_sha256": "0fbf82f6200e9656b512ab82c6e65a1ab8e3cc1ae6eb71678966fbaf351b4052",
+          "predicate_kind": "contains_all_by_case",
+          "predicate": {
+            "merman/6a74625d8c0f4ff3626b": [
+              "A",
+              "B"
+            ],
+            "merman/bfd21ff9b4b75bf4d178": [
+              "A",
+              "B",
+              "C"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "subgraphs::flowchart_parser_explicit_subgraph_direction_survives_cross_boundary_edges",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/845aac224ff4d475e97f1ac17edf861dcbbb546f786ee53d5c2a48e799d11411.rs",
+        "captured_sha256": "845aac224ff4d475e97f1ac17edf861dcbbb546f786ee53d5c2a48e799d11411",
+        "captured_bytes": 1482,
+        "captured_text": "fn flowchart_parser_explicit_subgraph_direction_survives_cross_boundary_edges() {\n    let rendered = render_flowchart(\n        concat!(\n            \"flowchart TD\\n\",\n            \"subgraph one [LR Group]\\n\",\n            \"    direction LR\\n\",\n            \"    A --> B\\n\",\n            \"end\\n\",\n            \"X --> A\\n\",\n            \"B --> Y\\n\",\n        ),\n        &AsciiRenderOptions::ascii(),\n    )\n    .expect(\"cross-boundary subgraph should retain its explicit local direction\");\n\n    for expected in [\"LR\", \"Group\", \"A\", \"B\", \"X\", \"Y\"] {\n        assert!(\n            rendered.contains(expected),\n            \"missing {expected:?}:\\n{rendered}\"\n        );\n    }\n    let position = |needle: &str| {\n        rendered\n            .lines()\n            .enumerate()\n            .find_map(|(y, line)| line.find(needle).map(|x| (x, y)))\n            .unwrap_or_else(|| panic!(\"missing {needle:?} in output:\\n{rendered}\"))\n    };\n    let x = position(\" X \");\n    let a = position(\" A \");\n    let b = position(\" B \");\n    let y = position(\" Y \");\n    assert!(\n        x.1 < a.1,\n        \"root TD direction should keep the external source above its group entry:\\n{rendered}\"\n    );\n    assert_eq!(\n        a.1, b.1,\n        \"an explicit LR subgraph must remain horizontal across boundary edges:\\n{rendered}\"\n    );\n    assert!(\n        b.1 < y.1,\n        \"root TD direction should keep the external target below its group exit:\\n{rendered}\"\n    );\n    assert_rectangular_char_grid(&rendered);\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/subgraphs.rs",
+        "original_file_sha256": "a4ece27de2baf4e2a8193d03d1e58f6e3446b2738508c3aa5e37bf5f9726d206",
+        "original_byte_start": 18047,
+        "original_byte_end": 19529,
+        "original_line_start": 540,
+        "original_line_end": 585
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/b8399ebfc25f7ca8bda2"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert",
+          "source_text": "assert!(\n            rendered.contains(expected),\n            \"missing {expected:?}:\\n{rendered}\"\n        )",
+          "source_sha256": "56719de460a19cc037910451c10b67d713d3dbdddc24e9ae92f8d8084cd03f20",
+          "predicate_kind": "contains_all",
+          "predicate": {
+            "labels": [
+              "LR",
+              "Group",
+              "A",
+              "B",
+              "X",
+              "Y"
+            ]
+          }
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert",
+          "source_text": "assert!(\n        x.1 < a.1,\n        \"root TD direction should keep the external source above its group entry:\\n{rendered}\"\n    )",
+          "source_sha256": "bde8126464c7bd61f645ebd0b9d328c5d5f0e0d69ecac929d06a35f1c064b4a2",
+          "predicate_kind": "row_before",
+          "predicate": {
+            "left": " X ",
+            "right": " A "
+          }
+        },
+        {
+          "ordinal": 3,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n        a.1, b.1,\n        \"an explicit LR subgraph must remain horizontal across boundary edges:\\n{rendered}\"\n    )",
+          "source_sha256": "ac90d2e39150b045ca75022c1076e9daf509ff290778b8653f7d3ef62746835b",
+          "predicate_kind": "same_row",
+          "predicate": {
+            "left": " A ",
+            "right": " B "
+          }
+        },
+        {
+          "ordinal": 4,
+          "macro": "assert",
+          "source_text": "assert!(\n        b.1 < y.1,\n        \"root TD direction should keep the external target below its group exit:\\n{rendered}\"\n    )",
+          "source_sha256": "880353428c67909d8dd441d5812cf7f6a84ff9a3422bbebb9b8703455dbc9925",
+          "predicate_kind": "row_before",
+          "predicate": {
+            "left": " B ",
+            "right": " Y "
+          }
+        }
+      ]
+    },
+    {
+      "name": "subgraphs::flowchart_parser_isolated_implicit_subgraph_uses_mermaid_perpendicular_default",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/600518dfd1dd329eed9c5f949d88b9aa1dc2f619d8f435ce37a01655df9ac996.rs",
+        "captured_sha256": "600518dfd1dd329eed9c5f949d88b9aa1dc2f619d8f435ce37a01655df9ac996",
+        "captured_bytes": 1361,
+        "captured_text": "fn flowchart_parser_isolated_implicit_subgraph_uses_mermaid_perpendicular_default() {\n    for (root_direction, expected_axis) in [\n        (\"TD\", \"row\"),\n        (\"LR\", \"column\"),\n        (\"BT\", \"column\"),\n        (\"RL\", \"column\"),\n    ] {\n        let rendered = render_flowchart(\n            &format!(\"flowchart {root_direction}\\nsubgraph isolated\\n    A --> B\\nend\\n\"),\n            &AsciiRenderOptions::ascii(),\n        )\n        .unwrap_or_else(|error| {\n            panic!(\"isolated subgraph under {root_direction} should render: {error:?}\")\n        });\n        let position = |needle: &str| {\n            rendered\n                .lines()\n                .enumerate()\n                .find_map(|(y, line)| line.find(needle).map(|x| (x, y)))\n                .unwrap_or_else(|| panic!(\"missing {needle:?} in output:\\n{rendered}\"))\n        };\n        let a = position(\" A \");\n        let b = position(\" B \");\n\n        if expected_axis == \"row\" {\n            assert_eq!(\n                a.1, b.1,\n                \"isolated subgraph should toggle {root_direction} to a horizontal axis:\\n{rendered}\"\n            );\n        } else {\n            assert_eq!(\n                a.0, b.0,\n                \"isolated subgraph should toggle {root_direction} to a vertical axis:\\n{rendered}\"\n            );\n        }\n        assert_rectangular_char_grid(&rendered);\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/subgraphs.rs",
+        "original_file_sha256": "a4ece27de2baf4e2a8193d03d1e58f6e3446b2738508c3aa5e37bf5f9726d206",
+        "original_byte_start": 19539,
+        "original_byte_end": 20900,
+        "original_line_start": 588,
+        "original_line_end": 625
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/60725fefa7e2460e9655",
+        "merman/814b9a1c319a94c487d6",
+        "merman/a2c30413212598f1dbb6",
+        "merman/c4b9e1c3982e902a68e7"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n                a.1, b.1,\n                \"isolated subgraph should toggle {root_direction} to a horizontal axis:\\n{rendered}\"\n            )",
+          "source_sha256": "b195856206ed5ac723e6bee9b5cdb6032a314f79e142ecb06422997ef70cde13",
+          "predicate_kind": "same_row_when_case",
+          "predicate": {
+            "ids": [
+              "merman/c4b9e1c3982e902a68e7"
+            ],
+            "left": " A ",
+            "right": " B "
+          }
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n                a.0, b.0,\n                \"isolated subgraph should toggle {root_direction} to a vertical axis:\\n{rendered}\"\n            )",
+          "source_sha256": "fd68016e60242b217742a39f165fd93846dccc368235eaae9be5cb6005ff1d53",
+          "predicate_kind": "same_column_when_case",
+          "predicate": {
+            "ids": [
+              "merman/a2c30413212598f1dbb6",
+              "merman/814b9a1c319a94c487d6",
+              "merman/60725fefa7e2460e9655"
+            ],
+            "left": " A ",
+            "right": " B "
+          }
+        }
+      ]
+    },
+    {
+      "name": "subgraphs::flowchart_parser_subgraph_reverse_directions_mirror_local_coordinates",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/661c7d8d2bd083327ffe9238ad5bb7ac5ba5677431feb6169e495c67455a8767.rs",
+        "captured_sha256": "661c7d8d2bd083327ffe9238ad5bb7ac5ba5677431feb6169e495c67455a8767",
+        "captured_bytes": 1613,
+        "captured_text": "fn flowchart_parser_subgraph_reverse_directions_mirror_local_coordinates() {\n    for (direction, expected_axis) in [(\"RL\", \"row\"), (\"BT\", \"column\")] {\n        let rendered = render_flowchart(\n            &format!(\n                \"flowchart TB\\nsubgraph reverse\\n    direction {direction}\\n    A --> B\\nend\\n\"\n            ),\n            &AsciiRenderOptions::ascii(),\n        )\n        .unwrap_or_else(|error| panic!(\"local {direction} subgraph should render: {error:?}\"));\n\n        let a = rendered\n            .lines()\n            .enumerate()\n            .find_map(|(y, line)| line.find(\" A \").map(|x| (x, y)))\n            .unwrap_or_else(|| panic!(\"missing A in {direction} output:\\n{rendered}\"));\n        let b = rendered\n            .lines()\n            .enumerate()\n            .find_map(|(y, line)| line.find(\" B \").map(|x| (x, y)))\n            .unwrap_or_else(|| panic!(\"missing B in {direction} output:\\n{rendered}\"));\n\n        if expected_axis == \"row\" {\n            assert_eq!(\n                a.1, b.1,\n                \"RL local direction should keep the edge horizontal:\\n{rendered}\"\n            );\n            assert!(\n                b.0 < a.0,\n                \"RL local direction should place B before A:\\n{rendered}\"\n            );\n        } else {\n            assert_eq!(\n                a.0, b.0,\n                \"BT local direction should keep the edge vertical:\\n{rendered}\"\n            );\n            assert!(\n                b.1 < a.1,\n                \"BT local direction should place B above A:\\n{rendered}\"\n            );\n        }\n        assert_rectangular_char_grid(&rendered);\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/subgraphs.rs",
+        "original_file_sha256": "a4ece27de2baf4e2a8193d03d1e58f6e3446b2738508c3aa5e37bf5f9726d206",
+        "original_byte_start": 14541,
+        "original_byte_end": 16154,
+        "original_line_start": 442,
+        "original_line_end": 484
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/bcfd9b95180d270e88b2",
+        "merman/d9fafe8533ba3cb9cc41"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n                a.1, b.1,\n                \"RL local direction should keep the edge horizontal:\\n{rendered}\"\n            )",
+          "source_sha256": "7cfb554326f4ea480d0b72e2be8c6f95d54713cb8eca0c0b72ebd6077377c52a",
+          "predicate_kind": "same_row_when_case",
+          "predicate": {
+            "ids": [
+              "merman/d9fafe8533ba3cb9cc41"
+            ],
+            "left": " A ",
+            "right": " B "
+          }
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert",
+          "source_text": "assert!(\n                b.0 < a.0,\n                \"RL local direction should place B before A:\\n{rendered}\"\n            )",
+          "source_sha256": "004a6504e76fd053f56a04073a892c947396cd05e9f95bbf7449b8404b1a9adb",
+          "predicate_kind": "x_before_when_case",
+          "predicate": {
+            "ids": [
+              "merman/d9fafe8533ba3cb9cc41"
+            ],
+            "left": " B ",
+            "right": " A "
+          }
+        },
+        {
+          "ordinal": 3,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n                a.0, b.0,\n                \"BT local direction should keep the edge vertical:\\n{rendered}\"\n            )",
+          "source_sha256": "475982cce1e06f825ee20300c95187516e85009a68aff56f04f1628351f92187",
+          "predicate_kind": "same_column_when_case",
+          "predicate": {
+            "ids": [
+              "merman/bcfd9b95180d270e88b2"
+            ],
+            "left": " A ",
+            "right": " B "
+          }
+        },
+        {
+          "ordinal": 4,
+          "macro": "assert",
+          "source_text": "assert!(\n                b.1 < a.1,\n                \"BT local direction should place B above A:\\n{rendered}\"\n            )",
+          "source_sha256": "55f1bd359ca5ed2bf947f92454607e4a31a90f752453235105ced80a9d0f9043",
+          "predicate_kind": "row_before_when_case",
+          "predicate": {
+            "ids": [
+              "merman/bcfd9b95180d270e88b2"
+            ],
+            "left": " B ",
+            "right": " A "
+          }
+        }
+      ]
+    },
+    {
+      "name": "subgraphs::flowchart_root_and_local_reverse_directions_compose_once",
+      "source": {
+        "captured_path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/f95ae9424539c2d10ffac70ee8aa9408b0019d3ffe0cd1b5501f49d035202d33.rs",
+        "captured_sha256": "f95ae9424539c2d10ffac70ee8aa9408b0019d3ffe0cd1b5501f49d035202d33",
+        "captured_bytes": 1873,
+        "captured_text": "fn flowchart_root_and_local_reverse_directions_compose_once() {\n    for (root_direction, local_direction, expected_axis, target_before_source) in [\n        (\"RL\", \"RL\", \"row\", true),\n        (\"RL\", \"LR\", \"row\", false),\n        (\"BT\", \"BT\", \"column\", true),\n        (\"BT\", \"TB\", \"column\", false),\n    ] {\n        let rendered = render_flowchart(\n            &format!(\n                \"flowchart {root_direction}\\nsubgraph reverse\\n    direction {local_direction}\\n    A --> B\\nend\\n\"\n            ),\n            &AsciiRenderOptions::ascii(),\n        )\n        .unwrap_or_else(|error| {\n            panic!(\n                \"root {root_direction} with local {local_direction} should render: {error:?}\"\n            )\n        });\n\n        let a = rendered\n            .lines()\n            .enumerate()\n            .find_map(|(y, line)| line.find(\" A \").map(|x| (x, y)))\n            .unwrap_or_else(|| panic!(\"missing A in output:\\n{rendered}\"));\n        let b = rendered\n            .lines()\n            .enumerate()\n            .find_map(|(y, line)| line.find(\" B \").map(|x| (x, y)))\n            .unwrap_or_else(|| panic!(\"missing B in output:\\n{rendered}\"));\n\n        if expected_axis == \"row\" {\n            assert_eq!(\n                a.1, b.1,\n                \"local direction must stay horizontal:\\n{rendered}\"\n            );\n            assert_eq!(\n                b.0 < a.0,\n                target_before_source,\n                \"root/local horizontal mirrors must compose exactly once:\\n{rendered}\"\n            );\n        } else {\n            assert_eq!(a.0, b.0, \"local direction must stay vertical:\\n{rendered}\");\n            assert_eq!(\n                b.1 < a.1,\n                target_before_source,\n                \"root/local vertical mirrors must compose exactly once:\\n{rendered}\"\n            );\n        }\n        assert_rectangular_char_grid(&rendered);\n    }\n}",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/subgraphs.rs",
+        "original_file_sha256": "a4ece27de2baf4e2a8193d03d1e58f6e3446b2738508c3aa5e37bf5f9726d206",
+        "original_byte_start": 16164,
+        "original_byte_end": 18037,
+        "original_line_start": 487,
+        "original_line_end": 537
+      },
+      "helper": "assert_rectangular_char_grid",
+      "options": [
+        "encoding:ascii"
+      ],
+      "case_ids": [
+        "merman/35756dbe3ad63e7661ff",
+        "merman/c4cd3fd0609d44be072b",
+        "merman/ceb0dcd17c96a605c220",
+        "merman/e65b010948038e0569ae"
+      ],
+      "direct_assertions": [
+        {
+          "ordinal": 1,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n                a.1, b.1,\n                \"local direction must stay horizontal:\\n{rendered}\"\n            )",
+          "source_sha256": "3f6f3b24c9117a31aa1472dba5d4ffcab880d4202635755995a2ef8c9048ea69",
+          "predicate_kind": "same_row_when_case",
+          "predicate": {
+            "ids": [
+              "merman/e65b010948038e0569ae",
+              "merman/c4cd3fd0609d44be072b"
+            ],
+            "left": " A ",
+            "right": " B "
+          }
+        },
+        {
+          "ordinal": 2,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n                b.0 < a.0,\n                target_before_source,\n                \"root/local horizontal mirrors must compose exactly once:\\n{rendered}\"\n            )",
+          "source_sha256": "95c6c950619877ef12c3de997d08cbbfce535dfe597c013b03337efc9270ca81",
+          "predicate_kind": "bool_x_before_when_case",
+          "predicate": {
+            "true_ids": [
+              "merman/e65b010948038e0569ae"
+            ],
+            "left": " B ",
+            "right": " A "
+          }
+        },
+        {
+          "ordinal": 3,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(a.0, b.0, \"local direction must stay vertical:\\n{rendered}\")",
+          "source_sha256": "3031ed2153e1c359249035c3b3bbb23f18fe3c15a5cb2358c7570594ce580f58",
+          "predicate_kind": "same_column_when_case",
+          "predicate": {
+            "ids": [
+              "merman/35756dbe3ad63e7661ff",
+              "merman/ceb0dcd17c96a605c220"
+            ],
+            "left": " A ",
+            "right": " B "
+          }
+        },
+        {
+          "ordinal": 4,
+          "macro": "assert_eq",
+          "source_text": "assert_eq!(\n                b.1 < a.1,\n                target_before_source,\n                \"root/local vertical mirrors must compose exactly once:\\n{rendered}\"\n            )",
+          "source_sha256": "ae656980fe892ff9bb632d2966e97c6761b5634bd98f8464ffedc183e9a40eaa",
+          "predicate_kind": "bool_row_before_when_case",
+          "predicate": {
+            "true_ids": [
+              "merman/35756dbe3ad63e7661ff"
+            ],
+            "left": " B ",
+            "right": " A "
+          }
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "merman/09b425a6af14a7aa6546",
+      "family": "flowchart",
+      "input": "flowchart BT\nA o--x A",
+      "input_sha256": "09b425a6af14a7aa654626939266dd814cf9cdff2162ef7f82dcb7e4cf6ff751",
+      "input_utf8_bytes": 21,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/0bcc5747ff20c3c9062e",
+      "family": "flowchart",
+      "input": "flowchart TD\n    Start --> Ingest\n    subgraph pipe [Pipeline]\n        direction LR\n        Ingest --> Publish\n    end\n    Publish -->|boundaryLabelWithEnoughWidth| Success[Success]\n",
+      "input_sha256": "0bcc5747ff20c3c9062ed41fd9e1d0cae65cc105b28f30a17303fcb7ecfe874f",
+      "input_utf8_bytes": 182,
+      "source_facts": [
+        {
+          "kind": "complete_raw_authored_fixture",
+          "path": "crates/merman-ascii/tests/testdata/local-semantic/flowchart/boundary_label_lane.mmd",
+          "sha256": "0bcc5747ff20c3c9062ed41fd9e1d0cae65cc105b28f30a17303fcb7ecfe874f",
+          "line_start": 1,
+          "line_end": 7
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/0beda8865b7ddb3532e4",
+      "family": "flowchart",
+      "input": "flowchart LR\nA[开始] -->|处理🚀| B[完成]",
+      "input_sha256": "0beda8865b7ddb3532e4461e9004adb015156a94798cab0249b98f34dfdf1ab4",
+      "input_utf8_bytes": 48,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/13713ab9c4d1b5d28ae2",
+      "family": "flowchart",
+      "input": "graph LR\nA[Γειά]-->|ετικέτα|B[Κόσμος]",
+      "input_sha256": "13713ab9c4d1b5d28ae2bc5d2718a35f5f8380aee685369ec91daa10786cbd4a",
+      "input_utf8_bytes": 54,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/17bd23abc724be96454c",
+      "family": "flowchart",
+      "input": "flowchart TD\nsubgraph left [Left Group]\n    A[Alpha] --> B[Beta]\nend\nsubgraph right [Right Group]\n    C[Gamma] --> D[Delta]\nend\nB -- handoff --> C\n",
+      "input_sha256": "17bd23abc724be96454c1eaac564d13b949425648b93cc4df175914f7c8bdd20",
+      "input_utf8_bytes": 147,
+      "source_facts": [
+        {
+          "kind": "complete_raw_authored_fixture",
+          "path": "crates/merman-ascii/tests/testdata/local-semantic/flowchart/sibling_boundary_routes.mmd",
+          "sha256": "17bd23abc724be96454c1eaac564d13b949425648b93cc4df175914f7c8bdd20",
+          "line_start": 1,
+          "line_end": 8
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/193b6e6ea37ca60d33e8",
+      "family": "flowchart",
+      "input": "flowchart TB\nA -->|north<br>south| B\n",
+      "input_sha256": "193b6e6ea37ca60d33e8582b4b95d59bfd66e3de7a450dc6eba5c4eeee928abf",
+      "input_utf8_bytes": 37,
+      "source_facts": [
+        {
+          "kind": "complete_raw_authored_fixture",
+          "path": "crates/merman-ascii/tests/testdata/local-semantic/flowchart/multiline_edge_label.mmd",
+          "sha256": "193b6e6ea37ca60d33e8582b4b95d59bfd66e3de7a450dc6eba5c4eeee928abf",
+          "line_start": 1,
+          "line_end": 2
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/2f0e9f3414f35f544b04",
+      "family": "flowchart",
+      "input": "flowchart TD\nA[\"é team 👩‍💻<br>超長標籤 abcdefghijklmnop\"] --> B[Done]",
+      "input_sha256": "2f0e9f3414f35f544b048f9297ada9d041b031a4e84eca7af6339fa7f5025877",
+      "input_utf8_bytes": 83,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/35756dbe3ad63e7661ff",
+      "family": "flowchart",
+      "input": "flowchart BT\nsubgraph reverse\n    direction BT\n    A --> B\nend\n",
+      "input_sha256": "35756dbe3ad63e7661ff19f46cfa8739bb35a5505c85220c0cf821a9eae94bcf",
+      "input_utf8_bytes": 63,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/408b0c72ba9c2c5c5d7d",
+      "family": "flowchart",
+      "input": "flowchart LR\nA -->|alpha| A\nA -- beta --o A\nA -- gamma --x A",
+      "input_sha256": "408b0c72ba9c2c5c5d7da0a50d5d62f6d8cbcca13bfe10fdf496924930f71a19",
+      "input_utf8_bytes": 60,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/4603bd5736ff910df87a",
+      "family": "flowchart",
+      "input": "flowchart LR\nA o--x A",
+      "input_sha256": "4603bd5736ff910df87a0ea138bdee78ded4d18da5845ae07c697da2dd591242",
+      "input_utf8_bytes": 21,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/479ae2e3ad93e2d2df27",
+      "family": "flowchart",
+      "input": "flowchart LR\nfirst -->|very long description| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "479ae2e3ad93e2d2df27b4f3be7b112695c0699b923501284e12976f30b8c3df",
+      "input_utf8_bytes": 103,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/4a4d0e05db2afd4bc83a",
+      "family": "flowchart",
+      "input": "flowchart TD\nStart --> Entry\nsubgraph outer [Outer Pipeline]\n    direction LR\n    Entry[Entry]\n    subgraph inner [Inner Steps]\n        direction TD\n        Validate[Validate] --> Persist[Persist]\n    end\n    Entry --> Validate\nend\nPersist --> Done\n",
+      "input_sha256": "4a4d0e05db2afd4bc83a444f2ffd3ae9db9ad46a1b9b0986118f8493aff4c5b4",
+      "input_utf8_bytes": 249,
+      "source_facts": [
+        {
+          "kind": "complete_raw_authored_fixture",
+          "path": "crates/merman-ascii/tests/testdata/local-semantic/flowchart/nested_direction_boundary.mmd",
+          "sha256": "4a4d0e05db2afd4bc83a444f2ffd3ae9db9ad46a1b9b0986118f8493aff4c5b4",
+          "line_start": 1,
+          "line_end": 12
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/523ee5e670264b0ac740",
+      "family": "flowchart",
+      "input": "flowchart LR\nfirst <-->|very long description| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "523ee5e670264b0ac74040aff47071c72eb635b8ccfba382399d47bddda310ad",
+      "input_utf8_bytes": 104,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/60725fefa7e2460e9655",
+      "family": "flowchart",
+      "input": "flowchart RL\nsubgraph isolated\n    A --> B\nend\n",
+      "input_sha256": "60725fefa7e2460e96555b38ac38fafa2669255230a1fb288f02792d07a682f4",
+      "input_utf8_bytes": 47,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/6076bbe5559b6e7bbc1a",
+      "family": "flowchart",
+      "input": "flowchart TD\n  B --> C\n  A --> C\n  A --> B\n",
+      "input_sha256": "6076bbe5559b6e7bbc1a0e427e5740ec183240dcdcf8e765251d018ddce128ae",
+      "input_utf8_bytes": 43,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/61d76783bbe819d1efd4",
+      "family": "flowchart",
+      "input": "flowchart TD\nstart[入口] --> check\nsubgraph pipe [流程中枢]\n    direction LR\n    check[检查] --> parse[解析]\n    subgraph validate [校验层]\n        direction TD\n        verify[验证] --> publish[发布]\n    end\n    parse --> verify\nend\npublish --> finish[完成]\n",
+      "input_sha256": "61d76783bbe819d1efd4f57bb72f770f10483a5e60a83d5ba0a57e459b49c18b",
+      "input_utf8_bytes": 277,
+      "source_facts": [
+        {
+          "kind": "complete_raw_authored_fixture",
+          "path": "crates/merman-ascii/tests/testdata/local-semantic/flowchart/cjk_boundary_routes.mmd",
+          "sha256": "61d76783bbe819d1efd4f57bb72f770f10483a5e60a83d5ba0a57e459b49c18b",
+          "line_start": 1,
+          "line_end": 12
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/6474365faa3aab7b7f7c",
+      "family": "flowchart",
+      "input": "flowchart LR\nA@{ shape: stadium, label: \"Alpha Beta Gamma Delta\" } --> B[Done]",
+      "input_sha256": "6474365faa3aab7b7f7c84820bdc1a86668e4f7736db9701ee0defa2a343b42e",
+      "input_utf8_bytes": 78,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/6a74625d8c0f4ff3626b",
+      "family": "flowchart",
+      "input": "flowchart LR\nsubgraph left\nA\nend\nsubgraph right\nB\nend\nA --> B",
+      "input_sha256": "6a74625d8c0f4ff3626b5f0edc6a218c72e0549b088753e17ed1f31b7c27a1d7",
+      "input_utf8_bytes": 61,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/6f88bb68ebab648be15e",
+      "family": "flowchart",
+      "input": "flowchart TD\n  A --> B\n  B --> C\n  A --> C\n",
+      "input_sha256": "6f88bb68ebab648be15e1732750798f7d44b0a1cecbdce7ef0254951c664f672",
+      "input_utf8_bytes": 43,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/7219ab0f72686b982ac3",
+      "family": "flowchart",
+      "input": "flowchart TD\n  A --> C\n  B --> C\n  A --> B\n",
+      "input_sha256": "7219ab0f72686b982ac37cc61d6ab435c4c81a880eb417ea355a0c04a235b518",
+      "input_utf8_bytes": 43,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/7c3251a038ac4cc30c0b",
+      "family": "flowchart",
+      "input": "flowchart BT\nA -->|alpha| A\nA -- beta --o A\nA -- gamma --x A",
+      "input_sha256": "7c3251a038ac4cc30c0b297640aa740f057d84f03268dc28f4e002d3e3da85c6",
+      "input_utf8_bytes": 60,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/814b9a1c319a94c487d6",
+      "family": "flowchart",
+      "input": "flowchart BT\nsubgraph isolated\n    A --> B\nend\n",
+      "input_sha256": "814b9a1c319a94c487d64a210d55e6d75c688941dd366f211246243375d4a06d",
+      "input_utf8_bytes": 47,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/8971d0c2f790764f4134",
+      "family": "flowchart",
+      "input": "flowchart TD\nSource -- load --> Ingest\nAudit -- check --> Validate\nsubgraph pipe [Pipeline]\n    direction LR\n    Ingest[Ingest] --> Validate[Validate]\n    Validate --> Publish[Publish]\nend\nPublish -- ok --> Success\nPublish -- fail --> Retry\n",
+      "input_sha256": "8971d0c2f790764f413411657d73ef440ce593dfcafbfdf69324d4c0e34e5be2",
+      "input_utf8_bytes": 241,
+      "source_facts": [
+        {
+          "kind": "complete_raw_authored_fixture",
+          "path": "crates/merman-ascii/tests/testdata/local-semantic/flowchart/multi_boundary_routes.mmd",
+          "sha256": "8971d0c2f790764f413411657d73ef440ce593dfcafbfdf69324d4c0e34e5be2",
+          "line_start": 1,
+          "line_end": 10
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/89815b0e3b4c435c5d68",
+      "family": "flowchart",
+      "input": "flowchart RL\nA -->|alpha| A\nA -- beta --o A\nA -- gamma --x A",
+      "input_sha256": "89815b0e3b4c435c5d687a8de3f93f08757d9b767a3350fdcd2b5adaa1a33b40",
+      "input_utf8_bytes": 60,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/8d96d47269f502eac572",
+      "family": "flowchart",
+      "input": "flowchart RL\nfirst -->|很长的连接说明文字| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "8d96d47269f502eac572ced5400cb8caa1920c242ddb0246fcad5fa3ef525f9e",
+      "input_utf8_bytes": 109,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/92f1fb7617acb7e8357d",
+      "family": "flowchart",
+      "input": "flowchart LR\nfirst <-->|很长的连接说明文字| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "92f1fb7617acb7e8357d7dcf084ba0cc931bee72fe05e4f85e7abd905a2fd9e4",
+      "input_utf8_bytes": 110,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/9937150556fdf630caef",
+      "family": "flowchart",
+      "input": "flowchart RL\nA@{ shape: stadium, label: \"Alpha Beta Gamma Delta\" } --> B[Done]",
+      "input_sha256": "9937150556fdf630caefb3e9e3b0d9b84d905d84d39d61223c64e4338917070c",
+      "input_utf8_bytes": 78,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/9b625df2033a6c7d7cef",
+      "family": "flowchart",
+      "input": "flowchart RL\nfirst <-->|very long description| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "9b625df2033a6c7d7cefd65aaf57af1eb95e4ccb477c44704ad4c186845afb81",
+      "input_utf8_bytes": 104,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/a1944e348f8826959ce8",
+      "family": "flowchart",
+      "input": "flowchart TD\nA --> B\nB --> C\nC -->|back to top| A\nC -->|back to middle| B\n",
+      "input_sha256": "a1944e348f8826959ce8437063b411f0be488003f7fc6d210136a1b154fc44b0",
+      "input_utf8_bytes": 74,
+      "source_facts": [
+        {
+          "kind": "complete_raw_authored_fixture",
+          "path": "crates/merman-ascii/tests/testdata/local-semantic/flowchart/back_edge_labels.mmd",
+          "sha256": "a1944e348f8826959ce8437063b411f0be488003f7fc6d210136a1b154fc44b0",
+          "line_start": 1,
+          "line_end": 5
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/a2c30413212598f1dbb6",
+      "family": "flowchart",
+      "input": "flowchart LR\nsubgraph isolated\n    A --> B\nend\n",
+      "input_sha256": "a2c30413212598f1dbb6122f7b3871b7e87e91aa23998e562ac2be98e6b31705",
+      "input_utf8_bytes": 47,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/aa5b580c7f38170402b7",
+      "family": "flowchart",
+      "input": "flowchart TD\nA -->|alpha| A\nA -- beta --o A\nA -- gamma --x A",
+      "input_sha256": "aa5b580c7f38170402b7d5aa48a34d8134dee5502bb246e1c9b79d3508dcbc1f",
+      "input_utf8_bytes": 60,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/afd506b9ce56199b0e47",
+      "family": "flowchart",
+      "input": "flowchart BT\n  A --> C\n  A --> B\n  B --> C\n",
+      "input_sha256": "afd506b9ce56199b0e476ce35a086095aab1e63a25c7a3a23900f9f5a332f31d",
+      "input_utf8_bytes": 43,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/afffee93849d0272e787",
+      "family": "flowchart",
+      "input": "flowchart RL\nfirst <-->|很长的连接说明文字| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "afffee93849d0272e787965dfd6723c6f03d3d16b1633b6a98a15ea810cc9551",
+      "input_utf8_bytes": 110,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/b15e78b38be58540d7ca",
+      "family": "flowchart",
+      "input": "flowchart TD\n  A --> B\n  A --> C\n  B --> C\n",
+      "input_sha256": "b15e78b38be58540d7ca7bb915c091eaf24acdbfdaef89d4ad4d4ef967b06eda",
+      "input_utf8_bytes": 43,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/b33b925515990d94c0fd",
+      "family": "flowchart",
+      "input": "flowchart RL\nA o--x A",
+      "input_sha256": "b33b925515990d94c0fd9f43b81be2cf7dbccd03ad32e2663cb2ef62cd87cebc",
+      "input_utf8_bytes": 21,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/b48924dee54791d54c68",
+      "family": "flowchart",
+      "input": "flowchart RL\nfirst <-->|very long descriptions| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "b48924dee54791d54c68bb91ef26e344015bdb4afd9f24fa59dc2fb9bda9ae38",
+      "input_utf8_bytes": 105,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/b8399ebfc25f7ca8bda2",
+      "family": "flowchart",
+      "input": "flowchart TD\nsubgraph one [LR Group]\n    direction LR\n    A --> B\nend\nX --> A\nB --> Y\n",
+      "input_sha256": "b8399ebfc25f7ca8bda2250712aa3e33eeeb43789e24183892909d89c817086b",
+      "input_utf8_bytes": 86,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/bcfd9b95180d270e88b2",
+      "family": "flowchart",
+      "input": "flowchart TB\nsubgraph reverse\n    direction BT\n    A --> B\nend\n",
+      "input_sha256": "bcfd9b95180d270e88b2fc759294c60a19a0df4a7093d3650fd5d3c2bd56310c",
+      "input_utf8_bytes": 63,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/be5d32a24d6cc1fcd0d3",
+      "family": "flowchart",
+      "input": "flowchart LR\nsubgraph today [Today]\n    T1[Today AI] --> T2[Today Markdown]\n    T2 --> T3[Today Reads]\nend\nsubgraph tomorrow [Next Wave]\n    N1[Next AI] --> N2[Next Widget]\n    N2 --> N3[Next Acts]\nend\n",
+      "input_sha256": "be5d32a24d6cc1fcd0d3b56feba04dc778d70f65d6ce3206c8be336b3187d8f0",
+      "input_utf8_bytes": 202,
+      "source_facts": [
+        {
+          "kind": "complete_raw_authored_fixture",
+          "path": "crates/merman-ascii/tests/testdata/local-semantic/flowchart/disconnected_subgraphs.mmd",
+          "sha256": "be5d32a24d6cc1fcd0d3b56feba04dc778d70f65d6ce3206c8be336b3187d8f0",
+          "line_start": 1,
+          "line_end": 9
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/bf9642a4ab479973d222",
+      "family": "flowchart",
+      "input": "graph TD\nSourceA & SourceB --> Merge\nFanout --> TargetA & TargetB\n",
+      "input_sha256": "bf9642a4ab479973d222863499296cc4a6b7115ed049ba4c67831cc9d2241e73",
+      "input_utf8_bytes": 66,
+      "source_facts": [
+        {
+          "kind": "complete_raw_authored_fixture",
+          "path": "crates/merman-ascii/tests/testdata/local-semantic/flowchart/ampersand_fanin_fanout.mmd",
+          "sha256": "bf9642a4ab479973d222863499296cc4a6b7115ed049ba4c67831cc9d2241e73",
+          "line_start": 1,
+          "line_end": 3
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/bfd21ff9b4b75bf4d178",
+      "family": "flowchart",
+      "input": "flowchart TD\nsubgraph first\nA --> B\nend\nsubgraph second\nB --> C\nend",
+      "input_sha256": "bfd21ff9b4b75bf4d1788d9010d5b7c6e8017795e183c1af33c3117bf30e1f9a",
+      "input_utf8_bytes": 67,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/c19fc56efeca30ef862e",
+      "family": "flowchart",
+      "input": "graph LR\nA[Café]-->|résumé|B[Über]",
+      "input_sha256": "c19fc56efeca30ef862e3152113c5d3fc8461f92b2709c79e4c3cdb490b0128c",
+      "input_utf8_bytes": 38,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/c4b9e1c3982e902a68e7",
+      "family": "flowchart",
+      "input": "flowchart TD\nsubgraph isolated\n    A --> B\nend\n",
+      "input_sha256": "c4b9e1c3982e902a68e75fd9a14a28e3c848e77704a27d2a6ca8531fe3f2460e",
+      "input_utf8_bytes": 47,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/c4cd3fd0609d44be072b",
+      "family": "flowchart",
+      "input": "flowchart RL\nsubgraph reverse\n    direction LR\n    A --> B\nend\n",
+      "input_sha256": "c4cd3fd0609d44be072b101e459879f160c307c877bf1e2727e5a31813fba18f",
+      "input_utf8_bytes": 63,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/c6b88bede9f8e643f263",
+      "family": "flowchart",
+      "input": "graph LR\nA[Привет]-->|метка|B[Мир]",
+      "input_sha256": "c6b88bede9f8e643f2630abab4520b9037db4947ef4b26cfe410fb1eb8758fa7",
+      "input_utf8_bytes": 48,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/c793f1d6eeb4d90003d3",
+      "family": "flowchart",
+      "input": "flowchart BT\nA@{ shape: stadium, label: \"Alpha Beta Gamma Delta\" } --> B[Done]",
+      "input_sha256": "c793f1d6eeb4d90003d3725d897b507a255463dd6d6dccd4c0f25eccc6324e25",
+      "input_utf8_bytes": 78,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/c9b5922a340c4dc35e50",
+      "family": "flowchart",
+      "input": "flowchart TD\n  B --> C\n  A --> B\n  A --> C\n",
+      "input_sha256": "c9b5922a340c4dc35e50367bb2d6d153892d8ffb994519426e8ec0b0fb06179b",
+      "input_utf8_bytes": 43,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/cd2887e0cee84f646d4e",
+      "family": "flowchart",
+      "input": "flowchart TD\nA@{ shape: stadium, label: \"Alpha Beta Gamma Delta\" } --> B[Done]",
+      "input_sha256": "cd2887e0cee84f646d4e31487a33cbc2d5a71b10fab0d944e8164065a4afae0e",
+      "input_utf8_bytes": 78,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/ceb0dcd17c96a605c220",
+      "family": "flowchart",
+      "input": "flowchart BT\nsubgraph reverse\n    direction TB\n    A --> B\nend\n",
+      "input_sha256": "ceb0dcd17c96a605c220b6c07edc377c36f8b4c80d169cb20a1e11b4c87cdb7b",
+      "input_utf8_bytes": 63,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/d0f6a5fc989a2b62eed3",
+      "family": "flowchart",
+      "input": "flowchart TD\n  A --> C\n  A --> B\n  B --> C\n",
+      "input_sha256": "d0f6a5fc989a2b62eed3ed49ee4ea1b8a5ff4830e68ca7c4870a0636c3520f3f",
+      "input_utf8_bytes": 43,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/d9fafe8533ba3cb9cc41",
+      "family": "flowchart",
+      "input": "flowchart TB\nsubgraph reverse\n    direction RL\n    A --> B\nend\n",
+      "input_sha256": "d9fafe8533ba3cb9cc41eaa68ac26aa6969ab54a5c6024b22a3eee044c626eb5",
+      "input_utf8_bytes": 63,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/dd83b17024967dd326c2",
+      "family": "flowchart",
+      "input": "flowchart RL\nfirst -->|very long description| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "dd83b17024967dd326c239709c7bb655a7d65284829c53f60ee9405258ebc537",
+      "input_utf8_bytes": 103,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/df3b10d57858170126f0",
+      "family": "flowchart",
+      "input": "flowchart RL\nfirst -->|very long descriptions| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "df3b10d57858170126f0c0aca3f9f9146244d748cdfd782ec25f3b8f6435a5a3",
+      "input_utf8_bytes": 104,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/df7eab99901e5629859e",
+      "family": "flowchart",
+      "input": "flowchart TD\n  Client[\"browser / agent\"]\n  DNS[\"*.docs.mysampleapp.net (Route53 subzone, delegated to mysampleapps account)\"]\n  CF[\"CloudFront distribution: wildcard cert, Host-to-prefix CF Function, WAF VPN allowlist, OAC to S3\"]\n  APP[\"upload app (Lambda, Python): GET / form, POST /upload, POST /api/deploy (IAM), boto3\"]\n  S3[\"S3 bucket mysampleapp: sites/subdomain/...\"]\n  DDB[\"DynamoDB reservations\"]\n\n  Client --> DNS\n  DNS --> CF\n  DNS --> APP\n  CF -->|reads| S3\n  APP -->|writes| S3\n  APP -->|reserve / check owner| DDB\n  APP -.->|CreateInvalidation| CF\n",
+      "input_sha256": "df7eab99901e5629859e65dc2645650928c451497b3f9071e12c754cb831b22e",
+      "input_utf8_bytes": 563,
+      "source_facts": [
+        {
+          "kind": "complete_raw_authored_fixture",
+          "path": "crates/merman-ascii/tests/testdata/local-semantic/flowchart/issue_53_long_node_labels.mmd",
+          "sha256": "df7eab99901e5629859e65dc2645650928c451497b3f9071e12c754cb831b22e",
+          "line_start": 1,
+          "line_end": 15
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/support/mod.rs",
+          "line_start": 79,
+          "line_end": 79,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/e2f394a333efee719902",
+      "family": "flowchart",
+      "input": "flowchart LR\nfirst -->|very long descriptions| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "e2f394a333efee7199021269585d4b0a5c92b6b2b4e7bef8bfcbe7490c81e1df",
+      "input_utf8_bytes": 104,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/e65b010948038e0569ae",
+      "family": "flowchart",
+      "input": "flowchart RL\nsubgraph reverse\n    direction RL\n    A --> B\nend\n",
+      "input_sha256": "e65b010948038e0569ae2bf4a0b540e7eb9f0f79d8bde1307825614a045fb351",
+      "input_utf8_bytes": 63,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/ec0b18557bd1af513445",
+      "family": "flowchart",
+      "input": "flowchart LR\nfirst <-->|very long descriptions| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "ec0b18557bd1af51344584cc332fb7b0c52d1010f8d5802eded91ff317f52cb7",
+      "input_utf8_bytes": 105,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/f305a51f06157b713e8c",
+      "family": "flowchart",
+      "input": "flowchart TD\nA o--x A",
+      "input_sha256": "f305a51f06157b713e8c93c35d0baae7c18bceb8477e8662af38c8f5ffb44944",
+      "input_utf8_bytes": 21,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    },
+    {
+      "id": "merman/f3598bdfd8b4dd7393e5",
+      "family": "flowchart",
+      "input": "flowchart LR\nfirst -->|很长的连接说明文字| second\nsecond --> third[many words are too much sometime]",
+      "input_sha256": "f3598bdfd8b4dd7393e535ec73dea84760549eae0d9c0fd0f52ff567338ca18c",
+      "input_utf8_bytes": 109,
+      "source_facts": [
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        },
+        {
+          "kind": "executed_public_parse",
+          "path": "crates/merman-ascii/tests/flowchart_model.rs",
+          "line_start": 27,
+          "line_end": 27,
+          "line_kind": "original_unmodified_source"
+        }
+      ]
+    }
+  ],
+  "source_case_ledger": {
+    "path": "tests/fixtures/mermaid_terminal/merman/cases.json",
+    "sha256": "89ce2ef6ad779481285ce61b771a64fd059b17a824eb2c292934ff13393562db",
+    "bytes": 16326956,
+    "selection_note": "The complete ledger is 16,326,956 bytes and cannot be parsed within the fixed 8,000,000-unit setup ledger. This asset retains the 59 selected raw inputs and their SHA-256 source facts; execution rebinds each complete original Rust function after five captures. A future per-case immutable extraction must be separately source-reviewed before claiming a live-ledger re-read."
+  }
+}

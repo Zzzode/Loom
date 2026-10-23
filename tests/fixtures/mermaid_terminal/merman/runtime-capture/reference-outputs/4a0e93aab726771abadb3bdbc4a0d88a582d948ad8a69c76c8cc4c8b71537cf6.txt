@@ -1,0 +1,4 @@
+xDomain: band categories=[]
+yDomain: linear authored=[0,1] resolved=[0,1]
+1 +##########
+  +

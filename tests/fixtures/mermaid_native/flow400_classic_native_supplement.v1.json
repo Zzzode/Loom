@@ -1,0 +1,160 @@
+{
+  "schema": "flow400_classic_native_supplement/v1",
+  "qualification": "Source-pinned complete Classic Models require independent Native and Official actual runs before admission.",
+  "base_authority": {
+    "asset_sha256": "f03178a8c6b3872abf1a3d2693fc1841b31492961f7a7a632424860d6a8d884c",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+    "all_sources": 400,
+    "complete_models": 8,
+    "pending": 392
+  },
+  "prior_authority": {
+    "config21_asset_sha256": "6011a1ff418dcb2491e65e3a77205237d5b24483d755a9826dbbe32fd537c9e6",
+    "typed_source4_asset_sha256": "b5a64f09fd363020d5bb91c2498541d6bfa88ec17bab8a3fb8eaf3f0b43a472e",
+    "aggregate_complete_before_classic": 33,
+    "aggregate_pending_before_classic": 367
+  },
+  "formal_counts": {
+    "cases": 3,
+    "aggregate_complete_after_all_official_runs": 36,
+    "aggregate_pending_after_all_official_runs": 364,
+    "ultimate_complete_required": 400,
+    "ultimate_pending_required": 0,
+    "official_credit_before_execution": 0
+  },
+  "cases": [
+    {
+      "case_id": "original_244_dagre_subgraphs",
+      "base_authority": {
+        "adaptation": null,
+        "fixture": "flowchart/pr-check/2-layout-dagre-subgraphs.mmd",
+        "manifest_global_ordinal": 905,
+        "model_json": null,
+        "model_sha256": null,
+        "oracle_record_sha256": "53b361cfefb2cab25c589ebb528898298eb7ea57625f8dfe7c3d526873601cdf",
+        "ordinal": 244,
+        "source_bytes": 524,
+        "source_git_blob": "008f0a15031f50dec43a3e3b40e6def4b0d7b63a",
+        "source_sha256": "2a62c46194efe95b1cd64293ca15b7fd07a4b02c8359ebc7091c6e8a364db49b"
+      },
+      "source": "---\ndescription:\n  Cross-boundary subgraph layout under dagre — three subgraphs (Frontend,\n  Backend, Auth) where Frontend has an edge crossing into each of the other two.\n  Mirrors 3-layout-elk-subgraphs.mmd's structure exactly so the two only differ\n  by layout engine, not by diagram shape.\nconfig:\n  layout: dagre\n---\nflowchart TD\n  subgraph Frontend\n    A[Client] --> B[Cache]\n  end\n  subgraph Backend\n    C[API] --> D[(Database)]\n  end\n  subgraph Auth\n    E[Auth Service] --> F[(Sessions)]\n  end\n  B --> C\n  B --> E\n",
+      "source_sha256": "2a62c46194efe95b1cd64293ca15b7fd07a4b02c8359ebc7091c6e8a364db49b",
+      "classic_model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Client\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Cache\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"API\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"Database\",\"shape\":\"cylinder\"}],[\"E\",{\"id\":\"E\",\"label\":\"Auth Service\",\"shape\":\"rectangle\"}],[\"F\",{\"id\":\"F\",\"label\":\"Sessions\",\"shape\":\"cylinder\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"E\",\"target\":\"F\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"E\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[{\"id\":\"Frontend\",\"label\":\"Frontend\",\"direction\":\"\",\"nodeIds\":[\"A\",\"B\"],\"children\":[]},{\"id\":\"Backend\",\"label\":\"Backend\",\"direction\":\"\",\"nodeIds\":[\"C\",\"D\"],\"children\":[]},{\"id\":\"Auth\",\"label\":\"Auth\",\"direction\":\"\",\"nodeIds\":[\"E\",\"F\"],\"children\":[]}]}",
+      "classic_model_sha256": "51f697442947715e22e0f06754a2c252d71283e9c594149f70b1470001f01cc0",
+      "envelope": {
+        "profile": "description_config_dagre",
+        "bytes": 324,
+        "sha256": "2740b91b0dc225f9d3c3afcc9b0ae6c6f981d8041a23963fdf8455bca91ca902",
+        "text": "---\ndescription:\n  Cross-boundary subgraph layout under dagre — three subgraphs (Frontend,\n  Backend, Auth) where Frontend has an edge crossing into each of the other two.\n  Mirrors 3-layout-elk-subgraphs.mmd's structure exactly so the two only differ\n  by layout engine, not by diagram shape.\nconfig:\n  layout: dagre\n---\n",
+        "description_form": "plain_multiline",
+        "root_keys": [
+          "description",
+          "config"
+        ],
+        "config": {
+          "layout": "dagre"
+        },
+        "body_header": "flowchart TD",
+        "body_sha256": "8ea4fd7ee2deb9877d835c8f2e824e2e37a52e6addd7da28c28ecb2c7e1d6fc5"
+      },
+      "native_requirement": {
+        "exact_rejections": 5,
+        "mutations": [
+          "cylinder_to_circle",
+          "Client_label_to_absent",
+          "first_edge_endpoint_to_self",
+          "Frontend_remove_first_member",
+          "extra_ink"
+        ]
+      },
+      "formal_status": "unadmitted_design_only"
+    },
+    {
+      "case_id": "original_295_classic_trapezoids",
+      "base_authority": {
+        "adaptation": null,
+        "fixture": "flowchart/visual-check/4-should-render-a-simple-flowchart-with-trapezoid-and-inverse-trapezoid-vertex-options.mmd",
+        "manifest_global_ordinal": 956,
+        "model_json": null,
+        "model_sha256": null,
+        "oracle_record_sha256": "c1c19a12e81eb1c8e32be94b8d49c5b4b04a6c851baa18ba37e55a63c4fa2c86",
+        "ordinal": 295,
+        "source_bytes": 445,
+        "source_git_blob": "567cb0b2ae0376e0d2236eac4bd14ca8a2a07f75",
+        "source_sha256": "24ba3583289e1efac455cbd71ebe8bea4daabfd99fb01870912cf8b5e06ace2b"
+      },
+      "source": "---\ndescription:\n  Verifies that trapezoid ([/.../]) and inverse-trapezoid ([\\...\\]) node shapes\n  render correctly, including a node with a long multi-line label wrapped via\n  <br/> tags.\nconfig:\n  fontFamily: courier\n---\ngraph TD\n  A[/Christmas\\]\n  A -->|Get money| B[\\Go shopping/]\n  B --> C{Let me thinksssss<br/>ssssssssssssssssssssss<br/>sssssssssssssssssssssssssss}\n  C -->|One| D[/Laptop/]\n  C -->|Two| E[\\iPhone\\]\n  C -->|Three| F[Car]\n",
+      "source_sha256": "24ba3583289e1efac455cbd71ebe8bea4daabfd99fb01870912cf8b5e06ace2b",
+      "classic_model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Christmas\",\"shape\":\"trapezoid\"}],[\"B\",{\"id\":\"B\",\"label\":\"Go shopping\",\"shape\":\"trapezoid_alt\"}],[\"C\",{\"id\":\"C\",\"label\":\"Let me thinksssss\\nssssssssssssssssssssss\\nsssssssssssssssssssssssssss\",\"shape\":\"diamond\"}],[\"D\",{\"id\":\"D\",\"label\":\"Laptop\",\"shape\":\"parallelogram\"}],[\"E\",{\"id\":\"E\",\"label\":\"iPhone\",\"shape\":\"parallelogram_alt\"}],[\"F\",{\"id\":\"F\",\"label\":\"Car\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"Get money\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"One\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"E\",\"label\":\"Two\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"F\",\"label\":\"Three\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "classic_model_sha256": "7b15ceda4ebce0dc71b2d9980c22dea713f5623693245dd5090c420dda36ad14",
+      "envelope": {
+        "profile": "description_config_font_courier",
+        "bytes": 223,
+        "sha256": "fb22010cb25448af25bb3cca785445f17e50f8ef5dbc01a7c5237a405ce844dd",
+        "text": "---\ndescription:\n  Verifies that trapezoid ([/.../]) and inverse-trapezoid ([\\...\\]) node shapes\n  render correctly, including a node with a long multi-line label wrapped via\n  <br/> tags.\nconfig:\n  fontFamily: courier\n---\n",
+        "description_form": "plain_multiline",
+        "root_keys": [
+          "description",
+          "config"
+        ],
+        "config": {
+          "fontFamily": "courier"
+        },
+        "body_header": "graph TD",
+        "body_sha256": "e44e808803b0a1247a55022d0e4e7aac561ebf72e9ef4cffee2d35c0d25d5672"
+      },
+      "native_requirement": {
+        "exact_rejections": 4,
+        "mutations": [
+          "trapezoid_to_trapezoid_alt",
+          "Christmas_label_to_absent",
+          "first_edge_endpoint_to_self",
+          "extra_ink"
+        ]
+      },
+      "formal_status": "unadmitted_design_only"
+    },
+    {
+      "case_id": "original_376_stadium",
+      "base_authority": {
+        "adaptation": null,
+        "fixture": "flowchart/visual-check/should-render-a-stadium-shaped-node.mmd",
+        "manifest_global_ordinal": 1037,
+        "model_json": null,
+        "model_sha256": null,
+        "oracle_record_sha256": "ba95e8df123bf063b15c53690a9eef3012969b45018c632ed4242b286059eb07",
+        "ordinal": 376,
+        "source_bytes": 266,
+        "source_git_blob": "f78c94c3633b130a7c45caf194c0781c40bf7a9b",
+        "source_sha256": "3497ab671f384701e964e3b71127e46ad889c6b67eb4fd18576bbc5a58309b8e"
+      },
+      "source": "---\ndescription:\n  Verifies basic rendering of the stadium shape (rounded-end pill created with\n  ([...]) node syntax) as a starting node feeding into two plain rectangular\n  nodes.\n---\nflowchart TB\n  A([\"Start\"]) --> n1[\"Untitled Node\"]\n  A --> n2[\"Untitled Node\"]\n",
+      "source_sha256": "3497ab671f384701e964e3b71127e46ad889c6b67eb4fd18576bbc5a58309b8e",
+      "classic_model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Start\",\"shape\":\"stadium\"}],[\"n1\",{\"id\":\"n1\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}],[\"n2\",{\"id\":\"n2\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"n1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"A\",\"target\":\"n2\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "classic_model_sha256": "1c776a209890b47a8da4b026973aef2a65e45a4015a332349ba4504392d38ecf",
+      "envelope": {
+        "profile": "plain_description_only",
+        "bytes": 186,
+        "sha256": "ef4e5552733f936bc17f4ef3d4adfb5c1cf9c60f5c684df6298428210f243027",
+        "text": "---\ndescription:\n  Verifies basic rendering of the stadium shape (rounded-end pill created with\n  ([...]) node syntax) as a starting node feeding into two plain rectangular\n  nodes.\n---\n",
+        "description_form": "plain_multiline",
+        "root_keys": [
+          "description"
+        ],
+        "config": null,
+        "body_header": "flowchart TB",
+        "body_sha256": "2eeb06d7e144bee28b450c94d278c4a2e3239f316b7892a6c8dc8eb9289bcc7f"
+      },
+      "native_requirement": {
+        "exact_rejections": 4,
+        "mutations": [
+          "stadium_to_circle",
+          "Start_label_to_absent",
+          "first_edge_endpoint_to_self",
+          "extra_ink"
+        ]
+      },
+      "formal_status": "unadmitted_design_only"
+    }
+  ]
+}

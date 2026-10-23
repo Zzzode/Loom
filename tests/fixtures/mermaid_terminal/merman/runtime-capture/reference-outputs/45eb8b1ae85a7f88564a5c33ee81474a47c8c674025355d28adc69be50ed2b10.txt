@@ -1,0 +1,7 @@
++--------------------------------------------------------+
+| Foo                                                    |
++--------------------------------------------------------+
+| +veryLongMemberNameToWrapTheLayoutProbe: String        |
+| +anotherVeryLongMemberNameToWrapTheLayoutProbe: String |
+| +thirdVeryLongMemberNameToWrapTheLayoutProbe: String   |
++--------------------------------------------------------+

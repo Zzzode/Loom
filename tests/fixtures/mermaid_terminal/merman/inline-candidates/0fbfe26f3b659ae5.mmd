@@ -1,0 +1,12 @@
+sequenceDiagram
+participant A
+participant B
+participant C
+loop Outer
+alt Choice
+opt Inner
+Note left of A: queued
+A->>B: Work
+end
+end
+end

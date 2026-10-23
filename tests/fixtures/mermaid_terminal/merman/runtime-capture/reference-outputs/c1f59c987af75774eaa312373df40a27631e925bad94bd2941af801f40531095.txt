@@ -1,0 +1,7 @@
+titleDisplay: chart(bytes=16)="Single Bar Chart"
+titleDisplay: yAxis(bytes=5)="Value"
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=1)="A" value=75 pointLabel=none clipped=false}] orphanPointLabels=[]
+A +######75
+  ++--------+
+   0      100
+titleDisplay: xAxis(bytes=10)="Categories"

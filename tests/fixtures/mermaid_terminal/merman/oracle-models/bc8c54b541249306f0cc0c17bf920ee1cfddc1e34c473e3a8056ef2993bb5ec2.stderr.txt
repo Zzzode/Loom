@@ -1,0 +1,1 @@
+Diagram parse error (sequence): unexpected text; expected central, signal type

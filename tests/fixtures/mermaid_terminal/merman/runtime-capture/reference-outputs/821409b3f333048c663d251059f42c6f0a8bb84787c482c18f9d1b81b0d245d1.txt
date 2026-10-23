@@ -1,0 +1,67 @@
+┌──────────────────────────┐                            
+│                          │                            
+│     browser / agent      │                            
+│                          │                            
+└─────────────┬────────────┘                            
+              │                                         
+              │                                         
+              │                                         
+              │                                         
+              [36m▼[0m                                         
+┌──────────────────────────┐                            
+│                          │                            
+│  *.docs.mysampleapp.net  │                            
+│                          │                            
+│    (Route53 subzone,     │                            
+│                          │─┐                          
+│       delegated to       │ │                          
+│                          │ │                          
+│  mysampleapps account)   │ │                          
+│                          │ │                          
+└─────────────┬────────────┘ │                          
+              │              │                          
+              │              │                          
+              │              │                          
+              │              │                          
+              [36m▼[0m              │                          
+┌──────────────────────────┐ │                          
+│                          │ │                          
+│   upload app (Lambda,    │ │                          
+│                          │ │                          
+│   Python): GET / form,   │ │                          
+│                          ├─┤writes                    
+│    POST /upload, POST    │ │                          
+│                          │ │                          
+│ /api/deploy (IAM), boto3 │ │                          
+│                          │ │                          
+└─────────────┬────────────┘ │                          
+              ┆              │                          
+              ┆              │                          
+     CreateInvalidation      │reserve / check owner     
+              ┆              │                          
+              [36m▼[0m              │                          
+┌──────────────────────────┐ │ ┌───────────────────────┐
+│                          │ │ │                       │
+│ CloudFront distribution: │ │ │                       │
+│                          │ │ │                       │
+│      wildcard cert,      │ │ │                       │
+│                          │ │ │                       │
+│    Host-to-prefix CF     │[36m◄[0m┼[36m►[0m│ DynamoDB reservations │
+│                          │ │ │                       │
+│    Function, WAF VPN     │ │ │                       │
+│                          │ │ │                       │
+│   allowlist, OAC to S3   │ │ │                       │
+│                          │ │ │                       │
+└─────────────┬────────────┘ │ └───────────────────────┘
+              │              │                          
+              │              │                          
+            reads            │                          
+              │              │                          
+              [36m▼[0m              │                          
+┌──────────────────────────┐ │                          
+│                          │ │                          
+│  S3 bucket mysampleapp:  │ │                          
+│                          │[36m◄[0m┘                          
+│   sites/subdomain/...    │                            
+│                          │                            
+└──────────────────────────┘                            

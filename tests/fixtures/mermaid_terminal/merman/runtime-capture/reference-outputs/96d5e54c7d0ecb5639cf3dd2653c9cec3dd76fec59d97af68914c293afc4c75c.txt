@@ -1,0 +1,9 @@
+titleDisplay: chart(bytes=49)="before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}"
+xDomain: band categories=[bytes=1="A"]
+  1 +[31m###[0m
+0.8 +[31m###[0m
+0.6 +[31m###[0m
+0.4 +[31m###[0m
+0.2 +[31m###[0m
+  0 +-+-
+      A

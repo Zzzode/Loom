@@ -1,0 +1,9 @@
+xDomain: linear authored=[1,4] resolved=[1,4]
+values: * series=0 type=line title=none samples=[{index=0 x(bytes=1)="1" value=1.3 pointLabel=none clipped=false}, {index=1 x(bytes=1)="2" value=0.6 pointLabel=none clipped=false}, {index=2 x(bytes=1)="3" value=2.4 pointLabel=none clipped=false}, {index=3 x(bytes=1)="4" value=-0.34 pointLabel=none clipped=false}] orphanPointLabels=[]
+  2.4 +       +-*-+
+ 1.85 +       |   |
+  1.3 + *-+   |   |
+ 0.76 +   +-*-+   |
+ 0.21 +           +-*
+-0.34 +-+---+---+---+-
+        1   2   3   4

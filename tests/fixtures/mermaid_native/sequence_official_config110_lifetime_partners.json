@@ -1,0 +1,364 @@
+[
+  {
+    "name": "role_only_keeps_first",
+    "source": "sequenceDiagram\nparticipant A\nparticipant B\nparticipant A@{\"type\":\"queue\"}\nA->>B: ping\n",
+    "source_sha256": "df713f5d4b97f647c249ed939be5df4217501da5285c363b676ea6043b504299",
+    "expected": "whole_scene",
+    "model": {
+      "title": "",
+      "actors": [
+        {
+          "id": "A",
+          "label": "A",
+          "role": "Participant"
+        },
+        {
+          "id": "B",
+          "label": "B",
+          "role": "Participant"
+        }
+      ],
+      "messages": [
+        {
+          "from": 0,
+          "to": 1,
+          "label": "ping",
+          "arrow": "Filled",
+          "dashed": false,
+          "central_from": false,
+          "central_to": false,
+          "number": ""
+        }
+      ],
+      "notes": [],
+      "fragments": [],
+      "boxes": [],
+      "order": [
+        {
+          "kind": "Message",
+          "index": 0,
+          "part": 0
+        }
+      ]
+    },
+    "model_sha256": "06b4068e1a619c1b5f3bac2986fe1a25d482869b26fc81044acc3a3482363bcb",
+    "source_semantics": "Existing same-name actor plus undefined description early-returns before type replacement."
+  },
+  {
+    "name": "nonempty_alias_equal_id_updates_role",
+    "source": "sequenceDiagram\nparticipant A\nparticipant B\nparticipant A@{\"type\":\"queue\",\"alias\":\"A\"}\nA->>B: ping\n",
+    "source_sha256": "53024b9fe8230f95beea838814b8498458e76eefd8a709f87daeed8bbca16f07",
+    "expected": "whole_scene",
+    "model": {
+      "title": "",
+      "actors": [
+        {
+          "id": "A",
+          "label": "A",
+          "role": "Queue"
+        },
+        {
+          "id": "B",
+          "label": "B",
+          "role": "Participant"
+        }
+      ],
+      "messages": [
+        {
+          "from": 0,
+          "to": 1,
+          "label": "ping",
+          "arrow": "Filled",
+          "dashed": false,
+          "central_from": false,
+          "central_to": false,
+          "number": ""
+        }
+      ],
+      "notes": [],
+      "fragments": [],
+      "boxes": [],
+      "order": [
+        {
+          "kind": "Message",
+          "index": 0,
+          "part": 0
+        }
+      ]
+    },
+    "model_sha256": "1fe233287c9b953b781ffd3ae1a3ababd434b2f982898a0ea727ea7d80766f49",
+    "source_semantics": "Truthy metadata alias creates non-null description even when text equals the ID; Queue replaces Participant."
+  },
+  {
+    "name": "empty_alias_still_keeps_first",
+    "source": "sequenceDiagram\nparticipant A\nparticipant B\nparticipant A@{\"type\":\"queue\",\"alias\":\"\"}\nA->>B: ping\n",
+    "source_sha256": "ca122126293e8e37695eb97802101fa06ec79e279a39bade3a6fd10180967abf",
+    "expected": "whole_scene",
+    "model": {
+      "title": "",
+      "actors": [
+        {
+          "id": "A",
+          "label": "A",
+          "role": "Participant"
+        },
+        {
+          "id": "B",
+          "label": "B",
+          "role": "Participant"
+        }
+      ],
+      "messages": [
+        {
+          "from": 0,
+          "to": 1,
+          "label": "ping",
+          "arrow": "Filled",
+          "dashed": false,
+          "central_from": false,
+          "central_to": false,
+          "number": ""
+        }
+      ],
+      "notes": [],
+      "fragments": [],
+      "boxes": [],
+      "order": [
+        {
+          "kind": "Message",
+          "index": 0,
+          "part": 0
+        }
+      ]
+    },
+    "model_sha256": "06b4068e1a619c1b5f3bac2986fe1a25d482869b26fc81044acc3a3482363bcb",
+    "source_semantics": "Empty alias is false in the primary condition; description remains absent, preserving the old role."
+  },
+  {
+    "name": "masked_destroy_at_end",
+    "source": "sequenceDiagram\nparticipant A\nparticipant D\ndestroy D\ncreate participant C\nA->>C: born\n",
+    "source_sha256": "2cdef3286309fa021f222f060b19eb75b4342d7d1d7754e5b6f99a87c27c7889",
+    "expected": "whole_scene",
+    "model": {
+      "title": "",
+      "actors": [
+        {
+          "id": "A",
+          "label": "A",
+          "role": "Participant"
+        },
+        {
+          "id": "D",
+          "label": "D",
+          "role": "Participant"
+        },
+        {
+          "id": "C",
+          "label": "C",
+          "role": "Participant"
+        }
+      ],
+      "messages": [
+        {
+          "from": 0,
+          "to": 2,
+          "label": "born",
+          "arrow": "Filled",
+          "dashed": false,
+          "central_from": false,
+          "central_to": false,
+          "number": ""
+        }
+      ],
+      "notes": [],
+      "fragments": [],
+      "boxes": [],
+      "order": [
+        {
+          "kind": "Create",
+          "index": 2,
+          "part": 0
+        },
+        {
+          "kind": "Message",
+          "index": 0,
+          "part": 0
+        }
+      ]
+    },
+    "model_sha256": "ab7c44ab46e47f2a9d10e6f7193927916fda84894dae6f1e1b3e45378051dd21",
+    "source_semantics": "destroyedActors[D]=0 and createdActors[C]=0; creation masks visible death; logical lastDestroyed remains D at EOF. Native adaptation must not reject solely for this masked state."
+  },
+  {
+    "name": "masked_then_matching_normal",
+    "source": "sequenceDiagram\nparticipant A\nparticipant D\ndestroy D\ncreate participant C\nA->>C: born\nD->>A: alive\n",
+    "source_sha256": "0f9c037eee8161ca82cd854f1746c74eaa727a40cc43bd7abf31717da3014bd2",
+    "expected": "whole_scene",
+    "model": {
+      "title": "",
+      "actors": [
+        {
+          "id": "A",
+          "label": "A",
+          "role": "Participant"
+        },
+        {
+          "id": "D",
+          "label": "D",
+          "role": "Participant"
+        },
+        {
+          "id": "C",
+          "label": "C",
+          "role": "Participant"
+        }
+      ],
+      "messages": [
+        {
+          "from": 0,
+          "to": 2,
+          "label": "born",
+          "arrow": "Filled",
+          "dashed": false,
+          "central_from": false,
+          "central_to": false,
+          "number": ""
+        },
+        {
+          "from": 1,
+          "to": 0,
+          "label": "alive",
+          "arrow": "Filled",
+          "dashed": false,
+          "central_from": false,
+          "central_to": false,
+          "number": ""
+        }
+      ],
+      "notes": [],
+      "fragments": [],
+      "boxes": [],
+      "order": [
+        {
+          "kind": "Create",
+          "index": 2,
+          "part": 0
+        },
+        {
+          "kind": "Message",
+          "index": 0,
+          "part": 0
+        },
+        {
+          "kind": "Message",
+          "index": 1,
+          "part": 0
+        }
+      ]
+    },
+    "model_sha256": "8b987776e7ffb60e76c62846209c7d5e4673c284325fd9027b7f57050d1171e4",
+    "source_semantics": "Normal endpoint D clears logical guard; destruction map index remains 0, so no late visible Destroy at index 1."
+  },
+  {
+    "name": "masked_guard_through_note_and_number",
+    "source": "sequenceDiagram\nparticipant A\nparticipant D\ndestroy D\ncreate participant C\nA->>C: born\nNote over A: checkpoint\nautonumber 7\nD->>A: alive\n",
+    "source_sha256": "ed5eaf58046482303d2d94770a1fc5a80108266cc5a74bfcf00041e374d8c769",
+    "expected": "whole_scene",
+    "model": {
+      "title": "",
+      "actors": [
+        {
+          "id": "A",
+          "label": "A",
+          "role": "Participant"
+        },
+        {
+          "id": "D",
+          "label": "D",
+          "role": "Participant"
+        },
+        {
+          "id": "C",
+          "label": "C",
+          "role": "Participant"
+        }
+      ],
+      "messages": [
+        {
+          "from": 0,
+          "to": 2,
+          "label": "born",
+          "arrow": "Filled",
+          "dashed": false,
+          "central_from": false,
+          "central_to": false,
+          "number": ""
+        },
+        {
+          "from": 1,
+          "to": 0,
+          "label": "alive",
+          "arrow": "Filled",
+          "dashed": false,
+          "central_from": false,
+          "central_to": false,
+          "number": "7"
+        }
+      ],
+      "notes": [
+        {
+          "actors": [
+            0
+          ],
+          "text": "checkpoint",
+          "position": "over",
+          "after": 0
+        }
+      ],
+      "fragments": [],
+      "boxes": [],
+      "order": [
+        {
+          "kind": "Create",
+          "index": 2,
+          "part": 0
+        },
+        {
+          "kind": "Message",
+          "index": 0,
+          "part": 0
+        },
+        {
+          "kind": "Note",
+          "index": 0,
+          "part": 0
+        },
+        {
+          "kind": "Message",
+          "index": 1,
+          "part": 0
+        }
+      ]
+    },
+    "model_sha256": "fdaf45264b0048a9803f1d9b117a5389c898f6edb4e199901b34c952556e1646",
+    "source_semantics": "Note and autonumber are not normal signals and do not consume lastDestroyed; subsequent D endpoint clears it without a delayed death."
+  },
+  {
+    "name": "masked_then_nonmatching_normal_closed",
+    "source": "sequenceDiagram\nparticipant A\nparticipant D\ndestroy D\ncreate participant C\nA->>C: born\nA->>C: next\n",
+    "source_sha256": "dbfff086c2b5e810a59fcd8f27233718a214f9623c4fb85ba43ceaad9bc1a3bd",
+    "expected": "whole_source_closed_profile",
+    "model": null,
+    "model_sha256": null,
+    "source_semantics": "Normal endpoints A/C omit pending D; primary addMessage guard rejects. Do not treat the earlier creating signal as clearing the guard."
+  },
+  {
+    "name": "unmasked_dangling_destroy_closed",
+    "source": "sequenceDiagram\nparticipant A\nparticipant D\ndestroy D\n",
+    "source_sha256": "c98ed709789974d98a08cc5509a39684f11e64c8a9ac2bf0939bb9f95abe00e6",
+    "expected": "whole_source_closed_profile",
+    "model": null,
+    "model_sha256": null,
+    "source_semantics": "Existing native dangling-destroy profile remains whole-source closed; no claim that all primary dangling-destroy sources are invalid."
+  }
+]

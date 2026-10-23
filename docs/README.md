@@ -42,6 +42,8 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 |---|---|
 | [`dev/context-compaction.md`](dev/context-compaction.md) | Shared main/child context budgeting, checkpoint recovery, and native/live verification. |
 | [`dev/markdown-conformance.md`](dev/markdown-conformance.md) | CommonMark 0.31.2 + GFM conformance suite: architecture, fixtures, HTML serializer, floor system, JSON output + dashboard. Baseline: 1350/1354 (99.7%). |
+| [`dev/mermaid-conformance.md`](dev/mermaid-conformance.md) | Pinned Mermaid 12.2.0 official corpus, independent terminal oracle and per-width drawing/fallback/error reports. |
+| [`dev/mermaid-terminal-tests.md`](dev/mermaid-terminal-tests.md) | Complementary upstream terminal test inputs, immutable provenance, native execution baseline and semantic-port gates. |
 | [`dev/error-handling-conventions.md`](dev/error-handling-conventions.md) | `std::expected` / `Result<T>` error-handling conventions for the C++ tree. |
 | [`dev/ui-glossary.md`](dev/ui-glossary.md) | Canonical UI vocabulary: framework terms (Element/Component/Box/Screen) vs project terms (Block/Row/Panel/Pane/Store/…), deprecated terms. |
 
@@ -93,7 +95,8 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0027-current-context-occupancy.md`](rfcs/0027-current-context-occupancy.md) | **Implemented.** Current working-context token estimates and percentages, separate from cumulative session usage. |
 | [`rfcs/0028-automatic-model-generation-defaults.md`](rfcs/0028-automatic-model-generation-defaults.md) | **Implemented.** Automatic generation defaults and preserved explicit overrides across model switching. |
 | [`rfcs/0029-model-capacity-metadata.md`](rfcs/0029-model-capacity-metadata.md) | **Implemented.** Read model context capacities from the configured service before using local fallback estimates. |
-| [`rfcs/0030-terminal-mermaid-diagrams.md`](rfcs/0030-terminal-mermaid-diagrams.md) | **Implemented.** Native terminal diagrams for supported Mermaid flowcharts and sequence diagrams, preserving unsupported source. |
+| [`rfcs/0030-terminal-mermaid-diagrams.md`](rfcs/0030-terminal-mermaid-diagrams.md) | **Implementable.** Native terminal diagrams and pinned official-corpus capability matrix; Phase C is in progress and Phase D (bounded style projection) has an approved design. Unsupported source is preserved. |
+| [`rfcs/0031-mermaid-envelope-and-renderer-cleanup.md`](rfcs/0031-mermaid-envelope-and-renderer-cleanup.md) | **Implementable.** One bounded Mermaid metadata envelope, config-free gitGraph/state admission, relations split, family dispatch and structural cleanup; PRR approved, Phase E1 implemented (Linux PSS outstanding). |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

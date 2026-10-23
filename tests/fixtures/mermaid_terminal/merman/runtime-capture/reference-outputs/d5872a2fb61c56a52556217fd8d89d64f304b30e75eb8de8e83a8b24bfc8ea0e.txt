@@ -1,0 +1,9 @@
+                            +---+
+                            | A |
+                            +---+
+endpointLabel=[bytes=31 "endpointRef(bytes=8)=\"Domain.T\""]
+                              |
+                              v
+                            +---+
+                            | B |
+                            +---+

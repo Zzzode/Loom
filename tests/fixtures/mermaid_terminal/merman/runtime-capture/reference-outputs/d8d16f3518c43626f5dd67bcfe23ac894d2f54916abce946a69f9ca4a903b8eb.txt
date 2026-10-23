@@ -1,0 +1,12 @@
+titleDisplay: chart(bytes=11)="Theme: base"
+titleDisplay: yAxis(bytes=1)="Y"
+xDomain: band categories=[bytes=1="a", bytes=1="b", bytes=1="c"]
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=1)="a" value=2 pointLabel=none clipped=false}, {index=1 x(bytes=1)="b" value=5 pointLabel=none clipped=false}, {index=2 x(bytes=1)="c" value=8 pointLabel=none clipped=false}] orphanPointLabels=[]
+10 +
+ 8 +        ###
+ 6 +    ### ###
+ 4 +    ### ###
+ 2 +### ### ###
+ 0 +-+---+---+-
+     a   b   c
+titleDisplay: xAxis(bytes=1)="X"

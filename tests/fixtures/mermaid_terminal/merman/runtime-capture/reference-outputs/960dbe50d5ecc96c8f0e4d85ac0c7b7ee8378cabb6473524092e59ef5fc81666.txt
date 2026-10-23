@@ -1,0 +1,36 @@
++---+
+| A |
++---+
+
++---+
+| B |
++---+
+
++---+
+| C |
++---+
+
++-------------+
+| note        |
+| Short note. |
++-------------+
+
++-----------------------------------------------------------+
+| note                                                      |
+| Multiline note                                            |
+| line 2                                                    |
+| line 3                                                    |
+| authored(bytes=36)="Multiline note<br/>line 2<br/>line 3" |
++-----------------------------------------------------------+
+
++----------------------------------------------------+
+| note                                               |
+| Keywords in note: classDiagram-v2, namespace, end. |
++----------------------------------------------------+
+
+relations:
+id(bytes=1)="A"     --> id(bytes=1)="B" : uses
+id(bytes=1)="B"     --> id(bytes=1)="C" : builds
+id(bytes=5)="note0" ..  id(bytes=1)="A"
+id(bytes=5)="note1" ..  id(bytes=1)="B"
+id(bytes=5)="note2" ..  id(bytes=1)="C"

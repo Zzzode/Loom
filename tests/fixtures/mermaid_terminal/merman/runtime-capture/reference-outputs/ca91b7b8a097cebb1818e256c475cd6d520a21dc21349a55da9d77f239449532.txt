@@ -1,0 +1,7 @@
++------+
+| Node |--------------^
++------+              |
+ endpoint 1: source   |
+ relation: recursive  |
+ endpoint 2: target   |
+    v-----------------+

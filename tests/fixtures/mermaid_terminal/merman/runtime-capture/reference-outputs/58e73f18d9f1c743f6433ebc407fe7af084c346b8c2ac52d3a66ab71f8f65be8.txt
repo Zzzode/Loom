@@ -1,0 +1,2 @@
+group(bytes=4)="root" [id(bytes=4)="root", priority(bytes=4)="high",
+assigned(bytes=5)="alice", icon(bytes=4)="star"]

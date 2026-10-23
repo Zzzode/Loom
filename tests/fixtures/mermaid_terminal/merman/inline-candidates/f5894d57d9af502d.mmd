@@ -1,0 +1,12 @@
+sequenceDiagram
+participant API@{ "type" : "boundary", "alias": "Public API" }
+participant Auth@{ "type" : "control" } as Auth Controller
+participant Entity@{ "type" : "entity" }
+participant DB@{ "type" : "database" }
+participant Queue@{ "type" : "queue" }
+actor Store@{ "type" : "collections" } as Event Store
+API->>Auth: Request
+Auth->>Entity: Validate
+Entity->>DB: Query
+DB-->>Queue: Result
+Queue-->>Store: Publish

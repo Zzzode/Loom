@@ -1,0 +1,33 @@
+  ┌───────┐       ┌─────┐
+  │ Alice │       │ Bob │
+  └───────┘       └─────┘
+      │              │
+      │              │
+      │  Extremely   │
+      │ utterly long │
+      │   line of    │
+      │   longness   │
+      │  which had   │
+      │  previously  │
+      │  overflown   │
+      │  the actor   │
+      │ box as it is │
+      │ much longer  │
+      │ than what it │
+      │  should be   │
+      ├──────────────▶
+      │              │
+      │              │
+┌─────┼──────────────┼────┐
+│       loop Loopy        │
+├─────┼──────────────┼────┤
+│     │              │    │
+│     │ Pasten       │    │
+│     ◀──────────────┤    │
+│     │              │    │
+│     │              │    │
+└─────┼──────────────┼────┘
+      │              │
+      │              │
+
+AFTER_MERMAID

@@ -1,0 +1,2905 @@
+{
+  "schema": 1,
+  "units": [
+    {
+      "original": {
+        "byte_end": 51483,
+        "byte_start": 50985,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1454,
+        "line_start": 1440,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/86b108b6f36b8dff6f98198ed749660272c62f5b6650623ae8353f69dfa3dbc0.rs",
+        "sha256": "86b108b6f36b8dff6f98198ed749660272c62f5b6650623ae8353f69dfa3dbc0",
+        "test_name": "tests::render_flowchart_rejects_edges_with_missing_endpoint_nodes",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/86b108b6f36b8dff6f98198ed749660272c62f5b6650623ae8353f69dfa3dbc0.rs",
+        "sha256": "86b108b6f36b8dff6f98198ed749660272c62f5b6650623ae8353f69dfa3dbc0",
+        "bytes": 498
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 50925,
+        "byte_start": 50437,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1436,
+        "line_start": 1422,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/f0a17c732bf32fa07c2a09ead140fd092b41a350f977d2aa7c2622d892091184.rs",
+        "sha256": "f0a17c732bf32fa07c2a09ead140fd092b41a350f977d2aa7c2622d892091184",
+        "test_name": "tests::render_flowchart_rejects_unsupported_directions",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/f0a17c732bf32fa07c2a09ead140fd092b41a350f977d2aa7c2622d892091184.rs",
+        "sha256": "f0a17c732bf32fa07c2a09ead140fd092b41a350f977d2aa7c2622d892091184",
+        "bytes": 488
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 45228,
+        "byte_start": 44738,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1264,
+        "line_start": 1252,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/ec368c1be3425e29404623c4fefedfcfc6360e22b24f5332ca46860d82a64108.rs",
+        "sha256": "ec368c1be3425e29404623c4fefedfcfc6360e22b24f5332ca46860d82a64108",
+        "test_name": "tests::render_flowchart_renders_basic_left_right_chain",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/ec368c1be3425e29404623c4fefedfcfc6360e22b24f5332ca46860d82a64108.rs",
+        "sha256": "ec368c1be3425e29404623c4fefedfcfc6360e22b24f5332ca46860d82a64108",
+        "bytes": 490
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 46664,
+        "byte_start": 46123,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1305,
+        "line_start": 1291,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/1adf7a820f276236da701c5263b5b74dd2a7f3ca227217d3ae8c5494d4dedbca.rs",
+        "sha256": "1adf7a820f276236da701c5263b5b74dd2a7f3ca227217d3ae8c5494d4dedbca",
+        "test_name": "tests::render_flowchart_renders_model_edge_labels",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/1adf7a820f276236da701c5263b5b74dd2a7f3ca227217d3ae8c5494d4dedbca.rs",
+        "sha256": "1adf7a820f276236da701c5263b5b74dd2a7f3ca227217d3ae8c5494d4dedbca",
+        "bytes": 541
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 50377,
+        "byte_start": 49279,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1418,
+        "line_start": 1383,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/1ba3b1c2537027bc8710576b974e805e19d8ef416134df1be8649be28d4f80d4.rs",
+        "sha256": "1ba3b1c2537027bc8710576b974e805e19d8ef416134df1be8649be28d4f80d4",
+        "test_name": "tests::render_flowchart_renders_model_multiline_subgraph_titles",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/1ba3b1c2537027bc8710576b974e805e19d8ef416134df1be8649be28d4f80d4.rs",
+        "sha256": "1ba3b1c2537027bc8710576b974e805e19d8ef416134df1be8649be28d4f80d4",
+        "bytes": 1098
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 49219,
+        "byte_start": 48201,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1379,
+        "line_start": 1346,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/163e24e1a4b158654dc9432e8b67ec74851268f20f68ae0c6df63fc656114cf7.rs",
+        "sha256": "163e24e1a4b158654dc9432e8b67ec74851268f20f68ae0c6df63fc656114cf7",
+        "test_name": "tests::render_flowchart_renders_model_subgraphs",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/163e24e1a4b158654dc9432e8b67ec74851268f20f68ae0c6df63fc656114cf7.rs",
+        "sha256": "163e24e1a4b158654dc9432e8b67ec74851268f20f68ae0c6df63fc656114cf7",
+        "bytes": 1018
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 46063,
+        "byte_start": 45288,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1287,
+        "line_start": 1268,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/d506c2f38c16ad6e19c5450fe3c573a49f933b6d29a505e7125bd04ccba35dab.rs",
+        "sha256": "d506c2f38c16ad6e19c5450fe3c573a49f933b6d29a505e7125bd04ccba35dab",
+        "test_name": "tests::render_flowchart_respects_grid_cell_limit",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/d506c2f38c16ad6e19c5450fe3c573a49f933b6d29a505e7125bd04ccba35dab.rs",
+        "sha256": "d506c2f38c16ad6e19c5450fe3c573a49f933b6d29a505e7125bd04ccba35dab",
+        "bytes": 775
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 48141,
+        "byte_start": 46724,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1342,
+        "line_start": 1309,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/63af274b7e4b2755f8d4eb1c7497b88a48d3fa8f3d7636a552ad29d250e20484.rs",
+        "sha256": "63af274b7e4b2755f8d4eb1c7497b88a48d3fa8f3d7636a552ad29d250e20484",
+        "test_name": "tests::render_flowchart_supports_invisible_constraints_and_cross_markers",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/63af274b7e4b2755f8d4eb1c7497b88a48d3fa8f3d7636a552ad29d250e20484.rs",
+        "sha256": "63af274b7e4b2755f8d4eb1c7497b88a48d3fa8f3d7636a552ad29d250e20484",
+        "bytes": 1417
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 40664,
+        "byte_start": 40405,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1137,
+        "line_start": 1131,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/a9825bf3ea6a563d7c8b0f3283e9d9046b684b5526835fe818a59975b6a338f7.rs",
+        "sha256": "a9825bf3ea6a563d7c8b0f3283e9d9046b684b5526835fe818a59975b6a338f7",
+        "test_name": "tests::render_model_routes_basic_flowchart_to_graph_renderer",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/a9825bf3ea6a563d7c8b0f3283e9d9046b684b5526835fe818a59975b6a338f7.rs",
+        "sha256": "a9825bf3ea6a563d7c8b0f3283e9d9046b684b5526835fe818a59975b6a338f7",
+        "bytes": 259
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 44678,
+        "byte_start": 44374,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1248,
+        "line_start": 1241,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/c7336c9ee733739b5b697517835f8da4bad9ed9518a6237629a3a90c25ad2a41.rs",
+        "sha256": "c7336c9ee733739b5b697517835f8da4bad9ed9518a6237629a3a90c25ad2a41",
+        "test_name": "tests::render_model_routes_mindmap_to_hierarchy_renderer",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/c7336c9ee733739b5b697517835f8da4bad9ed9518a6237629a3a90c25ad2a41.rs",
+        "sha256": "c7336c9ee733739b5b697517835f8da4bad9ed9518a6237629a3a90c25ad2a41",
+        "bytes": 304
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 44316,
+        "byte_start": 43960,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1237,
+        "line_start": 1229,
+        "original_file_sha256": "97235f9608497576c2a4840c12f754c7549c0ab8c564bf5c456f19045b9eb232",
+        "path": "runtime-capture/assertions/5d8374fcb0985b2d892410de8002d0b4f2f6ea6c35360bebeaa8882574861e78.rs",
+        "sha256": "5d8374fcb0985b2d892410de8002d0b4f2f6ea6c35360bebeaa8882574861e78",
+        "test_name": "tests::render_model_routes_tree_view_to_hierarchy_renderer",
+        "upstream_path": "crates/merman-ascii/src/lib.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/5d8374fcb0985b2d892410de8002d0b4f2f6ea6c35360bebeaa8882574861e78.rs",
+        "sha256": "5d8374fcb0985b2d892410de8002d0b4f2f6ea6c35360bebeaa8882574861e78",
+        "bytes": 356
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 30651,
+        "byte_start": 29729,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 946,
+        "line_start": 926,
+        "original_file_sha256": "679f1a60a2e0c5a8755733a3ad2ccd44f23a9dd3b93feb41b1e801630fbd0a26",
+        "path": "runtime-capture/assertions/cf8c358e5a9cded41dabf0bbe2f2d6bf4a140ec711de52e253a9385c43977f1d.rs",
+        "sha256": "cf8c358e5a9cded41dabf0bbe2f2d6bf4a140ec711de52e253a9385c43977f1d",
+        "test_name": "empty_er_direction_bytes_are_admitted_before_parsing",
+        "upstream_path": "crates/merman-ascii/tests/er_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/cf8c358e5a9cded41dabf0bbe2f2d6bf4a140ec711de52e253a9385c43977f1d.rs",
+        "sha256": "cf8c358e5a9cded41dabf0bbe2f2d6bf4a140ec711de52e253a9385c43977f1d",
+        "bytes": 922
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 29719,
+        "byte_start": 28992,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 923,
+        "line_start": 903,
+        "original_file_sha256": "679f1a60a2e0c5a8755733a3ad2ccd44f23a9dd3b93feb41b1e801630fbd0a26",
+        "path": "runtime-capture/assertions/bb08c80dfd8d9df22b0ea3441f0a42f6687f003d685bc99f20b79ebe1b99f12d.rs",
+        "sha256": "bb08c80dfd8d9df22b0ea3441f0a42f6687f003d685bc99f20b79ebe1b99f12d",
+        "test_name": "empty_er_model_validates_direction_before_returning_empty",
+        "upstream_path": "crates/merman-ascii/tests/er_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/bb08c80dfd8d9df22b0ea3441f0a42f6687f003d685bc99f20b79ebe1b99f12d.rs",
+        "sha256": "bb08c80dfd8d9df22b0ea3441f0a42f6687f003d685bc99f20b79ebe1b99f12d",
+        "bytes": 727
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 54021,
+        "byte_start": 52298,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1658,
+        "line_start": 1611,
+        "original_file_sha256": "679f1a60a2e0c5a8755733a3ad2ccd44f23a9dd3b93feb41b1e801630fbd0a26",
+        "path": "runtime-capture/assertions/7733d49ed78f368e140dc6f082b2ae1b3a80094a1bfb4127d291226b709366c3.rs",
+        "sha256": "7733d49ed78f368e140dc6f082b2ae1b3a80094a1bfb4127d291226b709366c3",
+        "test_name": "er_single_line_display_projection_discloses_the_authored_owner",
+        "upstream_path": "crates/merman-ascii/tests/er_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/7733d49ed78f368e140dc6f082b2ae1b3a80094a1bfb4127d291226b709366c3.rs",
+        "sha256": "7733d49ed78f368e140dc6f082b2ae1b3a80094a1bfb4127d291226b709366c3",
+        "bytes": 1723
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 51504,
+        "byte_start": 48183,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1585,
+        "line_start": 1495,
+        "original_file_sha256": "679f1a60a2e0c5a8755733a3ad2ccd44f23a9dd3b93feb41b1e801630fbd0a26",
+        "path": "runtime-capture/assertions/b9b10bef93fb7abe85fc1dda943c5cd8d748b15ec45d7dee039935ae371e473e.rs",
+        "sha256": "b9b10bef93fb7abe85fc1dda943c5cd8d748b15ec45d7dee039935ae371e473e",
+        "test_name": "er_summary_frames_direct_authored_identities_that_share_one_display_label",
+        "upstream_path": "crates/merman-ascii/tests/er_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/b9b10bef93fb7abe85fc1dda943c5cd8d748b15ec45d7dee039935ae371e473e.rs",
+        "sha256": "b9b10bef93fb7abe85fc1dda943c5cd8d748b15ec45d7dee039935ae371e473e",
+        "bytes": 3321
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 52288,
+        "byte_start": 51514,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1608,
+        "line_start": 1588,
+        "original_file_sha256": "679f1a60a2e0c5a8755733a3ad2ccd44f23a9dd3b93feb41b1e801630fbd0a26",
+        "path": "runtime-capture/assertions/284cf4e26c37cb57ebc3f537d062e8656d36c415b9165a8e94f25fab121df67c.rs",
+        "sha256": "284cf4e26c37cb57ebc3f537d062e8656d36c415b9165a8e94f25fab121df67c",
+        "test_name": "er_terminal_normalization_discloses_the_authored_box_identity",
+        "upstream_path": "crates/merman-ascii/tests/er_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/284cf4e26c37cb57ebc3f537d062e8656d36c415b9165a8e94f25fab121df67c.rs",
+        "sha256": "284cf4e26c37cb57ebc3f537d062e8656d36c415b9165a8e94f25fab121df67c",
+        "bytes": 774
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6595,
+        "byte_start": 5749,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 208,
+        "line_start": 184,
+        "original_file_sha256": "5eed55b44db6545333b7ba8080c647b4279c3c9e99319717775f78bccf795335",
+        "path": "runtime-capture/assertions/f30dcf5308a6d1b8cde0e73d5ef2c832a54005eafc2cca892b4f99ff060b5b4a.rs",
+        "sha256": "f30dcf5308a6d1b8cde0e73d5ef2c832a54005eafc2cca892b4f99ff060b5b4a",
+        "test_name": "shapes::flowchart_typed_model_internal_shape_aliases_render",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/shapes.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/f30dcf5308a6d1b8cde0e73d5ef2c832a54005eafc2cca892b4f99ff060b5b4a.rs",
+        "sha256": "f30dcf5308a6d1b8cde0e73d5ef2c832a54005eafc2cca892b4f99ff060b5b4a",
+        "bytes": 846
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 7412,
+        "byte_start": 6605,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 231,
+        "line_start": 211,
+        "original_file_sha256": "5eed55b44db6545333b7ba8080c647b4279c3c9e99319717775f78bccf795335",
+        "path": "runtime-capture/assertions/ca7f1cd4345bc50eeaa018b954b166cc16d88c5ce3b8efa74721861ba9bbfe84.rs",
+        "sha256": "ca7f1cd4345bc50eeaa018b954b166cc16d88c5ce3b8efa74721861ba9bbfe84",
+        "test_name": "shapes::flowchart_typed_model_rejects_icon_and_image_metadata",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/shapes.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/ca7f1cd4345bc50eeaa018b954b166cc16d88c5ce3b8efa74721861ba9bbfe84.rs",
+        "sha256": "ca7f1cd4345bc50eeaa018b954b166cc16d88c5ce3b8efa74721861ba9bbfe84",
+        "bytes": 807
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6031,
+        "byte_start": 3764,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 188,
+        "line_start": 120,
+        "original_file_sha256": "a4ece27de2baf4e2a8193d03d1e58f6e3446b2738508c3aa5e37bf5f9726d206",
+        "path": "runtime-capture/assertions/96692d63dba49290e0865136abe91daeeeb800fe17ab8e884f27fb2187ba7e1f.rs",
+        "sha256": "96692d63dba49290e0865136abe91daeeeb800fe17ab8e884f27fb2187ba7e1f",
+        "test_name": "subgraphs::duplicate_flowchart_parent_contains_its_nested_child_layout",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/subgraphs.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/96692d63dba49290e0865136abe91daeeeb800fe17ab8e884f27fb2187ba7e1f.rs",
+        "sha256": "96692d63dba49290e0865136abe91daeeeb800fe17ab8e884f27fb2187ba7e1f",
+        "bytes": 2267
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 3754,
+        "byte_start": 2242,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 117,
+        "line_start": 75,
+        "original_file_sha256": "a4ece27de2baf4e2a8193d03d1e58f6e3446b2738508c3aa5e37bf5f9726d206",
+        "path": "runtime-capture/assertions/02aac39006eda6d75a0acb3a09770513e5a3ab3eef86159fbe17e721a1968478.rs",
+        "sha256": "02aac39006eda6d75a0acb3a09770513e5a3ab3eef86159fbe17e721a1968478",
+        "test_name": "subgraphs::flowchart_direct_model_duplicate_subgraph_ids_use_the_parser_semantics",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/subgraphs.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/02aac39006eda6d75a0acb3a09770513e5a3ab3eef86159fbe17e721a1968478.rs",
+        "sha256": "02aac39006eda6d75a0acb3a09770513e5a3ab3eef86159fbe17e721a1968478",
+        "bytes": 1512
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 14531,
+        "byte_start": 10706,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 439,
+        "line_start": 330,
+        "original_file_sha256": "a4ece27de2baf4e2a8193d03d1e58f6e3446b2738508c3aa5e37bf5f9726d206",
+        "path": "runtime-capture/assertions/4a0b4a903819da46949c125a25e5710d1e6eed03d4a862a101c14016186c7e48.rs",
+        "sha256": "4a0b4a903819da46949c125a25e5710d1e6eed03d4a862a101c14016186c7e48",
+        "test_name": "subgraphs::render_model_subgraph_direction_override_renders_local_left_right_layout_without_cross_boundary_edges",
+        "upstream_path": "crates/merman-ascii/tests/flowchart_model/subgraphs.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/4a0b4a903819da46949c125a25e5710d1e6eed03d4a862a101c14016186c7e48.rs",
+        "sha256": "4a0b4a903819da46949c125a25e5710d1e6eed03d4a862a101c14016186c7e48",
+        "bytes": 3825
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 9796,
+        "byte_start": 9106,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 275,
+        "line_start": 253,
+        "original_file_sha256": "37fff059854c913b7eab088f2f79d3d32020b6acdfd0afb1c67457ed940d3aca",
+        "path": "runtime-capture/assertions/6f9a826dd145d128bd1f4707ecb3a69acab5f4f50669a915248ab30faec693e6.rs",
+        "sha256": "6f9a826dd145d128bd1f4707ecb3a69acab5f4f50669a915248ab30faec693e6",
+        "test_name": "gantt::gantt_direct_model_rejects_duplicate_task_ids",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/gantt.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/6f9a826dd145d128bd1f4707ecb3a69acab5f4f50669a915248ab30faec693e6.rs",
+        "sha256": "6f9a826dd145d128bd1f4707ecb3a69acab5f4f50669a915248ab30faec693e6",
+        "bytes": 690
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 7046,
+        "byte_start": 5557,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 191,
+        "line_start": 156,
+        "original_file_sha256": "37fff059854c913b7eab088f2f79d3d32020b6acdfd0afb1c67457ed940d3aca",
+        "path": "runtime-capture/assertions/4ec4bfd439cbf4304e8c39961d98775a29fb329e793dcb483346e4e3c45b3444.rs",
+        "sha256": "4ec4bfd439cbf4304e8c39961d98775a29fb329e793dcb483346e4e3c45b3444",
+        "test_name": "gantt::gantt_direct_model_renders_only_typed_constraints",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/gantt.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/4ec4bfd439cbf4304e8c39961d98775a29fb329e793dcb483346e4e3c45b3444.rs",
+        "sha256": "4ec4bfd439cbf4304e8c39961d98775a29fb329e793dcb483346e4e3c45b3444",
+        "bytes": 1489
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 3800,
+        "byte_start": 2871,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 111,
+        "line_start": 86,
+        "original_file_sha256": "37fff059854c913b7eab088f2f79d3d32020b6acdfd0afb1c67457ed940d3aca",
+        "path": "runtime-capture/assertions/4822bcc2df2ae8aa051c6c1161c8ecbd6c169e4f80c18add51feb4fd74a1bbdb.rs",
+        "sha256": "4822bcc2df2ae8aa051c6c1161c8ecbd6c169e4f80c18add51feb4fd74a1bbdb",
+        "test_name": "gantt::gantt_direct_model_discloses_task_order",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/gantt.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/4822bcc2df2ae8aa051c6c1161c8ecbd6c169e4f80c18add51feb4fd74a1bbdb.rs",
+        "sha256": "4822bcc2df2ae8aa051c6c1161c8ecbd6c169e4f80c18add51feb4fd74a1bbdb",
+        "bytes": 929
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 8376,
+        "byte_start": 7056,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 226,
+        "line_start": 194,
+        "original_file_sha256": "37fff059854c913b7eab088f2f79d3d32020b6acdfd0afb1c67457ed940d3aca",
+        "path": "runtime-capture/assertions/d621045d984aee84ff5d6a662e46fc535592b4dbf134250d92ded06327b99ccd.rs",
+        "sha256": "d621045d984aee84ff5d6a662e46fc535592b4dbf134250d92ded06327b99ccd",
+        "test_name": "gantt::gantt_direct_model_distinguishes_fixed_and_relative_end_constraints",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/gantt.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/d621045d984aee84ff5d6a662e46fc535592b4dbf134250d92ded06327b99ccd.rs",
+        "sha256": "d621045d984aee84ff5d6a662e46fc535592b4dbf134250d92ded06327b99ccd",
+        "bytes": 1320
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 1851,
+        "byte_start": 23,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 53,
+        "line_start": 4,
+        "original_file_sha256": "37fff059854c913b7eab088f2f79d3d32020b6acdfd0afb1c67457ed940d3aca",
+        "path": "runtime-capture/assertions/7d615948182a4c1c78fffa573d08f6b87b4b771833c0ce3f4e2559c3ffedc0fa.rs",
+        "sha256": "7d615948182a4c1c78fffa573d08f6b87b4b771833c0ce3f4e2559c3ffedc0fa",
+        "test_name": "gantt::gantt_render_model_renders_sections_tasks_and_flags",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/gantt.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/7d615948182a4c1c78fffa573d08f6b87b4b771833c0ce3f4e2559c3ffedc0fa.rs",
+        "sha256": "7d615948182a4c1c78fffa573d08f6b87b4b771833c0ce3f4e2559c3ffedc0fa",
+        "bytes": 1828
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 4405,
+        "byte_start": 3810,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 127,
+        "line_start": 114,
+        "original_file_sha256": "37fff059854c913b7eab088f2f79d3d32020b6acdfd0afb1c67457ed940d3aca",
+        "path": "runtime-capture/assertions/e5eb04342b4b63288fcd1742162a09bd9e9ea8610a052681fa8d3cc22c97a24b.rs",
+        "sha256": "e5eb04342b4b63288fcd1742162a09bd9e9ea8610a052681fa8d3cc22c97a24b",
+        "test_name": "gantt::gantt_structured_text_framing_distinguishes_title_from_axis_format",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/gantt.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/e5eb04342b4b63288fcd1742162a09bd9e9ea8610a052681fa8d3cc22c97a24b.rs",
+        "sha256": "e5eb04342b4b63288fcd1742162a09bd9e9ea8610a052681fa8d3cc22c97a24b",
+        "bytes": 595
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 9096,
+        "byte_start": 8386,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 250,
+        "line_start": 229,
+        "original_file_sha256": "37fff059854c913b7eab088f2f79d3d32020b6acdfd0afb1c67457ed940d3aca",
+        "path": "runtime-capture/assertions/0e9fbde01d32ab9bd954735d5fca52c3d40738aa0a9570ccae5b34b4c5f4d094.rs",
+        "sha256": "0e9fbde01d32ab9bd954735d5fca52c3d40738aa0a9570ccae5b34b4c5f4d094",
+        "test_name": "gantt::gantt_structured_text_preserves_time_precision_and_render_end",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/gantt.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/0e9fbde01d32ab9bd954735d5fca52c3d40738aa0a9570ccae5b34b4c5f4d094.rs",
+        "sha256": "0e9fbde01d32ab9bd954735d5fca52c3d40738aa0a9570ccae5b34b4c5f4d094",
+        "bytes": 710
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 8435,
+        "byte_start": 6456,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 250,
+        "line_start": 190,
+        "original_file_sha256": "63b911a37f227c6ae0f8e9aee150889fd923f365a527356a8f02aadf3a743532",
+        "path": "runtime-capture/assertions/9216e2ead1f4e4b0503c3114b49b6934268efd28017724c06c49c67896724d63.rs",
+        "sha256": "9216e2ead1f4e4b0503c3114b49b6934268efd28017724c06c49c67896724d63",
+        "test_name": "git_graph::git_graph_branch_and_commit_identity_fields_are_length_framed",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/git_graph.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/9216e2ead1f4e4b0503c3114b49b6934268efd28017724c06c49c67896724d63.rs",
+        "sha256": "9216e2ead1f4e4b0503c3114b49b6934268efd28017724c06c49c67896724d63",
+        "bytes": 1979
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 5181,
+        "byte_start": 1918,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 147,
+        "line_start": 55,
+        "original_file_sha256": "63b911a37f227c6ae0f8e9aee150889fd923f365a527356a8f02aadf3a743532",
+        "path": "runtime-capture/assertions/c1fbc46c5f1f3c54deb1176bc56dab6633fd6c70c0dbb1060e3bcd045d6a4595.rs",
+        "sha256": "c1fbc46c5f1f3c54deb1176bc56dab6633fd6c70c0dbb1060e3bcd045d6a4595",
+        "test_name": "git_graph::git_graph_commit_message_and_metadata_are_framed_without_collisions",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/git_graph.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/c1fbc46c5f1f3c54deb1176bc56dab6633fd6c70c0dbb1060e3bcd045d6a4595.rs",
+        "sha256": "c1fbc46c5f1f3c54deb1176bc56dab6633fd6c70c0dbb1060e3bcd045d6a4595",
+        "bytes": 3263
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6446,
+        "byte_start": 5191,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 187,
+        "line_start": 150,
+        "original_file_sha256": "63b911a37f227c6ae0f8e9aee150889fd923f365a527356a8f02aadf3a743532",
+        "path": "runtime-capture/assertions/f130b547cb60a3ef4ba278700e19217f96c6f6617fead552ef66e752318a2ae9.rs",
+        "sha256": "f130b547cb60a3ef4ba278700e19217f96c6f6617fead552ef66e752318a2ae9",
+        "test_name": "git_graph::git_graph_render_model_rejects_unknown_commit_types",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/git_graph.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/f130b547cb60a3ef4ba278700e19217f96c6f6617fead552ef66e752318a2ae9.rs",
+        "sha256": "f130b547cb60a3ef4ba278700e19217f96c6f6617fead552ef66e752318a2ae9",
+        "bytes": 1255
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 1908,
+        "byte_start": 23,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 52,
+        "line_start": 4,
+        "original_file_sha256": "63b911a37f227c6ae0f8e9aee150889fd923f365a527356a8f02aadf3a743532",
+        "path": "runtime-capture/assertions/c9407e1d939b8fff3315856d42c891457551aa740b035c9adaae0319459bd33e.rs",
+        "sha256": "c9407e1d939b8fff3315856d42c891457551aa740b035c9adaae0319459bd33e",
+        "test_name": "git_graph::git_graph_render_model_renders_branches_commits_and_warnings",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/git_graph.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/c9407e1d939b8fff3315856d42c891457551aa740b035c9adaae0319459bd33e.rs",
+        "sha256": "c9407e1d939b8fff3315856d42c891457551aa740b035c9adaae0319459bd33e",
+        "bytes": 1885
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 9863,
+        "byte_start": 8445,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 292,
+        "line_start": 253,
+        "original_file_sha256": "63b911a37f227c6ae0f8e9aee150889fd923f365a527356a8f02aadf3a743532",
+        "path": "runtime-capture/assertions/9c9d9b0307cc6429781ffdcaa4702a2d30130234703bed27be455306a6e85c66.rs",
+        "sha256": "9c9d9b0307cc6429781ffdcaa4702a2d30130234703bed27be455306a6e85c66",
+        "test_name": "git_graph::git_graph_summary_loop_observes_operation_cancellation",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/git_graph.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/9c9d9b0307cc6429781ffdcaa4702a2d30130234703bed27be455306a6e85c66.rs",
+        "sha256": "9c9d9b0307cc6429781ffdcaa4702a2d30130234703bed27be455306a6e85c66",
+        "bytes": 1418
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 1610,
+        "byte_start": 23,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 45,
+        "line_start": 4,
+        "original_file_sha256": "a6569e3aade3ae068fa259c6b7a4aa6334441398025f1c9c12e96c7e2c3b83d6",
+        "path": "runtime-capture/assertions/acdba43b138c59dcade819fec1ae6811902d1895126201cc3b53b43d14a3e90f.rs",
+        "sha256": "acdba43b138c59dcade819fec1ae6811902d1895126201cc3b53b43d14a3e90f",
+        "test_name": "journey::journey_render_model_renders_actors_sections_and_scores",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/journey.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/acdba43b138c59dcade819fec1ae6811902d1895126201cc3b53b43d14a3e90f.rs",
+        "sha256": "acdba43b138c59dcade819fec1ae6811902d1895126201cc3b53b43d14a3e90f",
+        "bytes": 1587
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 2163,
+        "byte_start": 1619,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 59,
+        "line_start": 47,
+        "original_file_sha256": "a6569e3aade3ae068fa259c6b7a4aa6334441398025f1c9c12e96c7e2c3b83d6",
+        "path": "runtime-capture/assertions/0732103964503a06266cc7e1a267b4729d2700d4d5e2589b401afad91c862d76.rs",
+        "sha256": "0732103964503a06266cc7e1a267b4729d2700d4d5e2589b401afad91c862d76",
+        "test_name": "journey::journey_structured_text_framing_distinguishes_actor_list_items",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/journey.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/0732103964503a06266cc7e1a267b4729d2700d4d5e2589b401afad91c862d76.rs",
+        "sha256": "0732103964503a06266cc7e1a267b4729d2700d4d5e2589b401afad91c862d76",
+        "bytes": 544
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 3762,
+        "byte_start": 2938,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 118,
+        "line_start": 92,
+        "original_file_sha256": "ed54f847923e005eeb824714b85777be1dc16717a41e29ca77d9830c845462d0",
+        "path": "runtime-capture/assertions/cd8d094c4df4852afda92b9edce1f5dea85ed06be2c6272e22c0de4d0d4e64d8.rs",
+        "sha256": "cd8d094c4df4852afda92b9edce1f5dea85ed06be2c6272e22c0de4d0d4e64d8",
+        "test_name": "kanban::kanban_group_parent_ownership_is_disclosed_without_nested_geometry",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/kanban.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/cd8d094c4df4852afda92b9edce1f5dea85ed06be2c6272e22c0de4d0d4e64d8.rs",
+        "sha256": "cd8d094c4df4852afda92b9edce1f5dea85ed06be2c6272e22c0de4d0d4e64d8",
+        "bytes": 824
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 5169,
+        "byte_start": 3772,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 161,
+        "line_start": 121,
+        "original_file_sha256": "ed54f847923e005eeb824714b85777be1dc16717a41e29ca77d9830c845462d0",
+        "path": "runtime-capture/assertions/e581d1047150fec022ef75f4e577e5983f69337eb5e89dbb6ba2416630e083f0.rs",
+        "sha256": "e581d1047150fec022ef75f4e577e5983f69337eb5e89dbb6ba2416630e083f0",
+        "test_name": "kanban::kanban_render_model_keeps_unassigned_and_unknown_parent_cards",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/kanban.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/e581d1047150fec022ef75f4e577e5983f69337eb5e89dbb6ba2416630e083f0.rs",
+        "sha256": "e581d1047150fec022ef75f4e577e5983f69337eb5e89dbb6ba2416630e083f0",
+        "bytes": 1397
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6379,
+        "byte_start": 5179,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 204,
+        "line_start": 164,
+        "original_file_sha256": "ed54f847923e005eeb824714b85777be1dc16717a41e29ca77d9830c845462d0",
+        "path": "runtime-capture/assertions/dfcf5451b0738841ae94a4591d16fb856e13896a5a6674800cec9e49684c79a1.rs",
+        "sha256": "dfcf5451b0738841ae94a4591d16fb856e13896a5a6674800cec9e49684c79a1",
+        "test_name": "kanban::kanban_render_model_rejects_duplicate_or_empty_ids",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/kanban.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/dfcf5451b0738841ae94a4591d16fb856e13896a5a6674800cec9e49684c79a1.rs",
+        "sha256": "dfcf5451b0738841ae94a4591d16fb856e13896a5a6674800cec9e49684c79a1",
+        "bytes": 1200
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 1987,
+        "byte_start": 23,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 57,
+        "line_start": 4,
+        "original_file_sha256": "ed54f847923e005eeb824714b85777be1dc16717a41e29ca77d9830c845462d0",
+        "path": "runtime-capture/assertions/cdf39b87e0fd697064ad5153e02de6dea8899f36c9a982796b289638c532188a.rs",
+        "sha256": "cdf39b87e0fd697064ad5153e02de6dea8899f36c9a982796b289638c532188a",
+        "test_name": "kanban::kanban_render_model_renders_groups_and_child_metadata",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/kanban.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/cdf39b87e0fd697064ad5153e02de6dea8899f36c9a982796b289638c532188a.rs",
+        "sha256": "cdf39b87e0fd697064ad5153e02de6dea8899f36c9a982796b289638c532188a",
+        "bytes": 1964
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 2928,
+        "byte_start": 1996,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 89,
+        "line_start": 59,
+        "original_file_sha256": "ed54f847923e005eeb824714b85777be1dc16717a41e29ca77d9830c845462d0",
+        "path": "runtime-capture/assertions/af3159b6aebe0c1454c4587cd3d9c25e5119d0650a5d8e160d4bab7c12369560.rs",
+        "sha256": "af3159b6aebe0c1454c4587cd3d9c25e5119d0650a5d8e160d4bab7c12369560",
+        "test_name": "kanban::kanban_structured_text_framing_distinguishes_ticket_from_priority",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/kanban.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/af3159b6aebe0c1454c4587cd3d9c25e5119d0650a5d8e160d4bab7c12369560.rs",
+        "sha256": "af3159b6aebe0c1454c4587cd3d9c25e5119d0650a5d8e160d4bab7c12369560",
+        "bytes": 932
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6062,
+        "byte_start": 3684,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 195,
+        "line_start": 124,
+        "original_file_sha256": "5c3cefb8c076cdbe9d35a8add23f8a9b47ec7411a8cfebbb253789bd268b4b1c",
+        "path": "runtime-capture/assertions/05e364765dcce792f0b9924e87ec945c37a46131e4fae3efd04cbdae409fc850.rs",
+        "sha256": "05e364765dcce792f0b9924e87ec945c37a46131e4fae3efd04cbdae409fc850",
+        "test_name": "mindmap::mindmap_direct_model_rejects_duplicate_ids_and_missing_edges",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/mindmap.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/05e364765dcce792f0b9924e87ec945c37a46131e4fae3efd04cbdae409fc850.rs",
+        "sha256": "05e364765dcce792f0b9924e87ec945c37a46131e4fae3efd04cbdae409fc850",
+        "bytes": 2378
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 2715,
+        "byte_start": 1730,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 90,
+        "line_start": 61,
+        "original_file_sha256": "5c3cefb8c076cdbe9d35a8add23f8a9b47ec7411a8cfebbb253789bd268b4b1c",
+        "path": "runtime-capture/assertions/5fd645ba36249c551d9ac17314505a6f40768689b6c1e3d3825bc46c70f03702.rs",
+        "sha256": "5fd645ba36249c551d9ac17314505a6f40768689b6c1e3d3825bc46c70f03702",
+        "test_name": "mindmap::mindmap_direct_model_rejects_nodes_with_multiple_parents",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/mindmap.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/5fd645ba36249c551d9ac17314505a6f40768689b6c1e3d3825bc46c70f03702.rs",
+        "sha256": "5fd645ba36249c551d9ac17314505a6f40768689b6c1e3d3825bc46c70f03702",
+        "bytes": 985
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 8162,
+        "byte_start": 7383,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 264,
+        "line_start": 240,
+        "original_file_sha256": "5c3cefb8c076cdbe9d35a8add23f8a9b47ec7411a8cfebbb253789bd268b4b1c",
+        "path": "runtime-capture/assertions/93066995d691d23af3686dfad713a8e7e444c9493d149215eb065e0b5e83f7b7.rs",
+        "sha256": "93066995d691d23af3686dfad713a8e7e444c9493d149215eb065e0b5e83f7b7",
+        "test_name": "mindmap::mindmap_honors_ascii_and_unicode_structural_charsets",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/mindmap.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/93066995d691d23af3686dfad713a8e7e444c9493d149215eb065e0b5e83f7b7.rs",
+        "sha256": "93066995d691d23af3686dfad713a8e7e444c9493d149215eb065e0b5e83f7b7",
+        "bytes": 779
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 3674,
+        "byte_start": 2725,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 121,
+        "line_start": 93,
+        "original_file_sha256": "5c3cefb8c076cdbe9d35a8add23f8a9b47ec7411a8cfebbb253789bd268b4b1c",
+        "path": "runtime-capture/assertions/cc7bfe6bcc79001c2aca38554678bb7de011f3187934944c449533b1ac6ba424.rs",
+        "sha256": "cc7bfe6bcc79001c2aca38554678bb7de011f3187934944c449533b1ac6ba424",
+        "test_name": "mindmap::mindmap_render_model_keeps_disconnected_cycle_components",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/mindmap.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/cc7bfe6bcc79001c2aca38554678bb7de011f3187934944c449533b1ac6ba424.rs",
+        "sha256": "cc7bfe6bcc79001c2aca38554678bb7de011f3187934944c449533b1ac6ba424",
+        "bytes": 949
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 1720,
+        "byte_start": 943,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 58,
+        "line_start": 32,
+        "original_file_sha256": "5c3cefb8c076cdbe9d35a8add23f8a9b47ec7411a8cfebbb253789bd268b4b1c",
+        "path": "runtime-capture/assertions/89435044d8c90ad1279b0ce0bd4fa7476400de3d2b8c01573afa4baee75f7448.rs",
+        "sha256": "89435044d8c90ad1279b0ce0bd4fa7476400de3d2b8c01573afa4baee75f7448",
+        "test_name": "mindmap::mindmap_render_model_rejects_parallel_edges",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/mindmap.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/89435044d8c90ad1279b0ce0bd4fa7476400de3d2b8c01573afa4baee75f7448.rs",
+        "sha256": "89435044d8c90ad1279b0ce0bd4fa7476400de3d2b8c01573afa4baee75f7448",
+        "bytes": 777
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 934,
+        "byte_start": 23,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 30,
+        "line_start": 4,
+        "original_file_sha256": "5c3cefb8c076cdbe9d35a8add23f8a9b47ec7411a8cfebbb253789bd268b4b1c",
+        "path": "runtime-capture/assertions/868429b5600438ccf09e8b1db582c176e2e21969735555efc7fa8d4e6e672b87.rs",
+        "sha256": "868429b5600438ccf09e8b1db582c176e2e21969735555efc7fa8d4e6e672b87",
+        "test_name": "mindmap::mindmap_render_model_renders_rooted_outline",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/mindmap.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/868429b5600438ccf09e8b1db582c176e2e21969735555efc7fa8d4e6e672b87.rs",
+        "sha256": "868429b5600438ccf09e8b1db582c176e2e21969735555efc7fa8d4e6e672b87",
+        "bytes": 911
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6658,
+        "byte_start": 6072,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 216,
+        "line_start": 198,
+        "original_file_sha256": "5c3cefb8c076cdbe9d35a8add23f8a9b47ec7411a8cfebbb253789bd268b4b1c",
+        "path": "runtime-capture/assertions/312d4d0e91ea5599fefe37dbb418729c4ed925ffc5cbe9f87b7cd7004dc53ae7.rs",
+        "sha256": "312d4d0e91ea5599fefe37dbb418729c4ed925ffc5cbe9f87b7cd7004dc53ae7",
+        "test_name": "mindmap::mindmap_structured_text_discloses_identity_shape_icon_and_section",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/mindmap.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/312d4d0e91ea5599fefe37dbb418729c4ed925ffc5cbe9f87b7cd7004dc53ae7.rs",
+        "sha256": "312d4d0e91ea5599fefe37dbb418729c4ed925ffc5cbe9f87b7cd7004dc53ae7",
+        "bytes": 586
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 7373,
+        "byte_start": 6668,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 237,
+        "line_start": 219,
+        "original_file_sha256": "5c3cefb8c076cdbe9d35a8add23f8a9b47ec7411a8cfebbb253789bd268b4b1c",
+        "path": "runtime-capture/assertions/ba69abe609cb9deb9d6b2f2a856b4e3b469b63fe1ec27b19095713c7be3a9cda.rs",
+        "sha256": "ba69abe609cb9deb9d6b2f2a856b4e3b469b63fe1ec27b19095713c7be3a9cda",
+        "test_name": "mindmap::mindmap_structured_text_framing_distinguishes_labels_from_authored_ids",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/mindmap.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/ba69abe609cb9deb9d6b2f2a856b4e3b469b63fe1ec27b19095713c7be3a9cda.rs",
+        "sha256": "ba69abe609cb9deb9d6b2f2a856b4e3b469b63fe1ec27b19095713c7be3a9cda",
+        "bytes": 705
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 8794,
+        "byte_start": 8172,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 281,
+        "line_start": 267,
+        "original_file_sha256": "5c3cefb8c076cdbe9d35a8add23f8a9b47ec7411a8cfebbb253789bd268b4b1c",
+        "path": "runtime-capture/assertions/0a05e7242f7c87f1658b721b803c7d9325ef7af4949d5989887f6abf281ed5bf.rs",
+        "sha256": "0a05e7242f7c87f1658b721b803c7d9325ef7af4949d5989887f6abf281ed5bf",
+        "test_name": "mindmap::mindmap_uses_internal_ids_for_topology_and_authored_ids_for_disclosure",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/mindmap.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/0a05e7242f7c87f1658b721b803c7d9325ef7af4949d5989887f6abf281ed5bf.rs",
+        "sha256": "0a05e7242f7c87f1658b721b803c7d9325ef7af4949d5989887f6abf281ed5bf",
+        "bytes": 622
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 4185,
+        "byte_start": 2654,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 145,
+        "line_start": 96,
+        "original_file_sha256": "e9ebcc8de5b87d61e6b277917c4f9fe498d5b623bb64bc8eb8702adc48045989",
+        "path": "runtime-capture/assertions/9d14878551408c2023e2311b1a8ca66d407fafe513b3e5e3590df36c51507188.rs",
+        "sha256": "9d14878551408c2023e2311b1a8ca66d407fafe513b3e5e3590df36c51507188",
+        "test_name": "packet::packet_labels_cannot_forge_following_block_boundaries",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/packet.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/9d14878551408c2023e2311b1a8ca66d407fafe513b3e5e3590df36c51507188.rs",
+        "sha256": "9d14878551408c2023e2311b1a8ca66d407fafe513b3e5e3590df36c51507188",
+        "bytes": 1531
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 2644,
+        "byte_start": 1979,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 93,
+        "line_start": 72,
+        "original_file_sha256": "e9ebcc8de5b87d61e6b277917c4f9fe498d5b623bb64bc8eb8702adc48045989",
+        "path": "runtime-capture/assertions/0273bb8e64dcd8c252a0a7264bf00b863f51e137aad8ae2d8757bac5a66878cb.rs",
+        "sha256": "0273bb8e64dcd8c252a0a7264bf00b863f51e137aad8ae2d8757bac5a66878cb",
+        "test_name": "packet::packet_render_model_rejects_noninclusive_bit_counts",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/packet.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/0273bb8e64dcd8c252a0a7264bf00b863f51e137aad8ae2d8757bac5a66878cb.rs",
+        "sha256": "0273bb8e64dcd8c252a0a7264bf00b863f51e137aad8ae2d8757bac5a66878cb",
+        "bytes": 665
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 1381,
+        "byte_start": 23,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 47,
+        "line_start": 4,
+        "original_file_sha256": "e9ebcc8de5b87d61e6b277917c4f9fe498d5b623bb64bc8eb8702adc48045989",
+        "path": "runtime-capture/assertions/4f1a5d3ec5757d5ce89118ad1fca7ffd8811aebf554a6962e22a0ec0934cb197.rs",
+        "sha256": "4f1a5d3ec5757d5ce89118ad1fca7ffd8811aebf554a6962e22a0ec0934cb197",
+        "test_name": "packet::packet_render_model_renders_rows_and_ranges",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/packet.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/4f1a5d3ec5757d5ce89118ad1fca7ffd8811aebf554a6962e22a0ec0934cb197.rs",
+        "sha256": "4f1a5d3ec5757d5ce89118ad1fca7ffd8811aebf554a6962e22a0ec0934cb197",
+        "bytes": 1358
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 1692,
+        "byte_start": 23,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 49,
+        "line_start": 4,
+        "original_file_sha256": "2d5acf0cb959834cbb54b3df0f663e8c823228cdb01f0eb1380cd0a43d918818",
+        "path": "runtime-capture/assertions/39f25062b1e00fdb139f32b7a7c88bec6d65f9cbf62b37f84726c4bb6b2480ae.rs",
+        "sha256": "39f25062b1e00fdb139f32b7a7c88bec6d65f9cbf62b37f84726c4bb6b2480ae",
+        "test_name": "timeline::timeline_render_model_renders_sections_tasks_and_events",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/timeline.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/39f25062b1e00fdb139f32b7a7c88bec6d65f9cbf62b37f84726c4bb6b2480ae.rs",
+        "sha256": "39f25062b1e00fdb139f32b7a7c88bec6d65f9cbf62b37f84726c4bb6b2480ae",
+        "bytes": 1669
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 2935,
+        "byte_start": 1701,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 79,
+        "line_start": 51,
+        "original_file_sha256": "2d5acf0cb959834cbb54b3df0f663e8c823228cdb01f0eb1380cd0a43d918818",
+        "path": "runtime-capture/assertions/19325350113eaa265015d9797a64fa99afd6812f4ab28fb3a3fb8c9ebbb5b10e.rs",
+        "sha256": "19325350113eaa265015d9797a64fa99afd6812f4ab28fb3a3fb8c9ebbb5b10e",
+        "test_name": "timeline::timeline_render_model_wraps_long_task_and_event_text",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/timeline.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/19325350113eaa265015d9797a64fa99afd6812f4ab28fb3a3fb8c9ebbb5b10e.rs",
+        "sha256": "19325350113eaa265015d9797a64fa99afd6812f4ab28fb3a3fb8c9ebbb5b10e",
+        "bytes": 1234
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 3742,
+        "byte_start": 2945,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 103,
+        "line_start": 82,
+        "original_file_sha256": "2d5acf0cb959834cbb54b3df0f663e8c823228cdb01f0eb1380cd0a43d918818",
+        "path": "runtime-capture/assertions/d816058f48d6f1bfcafdc8cfe7b7cf68f797ebb24294e9f1b0ff5376e85ac448.rs",
+        "sha256": "d816058f48d6f1bfcafdc8cfe7b7cf68f797ebb24294e9f1b0ff5376e85ac448",
+        "test_name": "timeline::timeline_structured_text_framing_distinguishes_task_text_from_events",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/timeline.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/d816058f48d6f1bfcafdc8cfe7b7cf68f797ebb24294e9f1b0ff5376e85ac448.rs",
+        "sha256": "d816058f48d6f1bfcafdc8cfe7b7cf68f797ebb24294e9f1b0ff5376e85ac448",
+        "bytes": 797
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 3567,
+        "byte_start": 1406,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 103,
+        "line_start": 46,
+        "original_file_sha256": "41e4b9483aa56297dd4e132c986defeb511b899ddc6f6783bf51afff13dc7ae2",
+        "path": "runtime-capture/assertions/f9e33d2f3d96522cf695b20d5a8f0b7f4def6598cba50487e156fce5c397cfc8.rs",
+        "sha256": "f9e33d2f3d96522cf695b20d5a8f0b7f4def6598cba50487e156fce5c397cfc8",
+        "test_name": "tree_view::tree_view_discloses_typed_fields_and_honors_unicode_connectors",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/tree_view.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/f9e33d2f3d96522cf695b20d5a8f0b7f4def6598cba50487e156fce5c397cfc8.rs",
+        "sha256": "f9e33d2f3d96522cf695b20d5a8f0b7f4def6598cba50487e156fce5c397cfc8",
+        "bytes": 2161
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 4544,
+        "byte_start": 3577,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 134,
+        "line_start": 106,
+        "original_file_sha256": "41e4b9483aa56297dd4e132c986defeb511b899ddc6f6783bf51afff13dc7ae2",
+        "path": "runtime-capture/assertions/ad01624b2ed47606083ff260e1bd262db5957958784bdbb2c2841df70d6b68af.rs",
+        "sha256": "ad01624b2ed47606083ff260e1bd262db5957958784bdbb2c2841df70d6b68af",
+        "test_name": "tree_view::tree_view_distinguishes_trailing_slash_files_from_directories",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/tree_view.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/ad01624b2ed47606083ff260e1bd262db5957958784bdbb2c2841df70d6b68af.rs",
+        "sha256": "ad01624b2ed47606083ff260e1bd262db5957958784bdbb2c2841df70d6b68af",
+        "bytes": 967
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 7421,
+        "byte_start": 6512,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 225,
+        "line_start": 202,
+        "original_file_sha256": "41e4b9483aa56297dd4e132c986defeb511b899ddc6f6783bf51afff13dc7ae2",
+        "path": "runtime-capture/assertions/497986e5085239c5c1115e83d35a9390f61045d1524120bc07df7cc745e0f4ae.rs",
+        "sha256": "497986e5085239c5c1115e83d35a9390f61045d1524120bc07df7cc745e0f4ae",
+        "test_name": "tree_view::tree_view_recursive_emit_observes_operation_cancellation",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/tree_view.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/497986e5085239c5c1115e83d35a9390f61045d1524120bc07df7cc745e0f4ae.rs",
+        "sha256": "497986e5085239c5c1115e83d35a9390f61045d1524120bc07df7cc745e0f4ae",
+        "bytes": 909
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6502,
+        "byte_start": 5757,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 199,
+        "line_start": 172,
+        "original_file_sha256": "41e4b9483aa56297dd4e132c986defeb511b899ddc6f6783bf51afff13dc7ae2",
+        "path": "runtime-capture/assertions/7200e807464c0928e3198fd1fcc5ce7da2bc5ed5b877aba9438bcb9775cef0b0.rs",
+        "sha256": "7200e807464c0928e3198fd1fcc5ce7da2bc5ed5b877aba9438bcb9775cef0b0",
+        "test_name": "tree_view::tree_view_rejects_duplicate_public_node_ids",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/tree_view.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/7200e807464c0928e3198fd1fcc5ce7da2bc5ed5b877aba9438bcb9775cef0b0.rs",
+        "sha256": "7200e807464c0928e3198fd1fcc5ce7da2bc5ed5b877aba9438bcb9775cef0b0",
+        "bytes": 745
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 5747,
+        "byte_start": 5199,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 169,
+        "line_start": 153,
+        "original_file_sha256": "41e4b9483aa56297dd4e132c986defeb511b899ddc6f6783bf51afff13dc7ae2",
+        "path": "runtime-capture/assertions/7d52f8a74b1bd09a0bfb78cb93b4c8945458b0ce84a32bd4b46950d727d1483c.rs",
+        "sha256": "7d52f8a74b1bd09a0bfb78cb93b4c8945458b0ce84a32bd4b46950d727d1483c",
+        "test_name": "tree_view::tree_view_rejects_unknown_direct_model_node_types",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/tree_view.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/7d52f8a74b1bd09a0bfb78cb93b4c8945458b0ce84a32bd4b46950d727d1483c.rs",
+        "sha256": "7d52f8a74b1bd09a0bfb78cb93b4c8945458b0ce84a32bd4b46950d727d1483c",
+        "bytes": 548
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 1396,
+        "byte_start": 23,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 43,
+        "line_start": 4,
+        "original_file_sha256": "41e4b9483aa56297dd4e132c986defeb511b899ddc6f6783bf51afff13dc7ae2",
+        "path": "runtime-capture/assertions/53b18c3b3527cca6a6bce6b88b483fb0044dc730db391674e9162805e59fee57.rs",
+        "sha256": "53b18c3b3527cca6a6bce6b88b483fb0044dc730db391674e9162805e59fee57",
+        "test_name": "tree_view::tree_view_render_model_renders_outline_summary",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/tree_view.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/53b18c3b3527cca6a6bce6b88b483fb0044dc730db391674e9162805e59fee57.rs",
+        "sha256": "53b18c3b3527cca6a6bce6b88b483fb0044dc730db391674e9162805e59fee57",
+        "bytes": 1373
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 5189,
+        "byte_start": 4554,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 150,
+        "line_start": 137,
+        "original_file_sha256": "41e4b9483aa56297dd4e132c986defeb511b899ddc6f6783bf51afff13dc7ae2",
+        "path": "runtime-capture/assertions/1fd98b800757c18706ffc94053aaa400eab8dd7c67e45d659debc20f910feb25.rs",
+        "sha256": "1fd98b800757c18706ffc94053aaa400eab8dd7c67e45d659debc20f910feb25",
+        "test_name": "tree_view::tree_view_structured_text_framing_distinguishes_icon_from_class",
+        "upstream_path": "crates/merman-ascii/tests/new_family_models/tree_view.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/1fd98b800757c18706ffc94053aaa400eab8dd7c67e45d659debc20f910feb25.rs",
+        "sha256": "1fd98b800757c18706ffc94053aaa400eab8dd7c67e45d659debc20f910feb25",
+        "bytes": 635
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 14181,
+        "byte_start": 12401,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 413,
+        "line_start": 370,
+        "original_file_sha256": "dc3880a48c79d0870e4200f98131704b5f941ac8f90a63cf2db73653d0857f66",
+        "path": "runtime-capture/assertions/1cf4b71f4fe373c53de981f1f51c23158c3e6b7b3874013d5cdce31cc64076ed.rs",
+        "sha256": "1cf4b71f4fe373c53de981f1f51c23158c3e6b7b3874013d5cdce31cc64076ed",
+        "test_name": "structured_text_resource_admission_observes_cancellation_before_layout_work_failure",
+        "upstream_path": "crates/merman-ascii/tests/operation_cancellation.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/1cf4b71f4fe373c53de981f1f51c23158c3e6b7b3874013d5cdce31cc64076ed.rs",
+        "sha256": "1cf4b71f4fe373c53de981f1f51c23158c3e6b7b3874013d5cdce31cc64076ed",
+        "bytes": 1780
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 9895,
+        "byte_start": 9129,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 269,
+        "line_start": 252,
+        "original_file_sha256": "da5fd1c1f80ed79b5e3a407abb65f5b5e679d66e1a5939465b29cab8c3e19516",
+        "path": "runtime-capture/assertions/c584116a14c88f52803b1287175a47aa784cc69f14196b96b766e4cd31dbdd97.rs",
+        "sha256": "c584116a14c88f52803b1287175a47aa784cc69f14196b96b766e4cd31dbdd97",
+        "test_name": "empty_extent_is_reportable_without_special_sentinel_text",
+        "upstream_path": "crates/merman-ascii/tests/output_report.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/c584116a14c88f52803b1287175a47aa784cc69f14196b96b766e4cd31dbdd97.rs",
+        "sha256": "c584116a14c88f52803b1287175a47aa784cc69f14196b96b766e4cd31dbdd97",
+        "bytes": 766
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6951,
+        "byte_start": 5714,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 200,
+        "line_start": 168,
+        "original_file_sha256": "ed181e20b8d9e6f1b0242690322da25919d2be2968c16794c31177b60d25dfed",
+        "path": "runtime-capture/assertions/dc2b9eaa6c0fe747c78a8c083cb7c750c810bfb54a00105707627f3d0b533a95.rs",
+        "sha256": "dc2b9eaa6c0fe747c78a8c083cb7c750c810bfb54a00105707627f3d0b533a95",
+        "test_name": "explicit_section_occurrences_must_be_in_bounds_and_match_the_label",
+        "upstream_path": "crates/merman-ascii/tests/sectioned_structured_text.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/dc2b9eaa6c0fe747c78a8c083cb7c750c810bfb54a00105707627f3d0b533a95.rs",
+        "sha256": "dc2b9eaa6c0fe747c78a8c083cb7c750c810bfb54a00105707627f3d0b533a95",
+        "bytes": 1237
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 5704,
+        "byte_start": 4410,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 165,
+        "line_start": 133,
+        "original_file_sha256": "ed181e20b8d9e6f1b0242690322da25919d2be2968c16794c31177b60d25dfed",
+        "path": "runtime-capture/assertions/3f7d2af71ce858131005e9d709171224e0415c42d0344e83d4e52c7fc0cd019d.rs",
+        "sha256": "3f7d2af71ce858131005e9d709171224e0415c42d0344e83d4e52c7fc0cd019d",
+        "test_name": "duplicate_direct_section_labels_require_an_occurrence_index",
+        "upstream_path": "crates/merman-ascii/tests/sectioned_structured_text.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/3f7d2af71ce858131005e9d709171224e0415c42d0344e83d4e52c7fc0cd019d.rs",
+        "sha256": "3f7d2af71ce858131005e9d709171224e0415c42d0344e83d4e52c7fc0cd019d",
+        "bytes": 1294
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 4400,
+        "byte_start": 2550,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 130,
+        "line_start": 81,
+        "original_file_sha256": "ed181e20b8d9e6f1b0242690322da25919d2be2968c16794c31177b60d25dfed",
+        "path": "runtime-capture/assertions/4ae09bd5145b6747d2e4d437996c249e0175063b3906564e5c7b533d5b88cd91.rs",
+        "sha256": "4ae09bd5145b6747d2e4d437996c249e0175063b3906564e5c7b533d5b88cd91",
+        "test_name": "direct_models_disclose_unknown_and_unsectioned_tasks_once",
+        "upstream_path": "crates/merman-ascii/tests/sectioned_structured_text.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/4ae09bd5145b6747d2e4d437996c249e0175063b3906564e5c7b533d5b88cd91.rs",
+        "sha256": "4ae09bd5145b6747d2e4d437996c249e0175063b3906564e5c7b533d5b88cd91",
+        "bytes": 1850
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6755,
+        "byte_start": 6154,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 204,
+        "line_start": 189,
+        "original_file_sha256": "8010d997f98b0e43568c3d42fb896a020a17ceb58ff03b8b7ca22563d898f89d",
+        "path": "runtime-capture/assertions/ee52dc6cde5161f55604616e2ba20823b2ec14fc6c560c96e714b87645b4c279.rs",
+        "sha256": "ee52dc6cde5161f55604616e2ba20823b2ec14fc6c560c96e714b87645b4c279",
+        "test_name": "actors::sequence_actor_order_must_be_a_complete_actor_permutation",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/actors.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/ee52dc6cde5161f55604616e2ba20823b2ec14fc6c560c96e714b87645b4c279.rs",
+        "sha256": "ee52dc6cde5161f55604616e2ba20823b2ec14fc6c560c96e714b87645b4c279",
+        "bytes": 601
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6144,
+        "byte_start": 5609,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 186,
+        "line_start": 172,
+        "original_file_sha256": "8010d997f98b0e43568c3d42fb896a020a17ceb58ff03b8b7ca22563d898f89d",
+        "path": "runtime-capture/assertions/ba9b98d990034a45820e89e67d99cda4ca06439e6d6c491dd8ad409f0ec45bab.rs",
+        "sha256": "ba9b98d990034a45820e89e67d99cda4ca06439e6d6c491dd8ad409f0ec45bab",
+        "test_name": "actors::sequence_actor_properties_are_accepted_as_omitted_metadata",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/actors.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/ba9b98d990034a45820e89e67d99cda4ca06439e6d6c491dd8ad409f0ec45bab.rs",
+        "sha256": "ba9b98d990034a45820e89e67d99cda4ca06439e6d6c491dd8ad409f0ec45bab",
+        "bytes": 535
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 7271,
+        "byte_start": 6765,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 216,
+        "line_start": 207,
+        "original_file_sha256": "8010d997f98b0e43568c3d42fb896a020a17ceb58ff03b8b7ca22563d898f89d",
+        "path": "runtime-capture/assertions/6062ca4761bf99c5f727583d17e77a4990b7dffd93e39eace049bbf4d8a0bcc3.rs",
+        "sha256": "6062ca4761bf99c5f727583d17e77a4990b7dffd93e39eace049bbf4d8a0bcc3",
+        "test_name": "actors::sequence_empty_actor_order_uses_deterministic_model_order",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/actors.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/6062ca4761bf99c5f727583d17e77a4990b7dffd93e39eace049bbf4d8a0bcc3.rs",
+        "sha256": "6062ca4761bf99c5f727583d17e77a4990b7dffd93e39eace049bbf4d8a0bcc3",
+        "bytes": 506
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 3390,
+        "byte_start": 3145,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 104,
+        "line_start": 99,
+        "original_file_sha256": "8010d997f98b0e43568c3d42fb896a020a17ceb58ff03b8b7ca22563d898f89d",
+        "path": "runtime-capture/assertions/7043a16517e6593ef304b60eb0be5f8f9151ca3c80ce86ca6ff5fef235af5991.rs",
+        "sha256": "7043a16517e6593ef304b60eb0be5f8f9151ca3c80ce86ca6ff5fef235af5991",
+        "test_name": "actors::sequence_unknown_actor_types_are_explicitly_unsupported",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/actors.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/7043a16517e6593ef304b60eb0be5f8f9151ca3c80ce86ca6ff5fef235af5991.rs",
+        "sha256": "7043a16517e6593ef304b60eb0be5f8f9151ca3c80ce86ca6ff5fef235af5991",
+        "bytes": 245
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 4103,
+        "byte_start": 3400,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 123,
+        "line_start": 107,
+        "original_file_sha256": "8010d997f98b0e43568c3d42fb896a020a17ceb58ff03b8b7ca22563d898f89d",
+        "path": "runtime-capture/assertions/642f8d558384e1f72c3bcfe680ab6a1498870adae534b13c2c7768175ef001f3.rs",
+        "sha256": "642f8d558384e1f72c3bcfe680ab6a1498870adae534b13c2c7768175ef001f3",
+        "test_name": "actors::sequence_wrapped_actor_labels_render_multiline_participant_boxes",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/actors.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/642f8d558384e1f72c3bcfe680ab6a1498870adae534b13c2c7768175ef001f3.rs",
+        "sha256": "642f8d558384e1f72c3bcfe680ab6a1498870adae534b13c2c7768175ef001f3",
+        "bytes": 703
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 16248,
+        "byte_start": 12556,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 458,
+        "line_start": 358,
+        "original_file_sha256": "b797ae86f16366f72a6c43b32a2c9d2e033c69575e73653daad488971d13bb49",
+        "path": "runtime-capture/assertions/3c917008b9b54468f8733fd82327385e3df996d6cec0606501aac264f6867aa6.rs",
+        "sha256": "3c917008b9b54468f8733fd82327385e3df996d6cec0606501aac264f6867aa6",
+        "test_name": "control_composition::sequence_box_with_lifecycle_and_mirror_keeps_boundaries",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/control_composition.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/3c917008b9b54468f8733fd82327385e3df996d6cec0606501aac264f6867aa6.rs",
+        "sha256": "3c917008b9b54468f8733fd82327385e3df996d6cec0606501aac264f6867aa6",
+        "bytes": 3692
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 8178,
+        "byte_start": 5777,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 227,
+        "line_start": 168,
+        "original_file_sha256": "b797ae86f16366f72a6c43b32a2c9d2e033c69575e73653daad488971d13bb49",
+        "path": "runtime-capture/assertions/7f5fdf239e4cedf8e07e3c3aa62fc49925337d75743ecab4a0ace7d4d4ac3b99.rs",
+        "sha256": "7f5fdf239e4cedf8e07e3c3aa62fc49925337d75743ecab4a0ace7d4d4ac3b99",
+        "test_name": "control_composition::sequence_empty_control_block_sections_render_visible_lifeline_rows",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/control_composition.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/7f5fdf239e4cedf8e07e3c3aa62fc49925337d75743ecab4a0ace7d4d4ac3b99.rs",
+        "sha256": "7f5fdf239e4cedf8e07e3c3aa62fc49925337d75743ecab4a0ace7d4d4ac3b99",
+        "bytes": 2401
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 11156,
+        "byte_start": 9961,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 324,
+        "line_start": 293,
+        "original_file_sha256": "88deef0433dacf3e037478d065a1461c9f521f91eeb53707a6b628e850279317",
+        "path": "runtime-capture/assertions/f22e8a3c3621e0d5b51eac0380e2429637a65fc0f60179cacadc67a18f570879.rs",
+        "sha256": "f22e8a3c3621e0d5b51eac0380e2429637a65fc0f60179cacadc67a18f570879",
+        "test_name": "control_extensions::sequence_rect_par_over_empty_sections_render_visible_lifeline_rows",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/control_extensions.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/f22e8a3c3621e0d5b51eac0380e2429637a65fc0f60179cacadc67a18f570879.rs",
+        "sha256": "f22e8a3c3621e0d5b51eac0380e2429637a65fc0f60179cacadc67a18f570879",
+        "bytes": 1195
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 12021,
+        "byte_start": 11166,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 351,
+        "line_start": 327,
+        "original_file_sha256": "88deef0433dacf3e037478d065a1461c9f521f91eeb53707a6b628e850279317",
+        "path": "runtime-capture/assertions/9564ed8832936ee20d9a632c26c31048685bdf773f6e31e4740e413e4caf178c.rs",
+        "sha256": "9564ed8832936ee20d9a632c26c31048685bdf773f6e31e4740e413e4caf178c",
+        "test_name": "control_extensions::sequence_rect_par_over_malformed_ordering_is_explicitly_unsupported",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/control_extensions.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/9564ed8832936ee20d9a632c26c31048685bdf773f6e31e4740e413e4caf178c.rs",
+        "sha256": "9564ed8832936ee20d9a632c26c31048685bdf773f6e31e4740e413e4caf178c",
+        "bytes": 855
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 17813,
+        "byte_start": 16146,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 527,
+        "line_start": 487,
+        "original_file_sha256": "9753406d76c3003cf5b9eda01bfc80fd9da04a2570bbf8838154a7cf9632c7b0",
+        "path": "runtime-capture/assertions/d97ed9e5bad6acdfe006dc059ba25a42aee23f0afa7f55c3d5ed4a36babcff8e.rs",
+        "sha256": "d97ed9e5bad6acdfe006dc059ba25a42aee23f0afa7f55c3d5ed4a36babcff8e",
+        "test_name": "layout_and_lifecycle::sequence_actor_lifecycle_validates_hand_built_indices",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/layout_and_lifecycle.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/d97ed9e5bad6acdfe006dc059ba25a42aee23f0afa7f55c3d5ed4a36babcff8e.rs",
+        "sha256": "d97ed9e5bad6acdfe006dc059ba25a42aee23f0afa7f55c3d5ed4a36babcff8e",
+        "bytes": 1667
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 11802,
+        "byte_start": 11429,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 357,
+        "line_start": 347,
+        "original_file_sha256": "9753406d76c3003cf5b9eda01bfc80fd9da04a2570bbf8838154a7cf9632c7b0",
+        "path": "runtime-capture/assertions/2957802914b03a9934b66bd6aa1038ea9a173252cb29ecc5dba62b201be29a9a.rs",
+        "sha256": "2957802914b03a9934b66bd6aa1038ea9a173252cb29ecc5dba62b201be29a9a",
+        "test_name": "layout_and_lifecycle::sequence_boxes_with_unknown_actors_are_explicitly_unsupported",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/layout_and_lifecycle.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/2957802914b03a9934b66bd6aa1038ea9a173252cb29ecc5dba62b201be29a9a.rs",
+        "sha256": "2957802914b03a9934b66bd6aa1038ea9a173252cb29ecc5dba62b201be29a9a",
+        "bytes": 373
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 12735,
+        "byte_start": 11812,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 386,
+        "line_start": 360,
+        "original_file_sha256": "9753406d76c3003cf5b9eda01bfc80fd9da04a2570bbf8838154a7cf9632c7b0",
+        "path": "runtime-capture/assertions/b12ee787163c455f2e5e9061ab7f4e4bed95b11420328d3680e30654c79cac4c.rs",
+        "sha256": "b12ee787163c455f2e5e9061ab7f4e4bed95b11420328d3680e30654c79cac4c",
+        "test_name": "layout_and_lifecycle::sequence_empty_boxes_render_as_diagram_wide_regions",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/layout_and_lifecycle.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/b12ee787163c455f2e5e9061ab7f4e4bed95b11420328d3680e30654c79cac4c.rs",
+        "sha256": "b12ee787163c455f2e5e9061ab7f4e4bed95b11420328d3680e30654c79cac4c",
+        "bytes": 923
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 5019,
+        "byte_start": 3721,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 152,
+        "line_start": 112,
+        "original_file_sha256": "9753406d76c3003cf5b9eda01bfc80fd9da04a2570bbf8838154a7cf9632c7b0",
+        "path": "runtime-capture/assertions/f7299e803aed5db55d62eaa8d1459243278ecfb366d3814a04c636897e4e3116.rs",
+        "sha256": "f7299e803aed5db55d62eaa8d1459243278ecfb366d3814a04c636897e4e3116",
+        "test_name": "layout_and_lifecycle::sequence_multiline_notes_render_from_typed_model",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/layout_and_lifecycle.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/f7299e803aed5db55d62eaa8d1459243278ecfb366d3814a04c636897e4e3116.rs",
+        "sha256": "f7299e803aed5db55d62eaa8d1459243278ecfb366d3814a04c636897e4e3116",
+        "bytes": 1298
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 16136,
+        "byte_start": 15331,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 484,
+        "line_start": 466,
+        "original_file_sha256": "9753406d76c3003cf5b9eda01bfc80fd9da04a2570bbf8838154a7cf9632c7b0",
+        "path": "runtime-capture/assertions/aee74a8678d171f8eb53428c1f1a9784886d494a29b56e586585985241c769d6.rs",
+        "sha256": "aee74a8678d171f8eb53428c1f1a9784886d494a29b56e586585985241c769d6",
+        "test_name": "layout_and_lifecycle::sequence_note_after_destroy_uses_the_static_actor_anchor",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/layout_and_lifecycle.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/aee74a8678d171f8eb53428c1f1a9784886d494a29b56e586585985241c769d6.rs",
+        "sha256": "aee74a8678d171f8eb53428c1f1a9784886d494a29b56e586585985241c769d6",
+        "bytes": 805
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 6817,
+        "byte_start": 5683,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 199,
+        "line_start": 171,
+        "original_file_sha256": "5a702bf95224aa445a57bc2f70083db6a3985688cea6a3d894ab9a8f8e779e0f",
+        "path": "runtime-capture/assertions/1e7b321711dace6285cdfbf495d0095bf5f0cc2e57cb1a46d8533bffb5fab748.rs",
+        "sha256": "1e7b321711dace6285cdfbf495d0095bf5f0cc2e57cb1a46d8533bffb5fab748",
+        "test_name": "validation::sequence_activated_signals_must_bind_their_target_state_event",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/validation.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/1e7b321711dace6285cdfbf495d0095bf5f0cc2e57cb1a46d8533bffb5fab748.rs",
+        "sha256": "1e7b321711dace6285cdfbf495d0095bf5f0cc2e57cb1a46d8533bffb5fab748",
+        "bytes": 1134
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 4606,
+        "byte_start": 3802,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 141,
+        "line_start": 117,
+        "original_file_sha256": "5a702bf95224aa445a57bc2f70083db6a3985688cea6a3d894ab9a8f8e779e0f",
+        "path": "runtime-capture/assertions/defc331d407804cc618c1dfa08ec1e82b0129c8dc4db6bcc8db54a7d04b08441.rs",
+        "sha256": "defc331d407804cc618c1dfa08ec1e82b0129c8dc4db6bcc8db54a7d04b08441",
+        "test_name": "validation::sequence_autonumber_values_must_be_finite",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/validation.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/defc331d407804cc618c1dfa08ec1e82b0129c8dc4db6bcc8db54a7d04b08441.rs",
+        "sha256": "defc331d407804cc618c1dfa08ec1e82b0129c8dc4db6bcc8db54a7d04b08441",
+        "bytes": 804
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 5673,
+        "byte_start": 4616,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 168,
+        "line_start": 144,
+        "original_file_sha256": "5a702bf95224aa445a57bc2f70083db6a3985688cea6a3d894ab9a8f8e779e0f",
+        "path": "runtime-capture/assertions/bcea5c0b3fef8b05474debeecab58044e52989545fd52e1241e4a63d16516714.rs",
+        "sha256": "bcea5c0b3fef8b05474debeecab58044e52989545fd52e1241e4a63d16516714",
+        "test_name": "validation::sequence_central_records_must_bind_their_visible_signal",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/validation.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/bcea5c0b3fef8b05474debeecab58044e52989545fd52e1241e4a63d16516714.rs",
+        "sha256": "bcea5c0b3fef8b05474debeecab58044e52989545fd52e1241e4a63d16516714",
+        "bytes": 1057
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 2771,
+        "byte_start": 1846,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 82,
+        "line_start": 56,
+        "original_file_sha256": "5a702bf95224aa445a57bc2f70083db6a3985688cea6a3d894ab9a8f8e779e0f",
+        "path": "runtime-capture/assertions/5523d56a434f58d3059614bf4c7b198cb7554f17cad998424559abb7f4982868.rs",
+        "sha256": "5523d56a434f58d3059614bf4c7b198cb7554f17cad998424559abb7f4982868",
+        "test_name": "validation::sequence_message_payload_must_match_its_semantic_kind",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/validation.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/5523d56a434f58d3059614bf4c7b198cb7554f17cad998424559abb7f4982868.rs",
+        "sha256": "5523d56a434f58d3059614bf4c7b198cb7554f17cad998424559abb7f4982868",
+        "bytes": 925
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 1836,
+        "byte_start": 1279,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 53,
+        "line_start": 43,
+        "original_file_sha256": "5a702bf95224aa445a57bc2f70083db6a3985688cea6a3d894ab9a8f8e779e0f",
+        "path": "runtime-capture/assertions/9d1c33c14cc0f1f76aae0004952e4e040db55cf989aa13f5acf1fc8a5457c11c.rs",
+        "sha256": "9d1c33c14cc0f1f76aae0004952e4e040db55cf989aa13f5acf1fc8a5457c11c",
+        "test_name": "validation::sequence_note_messages_are_the_compatibility_source_when_notes_are_absent",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/validation.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/9d1c33c14cc0f1f76aae0004952e4e040db55cf989aa13f5acf1fc8a5457c11c.rs",
+        "sha256": "9d1c33c14cc0f1f76aae0004952e4e040db55cf989aa13f5acf1fc8a5457c11c",
+        "bytes": 557
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 1269,
+        "byte_start": 23,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 40,
+        "line_start": 4,
+        "original_file_sha256": "5a702bf95224aa445a57bc2f70083db6a3985688cea6a3d894ab9a8f8e779e0f",
+        "path": "runtime-capture/assertions/156cab7e8db573f115c391f161623fed2826c44c46d4f344e485b047ee394191.rs",
+        "sha256": "156cab7e8db573f115c391f161623fed2826c44c46d4f344e485b047ee394191",
+        "test_name": "validation::sequence_note_projection_must_match_the_typed_note_facts",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/validation.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/156cab7e8db573f115c391f161623fed2826c44c46d4f344e485b047ee394191.rs",
+        "sha256": "156cab7e8db573f115c391f161623fed2826c44c46d4f344e485b047ee394191",
+        "bytes": 1246
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 7689,
+        "byte_start": 6827,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 227,
+        "line_start": 202,
+        "original_file_sha256": "5a702bf95224aa445a57bc2f70083db6a3985688cea6a3d894ab9a8f8e779e0f",
+        "path": "runtime-capture/assertions/5c4219fa08bd3dac6d04131fc334117139d9620f9125ba12efadb8790ae3bb1c.rs",
+        "sha256": "5c4219fa08bd3dac6d04131fc334117139d9620f9125ba12efadb8790ae3bb1c",
+        "test_name": "validation::sequence_other_model_features_are_explicitly_unsupported",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/validation.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/5c4219fa08bd3dac6d04131fc334117139d9620f9125ba12efadb8790ae3bb1c.rs",
+        "sha256": "5c4219fa08bd3dac6d04131fc334117139d9620f9125ba12efadb8790ae3bb1c",
+        "bytes": 862
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 3792,
+        "byte_start": 2781,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 114,
+        "line_start": 85,
+        "original_file_sha256": "5a702bf95224aa445a57bc2f70083db6a3985688cea6a3d894ab9a8f8e779e0f",
+        "path": "runtime-capture/assertions/223edc97ed520cc2c95b51546e19c4ef48bd1cb2f327e86ea5022c97ab9b461c.rs",
+        "sha256": "223edc97ed520cc2c95b51546e19c4ef48bd1cb2f327e86ea5022c97ab9b461c",
+        "test_name": "validation::sequence_structural_message_records_reject_unconsumed_fields",
+        "upstream_path": "crates/merman-ascii/tests/sequence_model/validation.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/223edc97ed520cc2c95b51546e19c4ef48bd1cb2f327e86ea5022c97ab9b461c.rs",
+        "sha256": "223edc97ed520cc2c95b51546e19c4ef48bd1cb2f327e86ea5022c97ab9b461c",
+        "bytes": 1011
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 21166,
+        "byte_start": 20022,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 651,
+        "line_start": 620,
+        "original_file_sha256": "e7e21ee94d59eb7821b755b732e088111f2113f7c6cbb3faf7fabae7d8dd0493",
+        "path": "runtime-capture/assertions/1eae6f3f67af436a71d17ff8a9ede575d96f92b7920193cf67a79334bf9736f3.rs",
+        "sha256": "1eae6f3f67af436a71d17ff8a9ede575d96f92b7920193cf67a79334bf9736f3",
+        "test_name": "direct_state_model_rejects_duplicate_node_ids_before_graph_projection",
+        "upstream_path": "crates/merman-ascii/tests/state_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/1eae6f3f67af436a71d17ff8a9ede575d96f92b7920193cf67a79334bf9736f3.rs",
+        "sha256": "1eae6f3f67af436a71d17ff8a9ede575d96f92b7920193cf67a79334bf9736f3",
+        "bytes": 1144
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 12437,
+        "byte_start": 11414,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 401,
+        "line_start": 375,
+        "original_file_sha256": "e7e21ee94d59eb7821b755b732e088111f2113f7c6cbb3faf7fabae7d8dd0493",
+        "path": "runtime-capture/assertions/f8f99bd4eced206f318df3675f49c3a36b523b54ecb2d3308180ee5bbc618d4b.rs",
+        "sha256": "f8f99bd4eced206f318df3675f49c3a36b523b54ecb2d3308180ee5bbc618d4b",
+        "test_name": "direct_state_model_keeps_multiline_compartment_boundary_after_bt_mirroring",
+        "upstream_path": "crates/merman-ascii/tests/state_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/f8f99bd4eced206f318df3675f49c3a36b523b54ecb2d3308180ee5bbc618d4b.rs",
+        "sha256": "f8f99bd4eced206f318df3675f49c3a36b523b54ecb2d3308180ee5bbc618d4b",
+        "bytes": 1023
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 20012,
+        "byte_start": 17684,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 617,
+        "line_start": 560,
+        "original_file_sha256": "e7e21ee94d59eb7821b755b732e088111f2113f7c6cbb3faf7fabae7d8dd0493",
+        "path": "runtime-capture/assertions/8005e7d1761bf82c1e8e5e5c44515430b01623aed0e31cb5680d3c9b24df84d9.rs",
+        "sha256": "8005e7d1761bf82c1e8e5e5c44515430b01623aed0e31cb5680d3c9b24df84d9",
+        "test_name": "direct_state_model_preserves_compartments_and_note_side_constraints",
+        "upstream_path": "crates/merman-ascii/tests/state_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/8005e7d1761bf82c1e8e5e5c44515430b01623aed0e31cb5680d3c9b24df84d9.rs",
+        "sha256": "8005e7d1761bf82c1e8e5e5c44515430b01623aed0e31cb5680d3c9b24df84d9",
+        "bytes": 2328
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 22133,
+        "byte_start": 21176,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 681,
+        "line_start": 654,
+        "original_file_sha256": "e7e21ee94d59eb7821b755b732e088111f2113f7c6cbb3faf7fabae7d8dd0493",
+        "path": "runtime-capture/assertions/6e220e6183fb1e90434c7490b065515ca70bc5fbd6f3b9cb821d6966861b4c15.rs",
+        "sha256": "6e220e6183fb1e90434c7490b065515ca70bc5fbd6f3b9cb821d6966861b4c15",
+        "test_name": "direct_state_model_rejects_edges_with_missing_endpoint_nodes",
+        "upstream_path": "crates/merman-ascii/tests/state_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/6e220e6183fb1e90434c7490b065515ca70bc5fbd6f3b9cb821d6966861b4c15.rs",
+        "sha256": "6e220e6183fb1e90434c7490b065515ca70bc5fbd6f3b9cb821d6966861b4c15",
+        "bytes": 957
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 25078,
+        "byte_start": 23480,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 775,
+        "line_start": 730,
+        "original_file_sha256": "e7e21ee94d59eb7821b755b732e088111f2113f7c6cbb3faf7fabae7d8dd0493",
+        "path": "runtime-capture/assertions/fb1caefe658c9a76c39c798755d94042436e933b5e6df1672c489b72a53d4b20.rs",
+        "sha256": "fb1caefe658c9a76c39c798755d94042436e933b5e6df1672c489b72a53d4b20",
+        "test_name": "direct_state_model_rejects_non_group_and_cyclic_parents",
+        "upstream_path": "crates/merman-ascii/tests/state_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/fb1caefe658c9a76c39c798755d94042436e933b5e6df1672c489b72a53d4b20.rs",
+        "sha256": "fb1caefe658c9a76c39c798755d94042436e933b5e6df1672c489b72a53d4b20",
+        "bytes": 1598
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 22831,
+        "byte_start": 22143,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 705,
+        "line_start": 684,
+        "original_file_sha256": "e7e21ee94d59eb7821b755b732e088111f2113f7c6cbb3faf7fabae7d8dd0493",
+        "path": "runtime-capture/assertions/c708cd293751ff05e9c05a83b075e46c86371d537c4cde030a130d2c2fe64af4.rs",
+        "sha256": "c708cd293751ff05e9c05a83b075e46c86371d537c4cde030a130d2c2fe64af4",
+        "test_name": "direct_state_model_rejects_non_string_label_values",
+        "upstream_path": "crates/merman-ascii/tests/state_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/c708cd293751ff05e9c05a83b075e46c86371d537c4cde030a130d2c2fe64af4.rs",
+        "sha256": "c708cd293751ff05e9c05a83b075e46c86371d537c4cde030a130d2c2fe64af4",
+        "bytes": 688
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 23470,
+        "byte_start": 22841,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 727,
+        "line_start": 708,
+        "original_file_sha256": "e7e21ee94d59eb7821b755b732e088111f2113f7c6cbb3faf7fabae7d8dd0493",
+        "path": "runtime-capture/assertions/28d48d8b2e72d19fb6bd353a120eb6c10aefe9764ac2948bf21f41aee1864256.rs",
+        "sha256": "28d48d8b2e72d19fb6bd353a120eb6c10aefe9764ac2948bf21f41aee1864256",
+        "test_name": "direct_state_model_rejects_unknown_parent_ids",
+        "upstream_path": "crates/merman-ascii/tests/state_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/28d48d8b2e72d19fb6bd353a120eb6c10aefe9764ac2948bf21f41aee1864256.rs",
+        "sha256": "28d48d8b2e72d19fb6bd353a120eb6c10aefe9764ac2948bf21f41aee1864256",
+        "bytes": 629
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 7822,
+        "byte_start": 7230,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 220,
+        "line_start": 207,
+        "original_file_sha256": "8999014d2b8fa7dd375b2fbcc039374633a54b2f60d2a080ec8a5a5844a8f060",
+        "path": "runtime-capture/assertions/af6a48721c82d07cd3fed0aebfff43d92e929669ea1e21fde23ba7c66b3fb1b7.rs",
+        "sha256": "af6a48721c82d07cd3fed0aebfff43d92e929669ea1e21fde23ba7c66b3fb1b7",
+        "test_name": "structured_text_html_escapes_authored_markup_after_normalization",
+        "upstream_path": "crates/merman-ascii/tests/terminal_text_safety.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/af6a48721c82d07cd3fed0aebfff43d92e929669ea1e21fde23ba7c66b3fb1b7.rs",
+        "sha256": "af6a48721c82d07cd3fed0aebfff43d92e929669ea1e21fde23ba7c66b3fb1b7",
+        "bytes": 592
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 7220,
+        "byte_start": 6472,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 204,
+        "line_start": 188,
+        "original_file_sha256": "8999014d2b8fa7dd375b2fbcc039374633a54b2f60d2a080ec8a5a5844a8f060",
+        "path": "runtime-capture/assertions/4d7a9031df78d6ebfdf4a961d527dc7b50a717fbedcbc0a7df5a466a38d8914f.rs",
+        "sha256": "4d7a9031df78d6ebfdf4a961d527dc7b50a717fbedcbc0a7df5a466a38d8914f",
+        "test_name": "structured_text_visibly_escapes_terminal_and_bidi_controls",
+        "upstream_path": "crates/merman-ascii/tests/terminal_text_safety.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/4d7a9031df78d6ebfdf4a961d527dc7b50a717fbedcbc0a7df5a466a38d8914f.rs",
+        "sha256": "4d7a9031df78d6ebfdf4a961d527dc7b50a717fbedcbc0a7df5a466a38d8914f",
+        "bytes": 748
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 78342,
+        "byte_start": 77043,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2371,
+        "line_start": 2336,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/c43d0370ae3f62785401899b690c31d0da47d9dde58ec9a9ece5e1435f4ea37b.rs",
+        "sha256": "c43d0370ae3f62785401899b690c31d0da47d9dde58ec9a9ece5e1435f4ea37b",
+        "test_name": "xychart_band_domain_discloses_terminal_normalization_identity",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/c43d0370ae3f62785401899b690c31d0da47d9dde58ec9a9ece5e1435f4ea37b.rs",
+        "sha256": "c43d0370ae3f62785401899b690c31d0da47d9dde58ec9a9ece5e1435f4ea37b",
+        "bytes": 1299
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 75936,
+        "byte_start": 74328,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2303,
+        "line_start": 2263,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/b76d29bb9762edc59ca960cf8ca6715642a98c2378c361c824879d4af3d4a4c7.rs",
+        "sha256": "b76d29bb9762edc59ca960cf8ca6715642a98c2378c361c824879d4af3d4a4c7",
+        "test_name": "xychart_centered_band_projection_discloses_colliding_categories",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/b76d29bb9762edc59ca960cf8ca6715642a98c2378c361c824879d4af3d4a4c7.rs",
+        "sha256": "b76d29bb9762edc59ca960cf8ca6715642a98c2378c361c824879d4af3d4a4c7",
+        "bytes": 1608
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 58024,
+        "byte_start": 56768,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1766,
+        "line_start": 1735,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/e4fb94f4252a02f70097c073c12361976083d1e1e6bf24dd3a72368a858b02c6.rs",
+        "sha256": "e4fb94f4252a02f70097c073c12361976083d1e1e6bf24dd3a72368a858b02c6",
+        "test_name": "xychart_accessibility_metadata_is_intentionally_omitted",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/e4fb94f4252a02f70097c073c12361976083d1e1e6bf24dd3a72368a858b02c6.rs",
+        "sha256": "e4fb94f4252a02f70097c073c12361976083d1e1e6bf24dd3a72368a858b02c6",
+        "bytes": 1256
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 89038,
+        "byte_start": 87922,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2690,
+        "line_start": 2661,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/09d948bdb3be4c71484fcaaa4b27c18def535c533daf3fd2c8886d5fc69579d6.rs",
+        "sha256": "09d948bdb3be4c71484fcaaa4b27c18def535c533daf3fd2c8886d5fc69579d6",
+        "test_name": "xychart_blank_authored_x_values_preserve_utf8_identity",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/09d948bdb3be4c71484fcaaa4b27c18def535c533daf3fd2c8886d5fc69579d6.rs",
+        "sha256": "09d948bdb3be4c71484fcaaa4b27c18def535c533daf3fd2c8886d5fc69579d6",
+        "bytes": 1116
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 67322,
+        "byte_start": 66390,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2049,
+        "line_start": 2022,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/fdf1c26a417d9280a2420e659c4430283ef5bfefefbcfaed12ed45017b187c3b.rs",
+        "sha256": "fdf1c26a417d9280a2420e659c4430283ef5bfefefbcfaed12ed45017b187c3b",
+        "test_name": "xychart_degenerate_range_keeps_data_visible",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/fdf1c26a417d9280a2420e659c4430283ef5bfefefbcfaed12ed45017b187c3b.rs",
+        "sha256": "fdf1c26a417d9280a2420e659c4430283ef5bfefefbcfaed12ed45017b187c3b",
+        "bytes": 932
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 98583,
+        "byte_start": 97630,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2972,
+        "line_start": 2945,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/4c57e664e2da2ea088a34ceb5df8e9bd19a7ef0bbdae8996b8b1a94dba376879.rs",
+        "sha256": "4c57e664e2da2ea088a34ceb5df8e9bd19a7ef0bbdae8996b8b1a94dba376879",
+        "test_name": "xychart_dense_linear_bar_overlap_triggers_exact_disclosure",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/4c57e664e2da2ea088a34ceb5df8e9bd19a7ef0bbdae8996b8b1a94dba376879.rs",
+        "sha256": "4c57e664e2da2ea088a34ceb5df8e9bd19a7ef0bbdae8996b8b1a94dba376879",
+        "bytes": 953
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 53780,
+        "byte_start": 52227,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1632,
+        "line_start": 1591,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/20664004581dbf9eb9e619b5e8d9bd062a346ff23c173eff51dc4b9b8de86fcc.rs",
+        "sha256": "20664004581dbf9eb9e619b5e8d9bd062a346ff23c173eff51dc4b9b8de86fcc",
+        "test_name": "xychart_direct_model_title_frames_distinguish_lf_from_literal_escape",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/20664004581dbf9eb9e619b5e8d9bd062a346ff23c173eff51dc4b9b8de86fcc.rs",
+        "sha256": "20664004581dbf9eb9e619b5e8d9bd062a346ff23c173eff51dc4b9b8de86fcc",
+        "bytes": 1553
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 52217,
+        "byte_start": 50036,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1588,
+        "line_start": 1530,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/ca70aac2df74370a1392ed3e9d61ae9a6b7362f421177ef12fde59558b1bb82d.rs",
+        "sha256": "ca70aac2df74370a1392ed3e9d61ae9a6b7362f421177ef12fde59558b1bb82d",
+        "test_name": "xychart_direct_model_title_frames_preserve_trim_and_esc",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/ca70aac2df74370a1392ed3e9d61ae9a6b7362f421177ef12fde59558b1bb82d.rs",
+        "sha256": "ca70aac2df74370a1392ed3e9d61ae9a6b7362f421177ef12fde59558b1bb82d",
+        "bytes": 2181
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 48905,
+        "byte_start": 46543,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1489,
+        "line_start": 1428,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/ac6aaa39b8339792744f2e95a1b73e13ebbd1b78d4ab74fce84ce57795ff7eb3.rs",
+        "sha256": "ac6aaa39b8339792744f2e95a1b73e13ebbd1b78d4ab74fce84ce57795ff7eb3",
+        "test_name": "xychart_direct_model_title_owners_prevent_chart_axis_spoofing",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/ac6aaa39b8339792744f2e95a1b73e13ebbd1b78d4ab74fce84ce57795ff7eb3.rs",
+        "sha256": "ac6aaa39b8339792744f2e95a1b73e13ebbd1b78d4ab74fce84ce57795ff7eb3",
+        "bytes": 2362
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 79831,
+        "byte_start": 78352,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2414,
+        "line_start": 2374,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/a2a31585180d5cf51c509bff860fe74e82439d4ad5731d7d9a4780344ced8071.rs",
+        "sha256": "a2a31585180d5cf51c509bff860fe74e82439d4ad5731d7d9a4780344ced8071",
+        "test_name": "xychart_duplicate_categories_keep_source_order_and_disclosure_identity",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/a2a31585180d5cf51c509bff860fe74e82439d4ad5731d7d9a4780344ced8071.rs",
+        "sha256": "a2a31585180d5cf51c509bff860fe74e82439d4ad5731d7d9a4780344ced8071",
+        "bytes": 1479
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 43699,
+        "byte_start": 42218,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1342,
+        "line_start": 1304,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/e36c9202cfb79824bd9411b697315aefd8d62ef016c7689cfd58803d0b2a198c.rs",
+        "sha256": "e36c9202cfb79824bd9411b697315aefd8d62ef016c7689cfd58803d0b2a198c",
+        "test_name": "xychart_empty_band_domain_discloses_authored_sample_coordinates",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/e36c9202cfb79824bd9411b697315aefd8d62ef016c7689cfd58803d0b2a198c.rs",
+        "sha256": "e36c9202cfb79824bd9411b697315aefd8d62ef016c7689cfd58803d0b2a198c",
+        "bytes": 1481
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 27215,
+        "byte_start": 25485,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 890,
+        "line_start": 849,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/e84c0d8f9254662ccf2d87830611878608eb731ea4288188aa4b131a0709c076.rs",
+        "sha256": "e84c0d8f9254662ccf2d87830611878608eb731ea4288188aa4b131a0709c076",
+        "test_name": "xychart_empty_plot_preserves_typed_series_metadata",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/e84c0d8f9254662ccf2d87830611878608eb731ea4288188aa4b131a0709c076.rs",
+        "sha256": "e84c0d8f9254662ccf2d87830611878608eb731ea4288188aa4b131a0709c076",
+        "bytes": 1730
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 31758,
+        "byte_start": 30068,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1000,
+        "line_start": 960,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/3d00e518549ccbd7cc7ef9fa82d2e0538c1b47e005251e253e05cced2704bad4.rs",
+        "sha256": "3d00e518549ccbd7cc7ef9fa82d2e0538c1b47e005251e253e05cced2704bad4",
+        "test_name": "xychart_empty_projection_enforces_authored_grapheme_budget",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/3d00e518549ccbd7cc7ef9fa82d2e0538c1b47e005251e253e05cced2704bad4.rs",
+        "sha256": "3d00e518549ccbd7cc7ef9fa82d2e0538c1b47e005251e253e05cced2704bad4",
+        "bytes": 1690
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 32699,
+        "byte_start": 31768,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1029,
+        "line_start": 1003,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/484ddceb72a75e60428b849204576ee95614d6b9db4bd3bf206584391c38dee5.rs",
+        "sha256": "484ddceb72a75e60428b849204576ee95614d6b9db4bd3bf206584391c38dee5",
+        "test_name": "xychart_empty_projection_html_escapes_authored_fields",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/484ddceb72a75e60428b849204576ee95614d6b9db4bd3bf206584391c38dee5.rs",
+        "sha256": "484ddceb72a75e60428b849204576ee95614d6b9db4bd3bf206584391c38dee5",
+        "bytes": 931
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 94109,
+        "byte_start": 92865,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2844,
+        "line_start": 2809,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/71e7e7fb673246ddbf65391309f2ceaa011d0d4c4d5912cc7dd444b7e7c1d140.rs",
+        "sha256": "71e7e7fb673246ddbf65391309f2ceaa011d0d4c4d5912cc7dd444b7e7c1d140",
+        "test_name": "xychart_empty_series_preserves_exact_y_domain_identity",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/71e7e7fb673246ddbf65391309f2ceaa011d0d4c4d5912cc7dd444b7e7c1d140.rs",
+        "sha256": "71e7e7fb673246ddbf65391309f2ceaa011d0d4c4d5912cc7dd444b7e7c1d140",
+        "bytes": 1244
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 45310,
+        "byte_start": 43709,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1389,
+        "line_start": 1345,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/bd85bdd3176e689e97d1b1766be472020d0181312bdf114c86cf52b0afcfcae0.rs",
+        "sha256": "bd85bdd3176e689e97d1b1766be472020d0181312bdf114c86cf52b0afcfcae0",
+        "test_name": "xychart_exact_disclosure_is_injective_for_authored_delimiters",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/bd85bdd3176e689e97d1b1766be472020d0181312bdf114c86cf52b0afcfcae0.rs",
+        "sha256": "bd85bdd3176e689e97d1b1766be472020d0181312bdf114c86cf52b0afcfcae0",
+        "bytes": 1601
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 46533,
+        "byte_start": 45320,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1425,
+        "line_start": 1392,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/e0108f8ff8ebdace1602738f1e632467f0e9d3c1565a27e6c3bcef7f909ba3fb.rs",
+        "sha256": "e0108f8ff8ebdace1602738f1e632467f0e9d3c1565a27e6c3bcef7f909ba3fb",
+        "test_name": "xychart_exact_disclosure_quotes_control_and_field_delimiters",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/e0108f8ff8ebdace1602738f1e632467f0e9d3c1565a27e6c3bcef7f909ba3fb.rs",
+        "sha256": "e0108f8ff8ebdace1602738f1e632467f0e9d3c1565a27e6c3bcef7f909ba3fb",
+        "bytes": 1213
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 63959,
+        "byte_start": 62461,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1938,
+        "line_start": 1899,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/bb6dc6d8764469552b7b09aad818a97478f0ad4e5fe9d477c68b23b8e5d05e0a.rs",
+        "sha256": "bb6dc6d8764469552b7b09aad818a97478f0ad4e5fe9d477c68b23b8e5d05e0a",
+        "test_name": "xychart_grouped_horizontal_extent_is_budgeted_before_allocation",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/bb6dc6d8764469552b7b09aad818a97478f0ad4e5fe9d477c68b23b8e5d05e0a.rs",
+        "sha256": "bb6dc6d8764469552b7b09aad818a97478f0ad4e5fe9d477c68b23b8e5d05e0a",
+        "bytes": 1498
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 90227,
+        "byte_start": 89048,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2727,
+        "line_start": 2693,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/81293fab5155232b19f6cc0a877aa879f0c51402d0f916f4fe1606c6f7f89f19.rs",
+        "sha256": "81293fab5155232b19f6cc0a877aa879f0c51402d0f916f4fe1606c6f7f89f19",
+        "test_name": "xychart_hidden_axis_ranges_are_disclosed_exactly",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/81293fab5155232b19f6cc0a877aa879f0c51402d0f916f4fe1606c6f7f89f19.rs",
+        "sha256": "81293fab5155232b19f6cc0a877aa879f0c51402d0f916f4fe1606c6f7f89f19",
+        "bytes": 1179
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 62451,
+        "byte_start": 61071,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1896,
+        "line_start": 1858,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/b70f5cd08edeba7d44c5c1500a45173c7dada47a5e34945218b07f9e5379eb34.rs",
+        "sha256": "b70f5cd08edeba7d44c5c1500a45173c7dada47a5e34945218b07f9e5379eb34",
+        "test_name": "xychart_horizontal_grouped_bars_get_independent_rows",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/b70f5cd08edeba7d44c5c1500a45173c7dada47a5e34945218b07f9e5379eb34.rs",
+        "sha256": "b70f5cd08edeba7d44c5c1500a45173c7dada47a5e34945218b07f9e5379eb34",
+        "bytes": 1380
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 40743,
+        "byte_start": 39479,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1255,
+        "line_start": 1218,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/0a4ef97dc1ca67e72a6e68459281ec73e65b388473d62e47150c9ba616babab4.rs",
+        "sha256": "0a4ef97dc1ca67e72a6e68459281ec73e65b388473d62e47150c9ba616babab4",
+        "test_name": "xychart_horizontal_line_series_draw_connected_paths",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/0a4ef97dc1ca67e72a6e68459281ec73e65b388473d62e47150c9ba616babab4.rs",
+        "sha256": "0a4ef97dc1ca67e72a6e68459281ec73e65b388473d62e47150c9ba616babab4",
+        "bytes": 1264
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 42208,
+        "byte_start": 40753,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1301,
+        "line_start": 1258,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/f966989c32b513d2d2a61868cfae615ee5e7bff93c6e17acdde9e7725574d4e2.rs",
+        "sha256": "f966989c32b513d2d2a61868cfae615ee5e7bff93c6e17acdde9e7725574d4e2",
+        "test_name": "xychart_horizontal_linear_axis_labels_use_authored_sample_coordinates",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/f966989c32b513d2d2a61868cfae615ee5e7bff93c6e17acdde9e7725574d4e2.rs",
+        "sha256": "f966989c32b513d2d2a61868cfae615ee5e7bff93c6e17acdde9e7725574d4e2",
+        "bytes": 1455
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 60131,
+        "byte_start": 58034,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1825,
+        "line_start": 1769,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/3adf8cf0242bc76d4f5811daa4102afdd2b68071e6c7b73c653ae84d4f55162b.rs",
+        "sha256": "3adf8cf0242bc76d4f5811daa4102afdd2b68071e6c7b73c653ae84d4f55162b",
+        "test_name": "xychart_horizontal_unequal_linear_series_share_exact_sample_labels",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/3adf8cf0242bc76d4f5811daa4102afdd2b68071e6c7b73c653ae84d4f55162b.rs",
+        "sha256": "3adf8cf0242bc76d4f5811daa4102afdd2b68071e6c7b73c653ae84d4f55162b",
+        "bytes": 2097
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 87912,
+        "byte_start": 86521,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2658,
+        "line_start": 2616,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/313a1415aee9eab9773f348dbf511835521bec086322b74a7b5befcfcd7e97d8.rs",
+        "sha256": "313a1415aee9eab9773f348dbf511835521bec086322b74a7b5befcfcd7e97d8",
+        "test_name": "xychart_implicit_and_explicit_band_domains_remain_injective",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/313a1415aee9eab9773f348dbf511835521bec086322b74a7b5befcfcd7e97d8.rs",
+        "sha256": "313a1415aee9eab9773f348dbf511835521bec086322b74a7b5befcfcd7e97d8",
+        "bytes": 1391
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 91675,
+        "byte_start": 90237,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2771,
+        "line_start": 2730,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/6431c3b2ae3e4681f7b27522d265fb4f754f67d01ba088493b092dc4a3635b19.rs",
+        "sha256": "6431c3b2ae3e4681f7b27522d265fb4f754f67d01ba088493b092dc4a3635b19",
+        "test_name": "xychart_inferred_visible_range_discloses_authored_and_resolved_identity",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/6431c3b2ae3e4681f7b27522d265fb4f754f67d01ba088493b092dc4a3635b19.rs",
+        "sha256": "6431c3b2ae3e4681f7b27522d265fb4f754f67d01ba088493b092dc4a3635b19",
+        "bytes": 1438
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 86511,
+        "byte_start": 85118,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2613,
+        "line_start": 2570,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/98f209f70f3025fce4072daa40c44f66eff2cf05a1cc97cfc6a6b8b2a5fa137d.rs",
+        "sha256": "98f209f70f3025fce4072daa40c44f66eff2cf05a1cc97cfc6a6b8b2a5fa137d",
+        "test_name": "xychart_linear_and_band_axes_have_distinct_owner_disclosure",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/98f209f70f3025fce4072daa40c44f66eff2cf05a1cc97cfc6a6b8b2a5fa137d.rs",
+        "sha256": "98f209f70f3025fce4072daa40c44f66eff2cf05a1cc97cfc6a6b8b2a5fa137d",
+        "bytes": 1393
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 39469,
+        "byte_start": 38061,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1215,
+        "line_start": 1177,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/ff08aa5fb30e4557695e8ea20bb288744232559590bff666e4dbbe1611936a41.rs",
+        "sha256": "ff08aa5fb30e4557695e8ea20bb288744232559590bff666e4dbbe1611936a41",
+        "test_name": "xychart_linear_x_coordinates_control_terminal_point_spacing",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/ff08aa5fb30e4557695e8ea20bb288744232559590bff666e4dbbe1611936a41.rs",
+        "sha256": "ff08aa5fb30e4557695e8ea20bb288744232559590bff666e4dbbe1611936a41",
+        "bytes": 1408
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 85108,
+        "byte_start": 84008,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2567,
+        "line_start": 2538,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/9919019eb8646bbd6dece2cee2cd69b13558a034f438880604b8dc5957fdddc4.rs",
+        "sha256": "9919019eb8646bbd6dece2cee2cd69b13558a034f438880604b8dc5957fdddc4",
+        "test_name": "xychart_linear_x_lexemes_remain_injective_after_numeric_projection",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/9919019eb8646bbd6dece2cee2cd69b13558a034f438880604b8dc5957fdddc4.rs",
+        "sha256": "9919019eb8646bbd6dece2cee2cd69b13558a034f438880604b8dc5957fdddc4",
+        "bytes": 1100
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 81547,
+        "byte_start": 79841,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2461,
+        "line_start": 2417,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/09dc26221e6389788a81b1a74fe4935d7cb7c14ad0842e8e9607367ff051d1ee.rs",
+        "sha256": "09dc26221e6389788a81b1a74fe4935d7cb7c14ad0842e8e9607367ff051d1ee",
+        "test_name": "xychart_missing_samples_break_paths_and_remain_explicit",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/09dc26221e6389788a81b1a74fe4935d7cb7c14ad0842e8e9607367ff051d1ee.rs",
+        "sha256": "09dc26221e6389788a81b1a74fe4935d7cb7c14ad0842e8e9607367ff051d1ee",
+        "bytes": 1706
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 96485,
+        "byte_start": 95243,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2910,
+        "line_start": 2878,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/3aee8a7f75e96866384863b3766cddc081f08ccf0e514fc38b788b81a5813fb7.rs",
+        "sha256": "3aee8a7f75e96866384863b3766cddc081f08ccf0e514fc38b788b81a5813fb7",
+        "test_name": "xychart_multisample_quantized_x_remains_exact_across_models",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/3aee8a7f75e96866384863b3766cddc081f08ccf0e514fc38b788b81a5813fb7.rs",
+        "sha256": "3aee8a7f75e96866384863b3766cddc081f08ccf0e514fc38b788b81a5813fb7",
+        "bytes": 1242
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 72691,
+        "byte_start": 71362,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2212,
+        "line_start": 2171,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/e8e00ef895a27a4850f36243b406e89da605da47c455d5641286b48d38641cb4.rs",
+        "sha256": "e8e00ef895a27a4850f36243b406e89da605da47c455d5641286b48d38641cb4",
+        "test_name": "xychart_nonempty_domain_discloses_empty_series_title_and_type",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/e8e00ef895a27a4850f36243b406e89da605da47c455d5641286b48d38641cb4.rs",
+        "sha256": "e8e00ef895a27a4850f36243b406e89da605da47c455d5641286b48d38641cb4",
+        "bytes": 1329
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 69792,
+        "byte_start": 68689,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2118,
+        "line_start": 2089,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/327428d6760dc426874bb28f320e6346c6bd9f9a1b1e18bc50a6974265a056d6.rs",
+        "sha256": "327428d6760dc426874bb28f320e6346c6bd9f9a1b1e18bc50a6974265a056d6",
+        "test_name": "xychart_orphan_point_labels_and_clipped_values_are_disclosed",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/327428d6760dc426874bb28f320e6346c6bd9f9a1b1e18bc50a6974265a056d6.rs",
+        "sha256": "327428d6760dc426874bb28f320e6346c6bd9f9a1b1e18bc50a6974265a056d6",
+        "bytes": 1103
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 74318,
+        "byte_start": 72701,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2260,
+        "line_start": 2215,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/c9f72d553cee0fde48309c25d576447befc779eea34134042de948e81ac3aed8.rs",
+        "sha256": "c9f72d553cee0fde48309c25d576447befc779eea34134042de948e81ac3aed8",
+        "test_name": "xychart_overwide_band_category_discloses_the_complete_axis_domain",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/c9f72d553cee0fde48309c25d576447befc779eea34134042de948e81ac3aed8.rs",
+        "sha256": "c9f72d553cee0fde48309c25d576447befc779eea34134042de948e81ac3aed8",
+        "bytes": 1617
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 71352,
+        "byte_start": 69802,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2168,
+        "line_start": 2121,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/a991106449bcf5654efa8b98df7c4efd5c4833f061a6167d00a2955aa96b0b0d.rs",
+        "sha256": "a991106449bcf5654efa8b98df7c4efd5c4833f061a6167d00a2955aa96b0b0d",
+        "test_name": "xychart_point_labels_preserve_authored_whitespace_and_presence",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/a991106449bcf5654efa8b98df7c4efd5c4833f061a6167d00a2955aa96b0b0d.rs",
+        "sha256": "a991106449bcf5654efa8b98df7c4efd5c4833f061a6167d00a2955aa96b0b0d",
+        "bytes": 1550
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 82824,
+        "byte_start": 81557,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2500,
+        "line_start": 2464,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/fd9db5743b379ab6aef4fb3fc6019d7be5cfc94858b45843decded7ed2a76759.rs",
+        "sha256": "fd9db5743b379ab6aef4fb3fc6019d7be5cfc94858b45843decded7ed2a76759",
+        "test_name": "xychart_quantized_line_collision_triggers_exact_disclosure",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/fd9db5743b379ab6aef4fb3fc6019d7be5cfc94858b45843decded7ed2a76759.rs",
+        "sha256": "fd9db5743b379ab6aef4fb3fc6019d7be5cfc94858b45843decded7ed2a76759",
+        "bytes": 1267
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 56758,
+        "byte_start": 55751,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1732,
+        "line_start": 1701,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/5a6193c97edaf6fc5eeac0c0c54b950456144f0a22f629dd91dfb7d5e0f18c78.rs",
+        "sha256": "5a6193c97edaf6fc5eeac0c0c54b950456144f0a22f629dd91dfb7d5e0f18c78",
+        "test_name": "xychart_rejects_direct_model_band_y_axis",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/5a6193c97edaf6fc5eeac0c0c54b950456144f0a22f629dd91dfb7d5e0f18c78.rs",
+        "sha256": "5a6193c97edaf6fc5eeac0c0c54b950456144f0a22f629dd91dfb7d5e0f18c78",
+        "bytes": 1007
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 55741,
+        "byte_start": 54878,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1698,
+        "line_start": 1671,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/3d5617ded55ed1dfae391e9c1a7f16150cd01a40aa542be6793030af9a7d94c6.rs",
+        "sha256": "3d5617ded55ed1dfae391e9c1a7f16150cd01a40aa542be6793030af9a7d94c6",
+        "test_name": "xychart_rejects_unknown_direct_model_orientation",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/3d5617ded55ed1dfae391e9c1a7f16150cd01a40aa542be6793030af9a7d94c6.rs",
+        "sha256": "3d5617ded55ed1dfae391e9c1a7f16150cd01a40aa542be6793030af9a7d94c6",
+        "bytes": 863
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 68679,
+        "byte_start": 67332,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2086,
+        "line_start": 2052,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/c4e1fcd0de2a61df7df1815be00d91d6d8802828b0b1b9d8f3c0a23b7d58ce8b.rs",
+        "sha256": "c4e1fcd0de2a61df7df1815be00d91d6d8802828b0b1b9d8f3c0a23b7d58ce8b",
+        "test_name": "xychart_reversed_value_range_preserves_authored_axis_direction",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/c4e1fcd0de2a61df7df1815be00d91d6d8802828b0b1b9d8f3c0a23b7d58ce8b.rs",
+        "sha256": "c4e1fcd0de2a61df7df1815be00d91d6d8802828b0b1b9d8f3c0a23b7d58ce8b",
+        "bytes": 1347
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 97620,
+        "byte_start": 96495,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2942,
+        "line_start": 2913,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/c3871bdf1887c01ef51d582f25ab1567d7a17f762334422b2e685c6143677d3d.rs",
+        "sha256": "c3871bdf1887c01ef51d582f25ab1567d7a17f762334422b2e685c6143677d3d",
+        "test_name": "xychart_single_bar_quantized_x_remains_exact_across_models",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/c3871bdf1887c01ef51d582f25ab1567d7a17f762334422b2e685c6143677d3d.rs",
+        "sha256": "c3871bdf1887c01ef51d582f25ab1567d7a17f762334422b2e685c6143677d3d",
+        "bytes": 1125
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 83998,
+        "byte_start": 82834,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2535,
+        "line_start": 2503,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/05801b2bd0f65bf39b29ec630ba055f3735fe5005a13127c23ea2cd0e853b71f.rs",
+        "sha256": "05801b2bd0f65bf39b29ec630ba055f3735fe5005a13127c23ea2cd0e853b71f",
+        "test_name": "xychart_single_linear_sample_preserves_authored_x_across_models",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/05801b2bd0f65bf39b29ec630ba055f3735fe5005a13127c23ea2cd0e853b71f.rs",
+        "sha256": "05801b2bd0f65bf39b29ec630ba055f3735fe5005a13127c23ea2cd0e853b71f",
+        "bytes": 1164
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 95233,
+        "byte_start": 94119,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2875,
+        "line_start": 2847,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/90bbda6d06bdd043450ce5e3c7ad35a00cd903539074e2fb6e9778ccd76b263d.rs",
+        "sha256": "90bbda6d06bdd043450ce5e3c7ad35a00cd903539074e2fb6e9778ccd76b263d",
+        "test_name": "xychart_single_quantized_y_value_remains_exact_across_models",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/90bbda6d06bdd043450ce5e3c7ad35a00cd903539074e2fb6e9778ccd76b263d.rs",
+        "sha256": "90bbda6d06bdd043450ce5e3c7ad35a00cd903539074e2fb6e9778ccd76b263d",
+        "bytes": 1114
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 54868,
+        "byte_start": 53790,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1668,
+        "line_start": 1635,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/e7dcb93b7d01346ab3b789c4a4ca1cf9dade019c1f26263b0e24f025d299d59b.rs",
+        "sha256": "e7dcb93b7d01346ab3b789c4a4ca1cf9dade019c1f26263b0e24f025d299d59b",
+        "test_name": "xychart_single_series_title_remains_visible",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/e7dcb93b7d01346ab3b789c4a4ca1cf9dade019c1f26263b0e24f025d299d59b.rs",
+        "sha256": "e7dcb93b7d01346ab3b789c4a4ca1cf9dade019c1f26263b0e24f025d299d59b",
+        "bytes": 1078
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 77033,
+        "byte_start": 75946,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2333,
+        "line_start": 2306,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/4120152c772bf78b73af96f2fc7a5b17ef7bc542e0ff5ad19d2844dcbc0ed71b.rs",
+        "sha256": "4120152c772bf78b73af96f2fc7a5b17ef7bc542e0ff5ad19d2844dcbc0ed71b",
+        "test_name": "xychart_trailing_band_projection_discloses_trimmed_category",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/4120152c772bf78b73af96f2fc7a5b17ef7bc542e0ff5ad19d2844dcbc0ed71b.rs",
+        "sha256": "4120152c772bf78b73af96f2fc7a5b17ef7bc542e0ff5ad19d2844dcbc0ed71b",
+        "bytes": 1087
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 38051,
+        "byte_start": 36515,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1174,
+        "line_start": 1133,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/4a5382abd21bdf792edae5576988ce25ae381fe81901f0d7f844cbef34742c56.rs",
+        "sha256": "4a5382abd21bdf792edae5576988ce25ae381fe81901f0d7f844cbef34742c56",
+        "test_name": "xychart_typed_data_is_the_coordinate_and_value_source_of_truth",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/4a5382abd21bdf792edae5576988ce25ae381fe81901f0d7f844cbef34742c56.rs",
+        "sha256": "4a5382abd21bdf792edae5576988ce25ae381fe81901f0d7f844cbef34742c56",
+        "bytes": 1536
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 61061,
+        "byte_start": 60141,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1855,
+        "line_start": 1828,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/30bc10c484977fa64c2413025eb60af71b5c0a2a7c8a81290f2cb601028ff6a0.rs",
+        "sha256": "30bc10c484977fa64c2413025eb60af71b5c0a2a7c8a81290f2cb601028ff6a0",
+        "test_name": "xychart_unicode_line_topology_resolves_rounded_corners",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/30bc10c484977fa64c2413025eb60af71b5c0a2a7c8a81290f2cb601028ff6a0.rs",
+        "sha256": "30bc10c484977fa64c2413025eb60af71b5c0a2a7c8a81290f2cb601028ff6a0",
+        "bytes": 920
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 65435,
+        "byte_start": 63969,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 1983,
+        "line_start": 1941,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/0be707246efd8cda848301ddc6e8b122b9852d4a346fcb2cba513febf0f922b6.rs",
+        "sha256": "0be707246efd8cda848301ddc6e8b122b9852d4a346fcb2cba513febf0f922b6",
+        "test_name": "xychart_vertical_grouped_bars_use_distinct_category_lanes",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/0be707246efd8cda848301ddc6e8b122b9852d4a346fcb2cba513febf0f922b6.rs",
+        "sha256": "0be707246efd8cda848301ddc6e8b122b9852d4a346fcb2cba513febf0f922b6",
+        "bytes": 1466
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    },
+    {
+      "original": {
+        "byte_end": 92855,
+        "byte_start": 91685,
+        "kind": "exact_original_test_function_slice",
+        "line_end": 2806,
+        "line_start": 2774,
+        "original_file_sha256": "7b9cdcd4a97d448b9e637e77ff5b15cd900562583f4c8c580048aae77d7c74bd",
+        "path": "runtime-capture/assertions/7633f7c60996d1f8b27ac7943b236d3eaaab0682f3be2cebb9606dbf6d296883.rs",
+        "sha256": "7633f7c60996d1f8b27ac7943b236d3eaaab0682f3be2cebb9606dbf6d296883",
+        "test_name": "xychart_visible_high_precision_range_uses_exact_domain_disclosure",
+        "upstream_path": "crates/merman-ascii/tests/xychart_model.rs"
+      },
+      "source": {
+        "path": "tests/fixtures/mermaid_terminal/merman/runtime-capture/assertions/7633f7c60996d1f8b27ac7943b236d3eaaab0682f3be2cebb9606dbf6d296883.rs",
+        "sha256": "7633f7c60996d1f8b27ac7943b236d3eaaab0682f3be2cebb9606dbf6d296883",
+        "bytes": 1170
+      },
+      "native_mapping": "pending_model_only_or_private_policy_review; not_a_fabricated_source_case"
+    }
+  ]
+}

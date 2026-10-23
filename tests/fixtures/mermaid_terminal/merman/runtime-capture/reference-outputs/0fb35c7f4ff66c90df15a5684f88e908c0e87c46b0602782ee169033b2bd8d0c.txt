@@ -1,0 +1,2 @@
+gitGraph direction(bytes=2)="TB" current(bytes=0)=""
+branches=[bytes=13 "main, feature"]

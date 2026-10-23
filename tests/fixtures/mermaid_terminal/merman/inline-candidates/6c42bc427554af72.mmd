@@ -1,0 +1,8 @@
+flowchart LR
+ subgraph CI
+ L[Lint] --> T[Test]
+ end
+ subgraph Deploy
+ S[Staging] --> P[Prod]
+ end
+ T --> S

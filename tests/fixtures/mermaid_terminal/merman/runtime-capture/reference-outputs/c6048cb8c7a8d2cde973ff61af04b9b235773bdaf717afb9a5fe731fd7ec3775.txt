@@ -1,0 +1,7 @@
+xDomain: band categories=[bytes=3="Jan", bytes=3="Feb"]
+8 +     ####
+6 +     ####
+4 +#### ####
+2 +#### ####
+0 +--+----+-
+   Jan  Feb

@@ -1,0 +1,175 @@
+family: sequence
+model.accDescr: null
+model.accTitle: null
+model.actorOrder[0]: "User"
+model.actorOrder[1]: "Main"
+model.actorOrder[2]: "Renderer"
+model.actorOrder[3]: "Timer"
+model.actors.Main.description: "Main Process"
+model.actors.Main.links: {}
+model.actors.Main.name: "Main"
+model.actors.Main.properties: {}
+model.actors.Main.type: "participant"
+model.actors.Main.wrap: false
+model.actors.Renderer.description: "Renderer"
+model.actors.Renderer.links: {}
+model.actors.Renderer.name: "Renderer"
+model.actors.Renderer.properties: {}
+model.actors.Renderer.type: "participant"
+model.actors.Renderer.wrap: false
+model.actors.Timer.description: "3s Fallback Timer"
+model.actors.Timer.links: {}
+model.actors.Timer.name: "Timer"
+model.actors.Timer.properties: {}
+model.actors.Timer.type: "participant"
+model.actors.Timer.wrap: false
+model.actors.User.description: "User"
+model.actors.User.links: {}
+model.actors.User.name: "User"
+model.actors.User.properties: {}
+model.actors.User.type: "participant"
+model.actors.User.wrap: false
+model.boxes: []
+model.constants.placement.leftOf: 0
+model.constants.placement.over: 2
+model.constants.placement.rightOf: 1
+model.createdActors: {}
+model.destroyedActors: {}
+model.messages[0].activate: false
+model.messages[0].from: "User"
+model.messages[0].id: "0"
+model.messages[0].message: "CMD+W"
+model.messages[0].to: "Main"
+model.messages[0].type: 0
+model.messages[0].wrap: false
+model.messages[1].activate: false
+model.messages[1].from: "Main"
+model.messages[1].id: "1"
+model.messages[1].message: "event.preventDefault()"
+model.messages[1].to: "Main"
+model.messages[1].type: 0
+model.messages[1].wrap: false
+model.messages[2].activate: false
+model.messages[2].from: "Main"
+model.messages[2].id: "2"
+model.messages[2].message: "WINDOW_CLOSE_REQUESTED"
+model.messages[2].to: "Renderer"
+model.messages[2].type: 0
+model.messages[2].wrap: false
+model.messages[3].activate: false
+model.messages[3].from: "Main"
+model.messages[3].id: "3"
+model.messages[3].message: "Start 3s timer"
+model.messages[3].to: "Timer"
+model.messages[3].type: 0
+model.messages[3].wrap: false
+model.messages[4].activate: false
+model.messages[4].from: null
+model.messages[4].id: "4"
+model.messages[4].message: "Multiple panels"
+model.messages[4].to: null
+model.messages[4].type: 12
+model.messages[4].wrap: false
+model.messages[5].activate: false
+model.messages[5].from: "Renderer"
+model.messages[5].id: "5"
+model.messages[5].message: "closePanel(focusedId)"
+model.messages[5].to: "Renderer"
+model.messages[5].type: 0
+model.messages[5].wrap: false
+model.messages[6].activate: false
+model.messages[6].from: "Renderer"
+model.messages[6].id: "6"
+model.messages[6].message: "Panel removed"
+model.messages[6].placement: 2
+model.messages[6].to: "Renderer"
+model.messages[6].type: 2
+model.messages[6].wrap: false
+model.messages[7].activate: false
+model.messages[7].from: "Renderer"
+model.messages[7].id: "7"
+model.messages[7].message: "No confirmCloseWindow!"
+model.messages[7].placement: 2
+model.messages[7].to: "Renderer"
+model.messages[7].type: 2
+model.messages[7].wrap: false
+model.messages[8].activate: false
+model.messages[8].from: "Timer"
+model.messages[8].id: "8"
+model.messages[8].message: "3s elapsed -> window.destroy()"
+model.messages[8].to: "Main"
+model.messages[8].type: 1
+model.messages[8].wrap: false
+model.messages[9].activate: false
+model.messages[9].from: null
+model.messages[9].id: "9"
+model.messages[9].message: "Single panel"
+model.messages[9].to: null
+model.messages[9].type: 13
+model.messages[9].wrap: false
+model.messages[10].activate: false
+model.messages[10].from: "Renderer"
+model.messages[10].id: "10"
+model.messages[10].message: "closePanel(lastId)"
+model.messages[10].to: "Renderer"
+model.messages[10].type: 0
+model.messages[10].wrap: false
+model.messages[11].activate: false
+model.messages[11].from: "Renderer"
+model.messages[11].id: "11"
+model.messages[11].message: "Stack becomes []"
+model.messages[11].placement: 2
+model.messages[11].to: "Renderer"
+model.messages[11].type: 2
+model.messages[11].wrap: false
+model.messages[12].activate: false
+model.messages[12].from: "Renderer"
+model.messages[12].id: "12"
+model.messages[12].message: "Auto-select fires -> new panel created!"
+model.messages[12].to: "Renderer"
+model.messages[12].type: 0
+model.messages[12].wrap: false
+model.messages[13].activate: false
+model.messages[13].from: "Renderer"
+model.messages[13].id: "13"
+model.messages[13].message: "Panel reopens"
+model.messages[13].placement: 2
+model.messages[13].to: "Renderer"
+model.messages[13].type: 2
+model.messages[13].wrap: false
+model.messages[14].activate: false
+model.messages[14].from: "Timer"
+model.messages[14].id: "14"
+model.messages[14].message: "3s elapsed -> window.destroy()"
+model.messages[14].to: "Main"
+model.messages[14].type: 1
+model.messages[14].wrap: false
+model.messages[15].activate: false
+model.messages[15].from: null
+model.messages[15].id: "15"
+model.messages[15].message: ""
+model.messages[15].to: null
+model.messages[15].type: 14
+model.messages[15].wrap: false
+model.notes[0].actor[0]: "Renderer"
+model.notes[0].actor[1]: "Renderer"
+model.notes[0].message: "Panel removed"
+model.notes[0].placement: 2
+model.notes[0].wrap: false
+model.notes[1].actor[0]: "Renderer"
+model.notes[1].actor[1]: "Renderer"
+model.notes[1].message: "No confirmCloseWindow!"
+model.notes[1].placement: 2
+model.notes[1].wrap: false
+model.notes[2].actor[0]: "Renderer"
+model.notes[2].actor[1]: "Renderer"
+model.notes[2].message: "Stack becomes []"
+model.notes[2].placement: 2
+model.notes[2].wrap: false
+model.notes[3].actor[0]: "Renderer"
+model.notes[3].actor[1]: "Renderer"
+model.notes[3].message: "Panel reopens"
+model.notes[3].placement: 2
+model.notes[3].wrap: false
+model.title: null
+model.type: "sequence"

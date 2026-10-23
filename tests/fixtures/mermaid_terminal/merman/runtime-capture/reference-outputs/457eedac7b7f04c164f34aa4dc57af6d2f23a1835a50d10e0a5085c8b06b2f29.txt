@@ -1,0 +1,11 @@
+# Revenue  * Forecast
+xDomain: band categories=[bytes=1="A", bytes=1="B"]
+values: # series=0 type=bar title(bytes=7)="Revenue" samples=[{index=0 x(bytes=1)="A" value=2 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=8 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=1 type=line title(bytes=8)="Forecast" samples=[{index=0 x(bytes=1)="A" value=8 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=2 pointLabel=none clipped=false}] orphanPointLabels=[]
+10 +
+ 8 + *-+###
+ 6 +   |###
+ 4 +   |###
+ 2 +###+-*#
+ 0 +-+---+-
+     A   B

@@ -1,0 +1,17 @@
++----------+      +---------+          +------+
+| CUSTOMER |      | PRODUCT |          | USER |
++----------+      +---------+          +------+
+     ||               ||                  ||
+ exactly one      one or more    exactly one optional
+      |                |                   :
+     ||               |{                  ||
+  +-------+      +----------+         +---------+
+  | ORDER |      | CATEGORY |         | PROFILE |
+  +-------+      +----------+         +---------+
+     ||
+ one to many
+      |
+     o{
++-----------+
+| LINE-ITEM |
++-----------+

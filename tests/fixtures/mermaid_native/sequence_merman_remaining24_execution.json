@@ -1,0 +1,1761 @@
+{
+  "schema": 1,
+  "qualification": "Source-reviewed execution projection only; no actual admission, geometry success, source-negative policy pass or original foreign predicate certification.",
+  "source_proposal_sha256": "fd30d1b2a1cff345638e93c78a76d5010cfc8332aecceee4e9475e0af60ef2ed",
+  "source_review_sha256": "539e20894a9beacdd3bc9038e35eded53857b5b41b27a8fa7ede1db4cf658b24",
+  "basis_path": "mermaid_native/sequence_merman280_nonwrap42_admitted_facts.json",
+  "basis_sha256": "6009207d4664e68d0ba90264008990b8832eaea62c99ada4bb3691b8e944d4f6",
+  "wrap43_inventory_sha256": "5b207a4db8a136690db55647f9bc796546272af4b438b0be8c5445a4a2b5ee0c",
+  "cases": [
+    {
+      "id": "merman/00d77a1310c16b974e91",
+      "source": "sequenceDiagram\npar_over Parallel overlap\n  Alice ->> Bob: Message\n  Note left of Alice: Alice note\n  Note right of Bob: Bob note\nend\n",
+      "source_sha256": "00d77a1310c16b974e9130be83087fb944a3cda03c6cbcef91826b3730149955",
+      "basis_index": 2,
+      "basis_record_span": {
+        "offset": 37865,
+        "length": 5183,
+        "sha256": "f4135947415aa82b47a7a483d0e9680b6d558f4ac13fd5c73605afb1708fa34f"
+      },
+      "frozen_case_canonical_sha256": "e2c10f8978fd8b223d1969c267814cb427e47d10528ca9883f05aa94337de1bb",
+      "vendor_case_pointer": "/cases/103",
+      "vendor_case_canonical_sha256": "350aff8d96c1d93399d05d00cfbe509956bfcaef1a3f3972507d2c2e905bafcf",
+      "primary_model_canonical_sha256": "f337cd51560d78ed931d5dbe06581063704f7c996ea97ebac90a0cc353c34d05",
+      "source_property_tags": [
+        "fragment:par_over"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "par_over9",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/082472b4bacc95003c55",
+      "source": "sequenceDiagram\nAlice->Bob: Hello Bob, how are you?\npar -:<>,;# comment\nBob-->Alice: I am good thanks!\nand ,<>:-#; comment\nBob-->Alice: I am good thanks!\nend\n",
+      "source_sha256": "082472b4bacc95003c550e425844b3631bedc508f2b4cefa48e8dea97f632562",
+      "basis_index": 15,
+      "basis_record_span": {
+        "offset": 120884,
+        "length": 5107,
+        "sha256": "c379b6c4bfeaadfa2df8a3550978bfce71e3bde1b29e61561ebaf7f3d832b6aa"
+      },
+      "frozen_case_canonical_sha256": "ccedc5cdb364ec2b289f0987ef471ac10f28e331ed71adfcca060d453c02a5b2",
+      "vendor_case_pointer": "/cases/154",
+      "vendor_case_canonical_sha256": "2d362c7ed1da80014b6817180663fdd0f3b01f946ff42ddcfd4212ae7b53c366",
+      "primary_model_canonical_sha256": "8ed34bad9bf860051dd222617a8b619672c3d4222f5e0feb5c17d88d5e4f3fc5",
+      "source_property_tags": [
+        "fragment:par",
+        "rich_markup_surface"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "rich_literal_math6",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "par",
+            "label": "-:<>,",
+            "parent": -1,
+            "dividers": [
+              ",<>:-"
+            ]
+          }
+        ],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "da6d2318f0e2790fd62d2b0dbced58b85cf0fc1b9efcd7488e32b39bb8cc066b",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {},
+        "destroyed": {}
+      },
+      "text_projection_witnesses_sha256": "381edf402355d7db627f56c70656e14f9914ca1d7759dff8b9a8e27f82e0cef8"
+    },
+    {
+      "id": "merman/09bbd53c7cdacc04db71",
+      "source": "sequenceDiagram\nparticipant A\nparticipant B\nrect rgba(0,0,0,0.1)\npar_over Everyone\nA->>B: Work\nend\nend",
+      "source_sha256": "09bbd53c7cdacc04db711b7717db953398b81f92225686f464a655c934708070",
+      "basis_index": 18,
+      "basis_record_span": {
+        "offset": 140162,
+        "length": 4761,
+        "sha256": "46169f96ffacfd7ebf1b73a25363a6db32cb5c7c35622197fd0deb0c7c990e23"
+      },
+      "frozen_case_canonical_sha256": "66b3f34911cd5ddb1c6f40a0b761881592532494c3051af19ae87975aae910c0",
+      "vendor_case_pointer": "/cases/166",
+      "vendor_case_canonical_sha256": "c29e97d9a14fd7d4577299a6be1c7b5432020edf8997fcf9c42a35ef12a5b7e9",
+      "primary_model_canonical_sha256": "e236fae14bfbc307c9ed352b2a22073b6e7722c2d4f55f5ca9bc49cb88888642",
+      "source_property_tags": [
+        "fragment:par_over",
+        "fragment:rect"
+      ],
+      "original_function_sha256": [
+        "4518c2c17f956d2f76d25fce18279f20e360eb7cd715bf34c965ae2812a68e33"
+      ],
+      "group": "par_over9",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/0e8d499edc49a28d2316",
+      "source": "sequenceDiagram\nparticipant A\nparticipant B\ndestroy B\nNote over A: closing\nautonumber\nA--xB: bye\n",
+      "source_sha256": "0e8d499edc49a28d231659823200227789515c7c578f94ead8b48cd6f577caa2",
+      "basis_index": 23,
+      "basis_record_span": {
+        "offset": 178862,
+        "length": 4716,
+        "sha256": "69f6260e1db5d1016027a4183713051481a454ed0933baec44b98ba3984621ce"
+      },
+      "frozen_case_canonical_sha256": "627e43f7ef3e877d727c06f79ac7c423dfa3fddd24cb065cd894d20779484ada",
+      "vendor_case_pointer": "/cases/194",
+      "vendor_case_canonical_sha256": "5a7827969b227606b0cc15e2e0437495e0c9d354c1849b7c2c6a8a6cc7f3a8a5",
+      "primary_model_canonical_sha256": "999d4d663d93c9dd37e0369519d3031570996e6a21cf0f67fafecb1dff724873",
+      "source_property_tags": [
+        "autonumber",
+        "destruction",
+        "lifetime_anchor_before_note_or_directive"
+      ],
+      "original_function_sha256": [
+        "990692ce593588b86cb983d1cd5b4141c5c573a2f623569f83bfd34819bd5630"
+      ],
+      "group": "lifetime_resolved4",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "role": "Participant"
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "bye",
+            "arrow": "Cross",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": "1"
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0
+            ],
+            "text": "closing",
+            "position": "over",
+            "after": -1
+          }
+        ],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "35a8524e27b4fb0598d95c673db2ffc23bd8ffdc6e595d0878c4b88480030c89",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {},
+        "destroyed": {
+          "0": {
+            "actor": "B",
+            "declaration_line": 4
+          }
+        }
+      },
+      "text_projection_witnesses_sha256": "4b193d997c3e0be62eeadd3f97c997551531a833309f663df183cc630a66729f"
+    },
+    {
+      "id": "merman/2d5bdcfe3c6655a3b776",
+      "source": "sequenceDiagram\nparticipant Alice\nparticipant Bob\nparticipant John\npar_over Section title\n  Alice ->> Bob: Message 1<br>Second line\n  Bob ->> John: Message 2\nend\npar_over Two line<br>section title\n  Note over Alice: Alice note\n  Note over Bob: Bob note<br>Second line\n  Note over John: John note\nend\npar_over Mixed section\n  Alice ->> Bob: Message 1\n  Note left of Bob: Alice/Bob Note\nend\n    \n",
+      "source_sha256": "2d5bdcfe3c6655a3b776e1665749f45ca2f0a45df6db7aa2ef746c0f52811a75",
+      "basis_index": 62,
+      "basis_record_span": {
+        "offset": 509344,
+        "length": 7997,
+        "sha256": "cac31d7364c00cfb085e08b6af21c7586ce0d1e6087841a79a209d8cead9c33a"
+      },
+      "frozen_case_canonical_sha256": "da0d4e6baa8fc6bb058d546b2b8d2bbe640885ae291972eb1579fc66e4b9fc28",
+      "vendor_case_pointer": "/cases/375",
+      "vendor_case_canonical_sha256": "aa3ab37a7c473c25014f1c18e717cd67f151588aa22a246d50e7c00ca90b04e3",
+      "primary_model_canonical_sha256": "5b192230563eb28d8ff3130f270b89dc9998b4ec0e6cd5e679996cc37ae1c3cd",
+      "source_property_tags": [
+        "fragment:par_over",
+        "raw_BR_text"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "par_over9",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/33aea29bc46bd1fd8f76",
+      "source": "sequenceDiagram\nparticipant A\nparticipant B\nactivate B\nA->>B: Work\ndestroy B\nA--xB: Bye\ndeactivate B",
+      "source_sha256": "33aea29bc46bd1fd8f76d139414061aaa31d2d4aa0773937dd744300bad649f0",
+      "basis_index": 71,
+      "basis_record_span": {
+        "offset": 574582,
+        "length": 4557,
+        "sha256": "31213714e3f8820c9efdbccb0e58d9e51186a291bea6e836526d1fc15dae8228"
+      },
+      "frozen_case_canonical_sha256": "bdffc6a4ba6c00904b9b561991c2c00ff5671206a47e84173606078f86a8e9e6",
+      "vendor_case_pointer": "/cases/416",
+      "vendor_case_canonical_sha256": "b472db837ef61f7e72359c4f731cee0ff2a5f0453338dfe7e0f58e4a022bf31c",
+      "primary_model_canonical_sha256": "3be17367eb9a3c2e03a0afbce43392d711455064233f169128483697e8fd1a4d",
+      "source_property_tags": [
+        "activation",
+        "destruction"
+      ],
+      "original_function_sha256": [
+        "dc78751e915e913fa701ef735bcec3dbf0e640c398cb356660340e13963f357a"
+      ],
+      "group": "deactivation_after_destroy1",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/388aa7ef29e064094a85",
+      "source": "---\nreferences:\n  - \"File: /packages/mermaid/src/mermaidAPI.ts\"\n  - \"File: /packages/mermaid/src/mermaid.ts\"\ngenerationTime: 2025-01-28T16:30:00.000Z\n---\nsequenceDiagram\n    participant User as User/Browser\n    participant Mermaid as mermaid.ts\n    participant Queue as executionQueue\n    participant API as mermaidAPI.ts\n    participant Config as configApi\n    participant Preprocessor as preprocessDiagram\n    participant DiagramAPI as diagram-api\n    participant Diagram as Diagram.fromText\n    participant Renderer as diagram.renderer\n    participant Styles as Styling System\n    participant DOM as DOM/SVG\n\n    Note over User, DOM: Mermaid Complete API Flow\n\n    %% Initialization Phase\n    User->>+Mermaid: mermaid.initialize(config)\n    Mermaid->>+API: mermaidAPI.initialize(config)\n    \n    API->>API: assignWithDepth({}, userOptions)\n    API->>API: handle legacy fontFamily config\n    API->>Config: saveConfigFromInitialize(options)\n    \n    alt Theme Configuration Available\n        API->>API: check if theme in theme object\n        API->>API: set themeVariables from theme\n    else Default Theme\n        API->>API: use default theme variables\n    end\n    \n    API->>Config: setSiteConfig(options) or getSiteConfig()\n    API->>API: setLogLevel(config.logLevel)\n    API->>DiagramAPI: addDiagrams()\n    \n    API-->>-Mermaid: initialization complete\n    Mermaid-->>-User: ready to render\n\n    %% Content Loaded Event\n    User->>DOM: document.load event\n    DOM->>+Mermaid: contentLoaded()\n    \n    opt startOnLoad is true\n        Mermaid->>Config: getConfig()\n        Config-->>Mermaid: { startOnLoad: true }\n        Mermaid->>Mermaid: run()\n    end\n    \n    Mermaid-->>-DOM: event handling complete\n\n    %% Main Run Function\n    User->>+Mermaid: mermaid.run(options)\n    \n    Mermaid->>Mermaid: runThrowsErrors(options)\n    Mermaid->>Config: getConfig()\n    Config-->>Mermaid: configuration object\n    \n    alt nodes provided\n        Mermaid->>Mermaid: use provided nodes\n    else querySelector provided\n        Mermaid->>DOM: document.querySelectorAll(querySelector)\n        DOM-->>Mermaid: nodesToProcess\n    end\n    \n    Mermaid->>Mermaid: new InitIDGenerator(deterministicIds, seed)\n    \n    loop For each diagram element\n        Mermaid->>DOM: check element.getAttribute('data-processed')\n        \n        opt not processed\n            Mermaid->>DOM: element.setAttribute('data-processed', 'true')\n            Mermaid->>Mermaid: generate unique id\n            Mermaid->>DOM: get element.innerHTML\n            Mermaid->>Mermaid: entityDecode and clean text\n            Mermaid->>Mermaid: detectInit(txt)\n            \n            Mermaid->>Queue: render(id, txt, element)\n        end\n    end\n    \n    Mermaid-->>-User: processing initiated\n\n    %% Render Function (Queued)\n    activate Queue\n    Queue->>+API: mermaidAPI.render(id, text, container)\n    \n    API->>DiagramAPI: addDiagrams()\n    API->>+Preprocessor: processAndSetConfigs(text)\n    \n    Preprocessor->>Preprocessor: preprocessDiagram(text)\n    Preprocessor->>Config: reset()\n    Preprocessor->>Config: addDirective(processed.config)\n    Preprocessor-->>-API: { code, config }\n    \n    API->>Config: getConfig()\n    Config-->>API: current configuration\n    \n    opt text length > maxTextSize\n        API->>API: text = MAX_TEXTLENGTH_EXCEEDED_MSG\n    end\n    \n    API->>API: setup id selectors and element IDs\n    API->>API: determine security level (sandbox/loose)\n\n    %% DOM Setup\n    alt svgContainingElement provided\n        alt isSandboxed\n            API->>DOM: sandboxedIframe(select(svgContainingElement), iFrameID)\n            API->>DOM: select iframe contentDocument body\n        else\n            API->>DOM: select(svgContainingElement)\n        end\n    else no container\n        API->>API: removeExistingElements(document, id, divId, iFrameId)\n        alt isSandboxed\n            API->>DOM: sandboxedIframe(select('body'), iFrameID)\n        else\n            API->>DOM: select('body')\n        end\n    end\n    \n    API->>DOM: appendDivSvgG(root, id, enclosingDivID, fontFamily, XMLNS_XLINK_STD)\n\n    %% Diagram Creation\n    API->>+Diagram: Diagram.fromText(text, { title: processed.title })\n    \n    Diagram->>DiagramAPI: detect diagram type\n    Diagram->>DiagramAPI: load appropriate diagram\n    Diagram-->>-API: diagram instance\n    \n    opt parsing error occurred\n        API->>+Diagram: Diagram.fromText('error')\n        Diagram-->>-API: error diagram\n        API->>API: store parseEncounteredException\n    end\n\n    %% Style Generation\n    API->>DOM: get svg element and firstChild\n    API->>Renderer: diag.renderer.getClasses(text, diag)\n    Renderer-->>API: diagramClassDefs\n    \n    API->>+Styles: createUserStyles(config, diagramType, diagramClassDefs, idSelector)\n    \n    Styles->>Styles: createCssStyles(config, classDefs)\n    \n    opt config.themeCSS defined\n        Styles->>Styles: append themeCSS\n    end\n    \n    opt fontFamily configured\n        Styles->>Styles: add CSS variables for fonts\n    end\n    \n    opt classDefs exist\n        loop For each styleClassDef\n            opt has styles\n                Styles->>Styles: cssImportantStyles for each CSS element\n            end\n            opt has textStyles\n                Styles->>Styles: cssImportantStyles for tspan elements\n            end\n        end\n    end\n    \n    Styles->>Styles: getStyles(graphType, userCSSstyles, themeVariables)\n    Styles->>Styles: serialize(compile(svgId{allStyles}), stringify)\n    Styles-->>-API: compiled CSS rules\n    \n    API->>DOM: create style element\n    API->>DOM: style.innerHTML = rules\n    API->>DOM: svg.insertBefore(style, firstChild)\n\n    %% Diagram Rendering\n    API->>+Renderer: diag.renderer.draw(text, id, version, diag)\n    \n    Renderer->>Renderer: diagram-specific rendering logic\n    Renderer->>DOM: create SVG elements\n    Renderer->>DOM: apply positioning and styling\n    Renderer-->>-API: rendered diagram\n    \n    opt rendering error\n        alt suppressErrorRendering\n            API->>API: removeTempElements()\n            API->>Mermaid: throw error\n        else\n            API->>Renderer: errorRenderer.draw(text, id, version)\n        end\n    end\n\n    %% Accessibility and Cleanup\n    API->>DOM: select svg element\n    API->>Diagram: diag.db.getAccTitle()\n    API->>Diagram: diag.db.getAccDescription()\n    API->>API: addA11yInfo(diagramType, svgNode, a11yTitle, a11yDescr)\n    \n    API->>DOM: set xmlns for foreignobject elements\n    API->>DOM: get innerHTML from enclosing div\n    \n    API->>+API: cleanUpSvgCode(svgCode, isSandboxed, arrowMarkerAbsolute)\n    \n    opt not useArrowMarkerUrls and not sandboxed\n        API->>API: replace marker-end URLs with anchors\n    end\n    \n    API->>API: decodeEntities(svgCode)\n    API->>API: replace <br> with <br/>\n    API-->>-API: cleaned SVG code\n    \n    alt isSandboxed\n        API->>+API: putIntoIFrame(svgCode, svgEl)\n        API->>API: calculate iframe height\n        API->>API: toBase64 encode SVG content\n        API->>API: create iframe with sandbox attributes\n        API-->>-API: iframe HTML\n    else not loose security\n        API->>API: DOMPurify.sanitize(svgCode, options)\n    end\n    \n    API->>API: attachFunctions()\n    API->>API: removeTempElements()\n    \n    opt parseEncounteredException\n        API->>Mermaid: throw parseEncounteredException\n    end\n    \n    API-->>-Queue: { diagramType, svg: svgCode, bindFunctions }\n\n    %% Return to Web Integration\n    activate Mermaid\n    Queue-->>Mermaid: render result\n    Mermaid->>DOM: element.innerHTML = svg\n    \n    opt postRenderCallback\n        Mermaid->>User: postRenderCallback(id)\n    end\n    \n    opt bindFunctions exist\n        Mermaid->>DOM: bindFunctions(element)\n    end\n    deactivate Mermaid\n\n    %% Parse Function Flow\n    User->>+Mermaid: mermaid.parse(text, parseOptions)\n    activate Queue\n    \n    Queue->>+API: mermaidAPI.parse(text, parseOptions)\n    \n    API->>DiagramAPI: addDiagrams()\n    API->>Preprocessor: processAndSetConfigs(text)\n    Preprocessor-->>API: { code, config }\n    API->>Diagram: getDiagramFromText(code)\n    Diagram-->>API: diagram instance\n    API-->>-Queue: { diagramType: diagram.type, config }\n    \n    Queue-->>-Mermaid: parse result\n    Mermaid-->>-User: ParseResult or false\n\n    %% External Diagram Registration\n    User->>+Mermaid: registerExternalDiagrams(diagrams, options)\n    \n    Mermaid->>DiagramAPI: addDiagrams()\n    Mermaid->>DiagramAPI: registerLazyLoadedDiagrams(...diagrams)\n    \n    opt lazyLoad is false\n        Mermaid->>DiagramAPI: loadRegisteredDiagrams()\n    end\n    \n    Mermaid-->>-User: registration complete\n\n    %% Error Handling\n    Note over Mermaid, API: Error Handling Throughout\n    alt Error occurs\n        API->>Mermaid: throw error\n        Mermaid->>+Mermaid: handleError(error, errors, parseError)\n        \n        Mermaid->>Mermaid: log.warn(error)\n        \n        alt isDetailedError\n            Mermaid->>User: parseError(error.str, error.hash)\n        else\n            Mermaid->>User: parseError(error)\n        end\n        \n        opt not suppressErrors\n            Mermaid->>User: throw error\n        end\n        \n        Mermaid-->>-User: error handled\n    end\n\n    %% Configuration Details\n    Note over Config: Configuration Functions\n    Note right of Config: Functions:<br/>- reset()<br/>- getConfig()<br/>- setConfig()<br/>- getSiteConfig()<br/>- updateSiteConfig()<br/>- saveConfigFromInitialize()\n    \n    Note over Styles: CSS Generation\n    Note right of Styles: Features:<br/>- createCssStyles()<br/>- createUserStyles()<br/>- cssImportantStyles()<br/>- Theme integration<br/>- Class definitions\n    \n    Note over API: Security Levels\n    Note right of API: Modes:<br/>- sandbox: iframe isolation<br/>- loose: minimal sanitization<br/>- default: DOMPurify sanitization\n    \n    Note over API: Helper Functions\n    Note right of API: Utilities:<br/>- cleanUpSvgCode()<br/>- putIntoIFrame()<br/>- appendDivSvgG()<br/>- removeExistingElements() ",
+      "source_sha256": "388aa7ef29e064094a8560c8afd1b3750e065e07a895ac1373a804922199556f",
+      "basis_index": 77,
+      "basis_record_span": {
+        "offset": 615172,
+        "length": 74268,
+        "sha256": "51927db5f31f2054638c5eb6efc708565c28e0626781cda8239cdd72bff24e0d"
+      },
+      "frozen_case_canonical_sha256": "2728a139206eaa2c6e2c4b56fc285aaebb5cbe23bc83e4a6a08d0595199bbbcf",
+      "vendor_case_pointer": "/cases/449",
+      "vendor_case_canonical_sha256": "2c27d768783b4c761815febdd8a3e1844768bc40db51f043aed46150bb28a95d",
+      "primary_model_canonical_sha256": "00f99feb466e476367dbb131657bfa7f6d5ff445fcfcdfe95da82c52907f3537",
+      "source_property_tags": [
+        "activation",
+        "authored_metadata_document_or_directive",
+        "fragment:alt",
+        "fragment:loop",
+        "fragment:opt",
+        "raw_BR_text"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "existing_domain_cap1",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/45bf7dcfa15d56f2b33d",
+      "source": "sequenceDiagram\n    autonumber\n    participant 1 as $$\\alpha$$\n    participant 2 as $$\\beta$$\n    1->>2: Solve: $$\\sqrt{2+2}$$\n    2-->>1: Answer: $$2$$\n    Note right of 2: $$\\sqrt{2+2}=\\sqrt{4}=2$$\n",
+      "source_sha256": "45bf7dcfa15d56f2b33d1371b4ae42e475937ede30c8f85c6a9bb9694a3d5128",
+      "basis_index": 95,
+      "basis_record_span": {
+        "offset": 817756,
+        "length": 4949,
+        "sha256": "0c08e6d23804a0e35b5199a5a7fef86ff8a9abaf8bf93e8f14b324f1074063a6"
+      },
+      "frozen_case_canonical_sha256": "cc847c17f92fd2cab71bc3698fc071262d93e86cb2ecea5b32f291331ec55db2",
+      "vendor_case_pointer": "/cases/532",
+      "vendor_case_canonical_sha256": "81b8ada15fd8b2586ed6e8d9cf47b4080dddc0ce96483b4c2d515369b82d3f49",
+      "primary_model_canonical_sha256": "a01a900887c9cd5249a0a34d21c4dc0a363710f11fa41d030e8d41c8ecca42a3",
+      "source_property_tags": [
+        "autonumber",
+        "math_label_surface"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "rich_literal_math6",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "1",
+            "label": "$$\\\\alpha$$",
+            "role": "Participant"
+          },
+          {
+            "id": "2",
+            "label": "$$\\\\beta$$",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Solve: $$\\\\sqrt{2+2}$$",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "1"
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Answer: $$2$$",
+            "arrow": "Filled",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": "2"
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              1
+            ],
+            "text": "$$\\\\sqrt{2+2}=\\\\sqrt{4}=2$$",
+            "position": "right",
+            "after": 1
+          }
+        ],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "44f589cf3214e44387f039e472a6ac44c1d4916c852d4259e2d0c03e5be28956",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {},
+        "destroyed": {}
+      },
+      "text_projection_witnesses_sha256": "024f9c647c29d189cf5f0e0e540e13ec499623c1cd855d97ee633ac04c2f9802"
+    },
+    {
+      "id": "merman/5385d70899070554a764",
+      "source": "sequenceDiagram\nparticipant A\nparticipant B\npar_over Everyone\nA->>B: Work\nend",
+      "source_sha256": "5385d70899070554a764df4ddc1893adf16074b94a9a6fb45cc3429c42531d49",
+      "basis_index": 108,
+      "basis_record_span": {
+        "offset": 926975,
+        "length": 5658,
+        "sha256": "07465278e13db5af929f49a51b869cc20bd30605c5d541dbe7dd484a25db032e"
+      },
+      "frozen_case_canonical_sha256": "b9eddcf54859c603b2bc146ec4f08d7ecfcc350d1b4572ac3f66b343ce268175",
+      "vendor_case_pointer": "/cases/616",
+      "vendor_case_canonical_sha256": "037ba64a7173796566c764285791fb4c289181eab59e8732b0edec35ff51a1fe",
+      "primary_model_canonical_sha256": "fe9a8312bf92522771e61a8a4069c9dd7dbedecea6a831f5c7e81e779065aadf",
+      "source_property_tags": [
+        "fragment:par_over"
+      ],
+      "original_function_sha256": [
+        "a1dd27da3ca56790247c86587f47f893ae4c3e8c810e994be0db7a7de9b261af",
+        "521f1cbb794771db9ae08fd1f0e0e51082365c7d1519bc742c70187bc3641337",
+        "5550b70251c3d7a97d8664836c1082f98045ebc2cad5be978dfe92a6d8c98230"
+      ],
+      "group": "par_over9",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/5cb436ed4175eed21261",
+      "source": "sequenceDiagram\nparticipant A\nparticipant B\npar_over Everyone\nrect rgba(0,0,0,0.1)\nA->>B: Work\nend\nend",
+      "source_sha256": "5cb436ed4175eed212613545a557992afa6488628d80b85ddeeb76dd13086338",
+      "basis_index": 116,
+      "basis_record_span": {
+        "offset": 1011229,
+        "length": 4761,
+        "sha256": "1628d084002607806f7f936907710c545d855c1ebb6206f92b3b1fa977bc27a3"
+      },
+      "frozen_case_canonical_sha256": "6419f7a22bf72d09c68d6186610f18e0418596b438a113d416db4d3701dd0d3d",
+      "vendor_case_pointer": "/cases/678",
+      "vendor_case_canonical_sha256": "ae119810a40aee69cbc04bfcb81adabb8b90e85626dd2a1dba6c0ab48715c71b",
+      "primary_model_canonical_sha256": "4485c63f0aeb70315ef1b01405de6dacb2623ced53fc90fa891246cd1398deab",
+      "source_property_tags": [
+        "fragment:par_over",
+        "fragment:rect"
+      ],
+      "original_function_sha256": [
+        "4518c2c17f956d2f76d25fce18279f20e360eb7cd715bf34c965ae2812a68e33"
+      ],
+      "group": "par_over9",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/6913df63ae9fd62414e3",
+      "source": "sequenceDiagram\nparticipant A\nparticipant B\ndestroy A\ndestroy B\nA--xB: destroy\n",
+      "source_sha256": "6913df63ae9fd62414e3464062d3bfe5313c99a504647661eebe360d83bf678a",
+      "basis_index": 128,
+      "basis_record_span": {
+        "offset": 1111099,
+        "length": 3922,
+        "sha256": "6f24c1d976f27db5b478fb439f6b2f63b3b4345ead2a3d2e36fb158d9640f5dd"
+      },
+      "frozen_case_canonical_sha256": "167fb56da4f5ecf899a4990f98e051e179584ea57433fd6152e8423f38a3960d",
+      "vendor_case_pointer": "/cases/749",
+      "vendor_case_canonical_sha256": "53c19b9f21e7ddd68de0d5415ffe922212b7631bd41ef7cb5462dff4b54e3072",
+      "primary_model_canonical_sha256": "4dba05b57baec8cba00dd2878e62ec34378c3d0923e3ea9cdd5766e727a157d2",
+      "source_property_tags": [
+        "destruction"
+      ],
+      "original_function_sha256": [
+        "ab461f8af55778e4d92775d2d0c52a3b728084c2ad83c977c3c81a53fb025c20"
+      ],
+      "group": "lifetime_resolved4",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "role": "Participant"
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "destroy",
+            "arrow": "Cross",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "7a586a159b367abfdf979b109e97d302dab487eb9d927e3fe2e5a7527e7bfdca",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {},
+        "destroyed": {
+          "0": {
+            "actor": "B",
+            "declaration_line": 5
+          }
+        }
+      },
+      "text_projection_witnesses_sha256": "4355291a29579c5b4b82b0823ba5931d47a948f5bdf893cf9772713ec3279ba7"
+    },
+    {
+      "id": "merman/71884d64121d294fb929",
+      "source": "sequenceDiagram\nparticipant A\ncreate participant B\nNote over A: pending\nautonumber\nA->>B: ready\n",
+      "source_sha256": "71884d64121d294fb929ea641e83ce40e59e3303d69f67ee7eeb119e8ea52717",
+      "basis_index": 139,
+      "basis_record_span": {
+        "offset": 1187444,
+        "length": 4713,
+        "sha256": "f3aaff02729cf7524837679f1de44e6f60a7b0d61cece0728c96ec87c0842ca3"
+      },
+      "frozen_case_canonical_sha256": "b7b173b191382dbcc621140ff8ee88baa25f9b3587453e54214642ff6a3f5d33",
+      "vendor_case_pointer": "/cases/787",
+      "vendor_case_canonical_sha256": "c38cd8da0ba6c4f2a248d66f1a82bd42a1e6b89b61975fac2422a0316fcea618",
+      "primary_model_canonical_sha256": "7360a370773be69a7ef37030b358674007316b66dad3a20393768e5741bbc1d7",
+      "source_property_tags": [
+        "autonumber",
+        "creation",
+        "lifetime_anchor_before_note_or_directive"
+      ],
+      "original_function_sha256": [
+        "990692ce593588b86cb983d1cd5b4141c5c573a2f623569f83bfd34819bd5630"
+      ],
+      "group": "lifetime_resolved4",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "role": "Participant"
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "ready",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": "1"
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0
+            ],
+            "text": "pending",
+            "position": "over",
+            "after": -1
+          }
+        ],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "c1da63f06cb37c41a59360568dc3f1c18f0348d2437588f07db0d37411058f42",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {
+          "0": {
+            "actor": "B",
+            "declaration_line": 3
+          }
+        },
+        "destroyed": {}
+      },
+      "text_projection_witnesses_sha256": "0de0d1ceca9d6b640372ae99cdfac925cbf0b6b131bf7f8ac8907d75036e1f92"
+    },
+    {
+      "id": "merman/79cc95e35a23a0abfc6f",
+      "source": "sequenceDiagram\nparticipant Alice\nparticipant Bob\nparticipant John\npar_over Section title\n  Alice ->> Bob: Message 1<br>Second line\n  Bob ->> John: Message 2\nend\npar_over Two line<br>section title\n  Note over Alice: Alice note\n  Note over Bob: Bob note<br>Second line\n  Note over John: John note\nend\npar_over Mixed section\n  Alice ->> Bob: Message 1\n  Note left of Bob: Alice/Bob Note\nend\n      \n",
+      "source_sha256": "79cc95e35a23a0abfc6f9dfcddb3caccbf38f394c3c353e1ef998d569b9c1e4e",
+      "basis_index": 142,
+      "basis_record_span": {
+        "offset": 1205403,
+        "length": 7999,
+        "sha256": "ae2095e681125fe7ac9be488bc8c2719dad864220b7bd6d8cf63523140729e97"
+      },
+      "frozen_case_canonical_sha256": "49c156f71aec2c281d6681984be938184e9757468db232bc13b17d1f6afd2c12",
+      "vendor_case_pointer": "/cases/833",
+      "vendor_case_canonical_sha256": "ad97d78d7c2bef950f2e831ce8bfd465e3c7dd1c1f5f387672d6eadec9b47581",
+      "primary_model_canonical_sha256": "5b192230563eb28d8ff3130f270b89dc9998b4ec0e6cd5e679996cc37ae1c3cd",
+      "source_property_tags": [
+        "fragment:par_over",
+        "raw_BR_text"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "par_over9",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/81a0c97153104556578e",
+      "source": "sequenceDiagram\nbox Group\nparticipant A\nparticipant B\nend\npar_over Everyone\nNote over A,B: Wait\nA->>+B: Start\nB-->>-A: Done\nend",
+      "source_sha256": "81a0c97153104556578e04661d805e6ab6966980a0e902050307e16aa03d1eed",
+      "basis_index": 157,
+      "basis_record_span": {
+        "offset": 1342664,
+        "length": 5658,
+        "sha256": "8598cb1c1d1aa3796ae86f37068fd50871e4d3bcee61ed18e37d7dd17cfcc971"
+      },
+      "frozen_case_canonical_sha256": "9984d2dc33dd79f2f46a2de4f8f1571e11a989440efd2c79ae3919705080bc50",
+      "vendor_case_pointer": "/cases/891",
+      "vendor_case_canonical_sha256": "7647289182ce4cc6271649fe4207a8f74ad940e6d0e06fa88e045bda5481f90c",
+      "primary_model_canonical_sha256": "b0fbdee9b37df6b8c90f25d45fa56ab2aa82ea2f01dc10c37a1494ef16b8b820",
+      "source_property_tags": [
+        "activation",
+        "fragment:par_over",
+        "participant_boxes"
+      ],
+      "original_function_sha256": [
+        "bee3993f3197d4cb17de4dbbc844f19e446c95cbcb8c4d7affae1a44914956ba"
+      ],
+      "group": "par_over9",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/91cdfe3d82bd04bbc68d",
+      "source": "sequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nopt -:<>,;# comment\nBob-->Alice: I am good thanks!\nend\n",
+      "source_sha256": "91cdfe3d82bd04bbc68dbf7b25fca8ffdf48f8f8d826e73be4ec35cdfe6d152d",
+      "basis_index": 173,
+      "basis_record_span": {
+        "offset": 1473906,
+        "length": 4616,
+        "sha256": "e9fb92e3cf0bda1e57df9ff89f273af55154939c498c2b53366d6978a518dd63"
+      },
+      "frozen_case_canonical_sha256": "943d067bb13972544da258e28f8ac77024890a299a6cd940ee92a8f72fa73c2a",
+      "vendor_case_pointer": "/cases/978",
+      "vendor_case_canonical_sha256": "6d0ac48afef518b72532a3fcf6cc205e671828751d6a0877c58735e119125a3f",
+      "primary_model_canonical_sha256": "9d7446871e5fc5b860f9954b2be0c4eee3b08d687cebb01d3c4360cde433b2c7",
+      "source_property_tags": [
+        "fragment:opt",
+        "rich_markup_surface"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "rich_literal_math6",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "opt",
+            "label": "-:<>,",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "68e7c4f6cd40962603138af85b208c7fe5d6e8f5398e108e2f1e6f7b2d7d3d10",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {},
+        "destroyed": {}
+      },
+      "text_projection_witnesses_sha256": "8bceeff6a87e815cd8710017b5a8867ebd6592e5f22f2b7c656a1853de05f715"
+    },
+    {
+      "id": "merman/9af5cd838dae8a91ebc9",
+      "source": "sequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nalt -:<>,;# comment\nBob-->Alice: I am good thanks!\nelse ,<>:-#; comment\nBob-->Alice: I am good thanks!\nend\n",
+      "source_sha256": "9af5cd838dae8a91ebc9f67337b2f7f138a0889388f625491d19fd346500842f",
+      "basis_index": 181,
+      "basis_record_span": {
+        "offset": 1540904,
+        "length": 5109,
+        "sha256": "ee41032d81deafdd66ecb0613c31eff8b855550077a892b585afd91b93287648"
+      },
+      "frozen_case_canonical_sha256": "32e31b4c33a8f540d59e5cc406622fb3fbd3e8966d2f97176d494931f4c742e2",
+      "vendor_case_pointer": "/cases/1026",
+      "vendor_case_canonical_sha256": "b36dcfb6aea1583b0e35f3956cc7582a4509c371fc44968a6a6167de7f9cabc0",
+      "primary_model_canonical_sha256": "92456071125fbca0f2ca6ebc7e98680ed91f077e7df50ab0780ad88b40679f52",
+      "source_property_tags": [
+        "fragment:alt",
+        "rich_markup_surface"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "rich_literal_math6",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "alt",
+            "label": "-:<>,",
+            "parent": -1,
+            "dividers": [
+              ",<>:-"
+            ]
+          }
+        ],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "f087c91e1f761911c75b139e87b3aa85125858ae291f07b429dfcf13ace3ce4d",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {},
+        "destroyed": {}
+      },
+      "text_projection_witnesses_sha256": "381edf402355d7db627f56c70656e14f9914ca1d7759dff8b9a8e27f82e0cef8"
+    },
+    {
+      "id": "merman/aaeb3bc88813b9560a81",
+      "source": "sequenceDiagram\nAlice->Bob: -:<>,;# comment\nNote right of Bob: -:<>,;# comment\nloop -:<>,;# comment\n  Bob-->Alice: I am good thanks!\nend\nopt -:<>,;# comment\n  Bob-->Alice: I am good thanks!\nend\nalt -:<>,;# comment\n  Bob-->Alice: I am good thanks!\nelse ,<>:-#; comment\n  Bob-->Alice: I am good thanks!\nend\npar -:<>,;# comment\n  Bob-->Alice: I am good thanks!\nand ,<>:-#; comment\n  Bob-->Alice: I am good thanks!\nend\n\n",
+      "source_sha256": "aaeb3bc88813b9560a81678a59e8c909641d88b6d0448bce7691ad27d60a7733",
+      "basis_index": 196,
+      "basis_record_span": {
+        "offset": 1644151,
+        "length": 8197,
+        "sha256": "a19967459da89f120a17553f03c611975b46a4c28501122afc74b095b4f4c9d7"
+      },
+      "frozen_case_canonical_sha256": "b1fd2d54b6bc5a175f02fce440fcf7b073818157b8ba7c17acd4ff17b704de20",
+      "vendor_case_pointer": "/cases/1120",
+      "vendor_case_canonical_sha256": "26c0cfeffce435e0164ad7680552d22603f2938493670b97c974f68d2d0b8784",
+      "primary_model_canonical_sha256": "78131954891609cfd4e757eccdac4d691f65ec8b11e487f05e62548a5aa9bb6c",
+      "source_property_tags": [
+        "fragment:alt",
+        "fragment:loop",
+        "fragment:opt",
+        "fragment:par",
+        "rich_markup_surface"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "rich_literal_math6",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "-:<>,",
+            "arrow": "Unheaded",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I am good thanks!",
+            "arrow": "Unheaded",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              1
+            ],
+            "text": "-:<>,",
+            "position": "right",
+            "after": 0
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "loop",
+            "label": "-:<>,",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "opt",
+            "label": "-:<>,",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "alt",
+            "label": "-:<>,",
+            "parent": -1,
+            "dividers": [
+              ",<>:-"
+            ]
+          },
+          {
+            "kind": "par",
+            "label": "-:<>,",
+            "parent": -1,
+            "dividers": [
+              ",<>:-"
+            ]
+          }
+        ],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 3,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "45990d04bbb73ed6fdc8172e10e828051bb0189a040d1e0b98d2aaea4720023e",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {},
+        "destroyed": {}
+      },
+      "text_projection_witnesses_sha256": "e5cc9798d04219ef5dec8196df5a40980a419a6994321575160d0a54748f4854"
+    },
+    {
+      "id": "merman/b23a8461e0f7a3fe4543",
+      "source": "sequenceDiagram\nparticipant A\ncreate participant B\ncreate participant C\nA->>C: create\n",
+      "source_sha256": "b23a8461e0f7a3fe4543c20b3e28e8fd03223d5d81c7144b9c9c1b18b354cfbf",
+      "basis_index": 202,
+      "basis_record_span": {
+        "offset": 1694810,
+        "length": 4150,
+        "sha256": "b5c01db31e4c3077a6bb06901252bb0af6af558dfb18331c917a87764446b68f"
+      },
+      "frozen_case_canonical_sha256": "19cfd37fb80591d61c448d0f4ab044d739ba2a9c67ff084908cb120b34a19a29",
+      "vendor_case_pointer": "/cases/1162",
+      "vendor_case_canonical_sha256": "f2c5f1320a9f27c5cd86b9a71d66a829b93c1f702680f2326c2ac5d1d25abde8",
+      "primary_model_canonical_sha256": "62219bd241cf89c0f978f68078f3cf248857dac55ad9b4f4304d8cb714cd567d",
+      "source_property_tags": [
+        "creation"
+      ],
+      "original_function_sha256": [
+        "ab461f8af55778e4d92775d2d0c52a3b728084c2ad83c977c3c81a53fb025c20"
+      ],
+      "group": "lifetime_resolved4",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "role": "Participant"
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "role": "Participant"
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 2,
+            "label": "create",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "d91cc2eea65ad8996d3a4246b1dd30cf353cd4c712747585c503bdadb5ddf718",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {
+          "0": {
+            "actor": "C",
+            "declaration_line": 4
+          }
+        },
+        "destroyed": {}
+      },
+      "text_projection_witnesses_sha256": "b641b77b6df934b118385ab588557549eea46b1a87f4c6b38bf7bd566a0c167f"
+    },
+    {
+      "id": "merman/c1b8a55f506b235bc8a3",
+      "source": "sequenceDiagram\n  %% Authored stress fixture (Mermaid@11.12.2): comments, indentation, and escaped semicolons (#59;).\n\n  participant A as Alice\n  participant B as Bob\n\n  A->>B: hello #59; world\n  Note over A,B: note #59; with escaped semicolon\n\n  loop retry\n    A->>B: attempt 1\n    %% comment-only line\n    A->>B: attempt 2 #59;\n  end\n\n  opt optional branch\n    B-->>A: ok\n  end\n",
+      "source_sha256": "c1b8a55f506b235bc8a3f81f45eb2a0040f3316e243cde966db861cf2e30fcf8",
+      "basis_index": 216,
+      "basis_record_span": {
+        "offset": 1799844,
+        "length": 6283,
+        "sha256": "8ff31b429ae3d6abe47ac7a82fc41aad1c2acaf9d1c1a578b55cd37cf217cee0"
+      },
+      "frozen_case_canonical_sha256": "b74549de26c9def2ea9254bba4887177e05be794e7fd82bf618fb2fa46ad2f73",
+      "vendor_case_pointer": "/cases/1260",
+      "vendor_case_canonical_sha256": "f942c6b90a7d5de3bfa9f96d813c0585ee21cc9af15b0c80d0e0d6e8f2b3a6fe",
+      "primary_model_canonical_sha256": "a9c543fb7a83f24a7754bdd040dd71a8cd545fe8b5f4576192ad912283693e1c",
+      "source_property_tags": [
+        "fragment:loop",
+        "fragment:opt",
+        "source_character_reference_surface"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "encoded_text2",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "A",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "B",
+            "label": "Bob",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "hello ; world",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "label": "attempt 1",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "label": "attempt 2 ;",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "ok",
+            "arrow": "Filled",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0,
+              1
+            ],
+            "text": "note ; with escaped semicolon",
+            "position": "over",
+            "after": 0
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "loop",
+            "label": "retry",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "opt",
+            "label": "optional branch",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "eec102ea38cbfe1157fd734bed17b2e268c1f50144197161fb307d8dd4eb9b57",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {},
+        "destroyed": {}
+      },
+      "text_projection_witnesses_sha256": "d7f22ef83a6130434dd780bc0cd356a37602ecb30ea7f83e9e55c00214e48ee3"
+    },
+    {
+      "id": "merman/c417b97e7b2e6911d350",
+      "source": "sequenceDiagram\n  %% Authored stress fixture (Mermaid@11.12.2): HTML entities, escaped punctuation, and tricky label tokens.\n\n  participant A as Alice\n  participant B as Bob\n\n  A->>B: symbols: #35; #9829; #infin; <tag> #38; \"quotes\"\n  Note over A,B: label contains tokens: end, else, and, option, rect<br/>should not affect parsing\n  B-->>A: ok\n",
+      "source_sha256": "c417b97e7b2e6911d35042bb22171755dcbeb0399f408bd04b0929b16b850ed3",
+      "basis_index": 218,
+      "basis_record_span": {
+        "offset": 1816481,
+        "length": 5155,
+        "sha256": "6ab44fd7633061c9bcecabb6f60e7fcfc1718308ebfb44147497fda041c6fdb6"
+      },
+      "frozen_case_canonical_sha256": "807a9ed2f60e94e1438be493fb09bd21c7b58a61514d593eb159d0fcdc4eb71a",
+      "vendor_case_pointer": "/cases/1274",
+      "vendor_case_canonical_sha256": "537932d10cd575d8e3236ea7753c998cd24b363b8f5274d29d4256b45abe1b1f",
+      "primary_model_canonical_sha256": "b83a8aced8445fa8b91ee02b470ada98d17dc42738b72547895366f78702e10a",
+      "source_property_tags": [
+        "raw_BR_text",
+        "rich_markup_surface",
+        "source_character_reference_surface"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "rich_literal_math6",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "A",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "B",
+            "label": "Bob",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "symbols: # ♥ ∞ <tag> & \"quotes\"",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "ok",
+            "arrow": "Filled",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0,
+              1
+            ],
+            "text": "label contains tokens: end, else, and, option, rect\nshould not affect parsing",
+            "position": "over",
+            "after": 0
+          }
+        ],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "2a74d859c27128cd3ca455029019324e2547c9cf25de8997d1eac307e7f4604c",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {},
+        "destroyed": {}
+      },
+      "text_projection_witnesses_sha256": "8165c153018d023737d8330018584b1602d518d6a6ea2d5e115956e8a83b7d60"
+    },
+    {
+      "id": "merman/c64035d0269a39c2fcbf",
+      "source": "sequenceDiagram\n  participant A as \"Alice - A\"\n  participant B as \"Bob = B\"\n\n  A->>B: Entity codes: #9829; and #infin;\n  Note over A,B: Quotes: \"double\" and 'single'\n  A-->>B: Punctuation: commas, periods... dashes - and slashes /\n\n",
+      "source_sha256": "c64035d0269a39c2fcbf4094cfbefe042fc32ff01d2b48ee6828c95dc4badb26",
+      "basis_index": 220,
+      "basis_record_span": {
+        "offset": 1826103,
+        "length": 4869,
+        "sha256": "52c0d7194e0c90055a1789572c49ce25bfbe4d57a7e36a47312b876a8f72d7b4"
+      },
+      "frozen_case_canonical_sha256": "7a7e437d9fa7fc393088881146b5253d8adbf1e05050d8ab61559de294108613",
+      "vendor_case_pointer": "/cases/1286",
+      "vendor_case_canonical_sha256": "2d400050d60709b81f682d07947a90acae9b695fd2e8c92694f0a2f4969aa803",
+      "primary_model_canonical_sha256": "be858fc456f4ee7c915496abac98b0c07278389f3894a3f7f4d2ceb29685252c",
+      "source_property_tags": [
+        "source_character_reference_surface"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "encoded_text2",
+      "disposition": "complete_native_model_positive",
+      "model": {
+        "title": "",
+        "actors": [
+          {
+            "id": "A",
+            "label": "\"Alice - A\"",
+            "role": "Participant"
+          },
+          {
+            "id": "B",
+            "label": "\"Bob = B\"",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Entity codes: ♥ and ∞",
+            "arrow": "Filled",
+            "dashed": false,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Punctuation: commas, periods... dashes - and slashes /",
+            "arrow": "Filled",
+            "dashed": true,
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0,
+              1
+            ],
+            "text": "Quotes: \"double\" and 'single'",
+            "position": "over",
+            "after": 0
+          }
+        ],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      },
+      "model_canonical_sha256": "e3a46e252ca3b24b883eebffe310840656fff4b22b70d10501f18183545ead19",
+      "number_encoding": "DisplayText",
+      "resolved_lifetime_signal_bindings": {
+        "created": {},
+        "destroyed": {}
+      },
+      "text_projection_witnesses_sha256": "b6f91927cf8fb15d86cbc3d7f1c5dc8378d77516598d18b9a601010a47b257ee"
+    },
+    {
+      "id": "merman/cb707283b8e595877e8d",
+      "source": "sequenceDiagram\npar_over Parallel overlap\nAlice ->> Bob: Message\nNote left of Alice: Alice note\nNote right of Bob: Bob note\nend\n",
+      "source_sha256": "cb707283b8e595877e8d5a7d5b3947b33d841a3d86549e2b8ec402ca108e680a",
+      "basis_index": 227,
+      "basis_record_span": {
+        "offset": 1892260,
+        "length": 5178,
+        "sha256": "fec563cbb15f7d91d95649d8910f5a725c9212a8fdd59d0b6e4bba094d18242b"
+      },
+      "frozen_case_canonical_sha256": "a4d8d2ff2f8a85dd5f3bcb7906de88bb40dd3bc991b3b3a9ac4829d0478a0b39",
+      "vendor_case_pointer": "/cases/1323",
+      "vendor_case_canonical_sha256": "5eb58ea89431162c6daadc4f8aab575a8c36254bfb82f8e535626f41cb63384e",
+      "primary_model_canonical_sha256": "f337cd51560d78ed931d5dbe06581063704f7c996ea97ebac90a0cc353c34d05",
+      "source_property_tags": [
+        "fragment:par_over"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "par_over9",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/e20254ef2e67c152e961",
+      "source": "sequenceDiagram\nparticipant A\nparticipant B\npar_over Everyone\ncreate participant C\nB->>C: Hello C\nC->>B: Still here\ndestroy C\nB--xC: Bye C\nend",
+      "source_sha256": "e20254ef2e67c152e961e5b26bef5a848cfe456b12fd763b0f0cdc13a29437ae",
+      "basis_index": 252,
+      "basis_record_span": {
+        "offset": 2103497,
+        "length": 5113,
+        "sha256": "1af7fe204c348d697477a00139fab642033adac8e421aa6473b89dc0d21065c8"
+      },
+      "frozen_case_canonical_sha256": "20525f3efb21a7f34eae17b37712f497f05c9367393e200dbb541cb9cdd1c097",
+      "vendor_case_pointer": "/cases/1460",
+      "vendor_case_canonical_sha256": "275b7d6334f0d523cc8e000a80f74f7a834539fee4c43d9bfc3be9b54c282952",
+      "primary_model_canonical_sha256": "bca999ca2352ba1e8cb9b08a9dda3e9c4b67d490c57cd1fd46aeb0f1aaeeba5d",
+      "source_property_tags": [
+        "creation",
+        "destruction",
+        "fragment:par_over"
+      ],
+      "original_function_sha256": [
+        "cfe81e971edd5f64d16b02ca7a3693850fe75653ba87df253c8c66ad70f4632f"
+      ],
+      "group": "par_over9",
+      "disposition": "valid_source_native_profile_pending",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "merman/ea820bd13ab63162e9a5",
+      "source": "sequenceDiagram\n  participant (end) as end\n  participant A as Alice\n  participant B as Bob\n\n  A->>(end): message about (end)\n  (end)-->>A: ack [end]\n  Note over (end),A: The word \"end\" is a participant label here.\n\n  loop (end)\n    A->>B: step 1\n    B-->>A: ok\n  end\n",
+      "source_sha256": "ea820bd13ab63162e9a5bdd20bd62db7ffc5d468cbf5e3b047b31ed954388f17",
+      "basis_index": 266,
+      "basis_record_span": {
+        "offset": 2213805,
+        "length": 2640,
+        "sha256": "12aeefd85a359766828338ec472db1c8012ed451fa1d7428aa412932455ffcda"
+      },
+      "frozen_case_canonical_sha256": "250b090995d24e4f8a2841db5672c4967f077c34d45b76d212e6d56c211908e7",
+      "vendor_case_pointer": "/cases/1514",
+      "vendor_case_canonical_sha256": "4fe92209c480fbfaea804c60551b2ad424628c48226a5382c89307e2158e91e5",
+      "primary_model_canonical_sha256": null,
+      "source_property_tags": [
+        "primary_parse_error_without_Model"
+      ],
+      "original_function_sha256": [
+        "b372d1ea8d08c9cbe87d5c9be32c8604fde2ff34fde93e6db99faf6037fe502b"
+      ],
+      "group": "documented_original_source_negative1",
+      "disposition": "documented_original_negative_pending_native_policy",
+      "model": null,
+      "model_canonical_sha256": null,
+      "number_encoding": null,
+      "resolved_lifetime_signal_bindings": {},
+      "text_projection_witnesses_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  ]
+}

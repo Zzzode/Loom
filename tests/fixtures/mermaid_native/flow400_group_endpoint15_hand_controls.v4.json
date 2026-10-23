@@ -1,0 +1,2652 @@
+{
+  "schema": "flow400_group_endpoint15_hand_geometry/v3",
+  "qualification": "Hand-authored physical controls. Coordinates and glyphs are independent expected data, not captured output or a renderer oracle. v4 preserves v3 source bindings, literal LR/RL scenes, and the declared negative catalogue; it repairs the TD/BT crossing routes so every occupied route cell has exactly one edge owner and shifts only the BT outer-group label needed to keep the mirrored route off text.",
+  "revision_from_r1": "R1 rotated narrow TD/BT child frames into LR/RL, so ten labels did not fit. R2 manually assigns horizontal widths/routes; no renderer capture is used. R7 preserves all eight literal good scenes and supersedes only the declared negative-control catalogue and hand-source binding contract; v1 remains frozen. R10 preserves v2 as frozen history and repairs only crossing TD/BT rank-valid hand scenes after first-red diagnostics; no renderer capture is used. R11 preserves v2 and v3 as frozen history and repairs only the crossing TD/BT child-cross-container routes after a pairwise ownership review; no renderer capture is used.",
+  "point_target_contract": {
+    "one_way_end": "A normal one-way target uses the existing producer/oracle contract: straight perimeter glyph at the border and an arrow exactly one exterior cell away facing that border.",
+    "junction_at_target": "Not accepted. A target junction would require a changed producer contract and can conceal an extra arm.",
+    "source": "A source uses source_port-style junction glyph with its outward normal and original perimeter tangent arms."
+  },
+  "construction_contract": {
+    "frame": "Draw listed rectangles with exact light outlines, then horizontal labels at label_start, route glyphs, source ports, arrow heads, and one full following-token row. Target ports are untouched outline glyphs.",
+    "port": "A group endpoint is legal only at declared group border+normal; a vertex endpoint only at declared child border+normal.",
+    "route": "Every listed route is consumed exactly once by its tagged edge; a group crossing is never an endpoint.",
+    "no_implicit_transform": "All eight scenes are literal coordinates; a future test may share a grid builder but must not rotate producer output.",
+    "rank_cycle": "The topology-A hand scene intentionally projects three→two and two→c2 to a frontier quotient cycle. It is a complete good scene: rank ordering is suppressed only for that quotient-cycle component, never by fabricating child-to-group semantic edges.",
+    "declared_controls": "Each declared control names a concrete well-formed wrong expectation or a literal physical corruption. A semantic control is decoded from a rebuilt wire Model before geometry; resource/model-schema failures do not count as physical ownership rejections."
+  },
+  "good_scenes": [
+    {
+      "id": "cluster_to_cluster_then_cluster_to_child_td_hand_good",
+      "source_derived_obligation": "cluster_to_cluster_then_cluster_to_child",
+      "direction": "TD",
+      "grid_width": 20,
+      "grid_height": 30,
+      "sentinel_row": 29,
+      "exact_following_token": "AFTER_FLOW_SEMANTICS",
+      "frames": [
+        {
+          "entity_kind": "group",
+          "id": "three",
+          "rect": [
+            2,
+            2,
+            14,
+            10
+          ],
+          "label_start": [
+            3,
+            3
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "c2",
+          "rect": [
+            5,
+            6,
+            11,
+            8
+          ],
+          "label_start": [
+            6,
+            7
+          ]
+        },
+        {
+          "entity_kind": "group",
+          "id": "two",
+          "rect": [
+            2,
+            18,
+            14,
+            26
+          ],
+          "label_start": [
+            3,
+            19
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "b1",
+          "rect": [
+            5,
+            22,
+            11,
+            24
+          ],
+          "label_start": [
+            6,
+            23
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "edge_role": "group_to_group",
+          "source": {
+            "kind": "group",
+            "id": "three"
+          },
+          "target": {
+            "kind": "group",
+            "id": "two"
+          },
+          "source_port": {
+            "point": [
+              8,
+              10
+            ],
+            "outward": "D",
+            "glyph": "┬"
+          },
+          "target_port": {
+            "point": [
+              8,
+              18
+            ],
+            "outward": "U",
+            "glyph": "─"
+          },
+          "arrow_head": {
+            "point": [
+              8,
+              17
+            ],
+            "glyph": "▼"
+          },
+          "route_glyphs": [
+            [
+              8,
+              11,
+              "│"
+            ],
+            [
+              8,
+              12,
+              "│"
+            ],
+            [
+              8,
+              13,
+              "│"
+            ],
+            [
+              8,
+              14,
+              "│"
+            ],
+            [
+              8,
+              15,
+              "│"
+            ],
+            [
+              8,
+              16,
+              "│"
+            ]
+          ]
+        },
+        {
+          "edge_role": "group_to_child",
+          "source": {
+            "kind": "group",
+            "id": "two"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "c2"
+          },
+          "source_port": {
+            "point": [
+              12,
+              18
+            ],
+            "outward": "U",
+            "glyph": "┴"
+          },
+          "target_port": {
+            "point": [
+              10,
+              8
+            ],
+            "outward": "D",
+            "glyph": "─"
+          },
+          "arrow_head": {
+            "point": [
+              10,
+              9
+            ],
+            "glyph": "▲"
+          },
+          "route_glyphs": [
+            [
+              12,
+              17,
+              "│"
+            ],
+            [
+              12,
+              16,
+              "│"
+            ],
+            [
+              12,
+              15,
+              "│"
+            ],
+            [
+              12,
+              14,
+              "│"
+            ],
+            [
+              12,
+              13,
+              "│"
+            ],
+            [
+              12,
+              12,
+              "│"
+            ],
+            [
+              12,
+              11,
+              "┐"
+            ],
+            [
+              11,
+              11,
+              "─"
+            ],
+            [
+              10,
+              11,
+              "└"
+            ],
+            [
+              10,
+              10,
+              "┼"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cluster_to_cluster_then_cluster_to_child_bt_hand_good",
+      "source_derived_obligation": "cluster_to_cluster_then_cluster_to_child",
+      "direction": "BT",
+      "grid_width": 20,
+      "grid_height": 30,
+      "sentinel_row": 29,
+      "exact_following_token": "AFTER_FLOW_SEMANTICS",
+      "frames": [
+        {
+          "entity_kind": "group",
+          "id": "three",
+          "rect": [
+            2,
+            19,
+            14,
+            27
+          ],
+          "label_start": [
+            3,
+            20
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "c2",
+          "rect": [
+            5,
+            21,
+            11,
+            23
+          ],
+          "label_start": [
+            6,
+            22
+          ]
+        },
+        {
+          "entity_kind": "group",
+          "id": "two",
+          "rect": [
+            2,
+            3,
+            14,
+            11
+          ],
+          "label_start": [
+            3,
+            4
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "b1",
+          "rect": [
+            5,
+            5,
+            11,
+            7
+          ],
+          "label_start": [
+            6,
+            6
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "edge_role": "group_to_group",
+          "source": {
+            "kind": "group",
+            "id": "three"
+          },
+          "target": {
+            "kind": "group",
+            "id": "two"
+          },
+          "source_port": {
+            "point": [
+              8,
+              19
+            ],
+            "outward": "U",
+            "glyph": "┴"
+          },
+          "target_port": {
+            "point": [
+              8,
+              11
+            ],
+            "outward": "D",
+            "glyph": "─"
+          },
+          "arrow_head": {
+            "point": [
+              8,
+              12
+            ],
+            "glyph": "▲"
+          },
+          "route_glyphs": [
+            [
+              8,
+              18,
+              "│"
+            ],
+            [
+              8,
+              17,
+              "│"
+            ],
+            [
+              8,
+              16,
+              "│"
+            ],
+            [
+              8,
+              15,
+              "│"
+            ],
+            [
+              8,
+              14,
+              "│"
+            ],
+            [
+              8,
+              13,
+              "│"
+            ]
+          ]
+        },
+        {
+          "edge_role": "group_to_child",
+          "source": {
+            "kind": "group",
+            "id": "two"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "c2"
+          },
+          "source_port": {
+            "point": [
+              12,
+              11
+            ],
+            "outward": "D",
+            "glyph": "┬"
+          },
+          "target_port": {
+            "point": [
+              10,
+              21
+            ],
+            "outward": "U",
+            "glyph": "─"
+          },
+          "arrow_head": {
+            "point": [
+              10,
+              20
+            ],
+            "glyph": "▼"
+          },
+          "route_glyphs": [
+            [
+              12,
+              12,
+              "│"
+            ],
+            [
+              12,
+              13,
+              "│"
+            ],
+            [
+              12,
+              14,
+              "│"
+            ],
+            [
+              12,
+              15,
+              "│"
+            ],
+            [
+              12,
+              16,
+              "│"
+            ],
+            [
+              12,
+              17,
+              "│"
+            ],
+            [
+              12,
+              18,
+              "┘"
+            ],
+            [
+              11,
+              18,
+              "─"
+            ],
+            [
+              10,
+              18,
+              "┌"
+            ],
+            [
+              10,
+              19,
+              "┼"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cluster_to_cluster_then_cluster_to_child_lr_hand_good",
+      "source_derived_obligation": "cluster_to_cluster_then_cluster_to_child",
+      "direction": "LR",
+      "grid_width": 38,
+      "grid_height": 20,
+      "sentinel_row": 19,
+      "exact_following_token": "AFTER_FLOW_SEMANTICS",
+      "frames": [
+        {
+          "entity_kind": "group",
+          "id": "three",
+          "rect": [
+            2,
+            2,
+            12,
+            14
+          ],
+          "label_start": [
+            3,
+            3
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "c2",
+          "rect": [
+            5,
+            5,
+            10,
+            13
+          ],
+          "label_start": [
+            6,
+            6
+          ]
+        },
+        {
+          "entity_kind": "group",
+          "id": "two",
+          "rect": [
+            24,
+            2,
+            34,
+            14
+          ],
+          "label_start": [
+            25,
+            3
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "b1",
+          "rect": [
+            26,
+            5,
+            32,
+            13
+          ],
+          "label_start": [
+            27,
+            6
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "edge_role": "group_to_group",
+          "source": {
+            "kind": "group",
+            "id": "three"
+          },
+          "target": {
+            "kind": "group",
+            "id": "two"
+          },
+          "source_port": {
+            "point": [
+              12,
+              8
+            ],
+            "outward": "R",
+            "glyph": "├"
+          },
+          "target_port": {
+            "point": [
+              24,
+              8
+            ],
+            "outward": "L",
+            "glyph": "│"
+          },
+          "arrow_head": {
+            "point": [
+              23,
+              8
+            ],
+            "glyph": "▶"
+          },
+          "route_glyphs": [
+            [
+              13,
+              8,
+              "─"
+            ],
+            [
+              14,
+              8,
+              "─"
+            ],
+            [
+              15,
+              8,
+              "─"
+            ],
+            [
+              16,
+              8,
+              "─"
+            ],
+            [
+              17,
+              8,
+              "─"
+            ],
+            [
+              18,
+              8,
+              "─"
+            ],
+            [
+              19,
+              8,
+              "─"
+            ],
+            [
+              20,
+              8,
+              "─"
+            ],
+            [
+              21,
+              8,
+              "─"
+            ],
+            [
+              22,
+              8,
+              "─"
+            ]
+          ]
+        },
+        {
+          "edge_role": "group_to_child",
+          "source": {
+            "kind": "group",
+            "id": "two"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "c2"
+          },
+          "source_port": {
+            "point": [
+              24,
+              11
+            ],
+            "outward": "L",
+            "glyph": "┤"
+          },
+          "target_port": {
+            "point": [
+              10,
+              10
+            ],
+            "outward": "R",
+            "glyph": "│"
+          },
+          "arrow_head": {
+            "point": [
+              11,
+              10
+            ],
+            "glyph": "◀"
+          },
+          "route_glyphs": [
+            [
+              23,
+              11,
+              "─"
+            ],
+            [
+              22,
+              11,
+              "─"
+            ],
+            [
+              21,
+              11,
+              "─"
+            ],
+            [
+              20,
+              11,
+              "─"
+            ],
+            [
+              19,
+              11,
+              "─"
+            ],
+            [
+              18,
+              11,
+              "─"
+            ],
+            [
+              17,
+              11,
+              "─"
+            ],
+            [
+              16,
+              11,
+              "─"
+            ],
+            [
+              15,
+              11,
+              "─"
+            ],
+            [
+              14,
+              11,
+              "─"
+            ],
+            [
+              13,
+              11,
+              "└"
+            ],
+            [
+              13,
+              10,
+              "┐"
+            ],
+            [
+              12,
+              10,
+              "┼"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cluster_to_cluster_then_cluster_to_child_rl_hand_good",
+      "source_derived_obligation": "cluster_to_cluster_then_cluster_to_child",
+      "direction": "RL",
+      "grid_width": 38,
+      "grid_height": 20,
+      "sentinel_row": 19,
+      "exact_following_token": "AFTER_FLOW_SEMANTICS",
+      "frames": [
+        {
+          "entity_kind": "group",
+          "id": "three",
+          "rect": [
+            25,
+            2,
+            35,
+            14
+          ],
+          "label_start": [
+            26,
+            3
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "c2",
+          "rect": [
+            27,
+            5,
+            32,
+            13
+          ],
+          "label_start": [
+            28,
+            6
+          ]
+        },
+        {
+          "entity_kind": "group",
+          "id": "two",
+          "rect": [
+            3,
+            2,
+            13,
+            14
+          ],
+          "label_start": [
+            4,
+            3
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "b1",
+          "rect": [
+            5,
+            5,
+            11,
+            13
+          ],
+          "label_start": [
+            6,
+            6
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "edge_role": "group_to_group",
+          "source": {
+            "kind": "group",
+            "id": "three"
+          },
+          "target": {
+            "kind": "group",
+            "id": "two"
+          },
+          "source_port": {
+            "point": [
+              25,
+              8
+            ],
+            "outward": "L",
+            "glyph": "┤"
+          },
+          "target_port": {
+            "point": [
+              13,
+              8
+            ],
+            "outward": "R",
+            "glyph": "│"
+          },
+          "arrow_head": {
+            "point": [
+              14,
+              8
+            ],
+            "glyph": "◀"
+          },
+          "route_glyphs": [
+            [
+              24,
+              8,
+              "─"
+            ],
+            [
+              23,
+              8,
+              "─"
+            ],
+            [
+              22,
+              8,
+              "─"
+            ],
+            [
+              21,
+              8,
+              "─"
+            ],
+            [
+              20,
+              8,
+              "─"
+            ],
+            [
+              19,
+              8,
+              "─"
+            ],
+            [
+              18,
+              8,
+              "─"
+            ],
+            [
+              17,
+              8,
+              "─"
+            ],
+            [
+              16,
+              8,
+              "─"
+            ],
+            [
+              15,
+              8,
+              "─"
+            ]
+          ]
+        },
+        {
+          "edge_role": "group_to_child",
+          "source": {
+            "kind": "group",
+            "id": "two"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "c2"
+          },
+          "source_port": {
+            "point": [
+              13,
+              11
+            ],
+            "outward": "R",
+            "glyph": "├"
+          },
+          "target_port": {
+            "point": [
+              27,
+              10
+            ],
+            "outward": "L",
+            "glyph": "│"
+          },
+          "arrow_head": {
+            "point": [
+              26,
+              10
+            ],
+            "glyph": "▶"
+          },
+          "route_glyphs": [
+            [
+              14,
+              11,
+              "─"
+            ],
+            [
+              15,
+              11,
+              "─"
+            ],
+            [
+              16,
+              11,
+              "─"
+            ],
+            [
+              17,
+              11,
+              "─"
+            ],
+            [
+              18,
+              11,
+              "─"
+            ],
+            [
+              19,
+              11,
+              "─"
+            ],
+            [
+              20,
+              11,
+              "─"
+            ],
+            [
+              21,
+              11,
+              "─"
+            ],
+            [
+              22,
+              11,
+              "─"
+            ],
+            [
+              23,
+              11,
+              "─"
+            ],
+            [
+              24,
+              11,
+              "┘"
+            ],
+            [
+              24,
+              10,
+              "┌"
+            ],
+            [
+              25,
+              10,
+              "┼"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cluster_to_cluster_plus_child_crossing_td_hand_good",
+      "source_derived_obligation": "cluster_to_cluster_plus_child_crossing",
+      "direction": "TD",
+      "grid_width": 24,
+      "grid_height": 40,
+      "sentinel_row": 39,
+      "exact_following_token": "AFTER_FLOW_SEMANTICS",
+      "frames": [
+        {
+          "entity_kind": "group",
+          "id": "S1",
+          "rect": [
+            2,
+            2,
+            20,
+            18
+          ],
+          "label_start": [
+            3,
+            3
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub1",
+          "rect": [
+            4,
+            5,
+            9,
+            7
+          ],
+          "label_start": [
+            5,
+            6
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub2",
+          "rect": [
+            12,
+            11,
+            17,
+            13
+          ],
+          "label_start": [
+            13,
+            12
+          ]
+        },
+        {
+          "entity_kind": "group",
+          "id": "S2",
+          "rect": [
+            2,
+            26,
+            20,
+            36
+          ],
+          "label_start": [
+            3,
+            27
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub4",
+          "rect": [
+            8,
+            29,
+            14,
+            31
+          ],
+          "label_start": [
+            9,
+            30
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "edge_role": "child_internal",
+          "source": {
+            "kind": "vertex",
+            "id": "sub1"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "sub2"
+          },
+          "source_port": {
+            "point": [
+              6,
+              7
+            ],
+            "outward": "D",
+            "glyph": "┬"
+          },
+          "target_port": {
+            "point": [
+              14,
+              11
+            ],
+            "outward": "U",
+            "glyph": "─"
+          },
+          "arrow_head": {
+            "point": [
+              14,
+              10
+            ],
+            "glyph": "▼"
+          },
+          "route_glyphs": [
+            [
+              6,
+              8,
+              "│"
+            ],
+            [
+              6,
+              9,
+              "└"
+            ],
+            [
+              7,
+              9,
+              "─"
+            ],
+            [
+              8,
+              9,
+              "─"
+            ],
+            [
+              9,
+              9,
+              "─"
+            ],
+            [
+              10,
+              9,
+              "─"
+            ],
+            [
+              11,
+              9,
+              "─"
+            ],
+            [
+              12,
+              9,
+              "─"
+            ],
+            [
+              13,
+              9,
+              "─"
+            ],
+            [
+              14,
+              9,
+              "┐"
+            ]
+          ]
+        },
+        {
+          "edge_role": "group_to_group",
+          "source": {
+            "kind": "group",
+            "id": "S1"
+          },
+          "target": {
+            "kind": "group",
+            "id": "S2"
+          },
+          "source_port": {
+            "point": [
+              17,
+              18
+            ],
+            "outward": "D",
+            "glyph": "┬"
+          },
+          "target_port": {
+            "point": [
+              17,
+              26
+            ],
+            "outward": "U",
+            "glyph": "─"
+          },
+          "arrow_head": {
+            "point": [
+              17,
+              25
+            ],
+            "glyph": "▼"
+          },
+          "route_glyphs": [
+            [
+              17,
+              19,
+              "│"
+            ],
+            [
+              17,
+              20,
+              "│"
+            ],
+            [
+              17,
+              21,
+              "│"
+            ],
+            [
+              17,
+              22,
+              "│"
+            ],
+            [
+              17,
+              23,
+              "│"
+            ],
+            [
+              17,
+              24,
+              "│"
+            ]
+          ]
+        },
+        {
+          "edge_role": "child_cross_container",
+          "source": {
+            "kind": "vertex",
+            "id": "sub1"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "sub4"
+          },
+          "source_port": {
+            "point": [
+              4,
+              6
+            ],
+            "outward": "L",
+            "glyph": "┤"
+          },
+          "target_port": {
+            "point": [
+              11,
+              29
+            ],
+            "outward": "U",
+            "glyph": "─"
+          },
+          "arrow_head": {
+            "point": [
+              11,
+              28
+            ],
+            "glyph": "▼"
+          },
+          "route_glyphs": [
+            [
+              3,
+              6,
+              "┌"
+            ],
+            [
+              3,
+              7,
+              "│"
+            ],
+            [
+              3,
+              8,
+              "│"
+            ],
+            [
+              3,
+              9,
+              "│"
+            ],
+            [
+              3,
+              10,
+              "│"
+            ],
+            [
+              3,
+              11,
+              "│"
+            ],
+            [
+              3,
+              12,
+              "│"
+            ],
+            [
+              3,
+              13,
+              "│"
+            ],
+            [
+              3,
+              14,
+              "│"
+            ],
+            [
+              3,
+              15,
+              "│"
+            ],
+            [
+              3,
+              16,
+              "│"
+            ],
+            [
+              3,
+              17,
+              "│"
+            ],
+            [
+              3,
+              18,
+              "┼"
+            ],
+            [
+              3,
+              19,
+              "└"
+            ],
+            [
+              4,
+              19,
+              "─"
+            ],
+            [
+              5,
+              19,
+              "─"
+            ],
+            [
+              6,
+              19,
+              "─"
+            ],
+            [
+              7,
+              19,
+              "─"
+            ],
+            [
+              8,
+              19,
+              "─"
+            ],
+            [
+              9,
+              19,
+              "─"
+            ],
+            [
+              10,
+              19,
+              "─"
+            ],
+            [
+              11,
+              19,
+              "┐"
+            ],
+            [
+              11,
+              20,
+              "│"
+            ],
+            [
+              11,
+              21,
+              "│"
+            ],
+            [
+              11,
+              22,
+              "│"
+            ],
+            [
+              11,
+              23,
+              "│"
+            ],
+            [
+              11,
+              24,
+              "│"
+            ],
+            [
+              11,
+              25,
+              "│"
+            ],
+            [
+              11,
+              26,
+              "┼"
+            ],
+            [
+              11,
+              27,
+              "│"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cluster_to_cluster_plus_child_crossing_bt_hand_good",
+      "source_derived_obligation": "cluster_to_cluster_plus_child_crossing",
+      "direction": "BT",
+      "grid_width": 24,
+      "grid_height": 40,
+      "sentinel_row": 39,
+      "exact_following_token": "AFTER_FLOW_SEMANTICS",
+      "frames": [
+        {
+          "entity_kind": "group",
+          "id": "S1",
+          "rect": [
+            2,
+            21,
+            20,
+            37
+          ],
+          "label_start": [
+            5,
+            22
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub1",
+          "rect": [
+            4,
+            32,
+            9,
+            34
+          ],
+          "label_start": [
+            5,
+            33
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub2",
+          "rect": [
+            12,
+            26,
+            17,
+            28
+          ],
+          "label_start": [
+            13,
+            27
+          ]
+        },
+        {
+          "entity_kind": "group",
+          "id": "S2",
+          "rect": [
+            2,
+            3,
+            20,
+            13
+          ],
+          "label_start": [
+            3,
+            4
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub4",
+          "rect": [
+            8,
+            8,
+            14,
+            10
+          ],
+          "label_start": [
+            9,
+            9
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "edge_role": "child_internal",
+          "source": {
+            "kind": "vertex",
+            "id": "sub1"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "sub2"
+          },
+          "source_port": {
+            "point": [
+              6,
+              32
+            ],
+            "outward": "U",
+            "glyph": "┴"
+          },
+          "target_port": {
+            "point": [
+              14,
+              28
+            ],
+            "outward": "D",
+            "glyph": "─"
+          },
+          "arrow_head": {
+            "point": [
+              14,
+              29
+            ],
+            "glyph": "▲"
+          },
+          "route_glyphs": [
+            [
+              6,
+              31,
+              "┌"
+            ],
+            [
+              7,
+              31,
+              "─"
+            ],
+            [
+              8,
+              31,
+              "─"
+            ],
+            [
+              9,
+              31,
+              "─"
+            ],
+            [
+              10,
+              31,
+              "─"
+            ],
+            [
+              11,
+              31,
+              "─"
+            ],
+            [
+              12,
+              31,
+              "─"
+            ],
+            [
+              13,
+              31,
+              "─"
+            ],
+            [
+              14,
+              31,
+              "┘"
+            ],
+            [
+              14,
+              30,
+              "│"
+            ]
+          ]
+        },
+        {
+          "edge_role": "group_to_group",
+          "source": {
+            "kind": "group",
+            "id": "S1"
+          },
+          "target": {
+            "kind": "group",
+            "id": "S2"
+          },
+          "source_port": {
+            "point": [
+              17,
+              21
+            ],
+            "outward": "U",
+            "glyph": "┴"
+          },
+          "target_port": {
+            "point": [
+              17,
+              13
+            ],
+            "outward": "D",
+            "glyph": "─"
+          },
+          "arrow_head": {
+            "point": [
+              17,
+              14
+            ],
+            "glyph": "▲"
+          },
+          "route_glyphs": [
+            [
+              17,
+              20,
+              "│"
+            ],
+            [
+              17,
+              19,
+              "│"
+            ],
+            [
+              17,
+              18,
+              "│"
+            ],
+            [
+              17,
+              17,
+              "│"
+            ],
+            [
+              17,
+              16,
+              "│"
+            ],
+            [
+              17,
+              15,
+              "│"
+            ]
+          ]
+        },
+        {
+          "edge_role": "child_cross_container",
+          "source": {
+            "kind": "vertex",
+            "id": "sub1"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "sub4"
+          },
+          "source_port": {
+            "point": [
+              4,
+              33
+            ],
+            "outward": "L",
+            "glyph": "┤"
+          },
+          "target_port": {
+            "point": [
+              11,
+              10
+            ],
+            "outward": "D",
+            "glyph": "─"
+          },
+          "arrow_head": {
+            "point": [
+              11,
+              11
+            ],
+            "glyph": "▲"
+          },
+          "route_glyphs": [
+            [
+              3,
+              33,
+              "└"
+            ],
+            [
+              3,
+              32,
+              "│"
+            ],
+            [
+              3,
+              31,
+              "│"
+            ],
+            [
+              3,
+              30,
+              "│"
+            ],
+            [
+              3,
+              29,
+              "│"
+            ],
+            [
+              3,
+              28,
+              "│"
+            ],
+            [
+              3,
+              27,
+              "│"
+            ],
+            [
+              3,
+              26,
+              "│"
+            ],
+            [
+              3,
+              25,
+              "│"
+            ],
+            [
+              3,
+              24,
+              "│"
+            ],
+            [
+              3,
+              23,
+              "│"
+            ],
+            [
+              3,
+              22,
+              "│"
+            ],
+            [
+              3,
+              21,
+              "┼"
+            ],
+            [
+              3,
+              20,
+              "┌"
+            ],
+            [
+              4,
+              20,
+              "─"
+            ],
+            [
+              5,
+              20,
+              "─"
+            ],
+            [
+              6,
+              20,
+              "─"
+            ],
+            [
+              7,
+              20,
+              "─"
+            ],
+            [
+              8,
+              20,
+              "─"
+            ],
+            [
+              9,
+              20,
+              "─"
+            ],
+            [
+              10,
+              20,
+              "─"
+            ],
+            [
+              11,
+              20,
+              "┘"
+            ],
+            [
+              11,
+              19,
+              "│"
+            ],
+            [
+              11,
+              18,
+              "│"
+            ],
+            [
+              11,
+              17,
+              "│"
+            ],
+            [
+              11,
+              16,
+              "│"
+            ],
+            [
+              11,
+              15,
+              "│"
+            ],
+            [
+              11,
+              14,
+              "│"
+            ],
+            [
+              11,
+              13,
+              "┼"
+            ],
+            [
+              11,
+              12,
+              "│"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cluster_to_cluster_plus_child_crossing_lr_hand_good",
+      "source_derived_obligation": "cluster_to_cluster_plus_child_crossing",
+      "direction": "LR",
+      "grid_width": 48,
+      "grid_height": 24,
+      "sentinel_row": 23,
+      "exact_following_token": "AFTER_FLOW_SEMANTICS",
+      "frames": [
+        {
+          "entity_kind": "group",
+          "id": "S1",
+          "rect": [
+            2,
+            2,
+            22,
+            20
+          ],
+          "label_start": [
+            3,
+            3
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub1",
+          "rect": [
+            4,
+            6,
+            9,
+            10
+          ],
+          "label_start": [
+            5,
+            7
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub2",
+          "rect": [
+            14,
+            6,
+            19,
+            10
+          ],
+          "label_start": [
+            15,
+            7
+          ]
+        },
+        {
+          "entity_kind": "group",
+          "id": "S2",
+          "rect": [
+            30,
+            2,
+            42,
+            20
+          ],
+          "label_start": [
+            31,
+            3
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub4",
+          "rect": [
+            33,
+            10,
+            38,
+            14
+          ],
+          "label_start": [
+            34,
+            11
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "edge_role": "child_internal",
+          "source": {
+            "kind": "vertex",
+            "id": "sub1"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "sub2"
+          },
+          "source_port": {
+            "point": [
+              9,
+              8
+            ],
+            "outward": "R",
+            "glyph": "├"
+          },
+          "target_port": {
+            "point": [
+              14,
+              8
+            ],
+            "outward": "L",
+            "glyph": "│"
+          },
+          "arrow_head": {
+            "point": [
+              13,
+              8
+            ],
+            "glyph": "▶"
+          },
+          "route_glyphs": [
+            [
+              10,
+              8,
+              "─"
+            ],
+            [
+              11,
+              8,
+              "─"
+            ],
+            [
+              12,
+              8,
+              "─"
+            ]
+          ]
+        },
+        {
+          "edge_role": "group_to_group",
+          "source": {
+            "kind": "group",
+            "id": "S1"
+          },
+          "target": {
+            "kind": "group",
+            "id": "S2"
+          },
+          "source_port": {
+            "point": [
+              22,
+              17
+            ],
+            "outward": "R",
+            "glyph": "├"
+          },
+          "target_port": {
+            "point": [
+              30,
+              17
+            ],
+            "outward": "L",
+            "glyph": "│"
+          },
+          "arrow_head": {
+            "point": [
+              29,
+              17
+            ],
+            "glyph": "▶"
+          },
+          "route_glyphs": [
+            [
+              23,
+              17,
+              "─"
+            ],
+            [
+              24,
+              17,
+              "─"
+            ],
+            [
+              25,
+              17,
+              "─"
+            ],
+            [
+              26,
+              17,
+              "─"
+            ],
+            [
+              27,
+              17,
+              "─"
+            ],
+            [
+              28,
+              17,
+              "─"
+            ]
+          ]
+        },
+        {
+          "edge_role": "child_cross_container",
+          "source": {
+            "kind": "vertex",
+            "id": "sub1"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "sub4"
+          },
+          "source_port": {
+            "point": [
+              6,
+              10
+            ],
+            "outward": "D",
+            "glyph": "┬"
+          },
+          "target_port": {
+            "point": [
+              33,
+              12
+            ],
+            "outward": "L",
+            "glyph": "│"
+          },
+          "arrow_head": {
+            "point": [
+              32,
+              12
+            ],
+            "glyph": "▶"
+          },
+          "route_glyphs": [
+            [
+              6,
+              11,
+              "│"
+            ],
+            [
+              6,
+              12,
+              "└"
+            ],
+            [
+              7,
+              12,
+              "─"
+            ],
+            [
+              8,
+              12,
+              "─"
+            ],
+            [
+              9,
+              12,
+              "─"
+            ],
+            [
+              10,
+              12,
+              "─"
+            ],
+            [
+              11,
+              12,
+              "─"
+            ],
+            [
+              12,
+              12,
+              "─"
+            ],
+            [
+              13,
+              12,
+              "─"
+            ],
+            [
+              14,
+              12,
+              "─"
+            ],
+            [
+              15,
+              12,
+              "─"
+            ],
+            [
+              16,
+              12,
+              "─"
+            ],
+            [
+              17,
+              12,
+              "─"
+            ],
+            [
+              18,
+              12,
+              "─"
+            ],
+            [
+              19,
+              12,
+              "─"
+            ],
+            [
+              20,
+              12,
+              "─"
+            ],
+            [
+              21,
+              12,
+              "─"
+            ],
+            [
+              22,
+              12,
+              "┼"
+            ],
+            [
+              23,
+              12,
+              "─"
+            ],
+            [
+              24,
+              12,
+              "─"
+            ],
+            [
+              25,
+              12,
+              "─"
+            ],
+            [
+              26,
+              12,
+              "─"
+            ],
+            [
+              27,
+              12,
+              "─"
+            ],
+            [
+              28,
+              12,
+              "─"
+            ],
+            [
+              29,
+              12,
+              "─"
+            ],
+            [
+              30,
+              12,
+              "┼"
+            ],
+            [
+              31,
+              12,
+              "─"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cluster_to_cluster_plus_child_crossing_rl_hand_good",
+      "source_derived_obligation": "cluster_to_cluster_plus_child_crossing",
+      "direction": "RL",
+      "grid_width": 48,
+      "grid_height": 24,
+      "sentinel_row": 23,
+      "exact_following_token": "AFTER_FLOW_SEMANTICS",
+      "frames": [
+        {
+          "entity_kind": "group",
+          "id": "S1",
+          "rect": [
+            25,
+            2,
+            45,
+            20
+          ],
+          "label_start": [
+            26,
+            3
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub1",
+          "rect": [
+            38,
+            6,
+            43,
+            10
+          ],
+          "label_start": [
+            39,
+            7
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub2",
+          "rect": [
+            28,
+            6,
+            33,
+            10
+          ],
+          "label_start": [
+            29,
+            7
+          ]
+        },
+        {
+          "entity_kind": "group",
+          "id": "S2",
+          "rect": [
+            5,
+            2,
+            17,
+            20
+          ],
+          "label_start": [
+            6,
+            3
+          ]
+        },
+        {
+          "entity_kind": "vertex",
+          "id": "sub4",
+          "rect": [
+            9,
+            10,
+            14,
+            14
+          ],
+          "label_start": [
+            10,
+            11
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "edge_role": "child_internal",
+          "source": {
+            "kind": "vertex",
+            "id": "sub1"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "sub2"
+          },
+          "source_port": {
+            "point": [
+              38,
+              8
+            ],
+            "outward": "L",
+            "glyph": "┤"
+          },
+          "target_port": {
+            "point": [
+              33,
+              8
+            ],
+            "outward": "R",
+            "glyph": "│"
+          },
+          "arrow_head": {
+            "point": [
+              34,
+              8
+            ],
+            "glyph": "◀"
+          },
+          "route_glyphs": [
+            [
+              37,
+              8,
+              "─"
+            ],
+            [
+              36,
+              8,
+              "─"
+            ],
+            [
+              35,
+              8,
+              "─"
+            ]
+          ]
+        },
+        {
+          "edge_role": "group_to_group",
+          "source": {
+            "kind": "group",
+            "id": "S1"
+          },
+          "target": {
+            "kind": "group",
+            "id": "S2"
+          },
+          "source_port": {
+            "point": [
+              25,
+              17
+            ],
+            "outward": "L",
+            "glyph": "┤"
+          },
+          "target_port": {
+            "point": [
+              17,
+              17
+            ],
+            "outward": "R",
+            "glyph": "│"
+          },
+          "arrow_head": {
+            "point": [
+              18,
+              17
+            ],
+            "glyph": "◀"
+          },
+          "route_glyphs": [
+            [
+              24,
+              17,
+              "─"
+            ],
+            [
+              23,
+              17,
+              "─"
+            ],
+            [
+              22,
+              17,
+              "─"
+            ],
+            [
+              21,
+              17,
+              "─"
+            ],
+            [
+              20,
+              17,
+              "─"
+            ],
+            [
+              19,
+              17,
+              "─"
+            ]
+          ]
+        },
+        {
+          "edge_role": "child_cross_container",
+          "source": {
+            "kind": "vertex",
+            "id": "sub1"
+          },
+          "target": {
+            "kind": "vertex",
+            "id": "sub4"
+          },
+          "source_port": {
+            "point": [
+              41,
+              10
+            ],
+            "outward": "D",
+            "glyph": "┬"
+          },
+          "target_port": {
+            "point": [
+              14,
+              12
+            ],
+            "outward": "R",
+            "glyph": "│"
+          },
+          "arrow_head": {
+            "point": [
+              15,
+              12
+            ],
+            "glyph": "◀"
+          },
+          "route_glyphs": [
+            [
+              41,
+              11,
+              "│"
+            ],
+            [
+              41,
+              12,
+              "┘"
+            ],
+            [
+              40,
+              12,
+              "─"
+            ],
+            [
+              39,
+              12,
+              "─"
+            ],
+            [
+              38,
+              12,
+              "─"
+            ],
+            [
+              37,
+              12,
+              "─"
+            ],
+            [
+              36,
+              12,
+              "─"
+            ],
+            [
+              35,
+              12,
+              "─"
+            ],
+            [
+              34,
+              12,
+              "─"
+            ],
+            [
+              33,
+              12,
+              "─"
+            ],
+            [
+              32,
+              12,
+              "─"
+            ],
+            [
+              31,
+              12,
+              "─"
+            ],
+            [
+              30,
+              12,
+              "─"
+            ],
+            [
+              29,
+              12,
+              "─"
+            ],
+            [
+              28,
+              12,
+              "─"
+            ],
+            [
+              27,
+              12,
+              "─"
+            ],
+            [
+              26,
+              12,
+              "─"
+            ],
+            [
+              25,
+              12,
+              "┼"
+            ],
+            [
+              24,
+              12,
+              "─"
+            ],
+            [
+              23,
+              12,
+              "─"
+            ],
+            [
+              22,
+              12,
+              "─"
+            ],
+            [
+              21,
+              12,
+              "─"
+            ],
+            [
+              20,
+              12,
+              "─"
+            ],
+            [
+              19,
+              12,
+              "─"
+            ],
+            [
+              18,
+              12,
+              "─"
+            ],
+            [
+              17,
+              12,
+              "┼"
+            ],
+            [
+              16,
+              12,
+              "─"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "negative_controls": [
+    {
+      "id": "semantic_group_to_wrong_child",
+      "basis": "cluster_to_cluster_then_cluster_to_child_td_hand_good",
+      "mutation": "Change the tagged group:two target from vertex:c2 to vertex:b1 while retaining a well-formed decoded Model and the Grid.",
+      "must_reject": "The grid owns the tagged target at child c2, not sibling child b1."
+    },
+    {
+      "id": "semantic_wrong_sibling_group",
+      "basis": "cluster_to_cluster_plus_child_crossing_td_hand_good",
+      "mutation": "Change the tagged S1→S2 source to sibling group S2 while retaining a well-formed decoded Model and the Grid.",
+      "must_reject": "Named group endpoint identity is exact."
+    },
+    {
+      "id": "semantic_group_to_child_source",
+      "basis": "cluster_to_cluster_then_cluster_to_child_td_hand_good",
+      "mutation": "Change the group:two source tag of group_to_child to vertex:b1 in a well-formed decoded Model without changing the Grid.",
+      "must_reject": "The grid owns group two perimeter, not child b1."
+    },
+    {
+      "id": "physical_tangential_group_contact",
+      "basis": "cluster_to_cluster_plus_child_crossing_td_hand_good",
+      "mutation": "Replace the downward S1 group-source junction on its bottom straight border with a right-facing junction.",
+      "must_reject": "A tangential contact is not a legal outward group endpoint."
+    },
+    {
+      "id": "physical_unclaimed_group_shortcut",
+      "basis": "cluster_to_cluster_plus_child_crossing_td_hand_good",
+      "mutation": "Insert an unconsumed container-border junction.",
+      "must_reject": "Perimeter arms require exclusive route ownership."
+    },
+    {
+      "id": "semantic_crossing_boundary_as_group_target",
+      "basis": "cluster_to_cluster_plus_child_crossing_td_hand_good",
+      "mutation": "Retag child-crossing ordinary edge sub1→sub4 as tagged sub1→group:S1 in a rebuilt well-formed Model while retaining the Grid.",
+      "must_reject": "The S1 boundary crossing is not the tagged endpoint; the Grid still ends at child sub4."
+    },
+    {
+      "id": "model_missing_direct_membership",
+      "basis": "cluster_to_cluster_plus_child_crossing_td_hand_good",
+      "mutation": "Remove sub4 from S2 direct membership in a rebuilt well-formed Model.",
+      "must_reject": "Existing group membership obligations remain active."
+    },
+    {
+      "id": "model_duplicate_source_order",
+      "basis": "cluster_to_cluster_plus_child_crossing_td_hand_good",
+      "mutation": "Reuse source_edge_order index 1 and omit index 2.",
+      "must_reject": "Ordinary plus tagged source order is an exact partition."
+    }
+  ],
+  "expected_nonresource_rejections_per_good_scene": 8,
+  "formal_credit_before_native_and_official_owned_execution": 0,
+  "hand_model_bindings": [
+    {
+      "scene_id": "cluster_to_cluster_then_cluster_to_child_td_hand_good",
+      "source_case_id": "flow400_group_endpoint_46",
+      "topology": "cluster_to_cluster_then_cluster_to_child"
+    },
+    {
+      "scene_id": "cluster_to_cluster_then_cluster_to_child_bt_hand_good",
+      "source_case_id": "flow400_group_endpoint_46",
+      "topology": "cluster_to_cluster_then_cluster_to_child"
+    },
+    {
+      "scene_id": "cluster_to_cluster_then_cluster_to_child_lr_hand_good",
+      "source_case_id": "flow400_group_endpoint_46",
+      "topology": "cluster_to_cluster_then_cluster_to_child"
+    },
+    {
+      "scene_id": "cluster_to_cluster_then_cluster_to_child_rl_hand_good",
+      "source_case_id": "flow400_group_endpoint_46",
+      "topology": "cluster_to_cluster_then_cluster_to_child"
+    },
+    {
+      "scene_id": "cluster_to_cluster_plus_child_crossing_td_hand_good",
+      "source_case_id": "flow400_group_endpoint_51",
+      "topology": "cluster_to_cluster_plus_child_crossing"
+    },
+    {
+      "scene_id": "cluster_to_cluster_plus_child_crossing_bt_hand_good",
+      "source_case_id": "flow400_group_endpoint_51",
+      "topology": "cluster_to_cluster_plus_child_crossing"
+    },
+    {
+      "scene_id": "cluster_to_cluster_plus_child_crossing_lr_hand_good",
+      "source_case_id": "flow400_group_endpoint_51",
+      "topology": "cluster_to_cluster_plus_child_crossing"
+    },
+    {
+      "scene_id": "cluster_to_cluster_plus_child_crossing_rl_hand_good",
+      "source_case_id": "flow400_group_endpoint_51",
+      "topology": "cluster_to_cluster_plus_child_crossing"
+    }
+  ]
+}

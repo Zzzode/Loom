@@ -1,0 +1,34 @@
++----------------------------------------------------------------------------------------------------+
+| CAR                                                                                                |
++----------------------------------------------------------------------------------------------------+
+| type(bytes=6)="string" name(bytes=18)="registrationNumber" keys=[bytes=2 "PK"] comment(bytes=0)="" |
+| type(bytes=6)="string" name(bytes=4)="make" keys=[] comment(bytes=0)=""                            |
+| type(bytes=6)="string" name(bytes=5)="model" keys=[] comment(bytes=0)=""                           |
+| type(bytes=8)="string[]" name(bytes=5)="parts" keys=[] comment(bytes=0)=""                         |
++----------------------------------------------------------------------------------------------------+
+
++---------------------------------------------------------------------------------------------------------------------+
+| NAMED-DRIVER                                                                                                        |
++---------------------------------------------------------------------------------------------------------------------+
+| type(bytes=6)="string" name(bytes=21)="carRegistrationNumber" keys=[bytes=2 "PK", bytes=2 "FK"] comment(bytes=0)="" |
+| type(bytes=6)="string" name(bytes=13)="driverLicence" keys=[bytes=2 "PK", bytes=2 "FK"] comment(bytes=0)=""         |
++---------------------------------------------------------------------------------------------------------------------+
+
++------------------------------------------------------------------------------------------------------------------+
+| PERSON                                                                                                           |
++------------------------------------------------------------------------------------------------------------------+
+| type(bytes=6)="string" name(bytes=14)="driversLicense" keys=[bytes=2 "PK"] comment(bytes=13)="The license #"     |
+| type(bytes=10)="string(99)" name(bytes=9)="firstName" keys=[] comment(bytes=30)="Only 99 characters are allowed" |
+| type(bytes=6)="string" name(bytes=8)="lastName" keys=[] comment(bytes=0)=""                                      |
+| type(bytes=6)="string" name(bytes=5)="phone" keys=[bytes=2 "UK"] comment(bytes=0)=""                             |
+| type(bytes=3)="int" name(bytes=3)="age" keys=[] comment(bytes=0)=""                                              |
++------------------------------------------------------------------------------------------------------------------+
+
++--------------+
+| MANUFACTURER |
++--------------+
+
+relations:
+id(bytes=3)="CAR"           ||--o{ id(bytes=12)="NAMED-DRIVER" : allows
+id(bytes=6)="PERSON"        ||--o{ id(bytes=12)="NAMED-DRIVER" : is
+id(bytes=12)="MANUFACTURER" ||--o{ id(bytes=3)="CAR"           : makes

@@ -1,0 +1,54 @@
++----------------+
+| Animal         |
++----------------+
+| +int age       |
+| +String gender |
++----------------+
+| +isMammal()    |
+| +mate()        |
++----------------+
+
++-------------------+
+| Duck              |
++-------------------+
+| +String beakColor |
++-------------------+
+| +swim()           |
+| +quack()          |
++-------------------+
+
++-----------------+
+| Fish            |
++-----------------+
+| -int sizeInFeet |
++-----------------+
+| -canEat()       |
++-----------------+
+
++---------------+
+| Zebra         |
++---------------+
+| +bool is_wild |
++---------------+
+| +run()        |
++---------------+
+
++-------------------------------------------------------------------------------+
+| note                                                                          |
+| can fly                                                                       |
+| can swim                                                                      |
+| can dive                                                                      |
+| can help in debugging                                                         |
+| authored(bytes=56)="can fly<br>can swim<br>can dive<br>can help in debugging" |
++-------------------------------------------------------------------------------+
+
+relations:
+id(bytes=6)="Animal" <|-- id(bytes=4)="Duck"
+id(bytes=6)="Animal" <|-- id(bytes=4)="Fish"
+id(bytes=6)="Animal" <|-- id(bytes=5)="Zebra"
+id(bytes=5)="note1"  ..   id(bytes=4)="Duck"
+
++----------------------+
+| note                 |
+| From Duck till Zebra |
++----------------------+

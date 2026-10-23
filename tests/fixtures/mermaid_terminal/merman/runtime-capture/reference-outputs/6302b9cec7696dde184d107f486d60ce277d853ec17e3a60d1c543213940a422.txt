@@ -1,0 +1,2 @@
+node(bytes=4)="Root" id(bytes=13)="authored-root"
+\-- node(bytes=5)="Child" id(bytes=14)="authored-child"

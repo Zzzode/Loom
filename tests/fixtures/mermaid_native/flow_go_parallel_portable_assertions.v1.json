@@ -1,0 +1,85 @@
+{
+  "schema": "flow_go_parallel_portable_assertions/v1",
+  "upstream_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/render_graph_test.go",
+  "upstream_bytes": 9710,
+  "upstream_sha256": "00bb1c7c6f52cd9c78fcce193199804ce4b43cb20bf699527698075fa7c866c3",
+  "cases": [
+    {
+      "case_id": "mermaid_ascii_706a75a22f2db706",
+      "function": "TestRenderGraphSeparatesDuplicateEdgeLabels",
+      "function_byte_start": 3547,
+      "function_byte_end": 4440,
+      "function_sha256": "3b068d3cac4e46787276c36b28b30380a1e4ab3e6c28da8ac6c1380961864328",
+      "source": "graph LR\nA -->|miss| B\nA -->|hit| B",
+      "source_sha256": "706a75a22f2db706ac346bb5cebc6193819d54a24a2176e229ebb7c48dd5b3cd",
+      "model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"B\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"miss\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"A\",\"target\":\"B\",\"label\":\"hit\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "466f90bef32a0c3f64b0bda9f6dcf48bcdf3b79954fd69dcd1dd21cd7eeb97f2",
+      "required_labels": [
+        "miss",
+        "hit"
+      ],
+      "forbidden_merge": "mhit",
+      "require_distinct_rows": true,
+      "distinct_row_labels": [
+        "miss",
+        "hit"
+      ],
+      "portable_semantic_predicate_callsites": 3,
+      "remaining_contracts": [
+        "NewTestConfig(true,\"cli\") ASCII presentation option and Go error/result API",
+        "Exact complete Go runtime execution; only listed portable predicates ported here"
+      ]
+    },
+    {
+      "case_id": "mermaid_ascii_16c691dff076bf46",
+      "function": "TestRenderGraphSeparatesBidirectionalEdgeLabelsLR",
+      "function_byte_start": 4441,
+      "function_byte_end": 5434,
+      "function_sha256": "96835cad3310ec0a67329d831ef04917d6ff979ea6b43158af1156a418cecdf8",
+      "source": "graph LR\nA -->|workload exits| B\nB -->|run| A",
+      "source_sha256": "16c691dff076bf4621b70f72f16ca31a7c465df519a911fbc1db1c11c9cbe376",
+      "model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"B\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"workload exits\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"A\",\"label\":\"run\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "5004c6e8a8940ec564de9bead1c7c7ca6e4c4d809e2f5c804c899910f679216f",
+      "required_labels": [
+        "workload",
+        "exits",
+        "run"
+      ],
+      "forbidden_merge": "worklorunexits",
+      "require_distinct_rows": true,
+      "distinct_row_labels": [
+        "workload",
+        "run"
+      ],
+      "portable_semantic_predicate_callsites": 3,
+      "remaining_contracts": [
+        "NewTestConfig(true,\"cli\") ASCII presentation option and Go error/result API",
+        "Exact complete Go runtime execution; only listed portable predicates ported here"
+      ]
+    },
+    {
+      "case_id": "mermaid_ascii_a8083e7da7da67ba",
+      "function": "TestRenderGraphSeparatesBidirectionalEdgeLabelsTD",
+      "function_byte_start": 5435,
+      "function_byte_end": 6004,
+      "function_sha256": "978c152d374efcbab919cb273e1c9e2a16406f1766e385e595929609f9d57feb",
+      "source": "graph TD\nA -->|forward| B\nB -->|back| A",
+      "source_sha256": "a8083e7da7da67bac9dcfd4605097dfaac148fad1a577fd90e340eaa575fa57b",
+      "model_json": "{\"direction\":\"TD\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"B\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"forward\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"A\",\"label\":\"back\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "model_sha256": "c017d9996ad18046404242907320d7d01d2d414297f6488202cadddf2484f4f1",
+      "required_labels": [
+        "forward",
+        "back"
+      ],
+      "forbidden_merge": "fbackrd",
+      "require_distinct_rows": false,
+      "distinct_row_labels": [],
+      "portable_semantic_predicate_callsites": 2,
+      "remaining_contracts": [
+        "NewTestConfig(true,\"cli\") ASCII presentation option and Go error/result API",
+        "Exact complete Go runtime execution; only listed portable predicates ported here"
+      ]
+    }
+  ],
+  "qualification": "Three complete source-derived Models and eight portable predicate groups only. Full foreign tests/options/API and five-suite semantic completion remain unproved; no original official drawing credit."
+}

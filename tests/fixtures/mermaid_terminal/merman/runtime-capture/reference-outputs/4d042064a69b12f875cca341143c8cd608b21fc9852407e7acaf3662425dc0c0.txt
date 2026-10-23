@@ -1,0 +1,4 @@
+title(bytes=49)="before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}"
+direction: LR
+  - task(bytes=5)="2024 "
+    * event(bytes=5)="Event"

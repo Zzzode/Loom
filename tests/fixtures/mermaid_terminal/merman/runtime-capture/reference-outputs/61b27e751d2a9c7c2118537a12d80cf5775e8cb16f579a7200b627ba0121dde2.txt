@@ -1,0 +1,9 @@
+# full  # half
+xDomain: band categories=[bytes=1="A"]
+yDomain: linear authored=[0,10] resolved=[0,10]
+values: # series=0 type=bar title(bytes=4)="full" samples=[{index=0 x(bytes=1)="A" value=10 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: # series=1 type=bar title(bytes=4)="half" samples=[{index=0 x(bytes=1)="A" value=5 pointLabel=none clipped=false}] orphanPointLabels=[]
+##
+##
+####
+####

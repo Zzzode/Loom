@@ -1,0 +1,37 @@
++----------+
+| CUSTOMER |
++----------+
+
++------------------+
+| DELIVERY-ADDRESS |
++------------------+
+
++-------+
+| ORDER |
++-------+
+
++---------+
+| INVOICE |
++---------+
+
++------------+
+| ORDER-ITEM |
++------------+
+
++------------------+
+| PRODUCT-CATEGORY |
++------------------+
+
++---------+
+| PRODUCT |
++---------+
+
+relations:
+id(bytes=8)="CUSTOMER"          }|..|{ id(bytes=16)="DELIVERY-ADDRESS" : has
+id(bytes=8)="CUSTOMER"          ||--o{ id(bytes=5)="ORDER"             : places
+id(bytes=8)="CUSTOMER"          ||--o{ id(bytes=7)="INVOICE"           : liable for
+id(bytes=16)="DELIVERY-ADDRESS" ||--o{ id(bytes=5)="ORDER"             : receives
+id(bytes=7)="INVOICE"           ||--|{ id(bytes=5)="ORDER"             : covers
+id(bytes=5)="ORDER"             ||--|{ id(bytes=10)="ORDER-ITEM"       : includes
+id(bytes=16)="PRODUCT-CATEGORY" ||--|{ id(bytes=7)="PRODUCT"           : contains
+id(bytes=7)="PRODUCT"           ||--o{ id(bytes=10)="ORDER-ITEM"       : ordered in

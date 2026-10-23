@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "baseline_manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+  "source_facts": {
+    "path": "sequence_official_linebreaks_facts.json",
+    "sha256": "3cb45fa91233380fa09b140842a71ff97896479f528501c91326407c532f4fc0",
+    "schema": 1,
+    "model_schema": "sequence_native_full_model_legacy_integer/v1",
+    "case_index": 0
+  },
+  "promotions": [
+    {
+      "path": "sequence/nightly-check/should-handle-different-line-breaks.mmd",
+      "track": "body_diagnostic",
+      "raw_sha256": "ff99e85f3bb50d580ab1efcede852a68cbb42ddf70597a5951f9b2ad53c15f7a",
+      "body_offset_utf8_bytes": 235,
+      "body_sha256": "1000d9c69cc29c682413001d5724571953ee50310da3956541e5bcd57ae1c35c",
+      "full_model_sha256": "a0b7b9f0a2c07f5b6da412e29c1aea6cc57af6880f354ed0715338818803c1af",
+      "baseline_expectation_sha256": "74be5fb49744b5f6810c92b890aaa9dc2463f2401d8b0638a2ef4d61cc90581a",
+      "effective": {
+        "expected": "drawn",
+        "reason": "reviewed-native-sequence-linebreaks-entity-once-body",
+        "checks": {
+          "labels": [
+            "multiline",
+            "using <br>",
+            "using <br/>",
+            "using <br />",
+            "using <br \\u{0009}/>"
+          ],
+          "arrows": 4,
+          "ordering": []
+        },
+        "snapshot": "sequence_official_linebreaks_body.txt"
+      },
+      "snapshot_sha256": "acb7e2ef10208df87530f780f54443101bffb7acbd16e6d28d9aa228ca3e1cbb",
+      "reason": "Body-only complete reviewed source Model; raw description frontmatter and original browser/E2E pixels remain separate pending obligations."
+    }
+  ]
+}

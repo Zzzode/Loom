@@ -1,0 +1,466 @@
+{
+  "schema_version": 1,
+  "reviewer": "agent:/root/corpus_oracle",
+  "basis": "All eight complete pinned raw files and body projections read independently before expected facts were manually authored; no Loom output or current parser used to derive expected semantics.",
+  "upstream_commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+  "index_contract": "Actor indexes are authored first-use/declaration order, zero-based. Note.after is the zero-based preceding message index; -1 means before the first message. Arrow enum names match the independently reviewed native Model.",
+  "scope": "Eight body-only semantic projections; raw frontmatter/look/margins/fonts/noteAlign and foreign SVG visual parity are not certified. All eight exact bodies are distinct: left/right alignment fixture labels differ literally, while all four alignment notes are positioned left of Alice.",
+  "cases": [
+    {
+      "path": "sequence/nightly-check/should-render-central-connections-with-notes.mmd",
+      "raw_sha256": "847f93d8ee33fff2c4053d881bee96be9200326233a4ba571c8c996146747fe0",
+      "body_offset_utf8_bytes": 330,
+      "body_sha256": "79996f50a85269d91bd62a85d4992a1e0c185a8082e1a01b6f986461cafce800",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  participant Charlie\n  Alice ()->>() Bob: Central connection\n  Note over Alice,Bob: Central connection note\n  Bob ()-->> Charlie: Reverse central connection\n  Note right of Charlie: Response note\n  Charlie ()<<-->>() Alice: Dual central connection\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          },
+          {
+            "id": "Charlie",
+            "label": "Charlie",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Central connection",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": true,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Reverse central connection",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 2,
+            "to": 0,
+            "label": "Dual central connection",
+            "dashed": true,
+            "arrow": "Both",
+            "central_from": true,
+            "central_to": true,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0,
+              1
+            ],
+            "text": "Central connection note",
+            "position": "over",
+            "after": 0
+          },
+          {
+            "actors": [
+              2
+            ],
+            "text": "Response note",
+            "position": "right",
+            "after": 1
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-different-note-fonts-when-configured.mmd",
+      "raw_sha256": "b6821c78e7518f7ad86e9032a162fc41d0d97de2d918706f55a01e2e34be014b",
+      "body_offset_utf8_bytes": 296,
+      "body_sha256": "b014fb206d3f1fe781a019932bb254c70e26f2629f56218ab789dac9bdde3603",
+      "body": "sequenceDiagram\n  Alice->>Bob: I'm short\n  note left of Alice: I should have bigger fonts\n  Bob->>Alice: Short as well\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "I'm short",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Short as well",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0
+            ],
+            "text": "I should have bigger fonts",
+            "position": "left",
+            "after": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-long-notes-left-of-actor.mmd",
+      "raw_sha256": "0b4a5e7b4d8fdda8133754d1e8addc2f0643e4be2024ec55fa53b615f5c254be",
+      "body_offset_utf8_bytes": 208,
+      "body_sha256": "d55eed73418d649717f125b4adf9ddcf60cd885cceb294bdb93a9163fab077a4",
+      "body": "sequenceDiagram\n  Alice->>Bob: Hola\n  Note left of Alice: Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be\n  Bob->>Alice: I'm short though\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hola",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I'm short though",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0
+            ],
+            "text": "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be",
+            "position": "left",
+            "after": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-long-notes-right-of-actor.mmd",
+      "raw_sha256": "4f9b1410943e8e84e6726a1445f95fa2744cb343ff64212ad13359edace462a0",
+      "body_offset_utf8_bytes": 209,
+      "body_sha256": "d53399bcbde50005b2b98bb7207ade1591ba85e4ee487dcb198c2c5bb6e11be7",
+      "body": "sequenceDiagram\n  Alice->>Bob: Hola\n  Note right of Alice: Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be\n  Bob->>Alice: I'm short though\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hola",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I'm short though",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0
+            ],
+            "text": "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be",
+            "position": "right",
+            "after": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-multi-line-notes-aligned-to-the-left-when-configured.mmd",
+      "raw_sha256": "2a2482ffc239a4f7a4ca05bdb0366c9afa9bdc1cdbef1a34918eb48784e1c42d",
+      "body_offset_utf8_bytes": 248,
+      "body_sha256": "f804fb75d8df5c7dc864764ae769ae7c9aeb89bc6062b60f1078954b84f44f36",
+      "body": "sequenceDiagram\n  Alice->>Bob: I'm short\n  note left of Alice: I am left aligned<br>but also<br>multiline\n  Bob->>Alice: Short as well\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "I'm short",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Short as well",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0
+            ],
+            "text": "I am left aligned\nbut also\nmultiline",
+            "position": "left",
+            "after": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-multi-line-notes-aligned-to-the-right-when-configured.mmd",
+      "raw_sha256": "74aefbb7c3f41d8d4d01c457a5090be6eac7e4350a8f0cbda34d0b29dc51b4bc",
+      "body_offset_utf8_bytes": 251,
+      "body_sha256": "6789d10a584360dd0fb01b2765aeb507e856eda1ebf42ac2ef234bc3a9febbb9",
+      "body": "sequenceDiagram\n  Alice->>Bob: I'm short\n  note left of Alice: I am right aligned<br>but also<br>multiline\n  Bob->>Alice: Short as well\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "I'm short",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Short as well",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0
+            ],
+            "text": "I am right aligned\nbut also\nmultiline",
+            "position": "left",
+            "after": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-notes-aligned-to-the-left-when-configured.mmd",
+      "raw_sha256": "b6cf79de150e2dc6256bc01a72de377a3023e8286f4f1a8074d0ec628e08530e",
+      "body_offset_utf8_bytes": 243,
+      "body_sha256": "3377c09aee2f762d4449a357c3b7d03cfb781512f64d38b6c9d55638558c327d",
+      "body": "sequenceDiagram\n  Alice->>Bob: I'm short\n  note left of Alice: I am left aligned\n  Bob->>Alice: Short as well\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "I'm short",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Short as well",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0
+            ],
+            "text": "I am left aligned",
+            "position": "left",
+            "after": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "sequence/nightly-check/should-render-notes-aligned-to-the-right-when-configured.mmd",
+      "raw_sha256": "6ed7e95e36bf49dc88cd457e8ec3aa0e49d35ba5587a05dcc3289342296e09ce",
+      "body_offset_utf8_bytes": 246,
+      "body_sha256": "5a5b7e0b9c8b1a4da321d689fb04445308c18a6c28194a302681ea7c6f350f05",
+      "body": "sequenceDiagram\n  Alice->>Bob: I'm short\n  note left of Alice: I am right aligned\n  Bob->>Alice: Short as well\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "I'm short",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Short as well",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0
+            ],
+            "text": "I am right aligned",
+            "position": "left",
+            "after": 0
+          }
+        ]
+      }
+    }
+  ]
+}

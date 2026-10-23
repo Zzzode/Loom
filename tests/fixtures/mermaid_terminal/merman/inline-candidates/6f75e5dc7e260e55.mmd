@@ -1,0 +1,8 @@
+sequenceDiagram
+participant A
+participant B
+critical Must lock
+A->>B: Lock
+option Timeout
+B-->>A: Backoff
+end

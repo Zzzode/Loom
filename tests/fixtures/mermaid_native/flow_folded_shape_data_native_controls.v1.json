@@ -1,0 +1,86 @@
+{
+  "schema": "flow_folded_shape_data_native_controls/v1",
+  "qualification": "Native test-first source envelope and closed shape-data grammar controls. Original corpus, Official, terminal, and foreign credit remain zero until separate owners prove them.",
+  "source_design_r1_manifest_sha256": "25c4d054e7f3514181340878a7eb5169e7e8388c881393c71f2a7672a82fc137",
+  "primary_frontend_commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+  "counts": {
+    "controls": 6,
+    "synthetic_controls": 4,
+    "official_full_source_candidates": 2,
+    "original_corpus_credit": 0,
+    "official_credit": 0,
+    "terminal_credit": 0
+  },
+  "controls": [
+    {
+      "id": "folded_description_legacy_control",
+      "provenance": "preexisting_native_closed_control_source_bytes_preserved_now_complete_typed_positive",
+      "source": "---\ndescription: >-\n  Flow.\n---\nflowchart LR\nA --> B\n",
+      "source_bytes": 53,
+      "source_sha256": "f9e2a4c6c6d3dd331b2c6d1eb16f4530c784394a070b2b1019ab4dc449f40f91",
+      "model_json": "{\"direction\":\"LR\",\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"B\",\"shape\":\"rectangle\"}]],\"subgraphs\":[]}",
+      "model_sha256": "a7c1cb6c2cf739ce7d3e34db5199240d929b198caca6f687d0e81d5c4bb3b01f",
+      "official": null
+    },
+    {
+      "id": "shape_data_last_wins",
+      "provenance": "source_derived_unwrapped_shape_data_last_wins_control",
+      "source": "flowchart BT\n  n2[\"Untitled Node\"] --> n1[\"Final Diamond\"]\n  n1@{ shape: rect}\n  n1@{ shape: diam}\n",
+      "source_bytes": 99,
+      "source_sha256": "6525d8dbfe9256e391176e77bb36d8574b6fef59f13953bb020ba99a131c1347",
+      "model_json": "{\"direction\":\"BT\",\"edges\":[{\"source\":\"n2\",\"target\":\"n1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"nodes\":[[\"n2\",{\"id\":\"n2\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}],[\"n1\",{\"id\":\"n1\",\"label\":\"Final Diamond\",\"shape\":\"diamond\"}]],\"subgraphs\":[]}",
+      "model_sha256": "5400452aa704c146b15763d2aa7d118de711b7735c7174954c277c7915350bb1",
+      "official": null
+    },
+    {
+      "id": "shape_data_duplicate_same_value",
+      "provenance": "source_derived_unwrapped_shape_data_duplicate_last_wins_control",
+      "source": "flowchart BT\n  n2[\"Untitled Node\"] --> n1[\"Final Rounded\"]\n  n1@{ shape: diam}\n  n1@{ shape: rounded}\n  n1@{ shape: rounded}\n",
+      "source_bytes": 125,
+      "source_sha256": "788154de9b83a3525cef266218822c28ed3c5ce0a70f4f85ff708e2f1d312c71",
+      "model_json": "{\"direction\":\"BT\",\"edges\":[{\"source\":\"n2\",\"target\":\"n1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"nodes\":[[\"n2\",{\"id\":\"n2\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}],[\"n1\",{\"id\":\"n1\",\"label\":\"Final Rounded\",\"shape\":\"rounded\"}]],\"subgraphs\":[]}",
+      "model_sha256": "0f2d3acf7c1e25eaa8f42ab6f215e360b86cfccb5e2a685eb3c47a6209426a66",
+      "official": null
+    },
+    {
+      "id": "shape_data_endpoint",
+      "provenance": "source_derived_unwrapped_shape_data_endpoint_control",
+      "source": "flowchart BT\n  n2[\"Untitled Node\"] --> n1@{ shape: diam}\n",
+      "source_bytes": 57,
+      "source_sha256": "a3026f1cb4f862fdd422d9c7dbaed44f676ad74fb26658a7221a7ed3af96b1ed",
+      "model_json": "{\"direction\":\"BT\",\"edges\":[{\"source\":\"n2\",\"target\":\"n1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"nodes\":[[\"n2\",{\"id\":\"n2\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}],[\"n1\",{\"id\":\"n1\",\"label\":\"n1\",\"shape\":\"diamond\"}]],\"subgraphs\":[]}",
+      "model_sha256": "88125156b742bea35a32cfc3ac40be98f15e17b899e8a9fc2ebd414f73bd032b",
+      "official": null
+    },
+    {
+      "id": "original_374",
+      "provenance": "official_full_source_complete_typed_model_candidate",
+      "source": "---\ndescription: >-\n  Verifies that the new-syntax shape-data directive @{ shape: diam } renders a\n  node as a diamond/decision shape, as an alternative to the legacy {..}\n  node-syntax for diamonds.\n---\nflowchart BT\n  n2[\"Untitled Node\"] --> n1[\"Diamond\"]\n  n1@{ shape: diam}\n",
+      "source_bytes": 277,
+      "source_sha256": "10a38ba8df398ccaf36e51e7f84dccc2a71af21c005e177d30d2c304ea209890",
+      "model_json": "{\"direction\":\"BT\",\"edges\":[{\"source\":\"n2\",\"target\":\"n1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"nodes\":[[\"n2\",{\"id\":\"n2\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}],[\"n1\",{\"id\":\"n1\",\"label\":\"Diamond\",\"shape\":\"diamond\"}]],\"subgraphs\":[]}",
+      "model_sha256": "b580c648a889affd342d095d4a5336a48ac6d9ee9cc9d011befda50dfec1117b",
+      "official": {
+        "ordinal": 374,
+        "manifest_global_ordinal": 1035,
+        "fixture": "flowchart/visual-check/should-render-a-diamond-shaped-node-using-shape-config.mmd",
+        "source_git_blob": "baf444189639caf9796271db2977b19cb27bb10c"
+      }
+    },
+    {
+      "id": "original_375",
+      "provenance": "official_full_source_complete_typed_model_candidate",
+      "source": "---\ndescription: >-\n  Verifies that the shape-data directives @{ shape: rounded } and @{ shape: rect\n  } correctly render a rounded-corner rectangle and a plain square-corner\n  rectangle side by side, distinguishing the two rectangle variants introduced\n  by the new shape config syntax.\n---\nflowchart BT\n  n2[\"Untitled Node\"] --> n1[\"Rounded Rectangle\"]\n  n3[\"Untitled Node\"] --> n1\n  n1@{ shape: rounded}\n  n3@{ shape: rect}\n",
+      "source_bytes": 427,
+      "source_sha256": "1384844adca4511a7a6f7917ebd6a9563d7dc877e5a4208f7acfc5e32abafacb",
+      "model_json": "{\"direction\":\"BT\",\"edges\":[{\"source\":\"n2\",\"target\":\"n1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"n3\",\"target\":\"n1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"nodes\":[[\"n2\",{\"id\":\"n2\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}],[\"n1\",{\"id\":\"n1\",\"label\":\"Rounded Rectangle\",\"shape\":\"rounded\"}],[\"n3\",{\"id\":\"n3\",\"label\":\"Untitled Node\",\"shape\":\"rectangle\"}]],\"subgraphs\":[]}",
+      "model_sha256": "96c6b1c9ab633e2525646bfe1769fa0495a03095019f84236487b9a88bad05ec",
+      "official": {
+        "ordinal": 375,
+        "manifest_global_ordinal": 1036,
+        "fixture": "flowchart/visual-check/should-render-a-rounded-rectangle-and-a-normal-rectangle.mmd",
+        "source_git_blob": "7a59c8f325e3ae4354e6253ba951e61063999f9f"
+      }
+    }
+  ]
+}

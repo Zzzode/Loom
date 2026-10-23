@@ -1,0 +1,14 @@
+erDiagram
+    CAR ||--o{ DRIVER : "insured for"
+    CAR }o--|| PERSON : "owned by"
+    NODE ||--o{ NODE : "leads to"
+    BOOK["Book"]:::core {
+      string *title PK "Title"
+      string[] author-ref[name](1) FK "Author ref"
+    }
+    BOOK ||--o{ PAGE : has
+    PAGE {
+      int number PK
+    }
+    classDef core fill:#f96,stroke:#333,stroke-width:2px,color:#fff
+    class BOOK core

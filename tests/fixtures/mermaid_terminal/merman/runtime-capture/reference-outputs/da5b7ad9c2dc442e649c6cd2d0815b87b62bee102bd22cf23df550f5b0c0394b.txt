@@ -1,0 +1,9 @@
+    <span style="color:#101010">+--------+</span>
+    <span style="color:#101010">|</span> <span style="color:#202020">Animal</span> <span style="color:#101010">|</span>
+    <span style="color:#101010">+--------+</span>
+         <span style="color:#404040">^</span>
+         <span style="color:#303030">|</span>
+   <span style="color:#505050">+</span><span style="color:#303030">-----</span><span style="color:#505050">+</span><span style="color:#303030">----</span><span style="color:#505050">+</span>
+<span style="color:#101010">+-----+</span>    <span style="color:#101010">+-----+</span>
+<span style="color:#101010">|</span> <span style="color:#202020">Dog</span> <span style="color:#101010">|</span>    <span style="color:#101010">|</span> <span style="color:#202020">Cat</span> <span style="color:#101010">|</span>
+<span style="color:#101010">+-----+</span>    <span style="color:#101010">+-----+</span>

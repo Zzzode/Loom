@@ -1,0 +1,1571 @@
+{
+  "cases": [
+    {
+      "expected": "whole_scene",
+      "name": "lr_leaf_chain_quotient_cycle",
+      "source": "classDiagram\ndirection LR\nnamespace Alpha {\nclass A1\nclass A2\n}\nnamespace Beta {\nclass B1\n}\nA1 --> B1\nB1 --> A2\n",
+      "source_sha256": "a7782eb512df51a67a7a83027be8f840e94aa810149b524731a8a66eee385028",
+      "source_witness": {
+        "longest_path_ranks": {
+          "A1": 0,
+          "A2": 2,
+          "B1": 1
+        },
+        "normalized_leaf_edges": [
+          [
+            "A1",
+            "B1"
+          ],
+          [
+            "B1",
+            "A2"
+          ]
+        ],
+        "ordered_actions": [
+          "AddClass(A1); complete members=[]",
+          "AddClass(A2); complete members=[]",
+          "AddClassesToNamespace(Alpha,A1,A2)",
+          "AddClass(B1); complete members=[]",
+          "AddClassesToNamespace(Beta,B1)",
+          "AddRelation(A1,-->,B1,'')",
+          "AddRelation(B1,-->,A2,'')"
+        ],
+        "physical_lines": [
+          {
+            "byte_length": 13,
+            "byte_offset": 0,
+            "line": 1,
+            "sha256": "7dff4cf5285a1605efbc009f9624ca55314121008aa9d8168d971c91af66e7e6",
+            "text": "classDiagram\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 13,
+            "line": 2,
+            "sha256": "7ab2b64a147060eee84c30d4711e0641d1d814e5ef903a15a997c4dbf612b861",
+            "text": "direction LR\n"
+          },
+          {
+            "byte_length": 18,
+            "byte_offset": 26,
+            "line": 3,
+            "sha256": "fdf527dc67f3d444a6e592c3deab7708202567a37cdee94bf86bf1363aa2edea",
+            "text": "namespace Alpha {\n"
+          },
+          {
+            "byte_length": 9,
+            "byte_offset": 44,
+            "line": 4,
+            "sha256": "e0ab7f4afa861204b8f9e6262435637510b64af7235bd79e9bd7c095bd3cf07c",
+            "text": "class A1\n"
+          },
+          {
+            "byte_length": 9,
+            "byte_offset": 53,
+            "line": 5,
+            "sha256": "40a7458bebf1b9c37e59e9ad1a53c1c48d72abadefb28cc9a2f8872640b3185f",
+            "text": "class A2\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 62,
+            "line": 6,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 17,
+            "byte_offset": 64,
+            "line": 7,
+            "sha256": "a28f4c7718c600032255d2532b06967b42cce5ddf661648315bd7999ccaed29a",
+            "text": "namespace Beta {\n"
+          },
+          {
+            "byte_length": 9,
+            "byte_offset": 81,
+            "line": 8,
+            "sha256": "f2f377fc4a1e30bc8fff76dabcdda49f87b391f48a879bc512a8537880da529d",
+            "text": "class B1\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 90,
+            "line": 9,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 10,
+            "byte_offset": 92,
+            "line": 10,
+            "sha256": "0025d5bdd289e9e7aa038950f346b5332cd96a0202a895e7f286aa8de118f270",
+            "text": "A1 --> B1\n"
+          },
+          {
+            "byte_length": 10,
+            "byte_offset": 102,
+            "line": 11,
+            "sha256": "02e69deb1548b57966a82c53d8952413390b92e2e1207c93742dfb91478ded0b",
+            "text": "B1 --> A2\n"
+          }
+        ],
+        "primary_rule": "Two root siblings; normalized leaf chain A1->B1->A2 is acyclic although its owner quotient cycles.",
+        "qualification": "Synthesized complete source-derived native control; no upstream imported assertion or renderer-derived geometry. Native strict leaf ranks and complete group ownership remain mandatory.",
+        "reference_ids": [
+          "db_first",
+          "db_member",
+          "db_namespace",
+          "db_relation",
+          "grammar_class",
+          "grammar_namespace",
+          "grammar_relation",
+          "db_direction"
+        ],
+        "root_quotient_edges": [
+          [
+            "namespace:416c706861",
+            "namespace:42657461"
+          ],
+          [
+            "namespace:42657461",
+            "namespace:416c706861"
+          ]
+        ]
+      },
+      "whole_native_model": {
+        "direction": "LR",
+        "entities": [
+          {
+            "headers": [
+              [
+                "A1"
+              ]
+            ],
+            "id": "class:4131",
+            "label": "A1",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "A2"
+              ]
+            ],
+            "id": "class:4132",
+            "label": "A2",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "B1"
+              ]
+            ],
+            "id": "class:4231",
+            "label": "B1",
+            "owner": "namespace:42657461",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [
+          {
+            "direction": "",
+            "id": "namespace:416c706861",
+            "label": "Alpha",
+            "members": [
+              "class:4131",
+              "class:4132"
+            ],
+            "parent": ""
+          },
+          {
+            "direction": "",
+            "id": "namespace:42657461",
+            "label": "Beta",
+            "members": [
+              "class:4231"
+            ],
+            "parent": ""
+          }
+        ],
+        "notes": [],
+        "relations": [
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 0,
+            "source": "class:4131",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4231"
+          },
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 1,
+            "source": "class:4231",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4132"
+          }
+        ]
+      },
+      "whole_native_model_sha256": "012b87a60aac99ff9cdf4458b16146964c07dd908146c141f7f61894fc7377e7"
+    },
+    {
+      "expected": "whole_scene",
+      "name": "rl_leaf_chain_quotient_cycle",
+      "source": "classDiagram\ndirection RL\nnamespace Alpha {\nclass A1\nclass A2\n}\nnamespace Beta {\nclass B1\n}\nA1 --> B1\nB1 --> A2\n",
+      "source_sha256": "ee8801397101d031edf149406e06a3bb8b24eb0d0d3639caa3c86a20224c7d67",
+      "source_witness": {
+        "longest_path_ranks": {
+          "A1": 0,
+          "A2": 2,
+          "B1": 1
+        },
+        "normalized_leaf_edges": [
+          [
+            "A1",
+            "B1"
+          ],
+          [
+            "B1",
+            "A2"
+          ]
+        ],
+        "ordered_actions": [
+          "AddClass(A1); complete members=[]",
+          "AddClass(A2); complete members=[]",
+          "AddClassesToNamespace(Alpha,A1,A2)",
+          "AddClass(B1); complete members=[]",
+          "AddClassesToNamespace(Beta,B1)",
+          "AddRelation(A1,-->,B1,'')",
+          "AddRelation(B1,-->,A2,'')"
+        ],
+        "physical_lines": [
+          {
+            "byte_length": 13,
+            "byte_offset": 0,
+            "line": 1,
+            "sha256": "7dff4cf5285a1605efbc009f9624ca55314121008aa9d8168d971c91af66e7e6",
+            "text": "classDiagram\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 13,
+            "line": 2,
+            "sha256": "45d67c17ada11bd27280baeaa1a79fa6b3dc741d2ef1f3f32a4394a84ce6b8b9",
+            "text": "direction RL\n"
+          },
+          {
+            "byte_length": 18,
+            "byte_offset": 26,
+            "line": 3,
+            "sha256": "fdf527dc67f3d444a6e592c3deab7708202567a37cdee94bf86bf1363aa2edea",
+            "text": "namespace Alpha {\n"
+          },
+          {
+            "byte_length": 9,
+            "byte_offset": 44,
+            "line": 4,
+            "sha256": "e0ab7f4afa861204b8f9e6262435637510b64af7235bd79e9bd7c095bd3cf07c",
+            "text": "class A1\n"
+          },
+          {
+            "byte_length": 9,
+            "byte_offset": 53,
+            "line": 5,
+            "sha256": "40a7458bebf1b9c37e59e9ad1a53c1c48d72abadefb28cc9a2f8872640b3185f",
+            "text": "class A2\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 62,
+            "line": 6,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 17,
+            "byte_offset": 64,
+            "line": 7,
+            "sha256": "a28f4c7718c600032255d2532b06967b42cce5ddf661648315bd7999ccaed29a",
+            "text": "namespace Beta {\n"
+          },
+          {
+            "byte_length": 9,
+            "byte_offset": 81,
+            "line": 8,
+            "sha256": "f2f377fc4a1e30bc8fff76dabcdda49f87b391f48a879bc512a8537880da529d",
+            "text": "class B1\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 90,
+            "line": 9,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 10,
+            "byte_offset": 92,
+            "line": 10,
+            "sha256": "0025d5bdd289e9e7aa038950f346b5332cd96a0202a895e7f286aa8de118f270",
+            "text": "A1 --> B1\n"
+          },
+          {
+            "byte_length": 10,
+            "byte_offset": 102,
+            "line": 11,
+            "sha256": "02e69deb1548b57966a82c53d8952413390b92e2e1207c93742dfb91478ded0b",
+            "text": "B1 --> A2\n"
+          }
+        ],
+        "primary_rule": "Same whole source DAG with explicit RL; native rank centers must reverse without changing source endpoints.",
+        "qualification": "Synthesized complete source-derived native control; no upstream imported assertion or renderer-derived geometry. Native strict leaf ranks and complete group ownership remain mandatory.",
+        "reference_ids": [
+          "db_first",
+          "db_member",
+          "db_namespace",
+          "db_relation",
+          "grammar_class",
+          "grammar_namespace",
+          "grammar_relation",
+          "db_direction"
+        ],
+        "root_quotient_edges": [
+          [
+            "namespace:416c706861",
+            "namespace:42657461"
+          ],
+          [
+            "namespace:42657461",
+            "namespace:416c706861"
+          ]
+        ]
+      },
+      "whole_native_model": {
+        "direction": "RL",
+        "entities": [
+          {
+            "headers": [
+              [
+                "A1"
+              ]
+            ],
+            "id": "class:4131",
+            "label": "A1",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "A2"
+              ]
+            ],
+            "id": "class:4132",
+            "label": "A2",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "B1"
+              ]
+            ],
+            "id": "class:4231",
+            "label": "B1",
+            "owner": "namespace:42657461",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [
+          {
+            "direction": "",
+            "id": "namespace:416c706861",
+            "label": "Alpha",
+            "members": [
+              "class:4131",
+              "class:4132"
+            ],
+            "parent": ""
+          },
+          {
+            "direction": "",
+            "id": "namespace:42657461",
+            "label": "Beta",
+            "members": [
+              "class:4231"
+            ],
+            "parent": ""
+          }
+        ],
+        "notes": [],
+        "relations": [
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 0,
+            "source": "class:4131",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4231"
+          },
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 1,
+            "source": "class:4231",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4132"
+          }
+        ]
+      },
+      "whole_native_model_sha256": "787b93b1bea7b4738bbffca61b0fa98a55bb5c8cf188e974b28bb655dc4920b5"
+    },
+    {
+      "expected": "whole_scene",
+      "name": "lr_same_rank_peers_and_disconnected",
+      "source": "classDiagram\ndirection LR\nnamespace Alpha {\nclass A1\nclass A2\nclass Idle\n}\nnamespace Beta {\nclass B1\nclass BPeer\n}\nA1 --> B1\nA1 --> BPeer\nB1 --> A2\nBPeer --> A2\n",
+      "source_sha256": "bacc7e0a74d319633458a58183bb8c6df74611cc69c5d334576acc8f4108700f",
+      "source_witness": {
+        "longest_path_ranks": {
+          "A1": 0,
+          "A2": 2,
+          "B1": 1,
+          "BPeer": 1,
+          "Idle": 0
+        },
+        "normalized_leaf_edges": [
+          [
+            "A1",
+            "B1"
+          ],
+          [
+            "A1",
+            "BPeer"
+          ],
+          [
+            "B1",
+            "A2"
+          ],
+          [
+            "BPeer",
+            "A2"
+          ]
+        ],
+        "ordered_actions": [
+          "AddClass(A1); complete members=[]",
+          "AddClass(A2); complete members=[]",
+          "AddClass(Idle); complete members=[]",
+          "AddClassesToNamespace(Alpha,A1,A2,Idle)",
+          "AddClass(B1); complete members=[]",
+          "AddClass(BPeer); complete members=[]",
+          "AddClassesToNamespace(Beta,B1,BPeer)",
+          "AddRelation(A1,-->,B1,'')",
+          "AddRelation(A1,-->,BPeer,'')",
+          "AddRelation(B1,-->,A2,'')",
+          "AddRelation(BPeer,-->,A2,'')"
+        ],
+        "physical_lines": [
+          {
+            "byte_length": 13,
+            "byte_offset": 0,
+            "line": 1,
+            "sha256": "7dff4cf5285a1605efbc009f9624ca55314121008aa9d8168d971c91af66e7e6",
+            "text": "classDiagram\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 13,
+            "line": 2,
+            "sha256": "7ab2b64a147060eee84c30d4711e0641d1d814e5ef903a15a997c4dbf612b861",
+            "text": "direction LR\n"
+          },
+          {
+            "byte_length": 18,
+            "byte_offset": 26,
+            "line": 3,
+            "sha256": "fdf527dc67f3d444a6e592c3deab7708202567a37cdee94bf86bf1363aa2edea",
+            "text": "namespace Alpha {\n"
+          },
+          {
+            "byte_length": 9,
+            "byte_offset": 44,
+            "line": 4,
+            "sha256": "e0ab7f4afa861204b8f9e6262435637510b64af7235bd79e9bd7c095bd3cf07c",
+            "text": "class A1\n"
+          },
+          {
+            "byte_length": 9,
+            "byte_offset": 53,
+            "line": 5,
+            "sha256": "40a7458bebf1b9c37e59e9ad1a53c1c48d72abadefb28cc9a2f8872640b3185f",
+            "text": "class A2\n"
+          },
+          {
+            "byte_length": 11,
+            "byte_offset": 62,
+            "line": 6,
+            "sha256": "aa4d197a29115e25733768fbc3c4eedcbe516670501f5aba3e2ebe372004291b",
+            "text": "class Idle\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 73,
+            "line": 7,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 17,
+            "byte_offset": 75,
+            "line": 8,
+            "sha256": "a28f4c7718c600032255d2532b06967b42cce5ddf661648315bd7999ccaed29a",
+            "text": "namespace Beta {\n"
+          },
+          {
+            "byte_length": 9,
+            "byte_offset": 92,
+            "line": 9,
+            "sha256": "f2f377fc4a1e30bc8fff76dabcdda49f87b391f48a879bc512a8537880da529d",
+            "text": "class B1\n"
+          },
+          {
+            "byte_length": 12,
+            "byte_offset": 101,
+            "line": 10,
+            "sha256": "4d66b231fd8707b26b39241c33bd63a58a29c29b5396259f6f8d0351fc00a2dc",
+            "text": "class BPeer\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 113,
+            "line": 11,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 10,
+            "byte_offset": 115,
+            "line": 12,
+            "sha256": "0025d5bdd289e9e7aa038950f346b5332cd96a0202a895e7f286aa8de118f270",
+            "text": "A1 --> B1\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 125,
+            "line": 13,
+            "sha256": "857af81fe67d6ffebedb87d5e7ace3a6610dbccdcf70fd4444f76c41ea436e1c",
+            "text": "A1 --> BPeer\n"
+          },
+          {
+            "byte_length": 10,
+            "byte_offset": 138,
+            "line": 14,
+            "sha256": "02e69deb1548b57966a82c53d8952413390b92e2e1207c93742dfb91478ded0b",
+            "text": "B1 --> A2\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 148,
+            "line": 15,
+            "sha256": "7b35423394232d4f6a011017a3d19441c6b51bee4600b34a19a84fb875da3bc1",
+            "text": "BPeer --> A2\n"
+          }
+        ],
+        "primary_rule": "Complete peer rank B1/BPeer and disconnected Idle remain owned and claimed; no leaf is omitted from whole geometry.",
+        "qualification": "Synthesized complete source-derived native control; no upstream imported assertion or renderer-derived geometry. Native strict leaf ranks and complete group ownership remain mandatory.",
+        "reference_ids": [
+          "db_first",
+          "db_member",
+          "db_namespace",
+          "db_relation",
+          "grammar_class",
+          "grammar_namespace",
+          "grammar_relation",
+          "db_direction"
+        ],
+        "root_quotient_edges": [
+          [
+            "namespace:416c706861",
+            "namespace:42657461"
+          ],
+          [
+            "namespace:42657461",
+            "namespace:416c706861"
+          ]
+        ]
+      },
+      "whole_native_model": {
+        "direction": "LR",
+        "entities": [
+          {
+            "headers": [
+              [
+                "A1"
+              ]
+            ],
+            "id": "class:4131",
+            "label": "A1",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "A2"
+              ]
+            ],
+            "id": "class:4132",
+            "label": "A2",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "Idle"
+              ]
+            ],
+            "id": "class:49646c65",
+            "label": "Idle",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "B1"
+              ]
+            ],
+            "id": "class:4231",
+            "label": "B1",
+            "owner": "namespace:42657461",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "BPeer"
+              ]
+            ],
+            "id": "class:4250656572",
+            "label": "BPeer",
+            "owner": "namespace:42657461",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [
+          {
+            "direction": "",
+            "id": "namespace:416c706861",
+            "label": "Alpha",
+            "members": [
+              "class:4131",
+              "class:4132",
+              "class:49646c65"
+            ],
+            "parent": ""
+          },
+          {
+            "direction": "",
+            "id": "namespace:42657461",
+            "label": "Beta",
+            "members": [
+              "class:4231",
+              "class:4250656572"
+            ],
+            "parent": ""
+          }
+        ],
+        "notes": [],
+        "relations": [
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 0,
+            "source": "class:4131",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4231"
+          },
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 1,
+            "source": "class:4131",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4250656572"
+          },
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 2,
+            "source": "class:4231",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4132"
+          },
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 3,
+            "source": "class:4250656572",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4132"
+          }
+        ]
+      },
+      "whole_native_model_sha256": "5c9d7c262890645005e212729b22af3edc0e9ccd61a9e9e9ebdbe36aaf8ef4b5"
+    },
+    {
+      "expected": "whole_scene",
+      "name": "lr_mixed_left_right_triangles",
+      "source": "classDiagram\ndirection LR\nnamespace Alpha {\nclass Parent\nclass Leaf\n}\nnamespace Beta {\nclass Middle\n}\nParent <|-- Middle\nLeaf --|> Middle\n",
+      "source_sha256": "855e0a27b68399f56fbf092f4918d655b7374da6ef213b80fdf99f056fb5b59f",
+      "source_witness": {
+        "longest_path_ranks": {
+          "Leaf": 2,
+          "Middle": 1,
+          "Parent": 0
+        },
+        "normalized_leaf_edges": [
+          [
+            "Parent",
+            "Middle"
+          ],
+          [
+            "Middle",
+            "Leaf"
+          ]
+        ],
+        "ordered_actions": [
+          "AddClass(Parent); complete members=[]",
+          "AddClass(Leaf); complete members=[]",
+          "AddClassesToNamespace(Alpha,Parent,Leaf)",
+          "AddClass(Middle); complete members=[]",
+          "AddClassesToNamespace(Beta,Middle)",
+          "AddRelation(Parent,<|--,Middle,'')",
+          "AddRelation(Leaf,--|>,Middle,'')"
+        ],
+        "physical_lines": [
+          {
+            "byte_length": 13,
+            "byte_offset": 0,
+            "line": 1,
+            "sha256": "7dff4cf5285a1605efbc009f9624ca55314121008aa9d8168d971c91af66e7e6",
+            "text": "classDiagram\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 13,
+            "line": 2,
+            "sha256": "7ab2b64a147060eee84c30d4711e0641d1d814e5ef903a15a997c4dbf612b861",
+            "text": "direction LR\n"
+          },
+          {
+            "byte_length": 18,
+            "byte_offset": 26,
+            "line": 3,
+            "sha256": "fdf527dc67f3d444a6e592c3deab7708202567a37cdee94bf86bf1363aa2edea",
+            "text": "namespace Alpha {\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 44,
+            "line": 4,
+            "sha256": "e690ec489bd8051eaaff4c9cf12960d5dee074897a076ff98c1e6b881f4d33b8",
+            "text": "class Parent\n"
+          },
+          {
+            "byte_length": 11,
+            "byte_offset": 57,
+            "line": 5,
+            "sha256": "8db18b4df614071b4c361739f1403020fe0d29d33862a8d125f0bf2a9202995e",
+            "text": "class Leaf\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 68,
+            "line": 6,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 17,
+            "byte_offset": 70,
+            "line": 7,
+            "sha256": "a28f4c7718c600032255d2532b06967b42cce5ddf661648315bd7999ccaed29a",
+            "text": "namespace Beta {\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 87,
+            "line": 8,
+            "sha256": "891852c44f6046caa89b0055a4ba561e439dcbb9e80333fd9bfacc81f7a5f11f",
+            "text": "class Middle\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 100,
+            "line": 9,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 19,
+            "byte_offset": 102,
+            "line": 10,
+            "sha256": "0c2d235de79d431db4f86c67ebc8c58b01872e1ca1fd6970fc077ec3e0c7aee4",
+            "text": "Parent <|-- Middle\n"
+          },
+          {
+            "byte_length": 17,
+            "byte_offset": 121,
+            "line": 11,
+            "sha256": "4d75bf1bf243e55a09bce90aff98046ef5ca4dae7d33c2a816554de2151feac3",
+            "text": "Leaf --|> Middle\n"
+          }
+        ],
+        "primary_rule": "Left and right triangle syntax both normalize parent-before-child: Parent->Middle->Leaf; business endpoint markers stay authored.",
+        "qualification": "Synthesized complete source-derived native control; no upstream imported assertion or renderer-derived geometry. Native strict leaf ranks and complete group ownership remain mandatory.",
+        "reference_ids": [
+          "db_first",
+          "db_member",
+          "db_namespace",
+          "db_relation",
+          "grammar_class",
+          "grammar_namespace",
+          "grammar_relation",
+          "db_direction"
+        ],
+        "root_quotient_edges": [
+          [
+            "namespace:416c706861",
+            "namespace:42657461"
+          ],
+          [
+            "namespace:42657461",
+            "namespace:416c706861"
+          ]
+        ]
+      },
+      "whole_native_model": {
+        "direction": "LR",
+        "entities": [
+          {
+            "headers": [
+              [
+                "Parent"
+              ]
+            ],
+            "id": "class:506172656e74",
+            "label": "Parent",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "Leaf"
+              ]
+            ],
+            "id": "class:4c656166",
+            "label": "Leaf",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "Middle"
+              ]
+            ],
+            "id": "class:4d6964646c65",
+            "label": "Middle",
+            "owner": "namespace:42657461",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [
+          {
+            "direction": "",
+            "id": "namespace:416c706861",
+            "label": "Alpha",
+            "members": [
+              "class:506172656e74",
+              "class:4c656166"
+            ],
+            "parent": ""
+          },
+          {
+            "direction": "",
+            "id": "namespace:42657461",
+            "label": "Beta",
+            "members": [
+              "class:4d6964646c65"
+            ],
+            "parent": ""
+          }
+        ],
+        "notes": [],
+        "relations": [
+          {
+            "end": "none",
+            "label": "",
+            "order": 0,
+            "source": "class:506172656e74",
+            "start": "triangle",
+            "stroke": "solid",
+            "target": "class:4d6964646c65"
+          },
+          {
+            "end": "triangle",
+            "label": "",
+            "order": 1,
+            "source": "class:4c656166",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4d6964646c65"
+          }
+        ]
+      },
+      "whole_native_model_sha256": "18fe66989b7cc5bcf748e4ac8b0a5a2654b1e55196a8529c9db49e094095c596"
+    },
+    {
+      "expected": "whole_scene",
+      "name": "rl_dotted_inheritance_and_association",
+      "source": "classDiagram\ndirection RL\nnamespace Alpha {\nclass Parent\nclass Leaf\n}\nnamespace Beta {\nclass Middle\n}\nParent <|.. Middle\nLeaf ..|> Middle\nParent --> Leaf\n",
+      "source_sha256": "0a11869c1ab267620ba3462cda846f5406ef1a9b4de65a39dad3246fb4376d5d",
+      "source_witness": {
+        "longest_path_ranks": {
+          "Leaf": 2,
+          "Middle": 1,
+          "Parent": 0
+        },
+        "normalized_leaf_edges": [
+          [
+            "Parent",
+            "Middle"
+          ],
+          [
+            "Middle",
+            "Leaf"
+          ],
+          [
+            "Parent",
+            "Leaf"
+          ]
+        ],
+        "ordered_actions": [
+          "AddClass(Parent); complete members=[]",
+          "AddClass(Leaf); complete members=[]",
+          "AddClassesToNamespace(Alpha,Parent,Leaf)",
+          "AddClass(Middle); complete members=[]",
+          "AddClassesToNamespace(Beta,Middle)",
+          "AddRelation(Parent,<|..,Middle,'')",
+          "AddRelation(Leaf,..|>,Middle,'')",
+          "AddRelation(Parent,-->,Leaf,'')"
+        ],
+        "physical_lines": [
+          {
+            "byte_length": 13,
+            "byte_offset": 0,
+            "line": 1,
+            "sha256": "7dff4cf5285a1605efbc009f9624ca55314121008aa9d8168d971c91af66e7e6",
+            "text": "classDiagram\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 13,
+            "line": 2,
+            "sha256": "45d67c17ada11bd27280baeaa1a79fa6b3dc741d2ef1f3f32a4394a84ce6b8b9",
+            "text": "direction RL\n"
+          },
+          {
+            "byte_length": 18,
+            "byte_offset": 26,
+            "line": 3,
+            "sha256": "fdf527dc67f3d444a6e592c3deab7708202567a37cdee94bf86bf1363aa2edea",
+            "text": "namespace Alpha {\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 44,
+            "line": 4,
+            "sha256": "e690ec489bd8051eaaff4c9cf12960d5dee074897a076ff98c1e6b881f4d33b8",
+            "text": "class Parent\n"
+          },
+          {
+            "byte_length": 11,
+            "byte_offset": 57,
+            "line": 5,
+            "sha256": "8db18b4df614071b4c361739f1403020fe0d29d33862a8d125f0bf2a9202995e",
+            "text": "class Leaf\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 68,
+            "line": 6,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 17,
+            "byte_offset": 70,
+            "line": 7,
+            "sha256": "a28f4c7718c600032255d2532b06967b42cce5ddf661648315bd7999ccaed29a",
+            "text": "namespace Beta {\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 87,
+            "line": 8,
+            "sha256": "891852c44f6046caa89b0055a4ba561e439dcbb9e80333fd9bfacc81f7a5f11f",
+            "text": "class Middle\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 100,
+            "line": 9,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 19,
+            "byte_offset": 102,
+            "line": 10,
+            "sha256": "009393464348704bf51f922f65fcc24276b77cd77757605200fba5c581658b6d",
+            "text": "Parent <|.. Middle\n"
+          },
+          {
+            "byte_length": 17,
+            "byte_offset": 121,
+            "line": 11,
+            "sha256": "328e68545e98a9c1370f7c74dd3df7fdca33c2dd71e770304faedc071e1c5f54",
+            "text": "Leaf ..|> Middle\n"
+          },
+          {
+            "byte_length": 16,
+            "byte_offset": 138,
+            "line": 12,
+            "sha256": "e29effd5c088f77d8606ad838419e2f90f13d87a0cddee0e73746f85cced9778",
+            "text": "Parent --> Leaf\n"
+          }
+        ],
+        "primary_rule": "RL dotted realization uses the same normalized DAG, plus full same-owner association; no actual leaf cycle is skipped.",
+        "qualification": "Synthesized complete source-derived native control; no upstream imported assertion or renderer-derived geometry. Native strict leaf ranks and complete group ownership remain mandatory.",
+        "reference_ids": [
+          "db_first",
+          "db_member",
+          "db_namespace",
+          "db_relation",
+          "grammar_class",
+          "grammar_namespace",
+          "grammar_relation",
+          "db_direction"
+        ],
+        "root_quotient_edges": [
+          [
+            "namespace:416c706861",
+            "namespace:42657461"
+          ],
+          [
+            "namespace:42657461",
+            "namespace:416c706861"
+          ]
+        ]
+      },
+      "whole_native_model": {
+        "direction": "RL",
+        "entities": [
+          {
+            "headers": [
+              [
+                "Parent"
+              ]
+            ],
+            "id": "class:506172656e74",
+            "label": "Parent",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "Leaf"
+              ]
+            ],
+            "id": "class:4c656166",
+            "label": "Leaf",
+            "owner": "namespace:416c706861",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "Middle"
+              ]
+            ],
+            "id": "class:4d6964646c65",
+            "label": "Middle",
+            "owner": "namespace:42657461",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [
+          {
+            "direction": "",
+            "id": "namespace:416c706861",
+            "label": "Alpha",
+            "members": [
+              "class:506172656e74",
+              "class:4c656166"
+            ],
+            "parent": ""
+          },
+          {
+            "direction": "",
+            "id": "namespace:42657461",
+            "label": "Beta",
+            "members": [
+              "class:4d6964646c65"
+            ],
+            "parent": ""
+          }
+        ],
+        "notes": [],
+        "relations": [
+          {
+            "end": "none",
+            "label": "",
+            "order": 0,
+            "source": "class:506172656e74",
+            "start": "triangle",
+            "stroke": "dotted",
+            "target": "class:4d6964646c65"
+          },
+          {
+            "end": "triangle",
+            "label": "",
+            "order": 1,
+            "source": "class:4c656166",
+            "start": "none",
+            "stroke": "dotted",
+            "target": "class:4d6964646c65"
+          },
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 2,
+            "source": "class:506172656e74",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4c656166"
+          }
+        ]
+      },
+      "whole_native_model_sha256": "8c1bcd2b01b7c3eec6e4b912776b7d658ad904c385808a374b1d9f9073707f41"
+    },
+    {
+      "expected": "whole_scene",
+      "name": "lr_unequal_member_cards_and_captions",
+      "source": "classDiagram\ndirection LR\nnamespace LongCaptionAlpha {\nclass Start {\n+int id\n}\nclass LongResult {\n+string value\n+value() string\n}\n}\nnamespace Beta {\nclass Bridge\n}\nStart --> Bridge\nBridge --> LongResult\n",
+      "source_sha256": "7feabd51dd9aa023c987089e893862c4154a6cfa219ceef406812204e3c6672a",
+      "source_witness": {
+        "longest_path_ranks": {
+          "Bridge": 1,
+          "LongResult": 2,
+          "Start": 0
+        },
+        "normalized_leaf_edges": [
+          [
+            "Start",
+            "Bridge"
+          ],
+          [
+            "Bridge",
+            "LongResult"
+          ]
+        ],
+        "ordered_actions": [
+          "AddClass(Start); complete members=['+int id']",
+          "AddClass(LongResult); complete members=['+string value', '+value() string']",
+          "AddClassesToNamespace(LongCaptionAlpha,Start,LongResult)",
+          "AddClass(Bridge); complete members=[]",
+          "AddClassesToNamespace(Beta,Bridge)",
+          "AddRelation(Start,-->,Bridge,'')",
+          "AddRelation(Bridge,-->,LongResult,'')"
+        ],
+        "physical_lines": [
+          {
+            "byte_length": 13,
+            "byte_offset": 0,
+            "line": 1,
+            "sha256": "7dff4cf5285a1605efbc009f9624ca55314121008aa9d8168d971c91af66e7e6",
+            "text": "classDiagram\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 13,
+            "line": 2,
+            "sha256": "7ab2b64a147060eee84c30d4711e0641d1d814e5ef903a15a997c4dbf612b861",
+            "text": "direction LR\n"
+          },
+          {
+            "byte_length": 29,
+            "byte_offset": 26,
+            "line": 3,
+            "sha256": "70780b6faf0f718e5954f305ef1b96d46884c0494c78e4592d863c8f8afe1fca",
+            "text": "namespace LongCaptionAlpha {\n"
+          },
+          {
+            "byte_length": 14,
+            "byte_offset": 55,
+            "line": 4,
+            "sha256": "50a8aff6131a22797fe963cc02082187a8545135ba578808e5770afb8971bdf9",
+            "text": "class Start {\n"
+          },
+          {
+            "byte_length": 8,
+            "byte_offset": 69,
+            "line": 5,
+            "sha256": "e4c5f65b950de3c808ad9900a029017149649e678a937c169130e3cd09f261f1",
+            "text": "+int id\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 77,
+            "line": 6,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 19,
+            "byte_offset": 79,
+            "line": 7,
+            "sha256": "99a53abb46230a9ff80f8b10c067c475dcb1c302b3f6deae21887e957702b772",
+            "text": "class LongResult {\n"
+          },
+          {
+            "byte_length": 14,
+            "byte_offset": 98,
+            "line": 8,
+            "sha256": "3d8224d7e0400974857a7a66c3b1ad929b8a8a8ea66030738c2e9fc9132cf73f",
+            "text": "+string value\n"
+          },
+          {
+            "byte_length": 16,
+            "byte_offset": 112,
+            "line": 9,
+            "sha256": "2d9515ccfda0476e3bc9ee447fbc447a76754015ff7236238d8ed77435a7ce70",
+            "text": "+value() string\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 128,
+            "line": 10,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 130,
+            "line": 11,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 17,
+            "byte_offset": 132,
+            "line": 12,
+            "sha256": "a28f4c7718c600032255d2532b06967b42cce5ddf661648315bd7999ccaed29a",
+            "text": "namespace Beta {\n"
+          },
+          {
+            "byte_length": 13,
+            "byte_offset": 149,
+            "line": 13,
+            "sha256": "1241c4ddd1deef4171f3cda62b66187790b7c5e920fba2f9fbb9ecff1c6b64e7",
+            "text": "class Bridge\n"
+          },
+          {
+            "byte_length": 2,
+            "byte_offset": 162,
+            "line": 14,
+            "sha256": "412ca345ccf75bf9c0806bce695be8de808b79984251a7a54d202cf6101dd451",
+            "text": "}\n"
+          },
+          {
+            "byte_length": 17,
+            "byte_offset": 164,
+            "line": 15,
+            "sha256": "bacc8691eaf981321b0790321d1137ad874c934ec74f219da3fc9b102234a725",
+            "text": "Start --> Bridge\n"
+          },
+          {
+            "byte_length": 22,
+            "byte_offset": 181,
+            "line": 16,
+            "sha256": "5d8bb9b872115e7a8aaa076ccef89b8cf7f5e2bbfcc90aa48b3a3efc9e3f3c05",
+            "text": "Bridge --> LongResult\n"
+          }
+        ],
+        "primary_rule": "Complete unequal card widths/member compartments and root group captions; no stripped member or caption proxy determines expected rank.",
+        "qualification": "Synthesized complete source-derived native control; no upstream imported assertion or renderer-derived geometry. Native strict leaf ranks and complete group ownership remain mandatory.",
+        "reference_ids": [
+          "db_first",
+          "db_member",
+          "db_namespace",
+          "db_relation",
+          "grammar_class",
+          "grammar_namespace",
+          "grammar_relation",
+          "db_direction"
+        ],
+        "root_quotient_edges": [
+          [
+            "namespace:42657461",
+            "namespace:4c6f6e6743617074696f6e416c706861"
+          ],
+          [
+            "namespace:4c6f6e6743617074696f6e416c706861",
+            "namespace:42657461"
+          ]
+        ]
+      },
+      "whole_native_model": {
+        "direction": "LR",
+        "entities": [
+          {
+            "headers": [
+              [
+                "Start"
+              ]
+            ],
+            "id": "class:5374617274",
+            "label": "Start",
+            "owner": "namespace:4c6f6e6743617074696f6e416c706861",
+            "rows": [
+              {
+                "alternatives": [
+                  "+int id"
+                ],
+                "role": "attribute"
+              }
+            ],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "LongResult"
+              ]
+            ],
+            "id": "class:4c6f6e67526573756c74",
+            "label": "LongResult",
+            "owner": "namespace:4c6f6e6743617074696f6e416c706861",
+            "rows": [
+              {
+                "alternatives": [
+                  "+string value"
+                ],
+                "role": "attribute"
+              },
+              {
+                "alternatives": [
+                  "+value() string"
+                ],
+                "role": "method"
+              }
+            ],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "Bridge"
+              ]
+            ],
+            "id": "class:427269646765",
+            "label": "Bridge",
+            "owner": "namespace:42657461",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [
+          {
+            "direction": "",
+            "id": "namespace:4c6f6e6743617074696f6e416c706861",
+            "label": "LongCaptionAlpha",
+            "members": [
+              "class:5374617274",
+              "class:4c6f6e67526573756c74"
+            ],
+            "parent": ""
+          },
+          {
+            "direction": "",
+            "id": "namespace:42657461",
+            "label": "Beta",
+            "members": [
+              "class:427269646765"
+            ],
+            "parent": ""
+          }
+        ],
+        "notes": [],
+        "relations": [
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 0,
+            "source": "class:5374617274",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:427269646765"
+          },
+          {
+            "end": "arrow",
+            "label": "",
+            "order": 1,
+            "source": "class:427269646765",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:4c6f6e67526573756c74"
+          }
+        ]
+      },
+      "whole_native_model_sha256": "6c151f7cb510b98b9718ea10958a1128bc3075ba89953c55c85eb3274dff77fb"
+    }
+  ],
+  "parent_design_sha256": "c6e9ac272d53d6fd53f252c387f8063669d8bd0854b2960387bdd304e7e2588c",
+  "primary_references": [
+    {
+      "byte_length": 2230,
+      "byte_offset": 13880,
+      "id": "db_first",
+      "line_end": 518,
+      "line_start": 452,
+      "path": "/Users/bytedance/Develop/Loom/build/mermaid-renderer-research-20261020/relations-audit/class481-source-contract/null192-source-closure/primary/crates__merman-core__src__diagrams__class__db.rs",
+      "sha256": "f3ebfa47275e32ae903052fd318cdda63f2151a9e3191dbf342d8b3fe1b8423e",
+      "text": "}\n\nimpl<'a> ClassDb<'a> {\n    fn split_class_name_and_type(&self, id: &str) -> (String, String) {\n        let id = sanitize_text(id, self.config);\n        let (left, right) = if let Some((left, right)) = id.split_once('~') {\n            (\n                left.to_string(),\n                right.split('~').next().unwrap_or(\"\").to_string(),\n            )\n        } else {\n            (id, String::new())\n        };\n\n        let class_name = sanitize_text(&left, self.config);\n        let type_param = if right.is_empty() {\n            right\n        } else {\n            sanitize_text(&right, self.config)\n        };\n\n        (class_name, type_param)\n    }\n\n    fn add_class_with_origin(&mut self, id: &str, relation_endpoint_facade_candidate: bool) {\n        let (class_name, type_param) = self.split_class_name_and_type(id);\n        if let Some(class) = self.classes.get_mut(&class_name) {\n            if !relation_endpoint_facade_candidate {\n                class.relation_endpoint_facade_candidate = false;\n            }\n            return;\n        }\n        let dom_id = format!(\"{MERMAID_DOM_ID_PREFIX}{class_name}-{}\", self.class_counter);\n        self.class_counter += 1;\n        let text = if type_param.is_empty() {\n            class_name.clone()\n        } else {\n            format!(\"{class_name}&lt;{type_param}&gt;\")\n        };\n        self.classes.insert(\n            class_name.clone(),\n            ClassNode {\n                id: class_name.clone(),\n                type_param: type_param.clone(),\n                label: class_name.clone(),\n                text,\n                css_classes: \"default\".to_string(),\n                methods: Vec::new(),\n                members: Vec::new(),\n                annotations: Vec::new(),\n                styles: Vec::new(),\n                dom_id,\n                parent: None,\n                link: None,\n                link_target: None,\n                tooltip: None,\n                have_callback: false,\n                callback: None,\n                callback_effective: false,\n                relation_endpoint_facade_candidate,\n            },\n        );\n    }\n\n    pub(super) fn add_class(&mut self, id: &str) {\n        self.add_class_with_origin(id, false);\n    }\n",
+      "whole_sha256": "651921476dd295d3f6cf52ddff79d7b0d1953fd05d83413b9636b4251b963930"
+    },
+    {
+      "byte_length": 1176,
+      "byte_offset": 16907,
+      "id": "db_member",
+      "line_end": 579,
+      "line_start": 545,
+      "path": "/Users/bytedance/Develop/Loom/build/mermaid-renderer-research-20261020/relations-audit/class481-source-contract/null192-source-closure/primary/crates__merman-core__src__diagrams__class__db.rs",
+      "sha256": "87e95e218c08e42d923653df79a35ec2026f6fad30a80d31392178f65d270a63",
+      "text": "    pub(super) fn add_member(&mut self, class_name: &str, member: &str) {\n        self.add_class(class_name);\n        let (class_name, _) = self.split_class_name_and_type(class_name);\n        let Some(c) = self.classes.get_mut(&class_name) else {\n            return;\n        };\n\n        let member_string = member.trim();\n        if member_string.is_empty() {\n            return;\n        }\n        if member_string.starts_with(\"<<\") && member_string.ends_with(\">>\") {\n            c.annotations.push(sanitize_text(\n                member_string\n                    .trim_start_matches(\"<<\")\n                    .trim_end_matches(\">>\"),\n                self.config,\n            ));\n            return;\n        }\n        if member_string.contains(')') {\n            c.methods\n                .push(ClassMember::new(member_string, \"method\", self.config));\n            return;\n        }\n        c.members\n            .push(ClassMember::new(member_string, \"attribute\", self.config));\n    }\n\n    fn add_members(&mut self, class_name: &str, mut members: Vec<String>) {\n        members.reverse();\n        for m in members {\n            self.add_member(class_name, &m);\n        }\n    }\n",
+      "whole_sha256": "651921476dd295d3f6cf52ddff79d7b0d1953fd05d83413b9636b4251b963930"
+    },
+    {
+      "byte_length": 902,
+      "byte_offset": 26105,
+      "id": "db_namespace",
+      "line_end": 839,
+      "line_start": 815,
+      "path": "/Users/bytedance/Develop/Loom/build/mermaid-renderer-research-20261020/relations-audit/class481-source-contract/null192-source-closure/primary/crates__merman-core__src__diagrams__class__db.rs",
+      "sha256": "9aebe0b7ea2b312537f10dd86d7af1437d776f9776cedd12be6c14086404a696",
+      "text": "    fn add_classes_to_namespace(&mut self, namespace: &str, class_names: &[String]) {\n        let namespace = self\n            .current_namespace()\n            .map(str::to_string)\n            .unwrap_or_else(|| namespace.to_string());\n        if !self.namespaces.contains_key(&namespace) {\n            return;\n        }\n        let mut ids = Vec::new();\n        for name in class_names {\n            let (class_name, _) = self.split_class_name_and_type(name);\n            self.add_class(name);\n            if let Some(c) = self.classes.get_mut(&class_name) {\n                c.parent = Some(namespace.clone());\n            }\n            ids.push(class_name);\n        }\n        if let Some(ns) = self.namespaces.get_mut(&namespace) {\n            for id in ids {\n                if !ns.class_ids.contains(&id) {\n                    ns.class_ids.push(id);\n                }\n            }\n        }\n    }\n",
+      "whole_sha256": "651921476dd295d3f6cf52ddff79d7b0d1953fd05d83413b9636b4251b963930"
+    },
+    {
+      "byte_length": 4627,
+      "byte_offset": 27211,
+      "id": "db_relation",
+      "line_end": 975,
+      "line_start": 847,
+      "path": "/Users/bytedance/Develop/Loom/build/mermaid-renderer-research-20261020/relations-audit/class481-source-contract/null192-source-closure/primary/crates__merman-core__src__diagrams__class__db.rs",
+      "sha256": "fb6809a90f0214089e7a38fe6aab71adbca16df82c7bde008d19b9eb201bdce2",
+      "text": "    }\n\n    fn add_relation_class(&mut self, id: &str) -> String {\n        let (class_name, _) = self.split_class_name_and_type(id);\n        if let Some(existing_id) = self.existing_relation_class_id(&class_name) {\n            return existing_id;\n        }\n\n        self.add_class_with_origin(id, true);\n        class_name\n    }\n\n    fn namespace_facade_aliases(&self) -> BTreeMap<String, String> {\n        let mut qualified_members = BTreeMap::<String, (usize, String)>::new();\n        for namespace in self.namespaces.values() {\n            for class_id in &namespace.class_ids {\n                let qualified_id = format!(\"{}.{}\", namespace.id, class_id);\n                let namespace_len = namespace.id.len();\n                match qualified_members.get(&qualified_id) {\n                    Some((existing_len, _)) if *existing_len >= namespace_len => {}\n                    _ => {\n                        qualified_members\n                            .insert(qualified_id, (namespace_len, class_id.to_string()));\n                    }\n                }\n            }\n        }\n\n        self.classes\n            .values()\n            .filter(|class| class.relation_endpoint_facade_candidate)\n            .filter_map(|class| {\n                qualified_members\n                    .get(class.id.as_str())\n                    .map(|(_, target)| (class.id.clone(), target.clone()))\n            })\n            .collect()\n    }\n\n    fn add_relation(&mut self, mut rel: RelationData) {\n        let original_id1 = rel.id1.clone();\n        let original_id2 = rel.id2.clone();\n\n        let invalid_types = [\n            REL_LOLLIPOP,\n            REL_AGGREGATION,\n            REL_COMPOSITION,\n            REL_DEPENDENCY,\n            REL_EXTENSION,\n        ];\n\n        if rel.relation.type1 == REL_LOLLIPOP && !invalid_types.contains(&rel.relation.type2) {\n            let id2_name = self.add_relation_class(&original_id2);\n            let iface_id = format!(\"interface{}\", self.interfaces.len());\n            self.interfaces.push(Interface {\n                id: iface_id.clone(),\n                label: rel.id1.clone(),\n                class_id: id2_name.clone(),\n            });\n            rel.id1 = iface_id;\n            rel.id2 = id2_name;\n        } else if rel.relation.type2 == REL_LOLLIPOP && !invalid_types.contains(&rel.relation.type1)\n        {\n            let id1_name = self.add_relation_class(&original_id1);\n            let iface_id = format!(\"interface{}\", self.interfaces.len());\n            self.interfaces.push(Interface {\n                id: iface_id.clone(),\n                label: rel.id2.clone(),\n                class_id: id1_name.clone(),\n            });\n            rel.id1 = id1_name;\n            rel.id2 = iface_id;\n        } else {\n            let id1_name = self.add_relation_class(&original_id1);\n            let id2_name = self.add_relation_class(&original_id2);\n            rel.id1 = id1_name;\n            rel.id2 = id2_name;\n        }\n\n        self.relations.push(rel);\n    }\n\n    pub(super) fn apply(&mut self, action: Action) -> std::result::Result<(), String> {\n        match action {\n            Action::SetDirection(d) => {\n                self.set_direction(&d);\n                Ok(())\n            }\n            Action::SetAccTitle(t) => {\n                self.acc_title = Some(t.trim_start().to_string());\n                Ok(())\n            }\n            Action::SetAccDescr(t) => {\n                let trimmed = t.trim().to_string();\n                self.acc_descr = Some(collapse_acc_descr_newline_whitespace(&trimmed));\n                Ok(())\n            }\n\n            Action::AddNamespace { id, label } => {\n                self.add_namespace(&id, label);\n                Ok(())\n            }\n            Action::AddClassesToNamespace {\n                namespace,\n                class_ids,\n            } => {\n                self.add_classes_to_namespace(&namespace, &class_ids);\n                Ok(())\n            }\n            Action::PopNamespace => {\n                self.pop_namespace();\n                Ok(())\n            }\n\n            Action::AddClass { id } => {\n                self.add_class(&id);\n                Ok(())\n            }\n            Action::SetClassLabel { id, label } => {\n                self.set_class_label(&id, &label);\n                Ok(())\n            }\n            Action::SetCssClass { ids, css_class } => {\n                self.set_css_class(&ids, &css_class);\n                Ok(())\n            }\n            Action::SetCssStyle { id, raw } => {\n                let styles = Self::parse_styles(&raw);\n                self.set_css_style(&id, styles);\n",
+      "whole_sha256": "651921476dd295d3f6cf52ddff79d7b0d1953fd05d83413b9636b4251b963930"
+    },
+    {
+      "byte_length": 1703,
+      "byte_offset": 3535,
+      "id": "grammar_class",
+      "line_end": 171,
+      "line_start": 115,
+      "path": "/Users/bytedance/Develop/Loom/build/mermaid-renderer-research-20261020/relations-audit/class481-source-contract/null192-source-closure/remaining163-next-source-audit/generic-header-source-design/pinned-primary/crates__merman-core__src__diagrams__class_grammar.lalrpop",
+      "sha256": "a5c7c362c139b11d596a429810e5144b8d5feb027d1ed52bef91cef29635eb3c",
+      "text": "  \"class\" <name:Name> <label:ClassLabel?> <annotation:InlineAnnotation?> <css:CssShorthand?> <body:ClassBody?> => {\n    let mut v = vec![Action::AddClass { id: name.clone() }];\n    if let Some(lab) = label {\n      v.push(Action::SetClassLabel { id: name.clone(), label: lab });\n    }\n    if let Some(annotation) = annotation {\n      v.push(Action::AddAnnotation { id: name.clone(), annotation });\n    }\n    if let Some(cls) = css {\n      v.push(Action::SetCssClass { ids: name.clone(), css_class: cls });\n    }\n    if let Some(members) = body {\n      v.push(Action::AddMembers { id: name, members });\n    }\n    v\n  }\n};\n\nClassStatementWithId: (String, Vec<Action>) = {\n  \"class\" <name:Name> <label:ClassLabel?> <annotation:InlineAnnotation?> <css:CssShorthand?> <body:ClassBody?> => {\n    let mut v = vec![Action::AddClass { id: name.clone() }];\n    if let Some(lab) = label {\n      v.push(Action::SetClassLabel { id: name.clone(), label: lab });\n    }\n    if let Some(annotation) = annotation {\n      v.push(Action::AddAnnotation { id: name.clone(), annotation });\n    }\n    if let Some(cls) = css {\n      v.push(Action::SetCssClass { ids: name.clone(), css_class: cls });\n    }\n    if let Some(members) = body {\n      v.push(Action::AddMembers { id: name.clone(), members });\n    }\n    (name, v)\n  }\n};\n\nClassLabel: String = {\n  SquareStart <s:Str> SquareStop => s\n};\n\nInlineAnnotation: String = {\n  AnnotationStart <annotation:Name> AnnotationStop => annotation\n};\n\nCssShorthand: String = {\n  StyleSeparator <c:Name> => c\n};\n\nClassBody: Vec<String> = {\n  StructStart <m:Members> StructStop => m\n};\n\nMembers: Vec<String> = {\n  => Vec::new(),\n  <m:MemberLine> <rest:Members> => {\n    let mut v = rest;\n",
+      "whole_sha256": "f2d4a368436cd65d0d532ff690ab5300ace8d02982882939349b19dd0310d352"
+    },
+    {
+      "byte_length": 1058,
+      "byte_offset": 8281,
+      "id": "grammar_namespace",
+      "line_end": 284,
+      "line_start": 261,
+      "path": "/Users/bytedance/Develop/Loom/build/mermaid-renderer-research-20261020/relations-audit/class481-source-contract/null192-source-closure/remaining163-next-source-audit/generic-header-source-design/pinned-primary/crates__merman-core__src__diagrams__class_grammar.lalrpop",
+      "sha256": "586767273fea43896a6d8dad8024afa8eb19083dd7058714dffeef329551bca5",
+      "text": "NamespaceStatement: ActionList = {\n  \"namespace\" <ns:Name> <label:ClassLabel?> StructStart <_n:Newlines> <classes:NamespaceClasses> StructStop =>? arena.namespace(ns, label, classes, control),\n};\n\nNamespaceClasses: (ActionList, ClassIdList) = {\n  => (ActionList::default(), ClassIdList::default()),\n  <c:NamespaceClassItem> <rest:NamespaceClassesRest> =>? arena.concat_namespace_items(c, rest, control),\n};\n\nNamespaceClassesRest: (ActionList, ClassIdList) = {\n  <_n:Newlines1> <c:NamespaceClassItem> <rest:NamespaceClassesRest> =>? arena.concat_namespace_items(c, rest, control),\n  Newlines => (ActionList::default(), ClassIdList::default()),\n};\n\nNamespaceClassItem: (ActionList, ClassIdList) = {\n  <c:ClassStatementWithId> =>? {\n    let actions = arena.push_actions(c.1, control)?;\n    Ok((actions, arena.push_class_id(c.0, control)?))\n  },\n  <n:NoteStatement> =>? Ok((arena.push_actions(vec![n], control)?, ClassIdList::default())),\n  <ns:NamespaceStatement> => (ns, ClassIdList::default()),\n};\n\nRelationStatement: crate::diagrams::class::RelationData = {\n",
+      "whole_sha256": "f2d4a368436cd65d0d532ff690ab5300ace8d02982882939349b19dd0310d352"
+    },
+    {
+      "byte_length": 1406,
+      "byte_offset": 9416,
+      "id": "grammar_relation",
+      "line_end": 339,
+      "line_start": 286,
+      "path": "/Users/bytedance/Develop/Loom/build/mermaid-renderer-research-20261020/relations-audit/class481-source-contract/null192-source-closure/remaining163-next-source-audit/generic-header-source-design/pinned-primary/crates__merman-core__src__diagrams__class_grammar.lalrpop",
+      "sha256": "0aa2c9620c819feffbf828b90765ef595b79e423357e3cabfe650b9edbc84022",
+      "text": "    id1: a,\n    id2: b,\n    relation: rel,\n    relation_title1: None,\n    relation_title2: None,\n    title: None,\n  },\n  <a:Name> <t1:Str> <rel:Relation> <b:Name> => crate::diagrams::class::RelationData {\n    id1: a,\n    id2: b,\n    relation: rel,\n    relation_title1: Some(t1),\n    relation_title2: None,\n    title: None,\n  },\n  <a:Name> <rel:Relation> <t2:Str> <b:Name> => crate::diagrams::class::RelationData {\n    id1: a,\n    id2: b,\n    relation: rel,\n    relation_title1: None,\n    relation_title2: Some(t2),\n    title: None,\n  },\n  <a:Name> <t1:Str> <rel:Relation> <t2:Str> <b:Name> => crate::diagrams::class::RelationData {\n    id1: a,\n    id2: b,\n    relation: rel,\n    relation_title1: Some(t1),\n    relation_title2: Some(t2),\n    title: None,\n  },\n};\n\nRelation: Relation = {\n  <t1:RelationType> <line:LineType> <t2:RelationType> => Relation { type1: t1, type2: t2, line_type: line },\n  <line:LineType> <t2:RelationType> => Relation { type1: REL_NONE, type2: t2, line_type: line },\n  <t1:RelationType> <line:LineType> => Relation { type1: t1, type2: REL_NONE, line_type: line },\n  <line:LineType> => Relation { type1: REL_NONE, type2: REL_NONE, line_type: line },\n};\n\nRelationType: i32 = {\n  Agg => REL_AGGREGATION,\n  Ext => REL_EXTENSION,\n  Comp => REL_COMPOSITION,\n  Dep => REL_DEPENDENCY,\n  Lollipop => REL_LOLLIPOP,\n};\n\nLineType: i32 = {\n  Line => LINE_SOLID,\n  DottedLine => LINE_DOTTED,\n};\n",
+      "whole_sha256": "f2d4a368436cd65d0d532ff690ab5300ace8d02982882939349b19dd0310d352"
+    },
+    {
+      "byte_length": 104,
+      "byte_offset": 16617,
+      "id": "db_direction",
+      "line_end": 537,
+      "line_start": 535,
+      "path": "/Users/bytedance/Develop/Loom/build/mermaid-renderer-research-20261020/relations-audit/class481-source-contract/null192-source-closure/primary/crates__merman-core__src__diagrams__class__db.rs",
+      "sha256": "1f8d6d93241473f813105f6aa3ac1bff4010551ef2a6f2c1cdcb94f731b070bd",
+      "text": "    pub(super) fn set_direction(&mut self, dir: &str) {\n        self.direction = dir.to_string();\n    }\n",
+      "whole_sha256": "651921476dd295d3f6cf52ddff79d7b0d1953fd05d83413b9636b4251b963930"
+    }
+  ],
+  "qualification": "Source-authored six complete Models; TEST-FIRST unexecuted. No original c567/481 Model or checker modification. Nested owners/leaf cycles remain outside this new narrow producer profile, not upstream-invalid.",
+  "schema": "class_compound_rank_controls/v1",
+  "unreviewed_source_debts": [
+    "Nested groups, root ordinary leaves, empty groups, Notes, endpoint captions, actual leaf SCCs, and vertical direction are outside the proposed alternative layout; original full-suite obligations and old paths remain.",
+    "No claim of exact foreign ASCII/SVG coordinates, namespace facade behavior, or imported assertions passing. Original c567 remains mandatory in Generic13."
+  ]
+}

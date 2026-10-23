@@ -1,0 +1,43 @@
++--------------------------------------------------------------------------------------+
+| CUSTOMER                                                                             |
++--------------------------------------------------------------------------------------+
+| type(bytes=3)="int" name(bytes=2)="id" keys=[bytes=2 "PK"] comment(bytes=0)=""       |
+| type(bytes=6)="string" name(bytes=4)="name" keys=[] comment(bytes=0)=""              |
+| type(bytes=6)="string" name(bytes=5)="email" keys=[bytes=2 "UK"] comment(bytes=0)="" |
+| type(bytes=4)="date" name(bytes=10)="created_at" keys=[] comment(bytes=0)=""         |
++--------------------------------------------------------------------------------------+
+
++------------------------------------------------------------------------------------------+
+| ORDER                                                                                    |
++------------------------------------------------------------------------------------------+
+| type(bytes=3)="int" name(bytes=2)="id" keys=[bytes=2 "PK"] comment(bytes=0)=""           |
+| type(bytes=3)="int" name(bytes=11)="customer_id" keys=[bytes=2 "FK"] comment(bytes=0)="" |
+| type(bytes=4)="date" name(bytes=10)="order_date" keys=[] comment(bytes=0)=""             |
+| type(bytes=6)="string" name(bytes=6)="status" keys=[] comment(bytes=0)=""                |
+| type(bytes=5)="float" name(bytes=12)="total_amount" keys=[] comment(bytes=0)=""          |
++------------------------------------------------------------------------------------------+
+
++-----------------------------------------------------------------------------------------+
+| ORDER_ITEM                                                                              |
++-----------------------------------------------------------------------------------------+
+| type(bytes=3)="int" name(bytes=2)="id" keys=[bytes=2 "PK"] comment(bytes=0)=""          |
+| type(bytes=3)="int" name(bytes=8)="order_id" keys=[bytes=2 "FK"] comment(bytes=0)=""    |
+| type(bytes=3)="int" name(bytes=10)="product_id" keys=[bytes=2 "FK"] comment(bytes=0)="" |
+| type(bytes=3)="int" name(bytes=8)="quantity" keys=[] comment(bytes=0)=""                |
+| type(bytes=5)="float" name(bytes=10)="unit_price" keys=[] comment(bytes=0)=""           |
++-----------------------------------------------------------------------------------------+
+
++--------------------------------------------------------------------------------+
+| PRODUCT                                                                        |
++--------------------------------------------------------------------------------+
+| type(bytes=3)="int" name(bytes=2)="id" keys=[bytes=2 "PK"] comment(bytes=0)="" |
+| type(bytes=6)="string" name(bytes=4)="name" keys=[] comment(bytes=0)=""        |
+| type(bytes=6)="string" name(bytes=8)="category" keys=[] comment(bytes=0)=""    |
+| type(bytes=5)="float" name(bytes=5)="price" keys=[] comment(bytes=0)=""        |
+| type(bytes=3)="int" name(bytes=11)="stock_count" keys=[] comment(bytes=0)=""   |
++--------------------------------------------------------------------------------+
+
+relations:
+id(bytes=8)="CUSTOMER" ||--o{ id(bytes=5)="ORDER"       : places
+id(bytes=5)="ORDER"    ||--|{ id(bytes=10)="ORDER_ITEM" : contains
+id(bytes=7)="PRODUCT"  ||--o{ id(bytes=10)="ORDER_ITEM" : appears in

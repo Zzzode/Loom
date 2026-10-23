@@ -1,0 +1,12 @@
+dateFormat(bytes=10)="YYYY-MM-DD"
+section(bytes=5)="Build"
+  - task(bytes=6)="Design" [id(bytes=6)="design", order=0, range=2026-01-01 ->
+    2026-01-02, start(bytes=10)="2026-01-01", duration(bytes=2)="1d"]
+  - task(bytes=6)="Review" [id(bytes=6)="review", order=1, range=2026-01-02 ->
+    2026-01-03, start(bytes=10)="2026-01-02", duration(bytes=2)="1d"]
+  - task(bytes=9)="Implement" [id(bytes=14)="implementation", order=2,
+    range=2026-01-03 -> 2026-01-01, after=[bytes=6 "design", bytes=6 "review"],
+    until=[bytes=6 "design", bytes=6 "review"]]
+  - task(bytes=7)="Release" [id(bytes=7)="release", order=3, range=2026-01-05 ->
+    2026-01-06, start(bytes=10)="2026-01-05", end(bytes=10)="2026-01-06",
+    manualEnd=true]

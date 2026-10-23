@@ -1,0 +1,19 @@
++-------+                                          +-----+                                          +---------+
+| Alice |                                          | Bob |                                          | Charlie |
++---+---+                                          +--+--+                                          +----+----+
+    |                                                 |                                                  |
+    | 1. Solid arrow with circle at destination (RTL) |                                                  |
+    o<------------------------------------------------+                                                  |
+    |                                                 |                                                  |
+    |                                                 | 2. Dotted arrow with circle at destination (RTL) |
+    |                                                 o<.................................................+
+    |                                                 |                                                  |
+    | 3. Open arrow with circle at destination (RTL)  |                                                  |
+    o-------------------------------------------------+                                                  |
+    |                                                 |                                                  |
+    | 4. Cross arrow with circle at destination (RTL) |                                                  |
+    ox...................................................................................................+
+    |                                                 |                                                  |
+    | 5. Close arrow with circle at destination (RTL) |                                                  |
+    o(................................................+                                                  |
+    |                                                 |                                                  |

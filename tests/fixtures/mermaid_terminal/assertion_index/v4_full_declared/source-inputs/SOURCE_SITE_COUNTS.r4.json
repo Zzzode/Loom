@@ -1,0 +1,2835 @@
+{
+  "schema": "five_suite_assertion_source_identity_counts/v1",
+  "qualification": "Static source identities only. A source site inside a Go t.Run callback also belongs to its enclosing top-level test context. These entries are not independent source sites, runtime instances, migrated assertions, or semantic coverage.",
+  "index_path": "build/mermaid-renderer-research-20261020/full-obligation-audit/five-suite-full-ast-all-declared-internal-root-r3/FULL_AST_SOURCE_INDEX.json",
+  "index_sha256": "2984e7e788624f5a3723e128d9d9eb50424e6ded6ee920e408be4c861268732e",
+  "identity_key": [
+    "vendor",
+    "source_path",
+    "source_sha256",
+    "byte_start",
+    "byte_end"
+  ],
+  "suite_counts": {
+    "beautiful_mermaid": {
+      "complete_files": 22,
+      "test_context_identities": 597,
+      "assertion_site_entries": 1469,
+      "distinct_assertion_source_sites": 1469,
+      "repeated_context_entries": 0
+    },
+    "mermaid_ascii": {
+      "complete_files": 32,
+      "test_context_identities": 215,
+      "assertion_site_entries": 628,
+      "distinct_assertion_source_sites": 482,
+      "repeated_context_entries": 146
+    },
+    "merman": {
+      "complete_files": 132,
+      "test_context_identities": 1376,
+      "assertion_site_entries": 4083,
+      "distinct_assertion_source_sites": 4083,
+      "repeated_context_entries": 0
+    },
+    "mmdflux": {
+      "complete_files": 164,
+      "test_context_identities": 3333,
+      "assertion_site_entries": 7945,
+      "distinct_assertion_source_sites": 7945,
+      "repeated_context_entries": 0
+    },
+    "termaid": {
+      "complete_files": 37,
+      "test_context_identities": 714,
+      "assertion_site_entries": 1411,
+      "distinct_assertion_source_sites": 1411,
+      "repeated_context_entries": 0
+    }
+  },
+  "totals": {
+    "complete_files": 387,
+    "test_context_identities": 6235,
+    "assertion_site_entries": 15536,
+    "distinct_assertion_source_sites": 15390,
+    "repeated_context_entries": 146
+  },
+  "overlapping_context_source_sites": [
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/diagram/frontmatter_test.go",
+      "source_sha256": "d4a714919170d9fac8e86d146bf14a0ad88a76b838709c96356a9587f2a6a4e4",
+      "byte_start": 2034,
+      "byte_end": 2082,
+      "contexts": [
+        {
+          "identity": "TestStripFrontmatter",
+          "body_start": 136,
+          "body_end": 2187
+        },
+        {
+          "identity": "TestStripFrontmatter::<dynamic@33>",
+          "body_start": 1941,
+          "body_end": 2181
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/diagram/frontmatter_test.go",
+      "source_sha256": "d4a714919170d9fac8e86d146bf14a0ad88a76b838709c96356a9587f2a6a4e4",
+      "byte_start": 2121,
+      "byte_end": 2172,
+      "contexts": [
+        {
+          "identity": "TestStripFrontmatter",
+          "body_start": 136,
+          "body_end": 2187
+        },
+        {
+          "identity": "TestStripFrontmatter::<dynamic@33>",
+          "body_start": 1941,
+          "body_end": 2181
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/er/golden_test.go",
+      "source_sha256": "801fffdcfeff62cecc8b96fedcc18378f7f0cfb4dbc4d929f1b573431971d6bf",
+      "byte_start": 2867,
+      "byte_end": 2917,
+      "contexts": [
+        {
+          "identity": "TestErDiagramRendering_ASCIISmokeTest",
+          "body_start": 2489,
+          "body_end": 3169
+        },
+        {
+          "identity": "TestErDiagramRendering_ASCIISmokeTest::<dynamic@84>",
+          "body_start": 2743,
+          "body_end": 3159
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/er/golden_test.go",
+      "source_sha256": "801fffdcfeff62cecc8b96fedcc18378f7f0cfb4dbc4d929f1b573431971d6bf",
+      "byte_start": 2981,
+      "byte_end": 3028,
+      "contexts": [
+        {
+          "identity": "TestErDiagramRendering_ASCIISmokeTest",
+          "body_start": 2489,
+          "body_end": 3169
+        },
+        {
+          "identity": "TestErDiagramRendering_ASCIISmokeTest::<dynamic@84>",
+          "body_start": 2743,
+          "body_end": 3159
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/er/golden_test.go",
+      "source_sha256": "801fffdcfeff62cecc8b96fedcc18378f7f0cfb4dbc4d929f1b573431971d6bf",
+      "byte_start": 3102,
+      "byte_end": 3148,
+      "contexts": [
+        {
+          "identity": "TestErDiagramRendering_ASCIISmokeTest",
+          "body_start": 2489,
+          "body_end": 3169
+        },
+        {
+          "identity": "TestErDiagramRendering_ASCIISmokeTest::<dynamic@84>",
+          "body_start": 2743,
+          "body_end": 3159
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/er/parser_test.go",
+      "source_sha256": "defc217bb9434e52bdedbd6c3aa17693ffdbdeb674e80ec760633fc3cda24491",
+      "byte_start": 1091,
+      "byte_end": 1130,
+      "contexts": [
+        {
+          "identity": "TestParseRelationshipCardinalities",
+          "body_start": 590,
+          "body_end": 1641
+        },
+        {
+          "identity": "TestParseRelationshipCardinalities::<dynamic@40>",
+          "body_start": 986,
+          "body_end": 1635
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/er/parser_test.go",
+      "source_sha256": "defc217bb9434e52bdedbd6c3aa17693ffdbdeb674e80ec760633fc3cda24491",
+      "byte_start": 1174,
+      "byte_end": 1235,
+      "contexts": [
+        {
+          "identity": "TestParseRelationshipCardinalities",
+          "body_start": 590,
+          "body_end": 1641
+        },
+        {
+          "identity": "TestParseRelationshipCardinalities::<dynamic@40>",
+          "body_start": 986,
+          "body_end": 1635
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/er/parser_test.go",
+      "source_sha256": "defc217bb9434e52bdedbd6c3aa17693ffdbdeb674e80ec760633fc3cda24491",
+      "byte_start": 1370,
+      "byte_end": 1515,
+      "contexts": [
+        {
+          "identity": "TestParseRelationshipCardinalities",
+          "body_start": 590,
+          "body_end": 1641
+        },
+        {
+          "identity": "TestParseRelationshipCardinalities::<dynamic@40>",
+          "body_start": 986,
+          "body_end": 1635
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/er/parser_test.go",
+      "source_sha256": "defc217bb9434e52bdedbd6c3aa17693ffdbdeb674e80ec760633fc3cda24491",
+      "byte_start": 1585,
+      "byte_end": 1626,
+      "contexts": [
+        {
+          "identity": "TestParseRelationshipCardinalities",
+          "body_start": 590,
+          "body_end": 1641
+        },
+        {
+          "identity": "TestParseRelationshipCardinalities::<dynamic@40>",
+          "body_start": 986,
+          "body_end": 1635
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/er/parser_test.go",
+      "source_sha256": "defc217bb9434e52bdedbd6c3aa17693ffdbdeb674e80ec760633fc3cda24491",
+      "byte_start": 2870,
+      "byte_end": 2921,
+      "contexts": [
+        {
+          "identity": "TestParseErErrors",
+          "body_start": 2535,
+          "body_end": 2936
+        },
+        {
+          "identity": "TestParseErErrors::<dynamic@92>",
+          "body_start": 2803,
+          "body_end": 2930
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/label_test.go",
+      "source_sha256": "2ea6da5508bab61a5fa8886b40ecbc5f09859dada2729bc92abb3b14055bfc2b",
+      "byte_start": 876,
+      "byte_end": 941,
+      "contexts": [
+        {
+          "identity": "TestNewGraphLabel",
+          "body_start": 70,
+          "body_end": 1346
+        },
+        {
+          "identity": "TestNewGraphLabel::<dynamic@39>",
+          "body_start": 758,
+          "body_end": 1340
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/label_test.go",
+      "source_sha256": "2ea6da5508bab61a5fa8886b40ecbc5f09859dada2729bc92abb3b14055bfc2b",
+      "byte_start": 1029,
+      "byte_end": 1098,
+      "contexts": [
+        {
+          "identity": "TestNewGraphLabel",
+          "body_start": 70,
+          "body_end": 1346
+        },
+        {
+          "identity": "TestNewGraphLabel::<dynamic@39>",
+          "body_start": 758,
+          "body_end": 1340
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/label_test.go",
+      "source_sha256": "2ea6da5508bab61a5fa8886b40ecbc5f09859dada2729bc92abb3b14055bfc2b",
+      "byte_start": 1151,
+      "byte_end": 1209,
+      "contexts": [
+        {
+          "identity": "TestNewGraphLabel",
+          "body_start": 70,
+          "body_end": 1346
+        },
+        {
+          "identity": "TestNewGraphLabel::<dynamic@39>",
+          "body_start": 758,
+          "body_end": 1340
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/label_test.go",
+      "source_sha256": "2ea6da5508bab61a5fa8886b40ecbc5f09859dada2729bc92abb3b14055bfc2b",
+      "byte_start": 1264,
+      "byte_end": 1331,
+      "contexts": [
+        {
+          "identity": "TestNewGraphLabel",
+          "body_start": 70,
+          "body_end": 1346
+        },
+        {
+          "identity": "TestNewGraphLabel::<dynamic@39>",
+          "body_start": 758,
+          "body_end": 1340
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 3650,
+      "byte_end": 3704,
+      "contexts": [
+        {
+          "identity": "TestParseNodeShapes",
+          "body_start": 2844,
+          "body_end": 3971
+        },
+        {
+          "identity": "TestParseNodeShapes::<dynamic@116>",
+          "body_start": 3555,
+          "body_end": 3965
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 3788,
+      "byte_end": 3860,
+      "contexts": [
+        {
+          "identity": "TestParseNodeShapes",
+          "body_start": 2844,
+          "body_end": 3971
+        },
+        {
+          "identity": "TestParseNodeShapes::<dynamic@116>",
+          "body_start": 3555,
+          "body_end": 3965
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 3893,
+      "byte_end": 3956,
+      "contexts": [
+        {
+          "identity": "TestParseNodeShapes",
+          "body_start": 2844,
+          "body_end": 3971
+        },
+        {
+          "identity": "TestParseNodeShapes::<dynamic@116>",
+          "body_start": 3555,
+          "body_end": 3965
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 6549,
+      "byte_end": 6595,
+      "contexts": [
+        {
+          "identity": "TestParseSubgraphHeader",
+          "body_start": 5895,
+          "body_end": 6855
+        },
+        {
+          "identity": "TestParseSubgraphHeader::<dynamic@218>",
+          "body_start": 6457,
+          "body_end": 6849
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 6637,
+      "byte_end": 6690,
+      "contexts": [
+        {
+          "identity": "TestParseSubgraphHeader",
+          "body_start": 5895,
+          "body_end": 6855
+        },
+        {
+          "identity": "TestParseSubgraphHeader::<dynamic@218>",
+          "body_start": 6457,
+          "body_end": 6849
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 6770,
+      "byte_end": 6840,
+      "contexts": [
+        {
+          "identity": "TestParseSubgraphHeader",
+          "body_start": 5895,
+          "body_end": 6855
+        },
+        {
+          "identity": "TestParseSubgraphHeader::<dynamic@218>",
+          "body_start": 6457,
+          "body_end": 6849
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 8635,
+      "byte_end": 8670,
+      "contexts": [
+        {
+          "identity": "TestMermaidFileToMapParsesNonStandardEdgeOperators",
+          "body_start": 8444,
+          "body_end": 8854
+        },
+        {
+          "identity": "TestMermaidFileToMapParsesNonStandardEdgeOperators::<dynamic@285>",
+          "body_start": 8532,
+          "body_end": 8848
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 8782,
+      "byte_end": 8839,
+      "contexts": [
+        {
+          "identity": "TestMermaidFileToMapParsesNonStandardEdgeOperators",
+          "body_start": 8444,
+          "body_end": 8854
+        },
+        {
+          "identity": "TestMermaidFileToMapParsesNonStandardEdgeOperators::<dynamic@285>",
+          "body_start": 8532,
+          "body_end": 8848
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 10710,
+      "byte_end": 10761,
+      "contexts": [
+        {
+          "identity": "TestParseRejectsMalformedClassDefWithoutPanicking",
+          "body_start": 10452,
+          "body_end": 10776
+        },
+        {
+          "identity": "TestParseRejectsMalformedClassDefWithoutPanicking::<dynamic@349>",
+          "body_start": 10615,
+          "body_end": 10770
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 12673,
+      "byte_end": 12739,
+      "contexts": [
+        {
+          "identity": "TestGraphTypeDetection",
+          "body_start": 11036,
+          "body_end": 12959
+        },
+        {
+          "identity": "TestGraphTypeDetection::<dynamic@391>",
+          "body_start": 12568,
+          "body_end": 12953
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 12785,
+      "byte_end": 12822,
+      "contexts": [
+        {
+          "identity": "TestGraphTypeDetection",
+          "body_start": 11036,
+          "body_end": 12959
+        },
+        {
+          "identity": "TestGraphTypeDetection::<dynamic@391>",
+          "body_start": 12568,
+          "body_end": 12953
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/parse_test.go",
+      "source_sha256": "546b63bec36c19b2d15d2d6b09ec39e2383025dfce6e34ddc22c0827d66ad00f",
+      "byte_start": 12875,
+      "byte_end": 12944,
+      "contexts": [
+        {
+          "identity": "TestGraphTypeDetection",
+          "body_start": 11036,
+          "body_end": 12959
+        },
+        {
+          "identity": "TestGraphTypeDetection::<dynamic@391>",
+          "body_start": 12568,
+          "body_end": 12953
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/render_graph_test.go",
+      "source_sha256": "00bb1c7c6f52cd9c78fcce193199804ce4b43cb20bf699527698075fa7c866c3",
+      "byte_start": 1221,
+      "byte_end": 1262,
+      "contexts": [
+        {
+          "identity": "TestRenderGraphHandlesUnicodeClusterNodeLabels",
+          "body_start": 974,
+          "body_end": 1479
+        },
+        {
+          "identity": "TestRenderGraphHandlesUnicodeClusterNodeLabels::<dynamic@43>",
+          "body_start": 1055,
+          "body_end": 1473
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/render_graph_test.go",
+      "source_sha256": "00bb1c7c6f52cd9c78fcce193199804ce4b43cb20bf699527698075fa7c866c3",
+      "byte_start": 1349,
+      "byte_end": 1424,
+      "contexts": [
+        {
+          "identity": "TestRenderGraphHandlesUnicodeClusterNodeLabels",
+          "body_start": 974,
+          "body_end": 1479
+        },
+        {
+          "identity": "TestRenderGraphHandlesUnicodeClusterNodeLabels::<dynamic@43>",
+          "body_start": 1055,
+          "body_end": 1473
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/render_graph_test.go",
+      "source_sha256": "00bb1c7c6f52cd9c78fcce193199804ce4b43cb20bf699527698075fa7c866c3",
+      "byte_start": 7227,
+      "byte_end": 7239,
+      "contexts": [
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels",
+          "body_start": 6058,
+          "body_end": 8960
+        },
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels::<dynamic@200>",
+          "body_start": 6692,
+          "body_end": 8945
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/render_graph_test.go",
+      "source_sha256": "00bb1c7c6f52cd9c78fcce193199804ce4b43cb20bf699527698075fa7c866c3",
+      "byte_start": 7489,
+      "byte_end": 7550,
+      "contexts": [
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels",
+          "body_start": 6058,
+          "body_end": 8960
+        },
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels::<dynamic@200>",
+          "body_start": 6692,
+          "body_end": 8945
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/render_graph_test.go",
+      "source_sha256": "00bb1c7c6f52cd9c78fcce193199804ce4b43cb20bf699527698075fa7c866c3",
+      "byte_start": 7741,
+      "byte_end": 7788,
+      "contexts": [
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels",
+          "body_start": 6058,
+          "body_end": 8960
+        },
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels::<dynamic@200>",
+          "body_start": 6692,
+          "body_end": 8945
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/render_graph_test.go",
+      "source_sha256": "00bb1c7c6f52cd9c78fcce193199804ce4b43cb20bf699527698075fa7c866c3",
+      "byte_start": 8192,
+      "byte_end": 8269,
+      "contexts": [
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels",
+          "body_start": 6058,
+          "body_end": 8960
+        },
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels::<dynamic@200>",
+          "body_start": 6692,
+          "body_end": 8945
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/render_graph_test.go",
+      "source_sha256": "00bb1c7c6f52cd9c78fcce193199804ce4b43cb20bf699527698075fa7c866c3",
+      "byte_start": 8662,
+      "byte_end": 8742,
+      "contexts": [
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels",
+          "body_start": 6058,
+          "body_end": 8960
+        },
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels::<dynamic@200>",
+          "body_start": 6692,
+          "body_end": 8945
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/graph/render_graph_test.go",
+      "source_sha256": "00bb1c7c6f52cd9c78fcce193199804ce4b43cb20bf699527698075fa7c866c3",
+      "byte_start": 8849,
+      "byte_end": 8915,
+      "contexts": [
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels",
+          "body_start": 6058,
+          "body_end": 8960
+        },
+        {
+          "identity": "TestRenderGraphAlignsFanoutLabels::<dynamic@200>",
+          "body_start": 6692,
+          "body_end": 8945
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/frontmatter_test.go",
+      "source_sha256": "98bf666377f561ae6f785217bfe03f6602dbb90968982715359332731f43abf5",
+      "byte_start": 1077,
+      "byte_end": 1089,
+      "contexts": [
+        {
+          "identity": "TestRenderWithFrontmatter",
+          "body_start": 304,
+          "body_end": 1447
+        },
+        {
+          "identity": "TestRenderWithFrontmatter::<dynamic@39>",
+          "body_start": 940,
+          "body_end": 1441
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/frontmatter_test.go",
+      "source_sha256": "98bf666377f561ae6f785217bfe03f6602dbb90968982715359332731f43abf5",
+      "byte_start": 1133,
+      "byte_end": 1190,
+      "contexts": [
+        {
+          "identity": "TestRenderWithFrontmatter",
+          "body_start": 304,
+          "body_end": 1447
+        },
+        {
+          "identity": "TestRenderWithFrontmatter::<dynamic@39>",
+          "body_start": 940,
+          "body_end": 1441
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/frontmatter_test.go",
+      "source_sha256": "98bf666377f561ae6f785217bfe03f6602dbb90968982715359332731f43abf5",
+      "byte_start": 1282,
+      "byte_end": 1294,
+      "contexts": [
+        {
+          "identity": "TestRenderWithFrontmatter",
+          "body_start": 304,
+          "body_end": 1447
+        },
+        {
+          "identity": "TestRenderWithFrontmatter::<dynamic@39>",
+          "body_start": 940,
+          "body_end": 1441
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/frontmatter_test.go",
+      "source_sha256": "98bf666377f561ae6f785217bfe03f6602dbb90968982715359332731f43abf5",
+      "byte_start": 1381,
+      "byte_end": 1426,
+      "contexts": [
+        {
+          "identity": "TestRenderWithFrontmatter",
+          "body_start": 304,
+          "body_end": 1447
+        },
+        {
+          "identity": "TestRenderWithFrontmatter::<dynamic@39>",
+          "body_start": 940,
+          "body_end": 1441
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 1800,
+      "byte_end": 1837,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramIntegration",
+          "body_start": 298,
+          "body_end": 2320
+        },
+        {
+          "identity": "TestSequenceDiagramIntegration::<dynamic@66>",
+          "body_start": 1615,
+          "body_end": 2314
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 1897,
+      "byte_end": 1935,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramIntegration",
+          "body_start": 298,
+          "body_end": 2320
+        },
+        {
+          "identity": "TestSequenceDiagramIntegration::<dynamic@66>",
+          "body_start": 1615,
+          "body_end": 2314
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 2090,
+      "byte_end": 2165,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramIntegration",
+          "body_start": 298,
+          "body_end": 2320
+        },
+        {
+          "identity": "TestSequenceDiagramIntegration::<dynamic@66>",
+          "body_start": 1615,
+          "body_end": 2314
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 2258,
+      "byte_end": 2305,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramIntegration",
+          "body_start": 298,
+          "body_end": 2320
+        },
+        {
+          "identity": "TestSequenceDiagramIntegration::<dynamic@66>",
+          "body_start": 1615,
+          "body_end": 2314
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 3967,
+      "byte_end": 4005,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramIntegration_ErrorHandling",
+          "body_start": 3250,
+          "body_end": 4106
+        },
+        {
+          "identity": "TestSequenceDiagramIntegration_ErrorHandling::<dynamic@146>",
+          "body_start": 3788,
+          "body_end": 4100
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 4054,
+      "byte_end": 4091,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramIntegration_ErrorHandling",
+          "body_start": 3250,
+          "body_end": 4106
+        },
+        {
+          "identity": "TestSequenceDiagramIntegration_ErrorHandling::<dynamic@146>",
+          "body_start": 3788,
+          "body_end": 4100
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 4652,
+      "byte_end": 4686,
+      "contexts": [
+        {
+          "identity": "TestDiagramFactoryIntegration",
+          "body_start": 4220,
+          "body_end": 5170
+        },
+        {
+          "identity": "TestDiagramFactoryIntegration::<dynamic@183>",
+          "body_start": 4567,
+          "body_end": 5164
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 4736,
+      "byte_end": 4802,
+      "contexts": [
+        {
+          "identity": "TestDiagramFactoryIntegration",
+          "body_start": 4220,
+          "body_end": 5170
+        },
+        {
+          "identity": "TestDiagramFactoryIntegration::<dynamic@183>",
+          "body_start": 4567,
+          "body_end": 5164
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 4898,
+      "byte_end": 4930,
+      "contexts": [
+        {
+          "identity": "TestDiagramFactoryIntegration",
+          "body_start": 4220,
+          "body_end": 5170
+        },
+        {
+          "identity": "TestDiagramFactoryIntegration::<dynamic@183>",
+          "body_start": 4567,
+          "body_end": 5164
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 5047,
+      "byte_end": 5080,
+      "contexts": [
+        {
+          "identity": "TestDiagramFactoryIntegration",
+          "body_start": 4220,
+          "body_end": 5170
+        },
+        {
+          "identity": "TestDiagramFactoryIntegration::<dynamic@183>",
+          "body_start": 4567,
+          "body_end": 5164
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/integration_test.go",
+      "source_sha256": "b4ef68b7a772351aee66ff44f3275fc9c1167dda39ab78504d2e4280c81fe27e",
+      "byte_start": 5116,
+      "byte_end": 5155,
+      "contexts": [
+        {
+          "identity": "TestDiagramFactoryIntegration",
+          "body_start": 4220,
+          "body_end": 5170
+        },
+        {
+          "identity": "TestDiagramFactoryIntegration::<dynamic@183>",
+          "body_start": 4567,
+          "body_end": 5164
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/max_width_test.go",
+      "source_sha256": "7137ce4e046495f7264f62461dddb4634bba141268ab17f0bb398af7aa74e012",
+      "byte_start": 732,
+      "byte_end": 744,
+      "contexts": [
+        {
+          "identity": "TestGraphMaxWidthGolden",
+          "body_start": 265,
+          "body_end": 1377
+        },
+        {
+          "identity": "TestGraphMaxWidthGolden::<dynamic@25>",
+          "body_start": 535,
+          "body_end": 1371
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/max_width_test.go",
+      "source_sha256": "7137ce4e046495f7264f62461dddb4634bba141268ab17f0bb398af7aa74e012",
+      "byte_start": 933,
+      "byte_end": 945,
+      "contexts": [
+        {
+          "identity": "TestGraphMaxWidthGolden",
+          "body_start": 265,
+          "body_end": 1377
+        },
+        {
+          "identity": "TestGraphMaxWidthGolden::<dynamic@25>",
+          "body_start": 535,
+          "body_end": 1371
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/max_width_test.go",
+      "source_sha256": "7137ce4e046495f7264f62461dddb4634bba141268ab17f0bb398af7aa74e012",
+      "byte_start": 989,
+      "byte_end": 1076,
+      "contexts": [
+        {
+          "identity": "TestGraphMaxWidthGolden",
+          "body_start": 265,
+          "body_end": 1377
+        },
+        {
+          "identity": "TestGraphMaxWidthGolden::<dynamic@25>",
+          "body_start": 535,
+          "body_end": 1371
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/max_width_test.go",
+      "source_sha256": "7137ce4e046495f7264f62461dddb4634bba141268ab17f0bb398af7aa74e012",
+      "byte_start": 1151,
+      "byte_end": 1231,
+      "contexts": [
+        {
+          "identity": "TestGraphMaxWidthGolden",
+          "body_start": 265,
+          "body_end": 1377
+        },
+        {
+          "identity": "TestGraphMaxWidthGolden::<dynamic@25>",
+          "body_start": 535,
+          "body_end": 1371
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/max_width_test.go",
+      "source_sha256": "7137ce4e046495f7264f62461dddb4634bba141268ab17f0bb398af7aa74e012",
+      "byte_start": 1301,
+      "byte_end": 1362,
+      "contexts": [
+        {
+          "identity": "TestGraphMaxWidthGolden",
+          "body_start": 265,
+          "body_end": 1377
+        },
+        {
+          "identity": "TestGraphMaxWidthGolden::<dynamic@25>",
+          "body_start": 535,
+          "body_end": 1371
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/max_width_test.go",
+      "source_sha256": "7137ce4e046495f7264f62461dddb4634bba141268ab17f0bb398af7aa74e012",
+      "byte_start": 1729,
+      "byte_end": 1782,
+      "contexts": [
+        {
+          "identity": "TestMaxWidthHandlesUnicodeClusterLabels",
+          "body_start": 1438,
+          "body_end": 2174
+        },
+        {
+          "identity": "TestMaxWidthHandlesUnicodeClusterLabels::<dynamic@53>",
+          "body_start": 1519,
+          "body_end": 2168
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/max_width_test.go",
+      "source_sha256": "7137ce4e046495f7264f62461dddb4634bba141268ab17f0bb398af7aa74e012",
+      "byte_start": 1833,
+      "byte_end": 1883,
+      "contexts": [
+        {
+          "identity": "TestMaxWidthHandlesUnicodeClusterLabels",
+          "body_start": 1438,
+          "body_end": 2174
+        },
+        {
+          "identity": "TestMaxWidthHandlesUnicodeClusterLabels::<dynamic@53>",
+          "body_start": 1519,
+          "body_end": 2168
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/max_width_test.go",
+      "source_sha256": "7137ce4e046495f7264f62461dddb4634bba141268ab17f0bb398af7aa74e012",
+      "byte_start": 1932,
+      "byte_end": 1997,
+      "contexts": [
+        {
+          "identity": "TestMaxWidthHandlesUnicodeClusterLabels",
+          "body_start": 1438,
+          "body_end": 2174
+        },
+        {
+          "identity": "TestMaxWidthHandlesUnicodeClusterLabels::<dynamic@53>",
+          "body_start": 1519,
+          "body_end": 2168
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/render/max_width_test.go",
+      "source_sha256": "7137ce4e046495f7264f62461dddb4634bba141268ab17f0bb398af7aa74e012",
+      "byte_start": 2084,
+      "byte_end": 2159,
+      "contexts": [
+        {
+          "identity": "TestMaxWidthHandlesUnicodeClusterLabels",
+          "body_start": 1438,
+          "body_end": 2174
+        },
+        {
+          "identity": "TestMaxWidthHandlesUnicodeClusterLabels::<dynamic@53>",
+          "body_start": 1519,
+          "body_end": 2168
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/activation_test.go",
+      "source_sha256": "9e053fe416a73b370d9e9ff416cf3b7170c90e4964550d972aff9a3eec91fa7d",
+      "byte_start": 2537,
+      "byte_end": 2590,
+      "contexts": [
+        {
+          "identity": "TestActivationShorthandAllArrows",
+          "body_start": 2285,
+          "body_end": 2771
+        },
+        {
+          "identity": "TestActivationShorthandAllArrows::<dynamic@67>",
+          "body_start": 2409,
+          "body_end": 2765
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/activation_test.go",
+      "source_sha256": "9e053fe416a73b370d9e9ff416cf3b7170c90e4964550d972aff9a3eec91fa7d",
+      "byte_start": 2678,
+      "byte_end": 2756,
+      "contexts": [
+        {
+          "identity": "TestActivationShorthandAllArrows",
+          "body_start": 2285,
+          "body_end": 2771
+        },
+        {
+          "identity": "TestActivationShorthandAllArrows::<dynamic@67>",
+          "body_start": 2409,
+          "body_end": 2765
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/activation_test.go",
+      "source_sha256": "9e053fe416a73b370d9e9ff416cf3b7170c90e4964550d972aff9a3eec91fa7d",
+      "byte_start": 4684,
+      "byte_end": 4695,
+      "contexts": [
+        {
+          "identity": "TestActivationErrors",
+          "body_start": 4092,
+          "body_end": 4801
+        },
+        {
+          "identity": "TestActivationErrors::<dynamic@117>",
+          "body_start": 4600,
+          "body_end": 4795
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/activation_test.go",
+      "source_sha256": "9e053fe416a73b370d9e9ff416cf3b7170c90e4964550d972aff9a3eec91fa7d",
+      "byte_start": 4727,
+      "byte_end": 4786,
+      "contexts": [
+        {
+          "identity": "TestActivationErrors",
+          "body_start": 4092,
+          "body_end": 4801
+        },
+        {
+          "identity": "TestActivationErrors::<dynamic@117>",
+          "body_start": 4600,
+          "body_end": 4795
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/activation_test.go",
+      "source_sha256": "9e053fe416a73b370d9e9ff416cf3b7170c90e4964550d972aff9a3eec91fa7d",
+      "byte_start": 10512,
+      "byte_end": 10524,
+      "contexts": [
+        {
+          "identity": "TestActivationUnbrokenAcrossFrames",
+          "body_start": 10125,
+          "body_end": 11477
+        },
+        {
+          "identity": "TestActivationUnbrokenAcrossFrames::<dynamic@276>",
+          "body_start": 10445,
+          "body_end": 11471
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/activation_test.go",
+      "source_sha256": "9e053fe416a73b370d9e9ff416cf3b7170c90e4964550d972aff9a3eec91fa7d",
+      "byte_start": 10603,
+      "byte_end": 10615,
+      "contexts": [
+        {
+          "identity": "TestActivationUnbrokenAcrossFrames",
+          "body_start": 10125,
+          "body_end": 11477
+        },
+        {
+          "identity": "TestActivationUnbrokenAcrossFrames::<dynamic@276>",
+          "body_start": 10445,
+          "body_end": 11471
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/activation_test.go",
+      "source_sha256": "9e053fe416a73b370d9e9ff416cf3b7170c90e4964550d972aff9a3eec91fa7d",
+      "byte_start": 11383,
+      "byte_end": 11456,
+      "contexts": [
+        {
+          "identity": "TestActivationUnbrokenAcrossFrames",
+          "body_start": 10125,
+          "body_end": 11477
+        },
+        {
+          "identity": "TestActivationUnbrokenAcrossFrames::<dynamic@276>",
+          "body_start": 10445,
+          "body_end": 11471
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/actor_test.go",
+      "source_sha256": "ac81a33e2443b014dc7a476e6a6f513bc048f3e41e70f0a3a8273429fc7a1435",
+      "byte_start": 1167,
+      "byte_end": 1204,
+      "contexts": [
+        {
+          "identity": "TestActorDeclarations",
+          "body_start": 383,
+          "body_end": 1710
+        },
+        {
+          "identity": "TestActorDeclarations::<dynamic@28>",
+          "body_start": 1094,
+          "body_end": 1704
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/actor_test.go",
+      "source_sha256": "ac81a33e2443b014dc7a476e6a6f513bc048f3e41e70f0a3a8273429fc7a1435",
+      "byte_start": 1247,
+      "byte_end": 1291,
+      "contexts": [
+        {
+          "identity": "TestActorDeclarations",
+          "body_start": 383,
+          "body_end": 1710
+        },
+        {
+          "identity": "TestActorDeclarations::<dynamic@28>",
+          "body_start": 1094,
+          "body_end": 1704
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/actor_test.go",
+      "source_sha256": "ac81a33e2443b014dc7a476e6a6f513bc048f3e41e70f0a3a8273429fc7a1435",
+      "byte_start": 1380,
+      "byte_end": 1453,
+      "contexts": [
+        {
+          "identity": "TestActorDeclarations",
+          "body_start": 383,
+          "body_end": 1710
+        },
+        {
+          "identity": "TestActorDeclarations::<dynamic@28>",
+          "body_start": 1094,
+          "body_end": 1704
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/actor_test.go",
+      "source_sha256": "ac81a33e2443b014dc7a476e6a6f513bc048f3e41e70f0a3a8273429fc7a1435",
+      "byte_start": 1535,
+      "byte_end": 1568,
+      "contexts": [
+        {
+          "identity": "TestActorDeclarations",
+          "body_start": 383,
+          "body_end": 1710
+        },
+        {
+          "identity": "TestActorDeclarations::<dynamic@28>",
+          "body_start": 1094,
+          "body_end": 1704
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/actor_test.go",
+      "source_sha256": "ac81a33e2443b014dc7a476e6a6f513bc048f3e41e70f0a3a8273429fc7a1435",
+      "byte_start": 1626,
+      "byte_end": 1695,
+      "contexts": [
+        {
+          "identity": "TestActorDeclarations",
+          "body_start": 383,
+          "body_end": 1710
+        },
+        {
+          "identity": "TestActorDeclarations::<dynamic@28>",
+          "body_start": 1094,
+          "body_end": 1704
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/alt_test.go",
+      "source_sha256": "d0cded43f3af0f5673d09d818c5c97054b9bddd9dc5fb728c22c5d9cb6b0682c",
+      "byte_start": 1419,
+      "byte_end": 1445,
+      "contexts": [
+        {
+          "identity": "TestParseAlt",
+          "body_start": 730,
+          "body_end": 1919
+        },
+        {
+          "identity": "TestParseAlt::<dynamic@45>",
+          "body_start": 1345,
+          "body_end": 1913
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/alt_test.go",
+      "source_sha256": "d0cded43f3af0f5673d09d818c5c97054b9bddd9dc5fb728c22c5d9cb6b0682c",
+      "byte_start": 1480,
+      "byte_end": 1521,
+      "contexts": [
+        {
+          "identity": "TestParseAlt",
+          "body_start": 730,
+          "body_end": 1919
+        },
+        {
+          "identity": "TestParseAlt::<dynamic@45>",
+          "body_start": 1345,
+          "body_end": 1913
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/alt_test.go",
+      "source_sha256": "d0cded43f3af0f5673d09d818c5c97054b9bddd9dc5fb728c22c5d9cb6b0682c",
+      "byte_start": 1575,
+      "byte_end": 1644,
+      "contexts": [
+        {
+          "identity": "TestParseAlt",
+          "body_start": 730,
+          "body_end": 1919
+        },
+        {
+          "identity": "TestParseAlt::<dynamic@45>",
+          "body_start": 1345,
+          "body_end": 1913
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/alt_test.go",
+      "source_sha256": "d0cded43f3af0f5673d09d818c5c97054b9bddd9dc5fb728c22c5d9cb6b0682c",
+      "byte_start": 1721,
+      "byte_end": 1777,
+      "contexts": [
+        {
+          "identity": "TestParseAlt",
+          "body_start": 730,
+          "body_end": 1919
+        },
+        {
+          "identity": "TestParseAlt::<dynamic@45>",
+          "body_start": 1345,
+          "body_end": 1913
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/alt_test.go",
+      "source_sha256": "d0cded43f3af0f5673d09d818c5c97054b9bddd9dc5fb728c22c5d9cb6b0682c",
+      "byte_start": 1848,
+      "byte_end": 1898,
+      "contexts": [
+        {
+          "identity": "TestParseAlt",
+          "body_start": 730,
+          "body_end": 1919
+        },
+        {
+          "identity": "TestParseAlt::<dynamic@45>",
+          "body_start": 1345,
+          "body_end": 1913
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/alt_test.go",
+      "source_sha256": "d0cded43f3af0f5673d09d818c5c97054b9bddd9dc5fb728c22c5d9cb6b0682c",
+      "byte_start": 2471,
+      "byte_end": 2482,
+      "contexts": [
+        {
+          "identity": "TestParseAltErrors",
+          "body_start": 2014,
+          "body_end": 2574
+        },
+        {
+          "identity": "TestParseAltErrors::<dynamic@79>",
+          "body_start": 2383,
+          "body_end": 2568
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/alt_test.go",
+      "source_sha256": "d0cded43f3af0f5673d09d818c5c97054b9bddd9dc5fb728c22c5d9cb6b0682c",
+      "byte_start": 2502,
+      "byte_end": 2559,
+      "contexts": [
+        {
+          "identity": "TestParseAltErrors",
+          "body_start": 2014,
+          "body_end": 2574
+        },
+        {
+          "identity": "TestParseAltErrors::<dynamic@79>",
+          "body_start": 2383,
+          "body_end": 2568
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/arrows_test.go",
+      "source_sha256": "9a9cf32673fa27e110aa05140bbd69a1b92cdc393336bcb3dd16cd06213e8cc1",
+      "byte_start": 634,
+      "byte_end": 673,
+      "contexts": [
+        {
+          "identity": "TestArrowTypes",
+          "body_start": 225,
+          "body_end": 1160
+        },
+        {
+          "identity": "TestArrowTypes::<dynamic@21>",
+          "body_start": 525,
+          "body_end": 1154
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/arrows_test.go",
+      "source_sha256": "9a9cf32673fa27e110aa05140bbd69a1b92cdc393336bcb3dd16cd06213e8cc1",
+      "byte_start": 713,
+      "byte_end": 769,
+      "contexts": [
+        {
+          "identity": "TestArrowTypes",
+          "body_start": 225,
+          "body_end": 1160
+        },
+        {
+          "identity": "TestArrowTypes::<dynamic@21>",
+          "body_start": 525,
+          "body_end": 1154
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/arrows_test.go",
+      "source_sha256": "9a9cf32673fa27e110aa05140bbd69a1b92cdc393336bcb3dd16cd06213e8cc1",
+      "byte_start": 837,
+      "byte_end": 886,
+      "contexts": [
+        {
+          "identity": "TestArrowTypes",
+          "body_start": 225,
+          "body_end": 1160
+        },
+        {
+          "identity": "TestArrowTypes::<dynamic@21>",
+          "body_start": 525,
+          "body_end": 1154
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/arrows_test.go",
+      "source_sha256": "9a9cf32673fa27e110aa05140bbd69a1b92cdc393336bcb3dd16cd06213e8cc1",
+      "byte_start": 936,
+      "byte_end": 1003,
+      "contexts": [
+        {
+          "identity": "TestArrowTypes",
+          "body_start": 225,
+          "body_end": 1160
+        },
+        {
+          "identity": "TestArrowTypes::<dynamic@21>",
+          "body_start": 525,
+          "body_end": 1154
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/arrows_test.go",
+      "source_sha256": "9a9cf32673fa27e110aa05140bbd69a1b92cdc393336bcb3dd16cd06213e8cc1",
+      "byte_start": 1083,
+      "byte_end": 1145,
+      "contexts": [
+        {
+          "identity": "TestArrowTypes",
+          "body_start": 225,
+          "body_end": 1160
+        },
+        {
+          "identity": "TestArrowTypes::<dynamic@21>",
+          "body_start": 525,
+          "body_end": 1154
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/box_test.go",
+      "source_sha256": "9d977779738ceecae3b86ed6f345873bc26a390aca1c1bdc5496d4630c91739e",
+      "byte_start": 1249,
+      "byte_end": 1261,
+      "contexts": [
+        {
+          "identity": "TestBoxParsing",
+          "body_start": 423,
+          "body_end": 1713
+        },
+        {
+          "identity": "TestBoxParsing::<dynamic@31>",
+          "body_start": 1060,
+          "body_end": 1707
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/box_test.go",
+      "source_sha256": "9d977779738ceecae3b86ed6f345873bc26a390aca1c1bdc5496d4630c91739e",
+      "byte_start": 1297,
+      "byte_end": 1341,
+      "contexts": [
+        {
+          "identity": "TestBoxParsing",
+          "body_start": 423,
+          "body_end": 1713
+        },
+        {
+          "identity": "TestBoxParsing::<dynamic@31>",
+          "body_start": 1060,
+          "body_end": 1707
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/box_test.go",
+      "source_sha256": "9d977779738ceecae3b86ed6f345873bc26a390aca1c1bdc5496d4630c91739e",
+      "byte_start": 1401,
+      "byte_end": 1454,
+      "contexts": [
+        {
+          "identity": "TestBoxParsing",
+          "body_start": 423,
+          "body_end": 1713
+        },
+        {
+          "identity": "TestBoxParsing::<dynamic@31>",
+          "body_start": 1060,
+          "body_end": 1707
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/box_test.go",
+      "source_sha256": "9d977779738ceecae3b86ed6f345873bc26a390aca1c1bdc5496d4630c91739e",
+      "byte_start": 1500,
+      "byte_end": 1569,
+      "contexts": [
+        {
+          "identity": "TestBoxParsing",
+          "body_start": 423,
+          "body_end": 1713
+        },
+        {
+          "identity": "TestBoxParsing::<dynamic@31>",
+          "body_start": 1060,
+          "body_end": 1707
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/box_test.go",
+      "source_sha256": "9d977779738ceecae3b86ed6f345873bc26a390aca1c1bdc5496d4630c91739e",
+      "byte_start": 1612,
+      "byte_end": 1698,
+      "contexts": [
+        {
+          "identity": "TestBoxParsing",
+          "body_start": 423,
+          "body_end": 1713
+        },
+        {
+          "identity": "TestBoxParsing::<dynamic@31>",
+          "body_start": 1060,
+          "body_end": 1707
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/box_test.go",
+      "source_sha256": "9d977779738ceecae3b86ed6f345873bc26a390aca1c1bdc5496d4630c91739e",
+      "byte_start": 3475,
+      "byte_end": 3486,
+      "contexts": [
+        {
+          "identity": "TestBoxErrors",
+          "body_start": 2779,
+          "body_end": 3574
+        },
+        {
+          "identity": "TestBoxErrors::<dynamic@89>",
+          "body_start": 3391,
+          "body_end": 3568
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/box_test.go",
+      "source_sha256": "9d977779738ceecae3b86ed6f345873bc26a390aca1c1bdc5496d4630c91739e",
+      "byte_start": 3502,
+      "byte_end": 3559,
+      "contexts": [
+        {
+          "identity": "TestBoxErrors",
+          "body_start": 2779,
+          "body_end": 3574
+        },
+        {
+          "identity": "TestBoxErrors::<dynamic@89>",
+          "body_start": 3391,
+          "body_end": 3568
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/case_test.go",
+      "source_sha256": "cbb609fb94c3c15b964bc485b9454e053f80be25d83e0bbc8525ed200f729165",
+      "byte_start": 644,
+      "byte_end": 703,
+      "contexts": [
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive",
+          "body_start": 527,
+          "body_end": 2957
+        },
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive::diagram keyword",
+          "body_start": 555,
+          "body_end": 710
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/case_test.go",
+      "source_sha256": "cbb609fb94c3c15b964bc485b9454e053f80be25d83e0bbc8525ed200f729165",
+      "byte_start": 879,
+      "byte_end": 905,
+      "contexts": [
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive",
+          "body_start": 527,
+          "body_end": 2957
+        },
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive::participant and autonumber",
+          "body_start": 750,
+          "body_end": 1111
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/case_test.go",
+      "source_sha256": "cbb609fb94c3c15b964bc485b9454e053f80be25d83e0bbc8525ed200f729165",
+      "byte_start": 935,
+      "byte_end": 981,
+      "contexts": [
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive",
+          "body_start": 527,
+          "body_end": 2957
+        },
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive::participant and autonumber",
+          "body_start": 750,
+          "body_end": 1111
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/case_test.go",
+      "source_sha256": "cbb609fb94c3c15b964bc485b9454e053f80be25d83e0bbc8525ed200f729165",
+      "byte_start": 1032,
+      "byte_end": 1104,
+      "contexts": [
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive",
+          "body_start": 527,
+          "body_end": 2957
+        },
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive::participant and autonumber",
+          "body_start": 750,
+          "body_end": 1111
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/case_test.go",
+      "source_sha256": "cbb609fb94c3c15b964bc485b9454e053f80be25d83e0bbc8525ed200f729165",
+      "byte_start": 1568,
+      "byte_end": 1612,
+      "contexts": [
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive",
+          "body_start": 527,
+          "body_end": 2957
+        },
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive::alt/else/end",
+          "body_start": 1379,
+          "body_end": 1619
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/case_test.go",
+      "source_sha256": "cbb609fb94c3c15b964bc485b9454e053f80be25d83e0bbc8525ed200f729165",
+      "byte_start": 2025,
+      "byte_end": 2086,
+      "contexts": [
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive",
+          "body_start": 527,
+          "body_end": 2957
+        },
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive::wrap prefix any case",
+          "body_start": 1900,
+          "body_end": 2093
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/case_test.go",
+      "source_sha256": "cbb609fb94c3c15b964bc485b9454e053f80be25d83e0bbc8525ed200f729165",
+      "byte_start": 2491,
+      "byte_end": 2546,
+      "contexts": [
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive",
+          "body_start": 527,
+          "body_end": 2957
+        },
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive::lower and upper produce identical structure",
+          "body_start": 2150,
+          "body_end": 2954
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/case_test.go",
+      "source_sha256": "cbb609fb94c3c15b964bc485b9454e053f80be25d83e0bbc8525ed200f729165",
+      "byte_start": 2634,
+      "byte_end": 2773,
+      "contexts": [
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive",
+          "body_start": 527,
+          "body_end": 2957
+        },
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive::lower and upper produce identical structure",
+          "body_start": 2150,
+          "body_end": 2954
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/case_test.go",
+      "source_sha256": "cbb609fb94c3c15b964bc485b9454e053f80be25d83e0bbc8525ed200f729165",
+      "byte_start": 2858,
+      "byte_end": 2942,
+      "contexts": [
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive",
+          "body_start": 527,
+          "body_end": 2957
+        },
+        {
+          "identity": "TestSequenceKeywordsCaseInsensitive::lower and upper produce identical structure",
+          "body_start": 2150,
+          "body_end": 2954
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/create_test.go",
+      "source_sha256": "231a2bf9d3b4f352f6652c079fdb332d069ead55d669062fc3bd4777ffd0ca6e",
+      "byte_start": 5205,
+      "byte_end": 5216,
+      "contexts": [
+        {
+          "identity": "TestCreateDestroyErrors",
+          "body_start": 3802,
+          "body_end": 5304
+        },
+        {
+          "identity": "TestCreateDestroyErrors::<dynamic@121>",
+          "body_start": 5121,
+          "body_end": 5298
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/create_test.go",
+      "source_sha256": "231a2bf9d3b4f352f6652c079fdb332d069ead55d669062fc3bd4777ffd0ca6e",
+      "byte_start": 5232,
+      "byte_end": 5289,
+      "contexts": [
+        {
+          "identity": "TestCreateDestroyErrors",
+          "body_start": 3802,
+          "body_end": 5304
+        },
+        {
+          "identity": "TestCreateDestroyErrors::<dynamic@121>",
+          "body_start": 5121,
+          "body_end": 5298
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/create_test.go",
+      "source_sha256": "231a2bf9d3b4f352f6652c079fdb332d069ead55d669062fc3bd4777ffd0ca6e",
+      "byte_start": 6124,
+      "byte_end": 6212,
+      "contexts": [
+        {
+          "identity": "TestCreateDestroyIntervening",
+          "body_start": 5576,
+          "body_end": 6227
+        },
+        {
+          "identity": "TestCreateDestroyIntervening::<dynamic@141>",
+          "body_start": 6059,
+          "body_end": 6221
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/fragments_test.go",
+      "source_sha256": "1b071f2793676cbbdb48c9c842fb57ce2b2dabed7a771615c7f2e5fc4ad26847",
+      "byte_start": 2664,
+      "byte_end": 2707,
+      "contexts": [
+        {
+          "identity": "TestParseFragments",
+          "body_start": 501,
+          "body_end": 3806
+        },
+        {
+          "identity": "TestParseFragments::<dynamic@84>",
+          "body_start": 2590,
+          "body_end": 3800
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/fragments_test.go",
+      "source_sha256": "1b071f2793676cbbdb48c9c842fb57ce2b2dabed7a771615c7f2e5fc4ad26847",
+      "byte_start": 2762,
+      "byte_end": 2834,
+      "contexts": [
+        {
+          "identity": "TestParseFragments",
+          "body_start": 501,
+          "body_end": 3806
+        },
+        {
+          "identity": "TestParseFragments::<dynamic@84>",
+          "body_start": 2590,
+          "body_end": 3800
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/fragments_test.go",
+      "source_sha256": "1b071f2793676cbbdb48c9c842fb57ce2b2dabed7a771615c7f2e5fc4ad26847",
+      "byte_start": 2925,
+      "byte_end": 2991,
+      "contexts": [
+        {
+          "identity": "TestParseFragments",
+          "body_start": 501,
+          "body_end": 3806
+        },
+        {
+          "identity": "TestParseFragments::<dynamic@84>",
+          "body_start": 2590,
+          "body_end": 3800
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/fragments_test.go",
+      "source_sha256": "1b071f2793676cbbdb48c9c842fb57ce2b2dabed7a771615c7f2e5fc4ad26847",
+      "byte_start": 3068,
+      "byte_end": 3127,
+      "contexts": [
+        {
+          "identity": "TestParseFragments",
+          "body_start": 501,
+          "body_end": 3806
+        },
+        {
+          "identity": "TestParseFragments::<dynamic@84>",
+          "body_start": 2590,
+          "body_end": 3800
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/fragments_test.go",
+      "source_sha256": "1b071f2793676cbbdb48c9c842fb57ce2b2dabed7a771615c7f2e5fc4ad26847",
+      "byte_start": 3389,
+      "byte_end": 3455,
+      "contexts": [
+        {
+          "identity": "TestParseFragments",
+          "body_start": 501,
+          "body_end": 3806
+        },
+        {
+          "identity": "TestParseFragments::<dynamic@84>",
+          "body_start": 2590,
+          "body_end": 3800
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/fragments_test.go",
+      "source_sha256": "1b071f2793676cbbdb48c9c842fb57ce2b2dabed7a771615c7f2e5fc4ad26847",
+      "byte_start": 3725,
+      "byte_end": 3785,
+      "contexts": [
+        {
+          "identity": "TestParseFragments",
+          "body_start": 501,
+          "body_end": 3806
+        },
+        {
+          "identity": "TestParseFragments::<dynamic@84>",
+          "body_start": 2590,
+          "body_end": 3800
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/fragments_test.go",
+      "source_sha256": "1b071f2793676cbbdb48c9c842fb57ce2b2dabed7a771615c7f2e5fc4ad26847",
+      "byte_start": 4502,
+      "byte_end": 4563,
+      "contexts": [
+        {
+          "identity": "TestParseFragmentErrors",
+          "body_start": 3851,
+          "body_end": 4704
+        },
+        {
+          "identity": "TestParseFragmentErrors::<dynamic@158>",
+          "body_start": 4429,
+          "body_end": 4698
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/fragments_test.go",
+      "source_sha256": "1b071f2793676cbbdb48c9c842fb57ce2b2dabed7a771615c7f2e5fc4ad26847",
+      "byte_start": 4593,
+      "byte_end": 4604,
+      "contexts": [
+        {
+          "identity": "TestParseFragmentErrors",
+          "body_start": 3851,
+          "body_end": 4704
+        },
+        {
+          "identity": "TestParseFragmentErrors::<dynamic@158>",
+          "body_start": 4429,
+          "body_end": 4698
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/fragments_test.go",
+      "source_sha256": "1b071f2793676cbbdb48c9c842fb57ce2b2dabed7a771615c7f2e5fc4ad26847",
+      "byte_start": 4624,
+      "byte_end": 4689,
+      "contexts": [
+        {
+          "identity": "TestParseFragmentErrors",
+          "body_start": 3851,
+          "body_end": 4704
+        },
+        {
+          "identity": "TestParseFragmentErrors::<dynamic@158>",
+          "body_start": 4429,
+          "body_end": 4698
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/fragments_test.go",
+      "source_sha256": "1b071f2793676cbbdb48c9c842fb57ce2b2dabed7a771615c7f2e5fc4ad26847",
+      "byte_start": 4665,
+      "byte_end": 4676,
+      "contexts": [
+        {
+          "identity": "TestParseFragmentErrors",
+          "body_start": 3851,
+          "body_end": 4704
+        },
+        {
+          "identity": "TestParseFragmentErrors::<dynamic@158>",
+          "body_start": 4429,
+          "body_end": 4698
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/notes_test.go",
+      "source_sha256": "c66ccf67ec4f255193748b0ca37af2ec28229fed2fff4128cab73503f00f1b34",
+      "byte_start": 2008,
+      "byte_end": 2034,
+      "contexts": [
+        {
+          "identity": "TestParseNotes",
+          "body_start": 602,
+          "body_end": 2612
+        },
+        {
+          "identity": "TestParseNotes::<dynamic@47>",
+          "body_start": 1934,
+          "body_end": 2606
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/notes_test.go",
+      "source_sha256": "c66ccf67ec4f255193748b0ca37af2ec28229fed2fff4128cab73503f00f1b34",
+      "byte_start": 2083,
+      "byte_end": 2114,
+      "contexts": [
+        {
+          "identity": "TestParseNotes",
+          "body_start": 602,
+          "body_end": 2612
+        },
+        {
+          "identity": "TestParseNotes::<dynamic@47>",
+          "body_start": 1934,
+          "body_end": 2606
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/notes_test.go",
+      "source_sha256": "c66ccf67ec4f255193748b0ca37af2ec28229fed2fff4128cab73503f00f1b34",
+      "byte_start": 2160,
+      "byte_end": 2222,
+      "contexts": [
+        {
+          "identity": "TestParseNotes",
+          "body_start": 602,
+          "body_end": 2612
+        },
+        {
+          "identity": "TestParseNotes::<dynamic@47>",
+          "body_start": 1934,
+          "body_end": 2606
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/notes_test.go",
+      "source_sha256": "c66ccf67ec4f255193748b0ca37af2ec28229fed2fff4128cab73503f00f1b34",
+      "byte_start": 2282,
+      "byte_end": 2355,
+      "contexts": [
+        {
+          "identity": "TestParseNotes",
+          "body_start": 602,
+          "body_end": 2612
+        },
+        {
+          "identity": "TestParseNotes::<dynamic@47>",
+          "body_start": 1934,
+          "body_end": 2606
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/notes_test.go",
+      "source_sha256": "c66ccf67ec4f255193748b0ca37af2ec28229fed2fff4128cab73503f00f1b34",
+      "byte_start": 2438,
+      "byte_end": 2500,
+      "contexts": [
+        {
+          "identity": "TestParseNotes",
+          "body_start": 602,
+          "body_end": 2612
+        },
+        {
+          "identity": "TestParseNotes::<dynamic@47>",
+          "body_start": 1934,
+          "body_end": 2606
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/notes_test.go",
+      "source_sha256": "c66ccf67ec4f255193748b0ca37af2ec28229fed2fff4128cab73503f00f1b34",
+      "byte_start": 2546,
+      "byte_end": 2597,
+      "contexts": [
+        {
+          "identity": "TestParseNotes",
+          "body_start": 602,
+          "body_end": 2612
+        },
+        {
+          "identity": "TestParseNotes::<dynamic@47>",
+          "body_start": 1934,
+          "body_end": 2606
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/par_test.go",
+      "source_sha256": "54a7024b8125c79b3ed865592c83b5ea0bb22eed3cdb7398ee8dedc0d61b9987",
+      "byte_start": 1719,
+      "byte_end": 1745,
+      "contexts": [
+        {
+          "identity": "TestParseParCriticalBreakRect",
+          "body_start": 469,
+          "body_end": 2336
+        },
+        {
+          "identity": "TestParseParCriticalBreakRect::<dynamic@39>",
+          "body_start": 1645,
+          "body_end": 2330
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/par_test.go",
+      "source_sha256": "54a7024b8125c79b3ed865592c83b5ea0bb22eed3cdb7398ee8dedc0d61b9987",
+      "byte_start": 1798,
+      "byte_end": 1826,
+      "contexts": [
+        {
+          "identity": "TestParseParCriticalBreakRect",
+          "body_start": 469,
+          "body_end": 2336
+        },
+        {
+          "identity": "TestParseParCriticalBreakRect::<dynamic@39>",
+          "body_start": 1645,
+          "body_end": 2330
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/par_test.go",
+      "source_sha256": "54a7024b8125c79b3ed865592c83b5ea0bb22eed3cdb7398ee8dedc0d61b9987",
+      "byte_start": 1866,
+      "byte_end": 1917,
+      "contexts": [
+        {
+          "identity": "TestParseParCriticalBreakRect",
+          "body_start": 469,
+          "body_end": 2336
+        },
+        {
+          "identity": "TestParseParCriticalBreakRect::<dynamic@39>",
+          "body_start": 1645,
+          "body_end": 2330
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/par_test.go",
+      "source_sha256": "54a7024b8125c79b3ed865592c83b5ea0bb22eed3cdb7398ee8dedc0d61b9987",
+      "byte_start": 1959,
+      "byte_end": 2013,
+      "contexts": [
+        {
+          "identity": "TestParseParCriticalBreakRect",
+          "body_start": 469,
+          "body_end": 2336
+        },
+        {
+          "identity": "TestParseParCriticalBreakRect::<dynamic@39>",
+          "body_start": 1645,
+          "body_end": 2330
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/par_test.go",
+      "source_sha256": "54a7024b8125c79b3ed865592c83b5ea0bb22eed3cdb7398ee8dedc0d61b9987",
+      "byte_start": 2138,
+      "byte_end": 2194,
+      "contexts": [
+        {
+          "identity": "TestParseParCriticalBreakRect",
+          "body_start": 469,
+          "body_end": 2336
+        },
+        {
+          "identity": "TestParseParCriticalBreakRect::<dynamic@39>",
+          "body_start": 1645,
+          "body_end": 2330
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/par_test.go",
+      "source_sha256": "54a7024b8125c79b3ed865592c83b5ea0bb22eed3cdb7398ee8dedc0d61b9987",
+      "byte_start": 2265,
+      "byte_end": 2315,
+      "contexts": [
+        {
+          "identity": "TestParseParCriticalBreakRect",
+          "body_start": 469,
+          "body_end": 2336
+        },
+        {
+          "identity": "TestParseParCriticalBreakRect::<dynamic@39>",
+          "body_start": 1645,
+          "body_end": 2330
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/par_test.go",
+      "source_sha256": "54a7024b8125c79b3ed865592c83b5ea0bb22eed3cdb7398ee8dedc0d61b9987",
+      "byte_start": 3225,
+      "byte_end": 3236,
+      "contexts": [
+        {
+          "identity": "TestParseDividerMismatch",
+          "body_start": 2461,
+          "body_end": 3328
+        },
+        {
+          "identity": "TestParseDividerMismatch::<dynamic@78>",
+          "body_start": 3139,
+          "body_end": 3322
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/par_test.go",
+      "source_sha256": "54a7024b8125c79b3ed865592c83b5ea0bb22eed3cdb7398ee8dedc0d61b9987",
+      "byte_start": 3256,
+      "byte_end": 3313,
+      "contexts": [
+        {
+          "identity": "TestParseDividerMismatch",
+          "body_start": 2461,
+          "body_end": 3328
+        },
+        {
+          "identity": "TestParseDividerMismatch::<dynamic@78>",
+          "body_start": 3139,
+          "body_end": 3322
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/renderer_test.go",
+      "source_sha256": "3aaf6f21912b4943d24ab4a1170c463933c9d485507a4c703dddf1cee1fbbd73",
+      "byte_start": 5817,
+      "byte_end": 5862,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest",
+          "body_start": 4381,
+          "body_end": 6742
+        },
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest::<dynamic@198>",
+          "body_start": 5690,
+          "body_end": 6736
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/renderer_test.go",
+      "source_sha256": "3aaf6f21912b4943d24ab4a1170c463933c9d485507a4c703dddf1cee1fbbd73",
+      "byte_start": 5924,
+      "byte_end": 5960,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest",
+          "body_start": 4381,
+          "body_end": 6742
+        },
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest::<dynamic@198>",
+          "body_start": 5690,
+          "body_end": 6736
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/renderer_test.go",
+      "source_sha256": "3aaf6f21912b4943d24ab4a1170c463933c9d485507a4c703dddf1cee1fbbd73",
+      "byte_start": 6096,
+      "byte_end": 6139,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest",
+          "body_start": 4381,
+          "body_end": 6742
+        },
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest::<dynamic@198>",
+          "body_start": 5690,
+          "body_end": 6736
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/renderer_test.go",
+      "source_sha256": "3aaf6f21912b4943d24ab4a1170c463933c9d485507a4c703dddf1cee1fbbd73",
+      "byte_start": 6257,
+      "byte_end": 6289,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest",
+          "body_start": 4381,
+          "body_end": 6742
+        },
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest::<dynamic@198>",
+          "body_start": 5690,
+          "body_end": 6736
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/renderer_test.go",
+      "source_sha256": "3aaf6f21912b4943d24ab4a1170c463933c9d485507a4c703dddf1cee1fbbd73",
+      "byte_start": 6437,
+      "byte_end": 6500,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest",
+          "body_start": 4381,
+          "body_end": 6742
+        },
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest::<dynamic@198>",
+          "body_start": 5690,
+          "body_end": 6736
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/renderer_test.go",
+      "source_sha256": "3aaf6f21912b4943d24ab4a1170c463933c9d485507a4c703dddf1cee1fbbd73",
+      "byte_start": 6664,
+      "byte_end": 6727,
+      "contexts": [
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest",
+          "body_start": 4381,
+          "body_end": 6742
+        },
+        {
+          "identity": "TestSequenceDiagramRendering_ASCIISmokeTest::<dynamic@198>",
+          "body_start": 5690,
+          "body_end": 6736
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/renderer_test.go",
+      "source_sha256": "3aaf6f21912b4943d24ab4a1170c463933c9d485507a4c703dddf1cee1fbbd73",
+      "byte_start": 9140,
+      "byte_end": 9194,
+      "contexts": [
+        {
+          "identity": "TestPutTextKeepsLeadingMarksWithBase",
+          "body_start": 8512,
+          "body_end": 9215
+        },
+        {
+          "identity": "TestPutTextKeepsLeadingMarksWithBase::<dynamic@299>",
+          "body_start": 8937,
+          "body_end": 9209
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/renderer_test.go",
+      "source_sha256": "3aaf6f21912b4943d24ab4a1170c463933c9d485507a4c703dddf1cee1fbbd73",
+      "byte_start": 11824,
+      "byte_end": 11916,
+      "contexts": [
+        {
+          "identity": "TestTextCellsAttachCombiningMarks",
+          "body_start": 10726,
+          "body_end": 12237
+        },
+        {
+          "identity": "TestTextCellsAttachCombiningMarks::<dynamic@361>",
+          "body_start": 11735,
+          "body_end": 12231
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/renderer_test.go",
+      "source_sha256": "3aaf6f21912b4943d24ab4a1170c463933c9d485507a4c703dddf1cee1fbbd73",
+      "byte_start": 11987,
+      "byte_end": 12066,
+      "contexts": [
+        {
+          "identity": "TestTextCellsAttachCombiningMarks",
+          "body_start": 10726,
+          "body_end": 12237
+        },
+        {
+          "identity": "TestTextCellsAttachCombiningMarks::<dynamic@361>",
+          "body_start": 11735,
+          "body_end": 12231
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/renderer_test.go",
+      "source_sha256": "3aaf6f21912b4943d24ab4a1170c463933c9d485507a4c703dddf1cee1fbbd73",
+      "byte_start": 12125,
+      "byte_end": 12222,
+      "contexts": [
+        {
+          "identity": "TestTextCellsAttachCombiningMarks",
+          "body_start": 10726,
+          "body_end": 12237
+        },
+        {
+          "identity": "TestTextCellsAttachCombiningMarks::<dynamic@361>",
+          "body_start": 11735,
+          "body_end": 12231
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 1419,
+      "byte_end": 1430,
+      "contexts": [
+        {
+          "identity": "TestParse",
+          "body_start": 154,
+          "body_end": 1892
+        },
+        {
+          "identity": "TestParse::<dynamic@33>",
+          "body_start": 1304,
+          "body_end": 1886
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 1451,
+      "byte_end": 1516,
+      "contexts": [
+        {
+          "identity": "TestParse",
+          "body_start": 154,
+          "body_end": 1892
+        },
+        {
+          "identity": "TestParse::<dynamic@33>",
+          "body_start": 1304,
+          "body_end": 1886
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 1562,
+      "byte_end": 1599,
+      "contexts": [
+        {
+          "identity": "TestParse",
+          "body_start": 154,
+          "body_end": 1892
+        },
+        {
+          "identity": "TestParse::<dynamic@33>",
+          "body_start": 1304,
+          "body_end": 1886
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 1661,
+      "byte_end": 1748,
+      "contexts": [
+        {
+          "identity": "TestParse",
+          "body_start": 154,
+          "body_end": 1892
+        },
+        {
+          "identity": "TestParse::<dynamic@33>",
+          "body_start": 1304,
+          "body_end": 1886
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 1802,
+      "byte_end": 1877,
+      "contexts": [
+        {
+          "identity": "TestParse",
+          "body_start": 154,
+          "body_end": 1892
+        },
+        {
+          "identity": "TestParse::<dynamic@33>",
+          "body_start": 1304,
+          "body_end": 1886
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 2995,
+      "byte_end": 3032,
+      "contexts": [
+        {
+          "identity": "TestParticipantAlias",
+          "body_start": 2573,
+          "body_end": 3586
+        },
+        {
+          "identity": "TestParticipantAlias::<dynamic@88>",
+          "body_start": 2922,
+          "body_end": 3580
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 3075,
+      "byte_end": 3119,
+      "contexts": [
+        {
+          "identity": "TestParticipantAlias",
+          "body_start": 2573,
+          "body_end": 3586
+        },
+        {
+          "identity": "TestParticipantAlias::<dynamic@88>",
+          "body_start": 2922,
+          "body_end": 3580
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 3181,
+      "byte_end": 3226,
+      "contexts": [
+        {
+          "identity": "TestParticipantAlias",
+          "body_start": 2573,
+          "body_end": 3586
+        },
+        {
+          "identity": "TestParticipantAlias::<dynamic@88>",
+          "body_start": 2922,
+          "body_end": 3580
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 3268,
+      "byte_end": 3322,
+      "contexts": [
+        {
+          "identity": "TestParticipantAlias",
+          "body_start": 2573,
+          "body_end": 3586
+        },
+        {
+          "identity": "TestParticipantAlias::<dynamic@88>",
+          "body_start": 2922,
+          "body_end": 3580
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 3424,
+      "byte_end": 3457,
+      "contexts": [
+        {
+          "identity": "TestParticipantAlias",
+          "body_start": 2573,
+          "body_end": 3586
+        },
+        {
+          "identity": "TestParticipantAlias::<dynamic@88>",
+          "body_start": 2922,
+          "body_end": 3580
+        }
+      ]
+    },
+    {
+      "vendor": "mermaid_ascii",
+      "source_path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/sequence_test.go",
+      "source_sha256": "7c19ff5c1fbee0b206fb7c868357c7fd8e3ee287366bb14380bb137b0292bff1",
+      "byte_start": 3515,
+      "byte_end": 3571,
+      "contexts": [
+        {
+          "identity": "TestParticipantAlias",
+          "body_start": 2573,
+          "body_end": 3586
+        },
+        {
+          "identity": "TestParticipantAlias::<dynamic@88>",
+          "body_start": 2922,
+          "body_end": 3580
+        }
+      ]
+    }
+  ],
+  "all_overlap_contexts_nested": true,
+  "runtime_or_semantic_credit": 0
+}

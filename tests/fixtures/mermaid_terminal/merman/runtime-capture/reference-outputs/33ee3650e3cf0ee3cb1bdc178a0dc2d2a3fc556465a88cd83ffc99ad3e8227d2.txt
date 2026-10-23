@@ -1,0 +1,11 @@
+titleDisplay: chart(bytes=13)="Sales Revenue"
+titleDisplay: yAxis(bytes=14)="Revenue (in $)"
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=3)="jan" value=5000 pointLabel=none clipped=false}, {index=1 x(bytes=3)="feb" value=6000 pointLabel=none clipped=false}, {index=2 x(bytes=3)="mar" value=7500 pointLabel=none clipped=false}, {index=3 x(bytes=3)="apr" value=8200 pointLabel=none clipped=false}, {index=4 x(bytes=3)="may" value=9500 pointLabel=none clipped=false}, {index=5 x(bytes=3)="jun" value=10500 pointLabel=none clipped=false}, {index=6 x(bytes=3)="jul" value=11000 pointLabel=none clipped=false}, {index=7 x(bytes=3)="aug" value=10200 pointLabel=none clipped=false}, {index=8 x(bytes=3)="sep" value=9200 pointLabel=none clipped=false}, {index=9 x(bytes=3)="oct" value=8500 pointLabel=none clipped=false}, {index=10 x(bytes=3)="nov" value=7000 pointLabel=none clipped=false}, {index=11 x(bytes=3)="dec" value=6000 pointLabel=none clipped=false}] orphanPointLabels=[]
+11000 +                    105 110
+ 9600 +                950 ### ### 102 920
+ 8200 +        750 820 ### ### ### ### ### 850
+ 6800 +        ### ### ### ### ### ### ### ### 700
+ 5400 +500 600 ### ### ### ### ### ### ### ### ### 600
+ 4000 +-+---+---+---+---+---+---+---+---+---+---+---+-
+       jan feb mar apr may jun jul aug sep oct nov dec
+titleDisplay: xAxis(bytes=6)="Months"

@@ -1,0 +1,16 @@
++----------+
+| CUSTOMER |
++----------+
+
++-------+
+| ORDER |
++-------+
+
++-----------+
+| LINE-ITEM |
++-----------+
+
+relations:
+id(bytes=8)="CUSTOMER" ||..o{ id(bytes=8)="CUSTOMER"  : refers
+id(bytes=8)="CUSTOMER" ||--o{ id(bytes=5)="ORDER"     : places
+id(bytes=5)="ORDER"    ||--|{ id(bytes=9)="LINE-ITEM" : contains

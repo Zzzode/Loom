@@ -1,0 +1,4 @@
+section(bytes=5)="Build"
+  - task(bytes=5)="Timed" [id(bytes=5)="timed", order=0,
+    range=1970-01-01T00:00:00.001 -> 1970-01-01T00:00:00.002,
+    renderEnd=1970-01-01T00:00:00.003]

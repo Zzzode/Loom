@@ -1,0 +1,1 @@
+actors=[bytes=10 "Alice, Bob"]

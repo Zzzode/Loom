@@ -1,0 +1,10 @@
+xDomain: linear authored=[1,1] resolved=[1,1]
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=1)="1" value=1 pointLabel=none clipped=false}] orphanPointLabels=[]
+1 +
+1 +
+1 +###
+1 +###
+1 +###
+1 +-+-
+    1
+titleDisplay: xAxis(bytes=19)="xAxisName has space"

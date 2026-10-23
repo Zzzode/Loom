@@ -1,0 +1,6 @@
+direction: LR
+section(bytes=8)="Planning"
+  - task(bytes=107)="Design a very long integration event stream normalization w
+    orkflow that still fits readable terminal output"
+    * event(bytes=87)="Capture every upstream payload variant without losing the
+       important operational context"

@@ -1,0 +1,1 @@
+{"type":"journey","title":"Repeated journey","accTitle":null,"accDescr":null,"sections":["Repeated","Repeated"],"tasks":[{"score":5,"people":["Alice"],"section":"Repeated","task":"  First","type":"Repeated"},{"score":3,"people":["Bob"],"section":"Repeated","task":"  Second","type":"Repeated"}],"actors":["Alice","Bob"]}

@@ -1,0 +1,2167 @@
+{
+  "author": "agent:/root/corpus_review",
+  "papers": [
+    {
+      "cards": [
+        {
+          "bottom": 27,
+          "id": "C",
+          "left": 44,
+          "right": 52,
+          "top": 4
+        },
+        {
+          "bottom": 57,
+          "id": "B",
+          "left": 44,
+          "right": 52,
+          "top": 34
+        },
+        {
+          "bottom": 87,
+          "id": "A",
+          "left": 44,
+          "right": 52,
+          "top": 64
+        }
+      ],
+      "edge_coordinate_transcription": [
+        {
+          "bend_x": 21,
+          "central_x": 27,
+          "central_y": 75,
+          "edge": 0,
+          "face": -1,
+          "source_row": 75,
+          "target_row": 48
+        },
+        {
+          "bend_x": 17,
+          "central_x": 25,
+          "central_y": 43,
+          "edge": 1,
+          "face": -1,
+          "source_row": 43,
+          "target_row": 79
+        },
+        {
+          "bend_x": 9,
+          "central_x": 14,
+          "central_y": 81,
+          "edge": 2,
+          "face": -1,
+          "source_row": 81,
+          "target_row": 11
+        },
+        {
+          "bend_x": 5,
+          "central_x": 14,
+          "central_y": 10,
+          "edge": 3,
+          "face": -1,
+          "source_row": 10,
+          "target_row": 82
+        },
+        {
+          "bend_x": 21,
+          "central_x": 27,
+          "central_y": 40,
+          "edge": 4,
+          "face": -1,
+          "source_row": 40,
+          "target_row": 13
+        },
+        {
+          "bend_x": 17,
+          "central_x": 25,
+          "central_y": 12,
+          "edge": 5,
+          "face": -1,
+          "source_row": 12,
+          "target_row": 41
+        }
+      ],
+      "height": 94,
+      "literal_rows": [
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                            ┌───────┐                                               ",
+        "                                            │ C     │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "     ┌────────ca────────────────────────────┤       │                                               ",
+        "     │   ┌─────────────────────────────────▶┤       │                                               ",
+        "     │   │       ┌───────cb─────────────────┤       │                                               ",
+        "     │   │       │   ┌─────────────────────▶┤       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      └───────┘                                               ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                      ┌───────┐                                               ",
+        "     │   │       │   │                      │ B     │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   └─────bc───────────────┤       │                                               ",
+        "     │   │       └─────────────────────────▶┤       │                                               ",
+        "     │   │                                  │       │                                               ",
+        "     │   │       ┌───────ba─────────────────┤       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │   ┌─────────────────────▶┤       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      └───────┘                                               ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                      ┌───────┐                                               ",
+        "     │   │       │   │                      │ A     │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   └─────ab──────────a/b──┤       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       └─────────────────────────▶┤       │                                               ",
+        "     │   │                                  │       │                                               ",
+        "     │   └────ac────────────────────────────┤       │                                               ",
+        "     └─────────────────────────────────────▶┤       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            └───────┘                                               ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "AFTER_RELATIONS_SEMANTICS                                                                           ",
+        "                                                                                                    "
+      ],
+      "name": "merman/a1d3f47956a951727735",
+      "original_immutable_source": true,
+      "pixel_controls": [
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 48
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 79
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 11
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 82
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 13
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 41
+        },
+        {
+          "after": " ",
+          "before": "a",
+          "kind": "caption_erase",
+          "x": 39,
+          "y": 75
+        },
+        {
+          "after": "┆",
+          "before": "│",
+          "kind": "stroke",
+          "x": 21,
+          "y": 61
+        },
+        {
+          "after": "├",
+          "before": "│",
+          "kind": "extra_arm",
+          "x": 21,
+          "y": 61
+        },
+        {
+          "after": "?",
+          "before": " ",
+          "kind": "extra_ink",
+          "x": 1,
+          "y": 1
+        }
+      ],
+      "qualification": "Independent fixed-coordinate complete paper. Native validity has not been executed; no producer/slot/planner output was consulted.",
+      "removed_physical_row": 75,
+      "source": "classDiagram\ndirection BT\nclass A\nclass B\nclass C\nA \"a/b\" --> B : ab\nB --> A : ba\nA --> C : ac\nC --> A : ca\nB --> C : bc\nC --> B : cb",
+      "source_sha256": "a1d3f47956a951727735f220c80857ca9435197855fce0338b83f3b6269286ac",
+      "whole_native_model": {
+        "direction": "BT",
+        "entities": [
+          {
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "id": "class:41",
+            "label": "A",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "B"
+              ]
+            ],
+            "id": "class:42",
+            "label": "B",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "C"
+              ]
+            ],
+            "id": "class:43",
+            "label": "C",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [],
+        "notes": [],
+        "relations": [
+          {
+            "end": "arrow",
+            "label": "ab",
+            "order": 0,
+            "source": "class:41",
+            "source_text": "a/b",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:42",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ba",
+            "order": 1,
+            "source": "class:42",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:41",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ac",
+            "order": 2,
+            "source": "class:41",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:43",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ca",
+            "order": 3,
+            "source": "class:43",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:41",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "bc",
+            "order": 4,
+            "source": "class:42",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:43",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "cb",
+            "order": 5,
+            "source": "class:43",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:42",
+            "target_text": null
+          }
+        ]
+      },
+      "whole_native_model_sha256": "ddc4e150e7230e146a14d6e7cc5584a958e2491af002642afd670b871276431c",
+      "width": 100
+    },
+    {
+      "cards": [
+        {
+          "bottom": 27,
+          "id": "C",
+          "left": 44,
+          "right": 52,
+          "top": 4
+        },
+        {
+          "bottom": 57,
+          "id": "B",
+          "left": 44,
+          "right": 52,
+          "top": 34
+        },
+        {
+          "bottom": 87,
+          "id": "A",
+          "left": 44,
+          "right": 52,
+          "top": 64
+        }
+      ],
+      "edge_coordinate_transcription": [
+        {
+          "bend_x": 21,
+          "central_x": 27,
+          "central_y": 75,
+          "edge": 0,
+          "face": -1,
+          "source_row": 75,
+          "target_row": 48
+        },
+        {
+          "bend_x": 17,
+          "central_x": 25,
+          "central_y": 43,
+          "edge": 1,
+          "face": -1,
+          "source_row": 43,
+          "target_row": 79
+        },
+        {
+          "bend_x": 9,
+          "central_x": 14,
+          "central_y": 81,
+          "edge": 2,
+          "face": -1,
+          "source_row": 81,
+          "target_row": 11
+        },
+        {
+          "bend_x": 5,
+          "central_x": 14,
+          "central_y": 10,
+          "edge": 3,
+          "face": -1,
+          "source_row": 10,
+          "target_row": 82
+        },
+        {
+          "bend_x": 21,
+          "central_x": 27,
+          "central_y": 40,
+          "edge": 4,
+          "face": -1,
+          "source_row": 40,
+          "target_row": 13
+        },
+        {
+          "bend_x": 17,
+          "central_x": 25,
+          "central_y": 12,
+          "edge": 5,
+          "face": -1,
+          "source_row": 12,
+          "target_row": 41
+        }
+      ],
+      "height": 94,
+      "literal_rows": [
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                            ┌───────┐                                               ",
+        "                                            │ C     │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "     ┌────────ca────────────────────────────┤       │                                               ",
+        "     │   ┌─────────────────────────────────▶┤       │                                               ",
+        "     │   │       ┌───────cb─────────────────┤       │                                               ",
+        "     │   │       │   ┌─────────────────────▶┤       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      └───────┘                                               ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                      ┌───────┐                                               ",
+        "     │   │       │   │                      │ B     │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   └─────bc───────────────┤       │                                               ",
+        "     │   │       └─────────────────────────▶┤       │                                               ",
+        "     │   │                                  │       │                                               ",
+        "     │   │       ┌───────ba─────────────────┤       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │   ┌─────────────────────▶┤       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      └───────┘                                               ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                      ┌───────┐                                               ",
+        "     │   │       │   │                      │ A     │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   └─────ab────────────a──┤       │                                               ",
+        "     │   │       │                       b  │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       └─────────────────────────▶┤       │                                               ",
+        "     │   │                                  │       │                                               ",
+        "     │   └────ac────────────────────────────┤       │                                               ",
+        "     └─────────────────────────────────────▶┤       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            └───────┘                                               ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "AFTER_RELATIONS_SEMANTICS                                                                           ",
+        "                                                                                                    "
+      ],
+      "name": "merman/bc8ff3a3c377e4283fbb",
+      "original_immutable_source": true,
+      "pixel_controls": [
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 48
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 79
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 11
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 82
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 13
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 41
+        },
+        {
+          "after": " ",
+          "before": "a",
+          "kind": "caption_erase",
+          "x": 41,
+          "y": 75
+        },
+        {
+          "after": " ",
+          "before": "b",
+          "kind": "multiline_row_erase",
+          "x": 41,
+          "y": 76
+        },
+        {
+          "after": "┆",
+          "before": "│",
+          "kind": "stroke",
+          "x": 21,
+          "y": 61
+        },
+        {
+          "after": "├",
+          "before": "│",
+          "kind": "extra_arm",
+          "x": 21,
+          "y": 61
+        },
+        {
+          "after": "?",
+          "before": " ",
+          "kind": "extra_ink",
+          "x": 1,
+          "y": 1
+        }
+      ],
+      "qualification": "Independent fixed-coordinate complete paper. Native validity has not been executed; no producer/slot/planner output was consulted.",
+      "removed_physical_row": 76,
+      "source": "classDiagram\ndirection BT\nclass A\nclass B\nclass C\nA \"a<br>b\" --> B : ab\nB --> A : ba\nA --> C : ac\nC --> A : ca\nB --> C : bc\nC --> B : cb",
+      "source_sha256": "bc8ff3a3c377e4283fbbc3c5bc779e512029accf4cea54beb880ee8b57fb3b39",
+      "whole_native_model": {
+        "direction": "BT",
+        "entities": [
+          {
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "id": "class:41",
+            "label": "A",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "B"
+              ]
+            ],
+            "id": "class:42",
+            "label": "B",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "C"
+              ]
+            ],
+            "id": "class:43",
+            "label": "C",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [],
+        "notes": [],
+        "relations": [
+          {
+            "end": "arrow",
+            "label": "ab",
+            "order": 0,
+            "source": "class:41",
+            "source_text": "a\nb",
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:42",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ba",
+            "order": 1,
+            "source": "class:42",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:41",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ac",
+            "order": 2,
+            "source": "class:41",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:43",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ca",
+            "order": 3,
+            "source": "class:43",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:41",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "bc",
+            "order": 4,
+            "source": "class:42",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:43",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "cb",
+            "order": 5,
+            "source": "class:43",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "class:42",
+            "target_text": null
+          }
+        ]
+      },
+      "whole_native_model_sha256": "1a2b8a7bfe7e1d062e930ed8f354b5ff348a71fe247c228f82b704502e97ad6e",
+      "width": 100
+    },
+    {
+      "cards": [
+        {
+          "bottom": 27,
+          "id": "A",
+          "left": 44,
+          "right": 52,
+          "top": 4
+        },
+        {
+          "bottom": 57,
+          "id": "B",
+          "left": 44,
+          "right": 52,
+          "top": 34
+        },
+        {
+          "bottom": 87,
+          "id": "C",
+          "left": 44,
+          "right": 52,
+          "top": 64
+        }
+      ],
+      "edge_coordinate_transcription": [
+        {
+          "bend_x": 21,
+          "central_x": 27,
+          "central_y": 13,
+          "edge": 0,
+          "face": -1,
+          "source_row": 13,
+          "target_row": 38
+        },
+        {
+          "bend_x": 17,
+          "central_x": 25,
+          "central_y": 41,
+          "edge": 1,
+          "face": -1,
+          "source_row": 41,
+          "target_row": 10
+        },
+        {
+          "bend_x": 9,
+          "central_x": 14,
+          "central_y": 8,
+          "edge": 2,
+          "face": -1,
+          "source_row": 8,
+          "target_row": 72
+        },
+        {
+          "bend_x": 5,
+          "central_x": 14,
+          "central_y": 73,
+          "edge": 3,
+          "face": -1,
+          "source_row": 73,
+          "target_row": 7
+        },
+        {
+          "bend_x": 21,
+          "central_x": 27,
+          "central_y": 46,
+          "edge": 4,
+          "face": -1,
+          "source_row": 46,
+          "target_row": 70
+        },
+        {
+          "bend_x": 17,
+          "central_x": 25,
+          "central_y": 71,
+          "edge": 5,
+          "face": -1,
+          "source_row": 71,
+          "target_row": 45
+        }
+      ],
+      "height": 94,
+      "literal_rows": [
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                            ┌───────┐                                               ",
+        "                                            │ A     │                                               ",
+        "                                            │       │                                               ",
+        "     ┌─────────────────────────────────────▶┤       │                                               ",
+        "     │   ┌────ac────────────────────────────┤       │                                               ",
+        "     │   │                                  │       │                                               ",
+        "     │   │       ┌─────────────────────aa──▶┤       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │   ┌─────ab───────────a ──┤       │                                               ",
+        "     │   │       │   │                  a2  │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      └───────┘                                               ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                      ┌───────┐                                               ",
+        "     │   │       │   │                      │ B     │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   └────────────────bee──▶┤       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       └───────ba────────────bee──┤       │                                               ",
+        "     │   │                             b2   │       │                                               ",
+        "     │   │                             b3   │       │                                               ",
+        "     │   │                                  │       │                                               ",
+        "     │   │       ┌─────────────────────────▶┤       │                                               ",
+        "     │   │       │   ┌─────bc───────────────┤       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      └───────┘                                               ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                      ┌───────┐                                               ",
+        "     │   │       │   │                      │ C     │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   └─────────────────────▶┤       │                                               ",
+        "     │   │       └───────cb─────────────────┤       │                                               ",
+        "     │   └─────────────────────────────────▶┤       │                                               ",
+        "     └────────ca────────────────────────────┤       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            └───────┘                                               ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "AFTER_RELATIONS_SEMANTICS                                                                           ",
+        "                                                                                                    "
+      ],
+      "name": "unequal_endpoint_bands_TB",
+      "original_immutable_source": false,
+      "pixel_controls": [
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 38
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 10
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 72
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 7
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 70
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 45
+        },
+        {
+          "after": " ",
+          "before": "a",
+          "kind": "caption_erase",
+          "x": 40,
+          "y": 13
+        },
+        {
+          "after": " ",
+          "before": "2",
+          "kind": "multiline_row_erase",
+          "x": 41,
+          "y": 14
+        },
+        {
+          "after": " ",
+          "before": "b",
+          "kind": "caption_erase",
+          "x": 38,
+          "y": 38
+        },
+        {
+          "after": " ",
+          "before": "b",
+          "kind": "caption_erase",
+          "x": 39,
+          "y": 41
+        },
+        {
+          "after": " ",
+          "before": "3",
+          "kind": "multiline_row_erase",
+          "x": 40,
+          "y": 43
+        },
+        {
+          "after": " ",
+          "before": "a",
+          "kind": "caption_erase",
+          "x": 39,
+          "y": 10
+        },
+        {
+          "after": "┆",
+          "before": "│",
+          "kind": "stroke",
+          "x": 21,
+          "y": 25
+        },
+        {
+          "after": "├",
+          "before": "│",
+          "kind": "extra_arm",
+          "x": 21,
+          "y": 25
+        },
+        {
+          "after": "?",
+          "before": " ",
+          "kind": "extra_ink",
+          "x": 1,
+          "y": 1
+        }
+      ],
+      "qualification": "Independent fixed-coordinate complete paper. Native validity has not been executed; no producer/slot/planner output was consulted.",
+      "removed_physical_row": 14,
+      "source": "classDiagram\ndirection TB\nclass A\nclass B\nclass C\nA \"a<br>a2\" --> \"bee\" B : ab\nB \"bee<br>b2<br>b3\" --> \"aa\" A : ba\nA --> C : ac\nC --> A : ca\nB --> C : bc\nC --> B : cb\n",
+      "source_sha256": "6cd5d84a7ea09218b4d2137c411ece19edbbca51c8f8e9e1e833994ce0d5787a",
+      "whole_native_model": {
+        "direction": "TB",
+        "entities": [
+          {
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "id": "A",
+            "label": "A",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "B"
+              ]
+            ],
+            "id": "B",
+            "label": "B",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "C"
+              ]
+            ],
+            "id": "C",
+            "label": "C",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [],
+        "notes": [],
+        "relations": [
+          {
+            "end": "arrow",
+            "label": "ab",
+            "order": 0,
+            "source": "A",
+            "source_text": "a\na2",
+            "start": "none",
+            "stroke": "solid",
+            "target": "B",
+            "target_text": "bee"
+          },
+          {
+            "end": "arrow",
+            "label": "ba",
+            "order": 1,
+            "source": "B",
+            "source_text": "bee\nb2\nb3",
+            "start": "none",
+            "stroke": "solid",
+            "target": "A",
+            "target_text": "aa"
+          },
+          {
+            "end": "arrow",
+            "label": "ac",
+            "order": 2,
+            "source": "A",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "C",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ca",
+            "order": 3,
+            "source": "C",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "A",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "bc",
+            "order": 4,
+            "source": "B",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "C",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "cb",
+            "order": 5,
+            "source": "C",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "B",
+            "target_text": null
+          }
+        ]
+      },
+      "whole_native_model_sha256": "8351ee18a9d1a8cb3b258ab73a5934d74aa0db6a692e9819dd73a38d83000185",
+      "width": 100
+    },
+    {
+      "cards": [
+        {
+          "bottom": 27,
+          "id": "C",
+          "left": 44,
+          "right": 52,
+          "top": 4
+        },
+        {
+          "bottom": 57,
+          "id": "B",
+          "left": 44,
+          "right": 52,
+          "top": 34
+        },
+        {
+          "bottom": 87,
+          "id": "A",
+          "left": 44,
+          "right": 52,
+          "top": 64
+        }
+      ],
+      "edge_coordinate_transcription": [
+        {
+          "bend_x": 21,
+          "central_x": 27,
+          "central_y": 75,
+          "edge": 0,
+          "face": -1,
+          "source_row": 75,
+          "target_row": 48
+        },
+        {
+          "bend_x": 17,
+          "central_x": 25,
+          "central_y": 43,
+          "edge": 1,
+          "face": -1,
+          "source_row": 43,
+          "target_row": 79
+        },
+        {
+          "bend_x": 9,
+          "central_x": 14,
+          "central_y": 81,
+          "edge": 2,
+          "face": -1,
+          "source_row": 81,
+          "target_row": 11
+        },
+        {
+          "bend_x": 5,
+          "central_x": 14,
+          "central_y": 10,
+          "edge": 3,
+          "face": -1,
+          "source_row": 10,
+          "target_row": 82
+        },
+        {
+          "bend_x": 21,
+          "central_x": 27,
+          "central_y": 40,
+          "edge": 4,
+          "face": -1,
+          "source_row": 40,
+          "target_row": 13
+        },
+        {
+          "bend_x": 17,
+          "central_x": 25,
+          "central_y": 12,
+          "edge": 5,
+          "face": -1,
+          "source_row": 12,
+          "target_row": 41
+        }
+      ],
+      "height": 94,
+      "literal_rows": [
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                            ┌───────┐                                               ",
+        "                                            │ C     │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "     ┌────────ca────────────────────────────┤       │                                               ",
+        "     │   ┌─────────────────────────────────▶┤       │                                               ",
+        "     │   │       ┌───────cb─────────────────┤       │                                               ",
+        "     │   │       │   ┌─────────────────────▶┤       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      └───────┘                                               ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                      ┌───────┐                                               ",
+        "     │   │       │   │                      │ B     │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   └─────bc───────────────┤       │                                               ",
+        "     │   │       └─────────────────────────▶┤       │                                               ",
+        "     │   │                                  │       │                                               ",
+        "     │   │       ┌───────ba────────────bee──┤       │                                               ",
+        "     │   │       │                     b2   │       │                                               ",
+        "     │   │       │                     b3   │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │   ┌────────────────bee──▶┤       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      └───────┘                                               ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                                                                              ",
+        "     │   │       │   │                      ┌───────┐                                               ",
+        "     │   │       │   │                      │ A     │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   │                      │       │                                               ",
+        "     │   │       │   └─────ab───────────a ──┤       │                                               ",
+        "     │   │       │                      a2  │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       │                          │       │                                               ",
+        "     │   │       └─────────────────────aa──▶┤       │                                               ",
+        "     │   │                                  │       │                                               ",
+        "     │   └────ac────────────────────────────┤       │                                               ",
+        "     └─────────────────────────────────────▶┤       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            └───────┘                                               ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "AFTER_RELATIONS_SEMANTICS                                                                           ",
+        "                                                                                                    "
+      ],
+      "name": "unequal_endpoint_bands_BT",
+      "original_immutable_source": false,
+      "pixel_controls": [
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 48
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 79
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 11
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 82
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 13
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 41
+        },
+        {
+          "after": " ",
+          "before": "a",
+          "kind": "caption_erase",
+          "x": 40,
+          "y": 75
+        },
+        {
+          "after": " ",
+          "before": "2",
+          "kind": "multiline_row_erase",
+          "x": 41,
+          "y": 76
+        },
+        {
+          "after": " ",
+          "before": "b",
+          "kind": "caption_erase",
+          "x": 38,
+          "y": 48
+        },
+        {
+          "after": " ",
+          "before": "b",
+          "kind": "caption_erase",
+          "x": 39,
+          "y": 43
+        },
+        {
+          "after": " ",
+          "before": "3",
+          "kind": "multiline_row_erase",
+          "x": 40,
+          "y": 45
+        },
+        {
+          "after": " ",
+          "before": "a",
+          "kind": "caption_erase",
+          "x": 39,
+          "y": 79
+        },
+        {
+          "after": "┆",
+          "before": "│",
+          "kind": "stroke",
+          "x": 21,
+          "y": 61
+        },
+        {
+          "after": "├",
+          "before": "│",
+          "kind": "extra_arm",
+          "x": 21,
+          "y": 61
+        },
+        {
+          "after": "?",
+          "before": " ",
+          "kind": "extra_ink",
+          "x": 1,
+          "y": 1
+        }
+      ],
+      "qualification": "Independent fixed-coordinate complete paper. Native validity has not been executed; no producer/slot/planner output was consulted.",
+      "removed_physical_row": 76,
+      "source": "classDiagram\ndirection BT\nclass A\nclass B\nclass C\nA \"a<br>a2\" --> \"bee\" B : ab\nB \"bee<br>b2<br>b3\" --> \"aa\" A : ba\nA --> C : ac\nC --> A : ca\nB --> C : bc\nC --> B : cb\n",
+      "source_sha256": "d9b3b054d4fcce63fa656b1351f4a55ed293e2e08f789b9f40566773b186126a",
+      "whole_native_model": {
+        "direction": "BT",
+        "entities": [
+          {
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "id": "A",
+            "label": "A",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "B"
+              ]
+            ],
+            "id": "B",
+            "label": "B",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "C"
+              ]
+            ],
+            "id": "C",
+            "label": "C",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [],
+        "notes": [],
+        "relations": [
+          {
+            "end": "arrow",
+            "label": "ab",
+            "order": 0,
+            "source": "A",
+            "source_text": "a\na2",
+            "start": "none",
+            "stroke": "solid",
+            "target": "B",
+            "target_text": "bee"
+          },
+          {
+            "end": "arrow",
+            "label": "ba",
+            "order": 1,
+            "source": "B",
+            "source_text": "bee\nb2\nb3",
+            "start": "none",
+            "stroke": "solid",
+            "target": "A",
+            "target_text": "aa"
+          },
+          {
+            "end": "arrow",
+            "label": "ac",
+            "order": 2,
+            "source": "A",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "C",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ca",
+            "order": 3,
+            "source": "C",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "A",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "bc",
+            "order": 4,
+            "source": "B",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "C",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "cb",
+            "order": 5,
+            "source": "C",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "B",
+            "target_text": null
+          }
+        ]
+      },
+      "whole_native_model_sha256": "aa87c9359c44bdca6019c7fe94c01b88e80b625023855a2d8de28f6e5893b896",
+      "width": 100
+    },
+    {
+      "cards": [
+        {
+          "bottom": 27,
+          "id": "A",
+          "left": 44,
+          "right": 52,
+          "top": 4
+        },
+        {
+          "bottom": 57,
+          "id": "B",
+          "left": 44,
+          "right": 52,
+          "top": 34
+        },
+        {
+          "bottom": 87,
+          "id": "C",
+          "left": 44,
+          "right": 52,
+          "top": 64
+        },
+        {
+          "bottom": 117,
+          "id": "D",
+          "left": 44,
+          "right": 52,
+          "top": 94
+        }
+      ],
+      "edge_coordinate_transcription": [
+        {
+          "bend_x": 27,
+          "central_x": 32,
+          "central_y": 13,
+          "edge": 0,
+          "face": -1,
+          "source_row": 13,
+          "target_row": 38
+        },
+        {
+          "bend_x": 23,
+          "central_x": 30,
+          "central_y": 39,
+          "edge": 1,
+          "face": -1,
+          "source_row": 39,
+          "target_row": 12
+        },
+        {
+          "bend_x": 15,
+          "central_x": 32,
+          "central_y": 11,
+          "edge": 2,
+          "face": -1,
+          "source_row": 11,
+          "target_row": 70
+        },
+        {
+          "bend_x": 11,
+          "central_x": 32,
+          "central_y": 71,
+          "edge": 3,
+          "face": -1,
+          "source_row": 71,
+          "target_row": 10
+        },
+        {
+          "bend_x": 7,
+          "central_x": 32,
+          "central_y": 9,
+          "edge": 4,
+          "face": -1,
+          "source_row": 9,
+          "target_row": 100
+        },
+        {
+          "bend_x": 3,
+          "central_x": 32,
+          "central_y": 101,
+          "edge": 5,
+          "face": -1,
+          "source_row": 101,
+          "target_row": 8
+        },
+        {
+          "bend_x": 27,
+          "central_x": 32,
+          "central_y": 42,
+          "edge": 6,
+          "face": -1,
+          "source_row": 42,
+          "target_row": 68
+        },
+        {
+          "bend_x": 23,
+          "central_x": 30,
+          "central_y": 69,
+          "edge": 7,
+          "face": -1,
+          "source_row": 69,
+          "target_row": 40
+        },
+        {
+          "bend_x": 86,
+          "central_x": 65,
+          "central_y": 40,
+          "edge": 8,
+          "face": 1,
+          "source_row": 40,
+          "target_row": 98
+        },
+        {
+          "bend_x": 90,
+          "central_x": 68,
+          "central_y": 99,
+          "edge": 9,
+          "face": 1,
+          "source_row": 99,
+          "target_row": 38
+        },
+        {
+          "bend_x": 27,
+          "central_x": 32,
+          "central_y": 73,
+          "edge": 10,
+          "face": -1,
+          "source_row": 73,
+          "target_row": 98
+        },
+        {
+          "bend_x": 23,
+          "central_x": 30,
+          "central_y": 99,
+          "edge": 11,
+          "face": -1,
+          "source_row": 99,
+          "target_row": 72
+        }
+      ],
+      "height": 124,
+      "literal_rows": [
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                            ┌───────┐                                               ",
+        "                                            │ A     │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "   ┌───────────────────────────────────────▶┤       │                                               ",
+        "   │   ┌────────────────────────ad──────────┤       │                                               ",
+        "   │   │   ┌───────────────────────────────▶┤       │                                               ",
+        "   │   │   │   ┌────────────────ac──────────┤       │                                               ",
+        "   │   │   │   │       ┌───────────────────▶┤       │                                               ",
+        "   │   │   │   │       │   ┌────ab──────────┤       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                └───────┘                                               ",
+        "   │   │   │   │       │   │                                                                        ",
+        "   │   │   │   │       │   │                                                                        ",
+        "   │   │   │   │       │   │                                                                        ",
+        "   │   │   │   │       │   │                                                                        ",
+        "   │   │   │   │       │   │                                                                        ",
+        "   │   │   │   │       │   │                                                                        ",
+        "   │   │   │   │       │   │                ┌───────┐                                               ",
+        "   │   │   │   │       │   │                │ B     │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   │                │       │                                               ",
+        "   │   │   │   │       │   └───────────────▶┤       ├◀────────────────────────────────────┐         ",
+        "   │   │   │   │       └──────ba────────────┤       │                                     │         ",
+        "   │   │   │   │       ┌───────────────────▶┤       ├──right─────bd───────────────────┐   │         ",
+        "   │   │   │   │       │                    │       │  one                            │   │         ",
+        "   │   │   │   │       │   ┌────bc────left──┤       │  two                            │   │         ",
+        "   │   │   │   │       │   │          row   │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                └───────┘                                 │   │         ",
+        "   │   │   │   │       │   │                                                          │   │         ",
+        "   │   │   │   │       │   │                                                          │   │         ",
+        "   │   │   │   │       │   │                                                          │   │         ",
+        "   │   │   │   │       │   │                                                          │   │         ",
+        "   │   │   │   │       │   │                                                          │   │         ",
+        "   │   │   │   │       │   │                                                          │   │         ",
+        "   │   │   │   │       │   │                ┌───────┐                                 │   │         ",
+        "   │   │   │   │       │   │                │ C     │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   │                │       │                                 │   │         ",
+        "   │   │   │   │       │   └───────────────▶┤       │                                 │   │         ",
+        "   │   │   │   │       └──────cb────────────┤       │                                 │   │         ",
+        "   │   │   │   └───────────────────────────▶┤       │                                 │   │         ",
+        "   │   │   └────────────────────ca──────────┤       │                                 │   │         ",
+        "   │   │               ┌───────────────────▶┤       │                                 │   │         ",
+        "   │   │               │   ┌────cd──────────┤       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                └───────┘                                 │   │         ",
+        "   │   │               │   │                                                          │   │         ",
+        "   │   │               │   │                                                          │   │         ",
+        "   │   │               │   │                                                          │   │         ",
+        "   │   │               │   │                                                          │   │         ",
+        "   │   │               │   │                                                          │   │         ",
+        "   │   │               │   │                                                          │   │         ",
+        "   │   │               │   │                ┌───────┐                                 │   │         ",
+        "   │   │               │   │                │ D     │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   │                │       │                                 │   │         ",
+        "   │   │               │   └───────────────▶┤       ├◀────────────────────────────────┘   │         ",
+        "   │   │               └──────dc────────────┤       ├───────────────db────────────────────┘         ",
+        "   │   └───────────────────────────────────▶┤       │                                               ",
+        "   └────────────────────────────da──────────┤       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            │       │                                               ",
+        "                                            └───────┘                                               ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "                                                                                                    ",
+        "AFTER_RELATIONS_SEMANTICS                                                                           ",
+        "                                                                                                    "
+      ],
+      "name": "same_vertex_two_faces_distinct_bands_K4",
+      "original_immutable_source": false,
+      "pixel_controls": [
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 38
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 12
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 70
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 10
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 100
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 8
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 68
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 40
+        },
+        {
+          "after": "▶",
+          "before": "◀",
+          "kind": "marker",
+          "x": 53,
+          "y": 98
+        },
+        {
+          "after": "▶",
+          "before": "◀",
+          "kind": "marker",
+          "x": 53,
+          "y": 38
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 98
+        },
+        {
+          "after": "◀",
+          "before": "▶",
+          "kind": "marker",
+          "x": 43,
+          "y": 72
+        },
+        {
+          "after": " ",
+          "before": "l",
+          "kind": "caption_erase",
+          "x": 38,
+          "y": 42
+        },
+        {
+          "after": " ",
+          "before": "w",
+          "kind": "multiline_row_erase",
+          "x": 40,
+          "y": 43
+        },
+        {
+          "after": " ",
+          "before": "r",
+          "kind": "caption_erase",
+          "x": 55,
+          "y": 40
+        },
+        {
+          "after": " ",
+          "before": "o",
+          "kind": "multiline_row_erase",
+          "x": 57,
+          "y": 42
+        },
+        {
+          "after": "┆",
+          "before": "│",
+          "kind": "stroke",
+          "x": 27,
+          "y": 25
+        },
+        {
+          "after": "├",
+          "before": "│",
+          "kind": "extra_arm",
+          "x": 27,
+          "y": 25
+        },
+        {
+          "after": "?",
+          "before": " ",
+          "kind": "extra_ink",
+          "x": 1,
+          "y": 1
+        }
+      ],
+      "qualification": "Independent fixed-coordinate complete paper. Native validity has not been executed; no producer/slot/planner output was consulted.",
+      "removed_physical_row": 42,
+      "source": "classDiagram\ndirection TB\nclass A\nclass B\nclass C\nclass D\nA --> B : ab\nB --> A : ba\nA --> C : ac\nC --> A : ca\nA --> D : ad\nD --> A : da\nB \"left<br>row\" --> C : bc\nC --> B : cb\nB \"right<br>one<br>two\" --> D : bd\nD --> B : db\nC --> D : cd\nD --> C : dc\n",
+      "source_sha256": "987828076e6bfa6feba0778b4794f0165b9d531044fc32373c5baec7670f6ffc",
+      "whole_native_model": {
+        "direction": "TB",
+        "entities": [
+          {
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "id": "A",
+            "label": "A",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "B"
+              ]
+            ],
+            "id": "B",
+            "label": "B",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "C"
+              ]
+            ],
+            "id": "C",
+            "label": "C",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          },
+          {
+            "headers": [
+              [
+                "D"
+              ]
+            ],
+            "id": "D",
+            "label": "D",
+            "owner": "",
+            "rows": [],
+            "shape": "box"
+          }
+        ],
+        "family": "class",
+        "groups": [],
+        "notes": [],
+        "relations": [
+          {
+            "end": "arrow",
+            "label": "ab",
+            "order": 0,
+            "source": "A",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "B",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ba",
+            "order": 1,
+            "source": "B",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "A",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ac",
+            "order": 2,
+            "source": "A",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "C",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ca",
+            "order": 3,
+            "source": "C",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "A",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "ad",
+            "order": 4,
+            "source": "A",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "D",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "da",
+            "order": 5,
+            "source": "D",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "A",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "bc",
+            "order": 6,
+            "source": "B",
+            "source_text": "left\nrow",
+            "start": "none",
+            "stroke": "solid",
+            "target": "C",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "cb",
+            "order": 7,
+            "source": "C",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "B",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "bd",
+            "order": 8,
+            "source": "B",
+            "source_text": "right\none\ntwo",
+            "start": "none",
+            "stroke": "solid",
+            "target": "D",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "db",
+            "order": 9,
+            "source": "D",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "B",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "cd",
+            "order": 10,
+            "source": "C",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "D",
+            "target_text": null
+          },
+          {
+            "end": "arrow",
+            "label": "dc",
+            "order": 11,
+            "source": "D",
+            "source_text": null,
+            "start": "none",
+            "stroke": "solid",
+            "target": "C",
+            "target_text": null
+          }
+        ]
+      },
+      "whole_native_model_sha256": "46f4f7367f6751dad419cc78254f4c840be892f706bc85e2b535d7fe739bc963",
+      "width": 100
+    }
+  ],
+  "qualification": "Five whole literal coordinate papers, not runtime output or source admission; all actual native proof remains pending.",
+  "schema": "class_endpoint_row_band_literal_papers/v1",
+  "source_design_review_sha256": "c9feb736c21e96da552064830e30dfde1f0f0f741d57ab64d753bfef5dc5ffe1"
+}

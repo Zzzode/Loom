@@ -1,0 +1,41 @@
++---------+
+| Gateway |
++---------+
+
++---------+
+| Service |
++---------+
+
++------+
+| Repo |
++------+
+
++-------+
+| Cache |
++-------+
+
+relations:
+id(bytes=7)="Gateway" --> id(bytes=7)="Service" : receives
+                                                  request
+                                                  authored(bytes=19)="receives<br>request"
+id(bytes=7)="Service" --> id(bytes=7)="Gateway" : returns
+                                                  response
+                                                  authored(bytes=19)="returns<br>response"
+id(bytes=7)="Service" --> id(bytes=4)="Repo"    : persists
+                                                  state
+                                                  authored(bytes=17)="persists<br>state"
+id(bytes=4)="Repo"    --> id(bytes=7)="Service" : hydrates
+                                                  state
+                                                  authored(bytes=17)="hydrates<br>state"
+id(bytes=7)="Service" --> id(bytes=5)="Cache"   : reads
+                                                  fast path
+                                                  authored(bytes=18)="reads<br>fast path"
+id(bytes=5)="Cache"   --> id(bytes=7)="Service" : invalidates
+                                                  entry
+                                                  authored(bytes=20)="invalidates<br>entry"
+id(bytes=4)="Repo"    --> id(bytes=5)="Cache"   : warms
+                                                  cache
+                                                  authored(bytes=14)="warms<br>cache"
+id(bytes=5)="Cache"   --> id(bytes=4)="Repo"    : evicts
+                                                  stale
+                                                  authored(bytes=15)="evicts<br>stale"

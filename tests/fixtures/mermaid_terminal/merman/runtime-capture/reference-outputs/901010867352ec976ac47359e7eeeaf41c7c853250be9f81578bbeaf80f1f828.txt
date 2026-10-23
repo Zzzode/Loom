@@ -1,0 +1,41 @@
++----------+
+| CUSTOMER |
++----------+
+
++-------+
+| ORDER |
++-------+
+
++---------+
+| INVOICE |
++---------+
+
++---------+
+| PAYMENT |
++---------+
+
+relations:
+id(bytes=8)="CUSTOMER" ||--o{ id(bytes=5)="ORDER"    : places
+                                                       orders
+                                                       authored(bytes=16)="places<br>orders"
+id(bytes=5)="ORDER"    ||--|| id(bytes=8)="CUSTOMER" : belongs
+                                                       to
+                                                       authored(bytes=13)="belongs<br>to"
+id(bytes=8)="CUSTOMER" ||--o{ id(bytes=7)="INVOICE"  : billed
+                                                       monthly
+                                                       authored(bytes=17)="billed<br>monthly"
+id(bytes=7)="INVOICE"  ||--|| id(bytes=8)="CUSTOMER" : issued
+                                                       to
+                                                       authored(bytes=12)="issued<br>to"
+id(bytes=5)="ORDER"    ||--|| id(bytes=7)="INVOICE"  : reconciles
+                                                       payment
+                                                       authored(bytes=21)="reconciles<br>payment"
+id(bytes=7)="INVOICE"  ||--|| id(bytes=5)="ORDER"    : audits
+                                                       order
+                                                       authored(bytes=15)="audits<br>order"
+id(bytes=5)="ORDER"    ||--o{ id(bytes=7)="PAYMENT"  : captures
+                                                       funds
+                                                       authored(bytes=17)="captures<br>funds"
+id(bytes=7)="PAYMENT"  ||--|| id(bytes=5)="ORDER"    : settles
+                                                       order
+                                                       authored(bytes=16)="settles<br>order"

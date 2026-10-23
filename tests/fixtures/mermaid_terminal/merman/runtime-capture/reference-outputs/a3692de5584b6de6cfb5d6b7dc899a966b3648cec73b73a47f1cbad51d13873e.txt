@@ -1,0 +1,11 @@
+* Line 1  # Bar 1
+xDomain: linear authored=[0,2] resolved=[0,2]
+values: * series=0 type=line title=none samples=[{index=0 x(bytes=1)="0" value=0 pointLabel=none clipped=false}, {index=1 x(bytes=18)="0.6666666666666666" value=1 pointLabel=none clipped=false}, {index=2 x(bytes=18)="1.3333333333333333" value=0 pointLabel=none clipped=false}, {index=3 x(bytes=1)="2" value=1 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: # series=1 type=bar title=none samples=[{index=0 x(bytes=1)="0" value=1 pointLabel=none clipped=false}, {index=1 x(bytes=18)="0.6666666666666666" value=0 pointLabel=none clipped=false}, {index=2 x(bytes=18)="1.3333333333333333" value=1 pointLabel=none clipped=false}, {index=3 x(bytes=1)="2" value=0 pointLabel=none clipped=false}] orphanPointLabels=[]
+  1 +###+-*-+###+-*
+0.8 +###|   |###|
+0.6 +###|   |###|
+0.4 +###|   |###|
+0.2 +#*-+   +-*-+
+  0 +-+---+---+---+-
+      0  0.6 1.3  2

@@ -1,0 +1,227 @@
+{
+  "schema": "pie7_whole_source_native_test_authority/v1",
+  "qualification": "Seven complete sources and Models from independently reviewed source/design R2 plus subcell contract R3. Not formal matrix or foreign assertion credit.",
+  "official_commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+  "source_design_r2_sha256": "c934cb3c18ad2d8b56f13514e239a5c34eb0879e0aed06ac46da495e1af72085",
+  "subcell_contract_r3_sha256": "6fe6c2a4ba2db8198ff3edd3c55f6a981d3d4a8e158f634949fdfd19fd57352f",
+  "cases": [
+    {
+      "ordinal": 11,
+      "source_file": "sources/011.mmd",
+      "source_path": "tests/fixtures/mermaid_official/cases/pie/nightly-check/should-render-a-simple-pie-diagram-with-long-labels.mmd",
+      "source_sha256": "9b515d1c744ef17a69899d6025c45737576a71d373cf0aa60541e7ad949547d5",
+      "source_bytes": 290,
+      "complete_prefix": "---\ndescription: >-\n  Pie diagram with unusually long slice-label text (\"Time spent looking for\n  movie\", \"Time spent watching it\") to verify long labels don't overflow or\n  clip in the legend/chart.\n---\n",
+      "prefix_bytes": 204,
+      "body_sha256": "e198886c3d914f8d034ca1a7ad8cfb7586a5928f12a796b8f64c23e4b753baed",
+      "Model": {
+        "title": "NETFLIX",
+        "show_data": false,
+        "slices": [
+          {
+            "label": "Time spent looking for movie",
+            "value": 90
+          },
+          {
+            "label": "Time spent watching it",
+            "value": 10
+          }
+        ]
+      },
+      "Model_canonical_sha256": "d3023db0c6866b7c34cfdc6ae85774dfe6641b6119040789cc7b7008c7edd4ee",
+      "Model_canonical_json": "{\"show_data\":false,\"slices\":[{\"label\":\"Time spent looking for movie\",\"value\":90},{\"label\":\"Time spent watching it\",\"value\":10}],\"title\":\"NETFLIX\"}"
+    },
+    {
+      "ordinal": 12,
+      "source_file": "sources/012.mmd",
+      "source_path": "tests/fixtures/mermaid_official/cases/pie/nightly-check/should-render-pie-slices-only-for-non-zero-values-but-shows-all-legends.mmd",
+      "source_sha256": "b78c67f92fed5ef813da2ec3ab3a290670abe324f7a49e39b2160b62e4f5bcaf",
+      "source_bytes": 382,
+      "complete_prefix": "---\ndescription: >-\n  Pie diagram verifying that all slices, including one with a very small\n  value (Rats: 1) relative to the others (Dogs: 386, Cats: 85), still render\n  a visible arc and appear in the legend, confirming small non-zero values\n  aren't dropped from either the chart or its legend.\n---\n",
+      "prefix_bytes": 303,
+      "body_sha256": "28e85aa94ed71541ada2e0a2745cbb7d19055be4a2c0e328e22009dea35f929e",
+      "Model": {
+        "title": "Pets adopted by volunteers",
+        "show_data": false,
+        "slices": [
+          {
+            "label": "Dogs",
+            "value": 386
+          },
+          {
+            "label": "Cats",
+            "value": 85
+          },
+          {
+            "label": "Rats",
+            "value": 1
+          }
+        ]
+      },
+      "Model_canonical_sha256": "b534c6523ee5561459329d1229e4f3d1bb73d4956769e40e28521657c2dcf48f",
+      "Model_canonical_json": "{\"show_data\":false,\"slices\":[{\"label\":\"Dogs\",\"value\":386},{\"label\":\"Cats\",\"value\":85},{\"label\":\"Rats\",\"value\":1}],\"title\":\"Pets adopted by volunteers\"}"
+    },
+    {
+      "ordinal": 18,
+      "source_file": "sources/018.mmd",
+      "source_path": "tests/fixtures/mermaid_official/cases/pie/pr-check/should-render-a-pie-diagram-with-a-long-title-without-clipping.mmd",
+      "source_sha256": "092b8799be12b4198b16c3bf1f8d69f1c64b8f747823e6e47b06c5d231a61484",
+      "source_bytes": 361,
+      "complete_prefix": "---\ndescription: >-\n  Simple pie diagram with a long title string and seven slices (Vegetables,\n  Fruits, Cheese, Milk, Eggs, Meat, Bread), checking that a lengthy title\n  renders without being clipped.\n---\n",
+      "prefix_bytes": 207,
+      "body_sha256": "634aad81efa5de4a456090b76f5df0977d08b554da7122fd6f1cd9554d5c4b1b",
+      "Model": {
+        "title": "Weekly Grocery Consumption for a Family of 4",
+        "show_data": false,
+        "slices": [
+          {
+            "label": "Vegetables",
+            "value": 25
+          },
+          {
+            "label": "Fruits",
+            "value": 5
+          },
+          {
+            "label": "Cheese",
+            "value": 5
+          },
+          {
+            "label": "Milk",
+            "value": 15
+          },
+          {
+            "label": "Eggs",
+            "value": 15
+          },
+          {
+            "label": "Meat",
+            "value": 30
+          },
+          {
+            "label": "Bread",
+            "value": 5
+          }
+        ]
+      },
+      "Model_canonical_sha256": "bf5413542114e5f4cd91acfb687bf13e8bd39f49438e8635d91673873fab9efc",
+      "Model_canonical_json": "{\"show_data\":false,\"slices\":[{\"label\":\"Vegetables\",\"value\":25},{\"label\":\"Fruits\",\"value\":5},{\"label\":\"Cheese\",\"value\":5},{\"label\":\"Milk\",\"value\":15},{\"label\":\"Eggs\",\"value\":15},{\"label\":\"Meat\",\"value\":30},{\"label\":\"Bread\",\"value\":5}],\"title\":\"Weekly Grocery Consumption for a Family of 4\"}"
+    },
+    {
+      "ordinal": 20,
+      "source_file": "sources/020.mmd",
+      "source_path": "tests/fixtures/mermaid_official/cases/pie/pr-check/should-render-a-pie-diagram-with-showdata.mmd",
+      "source_sha256": "39d37e1d901b67c7ff927facdf1a9c91e011ccae7bb54cf3bf4265672ed7bc8e",
+      "source_bytes": 243,
+      "complete_prefix": "---\ndescription: >-\n  Pie diagram using the `showData` keyword on the `pie` statement to display\n  each slice's numeric value alongside its legend label, with a minimal\n  two-slice Dogs/Cats dataset.\n---\n",
+      "prefix_bytes": 204,
+      "body_sha256": "5de5614face3d0f2f707d657f6d0da7f9e6f862a4f94c9bbc111426638e4420c",
+      "Model": {
+        "title": "",
+        "show_data": true,
+        "slices": [
+          {
+            "label": "Dogs",
+            "value": 50
+          },
+          {
+            "label": "Cats",
+            "value": 25
+          }
+        ]
+      },
+      "Model_canonical_sha256": "2082ad690551b811dc764ac7cf7f96067557875ca88b5a4a4315222b1e8f1a66",
+      "Model_canonical_json": "{\"show_data\":true,\"slices\":[{\"label\":\"Dogs\",\"value\":50},{\"label\":\"Cats\",\"value\":25}],\"title\":\"\"}"
+    },
+    {
+      "ordinal": 21,
+      "source_file": "sources/021.mmd",
+      "source_path": "tests/fixtures/mermaid_official/cases/pie/pr-check/should-render-a-simple-pie-diagram-with-capital-letters-for-labels.mmd",
+      "source_sha256": "7e94c33e07afb9658b8b92ba8c0b44f6bfee17189c7f79f9404c76a8e60393f6",
+      "source_bytes": 280,
+      "complete_prefix": "---\ndescription: >-\n  Simple pie diagram whose slice labels are written in all-caps (FRIENDS,\n  FAMILY, NOSE), checking that label casing is preserved as written rather\n  than being transformed.\n---\n",
+      "prefix_bytes": 199,
+      "body_sha256": "c8499516c2fcd9c5783f7d32f14eb09b0df673e44adff14cd31bfe4a67a62112",
+      "Model": {
+        "title": "What Voldemort doesn't have?",
+        "show_data": false,
+        "slices": [
+          {
+            "label": "FRIENDS",
+            "value": 2
+          },
+          {
+            "label": "FAMILY",
+            "value": 3
+          },
+          {
+            "label": "NOSE",
+            "value": 45
+          }
+        ]
+      },
+      "Model_canonical_sha256": "abc9956be8717ebc8cba8e5df83609d857f2d54f84227d6a02f4438167f44283",
+      "Model_canonical_json": "{\"show_data\":false,\"slices\":[{\"label\":\"FRIENDS\",\"value\":2},{\"label\":\"FAMILY\",\"value\":3},{\"label\":\"NOSE\",\"value\":45}],\"title\":\"What Voldemort doesn't have?\"}"
+    },
+    {
+      "ordinal": 22,
+      "source_file": "sources/022.mmd",
+      "source_path": "tests/fixtures/mermaid_official/cases/pie/pr-check/should-render-a-simple-pie-diagram.mmd",
+      "source_sha256": "41e12fdff5e90954b0375a3bead342a0336cd38cac5f0a94c2d6fc814f14ef5d",
+      "source_bytes": 246,
+      "complete_prefix": "---\ndescription: >-\n  Baseline smoke test for a simple pie diagram with a title and three slices\n  (Bandy, Ice-Hockey, Football), with no special config or styling.\n---\n",
+      "prefix_bytes": 169,
+      "body_sha256": "c64889e4ee197570a0412583a5895ee556aad3839e3c48ba9d933fd5e39e87b7",
+      "Model": {
+        "title": "Sports in Sweden",
+        "show_data": false,
+        "slices": [
+          {
+            "label": "Bandy",
+            "value": 40
+          },
+          {
+            "label": "Ice-Hockey",
+            "value": 80
+          },
+          {
+            "label": "Football",
+            "value": 90
+          }
+        ]
+      },
+      "Model_canonical_sha256": "1a75a921185924687ae64735507f458205dbd6692abef18ab96bc2f078914dbb",
+      "Model_canonical_json": "{\"show_data\":false,\"slices\":[{\"label\":\"Bandy\",\"value\":40},{\"label\":\"Ice-Hockey\",\"value\":80},{\"label\":\"Football\",\"value\":90}],\"title\":\"Sports in Sweden\"}"
+    },
+    {
+      "ordinal": 23,
+      "source_file": "sources/023.mmd",
+      "source_path": "tests/fixtures/mermaid_official/cases/pie/pr-check/simple-sports.mmd",
+      "source_sha256": "ca811be701e227efde886ddcf7cd91d9c38ee5b37db6bd0093e0e6799a630ec5",
+      "source_bytes": 276,
+      "complete_prefix": "---\ndescription: >-\n  Duplicate of the baseline simple pie diagram (title plus three slices:\n  Bandy, Ice-Hockey, Football) kept under a differently-named fixture file,\n  with no special config.\n---\n",
+      "prefix_bytes": 199,
+      "body_sha256": "c64889e4ee197570a0412583a5895ee556aad3839e3c48ba9d933fd5e39e87b7",
+      "Model": {
+        "title": "Sports in Sweden",
+        "show_data": false,
+        "slices": [
+          {
+            "label": "Bandy",
+            "value": 40
+          },
+          {
+            "label": "Ice-Hockey",
+            "value": 80
+          },
+          {
+            "label": "Football",
+            "value": 90
+          }
+        ]
+      },
+      "Model_canonical_sha256": "1a75a921185924687ae64735507f458205dbd6692abef18ab96bc2f078914dbb",
+      "Model_canonical_json": "{\"show_data\":false,\"slices\":[{\"label\":\"Bandy\",\"value\":40},{\"label\":\"Ice-Hockey\",\"value\":80},{\"label\":\"Football\",\"value\":90}],\"title\":\"Sports in Sweden\"}"
+    }
+  ]
+}

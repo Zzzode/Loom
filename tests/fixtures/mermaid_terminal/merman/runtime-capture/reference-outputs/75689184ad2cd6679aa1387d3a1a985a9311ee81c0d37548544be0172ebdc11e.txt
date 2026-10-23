@@ -1,0 +1,8 @@
+xDomain: linear authored=[0,100] resolved=[0,100]
+yDomain: linear authored=[0,10] resolved=[0,10]
+values: * series=0 type=line title=none samples=[{index=0 x(bytes=1)="0" value=5 pointLabel=none clipped=false}, {index=1 x(bytes=3)="0.1" value=5 pointLabel=none clipped=false}] orphanPointLabels=[]
+
+
+ *
+
+

@@ -1,0 +1,1987 @@
+{
+  "schema": "flow400_group_endpoint15_source_models/v1",
+  "qualification": "Design-only source-authoring asset. It is not a decoder, test, renderer run, admission, or credit record.",
+  "cohort": {
+    "name": "subgraph_endpoint_core15",
+    "records": 15,
+    "topology_a_records": 8,
+    "topology_b_records": 7
+  },
+  "endpoint_wire_contract": {
+    "kind_values": [
+      "vertex",
+      "group"
+    ],
+    "resolution": "A vertex id resolves only against base_model.nodes; a group id resolves only against explicit named subgraphs in the same record. No child substitution, forward lookup, implicit group, repeated-id merge, or label-based resolution is allowed.",
+    "base_model_compatibility": "base_model retains the existing direction/nodes/edges/subgraphs wire shape. Tagged edges are a separate supplement field and are never fed into the frozen base Flow400 decoder.",
+    "edge_order": "source_edge_order is an exact partition of every authored source link. Every index is unique and resolves to exactly one base or tagged edge."
+  },
+  "records": [
+    {
+      "case_id": "flow400_group_endpoint_46",
+      "ordinal": 46,
+      "manifest_global_ordinal": 707,
+      "fixture": "flowchart/nightly-check/dagre/66-dagre-more-nested-subgraph-cases-tb.mmd",
+      "source_git_blob": "aed6f58fd09bb05a81fcf837db30b78e768ab176",
+      "raw_source_utf8": "---\ndescription:\n  Verifies dagre layout, in the top-to-bottom (TB) direction, of two sibling\n  subgraphs connected by both a subgraph-to-subgraph edge and a\n  subgraph-to-nested-node edge that together form a cycle between the subgraphs.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart TB\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "source_bytes": 440,
+      "source_sha256": "4a950aa7c9c78e06ceb6e0f27b7f830b169fcfe9f30c58ff5b0a2811c58c1bdb",
+      "body_utf8": "flowchart TB\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "body_sha256": "620d1c078fda0014ae6fce959a0ea04f25275ab751e6a8a352a86c576f736ff0",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": "dagre",
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "TB",
+      "topology": "cluster_to_cluster_then_cluster_to_child",
+      "model": {
+        "base_model": {
+          "direction": "TB",
+          "nodes": [
+            [
+              "b1",
+              {
+                "id": "b1",
+                "label": "b1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "c2",
+              {
+                "id": "c2",
+                "label": "c2",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [],
+          "subgraphs": [
+            {
+              "id": "two",
+              "label": "two",
+              "direction": "",
+              "nodeIds": [
+                "b1"
+              ],
+              "children": []
+            },
+            {
+              "id": "three",
+              "label": "three",
+              "direction": "",
+              "nodeIds": [
+                "c2"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "three"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 0
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "two"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "c2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 2,
+          "groups": 2,
+          "ordinary_vertex_edges": 0,
+          "group_endpoint_edges": 2,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_sha256": "d00eb510cd0c1b73fc660696d7b6ab6f73c84ab0822dc6f8c35482915c7eb55e",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_48",
+      "ordinal": 48,
+      "manifest_global_ordinal": 709,
+      "fixture": "flowchart/nightly-check/dagre/67-dagre-more-nested-subgraph-cases-rl.mmd",
+      "source_git_blob": "825f1cf08d40bf43e80565dbaea379b2fb7977f2",
+      "raw_source_utf8": "---\ndescription:\n  Verifies dagre layout, in the right-to-left (RL) direction, of two sibling\n  subgraphs connected by both a subgraph-to-subgraph edge and a\n  subgraph-to-nested-node edge that together form a cycle between the subgraphs.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart RL\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "source_bytes": 440,
+      "source_sha256": "7c76370e0e7abbcf5accefa43ebe7347ce0f6d9dca17b85ac0db3ae8a094406a",
+      "body_utf8": "flowchart RL\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "body_sha256": "afa7b03d093275805f6d77436f0338da7973f99ae392e58a843a1ca0f8587c07",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": "dagre",
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "RL",
+      "topology": "cluster_to_cluster_then_cluster_to_child",
+      "model": {
+        "base_model": {
+          "direction": "RL",
+          "nodes": [
+            [
+              "b1",
+              {
+                "id": "b1",
+                "label": "b1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "c2",
+              {
+                "id": "c2",
+                "label": "c2",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [],
+          "subgraphs": [
+            {
+              "id": "two",
+              "label": "two",
+              "direction": "",
+              "nodeIds": [
+                "b1"
+              ],
+              "children": []
+            },
+            {
+              "id": "three",
+              "label": "three",
+              "direction": "",
+              "nodeIds": [
+                "c2"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "three"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 0
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "two"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "c2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 2,
+          "groups": 2,
+          "ordinary_vertex_edges": 0,
+          "group_endpoint_edges": 2,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_sha256": "c5b016a5b9fdcb7e7c988afd6f2f39d2fffcd885fb0ad8a1d8239fdf75377350",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_49",
+      "ordinal": 49,
+      "manifest_global_ordinal": 710,
+      "fixture": "flowchart/nightly-check/dagre/68-dagre-more-nested-subgraph-cases-bt.mmd",
+      "source_git_blob": "64894de7a10d1293ae7e30cf75b7cab4897d9cf1",
+      "raw_source_utf8": "---\ndescription:\n  Verifies dagre layout, in the bottom-to-top (BT) direction, of two sibling\n  subgraphs connected by both a subgraph-to-subgraph edge and a\n  subgraph-to-nested-node edge that together form a cycle between the subgraphs.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart BT\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "source_bytes": 440,
+      "source_sha256": "6c1b8e69ef6ff81dc9fec44a178902606d821d6a8c02b5d303585fad93430985",
+      "body_utf8": "flowchart BT\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "body_sha256": "25d186cca53d5c932d4013de776b52d7f66684c1cf87559a73251d8af24189ac",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": "dagre",
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "BT",
+      "topology": "cluster_to_cluster_then_cluster_to_child",
+      "model": {
+        "base_model": {
+          "direction": "BT",
+          "nodes": [
+            [
+              "b1",
+              {
+                "id": "b1",
+                "label": "b1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "c2",
+              {
+                "id": "c2",
+                "label": "c2",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [],
+          "subgraphs": [
+            {
+              "id": "two",
+              "label": "two",
+              "direction": "",
+              "nodeIds": [
+                "b1"
+              ],
+              "children": []
+            },
+            {
+              "id": "three",
+              "label": "three",
+              "direction": "",
+              "nodeIds": [
+                "c2"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "three"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 0
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "two"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "c2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 2,
+          "groups": 2,
+          "ordinary_vertex_edges": 0,
+          "group_endpoint_edges": 2,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_sha256": "8e490093952a8a04201227d1424e71497f5588640de30395e2fbe3ccbac3ebaa",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_50",
+      "ordinal": 50,
+      "manifest_global_ordinal": 711,
+      "fixture": "flowchart/nightly-check/dagre/69-dagre-more-nested-subgraph-cases-lr.mmd",
+      "source_git_blob": "d2432ad5ebd5560c1be4458a71b73e98e3b85a1d",
+      "raw_source_utf8": "---\ndescription:\n  Verifies dagre layout, in the left-to-right (LR) direction, of two sibling\n  subgraphs connected by both a subgraph-to-subgraph edge and a\n  subgraph-to-nested-node edge that together form a cycle between the subgraphs.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart LR\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "source_bytes": 440,
+      "source_sha256": "152078a8abc87d36a815f03a8350ec8cdbf9ea83bdf4ee180462d3af1594727d",
+      "body_utf8": "flowchart LR\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "body_sha256": "da2ffc916e9e54a753a1c775a5efa4ab8c3d4b02e66705451e4991b0415433b8",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": "dagre",
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "LR",
+      "topology": "cluster_to_cluster_then_cluster_to_child",
+      "model": {
+        "base_model": {
+          "direction": "LR",
+          "nodes": [
+            [
+              "b1",
+              {
+                "id": "b1",
+                "label": "b1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "c2",
+              {
+                "id": "c2",
+                "label": "c2",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [],
+          "subgraphs": [
+            {
+              "id": "two",
+              "label": "two",
+              "direction": "",
+              "nodeIds": [
+                "b1"
+              ],
+              "children": []
+            },
+            {
+              "id": "three",
+              "label": "three",
+              "direction": "",
+              "nodeIds": [
+                "c2"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "three"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 0
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "two"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "c2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 2,
+          "groups": 2,
+          "ordinary_vertex_edges": 0,
+          "group_endpoint_edges": 2,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_sha256": "a56f18f6c7501d7bdc31ca029d453f20bef916001ad68c041f16a6b9145deccc",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_51",
+      "ordinal": 51,
+      "manifest_global_ordinal": 712,
+      "fixture": "flowchart/nightly-check/dagre/70-dagre-handle-nested-subgraph-cases-tb-link-out-and-link-between-subgraphs.mmd",
+      "source_git_blob": "8d9a1dda3c9b58786e47800548ad70244eefedb2",
+      "raw_source_utf8": "---\ndescription:\n  Verifies dagre layout, in the top-to-bottom (TB) direction, of two sibling\n  subgraphs connected by both a subgraph-to-subgraph edge and a direct\n  node-to-node edge that crosses between their internals.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart TB\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "source_bytes": 432,
+      "source_sha256": "ad8cccaaff50ae5e3cbbbfcf45bf67b740bb03ba1dcef0a29f2bab439c2d568d",
+      "body_utf8": "flowchart TB\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "body_sha256": "6de83f06d3b4771cad44d11dd1f3d4fcb4181ebd25f01112528d50b8cd31f769",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": "dagre",
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "TB",
+      "topology": "cluster_to_cluster_plus_child_crossing",
+      "model": {
+        "base_model": {
+          "direction": "TB",
+          "nodes": [
+            [
+              "sub1",
+              {
+                "id": "sub1",
+                "label": "sub1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub2",
+              {
+                "id": "sub2",
+                "label": "sub2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub4",
+              {
+                "id": "sub4",
+                "label": "sub4",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "sub1",
+              "target": "sub2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "sub1",
+              "target": "sub4",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "S1",
+              "label": "S1",
+              "direction": "",
+              "nodeIds": [
+                "sub1",
+                "sub2"
+              ],
+              "children": []
+            },
+            {
+              "id": "S2",
+              "label": "S2",
+              "direction": "",
+              "nodeIds": [
+                "sub4"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "S1"
+            },
+            "target": {
+              "kind": "group",
+              "id": "S2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 3,
+          "groups": 2,
+          "ordinary_vertex_edges": 2,
+          "group_endpoint_edges": 1,
+          "source_edges": 3
+        }
+      },
+      "canonical_model_sha256": "407c0db75d264af506aed01ad48bd769844108b738350d25c176ca07803019f0",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_52",
+      "ordinal": 52,
+      "manifest_global_ordinal": 713,
+      "fixture": "flowchart/nightly-check/dagre/71-dagre-handle-nested-subgraph-cases-rl-link-out-and-link-between-subgraphs.mmd",
+      "source_git_blob": "a0e25561f3fac0f00b7815bad442a02434de2b00",
+      "raw_source_utf8": "---\ndescription:\n  Verifies dagre layout, in the right-to-left (RL) direction, of two sibling\n  subgraphs connected by both a subgraph-to-subgraph edge and a direct\n  node-to-node edge that crosses between their internals.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart RL\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "source_bytes": 432,
+      "source_sha256": "0097824ef99719abe027b6c72a8dd3af82d42ae7e2743e9d1c22b49754e9823a",
+      "body_utf8": "flowchart RL\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "body_sha256": "d9a7b59a5ee27f7ac4bed198b0d1b97508eec1e01e101cb2653bda42a658f6ea",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": "dagre",
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "RL",
+      "topology": "cluster_to_cluster_plus_child_crossing",
+      "model": {
+        "base_model": {
+          "direction": "RL",
+          "nodes": [
+            [
+              "sub1",
+              {
+                "id": "sub1",
+                "label": "sub1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub2",
+              {
+                "id": "sub2",
+                "label": "sub2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub4",
+              {
+                "id": "sub4",
+                "label": "sub4",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "sub1",
+              "target": "sub2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "sub1",
+              "target": "sub4",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "S1",
+              "label": "S1",
+              "direction": "",
+              "nodeIds": [
+                "sub1",
+                "sub2"
+              ],
+              "children": []
+            },
+            {
+              "id": "S2",
+              "label": "S2",
+              "direction": "",
+              "nodeIds": [
+                "sub4"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "S1"
+            },
+            "target": {
+              "kind": "group",
+              "id": "S2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 3,
+          "groups": 2,
+          "ordinary_vertex_edges": 2,
+          "group_endpoint_edges": 1,
+          "source_edges": 3
+        }
+      },
+      "canonical_model_sha256": "51267f963e816dd1481918e5e3fbdbc875c225c48441c65a000e08a0b7607691",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_53",
+      "ordinal": 53,
+      "manifest_global_ordinal": 714,
+      "fixture": "flowchart/nightly-check/dagre/72-dagre-handle-nested-subgraph-cases-bt-link-out-and-link-between-subgraphs.mmd",
+      "source_git_blob": "51e8f15a2d49187190218893c6127fa73dd277fc",
+      "raw_source_utf8": "---\ndescription:\n  Verifies dagre layout, in the bottom-to-top (BT) direction, of two sibling\n  subgraphs connected by both a subgraph-to-subgraph edge and a direct\n  node-to-node edge that crosses between their internals.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart BT\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "source_bytes": 432,
+      "source_sha256": "7bcbd6376a538b18d80a893f78fb95336663fd8d45d72f78f42168cf91cf590b",
+      "body_utf8": "flowchart BT\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "body_sha256": "3d9b21236da5a7206b2de34fb629a26a79a7848065a67cdb87388b8a18b0719d",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": "dagre",
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "BT",
+      "topology": "cluster_to_cluster_plus_child_crossing",
+      "model": {
+        "base_model": {
+          "direction": "BT",
+          "nodes": [
+            [
+              "sub1",
+              {
+                "id": "sub1",
+                "label": "sub1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub2",
+              {
+                "id": "sub2",
+                "label": "sub2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub4",
+              {
+                "id": "sub4",
+                "label": "sub4",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "sub1",
+              "target": "sub2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "sub1",
+              "target": "sub4",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "S1",
+              "label": "S1",
+              "direction": "",
+              "nodeIds": [
+                "sub1",
+                "sub2"
+              ],
+              "children": []
+            },
+            {
+              "id": "S2",
+              "label": "S2",
+              "direction": "",
+              "nodeIds": [
+                "sub4"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "S1"
+            },
+            "target": {
+              "kind": "group",
+              "id": "S2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 3,
+          "groups": 2,
+          "ordinary_vertex_edges": 2,
+          "group_endpoint_edges": 1,
+          "source_edges": 3
+        }
+      },
+      "canonical_model_sha256": "c78dd6aead03a757ec041033eaaac9cee774f300b0b3e1868234cd36462e0175",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_56",
+      "ordinal": 56,
+      "manifest_global_ordinal": 717,
+      "fixture": "flowchart/nightly-check/dagre/74-dagre-handle-nested-subgraph-cases-rl-link-out-and-link-between-subgraphs.mmd",
+      "source_git_blob": "04e1d6f7857ce1cb93e190fa785de24af3751ce6",
+      "raw_source_utf8": "---\ndescription:\n  Duplicate right-to-left (RL) case verifying dagre layout of two sibling\n  subgraphs connected by both a subgraph-to-subgraph edge and a direct\n  node-to-node edge that crosses between their internals.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart RL\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "source_bytes": 429,
+      "source_sha256": "294576e02acdb10b8432a886ce70b402ee5cd46391c3b4cde9c1ea954a2b6b86",
+      "body_utf8": "flowchart RL\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "body_sha256": "d9a7b59a5ee27f7ac4bed198b0d1b97508eec1e01e101cb2653bda42a658f6ea",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": "dagre",
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "RL",
+      "topology": "cluster_to_cluster_plus_child_crossing",
+      "model": {
+        "base_model": {
+          "direction": "RL",
+          "nodes": [
+            [
+              "sub1",
+              {
+                "id": "sub1",
+                "label": "sub1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub2",
+              {
+                "id": "sub2",
+                "label": "sub2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub4",
+              {
+                "id": "sub4",
+                "label": "sub4",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "sub1",
+              "target": "sub2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "sub1",
+              "target": "sub4",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "S1",
+              "label": "S1",
+              "direction": "",
+              "nodeIds": [
+                "sub1",
+                "sub2"
+              ],
+              "children": []
+            },
+            {
+              "id": "S2",
+              "label": "S2",
+              "direction": "",
+              "nodeIds": [
+                "sub4"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "S1"
+            },
+            "target": {
+              "kind": "group",
+              "id": "S2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 3,
+          "groups": 2,
+          "ordinary_vertex_edges": 2,
+          "group_endpoint_edges": 1,
+          "source_edges": 3
+        }
+      },
+      "canonical_model_sha256": "51267f963e816dd1481918e5e3fbdbc875c225c48441c65a000e08a0b7607691",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_329",
+      "ordinal": 329,
+      "manifest_global_ordinal": 990,
+      "fixture": "flowchart/visual-check/66-more-nested-subgraph-cases-tb.mmd",
+      "source_git_blob": "01970757354ad19db2f803d5d5b90682d2a5f430",
+      "raw_source_utf8": "---\ndescription:\n  Tests edge resolution between two sibling subgraphs and their child nodes (a\n  subgraph-to-subgraph edge plus a subgraph-to-inner-node edge) laid out in the\n  top-to-bottom (TB) flowchart direction.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart TB\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "source_bytes": 403,
+      "source_sha256": "4f8673f25e71d8e16db8f2d1442363475ac006415d8e3deb3e43571e7593f3e2",
+      "body_utf8": "flowchart TB\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "body_sha256": "620d1c078fda0014ae6fce959a0ea04f25275ab751e6a8a352a86c576f736ff0",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": null,
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "TB",
+      "topology": "cluster_to_cluster_then_cluster_to_child",
+      "model": {
+        "base_model": {
+          "direction": "TB",
+          "nodes": [
+            [
+              "b1",
+              {
+                "id": "b1",
+                "label": "b1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "c2",
+              {
+                "id": "c2",
+                "label": "c2",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [],
+          "subgraphs": [
+            {
+              "id": "two",
+              "label": "two",
+              "direction": "",
+              "nodeIds": [
+                "b1"
+              ],
+              "children": []
+            },
+            {
+              "id": "three",
+              "label": "three",
+              "direction": "",
+              "nodeIds": [
+                "c2"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "three"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 0
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "two"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "c2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 2,
+          "groups": 2,
+          "ordinary_vertex_edges": 0,
+          "group_endpoint_edges": 2,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_sha256": "d00eb510cd0c1b73fc660696d7b6ab6f73c84ab0822dc6f8c35482915c7eb55e",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_331",
+      "ordinal": 331,
+      "manifest_global_ordinal": 992,
+      "fixture": "flowchart/visual-check/67-more-nested-subgraph-cases-rl.mmd",
+      "source_git_blob": "097a86ab8aae92e7ab4851be1dbe73d0d5dfd5f8",
+      "raw_source_utf8": "---\ndescription:\n  Tests edge resolution between two sibling subgraphs and their child nodes (a\n  subgraph-to-subgraph edge plus a subgraph-to-inner-node edge) laid out in the\n  right-to-left (RL) flowchart direction.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart RL\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "source_bytes": 403,
+      "source_sha256": "8d1eb583b7f85940c51969ed8b9f73e8257b19a64dab652583d664b7101deff4",
+      "body_utf8": "flowchart RL\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "body_sha256": "afa7b03d093275805f6d77436f0338da7973f99ae392e58a843a1ca0f8587c07",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": null,
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "RL",
+      "topology": "cluster_to_cluster_then_cluster_to_child",
+      "model": {
+        "base_model": {
+          "direction": "RL",
+          "nodes": [
+            [
+              "b1",
+              {
+                "id": "b1",
+                "label": "b1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "c2",
+              {
+                "id": "c2",
+                "label": "c2",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [],
+          "subgraphs": [
+            {
+              "id": "two",
+              "label": "two",
+              "direction": "",
+              "nodeIds": [
+                "b1"
+              ],
+              "children": []
+            },
+            {
+              "id": "three",
+              "label": "three",
+              "direction": "",
+              "nodeIds": [
+                "c2"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "three"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 0
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "two"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "c2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 2,
+          "groups": 2,
+          "ordinary_vertex_edges": 0,
+          "group_endpoint_edges": 2,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_sha256": "c5b016a5b9fdcb7e7c988afd6f2f39d2fffcd885fb0ad8a1d8239fdf75377350",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_333",
+      "ordinal": 333,
+      "manifest_global_ordinal": 994,
+      "fixture": "flowchart/visual-check/68-more-nested-subgraph-cases-bt.mmd",
+      "source_git_blob": "14c04b81e580472425d49c6f29b89e19c7062634",
+      "raw_source_utf8": "---\ndescription:\n  Tests edge resolution between two sibling subgraphs and their child nodes (a\n  subgraph-to-subgraph edge plus a subgraph-to-inner-node edge) laid out in the\n  bottom-to-top (BT) flowchart direction.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart BT\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "source_bytes": 403,
+      "source_sha256": "16008964dbead8130d94ea1ce29241be41b853abc501798181bab1e082d735ab",
+      "body_utf8": "flowchart BT\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "body_sha256": "25d186cca53d5c932d4013de776b52d7f66684c1cf87559a73251d8af24189ac",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": null,
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "BT",
+      "topology": "cluster_to_cluster_then_cluster_to_child",
+      "model": {
+        "base_model": {
+          "direction": "BT",
+          "nodes": [
+            [
+              "b1",
+              {
+                "id": "b1",
+                "label": "b1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "c2",
+              {
+                "id": "c2",
+                "label": "c2",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [],
+          "subgraphs": [
+            {
+              "id": "two",
+              "label": "two",
+              "direction": "",
+              "nodeIds": [
+                "b1"
+              ],
+              "children": []
+            },
+            {
+              "id": "three",
+              "label": "three",
+              "direction": "",
+              "nodeIds": [
+                "c2"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "three"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 0
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "two"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "c2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 2,
+          "groups": 2,
+          "ordinary_vertex_edges": 0,
+          "group_endpoint_edges": 2,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_sha256": "8e490093952a8a04201227d1424e71497f5588640de30395e2fbe3ccbac3ebaa",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_335",
+      "ordinal": 335,
+      "manifest_global_ordinal": 996,
+      "fixture": "flowchart/visual-check/69-more-nested-subgraph-cases-lr.mmd",
+      "source_git_blob": "3cc131b181681aa3f517b2ded13351b8974beca1",
+      "raw_source_utf8": "---\ndescription:\n  Tests edge resolution between two sibling subgraphs and their child nodes (a\n  subgraph-to-subgraph edge plus a subgraph-to-inner-node edge) laid out in the\n  left-to-right (LR) flowchart direction.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart LR\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "source_bytes": 403,
+      "source_sha256": "03f48a035d877bb984d721661e374943bb561bdfee7ff31b85d0b6e69351b5e6",
+      "body_utf8": "flowchart LR\n  subgraph two\n  b1\n  end\n  subgraph three\n  c2\n  end\n\n  three --> two\n  two --> c2\n",
+      "body_sha256": "da2ffc916e9e54a753a1c775a5efa4ab8c3d4b02e66705451e4991b0415433b8",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": null,
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "LR",
+      "topology": "cluster_to_cluster_then_cluster_to_child",
+      "model": {
+        "base_model": {
+          "direction": "LR",
+          "nodes": [
+            [
+              "b1",
+              {
+                "id": "b1",
+                "label": "b1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "c2",
+              {
+                "id": "c2",
+                "label": "c2",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [],
+          "subgraphs": [
+            {
+              "id": "two",
+              "label": "two",
+              "direction": "",
+              "nodeIds": [
+                "b1"
+              ],
+              "children": []
+            },
+            {
+              "id": "three",
+              "label": "three",
+              "direction": "",
+              "nodeIds": [
+                "c2"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "three"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 0
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "two"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "c2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 2,
+          "groups": 2,
+          "ordinary_vertex_edges": 0,
+          "group_endpoint_edges": 2,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_sha256": "a56f18f6c7501d7bdc31ca029d453f20bef916001ad68c041f16a6b9145deccc",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_340",
+      "ordinal": 340,
+      "manifest_global_ordinal": 1001,
+      "fixture": "flowchart/visual-check/70-handle-nested-subgraph-cases-tb-link-out-and-link-between-subgraphs.mmd",
+      "source_git_blob": "df4c84e2caa66c3e27776a33abe677997e929d78",
+      "raw_source_utf8": "---\ndescription:\n  Tests a flowchart in TB direction with both a link between two subgraph\n  containers (S1 --> S2) and a direct link between individual nodes that belong\n  to two different subgraphs (sub1 --> sub4), verifying edges correctly cross\n  subgraph boundaries.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart TB\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "source_bytes": 465,
+      "source_sha256": "31cfba9707996355e2702000a2162b3b913bdca209c99ba1790abe4111590e99",
+      "body_utf8": "flowchart TB\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "body_sha256": "6de83f06d3b4771cad44d11dd1f3d4fcb4181ebd25f01112528d50b8cd31f769",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": null,
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "TB",
+      "topology": "cluster_to_cluster_plus_child_crossing",
+      "model": {
+        "base_model": {
+          "direction": "TB",
+          "nodes": [
+            [
+              "sub1",
+              {
+                "id": "sub1",
+                "label": "sub1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub2",
+              {
+                "id": "sub2",
+                "label": "sub2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub4",
+              {
+                "id": "sub4",
+                "label": "sub4",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "sub1",
+              "target": "sub2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "sub1",
+              "target": "sub4",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "S1",
+              "label": "S1",
+              "direction": "",
+              "nodeIds": [
+                "sub1",
+                "sub2"
+              ],
+              "children": []
+            },
+            {
+              "id": "S2",
+              "label": "S2",
+              "direction": "",
+              "nodeIds": [
+                "sub4"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "S1"
+            },
+            "target": {
+              "kind": "group",
+              "id": "S2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 3,
+          "groups": 2,
+          "ordinary_vertex_edges": 2,
+          "group_endpoint_edges": 1,
+          "source_edges": 3
+        }
+      },
+      "canonical_model_sha256": "407c0db75d264af506aed01ad48bd769844108b738350d25c176ca07803019f0",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_343",
+      "ordinal": 343,
+      "manifest_global_ordinal": 1004,
+      "fixture": "flowchart/visual-check/71-handle-nested-subgraph-cases-rl-link-out-and-link-between-subgraphs.mmd",
+      "source_git_blob": "516186cf1e689ce8db2640eb4526f05ed1c9ff44",
+      "raw_source_utf8": "---\ndescription:\n  Tests the same subgraph-to-subgraph link and cross-subgraph node link pattern\n  as the analogous TB/BT fixtures (S1 --> S2 plus sub1 --> sub4), but with the\n  flowchart set to RL (right-to-left) direction.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart RL\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "source_bytes": 418,
+      "source_sha256": "811d29c78d2a51cb35f6e239d6ffedfd5d3886d8f06aed13001938d05db17294",
+      "body_utf8": "flowchart RL\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "body_sha256": "d9a7b59a5ee27f7ac4bed198b0d1b97508eec1e01e101cb2653bda42a658f6ea",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": null,
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "RL",
+      "topology": "cluster_to_cluster_plus_child_crossing",
+      "model": {
+        "base_model": {
+          "direction": "RL",
+          "nodes": [
+            [
+              "sub1",
+              {
+                "id": "sub1",
+                "label": "sub1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub2",
+              {
+                "id": "sub2",
+                "label": "sub2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub4",
+              {
+                "id": "sub4",
+                "label": "sub4",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "sub1",
+              "target": "sub2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "sub1",
+              "target": "sub4",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "S1",
+              "label": "S1",
+              "direction": "",
+              "nodeIds": [
+                "sub1",
+                "sub2"
+              ],
+              "children": []
+            },
+            {
+              "id": "S2",
+              "label": "S2",
+              "direction": "",
+              "nodeIds": [
+                "sub4"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "S1"
+            },
+            "target": {
+              "kind": "group",
+              "id": "S2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 3,
+          "groups": 2,
+          "ordinary_vertex_edges": 2,
+          "group_endpoint_edges": 1,
+          "source_edges": 3
+        }
+      },
+      "canonical_model_sha256": "51267f963e816dd1481918e5e3fbdbc875c225c48441c65a000e08a0b7607691",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    },
+    {
+      "case_id": "flow400_group_endpoint_344",
+      "ordinal": 344,
+      "manifest_global_ordinal": 1005,
+      "fixture": "flowchart/visual-check/72-handle-nested-subgraph-cases-bt-link-out-and-link-between-subgraphs.mmd",
+      "source_git_blob": "d6bfd86d6f7bccff2c0016a96e3cdfbd42a11c93",
+      "raw_source_utf8": "---\ndescription:\n  Tests the same subgraph-to-subgraph link and cross-subgraph node link pattern\n  as the analogous TB/RL fixtures (S1 --> S2 plus sub1 --> sub4), but with the\n  flowchart set to BT (bottom-to-top) direction.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart BT\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "source_bytes": 418,
+      "source_sha256": "7b9ccfdcdf87a068f7573ee3c73e6963df992477ce82deb007e1b174b41ee3a1",
+      "body_utf8": "flowchart BT\n  subgraph S1\n   sub1 -->sub2\n  end\n  subgraph S2\n   sub4\n  end\n  S1 --> S2\n  sub1 --> sub4\n",
+      "body_sha256": "3d9b21236da5a7206b2de34fb629a26a79a7848065a67cdb87388b8a18b0719d",
+      "frontmatter": {
+        "description": "plain_nonempty",
+        "root_html_labels": true,
+        "nested_flowchart_html_labels": true,
+        "security_level": "loose",
+        "layout": null,
+        "unsupported_frontmatter_keys": []
+      },
+      "source_direction": "BT",
+      "topology": "cluster_to_cluster_plus_child_crossing",
+      "model": {
+        "base_model": {
+          "direction": "BT",
+          "nodes": [
+            [
+              "sub1",
+              {
+                "id": "sub1",
+                "label": "sub1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub2",
+              {
+                "id": "sub2",
+                "label": "sub2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "sub4",
+              {
+                "id": "sub4",
+                "label": "sub4",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "sub1",
+              "target": "sub2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "sub1",
+              "target": "sub4",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "S1",
+              "label": "S1",
+              "direction": "",
+              "nodeIds": [
+                "sub1",
+                "sub2"
+              ],
+              "children": []
+            },
+            {
+              "id": "S2",
+              "label": "S2",
+              "direction": "",
+              "nodeIds": [
+                "sub4"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "S1"
+            },
+            "target": {
+              "kind": "group",
+              "id": "S2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 3,
+          "groups": 2,
+          "ordinary_vertex_edges": 2,
+          "group_endpoint_edges": 1,
+          "source_edges": 3
+        }
+      },
+      "canonical_model_sha256": "c78dd6aead03a757ec041033eaaac9cee774f300b0b3e1868234cd36462e0175",
+      "selection_constraints": {
+        "group_declarations_precede_all_group_endpoint_references": true,
+        "all_nodes_rectangle": true,
+        "all_links_solid_unlabelled_one_way": true,
+        "no_collapsed_view": true,
+        "no_compound_ampersand_endpoint": true,
+        "no_styles_classes_link_style_or_click": true
+      }
+    }
+  ],
+  "formal_credit_before_owned_execution": 0
+}

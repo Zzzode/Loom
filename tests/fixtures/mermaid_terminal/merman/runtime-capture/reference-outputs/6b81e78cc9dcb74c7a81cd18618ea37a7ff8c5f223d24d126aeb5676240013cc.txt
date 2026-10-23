@@ -1,0 +1,8 @@
+xDomain: band categories=[bytes=4="ABCD"]
+values: # series=0 type=bar title=none samples=[] orphanPointLabels=[]
+10 +
+ 8 +
+ 6 +
+ 4 +
+ 2 +
+ 0 +

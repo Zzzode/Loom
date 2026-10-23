@@ -1,0 +1,9 @@
++--------+     +--------+     +--------+     +--------+     +--------+     +--------+    +--------+      +--------+
+| classB |     | classC |     | classE |     | classG |     | classI |     | classK |    | classN |      | classO |
++--------+     +--------+     +--------+     +--------+     +--------+     +--------+    +--------+      +--------+
+     ^              |              |              |              |              :             ^               :
+Inheritance    Composition    Aggregation    Association    Link(Solid)    Dependency    Realization    Link(Dashed)
+     |              *              o              v              |              v             :               :
++--------+     +--------+     +--------+     +--------+     +--------+     +--------+    +--------+      +--------+
+| classA |     | classD |     | classF |     | classH |     | classJ |     | classL |    | classM |      | classP |
++--------+     +--------+     +--------+     +--------+     +--------+     +--------+    +--------+      +--------+

@@ -1,0 +1,36 @@
+family: ti
+meline
+model.accD
+escr: null
+model.accT
+itle: null
+model.dire
+ction: "LR
+"
+model.sect
+ions: []
+model.task
+s[0].event
+s[0]: "Eve
+nt with a 
+long autho
+red value"
+model.task
+s[0].id: 0
+model.task
+s[0].score
+: 0
+model.task
+s[0].secti
+on: ""
+model.task
+s[0].task:
+ "2024 "
+model.task
+s[0].type:
+ ""
+model.titl
+e: "Basic"
+model.type
+: "timelin
+e"

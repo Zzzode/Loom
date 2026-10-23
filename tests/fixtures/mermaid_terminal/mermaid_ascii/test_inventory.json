@@ -1,0 +1,5160 @@
+{
+  "schema_version": 1,
+  "static_test_example_fuzz_functions": 162,
+  "actual_release_suite": {
+    "pass_events": 862,
+    "failed": 0,
+    "top_level": 162,
+    "leaf_tests": 812,
+    "parents": 50,
+    "test_packages_passed": 7,
+    "root_package_no_tests": true,
+    "runner": "Go1.23.4",
+    "log": "build/mermaid-renderer-research-20261019/mermaid-ascii-1.6.1-upstream-tests.jsonl"
+  },
+  "tests": [
+    {
+      "id": "mermaid_ascii/cmd/root_test.go:9",
+      "path": "cmd/root_test.go",
+      "line": 9,
+      "line_end": 25,
+      "name": "TestResolveMaxWidth",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/cmd/root_test.go",
+      "input_literals": [],
+      "assertion_count": 6,
+      "calls": [
+        "err.Error",
+        "resolveMaxWidth",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/diagram/config_test.go:5",
+      "path": "pkg/diagram/config_test.go",
+      "line": 5,
+      "line_end": 15,
+      "name": "TestConfigMaxWidthValidation",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/diagram/config_test.go",
+      "input_literals": [],
+      "assertion_count": 2,
+      "calls": [
+        "DefaultConfig",
+        "config.Validate",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/diagram/frontmatter_test.go:6",
+      "path": "pkg/diagram/frontmatter_test.go",
+      "line": 6,
+      "line_end": 43,
+      "name": "TestStripFrontmatter",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/diagram/frontmatter_test.go",
+      "input_literals": [
+        {
+          "input": "graph TD\nA-->B",
+          "line": 13,
+          "line_end": 13,
+          "expression": "\"graph TD\\nA-->B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph TD\nA-->B",
+          "line": 13,
+          "line_end": 13,
+          "expression": "\"graph TD\\nA-->B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "---\nconfig:\n  themeCSS: |\n    rect { fill: red; }\n---\nerDiagram",
+          "line": 27,
+          "line_end": 27,
+          "expression": "\"---\\nconfig:\\n  themeCSS: |\\n    rect { fill: red; }\\n---\\nerDiagram\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "erDiagram",
+          "line": 27,
+          "line_end": 27,
+          "expression": "\"erDiagram\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "StripFrontmatter",
+        "t.Errorf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/diagram/testutil/testutil_test.go:9",
+      "path": "pkg/diagram/testutil/testutil_test.go",
+      "line": 9,
+      "line_end": 26,
+      "name": "TestReadTestCaseDecodesExpectedSpaceMarkers",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/diagram/testutil/testutil_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA[␠input] --> B\n---\nleft␠right␠\n",
+          "line": 11,
+          "line_end": 11,
+          "expression": "\"graph LR\\nA[␠input] --> B\\n---\\nleft␠right␠\\n\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph LR\nA[␠input] --> B\n",
+          "line": 20,
+          "line_end": 20,
+          "expression": "\"graph LR\\nA[␠input] --> B\\n\"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "ReadTestCase",
+        "filepath.Join",
+        "os.WriteFile",
+        "t.Fatalf",
+        "t.TempDir"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/conn_smoke_test.go:10",
+      "path": "pkg/er/conn_smoke_test.go",
+      "line": 10,
+      "line_end": 21,
+      "name": "TestRenderRelationship",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/conn_smoke_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n CUSTOMER ||--o{ ORDER : places\n CUSTOMER {\n  int id PK\n }\n ORDER {\n  int id PK\n }",
+          "line": 11,
+          "line_end": 11,
+          "expression": "\"erDiagram\\n CUSTOMER ||--o{ ORDER : places\\n CUSTOMER {\\n  int id PK\\n }\\n ORDER {\\n  int id PK\\n }\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "Render",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/coverage_test.go:6",
+      "path": "pkg/er/coverage_test.go",
+      "line": 6,
+      "line_end": 22,
+      "name": "TestCardinalityMatrix",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/coverage_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n A ",
+          "line": 11,
+          "line_end": 11,
+          "expression": "\"erDiagram\\n A \"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/coverage_test.go:25",
+      "path": "pkg/er/coverage_test.go",
+      "line": 25,
+      "line_end": 46,
+      "name": "TestIdentifyingVariants",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/coverage_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n A ||--|| B : r",
+          "line": 30,
+          "line_end": 30,
+          "expression": "\"erDiagram\\n A ||--|| B : r\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "erDiagram\n A ||..|| B : r",
+          "line": 31,
+          "line_end": 31,
+          "expression": "\"erDiagram\\n A ||..|| B : r\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "erDiagram\n A ||-.|| B : r",
+          "line": 32,
+          "line_end": 32,
+          "expression": "\"erDiagram\\n A ||-.|| B : r\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "erDiagram\n A ||.-|| B : r",
+          "line": 33,
+          "line_end": 33,
+          "expression": "\"erDiagram\\n A ||.-|| B : r\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "erDiagram\n A only one to one or more B : r",
+          "line": 34,
+          "line_end": 34,
+          "expression": "\"erDiagram\\n A only one to one or more B : r\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "erDiagram\n A many optionally to zero or one B : r",
+          "line": 35,
+          "line_end": 35,
+          "expression": "\"erDiagram\\n A many optionally to zero or one B : r\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/coverage_test.go:49",
+      "path": "pkg/er/coverage_test.go",
+      "line": 49,
+      "line_end": 58,
+      "name": "TestTextAliasCardinality",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/coverage_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n A many to one or more B : r",
+          "line": 50,
+          "line_end": 50,
+          "expression": "\"erDiagram\\n A many to one or more B : r\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/coverage_test.go:61",
+      "path": "pkg/er/coverage_test.go",
+      "line": 61,
+      "line_end": 76,
+      "name": "TestParenTypesAndMultiBlock",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/coverage_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n T {\n  decimal(10, 2) amount\n }\n T {\n  varchar(255) name PK \"the name\"\n }",
+          "line": 62,
+          "line_end": 62,
+          "expression": "\"erDiagram\\n T {\\n  decimal(10, 2) amount\\n }\\n T {\\n  varchar(255) name PK \\\"the name\\\"\\n }\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/coverage_test.go:79",
+      "path": "pkg/er/coverage_test.go",
+      "line": 79,
+      "line_end": 87,
+      "name": "TestStyleLinesSkipped",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/coverage_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n A ||--|| B : r\n classDef foo fill:#f00\n class A foo\n style B color:#0f0\n accTitle: My ER\n",
+          "line": 80,
+          "line_end": 80,
+          "expression": "\"erDiagram\\n A ||--|| B : r\\n classDef foo fill:#f00\\n class A foo\\n style B color:#0f0\\n accTitle: My ER\\n\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/coverage_test.go:90",
+      "path": "pkg/er/coverage_test.go",
+      "line": 90,
+      "line_end": 101,
+      "name": "TestRecursiveAndDuplicate",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/coverage_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n NODE ||--o{ NODE : parent\n NODE ||--|| NODE : self",
+          "line": 91,
+          "line_end": 91,
+          "expression": "\"erDiagram\\n NODE ||--o{ NODE : parent\\n NODE ||--|| NODE : self\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/coverage_test.go:104",
+      "path": "pkg/er/coverage_test.go",
+      "line": 104,
+      "line_end": 113,
+      "name": "TestEitherSideCardinality",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/coverage_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n grants o{--|| tx : has",
+          "line": 105,
+          "line_end": 105,
+          "expression": "\"erDiagram\\n grants o{--|| tx : has\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/coverage_test.go:116",
+      "path": "pkg/er/coverage_test.go",
+      "line": 116,
+      "line_end": 132,
+      "name": "TestEntityAliases",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/coverage_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n Signature draft {\n  int id\n }",
+          "line": 118,
+          "line_end": 118,
+          "expression": "\"erDiagram\\n Signature draft {\\n  int id\\n }\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "erDiagram\n",
+          "line": 119,
+          "line_end": 119,
+          "expression": "\"erDiagram\\n\"",
+          "in_concatenation": true
+        },
+        {
+          "input": "erDiagram\n",
+          "line": 120,
+          "line_end": 120,
+          "expression": "\"erDiagram\\n\"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/coverage_test.go:136",
+      "path": "pkg/er/coverage_test.go",
+      "line": 136,
+      "line_end": 145,
+      "name": "TestDirectionAndLenientComments",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/coverage_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n direction LR\n T {\n  // a note line\n  string s \"unclosed comment\n  int n\n }",
+          "line": 137,
+          "line_end": 137,
+          "expression": "\"erDiagram\\n direction LR\\n T {\\n  // a note line\\n  string s \\\"unclosed comment\\n  int n\\n }\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/golden_test.go:64",
+      "path": "pkg/er/golden_test.go",
+      "line": 64,
+      "line_end": 66,
+      "name": "TestErDiagramRendering",
+      "category": "terminal-golden-driver",
+      "assertion_source_path": "upstream/pkg/er/golden_test.go",
+      "input_literals": [],
+      "assertion_count": 0,
+      "calls": [
+        "runErGoldenDir"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/golden_test.go:69",
+      "path": "pkg/er/golden_test.go",
+      "line": 69,
+      "line_end": 71,
+      "name": "TestErDiagramRendering_ASCII",
+      "category": "terminal-golden-driver",
+      "assertion_source_path": "upstream/pkg/er/golden_test.go",
+      "input_literals": [],
+      "assertion_count": 0,
+      "calls": [
+        "runErGoldenDir"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/golden_test.go:75",
+      "path": "pkg/er/golden_test.go",
+      "line": 75,
+      "line_end": 99,
+      "name": "TestErDiagramRendering_ASCIISmokeTest",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/golden_test.go",
+      "input_literals": [],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "Render",
+        "erTestDataPath",
+        "file.IsDir",
+        "file.Name",
+        "filepath.Join",
+        "os.ReadDir",
+        "strings.HasSuffix",
+        "strings.TrimSpace",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run",
+        "testutil.ReadSequenceTestCase"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/layout_smoke_test.go:9",
+      "path": "pkg/er/layout_smoke_test.go",
+      "line": 9,
+      "line_end": 31,
+      "name": "TestLayoutPlacement",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/layout_smoke_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n CUSTOMER ||--o{ ORDER : places\n CUSTOMER {\n  int id PK\n }\n ORDER {\n  int id PK\n }\n LINE_ITEM {\n  int qty\n }",
+          "line": 10,
+          "line_end": 10,
+          "expression": "\"erDiagram\\n CUSTOMER ||--o{ ORDER : places\\n CUSTOMER {\\n  int id PK\\n }\\n ORDER {\\n  int id PK\\n }\\n LINE_ITEM {\\n  int qty\\n }\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "len",
+        "placeEntities",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/parser_test.go:8",
+      "path": "pkg/er/parser_test.go",
+      "line": 8,
+      "line_end": 24,
+      "name": "TestIsErDiagram",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/parser_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n A ||--|| B : x",
+          "line": 13,
+          "line_end": 13,
+          "expression": "\"erDiagram\\n A ||--|| B : x\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "ERDIAGRAM\n A ||--|| B : x",
+          "line": 14,
+          "line_end": 14,
+          "expression": "\"ERDIAGRAM\\n A ||--|| B : x\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph TD\n A-->B",
+          "line": 16,
+          "line_end": 16,
+          "expression": "\"graph TD\\n A-->B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A->>B: x",
+          "line": 17,
+          "line_end": 17,
+          "expression": "\"sequenceDiagram\\n A->>B: x\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "IsErDiagram",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/parser_test.go:26",
+      "path": "pkg/er/parser_test.go",
+      "line": 26,
+      "line_end": 58,
+      "name": "TestParseRelationshipCardinalities",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/parser_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n A ",
+          "line": 41,
+          "line_end": 41,
+          "expression": "\"erDiagram\\n A \"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/parser_test.go:60",
+      "path": "pkg/er/parser_test.go",
+      "line": 60,
+      "line_end": 84,
+      "name": "TestParseEntityAttributes",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/parser_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n USER {\n  int id PK\n  string email UK \"unique\"\n  bigint org_id FK\n  text bio\n }",
+          "line": 61,
+          "line_end": 61,
+          "expression": "\"erDiagram\\n USER {\\n  int id PK\\n  string email UK \\\"unique\\\"\\n  bigint org_id FK\\n  text bio\\n }\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/parser_test.go:86",
+      "path": "pkg/er/parser_test.go",
+      "line": 86,
+      "line_end": 98,
+      "name": "TestParseErErrors",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/parser_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n A {\n  int id",
+          "line": 89,
+          "line_end": 89,
+          "expression": "\"erDiagram\\n A {\\n  int id\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "erDiagram\n A {\n  oneword\n }",
+          "line": 90,
+          "line_end": 90,
+          "expression": "\"erDiagram\\n A {\\n  oneword\\n }\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "Parse",
+        "t.Errorf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/parser_test.go:102",
+      "path": "pkg/er/parser_test.go",
+      "line": 102,
+      "line_end": 110,
+      "name": "TestEmptyErDiagram",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/parser_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n",
+          "line": 103,
+          "line_end": 103,
+          "expression": "\"erDiagram\\n\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "Render",
+        "strings.TrimSpace",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/render_smoke_test.go:10",
+      "path": "pkg/er/render_smoke_test.go",
+      "line": 10,
+      "line_end": 33,
+      "name": "TestRenderEntity",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/render_smoke_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n USER {\n  int id PK\n  string email UK \"unique\"\n  text bio\n }",
+          "line": 11,
+          "line_end": 11,
+          "expression": "\"erDiagram\\n USER {\\n  int id PK\\n  string email UK \\\"unique\\\"\\n  text bio\\n }\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "erDiagram\n T {\n  int a\n  int b\n }",
+          "line": 28,
+          "line_end": 28,
+          "expression": "\"erDiagram\\n T {\\n  int a\\n  int b\\n }\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "renderEntity",
+        "strings.Contains",
+        "strings.Count",
+        "strings.HasPrefix",
+        "strings.HasSuffix",
+        "strings.Join",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:11",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 11,
+      "line_end": 35,
+      "name": "TestUnquotedAliasForms",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n p[Person] {\n  string firstName\n }\n a[\"Customer Account\"] {\n  string email\n }\n p ||--o| a : has",
+          "line": 12,
+          "line_end": 12,
+          "expression": "\"erDiagram\\n p[Person] {\\n  string firstName\\n }\\n a[\\\"Customer Account\\\"] {\\n  string email\\n }\\n p ||--o| a : has\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "erDiagram\n p[Person]\n a[\"Customer Account\"]",
+          "line": 28,
+          "line_end": 28,
+          "expression": "\"erDiagram\\n p[Person]\\n a[\\\"Customer Account\\\"]\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 6,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:39",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 39,
+      "line_end": 50,
+      "name": "TestQuotedEntityNameInRelationship",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n \"ORDER ITEM\" {\n  int id\n }\n CUSTOMER ||--o{ \"ORDER ITEM\" : has\n \"ORDER ITEM\" ||--|| SKU : tracks",
+          "line": 40,
+          "line_end": 40,
+          "expression": "\"erDiagram\\n \\\"ORDER ITEM\\\" {\\n  int id\\n }\\n CUSTOMER ||--o{ \\\"ORDER ITEM\\\" : has\\n \\\"ORDER ITEM\\\" ||--|| SKU : tracks\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:54",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 54,
+      "line_end": 75,
+      "name": "TestWideRuneAlignment",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n 顧客 ||--o{ ORDER : 注文\n ORDER ||--|| LINE : has",
+          "line": 55,
+          "line_end": 55,
+          "expression": "\"erDiagram\\n 顧客 ||--o{ ORDER : 注文\\n ORDER ||--|| LINE : has\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "containsInt",
+        "runeColumns",
+        "strings.ContainsRune",
+        "strings.Join",
+        "strings.Split",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:79",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 79,
+      "line_end": 108,
+      "name": "TestCJKFeatureMatrix",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n 顧客[\"顧客エイリアス\"] {\n  string 名前 PK \"氏名\"\n  int 番号 \"識別子\"\n }\n 注文[\"注文エイリアス\"] {\n  string 状態\n }\n 顧客 ||--o{ 注文 : 発注\n 顧客 }o..o| 顧客 : 紹介\n 注文 ||--|| 注文 : 改訂",
+          "line": 80,
+          "line_end": 90,
+          "expression": "`erDiagram\n 顧客[\"顧客エイリアス\"] {\n  string 名前 PK \"氏名\"\n  int 番号 \"識別子\"\n }\n 注文[\"注文エイリアス\"] {\n  string 状態\n }\n 顧客 ||--o{ 注文 : 発注\n 顧客 }o..o| 顧客 : 紹介\n 注文 ||--|| 注文 : 改訂`",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:112",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 112,
+      "line_end": 126,
+      "name": "TestSelfLoopTokensIntact",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n ",
+          "line": 114,
+          "line_end": 114,
+          "expression": "\"erDiagram\\n \"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:130",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 130,
+      "line_end": 140,
+      "name": "TestManyRelationshipsDistinctAttach",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n A ||--o{ B : first\n A ||--o{ B : second\n B ||--|| A : third",
+          "line": 131,
+          "line_end": 131,
+          "expression": "\"erDiagram\\n A ||--o{ B : first\\n A ||--o{ B : second\\n B ||--|| A : third\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "Render",
+        "strings.Count",
+        "strings.Split",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:144",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 144,
+      "line_end": 153,
+      "name": "TestEntityNamedClass",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n class {\n  int id\n }\n class ||--|| B : has",
+          "line": 145,
+          "line_end": 145,
+          "expression": "\"erDiagram\\n class {\\n  int id\\n }\\n class ||--|| B : has\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:156",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 156,
+      "line_end": 161,
+      "name": "TestParseErrorLineNumbers",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n %% one\n %% two\n A ||--|| B : ok\n x : y : z",
+          "line": 157,
+          "line_end": 157,
+          "expression": "\"erDiagram\\n %% one\\n %% two\\n A ||--|| B : ok\\n x : y : z\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "err.Error",
+        "strings.Contains",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:165",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 165,
+      "line_end": 173,
+      "name": "TestAccDescrBlockSkipped",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n accTitle: My title\n accDescr {\n a long\n description\n }\n A ||--|| B : has",
+          "line": 166,
+          "line_end": 166,
+          "expression": "\"erDiagram\\n accTitle: My title\\n accDescr {\\n a long\\n description\\n }\\n A ||--|| B : has\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:177",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 177,
+      "line_end": 192,
+      "name": "TestLongLabelSurvivesManyLanes",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n",
+          "line": 179,
+          "line_end": 179,
+          "expression": "\"erDiagram\\n\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "Render",
+        "b.String",
+        "b.WriteString",
+        "entityName",
+        "strings.Contains",
+        "strings.Repeat",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:199",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 199,
+      "line_end": 221,
+      "name": "TestClassShorthandStripped",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n A:::x\n B:::y,z {\n  int id\n }\n C[\"Custom C\"]:::w\n A:::x ||--o{ B:::y : links",
+          "line": 200,
+          "line_end": 200,
+          "expression": "\"erDiagram\\n A:::x\\n B:::y,z {\\n  int id\\n }\\n C[\\\"Custom C\\\"]:::w\\n A:::x ||--o{ B:::y : links\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 6,
+      "calls": [
+        "Parse",
+        "Render",
+        "len",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:225",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 225,
+      "line_end": 230,
+      "name": "TestSubgraphRejected",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n subgraph CUSTOMERS\n  A ||--|| B : has\n end",
+          "line": 226,
+          "line_end": 226,
+          "expression": "\"erDiagram\\n subgraph CUSTOMERS\\n  A ||--|| B : has\\n end\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "err.Error",
+        "strings.Contains",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:235",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 235,
+      "line_end": 253,
+      "name": "TestBacktickAttributesStripped",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n X {\n  type `geo.accuracy`\n  `geo point` `two words` PK\n }",
+          "line": 236,
+          "line_end": 236,
+          "expression": "\"erDiagram\\n X {\\n  type `geo.accuracy`\\n  `geo point` `two words` PK\\n }\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "Render",
+        "len",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:257",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 257,
+      "line_end": 273,
+      "name": "TestTwoSelfLoopsDistinct",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n E ||--o{ E : first\n E }o..o| E : second",
+          "line": 258,
+          "line_end": 258,
+          "expression": "\"erDiagram\\n E ||--o{ E : first\\n E }o..o| E : second\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "strings.Contains",
+        "strings.Count",
+        "strings.Join",
+        "strings.Split",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/er/review_regression_test.go:277",
+      "path": "pkg/er/review_regression_test.go",
+      "line": 277,
+      "line_end": 293,
+      "name": "TestWhitespaceLabelsCollapse",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/er/review_regression_test.go",
+      "input_literals": [
+        {
+          "input": "erDiagram\n A ||--o{ B : \"   \"\n A ||--o{ C : \"     x\"",
+          "line": 278,
+          "line_end": 278,
+          "expression": "\"erDiagram\\n A ||--o{ B : \\\"   \\\"\\n A ||--o{ C : \\\"     x\\\"\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "strings.Contains",
+        "strings.Index",
+        "strings.Split",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/graph_test.go:49",
+      "path": "pkg/graph/graph_test.go",
+      "line": 49,
+      "line_end": 63,
+      "name": "TestASCII",
+      "category": "terminal-golden-driver",
+      "assertion_source_path": "upstream/pkg/graph/graph_test.go",
+      "input_literals": [],
+      "assertion_count": 1,
+      "calls": [
+        "file.IsDir",
+        "file.Name",
+        "filepath.Join",
+        "os.ReadDir",
+        "strings.HasSuffix",
+        "t.Fatalf",
+        "t.Run",
+        "verifyMap"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/graph_test.go:65",
+      "path": "pkg/graph/graph_test.go",
+      "line": 65,
+      "line_end": 79,
+      "name": "TestExtendedChars",
+      "category": "terminal-golden-driver",
+      "assertion_source_path": "upstream/pkg/graph/graph_test.go",
+      "input_literals": [],
+      "assertion_count": 1,
+      "calls": [
+        "file.IsDir",
+        "file.Name",
+        "filepath.Join",
+        "os.ReadDir",
+        "strings.HasSuffix",
+        "t.Fatalf",
+        "t.Run",
+        "verifyMap"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/graph_test.go:84",
+      "path": "pkg/graph/graph_test.go",
+      "line": 84,
+      "line_end": 98,
+      "name": "TestMultibyte",
+      "category": "terminal-golden-driver",
+      "assertion_source_path": "upstream/pkg/graph/graph_test.go",
+      "input_literals": [],
+      "assertion_count": 1,
+      "calls": [
+        "file.IsDir",
+        "file.Name",
+        "filepath.Join",
+        "os.ReadDir",
+        "strings.HasSuffix",
+        "t.Fatalf",
+        "t.Run",
+        "verifyMap"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/graph_test.go:101",
+      "path": "pkg/graph/graph_test.go",
+      "line": 101,
+      "line_end": 147,
+      "name": "TestGraphUseAsciiConfig",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA --> B",
+          "line": 102,
+          "line_end": 103,
+          "expression": "`graph LR\nA --> B`",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "renderGraph",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/label_test.go:5",
+      "path": "pkg/graph/label_test.go",
+      "line": 5,
+      "line_end": 61,
+      "name": "TestNewGraphLabel",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/graph/label_test.go",
+      "input_literals": [],
+      "assertion_count": 4,
+      "calls": [
+        "label.height",
+        "len",
+        "newGraphLabel",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:5",
+      "path": "pkg/graph/parse_test.go",
+      "line": 5,
+      "line_end": 20,
+      "name": "TestSplitGraphLines",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\\nA[\"line1\\nline2\"] --> B\\nC --> D",
+          "line": 6,
+          "line_end": 6,
+          "expression": "\"graph LR\\\\nA[\\\"line1\\\\nline2\\\"] --> B\\\\nC --> D\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph LR",
+          "line": 9,
+          "line_end": 9,
+          "expression": "\"graph LR\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "len",
+        "splitGraphLines",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:22",
+      "path": "pkg/graph/parse_test.go",
+      "line": 22,
+      "line_end": 37,
+      "name": "TestSplitGraphLinesKeepsLiteralNewlineInsideNodeLabel",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA[\"line1\nline2\"] --> B\nC --> D",
+          "line": 23,
+          "line_end": 23,
+          "expression": "\"graph LR\\nA[\\\"line1\\nline2\\\"] --> B\\nC --> D\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph LR",
+          "line": 26,
+          "line_end": 26,
+          "expression": "\"graph LR\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "len",
+        "splitGraphLines",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:39",
+      "path": "pkg/graph/parse_test.go",
+      "line": 39,
+      "line_end": 54,
+      "name": "TestParseNodeWithExplicitLabel",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [],
+      "assertion_count": 4,
+      "calls": [
+        "len",
+        "parseNode",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:56",
+      "path": "pkg/graph/parse_test.go",
+      "line": 56,
+      "line_end": 68,
+      "name": "TestParseNodePreservesLiteralBoundaryQuote",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [],
+      "assertion_count": 3,
+      "calls": [
+        "len",
+        "parseNode",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:70",
+      "path": "pkg/graph/parse_test.go",
+      "line": 70,
+      "line_end": 83,
+      "name": "TestParseNodeFallsBackForExtraClosingDelimiter",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [],
+      "assertion_count": 3,
+      "calls": [
+        "len",
+        "parseNode",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:85",
+      "path": "pkg/graph/parse_test.go",
+      "line": 85,
+      "line_end": 98,
+      "name": "TestParseNodeFallsBackForUnmatchedQuoteBeforeClosingDelimiter",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [],
+      "assertion_count": 3,
+      "calls": [
+        "len",
+        "parseNode",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:100",
+      "path": "pkg/graph/parse_test.go",
+      "line": 100,
+      "line_end": 129,
+      "name": "TestParseNodeShapes",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [],
+      "assertion_count": 3,
+      "calls": [
+        "len",
+        "parseNode",
+        "t.Fatal",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:131",
+      "path": "pkg/graph/parse_test.go",
+      "line": 131,
+      "line_end": 158,
+      "name": "TestMermaidFileToMapKeepsShapedNodeLabelsAcrossBareReferences",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\\nA{Decision}\\nB(Round)\\nC{{Hexagon}}\\nD[(Database)]\\nE>Asymmetric]\\nA --> B\\nB --> C\\nC --> D\\nD --> E",
+          "line": 132,
+          "line_end": 132,
+          "expression": "\"graph LR\\\\nA{Decision}\\\\nB(Round)\\\\nC{{Hexagon}}\\\\nD[(Database)]\\\\nE>Asymmetric]\\\\nA --> B\\\\nB --> C\\\\nC --> D\\\\nD --> E\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:160",
+      "path": "pkg/graph/parse_test.go",
+      "line": 160,
+      "line_end": 173,
+      "name": "TestMermaidFileToMapPreservesEscapedLabelNewlines",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\\nA[\"line1\\nline2\"] --> B",
+          "line": 161,
+          "line_end": 161,
+          "expression": "\"graph LR\\\\nA[\\\"line1\\\\nline2\\\"] --> B\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:175",
+      "path": "pkg/graph/parse_test.go",
+      "line": 175,
+      "line_end": 188,
+      "name": "TestMermaidFileToMapPreservesLiteralLabelNewlines",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA[\"line1\nline2\"] --> B",
+          "line": 176,
+          "line_end": 176,
+          "expression": "\"graph LR\\nA[\\\"line1\\nline2\\\"] --> B\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:190",
+      "path": "pkg/graph/parse_test.go",
+      "line": 190,
+      "line_end": 231,
+      "name": "TestParseSubgraphHeader",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [],
+      "assertion_count": 3,
+      "calls": [
+        "len",
+        "parseSubgraphHeader",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:233",
+      "path": "pkg/graph/parse_test.go",
+      "line": 233,
+      "line_end": 250,
+      "name": "TestMermaidFileToMapParsesSubgraphIDAndTitle",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nsubgraph frontend [Frontend Services]\nA --> B\nend",
+          "line": 234,
+          "line_end": 234,
+          "expression": "\"graph LR\\nsubgraph frontend [Frontend Services]\\nA --> B\\nend\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:252",
+      "path": "pkg/graph/parse_test.go",
+      "line": 252,
+      "line_end": 265,
+      "name": "TestMermaidFileToMapKeepsExplicitNodeLabelAcrossBareReferences",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph TD\nA[\"Foo\"] --> B[\"Bar\"]\nB --> C[\"Baz\"]",
+          "line": 253,
+          "line_end": 253,
+          "expression": "\"graph TD\\nA[\\\"Foo\\\"] --> B[\\\"Bar\\\"]\\nB --> C[\\\"Baz\\\"]\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:267",
+      "path": "pkg/graph/parse_test.go",
+      "line": 267,
+      "line_end": 280,
+      "name": "TestMermaidFileToMapUsesLatestExplicitLabel",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph TD\nA[\"Old\"] --> B\nA[\"New\"] --> C",
+          "line": 268,
+          "line_end": 268,
+          "expression": "\"graph TD\\nA[\\\"Old\\\"] --> B\\nA[\\\"New\\\"] --> C\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:283",
+      "path": "pkg/graph/parse_test.go",
+      "line": 283,
+      "line_end": 296,
+      "name": "TestMermaidFileToMapParsesNonStandardEdgeOperators",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA ",
+          "line": 286,
+          "line_end": 286,
+          "expression": "\"graph LR\\nA \"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "properties.data.Get",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:298",
+      "path": "pkg/graph/parse_test.go",
+      "line": 298,
+      "line_end": 311,
+      "name": "TestMermaidFileToMapParsesChainedNonStandardEdges",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA -.-> B\nB ==> C\nC --- D\nD --o E\nE --x F",
+          "line": 299,
+          "line_end": 299,
+          "expression": "\"graph LR\\nA -.-> B\\nB ==> C\\nC --- D\\nD --o E\\nE --x F\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "properties.data.Get",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:313",
+      "path": "pkg/graph/parse_test.go",
+      "line": 313,
+      "line_end": 327,
+      "name": "TestParsePreservesQuotedLabelMarkersAndUnquotedClassShorthand",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA[\"literal %% and ::: text\"]:::primary --> B",
+          "line": 314,
+          "line_end": 315,
+          "expression": "`graph LR\nA[\"literal %% and ::: text\"]:::primary --> B`",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:329",
+      "path": "pkg/graph/parse_test.go",
+      "line": 329,
+      "line_end": 341,
+      "name": "TestParseNodeDoesNotTreatQuotedClassMarkerAsShorthand",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [],
+      "assertion_count": 3,
+      "calls": [
+        "len",
+        "parseNode",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:343",
+      "path": "pkg/graph/parse_test.go",
+      "line": 343,
+      "line_end": 355,
+      "name": "TestParseRejectsMalformedClassDefWithoutPanicking",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\\n",
+          "line": 350,
+          "line_end": 350,
+          "expression": "\"graph LR\\\\n\"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "Parse",
+        "t.Fatal",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/parse_test.go:360",
+      "path": "pkg/graph/parse_test.go",
+      "line": 360,
+      "line_end": 407,
+      "name": "TestGraphTypeDetection",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/graph/parse_test.go",
+      "input_literals": [
+        {
+          "input": "graph TD\nA --> B",
+          "line": 367,
+          "line_end": 367,
+          "expression": "\"graph TD\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "flowchart LR",
+          "line": 368,
+          "line_end": 368,
+          "expression": "\"flowchart LR\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "flowchart LR\nA --> B",
+          "line": 368,
+          "line_end": 368,
+          "expression": "\"flowchart LR\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "    flowchart LR\n    A --> B",
+          "line": 369,
+          "line_end": 369,
+          "expression": "\"    flowchart LR\\n    A --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph LR    \nA --> B",
+          "line": 370,
+          "line_end": 370,
+          "expression": "\"graph LR    \\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "        graph TD\n        A --> B",
+          "line": 371,
+          "line_end": 371,
+          "expression": "\"        graph TD\\n        A --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "flowchart TB\nA --> B",
+          "line": 374,
+          "line_end": 374,
+          "expression": "\"flowchart TB\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph RL\nA --> B",
+          "line": 375,
+          "line_end": 375,
+          "expression": "\"graph RL\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "flowchart BT\nA --> B",
+          "line": 376,
+          "line_end": 376,
+          "expression": "\"flowchart BT\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph TD;\nA --> B",
+          "line": 378,
+          "line_end": 378,
+          "expression": "\"graph TD;\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "flowchart LR semicolon",
+          "line": 379,
+          "line_end": 379,
+          "expression": "\"flowchart LR semicolon\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "flowchart LR;\nA --> B",
+          "line": 379,
+          "line_end": 379,
+          "expression": "\"flowchart LR;\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph TD\r\nA --> B",
+          "line": 380,
+          "line_end": 380,
+          "expression": "\"graph TD\\r\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph\tLR\nA --> B",
+          "line": 381,
+          "line_end": 381,
+          "expression": "\"graph\\tLR\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph td\nA --> B",
+          "line": 382,
+          "line_end": 382,
+          "expression": "\"graph td\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "GRAPH TD\nA --> B",
+          "line": 383,
+          "line_end": 383,
+          "expression": "\"GRAPH TD\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph TD foo\nA --> B",
+          "line": 384,
+          "line_end": 384,
+          "expression": "\"graph TD foo\\nA --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x",
+          "line": 385,
+          "line_end": 385,
+          "expression": "\"sequenceDiagram\\nA->>B: x\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:12",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 12,
+      "line_end": 29,
+      "name": "TestRenderGraphHandlesLongChainWithoutPanic",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph TD\n",
+          "line": 16,
+          "line_end": 16,
+          "expression": "\"graph TD\\n\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "b.String",
+        "b.WriteString",
+        "diagram.NewTestConfig",
+        "fmt.Fprintf",
+        "renderGraph",
+        "strings.Contains",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:31",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 31,
+      "line_end": 39,
+      "name": "TestRenderGraphKeepsDisplayWidthForWideNodeLabels",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA[\"中A\"] --> B",
+          "line": 33,
+          "line_end": 33,
+          "expression": "\"graph LR\\nA[\\\"中A\\\"] --> B\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "assertUniformDisplayWidth",
+        "diagram.NewTestConfig",
+        "renderGraph",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:41",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 41,
+      "line_end": 55,
+      "name": "TestRenderGraphHandlesUnicodeClusterNodeLabels",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA[\"",
+          "line": 45,
+          "line_end": 45,
+          "expression": "\"graph LR\\nA[\\\"\"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "assertUniformDisplayWidth",
+        "diagram.NewTestConfig",
+        "renderGraph",
+        "strings.Contains",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:57",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 57,
+      "line_end": 65,
+      "name": "TestRenderGraphKeepsDisplayWidthForWideSubgraphTitles",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nsubgraph sg [数据库]\nA --> B\nend",
+          "line": 59,
+          "line_end": 59,
+          "expression": "\"graph LR\\nsubgraph sg [数据库]\\nA --> B\\nend\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "assertUniformDisplayWidth",
+        "diagram.NewTestConfig",
+        "renderGraph",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:67",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 67,
+      "line_end": 80,
+      "name": "TestRenderGraphKeepsExplicitTargetLabelAfterBareReference",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph TD\nA[\"Foo\"] --> B[\"Bar\"]\nB --> C[\"Baz\"]",
+          "line": 69,
+          "line_end": 69,
+          "expression": "\"graph TD\\nA[\\\"Foo\\\"] --> B[\\\"Bar\\\"]\\nB --> C[\\\"Baz\\\"]\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "diagram.NewTestConfig",
+        "renderGraph",
+        "strings.Contains",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:82",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 82,
+      "line_end": 95,
+      "name": "TestRenderGraphKeepsStandaloneSubgraphLabelWhenReferencedLater",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph TD\nsubgraph one\n    A[\"VcpuManager\"]\nend\nA --> B",
+          "line": 84,
+          "line_end": 84,
+          "expression": "\"graph TD\\nsubgraph one\\n    A[\\\"VcpuManager\\\"]\\nend\\nA --> B\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "diagram.NewTestConfig",
+        "renderGraph",
+        "strings.Contains",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:97",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 97,
+      "line_end": 110,
+      "name": "TestRenderGraphSupportsLiteralNewlineInNodeLabel",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA[\"line1\nline2\"] --> B",
+          "line": 99,
+          "line_end": 99,
+          "expression": "\"graph LR\\nA[\\\"line1\\nline2\\\"] --> B\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "diagram.NewTestConfig",
+        "renderGraph",
+        "strings.Contains",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:112",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 112,
+      "line_end": 139,
+      "name": "TestRenderGraphSeparatesDuplicateEdgeLabels",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA -->|miss| B\nA -->|hit| B",
+          "line": 114,
+          "line_end": 114,
+          "expression": "\"graph LR\\nA -->|miss| B\\nA -->|hit| B\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "diagram.NewTestConfig",
+        "renderGraph",
+        "strings.Contains",
+        "strings.Split",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:141",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 141,
+      "line_end": 168,
+      "name": "TestRenderGraphSeparatesBidirectionalEdgeLabelsLR",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA -->|workload exits| B\nB -->|run| A",
+          "line": 143,
+          "line_end": 143,
+          "expression": "\"graph LR\\nA -->|workload exits| B\\nB -->|run| A\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "diagram.NewTestConfig",
+        "renderGraph",
+        "strings.Contains",
+        "strings.Split",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:170",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 170,
+      "line_end": 183,
+      "name": "TestRenderGraphSeparatesBidirectionalEdgeLabelsTD",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "graph TD\nA -->|forward| B\nB -->|back| A",
+          "line": 172,
+          "line_end": 172,
+          "expression": "\"graph TD\\nA -->|forward| B\\nB -->|back| A\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "diagram.NewTestConfig",
+        "renderGraph",
+        "strings.Contains",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/graph/render_graph_test.go:185",
+      "path": "pkg/graph/render_graph_test.go",
+      "line": 185,
+      "line_end": 264,
+      "name": "TestRenderGraphAlignsFanoutLabels",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/graph/render_graph_test.go",
+      "input_literals": [
+        {
+          "input": "flowchart TB\n",
+          "line": 204,
+          "line_end": 204,
+          "expression": "\"flowchart TB\\n\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 6,
+      "calls": [
+        "assertUniformDisplayWidth",
+        "diagram.NewTestConfig",
+        "fmt.Fprintf",
+        "fmt.Sprintf",
+        "len",
+        "renderGraph",
+        "runewidth.StringWidth",
+        "source.String",
+        "source.WriteString",
+        "string",
+        "strings.Count",
+        "strings.Index",
+        "strings.Split",
+        "t.Fatal",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/frontmatter_test.go:12",
+      "path": "pkg/render/frontmatter_test.go",
+      "line": 12,
+      "line_end": 59,
+      "name": "TestRenderWithFrontmatter",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/render/frontmatter_test.go",
+      "input_literals": [
+        {
+          "input": "---\ntitle: Login flow\n---\nsequenceDiagram\nAlice->>Bob: Hi",
+          "line": 21,
+          "line_end": 21,
+          "expression": "\"---\\ntitle: Login flow\\n---\\nsequenceDiagram\\nAlice->>Bob: Hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "---\nconfig:\n  themeCSS: |\n    rect { fill: red; }\n---\nerDiagram\n  CUSTOMER ||--o{ ORDER : places",
+          "line": 27,
+          "line_end": 27,
+          "expression": "\"---\\nconfig:\\n  themeCSS: |\\n    rect { fill: red; }\\n---\\nerDiagram\\n  CUSTOMER ||--o{ ORDER : places\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "---\ntitle: Deps\n---\ngraph LR\nA-->B",
+          "line": 33,
+          "line_end": 33,
+          "expression": "\"---\\ntitle: Deps\\n---\\ngraph LR\\nA-->B\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "DiagramFactory",
+        "RenderDiagram",
+        "diag.Type",
+        "diagram.DefaultConfig",
+        "diagram.StripFrontmatter",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/frontmatter_test.go:63",
+      "path": "pkg/render/frontmatter_test.go",
+      "line": 63,
+      "line_end": 72,
+      "name": "TestRenderTitleAboveDiagram",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/render/frontmatter_test.go",
+      "input_literals": [
+        {
+          "input": "---\ntitle: My title\n---\ngraph LR\nA-->B",
+          "line": 64,
+          "line_end": 64,
+          "expression": "\"---\\ntitle: My title\\n---\\ngraph LR\\nA-->B\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "RenderDiagram",
+        "diagram.DefaultConfig",
+        "strings.Split",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/integration_test.go:13",
+      "path": "pkg/render/integration_test.go",
+      "line": 13,
+      "line_end": 94,
+      "name": "TestSequenceDiagramIntegration",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/render/integration_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n    Alice->>Bob: Hello\n    Bob-->>Alice: Hi",
+          "line": 22,
+          "line_end": 24,
+          "expression": "`sequenceDiagram\n    Alice->>Bob: Hello\n    Bob-->>Alice: Hi`",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n    Alice->>Alice: Think",
+          "line": 30,
+          "line_end": 31,
+          "expression": "`sequenceDiagram\n    Alice->>Alice: Think`",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n    Alice->>Bob: Request\n    Bob->>Charlie: Forward\n    Charlie-->>Bob: Response\n    Bob-->>Alice: Done",
+          "line": 37,
+          "line_end": 41,
+          "expression": "`sequenceDiagram\n    Alice->>Bob: Request\n    Bob->>Charlie: Forward\n    Charlie-->>Bob: Response\n    Bob-->>Alice: Done`",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n    participant A as Alice\n    participant B as Bob\n    A->>B: Test",
+          "line": 47,
+          "line_end": 50,
+          "expression": "`sequenceDiagram\n    participant A as Alice\n    participant B as Bob\n    A->>B: Test`",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n    %% This is a comment\n    Alice->>Bob: Hello\n    %% Another comment",
+          "line": 56,
+          "line_end": 59,
+          "expression": "`sequenceDiagram\n    %% This is a comment\n    Alice->>Bob: Hello\n    %% Another comment`",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "RenderDiagram",
+        "diagram.NewTestConfig",
+        "len",
+        "strings.Contains",
+        "t.Error",
+        "t.Errorf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/integration_test.go:97",
+      "path": "pkg/render/integration_test.go",
+      "line": 97,
+      "line_end": 119,
+      "name": "TestSequenceDiagramIntegration_ASCII",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/render/integration_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n    Alice->>Bob: Hello",
+          "line": 98,
+          "line_end": 99,
+          "expression": "`sequenceDiagram\n    Alice->>Bob: Hello`",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "RenderDiagram",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "t.Error",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/integration_test.go:122",
+      "path": "pkg/render/integration_test.go",
+      "line": 122,
+      "line_end": 159,
+      "name": "TestSequenceDiagramIntegration_ErrorHandling",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/render/integration_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n%% Only comments",
+          "line": 140,
+          "line_end": 140,
+          "expression": "\"sequenceDiagram\\n%% Only comments\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "RenderDiagram",
+        "diagram.NewTestConfig",
+        "t.Error",
+        "t.Errorf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/integration_test.go:162",
+      "path": "pkg/render/integration_test.go",
+      "line": 162,
+      "line_end": 209,
+      "name": "TestDiagramFactoryIntegration",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/render/integration_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n    A->>B: Test",
+          "line": 170,
+          "line_end": 171,
+          "expression": "`sequenceDiagram\n    A->>B: Test`",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph LR\n    A-->B",
+          "line": 176,
+          "line_end": 177,
+          "expression": "`graph LR\n    A-->B`",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "DiagramFactory",
+        "diag.Parse",
+        "diag.Render",
+        "diag.Type",
+        "diagram.NewTestConfig",
+        "len",
+        "t.Error",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/integration_test.go:251",
+      "path": "pkg/render/integration_test.go",
+      "line": 251,
+      "line_end": 277,
+      "name": "TestRenderConfig_Defaults",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/render/integration_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n    A->>B: Test",
+          "line": 266,
+          "line_end": 267,
+          "expression": "`sequenceDiagram\n    A->>B: Test`",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "RenderDiagram",
+        "diagram.DefaultConfig",
+        "diagram.NewTestConfig",
+        "len",
+        "t.Error",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/max_width_test.go:13",
+      "path": "pkg/render/max_width_test.go",
+      "line": 13,
+      "line_end": 49,
+      "name": "TestGraphMaxWidthGolden",
+      "category": "terminal-golden-driver",
+      "assertion_source_path": "upstream/pkg/render/max_width_test.go",
+      "input_literals": [],
+      "assertion_count": 5,
+      "calls": [
+        "RenderDiagramWithStatus",
+        "diagram.NewTestConfig",
+        "filepath.Join",
+        "maxDisplayWidth",
+        "strings.ReplaceAll",
+        "t.Fatal",
+        "t.Fatalf",
+        "t.Run",
+        "testutil.ReadTestCase"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/max_width_test.go:51",
+      "path": "pkg/render/max_width_test.go",
+      "line": 51,
+      "line_end": 71,
+      "name": "TestMaxWidthHandlesUnicodeClusterLabels",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/render/max_width_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA[\"",
+          "line": 56,
+          "line_end": 56,
+          "expression": "\"graph LR\\nA[\\\"\"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "RenderDiagramWithStatus",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/max_width_test.go:73",
+      "path": "pkg/render/max_width_test.go",
+      "line": 73,
+      "line_end": 98,
+      "name": "TestMaxWidthPreservesGraphContentAndDoesNotAffectSequence",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/render/max_width_test.go",
+      "input_literals": [
+        {
+          "input": "graph LR\nA[LongLabel] --> B",
+          "line": 76,
+          "line_end": 76,
+          "expression": "\"graph LR\\nA[LongLabel] --> B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nAlice->>Bob: Hello",
+          "line": 91,
+          "line_end": 91,
+          "expression": "\"sequenceDiagram\\nAlice->>Bob: Hello\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "RenderDiagramWithStatus",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/render/sequence_example_test.go:11",
+      "path": "pkg/render/sequence_example_test.go",
+      "line": 11,
+      "line_end": 44,
+      "name": "ExampleParse",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/render/sequence_example_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n    Alice->>Bob: Hello\n    Bob-->>Alice: Hi",
+          "line": 12,
+          "line_end": 14,
+          "expression": "`sequenceDiagram\n    Alice->>Bob: Hello\n    Bob-->>Alice: Hi`",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 0,
+      "calls": [
+        "diagram.NewTestConfig",
+        "fmt.Print",
+        "fmt.Printf",
+        "sequence.Parse",
+        "sequence.Render"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:27",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 27,
+      "line_end": 39,
+      "name": "TestActivationKeywords",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nAlice-->>Bob:Hello Bob, how are you?\nactivate Bob\nBob-->>Alice:Hello Alice, I'm fine and you?\ndeactivate Bob",
+          "line": 28,
+          "line_end": 28,
+          "expression": "\"sequenceDiagram\\nAlice-->>Bob:Hello Bob, how are you?\\nactivate Bob\\nBob-->>Alice:Hello Alice, I'm fine and you?\\ndeactivate Bob\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "activeCounts",
+        "len",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:43",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 43,
+      "line_end": 62,
+      "name": "TestActivationShorthand",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nAlice-->>+Bob:Hello Bob, how are you?\nBob-->>- Alice:Hello Alice, I'm fine and you?",
+          "line": 44,
+          "line_end": 44,
+          "expression": "\"sequenceDiagram\\nAlice-->>+Bob:Hello Bob, how are you?\\nBob-->>- Alice:Hello Alice, I'm fine and you?\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "Parse",
+        "activeCounts",
+        "t.Error",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:65",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 65,
+      "line_end": 78,
+      "name": "TestActivationShorthandAllArrows",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA",
+          "line": 68,
+          "line_end": 68,
+          "expression": "\"sequenceDiagram\\nA\"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "activeCounts",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:81",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 81,
+      "line_end": 92,
+      "name": "TestStackedActivations",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nAlice-->>+Bob:Hello Bob, how are you?\nBob-->>+Carol:Carol, let me introduce Alice?\nBob-->>- Alice:Hello Alice, please meet Carol?\nCarol->>- Bob:Oh Bob, I'm so happy to be here!",
+          "line": 82,
+          "line_end": 82,
+          "expression": "\"sequenceDiagram\\nAlice-->>+Bob:Hello Bob, how are you?\\nBob-->>+Carol:Carol, let me introduce Alice?\\nBob-->>- Alice:Hello Alice, please meet Carol?\\nCarol->>- Bob:Oh Bob, I'm so happy to be here!\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "activeCounts",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:96",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 96,
+      "line_end": 105,
+      "name": "TestStackedActivationsSameParticipant",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nuser->>+Server: Test\nuser->>+Server: Test2\nServer->>-user: T\nServer->>-user: T2",
+          "line": 97,
+          "line_end": 97,
+          "expression": "\"sequenceDiagram\\nuser->>+Server: Test\\nuser->>+Server: Test2\\nServer->>-user: T\\nServer->>-user: T2\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "activeCounts",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:109",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 109,
+      "line_end": 124,
+      "name": "TestActivationErrors",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>-B: x",
+          "line": 111,
+          "line_end": 111,
+          "expression": "\"sequenceDiagram\\nA->>-B: x\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ndeactivate B",
+          "line": 112,
+          "line_end": 112,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ndeactivate B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nuser->>+Server: Test\nuser->>+Server: Test2\nServer->>-user: T\nServer->>-user: T2\nServer->>-user: T3",
+          "line": 113,
+          "line_end": 113,
+          "expression": "\"sequenceDiagram\\nuser->>+Server: Test\\nuser->>+Server: Test2\\nServer->>-user: T\\nServer->>-user: T2\\nServer->>-user: T3\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>+B: x\ndeactivate B\ndeactivate B",
+          "line": 114,
+          "line_end": 114,
+          "expression": "\"sequenceDiagram\\nA->>+B: x\\ndeactivate B\\ndeactivate B\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "err.Error",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:128",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 128,
+      "line_end": 135,
+      "name": "TestActivationMixedNotations",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>+B: x\ndeactivate B",
+          "line": 129,
+          "line_end": 129,
+          "expression": "\"sequenceDiagram\\nA->>+B: x\\ndeactivate B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nactivate B\nA->>-B: x",
+          "line": 132,
+          "line_end": 132,
+          "expression": "\"sequenceDiagram\\nactivate B\\nA->>-B: x\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "t.Error",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:140",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 140,
+      "line_end": 161,
+      "name": "TestActivationRendering",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>+B: go\nB-->>-A: back\nA->>B: after",
+          "line": 141,
+          "line_end": 141,
+          "expression": "\"sequenceDiagram\\nA->>+B: go\\nB-->>-A: back\\nA->>B: after\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "strings.Contains",
+        "strings.Split",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:165",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 165,
+      "line_end": 178,
+      "name": "TestActivationOpenAtEnd",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>+B: x",
+          "line": 166,
+          "line_end": 166,
+          "expression": "\"sequenceDiagram\\nA->>+B: x\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "len",
+        "strings.Contains",
+        "strings.Split",
+        "strings.TrimRight",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:182",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 182,
+      "line_end": 210,
+      "name": "TestActivationAcrossFragment",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>+B: go\nloop retry\nB->>C: sub\nend\nB-->>-A: done",
+          "line": 183,
+          "line_end": 183,
+          "expression": "\"sequenceDiagram\\nA->>+B: go\\nloop retry\\nB->>C: sub\\nend\\nB-->>-A: done\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "strings.Contains",
+        "strings.Split",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:215",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 215,
+      "line_end": 232,
+      "name": "TestDeclareAfterImplicitCreation",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nform ui->>+employees: GET\nbox Facade\nparticipant employees as Employees\nend\nemployees-->>-form ui: 200",
+          "line": 216,
+          "line_end": 216,
+          "expression": "\"sequenceDiagram\\nform ui->>+employees: GET\\nbox Facade\\nparticipant employees as Employees\\nend\\nemployees-->>-form ui: 200\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nparticipant A\nparticipant A\nA->>A: x",
+          "line": 229,
+          "line_end": 229,
+          "expression": "\"sequenceDiagram\\nparticipant A\\nparticipant A\\nA->>A: x\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Error",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:237",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 237,
+      "line_end": 249,
+      "name": "TestBoxClaimsDeclaredParticipant",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>B: x\nA->>C: y\nbox Team\nparticipant B\nend\nB-->>A: z",
+          "line": 238,
+          "line_end": 238,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\nA->>C: y\\nbox Team\\nparticipant B\\nend\\nB-->>A: z\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:253",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 253,
+      "line_end": 265,
+      "name": "TestActivationSpacedSuffix",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->> +B: x\nB -->> -A: y",
+          "line": 254,
+          "line_end": 254,
+          "expression": "\"sequenceDiagram\\nA->> +B: x\\nB -->> -A: y\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "activeCounts",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:270",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 270,
+      "line_end": 315,
+      "name": "TestActivationUnbrokenAcrossFrames",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>+B: start\nalt first\nC->>D: one\nelse second\nC->>D: two\nend\nB-->>-A: done",
+          "line": 272,
+          "line_end": 272,
+          "expression": "\"sequenceDiagram\\nA->>+B: start\\nalt first\\nC->>D: one\\nelse second\\nC->>D: two\\nend\\nB-->>-A: done\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>+B: start\nNote over C,D: hello\nB-->>-A: done",
+          "line": 273,
+          "line_end": 273,
+          "expression": "\"sequenceDiagram\\nA->>+B: start\\nNote over C,D: hello\\nB-->>-A: done\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "strings.Contains",
+        "strings.ContainsAny",
+        "strings.ContainsRune",
+        "strings.Split",
+        "strings.TrimRight",
+        "strings.TrimSpace",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/activation_test.go:319",
+      "path": "pkg/sequence/activation_test.go",
+      "line": 319,
+      "line_end": 327,
+      "name": "TestActivationParticipantNamedActivate",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/activation_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nactivate->>B: hi",
+          "line": 320,
+          "line_end": 320,
+          "expression": "\"sequenceDiagram\\nactivate->>B: hi\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/actor_test.go:13",
+      "path": "pkg/sequence/actor_test.go",
+      "line": 13,
+      "line_end": 49,
+      "name": "TestActorDeclarations",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/actor_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nactor A as Alice\nactor B as Bob\nA->B: Hello Bob, how are you?\nB-->A: I am good thanks!",
+          "line": 20,
+          "line_end": 20,
+          "expression": "\"sequenceDiagram\\nactor A as Alice\\nactor B as Bob\\nA->B: Hello Bob, how are you?\\nB-->A: I am good thanks!\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nactor Alice\nAlice->>Alice: Hi",
+          "line": 21,
+          "line_end": 21,
+          "expression": "\"sequenceDiagram\\nactor Alice\\nAlice->>Alice: Hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nactor A AS Database Server\nA->>A: q",
+          "line": 22,
+          "line_end": 22,
+          "expression": "\"sequenceDiagram\\nactor A AS Database Server\\nA->>A: q\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nActor A as Alice\nA->>A: hi",
+          "line": 23,
+          "line_end": 23,
+          "expression": "\"sequenceDiagram\\nActor A as Alice\\nA->>A: hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nactor cron job as Cron\ncron job->>cron job: tick",
+          "line": 24,
+          "line_end": 24,
+          "expression": "\"sequenceDiagram\\nactor cron job as Cron\\ncron job->>cron job: tick\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "len",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/actor_test.go:54",
+      "path": "pkg/sequence/actor_test.go",
+      "line": 54,
+      "line_end": 70,
+      "name": "TestActorParticipantMix",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/actor_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nactor Alice as Alice2\nactor Bob\nparticipant John as John2\nparticipant Mandy\nAlice->>Bob: Hi Bob\nBob->>Alice: Hi Alice\nAlice->>John: Hi John\nJohn->>Mandy: Hi Mandy\nMandy ->>Joan: Hi Joan",
+          "line": 55,
+          "line_end": 55,
+          "expression": "\"sequenceDiagram\\nactor Alice as Alice2\\nactor Bob\\nparticipant John as John2\\nparticipant Mandy\\nAlice->>Bob: Hi Bob\\nBob->>Alice: Hi Alice\\nAlice->>John: Hi John\\nJohn->>Mandy: Hi Mandy\\nMandy ->>Joan: Hi Joan\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/actor_test.go:74",
+      "path": "pkg/sequence/actor_test.go",
+      "line": 74,
+      "line_end": 78,
+      "name": "TestActorDuplicateRejected",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/actor_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nactor A as Alice\nparticipant A as Al\nA->>A: hi",
+          "line": 75,
+          "line_end": 75,
+          "expression": "\"sequenceDiagram\\nactor A as Alice\\nparticipant A as Al\\nA->>A: hi\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "Parse",
+        "t.Error"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/alt_test.go:32",
+      "path": "pkg/sequence/alt_test.go",
+      "line": 32,
+      "line_end": 67,
+      "name": "TestParseAlt",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/alt_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n alt valid\n  A->>B: ok\n else invalid\n  B->>A: err\n end",
+          "line": 39,
+          "line_end": 39,
+          "expression": "\"sequenceDiagram\\n alt valid\\n  A->>B: ok\\n else invalid\\n  B->>A: err\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n alt a\n  A->>B: 1\n else b\n  A->>B: 2\n else c\n  A->>B: 3\n end",
+          "line": 40,
+          "line_end": 40,
+          "expression": "\"sequenceDiagram\\n alt a\\n  A->>B: 1\\n else b\\n  A->>B: 2\\n else c\\n  A->>B: 3\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n alt\n  A->>B: 1\n else\n  A->>B: 2\n end",
+          "line": 41,
+          "line_end": 41,
+          "expression": "\"sequenceDiagram\\n alt\\n  A->>B: 1\\n else\\n  A->>B: 2\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n alt <>&! ok\n  A->>B: 1\n end",
+          "line": 42,
+          "line_end": 42,
+          "expression": "\"sequenceDiagram\\n alt <>&! ok\\n  A->>B: 1\\n end\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "Parse",
+        "altDividers",
+        "hasAltStart",
+        "len",
+        "t.Error",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/alt_test.go:70",
+      "path": "pkg/sequence/alt_test.go",
+      "line": 70,
+      "line_end": 86,
+      "name": "TestParseAltErrors",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/alt_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n A->>B: x\n else\n",
+          "line": 74,
+          "line_end": 74,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n else\\n\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n loop x\n  A->>B: y\n else\n end",
+          "line": 75,
+          "line_end": 75,
+          "expression": "\"sequenceDiagram\\n loop x\\n  A->>B: y\\n else\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n alt x\n  A->>B: y",
+          "line": 76,
+          "line_end": 76,
+          "expression": "\"sequenceDiagram\\n alt x\\n  A->>B: y\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "err.Error",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/alt_test.go:90",
+      "path": "pkg/sequence/alt_test.go",
+      "line": 90,
+      "line_end": 107,
+      "name": "TestRenderAltSmoke",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/alt_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n alt outer\n  A->>B: x\n  alt inner\n   A->>B: y\n  else inner2\n   A->>B: z\n  end\n else outer2\n  A->>B: w\n end",
+          "line": 91,
+          "line_end": 91,
+          "expression": "\"sequenceDiagram\\n alt outer\\n  A->>B: x\\n  alt inner\\n   A->>B: y\\n  else inner2\\n   A->>B: z\\n  end\\n else outer2\\n  A->>B: w\\n end\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/arrows_test.go:7",
+      "path": "pkg/sequence/arrows_test.go",
+      "line": 7,
+      "line_end": 41,
+      "name": "TestArrowTypes",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/arrows_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n A",
+          "line": 22,
+          "line_end": 22,
+          "expression": "\"sequenceDiagram\\n A\"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "Parse",
+        "got.head",
+        "got.isDotted",
+        "len",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/arrows_test.go:47",
+      "path": "pkg/sequence/arrows_test.go",
+      "line": 47,
+      "line_end": 72,
+      "name": "TestArrowSpecParityForms",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/arrows_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nAlice-xBob:Hello Bob, how are you?",
+          "line": 52,
+          "line_end": 52,
+          "expression": "\"sequenceDiagram\\nAlice-xBob:Hello Bob, how are you?\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nAlice--xBob:Hello Bob, how are you?",
+          "line": 53,
+          "line_end": 53,
+          "expression": "\"sequenceDiagram\\nAlice--xBob:Hello Bob, how are you?\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nAlice-)Bob:Hello Bob, how are you?",
+          "line": 54,
+          "line_end": 54,
+          "expression": "\"sequenceDiagram\\nAlice-)Bob:Hello Bob, how are you?\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nAlice--)Bob:Hello Bob, how are you?",
+          "line": 55,
+          "line_end": 55,
+          "expression": "\"sequenceDiagram\\nAlice--)Bob:Hello Bob, how are you?\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nAlice<<->>Bob:Hello Bob, how are you?",
+          "line": 56,
+          "line_end": 56,
+          "expression": "\"sequenceDiagram\\nAlice<<->>Bob:Hello Bob, how are you?\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nAlice<<-->>Bob:Hello Bob, how are you?",
+          "line": 57,
+          "line_end": 57,
+          "expression": "\"sequenceDiagram\\nAlice<<-->>Bob:Hello Bob, how are you?\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Bob--x Alice: I am good thanks!",
+          "line": 58,
+          "line_end": 58,
+          "expression": "\"sequenceDiagram\\n Bob--x Alice: I am good thanks!\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Alice --x Ola1: Bye!",
+          "line": 59,
+          "line_end": 59,
+          "expression": "\"sequenceDiagram\\n Alice --x Ola1: Bye!\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n John<<->>Alice: This also works the other way",
+          "line": 60,
+          "line_end": 60,
+          "expression": "\"sequenceDiagram\\n John<<->>Alice: This also works the other way\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/arrows_test.go:77",
+      "path": "pkg/sequence/arrows_test.go",
+      "line": 77,
+      "line_end": 107,
+      "name": "TestCentralConnections",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/arrows_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n Alice ()->>() Bob: dual",
+          "line": 83,
+          "line_end": 83,
+          "expression": "\"sequenceDiagram\\n Alice ()->>() Bob: dual\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Alice ()-x() Bob: cross dual",
+          "line": 84,
+          "line_end": 84,
+          "expression": "\"sequenceDiagram\\n Alice ()-x() Bob: cross dual\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Alice ()<<->>() Bob: bidirectional dual",
+          "line": 85,
+          "line_end": 85,
+          "expression": "\"sequenceDiagram\\n Alice ()<<->>() Bob: bidirectional dual\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Alice ->>() Bob: forward",
+          "line": 86,
+          "line_end": 86,
+          "expression": "\"sequenceDiagram\\n Alice ->>() Bob: forward\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Alice ()->> Bob: reverse",
+          "line": 87,
+          "line_end": 87,
+          "expression": "\"sequenceDiagram\\n Alice ()->> Bob: reverse\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Alice () -->> () Bob: spaced dual",
+          "line": 88,
+          "line_end": 88,
+          "expression": "\"sequenceDiagram\\n Alice () -->> () Bob: spaced dual\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Alice ()--)() Bob: point dual",
+          "line": 89,
+          "line_end": 89,
+          "expression": "\"sequenceDiagram\\n Alice ()--)() Bob: point dual\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/arrows_test.go:110",
+      "path": "pkg/sequence/arrows_test.go",
+      "line": 110,
+      "line_end": 120,
+      "name": "TestMalformedCentralConnectionsRejected",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/arrows_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n Alice (->>) Bob: parens around arrow",
+          "line": 112,
+          "line_end": 112,
+          "expression": "\"sequenceDiagram\\n Alice (->>) Bob: parens around arrow\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Alice ( )->> Bob: space inside circle",
+          "line": 113,
+          "line_end": 113,
+          "expression": "\"sequenceDiagram\\n Alice ( )->> Bob: space inside circle\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Alice (()->> Bob: unbalanced",
+          "line": 114,
+          "line_end": 114,
+          "expression": "\"sequenceDiagram\\n Alice (()->> Bob: unbalanced\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "Parse",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/arrows_test.go:125",
+      "path": "pkg/sequence/arrows_test.go",
+      "line": 125,
+      "line_end": 147,
+      "name": "TestCrossPointBidirectionalArrows",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/arrows_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n A-xB: cross",
+          "line": 130,
+          "line_end": 130,
+          "expression": "\"sequenceDiagram\\n A-xB: cross\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A--xB: dotted cross",
+          "line": 131,
+          "line_end": 131,
+          "expression": "\"sequenceDiagram\\n A--xB: dotted cross\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A-)B: async",
+          "line": 132,
+          "line_end": 132,
+          "expression": "\"sequenceDiagram\\n A-)B: async\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A--)B: dotted async",
+          "line": 133,
+          "line_end": 133,
+          "expression": "\"sequenceDiagram\\n A--)B: dotted async\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A<<->>B: bidirectional",
+          "line": 134,
+          "line_end": 134,
+          "expression": "\"sequenceDiagram\\n A<<->>B: bidirectional\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A<<-->>B: dotted bidirectional",
+          "line": 135,
+          "line_end": 135,
+          "expression": "\"sequenceDiagram\\n A<<-->>B: dotted bidirectional\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/arrows_test.go:151",
+      "path": "pkg/sequence/arrows_test.go",
+      "line": 151,
+      "line_end": 162,
+      "name": "TestOpenArrowEmptyLabel",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/arrows_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n A->B: ",
+          "line": 152,
+          "line_end": 152,
+          "expression": "\"sequenceDiagram\\n A->B: \"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/box_test.go:14",
+      "path": "pkg/sequence/box_test.go",
+      "line": 14,
+      "line_end": 51,
+      "name": "TestBoxParsing",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/box_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n",
+          "line": 32,
+          "line_end": 32,
+          "expression": "\"sequenceDiagram\\n\"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/box_test.go:54",
+      "path": "pkg/sequence/box_test.go",
+      "line": 54,
+      "line_end": 62,
+      "name": "TestBoxWithActors",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/box_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nbox Team\nactor a as Alice\nparticipant b as Bob\nend\na->>b: hi",
+          "line": 55,
+          "line_end": 55,
+          "expression": "\"sequenceDiagram\\nbox Team\\nactor a as Alice\\nparticipant b as Bob\\nend\\na->>b: hi\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/box_test.go:65",
+      "path": "pkg/sequence/box_test.go",
+      "line": 65,
+      "line_end": 76,
+      "name": "TestMultipleBoxes",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/box_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nbox One\nparticipant a\nend\nbox Two\nparticipant b\nparticipant c\nend\na->>b: hi",
+          "line": 66,
+          "line_end": 66,
+          "expression": "\"sequenceDiagram\\nbox One\\nparticipant a\\nend\\nbox Two\\nparticipant b\\nparticipant c\\nend\\na->>b: hi\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/box_test.go:80",
+      "path": "pkg/sequence/box_test.go",
+      "line": 80,
+      "line_end": 96,
+      "name": "TestBoxErrors",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/box_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nbox X\nparticipant a\na->>a: hi\nend",
+          "line": 82,
+          "line_end": 82,
+          "expression": "\"sequenceDiagram\\nbox X\\nparticipant a\\na->>a: hi\\nend\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nbox X\nparticipant a\nloop retry\nend\nend",
+          "line": 83,
+          "line_end": 83,
+          "expression": "\"sequenceDiagram\\nbox X\\nparticipant a\\nloop retry\\nend\\nend\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nbox X\nbox Y\nparticipant a\nend\nend",
+          "line": 84,
+          "line_end": 84,
+          "expression": "\"sequenceDiagram\\nbox X\\nbox Y\\nparticipant a\\nend\\nend\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nbox X\nparticipant a\na->>a: hi",
+          "line": 85,
+          "line_end": 85,
+          "expression": "\"sequenceDiagram\\nbox X\\nparticipant a\\na->>a: hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nbox X\nparticipant a",
+          "line": 86,
+          "line_end": 86,
+          "expression": "\"sequenceDiagram\\nbox X\\nparticipant a\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "err.Error",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/box_test.go:100",
+      "path": "pkg/sequence/box_test.go",
+      "line": 100,
+      "line_end": 108,
+      "name": "TestEmptyBoxDropped",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/box_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nbox Empty\nend\nparticipant a\na->>a: hi",
+          "line": 101,
+          "line_end": 101,
+          "expression": "\"sequenceDiagram\\nbox Empty\\nend\\nparticipant a\\na->>a: hi\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/box_test.go:113",
+      "path": "pkg/sequence/box_test.go",
+      "line": 113,
+      "line_end": 147,
+      "name": "TestBoxRenderStructure",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/box_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nbox Payments Group\nparticipant GW\nparticipant PAY\nend\nparticipant S as Shop\nGW->>PAY: auth\nGW->>S: receipt",
+          "line": 114,
+          "line_end": 114,
+          "expression": "\"sequenceDiagram\\nbox Payments Group\\nparticipant GW\\nparticipant PAY\\nend\\nparticipant S as Shop\\nGW->>PAY: auth\\nGW->>S: receipt\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 6,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "len",
+        "strings.Contains",
+        "strings.HasPrefix",
+        "strings.Split",
+        "strings.TrimRight",
+        "t.Error",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/case_test.go:14",
+      "path": "pkg/sequence/case_test.go",
+      "line": 14,
+      "line_end": 80,
+      "name": "TestSequenceKeywordsCaseInsensitive",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/case_test.go",
+      "input_literals": [
+        {
+          "input": "SEQUENCEDIAGRAM\n A->>B: x",
+          "line": 16,
+          "line_end": 16,
+          "expression": "\"SEQUENCEDIAGRAM\\n A->>B: x\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n PARTICIPANT A as Alice\n AUTONUMBER\n A->>B: x",
+          "line": 22,
+          "line_end": 22,
+          "expression": "\"sequenceDiagram\\n PARTICIPANT A as Alice\\n AUTONUMBER\\n A->>B: x\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n LOOP r\n  A->>B: x\n END",
+          "line": 35,
+          "line_end": 35,
+          "expression": "\"sequenceDiagram\\n LOOP r\\n  A->>B: x\\n END\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n OPT r\n  A->>B: x\n END",
+          "line": 38,
+          "line_end": 38,
+          "expression": "\"sequenceDiagram\\n OPT r\\n  A->>B: x\\n END\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n ALT a\n  A->>B: x\n ELSE b\n  A->>B: y\n END",
+          "line": 42,
+          "line_end": 42,
+          "expression": "\"sequenceDiagram\\n ALT a\\n  A->>B: x\\n ELSE b\\n  A->>B: y\\n END\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n NOTE OVER A: hi",
+          "line": 49,
+          "line_end": 49,
+          "expression": "\"sequenceDiagram\\n NOTE OVER A: hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Note Left Of A: hi",
+          "line": 50,
+          "line_end": 50,
+          "expression": "\"sequenceDiagram\\n Note Left Of A: hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n note RIGHT OF A: hi",
+          "line": 51,
+          "line_end": 51,
+          "expression": "\"sequenceDiagram\\n note RIGHT OF A: hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Note over A:NOWRAP: hello",
+          "line": 55,
+          "line_end": 55,
+          "expression": "\"sequenceDiagram\\n Note over A:NOWRAP: hello\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram",
+          "line": 63,
+          "line_end": 63,
+          "expression": "\"sequenceDiagram\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "SEQUENCEDIAGRAM",
+          "line": 64,
+          "line_end": 64,
+          "expression": "\"SEQUENCEDIAGRAM\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 9,
+      "calls": [
+        "Parse",
+        "altDividers",
+        "fmt.Sprintf",
+        "len",
+        "mustFragment",
+        "mustNote",
+        "t.Error",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/create_test.go:13",
+      "path": "pkg/sequence/create_test.go",
+      "line": 13,
+      "line_end": 45,
+      "name": "TestCreateParticipant",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/create_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nparticipant a as Alice\na ->>b: Hello Bob?\ncreate participant c\nb-->>c: Hello c!\nc ->> b: Hello b?\ncreate actor d as Donald\na ->> d: Hello Donald?",
+          "line": 14,
+          "line_end": 14,
+          "expression": "\"sequenceDiagram\\nparticipant a as Alice\\na ->>b: Hello Bob?\\ncreate participant c\\nb-->>c: Hello c!\\nc ->> b: Hello b?\\ncreate actor d as Donald\\na ->> d: Hello Donald?\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 6,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/create_test.go:48",
+      "path": "pkg/sequence/create_test.go",
+      "line": 48,
+      "line_end": 72,
+      "name": "TestDestroyParticipant",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/create_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nparticipant a as Alice\na ->>b: Hello Bob?\ndestroy a\nb-->>a: Hello Alice!\nb ->> c: Where is Alice?\ndestroy c\nb ->> c: Where are you?",
+          "line": 49,
+          "line_end": 49,
+          "expression": "\"sequenceDiagram\\nparticipant a as Alice\\na ->>b: Hello Bob?\\ndestroy a\\nb-->>a: Hello Alice!\\nb ->> c: Where is Alice?\\ndestroy c\\nb ->> c: Where are you?\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "append",
+        "strings.Join",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/create_test.go:76",
+      "path": "pkg/sequence/create_test.go",
+      "line": 76,
+      "line_end": 91,
+      "name": "TestCreateAndDestroySameParticipant",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/create_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\na ->>b: Hello Bob?\ncreate participant c\nb ->>c: Hello c!\nc ->> b: Hello b?\ndestroy c\nb ->> c : Bye c !",
+          "line": 77,
+          "line_end": 77,
+          "expression": "\"sequenceDiagram\\na ->>b: Hello Bob?\\ncreate participant c\\nb ->>c: Hello c!\\nc ->> b: Hello b?\\ndestroy c\\nb ->> c : Bye c !\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "append",
+        "ev.Kind.String",
+        "strings.Join",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/create_test.go:95",
+      "path": "pkg/sequence/create_test.go",
+      "line": 95,
+      "line_end": 103,
+      "name": "TestCreateDestroySpacedNames",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/create_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nGW->>C: x\ncreate participant Auth Service\nGW->>Auth Service: validate\ndestroy Auth Service\nGW-xAuth Service: close",
+          "line": 96,
+          "line_end": 96,
+          "expression": "\"sequenceDiagram\\nGW->>C: x\\ncreate participant Auth Service\\nGW->>Auth Service: validate\\ndestroy Auth Service\\nGW-xAuth Service: close\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/create_test.go:107",
+      "path": "pkg/sequence/create_test.go",
+      "line": 107,
+      "line_end": 128,
+      "name": "TestCreateDestroyErrors",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/create_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nparticipant D",
+          "line": 109,
+          "line_end": 109,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nparticipant D\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ncreate participant C",
+          "line": 110,
+          "line_end": 110,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ncreate participant C\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nA->>B: y",
+          "line": 111,
+          "line_end": 111,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nA->>B: y\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nC->>A: hello",
+          "line": 112,
+          "line_end": 112,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nC->>A: hello\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>C: x\ncreate participant C\nA->>C: y",
+          "line": 113,
+          "line_end": 113,
+          "expression": "\"sequenceDiagram\\nA->>C: x\\ncreate participant C\\nA->>C: y\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nparticipant C\nA->>B: x\ncreate participant C\nA->>C: y",
+          "line": 114,
+          "line_end": 114,
+          "expression": "\"sequenceDiagram\\nparticipant C\\nA->>B: x\\ncreate participant C\\nA->>C: y\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ndestroy A\nB->>C: y",
+          "line": 115,
+          "line_end": 115,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ndestroy A\\nB->>C: y\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ndestroy Zed\nA->>B: y",
+          "line": 116,
+          "line_end": 116,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ndestroy Zed\\nA->>B: y\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ndestroy A",
+          "line": 117,
+          "line_end": 117,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ndestroy A\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ncreate C\nA->>C: y",
+          "line": 118,
+          "line_end": 118,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ncreate C\\nA->>C: y\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "err.Error",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/create_test.go:133",
+      "path": "pkg/sequence/create_test.go",
+      "line": 133,
+      "line_end": 147,
+      "name": "TestCreateDestroyIntervening",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/create_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nloop retry\nA->>C: hi\nend",
+          "line": 135,
+          "line_end": 135,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nloop retry\\nA->>C: hi\\nend\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nNote over A: thinking\nA->>C: hi",
+          "line": 136,
+          "line_end": 136,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nNote over A: thinking\\nA->>C: hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nparticipant D\nA->>C: hi",
+          "line": 137,
+          "line_end": 137,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nparticipant D\\nA->>C: hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: x\ndestroy B\nactivate A\nA-xB: bye",
+          "line": 138,
+          "line_end": 138,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ndestroy B\\nactivate A\\nA-xB: bye\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "Parse",
+        "t.Errorf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/create_test.go:151",
+      "path": "pkg/sequence/create_test.go",
+      "line": 151,
+      "line_end": 182,
+      "name": "TestCreateDestroyPreservesNotes",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/create_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nparticipant A\nparticipant B\nparticipant C\nA->>B: hi\ndestroy A\nA->>B: bye\nNote over B: xxxxxxxxxxxxxxxxx\nB->>C: after",
+          "line": 153,
+          "line_end": 153,
+          "expression": "\"sequenceDiagram\\nparticipant A\\nparticipant B\\nparticipant C\\nA->>B: hi\\ndestroy A\\nA->>B: bye\\nNote over B: xxxxxxxxxxxxxxxxx\\nB->>C: after\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "Render",
+        "append",
+        "diagram.DefaultConfig",
+        "len",
+        "strings.Contains",
+        "strings.Count",
+        "strings.Split",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/create_test.go:186",
+      "path": "pkg/sequence/create_test.go",
+      "line": 186,
+      "line_end": 232,
+      "name": "TestCreateDestroyRendering",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/create_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nAlice->>Bob: hello\ncreate participant Carl\nAlice->>Carl: hi\ndestroy Carl\nAlice-xCarl: bye\nBob->>Alice: done",
+          "line": 187,
+          "line_end": 187,
+          "expression": "\"sequenceDiagram\\nAlice->>Bob: hello\\ncreate participant Carl\\nAlice->>Carl: hi\\ndestroy Carl\\nAlice-xCarl: bye\\nBob->>Alice: done\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 6,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "len",
+        "strings.Contains",
+        "strings.ContainsRune",
+        "strings.Count",
+        "strings.Split",
+        "strings.TrimRight",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/create_test.go:236",
+      "path": "pkg/sequence/create_test.go",
+      "line": 236,
+      "line_end": 251,
+      "name": "TestCreateDestroyWithActivation",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/create_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nA->>+C: work\nC-->>-A: result\ndestroy C\nA-xC: close",
+          "line": 237,
+          "line_end": 237,
+          "expression": "\"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nA->>+C: work\\nC-->>-A: result\\ndestroy C\\nA-xC: close\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "strings.ContainsRune",
+        "t.Errorf",
+        "t.Fatal"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/example_test.go:10",
+      "path": "pkg/sequence/example_test.go",
+      "line": 10,
+      "line_end": 25,
+      "name": "ExampleParse",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/example_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n    Alice->>Bob: Hello\n    Bob-->>Alice: Hi",
+          "line": 11,
+          "line_end": 13,
+          "expression": "`sequenceDiagram\n    Alice->>Bob: Hello\n    Bob-->>Alice: Hi`",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "fmt.Printf",
+        "len",
+        "log.Fatal",
+        "sequence.Parse"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/example_test.go:27",
+      "path": "pkg/sequence/example_test.go",
+      "line": 27,
+      "line_end": 39,
+      "name": "ExampleIsSequenceDiagram",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/example_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n    A->>B: Test",
+          "line": 28,
+          "line_end": 29,
+          "expression": "`sequenceDiagram\n    A->>B: Test`",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph LR\n    A-->B",
+          "line": 31,
+          "line_end": 32,
+          "expression": "`graph LR\n    A-->B`",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 0,
+      "calls": [
+        "fmt.Printf",
+        "sequence.IsSequenceDiagram"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/fragments_test.go:22",
+      "path": "pkg/sequence/fragments_test.go",
+      "line": 22,
+      "line_end": 132,
+      "name": "TestParseFragments",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/fragments_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n A->>B: x\n loop every minute\n  A->>B: y\n end",
+          "line": 32,
+          "line_end": 32,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n loop every minute\\n  A->>B: y\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A->>B: x\n opt\n  A->>B: y\n end",
+          "line": 39,
+          "line_end": 39,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n opt\\n  A->>B: y\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n loop retry\n  A->>B: try\n  opt failed\n   B-->>A: err\n  end\n end",
+          "line": 46,
+          "line_end": 46,
+          "expression": "\"sequenceDiagram\\n loop retry\\n  A->>B: try\\n  opt failed\\n   B-->>A: err\\n  end\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n loop a\n  A->>B: 1\n end\n opt b\n  A->>B: 2\n end",
+          "line": 53,
+          "line_end": 53,
+          "expression": "\"sequenceDiagram\\n loop a\\n  A->>B: 1\\n end\\n opt b\\n  A->>B: 2\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A->>B: x\n loop nothing\n end",
+          "line": 60,
+          "line_end": 60,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n loop nothing\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n \"loop\"->>B: hi",
+          "line": 69,
+          "line_end": 69,
+          "expression": "\"sequenceDiagram\\n \\\"loop\\\"->>B: hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A->>B: start the loop now",
+          "line": 76,
+          "line_end": 76,
+          "expression": "\"sequenceDiagram\\n A->>B: start the loop now\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 6,
+      "calls": [
+        "Parse",
+        "append",
+        "fragmentKinds",
+        "len",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/fragments_test.go:134",
+      "path": "pkg/sequence/fragments_test.go",
+      "line": 134,
+      "line_end": 168,
+      "name": "TestParseFragmentErrors",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/fragments_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n A->>B: x\n loop forever\n  A->>B: y",
+          "line": 142,
+          "line_end": 142,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n loop forever\\n  A->>B: y\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A->>B: x\n end",
+          "line": 147,
+          "line_end": 147,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n loop a\n  opt b\n   A->>B: y\n end",
+          "line": 152,
+          "line_end": 152,
+          "expression": "\"sequenceDiagram\\n loop a\\n  opt b\\n   A->>B: y\\n end\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "err.Error",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/fragments_test.go:173",
+      "path": "pkg/sequence/fragments_test.go",
+      "line": 173,
+      "line_end": 192,
+      "name": "TestRenderFragmentSmoke",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/fragments_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n A->>B: x\n loop retry\n  A->>B: y\n  opt maybe\n   B-->>A: z\n  end\n end",
+          "line": 174,
+          "line_end": 174,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n loop retry\\n  A->>B: y\\n  opt maybe\\n   B-->>A: z\\n  end\\n end\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/fragments_test.go:198",
+      "path": "pkg/sequence/fragments_test.go",
+      "line": 198,
+      "line_end": 209,
+      "name": "TestKeywordLineIsNeverAMessage",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/fragments_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n alt ok\n A->>B: m\n else fall back -> retry: yes\n A->>B: n\n end",
+          "line": 199,
+          "line_end": 199,
+          "expression": "\"sequenceDiagram\\n alt ok\\n A->>B: m\\n else fall back -> retry: yes\\n A->>B: n\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n loop->>B: hi",
+          "line": 206,
+          "line_end": 206,
+          "expression": "\"sequenceDiagram\\n loop->>B: hi\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Fatal",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/notes_test.go:24",
+      "path": "pkg/sequence/notes_test.go",
+      "line": 24,
+      "line_end": 72,
+      "name": "TestParseNotes",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/notes_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n Note over B: hi",
+          "line": 32,
+          "line_end": 32,
+          "expression": "\"sequenceDiagram\\n Note over B: hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Note over A,B: shared",
+          "line": 33,
+          "line_end": 33,
+          "expression": "\"sequenceDiagram\\n Note over A,B: shared\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Note over B,A: rev",
+          "line": 34,
+          "line_end": 34,
+          "expression": "\"sequenceDiagram\\n Note over B,A: rev\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Note left of A: L",
+          "line": 35,
+          "line_end": 35,
+          "expression": "\"sequenceDiagram\\n Note left of A: L\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Note right of A: R",
+          "line": 36,
+          "line_end": 36,
+          "expression": "\"sequenceDiagram\\n Note right of A: R\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n note over A: low",
+          "line": 37,
+          "line_end": 37,
+          "expression": "\"sequenceDiagram\\n note over A: low\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Note over A: <>&! 100%",
+          "line": 40,
+          "line_end": 40,
+          "expression": "\"sequenceDiagram\\n Note over A: <>&! 100%\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Note over A: line1<br/>line2",
+          "line": 41,
+          "line_end": 41,
+          "expression": "\"sequenceDiagram\\n Note over A: line1<br/>line2\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Note right of B:nowrap: hi there",
+          "line": 42,
+          "line_end": 42,
+          "expression": "\"sequenceDiagram\\n Note right of B:nowrap: hi there\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n Note over A:wrap: hi",
+          "line": 43,
+          "line_end": 43,
+          "expression": "\"sequenceDiagram\\n Note over A:wrap: hi\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 6,
+      "calls": [
+        "Parse",
+        "firstNote",
+        "len",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/notes_test.go:75",
+      "path": "pkg/sequence/notes_test.go",
+      "line": 75,
+      "line_end": 80,
+      "name": "TestParseNoteErrors",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/notes_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n Note over : x",
+          "line": 77,
+          "line_end": 77,
+          "expression": "\"sequenceDiagram\\n Note over : x\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "Parse",
+        "t.Error"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/notes_test.go:84",
+      "path": "pkg/sequence/notes_test.go",
+      "line": 84,
+      "line_end": 99,
+      "name": "TestRenderNoteSmoke",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/notes_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n A->>B: x\n Note over A,B: a<br/>b\n Note right of B: r",
+          "line": 85,
+          "line_end": 85,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n Note over A,B: a<br/>b\\n Note right of B: r\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/notes_test.go:104",
+      "path": "pkg/sequence/notes_test.go",
+      "line": 104,
+      "line_end": 125,
+      "name": "TestNoteLeftOfLeftmostKeepsLifelines",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/notes_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n A->>B: x\n Note left of A: LEFT",
+          "line": 105,
+          "line_end": 105,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n Note left of A: LEFT\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "strings.HasPrefix",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/notes_test.go:131",
+      "path": "pkg/sequence/notes_test.go",
+      "line": 131,
+      "line_end": 145,
+      "name": "TestNoteInsideFragmentNotCutByBorder",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/notes_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n loop retry\n  A->>B: try\n  Note left of A: hello world\n end",
+          "line": 132,
+          "line_end": 132,
+          "expression": "\"sequenceDiagram\\n loop retry\\n  A->>B: try\\n  Note left of A: hello world\\n end\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/notes_test.go:150",
+      "path": "pkg/sequence/notes_test.go",
+      "line": 150,
+      "line_end": 179,
+      "name": "TestNoteInNestedFragmentsStagger",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/notes_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n loop outer\n  opt inner\n   A->>B: x\n   Note left of A: hi\n  end\n end",
+          "line": 151,
+          "line_end": 151,
+          "expression": "\"sequenceDiagram\\n loop outer\\n  opt inner\\n   A->>B: x\\n   Note left of A: hi\\n  end\\n end\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 4,
+      "calls": [
+        "Parse",
+        "Render",
+        "col",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "strings.Index",
+        "strings.Split",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/par_test.go:21",
+      "path": "pkg/sequence/par_test.go",
+      "line": 21,
+      "line_end": 65,
+      "name": "TestParseParCriticalBreakRect",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/par_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n par a\n  A->>B: 1\n and b\n  A->>C: 2\n end",
+          "line": 29,
+          "line_end": 29,
+          "expression": "\"sequenceDiagram\\n par a\\n  A->>B: 1\\n and b\\n  A->>C: 2\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n par a\n  A->>B: 1\n and b\n  A->>B: 2\n and c\n  A->>B: 3\n end",
+          "line": 30,
+          "line_end": 30,
+          "expression": "\"sequenceDiagram\\n par a\\n  A->>B: 1\\n and b\\n  A->>B: 2\\n and c\\n  A->>B: 3\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n critical conn\n  A->>B: 1\n option down\n  A->>B: 2\n end",
+          "line": 31,
+          "line_end": 31,
+          "expression": "\"sequenceDiagram\\n critical conn\\n  A->>B: 1\\n option down\\n  A->>B: 2\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n critical conn\n  A->>B: 1\n end",
+          "line": 32,
+          "line_end": 32,
+          "expression": "\"sequenceDiagram\\n critical conn\\n  A->>B: 1\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n break oops\n  A->>B: 1\n end",
+          "line": 33,
+          "line_end": 33,
+          "expression": "\"sequenceDiagram\\n break oops\\n  A->>B: 1\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n rect rgb(0,255,0)\n  A->>B: 1\n end",
+          "line": 34,
+          "line_end": 34,
+          "expression": "\"sequenceDiagram\\n rect rgb(0,255,0)\\n  A->>B: 1\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n rect rgba(0,0,0,0.1)\n  A->>B: 1\n end",
+          "line": 35,
+          "line_end": 35,
+          "expression": "\"sequenceDiagram\\n rect rgba(0,0,0,0.1)\\n  A->>B: 1\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n rect highlight\n  A->>B: 1\n end",
+          "line": 36,
+          "line_end": 36,
+          "expression": "\"sequenceDiagram\\n rect highlight\\n  A->>B: 1\\n end\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 6,
+      "calls": [
+        "Parse",
+        "altDividers",
+        "firstFragment",
+        "len",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/par_test.go:68",
+      "path": "pkg/sequence/par_test.go",
+      "line": 68,
+      "line_end": 84,
+      "name": "TestParseDividerMismatch",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/par_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n A->>B: x\n and\n",
+          "line": 70,
+          "line_end": 70,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n and\\n\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n A->>B: x\n option\n",
+          "line": 71,
+          "line_end": 71,
+          "expression": "\"sequenceDiagram\\n A->>B: x\\n option\\n\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n alt x\n  A->>B: y\n and z\n end",
+          "line": 72,
+          "line_end": 72,
+          "expression": "\"sequenceDiagram\\n alt x\\n  A->>B: y\\n and z\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n par x\n  A->>B: y\n option z\n end",
+          "line": 73,
+          "line_end": 73,
+          "expression": "\"sequenceDiagram\\n par x\\n  A->>B: y\\n option z\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n par x\n  A->>B: y\n else z\n end",
+          "line": 74,
+          "line_end": 74,
+          "expression": "\"sequenceDiagram\\n par x\\n  A->>B: y\\n else z\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n par x\n  A->>B: y",
+          "line": 75,
+          "line_end": 75,
+          "expression": "\"sequenceDiagram\\n par x\\n  A->>B: y\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 2,
+      "calls": [
+        "Parse",
+        "err.Error",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/par_test.go:87",
+      "path": "pkg/sequence/par_test.go",
+      "line": 87,
+      "line_end": 109,
+      "name": "TestRenderParCriticalBreakRectSmoke",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/par_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n par a\n  A->>B: x\n and b\n  A->>B: y\n end",
+          "line": 89,
+          "line_end": 89,
+          "expression": "\"sequenceDiagram\\n par a\\n  A->>B: x\\n and b\\n  A->>B: y\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n critical c\n  A->>B: x\n option o\n  A->>B: y\n end",
+          "line": 90,
+          "line_end": 90,
+          "expression": "\"sequenceDiagram\\n critical c\\n  A->>B: x\\n option o\\n  A->>B: y\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n break oops\n  A->>B: x\n end",
+          "line": 91,
+          "line_end": 91,
+          "expression": "\"sequenceDiagram\\n break oops\\n  A->>B: x\\n end\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n rect rgb(0,255,0)\n  A->>B: x\n end",
+          "line": 92,
+          "line_end": 92,
+          "expression": "\"sequenceDiagram\\n rect rgb(0,255,0)\\n  A->>B: x\\n end\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/renderer_test.go:23",
+      "path": "pkg/sequence/renderer_test.go",
+      "line": 23,
+      "line_end": 92,
+      "name": "TestSequenceDiagramRendering",
+      "category": "terminal-golden-driver",
+      "assertion_source_path": "upstream/pkg/sequence/renderer_test.go",
+      "input_literals": [],
+      "assertion_count": 0,
+      "calls": [
+        "filepath.Join",
+        "getTestDataPath",
+        "t.Run",
+        "verifySequenceDiagramWithCharset"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/renderer_test.go:96",
+      "path": "pkg/sequence/renderer_test.go",
+      "line": 96,
+      "line_end": 145,
+      "name": "TestSequenceDiagramRendering_ASCII",
+      "category": "terminal-golden-driver",
+      "assertion_source_path": "upstream/pkg/sequence/renderer_test.go",
+      "input_literals": [],
+      "assertion_count": 0,
+      "calls": [
+        "filepath.Join",
+        "getTestDataPath",
+        "t.Run",
+        "verifySequenceDiagramWithCharset"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/renderer_test.go:149",
+      "path": "pkg/sequence/renderer_test.go",
+      "line": 149,
+      "line_end": 234,
+      "name": "TestSequenceDiagramRendering_ASCIISmokeTest",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/renderer_test.go",
+      "input_literals": [],
+      "assertion_count": 6,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.NewTestConfig",
+        "filepath.Join",
+        "getTestDataPath",
+        "len",
+        "strings.Contains",
+        "strings.ContainsAny",
+        "t.Error",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run",
+        "testutil.ReadSequenceTestCase"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/renderer_test.go:239",
+      "path": "pkg/sequence/renderer_test.go",
+      "line": 239,
+      "line_end": 269,
+      "name": "TestSequenceDiagramRendering_EastAsian",
+      "category": "terminal-golden-driver",
+      "assertion_source_path": "upstream/pkg/sequence/renderer_test.go",
+      "input_literals": [],
+      "assertion_count": 0,
+      "calls": [
+        "filepath.Join",
+        "func() {\n\t\trunewidth.DefaultCondition = origCond\n\t}",
+        "getTestDataPath",
+        "runewidth.NewCondition",
+        "t.Run",
+        "verifySequenceDiagramWithCharset"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/renderer_test.go:271",
+      "path": "pkg/sequence/renderer_test.go",
+      "line": 271,
+      "line_end": 287,
+      "name": "TestPutTextLeadingCombiningMarkSkipsPadding",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/sequence/renderer_test.go",
+      "input_literals": [],
+      "assertion_count": 3,
+      "calls": [
+        "cellRune",
+        "putText",
+        "t.Fatalf",
+        "textualCell"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/renderer_test.go:289",
+      "path": "pkg/sequence/renderer_test.go",
+      "line": 289,
+      "line_end": 312,
+      "name": "TestPutTextKeepsLeadingMarksWithBase",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/sequence/renderer_test.go",
+      "input_literals": [],
+      "assertion_count": 1,
+      "calls": [
+        "cellRune",
+        "make",
+        "putText",
+        "t.Errorf",
+        "t.Run",
+        "textualCell"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/renderer_test.go:314",
+      "path": "pkg/sequence/renderer_test.go",
+      "line": 314,
+      "line_end": 344,
+      "name": "TestLiteralControlCharacterPreservedInRendererText",
+      "category": "terminal-private-model-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/renderer_test.go",
+      "input_literals": [],
+      "assertion_count": 3,
+      "calls": [
+        "Render",
+        "diagram.NewTestConfig",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatalf",
+        "textCells",
+        "trimCells"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/renderer_test.go:346",
+      "path": "pkg/sequence/renderer_test.go",
+      "line": 346,
+      "line_end": 376,
+      "name": "TestTextCellsAttachCombiningMarks",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/sequence/renderer_test.go",
+      "input_literals": [],
+      "assertion_count": 3,
+      "calls": [
+        "cellRune",
+        "displayWidth",
+        "len",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run",
+        "textCells",
+        "textualCell"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/sequence_test.go:11",
+      "path": "pkg/sequence/sequence_test.go",
+      "line": 11,
+      "line_end": 52,
+      "name": "TestParse",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/sequence_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n%% This is a comment\n%% Another comment",
+          "line": 21,
+          "line_end": 21,
+          "expression": "\"sequenceDiagram\\n%% This is a comment\\n%% Another comment\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram",
+          "line": 22,
+          "line_end": 22,
+          "expression": "\"sequenceDiagram\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nparticipant Alice\nparticipant Alice\nAlice->>Bob: Hi",
+          "line": 23,
+          "line_end": 23,
+          "expression": "\"sequenceDiagram\\nparticipant Alice\\nparticipant Alice\\nAlice->>Bob: Hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: Hello",
+          "line": 24,
+          "line_end": 24,
+          "expression": "\"sequenceDiagram\\nA->>B: Hello\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nparticipant Alice\nparticipant Bob\nAlice->>Bob: Hi",
+          "line": 25,
+          "line_end": 25,
+          "expression": "\"sequenceDiagram\\nparticipant Alice\\nparticipant Bob\\nAlice->>Bob: Hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA-->>B: Response",
+          "line": 26,
+          "line_end": 26,
+          "expression": "\"sequenceDiagram\\nA-->>B: Response\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>A: Self",
+          "line": 27,
+          "line_end": 27,
+          "expression": "\"sequenceDiagram\\nA->>A: Self\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: 1\nB->>C: 2\nC-->>A: 3",
+          "line": 28,
+          "line_end": 28,
+          "expression": "\"sequenceDiagram\\nA->>B: 1\\nB->>C: 2\\nC-->>A: 3\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\n%% Comment\nA->>B: Hi %% inline comment",
+          "line": 29,
+          "line_end": 29,
+          "expression": "\"sequenceDiagram\\n%% Comment\\nA->>B: Hi %% inline comment\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "Parse",
+        "err.Error",
+        "len",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/sequence_test.go:54",
+      "path": "pkg/sequence/sequence_test.go",
+      "line": 54,
+      "line_end": 74,
+      "name": "TestIsSequenceDiagram",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/sequence_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>B: Hello",
+          "line": 59,
+          "line_end": 59,
+          "expression": "\"sequenceDiagram\\nA->>B: Hello\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "SEQUENCEDIAGRAM\nA->>B: Hello",
+          "line": 60,
+          "line_end": 60,
+          "expression": "\"SEQUENCEDIAGRAM\\nA->>B: Hello\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "SequenceDiagram\nA->>B: Hello",
+          "line": 61,
+          "line_end": 61,
+          "expression": "\"SequenceDiagram\\nA->>B: Hello\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph LR\nA-->B",
+          "line": 63,
+          "line_end": 63,
+          "expression": "\"graph LR\\nA-->B\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "graph TD\nA-->B",
+          "line": 64,
+          "line_end": 64,
+          "expression": "\"graph TD\\nA-->B\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 1,
+      "calls": [
+        "IsSequenceDiagram",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/sequence_test.go:76",
+      "path": "pkg/sequence/sequence_test.go",
+      "line": 76,
+      "line_end": 113,
+      "name": "TestParticipantAlias",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/sequence_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nparticipant A as Alice\nA->>A: Hello",
+          "line": 83,
+          "line_end": 83,
+          "expression": "\"sequenceDiagram\\nparticipant A as Alice\\nA->>A: Hello\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nparticipant Alice\nAlice->>Alice: Hi",
+          "line": 84,
+          "line_end": 84,
+          "expression": "\"sequenceDiagram\\nparticipant Alice\\nAlice->>Alice: Hi\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 6,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "len",
+        "strings.Contains",
+        "t.Errorf",
+        "t.Fatal",
+        "t.Fatalf",
+        "t.Run"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/sequence_test.go:115",
+      "path": "pkg/sequence/sequence_test.go",
+      "line": 115,
+      "line_end": 171,
+      "name": "TestMessageRegex",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/sequence/sequence_test.go",
+      "input_literals": [],
+      "assertion_count": 3,
+      "calls": [
+        "splitMessage",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/sequence_test.go:173",
+      "path": "pkg/sequence/sequence_test.go",
+      "line": 173,
+      "line_end": 207,
+      "name": "TestParticipantRegex",
+      "category": "parser-helper",
+      "assertion_source_path": "upstream/pkg/sequence/sequence_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\n ",
+          "line": 194,
+          "line_end": 194,
+          "expression": "\"sequenceDiagram\\n \"",
+          "in_concatenation": true
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "len",
+        "t.Errorf",
+        "t.Fatalf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/sequence_test.go:209",
+      "path": "pkg/sequence/sequence_test.go",
+      "line": 209,
+      "line_end": 226,
+      "name": "TestSplitLines",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/sequence/sequence_test.go",
+      "input_literals": [],
+      "assertion_count": 1,
+      "calls": [
+        "diagram.SplitLines",
+        "len",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/sequence_test.go:228",
+      "path": "pkg/sequence/sequence_test.go",
+      "line": 228,
+      "line_end": 244,
+      "name": "TestRemoveComments",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/sequence/sequence_test.go",
+      "input_literals": [],
+      "assertion_count": 1,
+      "calls": [
+        "diagram.RemoveComments",
+        "len",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/sequence_test.go:246",
+      "path": "pkg/sequence/sequence_test.go",
+      "line": 246,
+      "line_end": 253,
+      "name": "TestArrowTypeString",
+      "category": "layout-or-config-helper",
+      "assertion_source_path": "upstream/pkg/sequence/sequence_test.go",
+      "input_literals": [],
+      "assertion_count": 2,
+      "calls": [
+        "DottedArrow.String",
+        "SolidArrow.String",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/sequence_test.go:255",
+      "path": "pkg/sequence/sequence_test.go",
+      "line": 255,
+      "line_end": 296,
+      "name": "FuzzParseSequenceDiagram",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/sequence_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>B: Hello",
+          "line": 256,
+          "line_end": 256,
+          "expression": "\"sequenceDiagram\\nA->>B: Hello\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nparticipant Alice\nAlice->>Bob: Hi",
+          "line": 257,
+          "line_end": 257,
+          "expression": "\"sequenceDiagram\\nparticipant Alice\\nAlice->>Bob: Hi\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA-->>B: Response",
+          "line": 258,
+          "line_end": 258,
+          "expression": "\"sequenceDiagram\\nA-->>B: Response\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>A: Self",
+          "line": 259,
+          "line_end": 259,
+          "expression": "\"sequenceDiagram\\nA->>A: Self\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 5,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "f.Add",
+        "f.Fuzz",
+        "make",
+        "t.Errorf"
+      ]
+    },
+    {
+      "id": "mermaid_ascii/pkg/sequence/sequence_test.go:298",
+      "path": "pkg/sequence/sequence_test.go",
+      "line": 298,
+      "line_end": 339,
+      "name": "FuzzRenderSequenceDiagram",
+      "category": "terminal-public-rendering",
+      "assertion_source_path": "upstream/pkg/sequence/sequence_test.go",
+      "input_literals": [
+        {
+          "input": "sequenceDiagram\nA->>B: Test",
+          "line": 300,
+          "line_end": 300,
+          "expression": "\"sequenceDiagram\\nA->>B: Test\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>A: Self",
+          "line": 301,
+          "line_end": 301,
+          "expression": "\"sequenceDiagram\\nA->>A: Self\"",
+          "in_concatenation": false
+        },
+        {
+          "input": "sequenceDiagram\nA->>B: 1\nB->>C: 2\nC->>A: 3",
+          "line": 302,
+          "line_end": 302,
+          "expression": "\"sequenceDiagram\\nA->>B: 1\\nB->>C: 2\\nC->>A: 3\"",
+          "in_concatenation": false
+        }
+      ],
+      "assertion_count": 3,
+      "calls": [
+        "Parse",
+        "Render",
+        "diagram.DefaultConfig",
+        "f.Add",
+        "f.Fuzz",
+        "strings.Contains",
+        "strings.TrimSpace",
+        "t.Error",
+        "t.Errorf",
+        "utf8.ValidString"
+      ]
+    }
+  ]
+}

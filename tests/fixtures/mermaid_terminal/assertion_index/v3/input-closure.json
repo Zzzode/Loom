@@ -1,0 +1,32 @@
+{
+  "schema": "five_suite_assertion_input_closure/v1",
+  "status": "static_source_inputs_only_not_execution_or_port_completion",
+  "input_ledgers": [
+    {
+      "path": "tests/fixtures/mermaid_terminal/assertion_index/v3/source-inputs/assertion-unit-ledger.json",
+      "sha256": "f417df778f8c31d7347c813fc70a34b555fe32846ee3797f6ab70a6edb5afb69",
+      "bytes": 2136177
+    },
+    {
+      "path": "tests/fixtures/mermaid_terminal/assertion_index/v3/source-inputs/unbound-assertion-source-ledger.json",
+      "sha256": "45940ad5114277c373315b3063ad02fc3ef27f0855b788595cb240de3ad06ce4",
+      "bytes": 152959
+    }
+  ],
+  "captured_source_slice_rule": {
+    "original_kind": "exact_original_test_function_slice",
+    "required_equal_fields": [
+      "original.byte_start=source.byte_start",
+      "original.byte_end=source.byte_end"
+    ],
+    "required_file_identity": [
+      "source.bytes=len(captured_file)",
+      "source.sha256=sha256(captured_file)",
+      "source.selected_bytes_sha256=sha256(captured_file)",
+      "original.sha256=sha256(captured_file)"
+    ],
+    "accepted_container_count": 533,
+    "meaning": "Only these explicitly proven runtime-capture files map local parser intervals back to upstream offsets; equal byte length alone is insufficient."
+  },
+  "source_file_closure": "The generated index pins every upstream source file separately in source_files; this closure pins only the two reviewed source-ledger inputs."
+}

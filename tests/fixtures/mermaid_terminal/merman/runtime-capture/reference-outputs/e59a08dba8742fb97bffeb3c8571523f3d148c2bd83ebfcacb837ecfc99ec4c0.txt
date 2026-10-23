@@ -1,0 +1,3 @@
+direction: LR
+  - task(bytes=4)="Task"
+    * event(bytes=5)="Event"

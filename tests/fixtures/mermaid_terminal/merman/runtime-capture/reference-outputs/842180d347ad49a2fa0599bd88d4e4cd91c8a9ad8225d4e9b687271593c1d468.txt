@@ -1,0 +1,21 @@
++---------+             +----+
+| Service |             | DB |
++----+----+             +--+-+
+   + critical Establish a connection to the DB +
+   | |                     |                   |
+   | | connect             |                   |
+   | +.....................|                   |
+   + option Network timeout -------------------+
+   | |                     |                   |
+   | | Log error           |                   |
+   | +..+                  |                   |
+   | |  |                  |                   |
+   | |..+                  |                   |
+   + option Credentials rejected --------------+
+   | |                     |                   |
+   | | Log different error |                   |
+   | +..+                  |                   |
+   | |  |                  |                   |
+   | |..+                  |                   |
+   +-------------------------------------------+
+     |                     |

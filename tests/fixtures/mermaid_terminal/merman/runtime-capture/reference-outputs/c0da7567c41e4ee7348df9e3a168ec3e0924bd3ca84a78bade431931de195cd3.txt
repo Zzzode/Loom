@@ -1,0 +1,24 @@
++------------+
+| Domain     |
++------------+
+| +--------+ |
+| | Marker | |
+| +--------+ |
++------------+
+
++---------+
+| Service |
++---------+
+
++---------------+
+| <<interface>> |
+| IService      |
++---------------+
+
++----------------+
+| note           |
+| interface note |
++----------------+
+
+relations:
+note(index=1, text(bytes=14)="interface note") .. id(bytes=10)="interface0" interfaceRef(id(bytes=10)="interface0" label(bytes=8)="IService" target(bytes=7)="Service" ordinal=1

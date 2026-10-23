@@ -1,0 +1,12 @@
+titleDisplay: chart(bytes=18)="Multiple Bar Plots"
+titleDisplay: yAxis(bytes=6)="Values"
+xDomain: band categories=[bytes=1="A", bytes=1="B", bytes=1="C"]
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=1)="A" value=10 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=50 pointLabel=none clipped=false}, {index=2 x(bytes=1)="C" value=90 pointLabel=none clipped=false}] orphanPointLabels=[]
+100 +        90
+ 80 +        ###
+ 60 +    50  ###
+ 40 +    ### ###
+ 20 +10  ### ###
+  0 +-+---+---+-
+      A   B   C
+titleDisplay: xAxis(bytes=10)="Categories"

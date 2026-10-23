@@ -1,0 +1,57 @@
+┌───────┐                               ┌─────┐                               ┌─────────────┐
+│ Alice │                               │ Bob │                               │    John     │
+└───────┘                               └─────┘                               │ Second Line │
+    │                                      │                                  └─────────────┘
+    │                                      │                                         │
+    │                                      │                                         │
+    │ Hello Bob, how are you?              │                                         │
+    ├──────────────────────────────────────▶                                         │
+    │                                      │                                         │
+    │                                      │                                         │
+    │                                      │ How about you John?                     │
+    │                                      ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄▶
+    │                                      │                                         │
+    │                                      │                                         │
+    │                                      │                                         │  ┌────────────────────┐
+    │                                      │                                         │  │ John thinks a long │
+    │                                      │                                         ├──┤ long time, so long │
+    │                                      │                                         │  │ that the text does │
+    │                                      │                                         │  │ not fit on a row.  │
+    │                                      │                                         │  └────────────────────┘
+    │                                      │                                         │
+    │                                      │                                         │
+    │ Checking with John...                │                                         │
+    ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┤                                         │
+    │                                      │                                         │
+    │                                      │                                         │
+    │                                      │                            ┌────────────┴───────────┐
+    │                                      │                            │  John looks like he's  │
+    │                                      │                            │ still thinking, so Bob │
+    │                                      │                            │    prods him a bit.    │
+    │                                      │                            └────────────┬───────────┘
+    │                                      │                                         │
+    │                                      │                                         │
+    │                                      │         Hey John -                      │
+    │                                      │ we're still waiting to know             │
+    │                                      │      how you're doing                   │
+    │                                      ├─────────────────────────────────────────×
+    │                                      │                                         │
+    │                                      │                                         │
+    │                                      │             ┌───────────────────────────┴───────────────────────────┐
+    │                                      │             │ John's trying hard not to break his train of thought. │
+    │                                      │             └───────────────────────────┬───────────────────────────┘
+    │                                      │                                         │
+    │                                      │                                         │
+    │                                      │ John! Are you still debating about how  │
+    │                                      │ you're doing? How long does it take??   │
+    │                                      ├─────────────────────────────────────────×
+    │                                      │                                         │
+    │                                      │                                         │
+    │                                      │                        ┌────────────────┴───────────────┐
+    │                                      │                        │ After a few more moments, John │
+    │                                      │                        │    finally snaps out of it.    │
+    │                                      │                        └────────────────┬───────────────┘
+    │                                      │                                         │
+    │                                      │                                         │
+
+AFTER_MERMAID

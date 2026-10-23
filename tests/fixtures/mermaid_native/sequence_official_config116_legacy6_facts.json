@@ -1,0 +1,3661 @@
+{
+  "schema": 1,
+  "kind": "official_config116_legacy6_native_source_execution/proposed-v1",
+  "author": "agent:/root/terminal_union",
+  "qualification": "Six complete immutable raw sources and independent raw Model proposals; pending source/concrete native review, no policy promotion.",
+  "inventory_sha256": "ba8320d4048302c928d51bcff1376647636326263934ee173cc69fe9db66aa8a",
+  "immutable_manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+  "crosswalk_sha256": "f8a7c7814a22f02c7f0ba6db7678548f308720524a17219545a16c703e13fcb4",
+  "cases": [
+    {
+      "id": "official-raw-sequence/0ded530f019f911a",
+      "path": "sequence/nightly-check/should-render-a-simple-sequence-diagram.mmd",
+      "input": "---\ndescription: >-\n  Classic Alice/Bob/John demo diagram (solid, dotted, and cross messages, an\n  alt/else block, and a par block) with the actor font overridden to\n  `courier` via config, checking the custom actor font family is applied.\nconfig:\n  sequence:\n    actorFontFamily: courier\n---\nsequenceDiagram\n  participant Alice\n  participant Bob\n  participant John as John<br/>Second Line\n  Alice ->> Bob: Hello Bob, how are you?\n  Bob-->>John: How about you John?\n  Bob--x Alice: I am good thanks!\n  Bob-x John: I am good thanks!\n  Note right of John: Bob thinks a long<br/>long time, so long<br/>that the text does<br/>not fit on a row.\n  Bob-->Alice: Checking with John...\n  alt either this\n  Alice->>John: Yes\n  else or this\n  Alice->>John: No\n  else or this will happen\n  Alice->John: Maybe\n  end\n  par this happens in parallel\n  Alice -->> Bob: Parallel message 1\n  and\n  Alice -->> John: Parallel message 2\n  end\n",
+      "input_sha256": "0ded530f019f911aaa68a761410eadec465ccea9dd2961abdcccc4365d0c55f4",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  participant John as John<br/>Second Line\n  Alice ->> Bob: Hello Bob, how are you?\n  Bob-->>John: How about you John?\n  Bob--x Alice: I am good thanks!\n  Bob-x John: I am good thanks!\n  Note right of John: Bob thinks a long<br/>long time, so long<br/>that the text does<br/>not fit on a row.\n  Bob-->Alice: Checking with John...\n  alt either this\n  Alice->>John: Yes\n  else or this\n  Alice->>John: No\n  else or this will happen\n  Alice->John: Maybe\n  end\n  par this happens in parallel\n  Alice -->> Bob: Parallel message 1\n  and\n  Alice -->> John: Parallel message 2\n  end\n",
+      "body_sha256": "91d87ff6a6880f49ad0992f03d822ff074ffaf87e5a424cac6e4c4401a767480",
+      "body_offset_utf8_bytes": 293,
+      "original_manifest_record": {
+        "path": "sequence/nightly-check/should-render-a-simple-sequence-diagram.mmd",
+        "sha256": "0ded530f019f911aaa68a761410eadec465ccea9dd2961abdcccc4365d0c55f4",
+        "git_blob": "2f76b2f4faa45a0eec1664d5a7fe3bc4c92835da",
+        "bytes": 921,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "drawn",
+          "reason": "Source-reviewed sequence fragment body. SourceReviewedOfficialFragmentBodies independently verifies all native actor/message/note cells, fragment type/condition/color, ordered branches and nested containment. Raw frontmatter/configuration remains unsupported.",
+          "checks": {
+            "labels": [
+              "Alice",
+              "Bob",
+              "John",
+              "Second Line",
+              "Hello Bob, how are you?",
+              "How about you John?",
+              "I am good thanks!",
+              "Checking with John...",
+              "Yes",
+              "No",
+              "Maybe",
+              "Parallel message 1",
+              "Parallel message 2",
+              "Bob thinks a long",
+              "long time, so long",
+              "that the text does",
+              "not fit on a row.",
+              "alt either this",
+              "else or this",
+              "else or this will happen",
+              "par this happens in parallel",
+              "and"
+            ],
+            "arrows": 6,
+            "ordering": []
+          },
+          "snapshot": "ad799b16bfc0f584.txt",
+          "offset": 293,
+          "sha256": "91d87ff6a6880f49ad0992f03d822ff074ffaf87e5a424cac6e4c4401a767480"
+        }
+      },
+      "raw_physical_lines": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 4,
+          "bytes": 16,
+          "sha256": "5f74023604c01fa7f354f49384734f4668c37023158331b8fbfc8eb4c5aea2d0",
+          "text": "description: >-\n"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 20,
+          "bytes": 77,
+          "sha256": "5eda57eab7dbaf676657c1b7de9bb6d0d622df684ad11f9e0b637ca7663d4832",
+          "text": "  Classic Alice/Bob/John demo diagram (solid, dotted, and cross messages, an\n"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 97,
+          "bytes": 69,
+          "sha256": "9b67896fca1521aa2badbe823a093f436d7d722373b335903a2bcf94f8b84c79",
+          "text": "  alt/else block, and a par block) with the actor font overridden to\n"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 166,
+          "bytes": 74,
+          "sha256": "b85b4275938e4c08e7af69e344f80c1a470561e06f091a7964e294d5e7d3d3e5",
+          "text": "  `courier` via config, checking the custom actor font family is applied.\n"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 240,
+          "bytes": 8,
+          "sha256": "e671f1d8924753ffdedf8dd89663f084bb425602036a2fc75a0c34a5215798c7",
+          "text": "config:\n"
+        },
+        {
+          "line": 7,
+          "offset_utf8_bytes": 248,
+          "bytes": 12,
+          "sha256": "8bc5588ca7d2b1e9c56af91a455250c95aab1d6b546cadce589a6382526c9ba8",
+          "text": "  sequence:\n"
+        },
+        {
+          "line": 8,
+          "offset_utf8_bytes": 260,
+          "bytes": 29,
+          "sha256": "f42e08228da2112a7be8895305155a18a7247abd47501ce724ab2a49c79f3461",
+          "text": "    actorFontFamily: courier\n"
+        },
+        {
+          "line": 9,
+          "offset_utf8_bytes": 289,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 10,
+          "offset_utf8_bytes": 293,
+          "bytes": 16,
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+          "text": "sequenceDiagram\n"
+        },
+        {
+          "line": 11,
+          "offset_utf8_bytes": 309,
+          "bytes": 20,
+          "sha256": "760b2873bd22cadae1ed980ee459c5f79092873a70b3313d393c4f4efe6fa60c",
+          "text": "  participant Alice\n"
+        },
+        {
+          "line": 12,
+          "offset_utf8_bytes": 329,
+          "bytes": 18,
+          "sha256": "7c231cab1703f244081583593351009cf4fda55b9bcf59aa1d1db31b0ebc047c",
+          "text": "  participant Bob\n"
+        },
+        {
+          "line": 13,
+          "offset_utf8_bytes": 347,
+          "bytes": 43,
+          "sha256": "ef452c62ff2ebac5922804e7cd511bdbed28aed065209c7256109a7431b478b8",
+          "text": "  participant John as John<br/>Second Line\n"
+        },
+        {
+          "line": 14,
+          "offset_utf8_bytes": 390,
+          "bytes": 41,
+          "sha256": "973a761293aa1bbf915ef3587462238d9220fd25def84d4375355417faeba6a1",
+          "text": "  Alice ->> Bob: Hello Bob, how are you?\n"
+        },
+        {
+          "line": 15,
+          "offset_utf8_bytes": 431,
+          "bytes": 35,
+          "sha256": "532aeee9d15fe232f8159bf04db4ca93dfc094353cc429256592b35b4e70c6d9",
+          "text": "  Bob-->>John: How about you John?\n"
+        },
+        {
+          "line": 16,
+          "offset_utf8_bytes": 466,
+          "bytes": 34,
+          "sha256": "1e1c235dcc75e905629a7729992fe8dd2f20fbfa6f24720134d2469c68f38103",
+          "text": "  Bob--x Alice: I am good thanks!\n"
+        },
+        {
+          "line": 17,
+          "offset_utf8_bytes": 500,
+          "bytes": 32,
+          "sha256": "7acb02bdc004a1a17532672ddd460c52444e8342e62bbfcacf79ed8de99e5733",
+          "text": "  Bob-x John: I am good thanks!\n"
+        },
+        {
+          "line": 18,
+          "offset_utf8_bytes": 532,
+          "bytes": 108,
+          "sha256": "0f35635025c25432ada10d6ee84a0549205f65934fe892aa4e45a14971b972d1",
+          "text": "  Note right of John: Bob thinks a long<br/>long time, so long<br/>that the text does<br/>not fit on a row.\n"
+        },
+        {
+          "line": 19,
+          "offset_utf8_bytes": 640,
+          "bytes": 37,
+          "sha256": "c03208adcb9fcbfd8c65ae01fb27600a337efe6eb55e21faeaa9dfd4b1b9c8ef",
+          "text": "  Bob-->Alice: Checking with John...\n"
+        },
+        {
+          "line": 20,
+          "offset_utf8_bytes": 677,
+          "bytes": 18,
+          "sha256": "06a9eb0cfa397036a7a66deeb7ba2f6d94a906472ef246f33a96081608bc23a2",
+          "text": "  alt either this\n"
+        },
+        {
+          "line": 21,
+          "offset_utf8_bytes": 695,
+          "bytes": 20,
+          "sha256": "53733199341681d97bc91b961ee21844079897ac57b71eecc381f162114c2e06",
+          "text": "  Alice->>John: Yes\n"
+        },
+        {
+          "line": 22,
+          "offset_utf8_bytes": 715,
+          "bytes": 15,
+          "sha256": "af2ade1caf2ccc4131538cdd42b611708f1a979efa2a839d942545769419631d",
+          "text": "  else or this\n"
+        },
+        {
+          "line": 23,
+          "offset_utf8_bytes": 730,
+          "bytes": 19,
+          "sha256": "421eb8c702878c3bafcc4b944751bbd2c37db119fc83a56ce062918a667173e0",
+          "text": "  Alice->>John: No\n"
+        },
+        {
+          "line": 24,
+          "offset_utf8_bytes": 749,
+          "bytes": 27,
+          "sha256": "b2753051b9429af6c4387f98384a6f2cc087ed88e7a5ac870b8e73180695d628",
+          "text": "  else or this will happen\n"
+        },
+        {
+          "line": 25,
+          "offset_utf8_bytes": 776,
+          "bytes": 21,
+          "sha256": "fb1b9b9e8de309b74d62b5d04f425b17e102d4c3d07c4267dcfa50af466c0832",
+          "text": "  Alice->John: Maybe\n"
+        },
+        {
+          "line": 26,
+          "offset_utf8_bytes": 797,
+          "bytes": 6,
+          "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+          "text": "  end\n"
+        },
+        {
+          "line": 27,
+          "offset_utf8_bytes": 803,
+          "bytes": 31,
+          "sha256": "39479d0630b4399fef3186e38f4f40775eaea65496bb88fc1c5a9ad7173e3aa8",
+          "text": "  par this happens in parallel\n"
+        },
+        {
+          "line": 28,
+          "offset_utf8_bytes": 834,
+          "bytes": 37,
+          "sha256": "c720a9abc62f2cbf0cc53a55560ecbf642667347c3ee374f0fbc198e7267b865",
+          "text": "  Alice -->> Bob: Parallel message 1\n"
+        },
+        {
+          "line": 29,
+          "offset_utf8_bytes": 871,
+          "bytes": 6,
+          "sha256": "81538f1174e85b86a9a6541c1b4d13b494d83e490a708f7553b9db2dc8615336",
+          "text": "  and\n"
+        },
+        {
+          "line": 30,
+          "offset_utf8_bytes": 877,
+          "bytes": 38,
+          "sha256": "b84b54bedf175accc5f5462fb9851f2e8f41b92ec39ca20f1817c6eefc0aa97b",
+          "text": "  Alice -->> John: Parallel message 2\n"
+        },
+        {
+          "line": 31,
+          "offset_utf8_bytes": 915,
+          "bytes": 6,
+          "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+          "text": "  end\n"
+        }
+      ],
+      "frontmatter_node_tree": {
+        "kind": "mapping",
+        "yaml_tag": "tag:yaml.org,2002:map",
+        "start_character": 0,
+        "end_character": 285,
+        "entries": [
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 0,
+              "end_character": 11,
+              "value": "description",
+              "style": null
+            },
+            "value": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 13,
+              "end_character": 236,
+              "value": "Classic Alice/Bob/John demo diagram (solid, dotted, and cross messages, an alt/else block, and a par block) with the actor font overridden to `courier` via config, checking the custom actor font family is applied.",
+              "style": ">"
+            }
+          },
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 236,
+              "end_character": 242,
+              "value": "config",
+              "style": null
+            },
+            "value": {
+              "kind": "mapping",
+              "yaml_tag": "tag:yaml.org,2002:map",
+              "start_character": 246,
+              "end_character": 285,
+              "entries": [
+                {
+                  "key": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 246,
+                    "end_character": 254,
+                    "value": "sequence",
+                    "style": null
+                  },
+                  "value": {
+                    "kind": "mapping",
+                    "yaml_tag": "tag:yaml.org,2002:map",
+                    "start_character": 260,
+                    "end_character": 285,
+                    "entries": [
+                      {
+                        "key": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:str",
+                          "start_character": 260,
+                          "end_character": 275,
+                          "value": "actorFontFamily",
+                          "style": null
+                        },
+                        "value": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:str",
+                          "start_character": 277,
+                          "end_character": 284,
+                          "value": "courier",
+                          "style": null
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "config_complete_leaf_inventory": [
+        {
+          "path": "sequence.actorFontFamily",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:str",
+          "value": "courier"
+        }
+      ],
+      "body_authority": {
+        "file": {
+          "path": "/Users/bytedance/Develop/Loom/tests/fixtures/mermaid_native/sequence_official_fragments_facts.json",
+          "sha256": "74ead1f2d193632e242fccfe083467d2c47313776849537a2a97fa0fce30e41c",
+          "bytes": 63196
+        },
+        "fixture_path": "mermaid_native/sequence_official_fragments_facts.json",
+        "case_index": 0,
+        "whole_case_canonical_sha256": "60b31d027cc69dd5007e486764c3e37a36bd3613423c83f39dc337485626ae53",
+        "model_key": "model",
+        "model_sha256": "922f4277f2e60a6449d4e4d31c43c17ad13517a78b9e7a2a92bd6c0dae24bbdf",
+        "number_encoding": "LegacyInteger",
+        "model_verbatim": {
+          "actors": [
+            {
+              "id": "Alice",
+              "label": "Alice",
+              "person": false
+            },
+            {
+              "id": "Bob",
+              "label": "Bob",
+              "person": false
+            },
+            {
+              "id": "John",
+              "label": "John\nSecond Line",
+              "person": false
+            }
+          ],
+          "messages": [
+            {
+              "to": 1,
+              "label": "Hello Bob, how are you?",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 0
+            },
+            {
+              "to": 2,
+              "label": "How about you John?",
+              "dashed": true,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 1
+            },
+            {
+              "to": 0,
+              "label": "I am good thanks!",
+              "dashed": true,
+              "arrow": "Cross",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 1
+            },
+            {
+              "to": 2,
+              "label": "I am good thanks!",
+              "dashed": false,
+              "arrow": "Cross",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 1
+            },
+            {
+              "to": 0,
+              "label": "Checking with John...",
+              "dashed": true,
+              "arrow": "Unheaded",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 1
+            },
+            {
+              "to": 2,
+              "label": "Yes",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 0
+            },
+            {
+              "to": 2,
+              "label": "No",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 0
+            },
+            {
+              "to": 2,
+              "label": "Maybe",
+              "dashed": false,
+              "arrow": "Unheaded",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 0
+            },
+            {
+              "to": 1,
+              "label": "Parallel message 1",
+              "dashed": true,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 0
+            },
+            {
+              "to": 2,
+              "label": "Parallel message 2",
+              "dashed": true,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 0
+            }
+          ],
+          "notes": [
+            {
+              "actors": [
+                2
+              ],
+              "text": "Bob thinks a long\nlong time, so long\nthat the text does\nnot fit on a row.",
+              "position": "right",
+              "after": 3
+            }
+          ],
+          "fragments": [
+            {
+              "kind": "alt",
+              "label": "either this",
+              "parent": -1,
+              "dividers": [
+                "or this",
+                "or this will happen"
+              ]
+            },
+            {
+              "kind": "par",
+              "label": "this happens in parallel",
+              "parent": -1,
+              "dividers": [
+                ""
+              ]
+            }
+          ],
+          "order": [
+            {
+              "kind": "Message",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 2,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 3,
+              "part": 0
+            },
+            {
+              "kind": "Note",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 4,
+              "part": 0
+            },
+            {
+              "kind": "Open",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 5,
+              "part": 0
+            },
+            {
+              "kind": "Divide",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 6,
+              "part": 0
+            },
+            {
+              "kind": "Divide",
+              "index": 0,
+              "part": 1
+            },
+            {
+              "kind": "Message",
+              "index": 7,
+              "part": 0
+            },
+            {
+              "kind": "Close",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Open",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 8,
+              "part": 0
+            },
+            {
+              "kind": "Divide",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 9,
+              "part": 0
+            },
+            {
+              "kind": "Close",
+              "index": 1,
+              "part": 0
+            }
+          ]
+        }
+      },
+      "profile": "fixed",
+      "number_encoding": "DisplayText",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "role": "Participant"
+          },
+          {
+            "id": "John",
+            "label": "John\nSecond Line",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Hello Bob, how are you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "How about you John?",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "I am good thanks!",
+            "dashed": true,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 1
+          },
+          {
+            "to": 2,
+            "label": "I am good thanks!",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "Checking with John...",
+            "dashed": true,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 1
+          },
+          {
+            "to": 2,
+            "label": "Yes",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "No",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Maybe",
+            "dashed": false,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": "Parallel message 1",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Parallel message 2",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              2
+            ],
+            "text": "Bob thinks a long\nlong time, so long\nthat the text does\nnot fit on a row.",
+            "position": "right",
+            "after": 3
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "alt",
+            "label": "either this",
+            "parent": -1,
+            "dividers": [
+              "or this",
+              "or this will happen"
+            ]
+          },
+          {
+            "kind": "par",
+            "label": "this happens in parallel",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 1
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 9,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "title": "",
+        "boxes": []
+      },
+      "model_sha256": "534598292a4577d13f1f387ebbe9cd5fa25843fd57fa3856131d3ad588c8ba54",
+      "source_label_witnesses": [],
+      "legacy_site": "SourceReviewedOfficialFragmentBodies"
+    },
+    {
+      "id": "official-raw-sequence/20f0c7f23ebe4861",
+      "path": "sequence/nightly-check/should-render-central-connections-with-activations.mmd",
+      "input": "---\ndescription: >-\n  Classic-look sequence diagram combining central-connection arrows (the\n  `()` marker denoting an open circle terminator) with activation bars,\n  verifying that activate/deactivate rendering lines up correctly on an\n  actor whose arrows use the central-connection syntax.\nconfig:\n  look: classic\n  sequence:\n    diagramMarginX: 50\n    diagramMarginY: 10\n---\nsequenceDiagram\n  participant Alice\n  participant Bob\n  participant Charlie\n  Alice ()->>() Bob: Activate Bob\n  activate Bob\n  Bob ()-->> Charlie: Message to Charlie\n  Bob ()->>() Alice: Response to Alice\n  deactivate Bob\n",
+      "input_sha256": "20f0c7f23ebe4861480c167b7bacd6d8bc71a0ae81f7321478e6b94f7602281d",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  participant Charlie\n  Alice ()->>() Bob: Activate Bob\n  activate Bob\n  Bob ()-->> Charlie: Message to Charlie\n  Bob ()->>() Alice: Response to Alice\n  deactivate Bob\n",
+      "body_sha256": "d28b46732327a2c2d7f38f049d89deb3cb8569dd3e6baea138f57bafa1a9bca2",
+      "body_offset_utf8_bytes": 379,
+      "original_manifest_record": {
+        "path": "sequence/nightly-check/should-render-central-connections-with-activations.mmd",
+        "sha256": "20f0c7f23ebe4861480c167b7bacd6d8bc71a0ae81f7321478e6b94f7602281d",
+        "git_blob": "23d7d2487649de8d2cb9d67655847286a4dfb980",
+        "bytes": 601,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "drawn",
+          "reason": "Source-only reviewed full actor/message/fragment/activation model passes SourceReviewedOfficialActivationBodies and the complete native timed-strip oracle before snapshot generation. This diagnostic suffix does not establish original metadata semantics or official SVG parity.",
+          "checks": {
+            "labels": [
+              "Alice",
+              "Bob",
+              "Charlie",
+              "Activate Bob",
+              "Message to Charlie",
+              "Response to Alice"
+            ],
+            "arrows": 3,
+            "ordering": []
+          },
+          "snapshot": "58f7bd922bc3db88.txt",
+          "offset": 379,
+          "sha256": "d28b46732327a2c2d7f38f049d89deb3cb8569dd3e6baea138f57bafa1a9bca2"
+        }
+      },
+      "raw_physical_lines": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 4,
+          "bytes": 16,
+          "sha256": "5f74023604c01fa7f354f49384734f4668c37023158331b8fbfc8eb4c5aea2d0",
+          "text": "description: >-\n"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 20,
+          "bytes": 73,
+          "sha256": "d7a0285d239ef75dbc0e127a4f80dbbf3b6090786f5b1e0739f0918084ecb5b1",
+          "text": "  Classic-look sequence diagram combining central-connection arrows (the\n"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 93,
+          "bytes": 72,
+          "sha256": "f5dde6f7517e65be67d41b98544deba080a3fd38c08b44b64333e6e6a863f44b",
+          "text": "  `()` marker denoting an open circle terminator) with activation bars,\n"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 165,
+          "bytes": 72,
+          "sha256": "192436732d30c9a4f6fd0bad13525f070d2acb9a9f86e03b05373faf35e3c79e",
+          "text": "  verifying that activate/deactivate rendering lines up correctly on an\n"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 237,
+          "bytes": 56,
+          "sha256": "513a2cc8ae46fa3ba963acb0c6da90a21a491428b8d23442a19a26344fa910a7",
+          "text": "  actor whose arrows use the central-connection syntax.\n"
+        },
+        {
+          "line": 7,
+          "offset_utf8_bytes": 293,
+          "bytes": 8,
+          "sha256": "e671f1d8924753ffdedf8dd89663f084bb425602036a2fc75a0c34a5215798c7",
+          "text": "config:\n"
+        },
+        {
+          "line": 8,
+          "offset_utf8_bytes": 301,
+          "bytes": 16,
+          "sha256": "5e932ba79e65a4a3e55f085d442009cb6f77f1ed0ba4e76ce2ea30b7541a680a",
+          "text": "  look: classic\n"
+        },
+        {
+          "line": 9,
+          "offset_utf8_bytes": 317,
+          "bytes": 12,
+          "sha256": "8bc5588ca7d2b1e9c56af91a455250c95aab1d6b546cadce589a6382526c9ba8",
+          "text": "  sequence:\n"
+        },
+        {
+          "line": 10,
+          "offset_utf8_bytes": 329,
+          "bytes": 23,
+          "sha256": "5862f1da15334c9451b99d1fc885de575205493f129094b1a620e8d59d3dc99b",
+          "text": "    diagramMarginX: 50\n"
+        },
+        {
+          "line": 11,
+          "offset_utf8_bytes": 352,
+          "bytes": 23,
+          "sha256": "1b4c6c0077fb328beb31f25ceefee6c65aa8bc176d9e8fa5cdaa89f4b13eefa5",
+          "text": "    diagramMarginY: 10\n"
+        },
+        {
+          "line": 12,
+          "offset_utf8_bytes": 375,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 13,
+          "offset_utf8_bytes": 379,
+          "bytes": 16,
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+          "text": "sequenceDiagram\n"
+        },
+        {
+          "line": 14,
+          "offset_utf8_bytes": 395,
+          "bytes": 20,
+          "sha256": "760b2873bd22cadae1ed980ee459c5f79092873a70b3313d393c4f4efe6fa60c",
+          "text": "  participant Alice\n"
+        },
+        {
+          "line": 15,
+          "offset_utf8_bytes": 415,
+          "bytes": 18,
+          "sha256": "7c231cab1703f244081583593351009cf4fda55b9bcf59aa1d1db31b0ebc047c",
+          "text": "  participant Bob\n"
+        },
+        {
+          "line": 16,
+          "offset_utf8_bytes": 433,
+          "bytes": 22,
+          "sha256": "1b81ccf94edf73aa3281ad923e5f85cbfe486420576f4d80f29c0f1cfccbacba",
+          "text": "  participant Charlie\n"
+        },
+        {
+          "line": 17,
+          "offset_utf8_bytes": 455,
+          "bytes": 34,
+          "sha256": "116c4fb928fd26a62751571b9dff215df1e49d1d83efedd334a8107ef4489aea",
+          "text": "  Alice ()->>() Bob: Activate Bob\n"
+        },
+        {
+          "line": 18,
+          "offset_utf8_bytes": 489,
+          "bytes": 15,
+          "sha256": "b109c0eee5eafce0756f595a10711fe9306bc9c3ca660acbc312a62f013ae84d",
+          "text": "  activate Bob\n"
+        },
+        {
+          "line": 19,
+          "offset_utf8_bytes": 504,
+          "bytes": 41,
+          "sha256": "ddfd5ed5c1ed8a4a3bde0fca8c36c2e4c9acf424c621a3455cfe4dac0a71fe13",
+          "text": "  Bob ()-->> Charlie: Message to Charlie\n"
+        },
+        {
+          "line": 20,
+          "offset_utf8_bytes": 545,
+          "bytes": 39,
+          "sha256": "77f76c76404fae5beb5834ea85fafd76dc11362f3ade33c4bc463642a0403d73",
+          "text": "  Bob ()->>() Alice: Response to Alice\n"
+        },
+        {
+          "line": 21,
+          "offset_utf8_bytes": 584,
+          "bytes": 17,
+          "sha256": "02291b5af72b7fffd0e890bbe07e96b3582653ac5acac990b5dc556a2acb186c",
+          "text": "  deactivate Bob\n"
+        }
+      ],
+      "frontmatter_node_tree": {
+        "kind": "mapping",
+        "yaml_tag": "tag:yaml.org,2002:map",
+        "start_character": 0,
+        "end_character": 371,
+        "entries": [
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 0,
+              "end_character": 11,
+              "value": "description",
+              "style": null
+            },
+            "value": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 13,
+              "end_character": 289,
+              "value": "Classic-look sequence diagram combining central-connection arrows (the `()` marker denoting an open circle terminator) with activation bars, verifying that activate/deactivate rendering lines up correctly on an actor whose arrows use the central-connection syntax.",
+              "style": ">"
+            }
+          },
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 289,
+              "end_character": 295,
+              "value": "config",
+              "style": null
+            },
+            "value": {
+              "kind": "mapping",
+              "yaml_tag": "tag:yaml.org,2002:map",
+              "start_character": 299,
+              "end_character": 371,
+              "entries": [
+                {
+                  "key": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 299,
+                    "end_character": 303,
+                    "value": "look",
+                    "style": null
+                  },
+                  "value": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 305,
+                    "end_character": 312,
+                    "value": "classic",
+                    "style": null
+                  }
+                },
+                {
+                  "key": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 315,
+                    "end_character": 323,
+                    "value": "sequence",
+                    "style": null
+                  },
+                  "value": {
+                    "kind": "mapping",
+                    "yaml_tag": "tag:yaml.org,2002:map",
+                    "start_character": 329,
+                    "end_character": 371,
+                    "entries": [
+                      {
+                        "key": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:str",
+                          "start_character": 329,
+                          "end_character": 343,
+                          "value": "diagramMarginX",
+                          "style": null
+                        },
+                        "value": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:int",
+                          "start_character": 345,
+                          "end_character": 347,
+                          "value": "50",
+                          "style": null
+                        }
+                      },
+                      {
+                        "key": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:str",
+                          "start_character": 352,
+                          "end_character": 366,
+                          "value": "diagramMarginY",
+                          "style": null
+                        },
+                        "value": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:int",
+                          "start_character": 368,
+                          "end_character": 370,
+                          "value": "10",
+                          "style": null
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "config_complete_leaf_inventory": [
+        {
+          "path": "look",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:str",
+          "value": "classic"
+        },
+        {
+          "path": "sequence.diagramMarginX",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:int",
+          "value": "50"
+        },
+        {
+          "path": "sequence.diagramMarginY",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:int",
+          "value": "10"
+        }
+      ],
+      "body_authority": {
+        "file": {
+          "path": "/Users/bytedance/Develop/Loom/tests/fixtures/mermaid_native/sequence_official_activation_facts.json",
+          "sha256": "4a2d69cb97ec62844d757d7435cef6a10df7751f8e28aa369d10775f4fd494c5",
+          "bytes": 18208
+        },
+        "fixture_path": "mermaid_native/sequence_official_activation_facts.json",
+        "case_index": 2,
+        "whole_case_canonical_sha256": "afafe173c8396f6236667e44c25bcc079c8e8b4adcea7f95d5827e7836c21927",
+        "model_key": "model",
+        "model_sha256": "31acf0df3e71aebdecb14392f62f53ddbfc4334d483c5cffde2fda6693a49335",
+        "number_encoding": "LegacyInteger",
+        "model_verbatim": {
+          "actors": [
+            {
+              "id": "Alice",
+              "label": "Alice",
+              "person": false
+            },
+            {
+              "id": "Bob",
+              "label": "Bob",
+              "person": false
+            },
+            {
+              "id": "Charlie",
+              "label": "Charlie",
+              "person": false
+            }
+          ],
+          "messages": [
+            {
+              "from": 0,
+              "to": 1,
+              "label": "Activate Bob",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": true,
+              "central_to": true,
+              "number": 0
+            },
+            {
+              "from": 1,
+              "to": 2,
+              "label": "Message to Charlie",
+              "dashed": true,
+              "arrow": "Filled",
+              "central_from": true,
+              "central_to": false,
+              "number": 0
+            },
+            {
+              "from": 1,
+              "to": 0,
+              "label": "Response to Alice",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": true,
+              "central_to": true,
+              "number": 0
+            }
+          ],
+          "notes": [],
+          "fragments": [],
+          "order": [
+            {
+              "kind": "Message",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Activate",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 2,
+              "part": 0
+            },
+            {
+              "kind": "Deactivate",
+              "index": 1,
+              "part": 0
+            }
+          ]
+        }
+      },
+      "profile": "fixed",
+      "number_encoding": "DisplayText",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "role": "Participant"
+          },
+          {
+            "id": "Charlie",
+            "label": "Charlie",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Activate Bob",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": true,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Message to Charlie",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Response to Alice",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": true,
+            "number": ""
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Deactivate",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "title": "",
+        "boxes": []
+      },
+      "model_sha256": "1fe5fd763333ad9f72d29536c4754670ba54c26076d159dbce86549e7a3afedf",
+      "source_label_witnesses": [],
+      "legacy_site": "SourceReviewedOfficialActivationBodies"
+    },
+    {
+      "id": "official-raw-sequence/847f93d8ee33fff2",
+      "path": "sequence/nightly-check/should-render-central-connections-with-notes.mmd",
+      "input": "---\ndescription: >-\n  Classic-look sequence diagram combining central-connection arrows with\n  `Note over` and `Note right of` statements, checking that note placement\n  is unaffected by the `()` central-connection marker on adjacent messages.\nconfig:\n  look: classic\n  sequence:\n    diagramMarginX: 50\n    diagramMarginY: 10\n---\nsequenceDiagram\n  participant Alice\n  participant Bob\n  participant Charlie\n  Alice ()->>() Bob: Central connection\n  Note over Alice,Bob: Central connection note\n  Bob ()-->> Charlie: Reverse central connection\n  Note right of Charlie: Response note\n  Charlie ()<<-->>() Alice: Dual central connection\n",
+      "input_sha256": "847f93d8ee33fff2c4053d881bee96be9200326233a4ba571c8c996146747fe0",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  participant Charlie\n  Alice ()->>() Bob: Central connection\n  Note over Alice,Bob: Central connection note\n  Bob ()-->> Charlie: Reverse central connection\n  Note right of Charlie: Response note\n  Charlie ()<<-->>() Alice: Dual central connection\n",
+      "body_sha256": "79996f50a85269d91bd62a85d4992a1e0c185a8082e1a01b6f986461cafce800",
+      "body_offset_utf8_bytes": 330,
+      "original_manifest_record": {
+        "path": "sequence/nightly-check/should-render-central-connections-with-notes.mmd",
+        "sha256": "847f93d8ee33fff2c4053d881bee96be9200326233a4ba571c8c996146747fe0",
+        "git_blob": "3d0d78cae6b43c19532e915934cd6c453b7337bb",
+        "bytes": 633,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "drawn",
+          "reason": "Source-reviewed sequence side-note body. SourceReviewedOfficialSideNotes verifies complete native cell labels, event order, central/arrow styles and explicit over/side note ownership; raw frontmatter font, alignment and look remain unsupported.",
+          "checks": {
+            "labels": [
+              "Alice",
+              "Bob",
+              "Charlie",
+              "Central connection",
+              "Reverse central connection",
+              "Dual central connection",
+              "Central connection note",
+              "Response note"
+            ],
+            "arrows": 4,
+            "ordering": [
+              {
+                "before": "Alice",
+                "after": "Bob",
+                "axis": "x"
+              },
+              {
+                "before": "Bob",
+                "after": "Charlie",
+                "axis": "x"
+              }
+            ]
+          },
+          "snapshot": "8c432b62bb2e178e.txt",
+          "offset": 330,
+          "sha256": "79996f50a85269d91bd62a85d4992a1e0c185a8082e1a01b6f986461cafce800"
+        }
+      },
+      "raw_physical_lines": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 4,
+          "bytes": 16,
+          "sha256": "5f74023604c01fa7f354f49384734f4668c37023158331b8fbfc8eb4c5aea2d0",
+          "text": "description: >-\n"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 20,
+          "bytes": 73,
+          "sha256": "c70d9a2ea2fe3ec779bc9ec63155beb427e15ba6a3ba5801c0e7b4ece4d26717",
+          "text": "  Classic-look sequence diagram combining central-connection arrows with\n"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 93,
+          "bytes": 75,
+          "sha256": "9025d9d95d416d0bbcc09a928ac074f48d1d7d08043abc43871515c7896423a1",
+          "text": "  `Note over` and `Note right of` statements, checking that note placement\n"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 168,
+          "bytes": 76,
+          "sha256": "b4985d4b6ba7ebc47a9b20a18b9fbda3454d7d8a5f04ce06cda82228d8a5d860",
+          "text": "  is unaffected by the `()` central-connection marker on adjacent messages.\n"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 244,
+          "bytes": 8,
+          "sha256": "e671f1d8924753ffdedf8dd89663f084bb425602036a2fc75a0c34a5215798c7",
+          "text": "config:\n"
+        },
+        {
+          "line": 7,
+          "offset_utf8_bytes": 252,
+          "bytes": 16,
+          "sha256": "5e932ba79e65a4a3e55f085d442009cb6f77f1ed0ba4e76ce2ea30b7541a680a",
+          "text": "  look: classic\n"
+        },
+        {
+          "line": 8,
+          "offset_utf8_bytes": 268,
+          "bytes": 12,
+          "sha256": "8bc5588ca7d2b1e9c56af91a455250c95aab1d6b546cadce589a6382526c9ba8",
+          "text": "  sequence:\n"
+        },
+        {
+          "line": 9,
+          "offset_utf8_bytes": 280,
+          "bytes": 23,
+          "sha256": "5862f1da15334c9451b99d1fc885de575205493f129094b1a620e8d59d3dc99b",
+          "text": "    diagramMarginX: 50\n"
+        },
+        {
+          "line": 10,
+          "offset_utf8_bytes": 303,
+          "bytes": 23,
+          "sha256": "1b4c6c0077fb328beb31f25ceefee6c65aa8bc176d9e8fa5cdaa89f4b13eefa5",
+          "text": "    diagramMarginY: 10\n"
+        },
+        {
+          "line": 11,
+          "offset_utf8_bytes": 326,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 12,
+          "offset_utf8_bytes": 330,
+          "bytes": 16,
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+          "text": "sequenceDiagram\n"
+        },
+        {
+          "line": 13,
+          "offset_utf8_bytes": 346,
+          "bytes": 20,
+          "sha256": "760b2873bd22cadae1ed980ee459c5f79092873a70b3313d393c4f4efe6fa60c",
+          "text": "  participant Alice\n"
+        },
+        {
+          "line": 14,
+          "offset_utf8_bytes": 366,
+          "bytes": 18,
+          "sha256": "7c231cab1703f244081583593351009cf4fda55b9bcf59aa1d1db31b0ebc047c",
+          "text": "  participant Bob\n"
+        },
+        {
+          "line": 15,
+          "offset_utf8_bytes": 384,
+          "bytes": 22,
+          "sha256": "1b81ccf94edf73aa3281ad923e5f85cbfe486420576f4d80f29c0f1cfccbacba",
+          "text": "  participant Charlie\n"
+        },
+        {
+          "line": 16,
+          "offset_utf8_bytes": 406,
+          "bytes": 40,
+          "sha256": "32689d14569ca46bffd3ab0c2f3c53e9b751effec6e84d5f965fd49925742765",
+          "text": "  Alice ()->>() Bob: Central connection\n"
+        },
+        {
+          "line": 17,
+          "offset_utf8_bytes": 446,
+          "bytes": 47,
+          "sha256": "8c75ced7de375c84d54aefc1f1e95f382f895377f721f5952727c2be80985933",
+          "text": "  Note over Alice,Bob: Central connection note\n"
+        },
+        {
+          "line": 18,
+          "offset_utf8_bytes": 493,
+          "bytes": 49,
+          "sha256": "03bcb667b1705376d327718b5c8756689911e82def9f155bfe690dbd91f7ea54",
+          "text": "  Bob ()-->> Charlie: Reverse central connection\n"
+        },
+        {
+          "line": 19,
+          "offset_utf8_bytes": 542,
+          "bytes": 39,
+          "sha256": "fa99498d9391e0a3beaf33f40cb5edcbb4280d6017408fc65821361162981095",
+          "text": "  Note right of Charlie: Response note\n"
+        },
+        {
+          "line": 20,
+          "offset_utf8_bytes": 581,
+          "bytes": 52,
+          "sha256": "203f107eaab79015b07fd620ffeb6e7afcfcbbe727b70f105e4319e906077fe2",
+          "text": "  Charlie ()<<-->>() Alice: Dual central connection\n"
+        }
+      ],
+      "frontmatter_node_tree": {
+        "kind": "mapping",
+        "yaml_tag": "tag:yaml.org,2002:map",
+        "start_character": 0,
+        "end_character": 322,
+        "entries": [
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 0,
+              "end_character": 11,
+              "value": "description",
+              "style": null
+            },
+            "value": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 13,
+              "end_character": 240,
+              "value": "Classic-look sequence diagram combining central-connection arrows with `Note over` and `Note right of` statements, checking that note placement is unaffected by the `()` central-connection marker on adjacent messages.",
+              "style": ">"
+            }
+          },
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 240,
+              "end_character": 246,
+              "value": "config",
+              "style": null
+            },
+            "value": {
+              "kind": "mapping",
+              "yaml_tag": "tag:yaml.org,2002:map",
+              "start_character": 250,
+              "end_character": 322,
+              "entries": [
+                {
+                  "key": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 250,
+                    "end_character": 254,
+                    "value": "look",
+                    "style": null
+                  },
+                  "value": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 256,
+                    "end_character": 263,
+                    "value": "classic",
+                    "style": null
+                  }
+                },
+                {
+                  "key": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 266,
+                    "end_character": 274,
+                    "value": "sequence",
+                    "style": null
+                  },
+                  "value": {
+                    "kind": "mapping",
+                    "yaml_tag": "tag:yaml.org,2002:map",
+                    "start_character": 280,
+                    "end_character": 322,
+                    "entries": [
+                      {
+                        "key": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:str",
+                          "start_character": 280,
+                          "end_character": 294,
+                          "value": "diagramMarginX",
+                          "style": null
+                        },
+                        "value": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:int",
+                          "start_character": 296,
+                          "end_character": 298,
+                          "value": "50",
+                          "style": null
+                        }
+                      },
+                      {
+                        "key": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:str",
+                          "start_character": 303,
+                          "end_character": 317,
+                          "value": "diagramMarginY",
+                          "style": null
+                        },
+                        "value": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:int",
+                          "start_character": 319,
+                          "end_character": 321,
+                          "value": "10",
+                          "style": null
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "config_complete_leaf_inventory": [
+        {
+          "path": "look",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:str",
+          "value": "classic"
+        },
+        {
+          "path": "sequence.diagramMarginX",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:int",
+          "value": "50"
+        },
+        {
+          "path": "sequence.diagramMarginY",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:int",
+          "value": "10"
+        }
+      ],
+      "body_authority": {
+        "file": {
+          "path": "/Users/bytedance/Develop/Loom/tests/fixtures/mermaid_native/sequence_official_side_notes_facts.json",
+          "sha256": "9a5ce7dc8c5f98badaf5c6a86346d8acbf98f6088b3851c2ef7e6131d188e1c7",
+          "bytes": 14286
+        },
+        "fixture_path": "mermaid_native/sequence_official_side_notes_facts.json",
+        "case_index": 0,
+        "whole_case_canonical_sha256": "ed42a8f3ff176c48add375470597402484e751633c10e933afc649720c48d175",
+        "model_key": "model",
+        "model_sha256": "4508fb450afbf853dcaf9eabf474eba2efc90b2af9738d778c028c811848e0fc",
+        "number_encoding": "LegacyInteger",
+        "model_verbatim": {
+          "actors": [
+            {
+              "id": "Alice",
+              "label": "Alice",
+              "person": false
+            },
+            {
+              "id": "Bob",
+              "label": "Bob",
+              "person": false
+            },
+            {
+              "id": "Charlie",
+              "label": "Charlie",
+              "person": false
+            }
+          ],
+          "messages": [
+            {
+              "from": 0,
+              "to": 1,
+              "label": "Central connection",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": true,
+              "central_to": true,
+              "number": 0
+            },
+            {
+              "from": 1,
+              "to": 2,
+              "label": "Reverse central connection",
+              "dashed": true,
+              "arrow": "Filled",
+              "central_from": true,
+              "central_to": false,
+              "number": 0
+            },
+            {
+              "from": 2,
+              "to": 0,
+              "label": "Dual central connection",
+              "dashed": true,
+              "arrow": "Both",
+              "central_from": true,
+              "central_to": true,
+              "number": 0
+            }
+          ],
+          "notes": [
+            {
+              "actors": [
+                0,
+                1
+              ],
+              "text": "Central connection note",
+              "position": "over",
+              "after": 0
+            },
+            {
+              "actors": [
+                2
+              ],
+              "text": "Response note",
+              "position": "right",
+              "after": 1
+            }
+          ]
+        }
+      },
+      "profile": "fixed",
+      "number_encoding": "DisplayText",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "role": "Participant"
+          },
+          {
+            "id": "Charlie",
+            "label": "Charlie",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Central connection",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": true,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Reverse central connection",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 2,
+            "to": 0,
+            "label": "Dual central connection",
+            "dashed": true,
+            "arrow": "Both",
+            "central_from": true,
+            "central_to": true,
+            "number": ""
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0,
+              1
+            ],
+            "text": "Central connection note",
+            "position": "over",
+            "after": 0
+          },
+          {
+            "actors": [
+              2
+            ],
+            "text": "Response note",
+            "position": "right",
+            "after": 1
+          }
+        ],
+        "title": "",
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          }
+        ]
+      },
+      "model_sha256": "eda3ffebfa41c646562c3bcc70af3ffd9bbfa1142f9672e359fff356c7fb5097",
+      "source_label_witnesses": [],
+      "legacy_site": "SourceReviewedOfficialSideNotes"
+    },
+    {
+      "id": "official-raw-sequence/623cbfacbed8eeb6",
+      "path": "sequence/nightly-check/should-render-loops-with-a-slight-margin.mmd",
+      "input": "---\ndescription: >-\n  Sequence diagram with `sequence.wrap: true`, where a long wrapped message\n  precedes a `loop` block, checking that the loop frame renders with a\n  slight margin rather than tightly hugging the wrapped message above it.\nconfig:\n  sequence:\n    wrap: true\n---\nsequenceDiagram\n  Alice->>Bob: Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be\n  loop Loopy\n  Bob->>Alice: Pasten\n  end\n",
+      "input_sha256": "623cbfacbed8eeb6506838788f285a351f523aa6a684c3923be5a69a4dcf73d5",
+      "body": "sequenceDiagram\n  Alice->>Bob: Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be\n  loop Loopy\n  Bob->>Alice: Pasten\n  end\n",
+      "body_sha256": "2a8aa69b76a4620011cebed5f9e3d555e5cd5671656987b16b34a2109da0c4ec",
+      "body_offset_utf8_bytes": 280,
+      "original_manifest_record": {
+        "path": "sequence/nightly-check/should-render-loops-with-a-slight-margin.mmd",
+        "sha256": "623cbfacbed8eeb6506838788f285a351f523aa6a684c3923be5a69a4dcf73d5",
+        "git_blob": "91fb858f4f8d30e8834b2868374aefeef241a412",
+        "bytes": 481,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "drawn",
+          "reason": "Source-reviewed sequence fragment body. SourceReviewedOfficialFragmentBodies independently verifies all native actor/message/note cells, fragment type/condition/color, ordered branches and nested containment. Raw frontmatter/configuration remains unsupported.",
+          "checks": {
+            "labels": [
+              "Alice",
+              "Bob",
+              "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be",
+              "Pasten",
+              "loop Loopy"
+            ],
+            "arrows": 2,
+            "ordering": []
+          },
+          "snapshot": "c5a0523d8620687c.txt",
+          "offset": 280,
+          "sha256": "2a8aa69b76a4620011cebed5f9e3d555e5cd5671656987b16b34a2109da0c4ec"
+        }
+      },
+      "raw_physical_lines": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 4,
+          "bytes": 16,
+          "sha256": "5f74023604c01fa7f354f49384734f4668c37023158331b8fbfc8eb4c5aea2d0",
+          "text": "description: >-\n"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 20,
+          "bytes": 76,
+          "sha256": "8ae03b28b65908a602538cf0196cbb12c577a2778112e87bd50e176f4dceb4e5",
+          "text": "  Sequence diagram with `sequence.wrap: true`, where a long wrapped message\n"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 96,
+          "bytes": 71,
+          "sha256": "f53c131867506384ec6fe330b6f067e70712acddc11d924719b6e336e4b3cd8c",
+          "text": "  precedes a `loop` block, checking that the loop frame renders with a\n"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 167,
+          "bytes": 74,
+          "sha256": "a8bd8e9a7df759d07922673489772de33ba739778f15c73a484ad7d1394f8e89",
+          "text": "  slight margin rather than tightly hugging the wrapped message above it.\n"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 241,
+          "bytes": 8,
+          "sha256": "e671f1d8924753ffdedf8dd89663f084bb425602036a2fc75a0c34a5215798c7",
+          "text": "config:\n"
+        },
+        {
+          "line": 7,
+          "offset_utf8_bytes": 249,
+          "bytes": 12,
+          "sha256": "8bc5588ca7d2b1e9c56af91a455250c95aab1d6b546cadce589a6382526c9ba8",
+          "text": "  sequence:\n"
+        },
+        {
+          "line": 8,
+          "offset_utf8_bytes": 261,
+          "bytes": 15,
+          "sha256": "61a09f2ff0f2944e13d782545ff71dd41fda72c13a24b5062447d6c8c03ffff0",
+          "text": "    wrap: true\n"
+        },
+        {
+          "line": 9,
+          "offset_utf8_bytes": 276,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 10,
+          "offset_utf8_bytes": 280,
+          "bytes": 16,
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+          "text": "sequenceDiagram\n"
+        },
+        {
+          "line": 11,
+          "offset_utf8_bytes": 296,
+          "bytes": 144,
+          "sha256": "22bf8db7c9ea7cfc0b780ddad5a97efd54c806b1fb5fb315b31a8c0fce3d3a0f",
+          "text": "  Alice->>Bob: Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be\n"
+        },
+        {
+          "line": 12,
+          "offset_utf8_bytes": 440,
+          "bytes": 13,
+          "sha256": "2a5c0b8a0b35eb76e419a338e6d5a5eea70e7211b7fc640efd81568d81e0f236",
+          "text": "  loop Loopy\n"
+        },
+        {
+          "line": 13,
+          "offset_utf8_bytes": 453,
+          "bytes": 22,
+          "sha256": "0f7c7ad7014fd1ec7ae36fa8ccc9d86142fd1c28c5ff19333e0e28506af545e3",
+          "text": "  Bob->>Alice: Pasten\n"
+        },
+        {
+          "line": 14,
+          "offset_utf8_bytes": 475,
+          "bytes": 6,
+          "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+          "text": "  end\n"
+        }
+      ],
+      "frontmatter_node_tree": {
+        "kind": "mapping",
+        "yaml_tag": "tag:yaml.org,2002:map",
+        "start_character": 0,
+        "end_character": 272,
+        "entries": [
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 0,
+              "end_character": 11,
+              "value": "description",
+              "style": null
+            },
+            "value": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 13,
+              "end_character": 237,
+              "value": "Sequence diagram with `sequence.wrap: true`, where a long wrapped message precedes a `loop` block, checking that the loop frame renders with a slight margin rather than tightly hugging the wrapped message above it.",
+              "style": ">"
+            }
+          },
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 237,
+              "end_character": 243,
+              "value": "config",
+              "style": null
+            },
+            "value": {
+              "kind": "mapping",
+              "yaml_tag": "tag:yaml.org,2002:map",
+              "start_character": 247,
+              "end_character": 272,
+              "entries": [
+                {
+                  "key": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 247,
+                    "end_character": 255,
+                    "value": "sequence",
+                    "style": null
+                  },
+                  "value": {
+                    "kind": "mapping",
+                    "yaml_tag": "tag:yaml.org,2002:map",
+                    "start_character": 261,
+                    "end_character": 272,
+                    "entries": [
+                      {
+                        "key": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:str",
+                          "start_character": 261,
+                          "end_character": 265,
+                          "value": "wrap",
+                          "style": null
+                        },
+                        "value": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:bool",
+                          "start_character": 267,
+                          "end_character": 271,
+                          "value": "true",
+                          "style": null
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "config_complete_leaf_inventory": [
+        {
+          "path": "sequence.wrap",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:bool",
+          "value": "true"
+        }
+      ],
+      "body_authority": {
+        "file": {
+          "path": "/Users/bytedance/Develop/Loom/tests/fixtures/mermaid_native/sequence_official_fragments_facts.json",
+          "sha256": "74ead1f2d193632e242fccfe083467d2c47313776849537a2a97fa0fce30e41c",
+          "bytes": 63196
+        },
+        "fixture_path": "mermaid_native/sequence_official_fragments_facts.json",
+        "case_index": 4,
+        "whole_case_canonical_sha256": "e08f014ec8aac260eb1f83c228f39336997f7c4a01b43b1a09c598ec61485789",
+        "model_key": "model",
+        "model_sha256": "b08f2433456ebf595e857a9030dbbda9f533a1ad5c294968d88ec2bf98a23e43",
+        "number_encoding": "LegacyInteger",
+        "model_verbatim": {
+          "actors": [
+            {
+              "id": "Alice",
+              "label": "Alice",
+              "person": false
+            },
+            {
+              "id": "Bob",
+              "label": "Bob",
+              "person": false
+            }
+          ],
+          "messages": [
+            {
+              "to": 1,
+              "label": "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 0
+            },
+            {
+              "to": 0,
+              "label": "Pasten",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 1
+            }
+          ],
+          "notes": [],
+          "fragments": [
+            {
+              "kind": "loop",
+              "label": "Loopy",
+              "parent": -1,
+              "dividers": []
+            }
+          ],
+          "order": [
+            {
+              "kind": "Message",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Open",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Close",
+              "index": 0,
+              "part": 0
+            }
+          ]
+        }
+      },
+      "profile": "source_wrap",
+      "number_encoding": "DisplayText",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": {
+              "text": "Alice",
+              "wrap": true
+            },
+            "role": "Participant"
+          },
+          {
+            "id": "Bob",
+            "label": {
+              "text": "Bob",
+              "wrap": true
+            },
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": {
+              "text": "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be",
+              "wrap": true
+            },
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 0
+          },
+          {
+            "to": 0,
+            "label": {
+              "text": "Pasten",
+              "wrap": true
+            },
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 1
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "loop",
+            "label": "Loopy",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          }
+        ],
+        "title": "",
+        "boxes": []
+      },
+      "model_sha256": "a3ed5b6eacd7604df5b2a61536bdd69ad112d9a9ec9fe693883242cd9b91f8e0",
+      "source_label_witnesses": [
+        {
+          "field": "message",
+          "index": 0,
+          "raw_line": 11,
+          "raw_offset_utf8_bytes": 296,
+          "whole_line": "  Alice->>Bob: Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be\n",
+          "whole_line_sha256": "22bf8db7c9ea7cfc0b780ddad5a97efd54c806b1fb5fb315b31a8c0fce3d3a0f",
+          "authored_label": "Extremely utterly long line of longness which had previously overflown the actor box as it is much longer than what it should be",
+          "effective_wrap": true
+        },
+        {
+          "field": "message",
+          "index": 1,
+          "raw_line": 13,
+          "raw_offset_utf8_bytes": 453,
+          "whole_line": "  Bob->>Alice: Pasten\n",
+          "whole_line_sha256": "0f7c7ad7014fd1ec7ae36fa8ccc9d86142fd1c28c5ff19333e0e28506af545e3",
+          "authored_label": "Pasten",
+          "effective_wrap": true
+        }
+      ],
+      "legacy_site": "SourceReviewedOfficialFragmentBodies"
+    },
+    {
+      "id": "official-raw-sequence/d534cb78203b61cc",
+      "path": "sequence/nightly-check/v2-with-wrapped-messages-and-notes.mmd",
+      "input": "---\ndescription: >-\n  A long message, a long multi-participant note, a par block with explicit <br>\n  line breaks, and a loop with a long note — all with sequence.wrap enabled.\nconfig:\n  sequence:\n    wrap: true\n---\nsequenceDiagram\n  participant A\n  participant B\n\n  A ->> B: This is a very long message that should wrap properly in the diagram rendering\n  Note over A,B: This is a very long note that should also wrap properly when rendered in the diagram\n\n  par Wrapped parallel\n    A ->> B: Parallel message 1<br>with explicit line break\n    and\n    B ->> A: Parallel message 2<br>with explicit line break\n  end\n\n  loop Wrapped loop\n    Note right of B: This is a long note<br>in a loop\n    A ->> B: Message in loop\n  end\n",
+      "input_sha256": "d534cb78203b61cc8d0709bf2670015b36d06c06a75b9c72db5fa2db934f78ca",
+      "body": "sequenceDiagram\n  participant A\n  participant B\n\n  A ->> B: This is a very long message that should wrap properly in the diagram rendering\n  Note over A,B: This is a very long note that should also wrap properly when rendered in the diagram\n\n  par Wrapped parallel\n    A ->> B: Parallel message 1<br>with explicit line break\n    and\n    B ->> A: Parallel message 2<br>with explicit line break\n  end\n\n  loop Wrapped loop\n    Note right of B: This is a long note<br>in a loop\n    A ->> B: Message in loop\n  end\n",
+      "body_sha256": "ad967963208c3ff834bcdbb1cbdca1c54d796de8dbcbab7628505dffc81675ca",
+      "body_offset_utf8_bytes": 218,
+      "original_manifest_record": {
+        "path": "sequence/nightly-check/v2-with-wrapped-messages-and-notes.mmd",
+        "sha256": "d534cb78203b61cc8d0709bf2670015b36d06c06a75b9c72db5fa2db934f78ca",
+        "git_blob": "4c3b4e44705741e1cb249b3c06b4b50696de04af",
+        "bytes": 727,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "drawn",
+          "reason": "Source-reviewed sequence fragment body. SourceReviewedOfficialFragmentBodies independently verifies all native actor/message/note cells, fragment type/condition/color, ordered branches and nested containment. Raw frontmatter/configuration remains unsupported.",
+          "checks": {
+            "labels": [
+              "A",
+              "B",
+              "This is a very long message that should wrap properly in the diagram rendering",
+              "Parallel message 1",
+              "with explicit line break",
+              "Parallel message 2",
+              "Message in loop",
+              "This is a very long note that should also wrap properly when rendered in the diagram",
+              "This is a long note",
+              "in a loop",
+              "par Wrapped parallel",
+              "and",
+              "loop Wrapped loop"
+            ],
+            "arrows": 4,
+            "ordering": []
+          },
+          "snapshot": "b59388cf66a099f4.txt",
+          "offset": 218,
+          "sha256": "ad967963208c3ff834bcdbb1cbdca1c54d796de8dbcbab7628505dffc81675ca"
+        }
+      },
+      "raw_physical_lines": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 4,
+          "bytes": 16,
+          "sha256": "5f74023604c01fa7f354f49384734f4668c37023158331b8fbfc8eb4c5aea2d0",
+          "text": "description: >-\n"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 20,
+          "bytes": 80,
+          "sha256": "cb12ed39a67bc7225a829f4f61d54452029fcf0f28e072c00789ae45e3f7675f",
+          "text": "  A long message, a long multi-participant note, a par block with explicit <br>\n"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 100,
+          "bytes": 79,
+          "sha256": "ae41c1e84acac4f548335543b26cabfa60f396d26ec8847a0850235d5c0e5e85",
+          "text": "  line breaks, and a loop with a long note — all with sequence.wrap enabled.\n"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 179,
+          "bytes": 8,
+          "sha256": "e671f1d8924753ffdedf8dd89663f084bb425602036a2fc75a0c34a5215798c7",
+          "text": "config:\n"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 187,
+          "bytes": 12,
+          "sha256": "8bc5588ca7d2b1e9c56af91a455250c95aab1d6b546cadce589a6382526c9ba8",
+          "text": "  sequence:\n"
+        },
+        {
+          "line": 7,
+          "offset_utf8_bytes": 199,
+          "bytes": 15,
+          "sha256": "61a09f2ff0f2944e13d782545ff71dd41fda72c13a24b5062447d6c8c03ffff0",
+          "text": "    wrap: true\n"
+        },
+        {
+          "line": 8,
+          "offset_utf8_bytes": 214,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 9,
+          "offset_utf8_bytes": 218,
+          "bytes": 16,
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+          "text": "sequenceDiagram\n"
+        },
+        {
+          "line": 10,
+          "offset_utf8_bytes": 234,
+          "bytes": 16,
+          "sha256": "bf80bccec2e32ea13d4ce0cb209af70ac863e56dddb76b6ae44704408413ea0b",
+          "text": "  participant A\n"
+        },
+        {
+          "line": 11,
+          "offset_utf8_bytes": 250,
+          "bytes": 16,
+          "sha256": "63c6311f7e2121cc88c7e5af4f86c23a83c57bf5003e92bed647ebe429b3f370",
+          "text": "  participant B\n"
+        },
+        {
+          "line": 12,
+          "offset_utf8_bytes": 266,
+          "bytes": 1,
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "text": "\n"
+        },
+        {
+          "line": 13,
+          "offset_utf8_bytes": 267,
+          "bytes": 90,
+          "sha256": "66ccc3a2e2c972ee1855d0cb0c4b7f1888b8404ad88296beb115c05fc7a02625",
+          "text": "  A ->> B: This is a very long message that should wrap properly in the diagram rendering\n"
+        },
+        {
+          "line": 14,
+          "offset_utf8_bytes": 357,
+          "bytes": 102,
+          "sha256": "1d7c0278ba1a8d087f72375cd3740a00fce19f1537f4132946175f3addb9f479",
+          "text": "  Note over A,B: This is a very long note that should also wrap properly when rendered in the diagram\n"
+        },
+        {
+          "line": 15,
+          "offset_utf8_bytes": 459,
+          "bytes": 1,
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "text": "\n"
+        },
+        {
+          "line": 16,
+          "offset_utf8_bytes": 460,
+          "bytes": 23,
+          "sha256": "9ec2ae83d47ffc777e061f8869da7429612c226f52d757fe81784461e3cd831f",
+          "text": "  par Wrapped parallel\n"
+        },
+        {
+          "line": 17,
+          "offset_utf8_bytes": 483,
+          "bytes": 60,
+          "sha256": "d63b0abc337dacdacb4071ab056646853a0db679536860f1ba072f4897bb7032",
+          "text": "    A ->> B: Parallel message 1<br>with explicit line break\n"
+        },
+        {
+          "line": 18,
+          "offset_utf8_bytes": 543,
+          "bytes": 8,
+          "sha256": "bedcefa59c10a05aa9ce523f0f1f15436566876dcdbe62877ada89d983fc4c24",
+          "text": "    and\n"
+        },
+        {
+          "line": 19,
+          "offset_utf8_bytes": 551,
+          "bytes": 60,
+          "sha256": "d4ee5fbc2fc192a52961450c5a6f5cdfdd2f8d9d6a912841b6823808d46fb0a8",
+          "text": "    B ->> A: Parallel message 2<br>with explicit line break\n"
+        },
+        {
+          "line": 20,
+          "offset_utf8_bytes": 611,
+          "bytes": 6,
+          "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+          "text": "  end\n"
+        },
+        {
+          "line": 21,
+          "offset_utf8_bytes": 617,
+          "bytes": 1,
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "text": "\n"
+        },
+        {
+          "line": 22,
+          "offset_utf8_bytes": 618,
+          "bytes": 20,
+          "sha256": "da8b5181782b1978a9af2971fd0e893372ddf4f20ea00531dc0e77a89130e277",
+          "text": "  loop Wrapped loop\n"
+        },
+        {
+          "line": 23,
+          "offset_utf8_bytes": 638,
+          "bytes": 54,
+          "sha256": "feccb40014dee62de6146bea5ee445446fd3f0eed9f2008771846f0ea7477587",
+          "text": "    Note right of B: This is a long note<br>in a loop\n"
+        },
+        {
+          "line": 24,
+          "offset_utf8_bytes": 692,
+          "bytes": 29,
+          "sha256": "219bfffab263312dfc361b6a3aec81354f8e642a8f54d5954ee58bf973b2ca65",
+          "text": "    A ->> B: Message in loop\n"
+        },
+        {
+          "line": 25,
+          "offset_utf8_bytes": 721,
+          "bytes": 6,
+          "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+          "text": "  end\n"
+        }
+      ],
+      "frontmatter_node_tree": {
+        "kind": "mapping",
+        "yaml_tag": "tag:yaml.org,2002:map",
+        "start_character": 0,
+        "end_character": 208,
+        "entries": [
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 0,
+              "end_character": 11,
+              "value": "description",
+              "style": null
+            },
+            "value": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 13,
+              "end_character": 173,
+              "value": "A long message, a long multi-participant note, a par block with explicit <br> line breaks, and a loop with a long note — all with sequence.wrap enabled.",
+              "style": ">"
+            }
+          },
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 173,
+              "end_character": 179,
+              "value": "config",
+              "style": null
+            },
+            "value": {
+              "kind": "mapping",
+              "yaml_tag": "tag:yaml.org,2002:map",
+              "start_character": 183,
+              "end_character": 208,
+              "entries": [
+                {
+                  "key": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 183,
+                    "end_character": 191,
+                    "value": "sequence",
+                    "style": null
+                  },
+                  "value": {
+                    "kind": "mapping",
+                    "yaml_tag": "tag:yaml.org,2002:map",
+                    "start_character": 197,
+                    "end_character": 208,
+                    "entries": [
+                      {
+                        "key": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:str",
+                          "start_character": 197,
+                          "end_character": 201,
+                          "value": "wrap",
+                          "style": null
+                        },
+                        "value": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:bool",
+                          "start_character": 203,
+                          "end_character": 207,
+                          "value": "true",
+                          "style": null
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "config_complete_leaf_inventory": [
+        {
+          "path": "sequence.wrap",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:bool",
+          "value": "true"
+        }
+      ],
+      "body_authority": {
+        "file": {
+          "path": "/Users/bytedance/Develop/Loom/tests/fixtures/mermaid_native/sequence_official_fragments_facts.json",
+          "sha256": "74ead1f2d193632e242fccfe083467d2c47313776849537a2a97fa0fce30e41c",
+          "bytes": 63196
+        },
+        "fixture_path": "mermaid_native/sequence_official_fragments_facts.json",
+        "case_index": 10,
+        "whole_case_canonical_sha256": "32789ef70210fbe8016d1bf10a7732bcb20e03bc69f81a926535db1fa4792f74",
+        "model_key": "model",
+        "model_sha256": "7389008386802aafd2ea63b8514b6c3aeb1f7eb118b4081544622259cd021279",
+        "number_encoding": "LegacyInteger",
+        "model_verbatim": {
+          "actors": [
+            {
+              "id": "A",
+              "label": "A",
+              "person": false
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "person": false
+            }
+          ],
+          "messages": [
+            {
+              "to": 1,
+              "label": "This is a very long message that should wrap properly in the diagram rendering",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 0
+            },
+            {
+              "to": 1,
+              "label": "Parallel message 1\nwith explicit line break",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 0
+            },
+            {
+              "to": 0,
+              "label": "Parallel message 2\nwith explicit line break",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 1
+            },
+            {
+              "to": 1,
+              "label": "Message in loop",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": false,
+              "central_to": false,
+              "number": 0,
+              "from": 0
+            }
+          ],
+          "notes": [
+            {
+              "actors": [
+                0,
+                1
+              ],
+              "text": "This is a very long note that should also wrap properly when rendered in the diagram",
+              "position": "over",
+              "after": 0
+            },
+            {
+              "actors": [
+                1
+              ],
+              "text": "This is a long note\nin a loop",
+              "position": "right",
+              "after": 2
+            }
+          ],
+          "fragments": [
+            {
+              "kind": "par",
+              "label": "Wrapped parallel",
+              "parent": -1,
+              "dividers": [
+                ""
+              ]
+            },
+            {
+              "kind": "loop",
+              "label": "Wrapped loop",
+              "parent": -1,
+              "dividers": []
+            }
+          ],
+          "order": [
+            {
+              "kind": "Message",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Note",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Open",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Divide",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 2,
+              "part": 0
+            },
+            {
+              "kind": "Close",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Open",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Note",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 3,
+              "part": 0
+            },
+            {
+              "kind": "Close",
+              "index": 1,
+              "part": 0
+            }
+          ]
+        }
+      },
+      "profile": "source_wrap",
+      "number_encoding": "DisplayText",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": {
+              "text": "A",
+              "wrap": true
+            },
+            "role": "Participant"
+          },
+          {
+            "id": "B",
+            "label": {
+              "text": "B",
+              "wrap": true
+            },
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": {
+              "text": "This is a very long message that should wrap properly in the diagram rendering",
+              "wrap": true
+            },
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 0
+          },
+          {
+            "to": 1,
+            "label": {
+              "text": "Parallel message 1<br>with explicit line break",
+              "wrap": true
+            },
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 0
+          },
+          {
+            "to": 0,
+            "label": {
+              "text": "Parallel message 2<br>with explicit line break",
+              "wrap": true
+            },
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 1
+          },
+          {
+            "to": 1,
+            "label": {
+              "text": "Message in loop",
+              "wrap": true
+            },
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": "",
+            "from": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0,
+              1
+            ],
+            "text": {
+              "text": "This is a very long note that should also wrap properly when rendered in the diagram",
+              "wrap": true
+            },
+            "position": "over",
+            "after": 0
+          },
+          {
+            "actors": [
+              1
+            ],
+            "text": {
+              "text": "This is a long note<br>in a loop",
+              "wrap": true
+            },
+            "position": "right",
+            "after": 2
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "par",
+            "label": "Wrapped parallel",
+            "parent": -1,
+            "dividers": [
+              ""
+            ]
+          },
+          {
+            "kind": "loop",
+            "label": "Wrapped loop",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "title": "",
+        "boxes": []
+      },
+      "model_sha256": "572a6c48374a75a7612c892c0e2eebc1ebc93b7faeb062953457f0c378ef21e8",
+      "source_label_witnesses": [
+        {
+          "field": "message",
+          "index": 0,
+          "raw_line": 13,
+          "raw_offset_utf8_bytes": 267,
+          "whole_line": "  A ->> B: This is a very long message that should wrap properly in the diagram rendering\n",
+          "whole_line_sha256": "66ccc3a2e2c972ee1855d0cb0c4b7f1888b8404ad88296beb115c05fc7a02625",
+          "authored_label": "This is a very long message that should wrap properly in the diagram rendering",
+          "effective_wrap": true
+        },
+        {
+          "field": "note",
+          "index": 0,
+          "raw_line": 14,
+          "raw_offset_utf8_bytes": 357,
+          "whole_line": "  Note over A,B: This is a very long note that should also wrap properly when rendered in the diagram\n",
+          "whole_line_sha256": "1d7c0278ba1a8d087f72375cd3740a00fce19f1537f4132946175f3addb9f479",
+          "authored_label": "This is a very long note that should also wrap properly when rendered in the diagram",
+          "effective_wrap": true
+        },
+        {
+          "field": "message",
+          "index": 1,
+          "raw_line": 17,
+          "raw_offset_utf8_bytes": 483,
+          "whole_line": "    A ->> B: Parallel message 1<br>with explicit line break\n",
+          "whole_line_sha256": "d63b0abc337dacdacb4071ab056646853a0db679536860f1ba072f4897bb7032",
+          "authored_label": "Parallel message 1<br>with explicit line break",
+          "effective_wrap": true
+        },
+        {
+          "field": "message",
+          "index": 2,
+          "raw_line": 19,
+          "raw_offset_utf8_bytes": 551,
+          "whole_line": "    B ->> A: Parallel message 2<br>with explicit line break\n",
+          "whole_line_sha256": "d4ee5fbc2fc192a52961450c5a6f5cdfdd2f8d9d6a912841b6823808d46fb0a8",
+          "authored_label": "Parallel message 2<br>with explicit line break",
+          "effective_wrap": true
+        },
+        {
+          "field": "note",
+          "index": 1,
+          "raw_line": 23,
+          "raw_offset_utf8_bytes": 638,
+          "whole_line": "    Note right of B: This is a long note<br>in a loop\n",
+          "whole_line_sha256": "feccb40014dee62de6146bea5ee445446fd3f0eed9f2008771846f0ea7477587",
+          "authored_label": "This is a long note<br>in a loop",
+          "effective_wrap": true
+        },
+        {
+          "field": "message",
+          "index": 3,
+          "raw_line": 24,
+          "raw_offset_utf8_bytes": 692,
+          "whole_line": "    A ->> B: Message in loop\n",
+          "whole_line_sha256": "219bfffab263312dfc361b6a3aec81354f8e642a8f54d5954ee58bf973b2ca65",
+          "authored_label": "Message in loop",
+          "effective_wrap": true
+        }
+      ],
+      "legacy_site": "SourceReviewedOfficialFragmentBodies"
+    },
+    {
+      "id": "official-raw-sequence/673a341fcd4d8019",
+      "path": "sequence/pr-check/should-render-central-connections-with-loops-and-alternatives.mmd",
+      "input": "---\ndescription: >-\n  Central-connection arrow syntax (`()->>()`, `()-->>`) combined with loop\n  and alt/else control-flow blocks, including a bidirectional dual central\n  connection and a central cross message inside the alt branches.\nconfig:\n  look: classic\n  sequence:\n    diagramMarginX: 50\n    diagramMarginY: 10\n---\nsequenceDiagram\n  participant Alice\n  participant Bob\n  participant Charlie\n  loop Every minute\n  Alice ()->>() Bob: Central heartbeat\n  Bob ()-->> Charlie: Forward heartbeat\n  end\n  alt Success\n  Charlie ()<<-->>() Alice: Success response\n  else Failure\n  Charlie ()-x() Alice: Failure response\n  end\n",
+      "input_sha256": "673a341fcd4d8019bd959e63e8960cc85ac4069fe3bc1379fcd6c9d5bdba50b6",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  participant Charlie\n  loop Every minute\n  Alice ()->>() Bob: Central heartbeat\n  Bob ()-->> Charlie: Forward heartbeat\n  end\n  alt Success\n  Charlie ()<<-->>() Alice: Success response\n  else Failure\n  Charlie ()-x() Alice: Failure response\n  end\n",
+      "body_sha256": "e5d62e6b2b34f5a0229d37f7967eadaaa395e0d0d18aef10f83fa8fde5449c39",
+      "body_offset_utf8_bytes": 322,
+      "original_manifest_record": {
+        "path": "sequence/pr-check/should-render-central-connections-with-loops-and-alternatives.mmd",
+        "sha256": "673a341fcd4d8019bd959e63e8960cc85ac4069fe3bc1379fcd6c9d5bdba50b6",
+        "git_blob": "663e1d5846179b201e296262b4a73dde4e1413bd",
+        "bytes": 624,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "drawn",
+          "reason": "Source-reviewed sequence fragment body. SourceReviewedOfficialFragmentBodies independently verifies all native actor/message/note cells, fragment type/condition/color, ordered branches and nested containment. Raw frontmatter/configuration remains unsupported.",
+          "checks": {
+            "labels": [
+              "Alice",
+              "Bob",
+              "Charlie",
+              "Central heartbeat",
+              "Forward heartbeat",
+              "Success response",
+              "Failure response",
+              "loop Every minute",
+              "alt Success",
+              "else Failure"
+            ],
+            "arrows": 4,
+            "ordering": []
+          },
+          "snapshot": "40c50963c96ded7a.txt",
+          "offset": 322,
+          "sha256": "e5d62e6b2b34f5a0229d37f7967eadaaa395e0d0d18aef10f83fa8fde5449c39"
+        }
+      },
+      "raw_physical_lines": [
+        {
+          "line": 1,
+          "offset_utf8_bytes": 0,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 2,
+          "offset_utf8_bytes": 4,
+          "bytes": 16,
+          "sha256": "5f74023604c01fa7f354f49384734f4668c37023158331b8fbfc8eb4c5aea2d0",
+          "text": "description: >-\n"
+        },
+        {
+          "line": 3,
+          "offset_utf8_bytes": 20,
+          "bytes": 75,
+          "sha256": "bfd2bde0b46f87e2a02966a4266acf2853d098996ff7e080481a3e471fc406f5",
+          "text": "  Central-connection arrow syntax (`()->>()`, `()-->>`) combined with loop\n"
+        },
+        {
+          "line": 4,
+          "offset_utf8_bytes": 95,
+          "bytes": 75,
+          "sha256": "918949a6134033850744b2b3d62ccf86c89c75834b965792a05c5f3879ec54e8",
+          "text": "  and alt/else control-flow blocks, including a bidirectional dual central\n"
+        },
+        {
+          "line": 5,
+          "offset_utf8_bytes": 170,
+          "bytes": 66,
+          "sha256": "f1595d9a8dd5fae9a7b296decf987c63dab95768d398ddfb84707974d30a4a2d",
+          "text": "  connection and a central cross message inside the alt branches.\n"
+        },
+        {
+          "line": 6,
+          "offset_utf8_bytes": 236,
+          "bytes": 8,
+          "sha256": "e671f1d8924753ffdedf8dd89663f084bb425602036a2fc75a0c34a5215798c7",
+          "text": "config:\n"
+        },
+        {
+          "line": 7,
+          "offset_utf8_bytes": 244,
+          "bytes": 16,
+          "sha256": "5e932ba79e65a4a3e55f085d442009cb6f77f1ed0ba4e76ce2ea30b7541a680a",
+          "text": "  look: classic\n"
+        },
+        {
+          "line": 8,
+          "offset_utf8_bytes": 260,
+          "bytes": 12,
+          "sha256": "8bc5588ca7d2b1e9c56af91a455250c95aab1d6b546cadce589a6382526c9ba8",
+          "text": "  sequence:\n"
+        },
+        {
+          "line": 9,
+          "offset_utf8_bytes": 272,
+          "bytes": 23,
+          "sha256": "5862f1da15334c9451b99d1fc885de575205493f129094b1a620e8d59d3dc99b",
+          "text": "    diagramMarginX: 50\n"
+        },
+        {
+          "line": 10,
+          "offset_utf8_bytes": 295,
+          "bytes": 23,
+          "sha256": "1b4c6c0077fb328beb31f25ceefee6c65aa8bc176d9e8fa5cdaa89f4b13eefa5",
+          "text": "    diagramMarginY: 10\n"
+        },
+        {
+          "line": 11,
+          "offset_utf8_bytes": 318,
+          "bytes": 4,
+          "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+          "text": "---\n"
+        },
+        {
+          "line": 12,
+          "offset_utf8_bytes": 322,
+          "bytes": 16,
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b",
+          "text": "sequenceDiagram\n"
+        },
+        {
+          "line": 13,
+          "offset_utf8_bytes": 338,
+          "bytes": 20,
+          "sha256": "760b2873bd22cadae1ed980ee459c5f79092873a70b3313d393c4f4efe6fa60c",
+          "text": "  participant Alice\n"
+        },
+        {
+          "line": 14,
+          "offset_utf8_bytes": 358,
+          "bytes": 18,
+          "sha256": "7c231cab1703f244081583593351009cf4fda55b9bcf59aa1d1db31b0ebc047c",
+          "text": "  participant Bob\n"
+        },
+        {
+          "line": 15,
+          "offset_utf8_bytes": 376,
+          "bytes": 22,
+          "sha256": "1b81ccf94edf73aa3281ad923e5f85cbfe486420576f4d80f29c0f1cfccbacba",
+          "text": "  participant Charlie\n"
+        },
+        {
+          "line": 16,
+          "offset_utf8_bytes": 398,
+          "bytes": 20,
+          "sha256": "a77c6df01771bcb74df15ede1cd8050a3f42119ba6387d26ce25afc7e77623cd",
+          "text": "  loop Every minute\n"
+        },
+        {
+          "line": 17,
+          "offset_utf8_bytes": 418,
+          "bytes": 39,
+          "sha256": "88a8fe6e3207998e74656e387a38f7d14ec4be0dd7b21934ba01451d0f82aa66",
+          "text": "  Alice ()->>() Bob: Central heartbeat\n"
+        },
+        {
+          "line": 18,
+          "offset_utf8_bytes": 457,
+          "bytes": 40,
+          "sha256": "ba68b7cbb48690aeecd26a35db1996ae931a47f6465c62712cf79d540f35a706",
+          "text": "  Bob ()-->> Charlie: Forward heartbeat\n"
+        },
+        {
+          "line": 19,
+          "offset_utf8_bytes": 497,
+          "bytes": 6,
+          "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+          "text": "  end\n"
+        },
+        {
+          "line": 20,
+          "offset_utf8_bytes": 503,
+          "bytes": 14,
+          "sha256": "7ce651dd0dab6421451e2a2da50755c1ccb4876d2f08b7a257666fe1ea018af4",
+          "text": "  alt Success\n"
+        },
+        {
+          "line": 21,
+          "offset_utf8_bytes": 517,
+          "bytes": 45,
+          "sha256": "f34f8df655eea3c166acc3742551894c7dfd91817b59985054f6b2bc6c2ed5fd",
+          "text": "  Charlie ()<<-->>() Alice: Success response\n"
+        },
+        {
+          "line": 22,
+          "offset_utf8_bytes": 562,
+          "bytes": 15,
+          "sha256": "148a9018b51cbb5872ab9593032617be49ac2ab3f467c83c465428317b6a6b68",
+          "text": "  else Failure\n"
+        },
+        {
+          "line": 23,
+          "offset_utf8_bytes": 577,
+          "bytes": 41,
+          "sha256": "075d0e8420e84bca902e69653b858979146d21ca2128767a6b7356c5e88a4938",
+          "text": "  Charlie ()-x() Alice: Failure response\n"
+        },
+        {
+          "line": 24,
+          "offset_utf8_bytes": 618,
+          "bytes": 6,
+          "sha256": "779811c5fbe25c3d4e5f3d1fd35ab9da6bcf8a68c5edf9d6ba97f68686c39680",
+          "text": "  end\n"
+        }
+      ],
+      "frontmatter_node_tree": {
+        "kind": "mapping",
+        "yaml_tag": "tag:yaml.org,2002:map",
+        "start_character": 0,
+        "end_character": 314,
+        "entries": [
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 0,
+              "end_character": 11,
+              "value": "description",
+              "style": null
+            },
+            "value": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 13,
+              "end_character": 232,
+              "value": "Central-connection arrow syntax (`()->>()`, `()-->>`) combined with loop and alt/else control-flow blocks, including a bidirectional dual central connection and a central cross message inside the alt branches.",
+              "style": ">"
+            }
+          },
+          {
+            "key": {
+              "kind": "scalar",
+              "yaml_tag": "tag:yaml.org,2002:str",
+              "start_character": 232,
+              "end_character": 238,
+              "value": "config",
+              "style": null
+            },
+            "value": {
+              "kind": "mapping",
+              "yaml_tag": "tag:yaml.org,2002:map",
+              "start_character": 242,
+              "end_character": 314,
+              "entries": [
+                {
+                  "key": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 242,
+                    "end_character": 246,
+                    "value": "look",
+                    "style": null
+                  },
+                  "value": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 248,
+                    "end_character": 255,
+                    "value": "classic",
+                    "style": null
+                  }
+                },
+                {
+                  "key": {
+                    "kind": "scalar",
+                    "yaml_tag": "tag:yaml.org,2002:str",
+                    "start_character": 258,
+                    "end_character": 266,
+                    "value": "sequence",
+                    "style": null
+                  },
+                  "value": {
+                    "kind": "mapping",
+                    "yaml_tag": "tag:yaml.org,2002:map",
+                    "start_character": 272,
+                    "end_character": 314,
+                    "entries": [
+                      {
+                        "key": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:str",
+                          "start_character": 272,
+                          "end_character": 286,
+                          "value": "diagramMarginX",
+                          "style": null
+                        },
+                        "value": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:int",
+                          "start_character": 288,
+                          "end_character": 290,
+                          "value": "50",
+                          "style": null
+                        }
+                      },
+                      {
+                        "key": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:str",
+                          "start_character": 295,
+                          "end_character": 309,
+                          "value": "diagramMarginY",
+                          "style": null
+                        },
+                        "value": {
+                          "kind": "scalar",
+                          "yaml_tag": "tag:yaml.org,2002:int",
+                          "start_character": 311,
+                          "end_character": 313,
+                          "value": "10",
+                          "style": null
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "config_complete_leaf_inventory": [
+        {
+          "path": "look",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:str",
+          "value": "classic"
+        },
+        {
+          "path": "sequence.diagramMarginX",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:int",
+          "value": "50"
+        },
+        {
+          "path": "sequence.diagramMarginY",
+          "kind": "scalar",
+          "yaml_tag": "tag:yaml.org,2002:int",
+          "value": "10"
+        }
+      ],
+      "body_authority": {
+        "file": {
+          "path": "/Users/bytedance/Develop/Loom/tests/fixtures/mermaid_native/sequence_official_fragments_facts.json",
+          "sha256": "74ead1f2d193632e242fccfe083467d2c47313776849537a2a97fa0fce30e41c",
+          "bytes": 63196
+        },
+        "fixture_path": "mermaid_native/sequence_official_fragments_facts.json",
+        "case_index": 11,
+        "whole_case_canonical_sha256": "e6a864ec5b96cc7c1f9f114ea5bf1dc179ce88c208a602dc4ed459ef2b64218a",
+        "model_key": "model",
+        "model_sha256": "dbcb38c106f65128f332f35d4caf7308a6a5376695d992849d20b1d72d68f067",
+        "number_encoding": "LegacyInteger",
+        "model_verbatim": {
+          "actors": [
+            {
+              "id": "Alice",
+              "label": "Alice",
+              "person": false
+            },
+            {
+              "id": "Bob",
+              "label": "Bob",
+              "person": false
+            },
+            {
+              "id": "Charlie",
+              "label": "Charlie",
+              "person": false
+            }
+          ],
+          "messages": [
+            {
+              "to": 1,
+              "label": "Central heartbeat",
+              "dashed": false,
+              "arrow": "Filled",
+              "central_from": true,
+              "central_to": true,
+              "number": 0,
+              "from": 0
+            },
+            {
+              "to": 2,
+              "label": "Forward heartbeat",
+              "dashed": true,
+              "arrow": "Filled",
+              "central_from": true,
+              "central_to": false,
+              "number": 0,
+              "from": 1
+            },
+            {
+              "to": 0,
+              "label": "Success response",
+              "dashed": true,
+              "arrow": "Both",
+              "central_from": true,
+              "central_to": true,
+              "number": 0,
+              "from": 2
+            },
+            {
+              "to": 0,
+              "label": "Failure response",
+              "dashed": false,
+              "arrow": "Cross",
+              "central_from": true,
+              "central_to": true,
+              "number": 0,
+              "from": 2
+            }
+          ],
+          "notes": [],
+          "fragments": [
+            {
+              "kind": "loop",
+              "label": "Every minute",
+              "parent": -1,
+              "dividers": []
+            },
+            {
+              "kind": "alt",
+              "label": "Success",
+              "parent": -1,
+              "dividers": [
+                "Failure"
+              ]
+            }
+          ],
+          "order": [
+            {
+              "kind": "Open",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Close",
+              "index": 0,
+              "part": 0
+            },
+            {
+              "kind": "Open",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 2,
+              "part": 0
+            },
+            {
+              "kind": "Divide",
+              "index": 1,
+              "part": 0
+            },
+            {
+              "kind": "Message",
+              "index": 3,
+              "part": 0
+            },
+            {
+              "kind": "Close",
+              "index": 1,
+              "part": 0
+            }
+          ]
+        }
+      },
+      "profile": "fixed",
+      "number_encoding": "DisplayText",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "role": "Participant"
+          },
+          {
+            "id": "Charlie",
+            "label": "Charlie",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "to": 1,
+            "label": "Central heartbeat",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": true,
+            "number": "",
+            "from": 0
+          },
+          {
+            "to": 2,
+            "label": "Forward heartbeat",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": false,
+            "number": "",
+            "from": 1
+          },
+          {
+            "to": 0,
+            "label": "Success response",
+            "dashed": true,
+            "arrow": "Both",
+            "central_from": true,
+            "central_to": true,
+            "number": "",
+            "from": 2
+          },
+          {
+            "to": 0,
+            "label": "Failure response",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": true,
+            "central_to": true,
+            "number": "",
+            "from": 2
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "loop",
+            "label": "Every minute",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "alt",
+            "label": "Success",
+            "parent": -1,
+            "dividers": [
+              "Failure"
+            ]
+          }
+        ],
+        "order": [
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "title": "",
+        "boxes": []
+      },
+      "model_sha256": "b37b5ddbbc50113be10a09a00ea066b53d85ee2d27d4f86148058e8608ac7359",
+      "source_label_witnesses": [],
+      "legacy_site": "SourceReviewedOfficialFragmentBodies"
+    }
+  ]
+}

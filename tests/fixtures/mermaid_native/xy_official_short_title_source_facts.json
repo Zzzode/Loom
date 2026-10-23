@@ -1,0 +1,591 @@
+{
+  "status": "SOURCE_ONLY_CANDIDATE_REQUIRES_INDEPENDENT_REVIEW",
+  "author": "/root/corpus_oracle",
+  "source": {
+    "path": "xychart/nightly-check/should-drop-the-title-when-the-chart-is-too-short.mmd",
+    "fixture_path": "tests/fixtures/mermaid_official/cases/xychart/nightly-check/should-drop-the-title-when-the-chart-is-too-short.mmd",
+    "bytes": 222,
+    "sha256": "b2735f4436f20e52fddbae28ae5cf087f6a8023ae7b1f137a27d6b114e2e28c9",
+    "git_blob": "f4768f5606f100b1c76d4268d31a9de4260c33b9",
+    "upstream_path": "e2e/diagrams/xychart/nightly-check/should-drop-the-title-when-the-chart-is-too-short.mmd",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "raw_text": "---\nconfig:\n  xyChart:\n    width: 1200\n    height: 60\n---\nxychart\n  title \"Too short for a title\"\n  x-axis \"Elapsed Time\" 0 --> 10\n  y-axis \"Percentage (%)\" 0 --> 100\n  line \"CPU\" [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]\n",
+    "body_offset": 58,
+    "body_bytes": 164,
+    "body_sha256": "3dd99189de46ead1997dea307b9012f58abd9fbe9e1d6ce43e04ce003ed95178",
+    "physical_witnesses": [
+      {
+        "line": 1,
+        "byte_offset": 0,
+        "byte_length": 4,
+        "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+        "text": "---\n"
+      },
+      {
+        "line": 2,
+        "byte_offset": 4,
+        "byte_length": 8,
+        "sha256": "e671f1d8924753ffdedf8dd89663f084bb425602036a2fc75a0c34a5215798c7",
+        "text": "config:\n"
+      },
+      {
+        "line": 3,
+        "byte_offset": 12,
+        "byte_length": 11,
+        "sha256": "8911b0cc7aed1b9e08c7a3e63b5a9e0738e210346acc9d703a103298727ccbcc",
+        "text": "  xyChart:\n"
+      },
+      {
+        "line": 4,
+        "byte_offset": 23,
+        "byte_length": 16,
+        "sha256": "ed3ec97e003427610b9b442c90ea6f5a8dd4a44c911d061a97858abb2009abc1",
+        "text": "    width: 1200\n"
+      },
+      {
+        "line": 5,
+        "byte_offset": 39,
+        "byte_length": 15,
+        "sha256": "f207ef5e0e89b519fe88d42f77d16fca8c8077df519a511cd5b519e975de9c7f",
+        "text": "    height: 60\n"
+      },
+      {
+        "line": 6,
+        "byte_offset": 54,
+        "byte_length": 4,
+        "sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+        "text": "---\n"
+      },
+      {
+        "line": 7,
+        "byte_offset": 58,
+        "byte_length": 8,
+        "sha256": "7b7ed6ad2b62a73d1288726fcd6e7d68e7cc0f17c583ef8ed1d829e43647c961",
+        "text": "xychart\n"
+      },
+      {
+        "line": 8,
+        "byte_offset": 66,
+        "byte_length": 32,
+        "sha256": "9040d8ceb7b53025c255cac92482b2853060519fe2a21245be875d6c0f586ef5",
+        "text": "  title \"Too short for a title\"\n"
+      },
+      {
+        "line": 9,
+        "byte_offset": 98,
+        "byte_length": 33,
+        "sha256": "ce418c873b389ef7625ff91d49b56885ede8f1a0c73248c23990e7b70fec94b0",
+        "text": "  x-axis \"Elapsed Time\" 0 --> 10\n"
+      },
+      {
+        "line": 10,
+        "byte_offset": 131,
+        "byte_length": 36,
+        "sha256": "1225a5b5539fae624655230763fd8fa3e5f3949bcf07f340c335293de1638bf9",
+        "text": "  y-axis \"Percentage (%)\" 0 --> 100\n"
+      },
+      {
+        "line": 11,
+        "byte_offset": 167,
+        "byte_length": 55,
+        "sha256": "33a9469af2a222ef59c0b5fee51506e8ac1afa7a427bf7138153286113f2a0dd",
+        "text": "  line \"CPU\" [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]\n"
+      }
+    ]
+  },
+  "source_model": {
+    "schema": "xy_source_full_semantics_with_foreign_layout/v1",
+    "orientation": "vertical",
+    "title": "Too short for a title",
+    "xAxis": {
+      "type": "linear",
+      "title": "Elapsed Time",
+      "min": 0,
+      "max": 10
+    },
+    "yAxis": {
+      "type": "linear",
+      "title": "Percentage (%)",
+      "min": 0,
+      "max": 100
+    },
+    "plots": [
+      {
+        "type": "line",
+        "title": "CPU",
+        "values": [
+          10,
+          20,
+          30,
+          40,
+          50,
+          60,
+          70,
+          80,
+          90,
+          100
+        ],
+        "point_labels": [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "authored_order": 0,
+        "source_derived_samples": [
+          {
+            "index": 0,
+            "x_exact": "0",
+            "x_binary64": 0.0,
+            "y": 10
+          },
+          {
+            "index": 1,
+            "x_exact": "10/9",
+            "x_binary64": 1.1111111111111112,
+            "y": 20
+          },
+          {
+            "index": 2,
+            "x_exact": "20/9",
+            "x_binary64": 2.2222222222222223,
+            "y": 30
+          },
+          {
+            "index": 3,
+            "x_exact": "10/3",
+            "x_binary64": 3.3333333333333335,
+            "y": 40
+          },
+          {
+            "index": 4,
+            "x_exact": "40/9",
+            "x_binary64": 4.444444444444445,
+            "y": 50
+          },
+          {
+            "index": 5,
+            "x_exact": "50/9",
+            "x_binary64": 5.555555555555555,
+            "y": 60
+          },
+          {
+            "index": 6,
+            "x_exact": "20/3",
+            "x_binary64": 6.666666666666667,
+            "y": 70
+          },
+          {
+            "index": 7,
+            "x_exact": "70/9",
+            "x_binary64": 7.777777777777779,
+            "y": 80
+          },
+          {
+            "index": 8,
+            "x_exact": "80/9",
+            "x_binary64": 8.88888888888889,
+            "y": 90
+          },
+          {
+            "index": 9,
+            "x_exact": "10",
+            "x_binary64": 10.0,
+            "y": 100
+          }
+        ]
+      }
+    ],
+    "accessibility": {
+      "title": "",
+      "description": ""
+    },
+    "metadata": {
+      "config": {
+        "xyChart": {
+          "width": 1200,
+          "height": 60
+        }
+      },
+      "title": null,
+      "description": null
+    },
+    "source_annotations": [],
+    "init_directives": []
+  },
+  "source_model_sha256": "3018f9355d47cb2d5a464d5f6b3cdac7dbdf71c61284132f58cb47e1f0060d0a",
+  "primary_spans": [
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/parser/xychart.jison",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "ce1e4904b3c2036ac29cc62b6e6561058b00e4bc9c9bbf661873451bb55bf0fc",
+      "first_line": 1,
+      "last_line": 6,
+      "byte_offset": 0,
+      "byte_length": 64,
+      "span_sha256": "2535472d007522d0b0f9cf95d96960927d38aba906307cbf87c376cb675755f8",
+      "text": "%lex\n%options case-insensitive\n\n%x string\n%x md_string\n%x title\n",
+      "meaning": "Case-insensitive lexer, quoted source text states."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/parser/xychart.jison",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "ce1e4904b3c2036ac29cc62b6e6561058b00e4bc9c9bbf661873451bb55bf0fc",
+      "first_line": 99,
+      "last_line": 110,
+      "byte_offset": 3940,
+      "byte_length": 990,
+      "span_sha256": "75dba9087b71110021f17a5cbd9b83b5742db3d23e7d66cae0e65dc1b487be0c",
+      "text": "statement\n  : statement eol\n  | title text                                                  { yy.setDiagramTitle($text.text.trim()); }\n  | X_AXIS parseXAxis\n  | Y_AXIS parseYAxis\n  | LINE plotData                                               { yy.setLineData({text: '', type: 'text'}, $plotData); }\n  | LINE text plotData                                          { yy.setLineData($text, $plotData); }\n  | BAR plotData                                                { yy.setBarData({text: '', type: 'text'}, $plotData); }\n  | BAR text plotData                                           { yy.setBarData($text, $plotData); }\n  | acc_title acc_title_value                                   { $$=$acc_title_value.trim();yy.setAccTitle($$); }\n  | acc_descr acc_descr_value                                   { $$=$acc_descr_value.trim();yy.setAccDescription($$); }\n  | acc_descr_multiline_value                                   { $$=$acc_descr_multiline_value.trim();yy.setAccDescription($$); }\n",
+      "meaning": "Title/axes/named-line declarations are data setters, not title omission commands."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/xychartDb.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "2025f06822a83157bdaca0ca9d8f6a9f44e6b885a42501c72c6cc68d09da08c9",
+      "first_line": 47,
+      "last_line": 53,
+      "byte_offset": 1476,
+      "byte_length": 216,
+      "span_sha256": "125729b9e60ce1ee176bda28f987fd3ac518554207c2411f58567ab136684a5b",
+      "text": "function getChartDefaultConfig(): XYChartConfig {\n  const config = configApi.getConfig();\n  return cleanAndMerge<XYChartConfig>(\n    defaultConfig.xyChart as XYChartConfig,\n    config.xyChart as XYChartConfig\n  );\n}\n",
+      "meaning": "Merge source chart config over defaults."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/xychartDb.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "2025f06822a83157bdaca0ca9d8f6a9f44e6b885a42501c72c6cc68d09da08c9",
+      "first_line": 73,
+      "last_line": 109,
+      "byte_offset": 1969,
+      "byte_length": 1149,
+      "span_sha256": "f4396c704596f86a473e8085b0c0beba191e5fa11d2b9073ebd08f1a18511478",
+      "text": "function textSanitizer(text: string) {\n  const config = configApi.getConfig();\n  return sanitizeText(text.trim(), config);\n}\n\nfunction setTmpSVGG(SVGG: SVGGroup) {\n  tmpSVGGroup = SVGG;\n}\nfunction setOrientation(orientation: string) {\n  if (orientation === 'horizontal') {\n    xyChartConfig.chartOrientation = 'horizontal';\n  } else {\n    xyChartConfig.chartOrientation = 'vertical';\n  }\n}\nfunction setXAxisTitle(title: NormalTextType) {\n  xyChartData.xAxis.title = textSanitizer(title.text);\n}\nfunction setXAxisRangeData(min: number, max: number) {\n  xyChartData.xAxis = { type: 'linear', title: xyChartData.xAxis.title, min, max };\n  hasSetXAxis = true;\n}\nfunction setXAxisBand(categories: NormalTextType[]) {\n  xyChartData.xAxis = {\n    type: 'band',\n    title: xyChartData.xAxis.title,\n    categories: categories.map((c) => textSanitizer(c.text)),\n  };\n  hasSetXAxis = true;\n}\nfunction setYAxisTitle(title: NormalTextType) {\n  xyChartData.yAxis.title = textSanitizer(title.text);\n}\nfunction setYAxisRangeData(min: number, max: number) {\n  xyChartData.yAxis = { type: 'linear', title: xyChartData.yAxis.title, min, max };\n  hasSetYAxis = true;\n}\n",
+      "meaning": "Source orientation, explicit numeric domains and axis title normalization."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/xychartDb.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "2025f06822a83157bdaca0ca9d8f6a9f44e6b885a42501c72c6cc68d09da08c9",
+      "first_line": 125,
+      "last_line": 164,
+      "byte_offset": 3732,
+      "byte_length": 1496,
+      "span_sha256": "1a8fb9c5c383ca2d58129b7732f98b86fd2033a45c2ed5dff8b9198727d8c673",
+      "text": "function transformDataWithoutCategory(data: number[]): SimplePlotDataType {\n  let retData: SimplePlotDataType = [];\n  if (data.length === 0) {\n    return retData;\n  }\n  if (!hasSetXAxis) {\n    const prevMinValue = isLinearAxisData(xyChartData.xAxis) ? xyChartData.xAxis.min : Infinity;\n    const prevMaxValue = isLinearAxisData(xyChartData.xAxis) ? xyChartData.xAxis.max : -Infinity;\n    setXAxisRangeData(Math.min(prevMinValue, 1), Math.max(prevMaxValue, data.length));\n  }\n\n  // When a band axis is defined, truncate data to match the number of categories\n  // to prevent orphaned bars/lines from rendering in unlabeled chart space.\n  // This also ensures the Y-axis range is computed only from visible data points.\n  if (isBandAxisData(xyChartData.xAxis) && data.length > xyChartData.xAxis.categories.length) {\n    data = data.slice(0, xyChartData.xAxis.categories.length);\n  }\n\n  if (!hasSetYAxis) {\n    setYAxisRangeFromPlotData(data);\n  }\n\n  if (isBandAxisData(xyChartData.xAxis)) {\n    retData = xyChartData.xAxis.categories.map((c, i) => [c, data[i]]);\n  }\n\n  if (isLinearAxisData(xyChartData.xAxis)) {\n    const min = xyChartData.xAxis.min;\n    const max = xyChartData.xAxis.max;\n    if (data.length === 1) {\n      // For backwards compatibility, avoid divide-by-zero error\n      retData = [[`${min}`, data[0]]];\n    } else {\n      const step = (max - min) / (data.length - 1);\n      retData = data.map((datum, index) => [`${min + index * step}`, datum]);\n    }\n  }\n\n  return retData;\n}\n",
+      "meaning": "Numeric x coordinates span authored domain evenly over all ten data samples."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/xychartDb.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "2025f06822a83157bdaca0ca9d8f6a9f44e6b885a42501c72c6cc68d09da08c9",
+      "first_line": 175,
+      "last_line": 189,
+      "byte_offset": 5445,
+      "byte_length": 549,
+      "span_sha256": "4d2fed815a8282dd016b9f10f5575d25a9b8e9f66edbbc720a9dbd595fd83e88",
+      "text": "function setLineData(title: NormalTextType, data: ParsedDataPoint[]) {\n  const values = data.map((d) => d.value);\n  const labels = data.map((d) => (d.label ? textSanitizer(d.label) : ''));\n  const plotData = transformDataWithoutCategory(values);\n  const hasAnyLabel = labels.some((l) => l !== '');\n  xyChartData.plots.push({\n    type: 'line',\n    title: textSanitizer(title.text),\n    strokeFill: getPlotColorFromPalette(plotIndex),\n    strokeWidth: 2,\n    data: plotData,\n    ...(hasAnyLabel ? { pointLabels: labels } : {}),\n  });\n  plotIndex++;\n}\n",
+      "meaning": "Named line owns complete ordered sample data, name and source point labels."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/chartBuilder/orchestrator.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "07749f247ae2ffd5d8496a09e05aba0c5725636a5c0cf6a647dc6148494eeed5",
+      "first_line": 61,
+      "last_line": 83,
+      "byte_offset": 1984,
+      "byte_length": 847,
+      "span_sha256": "d6ed8e915f45e2e80db14a63a2ac50c72f899a8386d646926a908511714aec6d",
+      "text": "  private calculateVerticalSpace() {\n    let availableWidth = this.chartConfig.width;\n    let availableHeight = this.chartConfig.height;\n    let plotX = 0;\n    let plotY = 0;\n    let legendSpace = { width: 0, height: 0 };\n    let chartWidth = Math.floor((availableWidth * this.chartConfig.plotReservedSpacePercent) / 100);\n    let chartHeight = Math.floor(\n      (availableHeight * this.chartConfig.plotReservedSpacePercent) / 100\n    );\n    let spaceUsed = this.componentStore.plot.calculateSpace({\n      width: chartWidth,\n      height: chartHeight,\n    });\n    availableWidth -= spaceUsed.width;\n    availableHeight -= spaceUsed.height;\n\n    spaceUsed = this.componentStore.title.calculateSpace({\n      width: this.chartConfig.width,\n      height: availableHeight,\n    });\n    plotY = spaceUsed.height;\n    availableHeight -= spaceUsed.height;\n",
+      "meaning": "Reserve plot dimensions before allocating title space."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/chartBuilder/components/plot/index.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "9bd5faaf96dceb038ed5665bc63c7254e745a24e1ffaf93a6d42a22fa5c2a297",
+      "first_line": 44,
+      "last_line": 51,
+      "byte_offset": 1005,
+      "byte_length": 262,
+      "span_sha256": "bddc98c305b56a030e594255ced546b19bc973c7b95cd5a6df576b3308984656",
+      "text": "  calculateSpace(availableSpace: Dimension): Dimension {\n    this.boundingRect.width = availableSpace.width;\n    this.boundingRect.height = availableSpace.height;\n\n    return {\n      width: this.boundingRect.width,\n      height: this.boundingRect.height,\n    };\n",
+      "meaning": "Plot reserves entire supplied dimensions."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/chartBuilder/components/chartTitle.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "58285b43ab8350a60576b55f9766e4b0100881b8c3d9211327d4f9f1c4834fb2",
+      "first_line": 37,
+      "last_line": 58,
+      "byte_offset": 994,
+      "byte_length": 780,
+      "span_sha256": "4e1542a6424029ee0d2ee436fdcdc973da8b70ef6643dc5d80346019fa035e9a",
+      "text": "  calculateSpace(availableSpace: Dimension): Dimension {\n    const titleDimension = this.textDimensionCalculator.getMaxDimension(\n      [this.chartData.title],\n      this.chartConfig.titleFontSize\n    );\n    const widthRequired = Math.max(titleDimension.width, availableSpace.width);\n    const heightRequired = titleDimension.height + 2 * this.chartConfig.titlePadding;\n    if (\n      heightRequired <= availableSpace.height &&\n      this.chartConfig.showTitle &&\n      this.chartData.title\n    ) {\n      this.boundingRect.width = widthRequired;\n      this.boundingRect.height = heightRequired;\n      this.titleWidth = titleDimension.width;\n      this.showChartTitle = true;\n    }\n\n    return {\n      width: this.boundingRect.width,\n      height: this.boundingRect.height,\n    };\n",
+      "meaning": "Conditional title visibility based on remaining height, measured text, title padding, showTitle and nonempty title."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/chartBuilder/components/chartTitle.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "58285b43ab8350a60576b55f9766e4b0100881b8c3d9211327d4f9f1c4834fb2",
+      "first_line": 73,
+      "last_line": 94,
+      "byte_offset": 2313,
+      "byte_length": 676,
+      "span_sha256": "e60891d25fab1d4db696351b4cecb52b552232545a830eca79dbb11e7886f512",
+      "text": "  getDrawableElements(): DrawableElem[] {\n    const drawableElem: DrawableElem[] = [];\n    if (this.showChartTitle) {\n      drawableElem.push({\n        groupTexts: ['chart-title'],\n        type: 'text',\n        data: [\n          {\n            fontSize: this.chartConfig.titleFontSize,\n            text: this.chartData.title,\n            verticalPos: 'middle',\n            horizontalPos: 'center',\n            x: this.boundingRect.x + this.boundingRect.width / 2,\n            y: this.boundingRect.y + this.boundingRect.height / 2,\n            fill: this.chartThemeConfig.titleColor,\n            rotation: 0,\n          },\n        ],\n      });\n    }\n    return drawableElem;\n  }\n",
+      "meaning": "Only visible title emits chart-title text drawable."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/chartBuilder/textDimensionCalculator.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "361c2fb15828778c9f08ff442093c609f057aa448468bac5f2ad11d48332743c",
+      "first_line": 9,
+      "last_line": 43,
+      "byte_offset": 305,
+      "byte_length": 1297,
+      "span_sha256": "d5ce3f45b816981cad240ecdd6b2639fbe39fb203b1840a877e06e4ff4f8ef39",
+      "text": "export class TextDimensionCalculatorWithFont implements TextDimensionCalculator {\n  constructor(private parentGroup: SVGGroup) {}\n  getMaxDimension(texts: string[], fontSize: number): Dimension {\n    if (!this.parentGroup) {\n      return {\n        width: texts.reduce((acc, cur) => Math.max(cur.length, acc), 0) * fontSize,\n        height: fontSize,\n      };\n    }\n\n    const dimension: Dimension = {\n      width: 0,\n      height: 0,\n    };\n\n    const elem = this.parentGroup\n      .append('g')\n      .attr('visibility', 'hidden')\n      .attr('font-size', fontSize);\n\n    // computeDimensionOfText measures in screen pixels. When the SVG is scaled to fit its\n    // container (useMaxWidth), convert back to SVG user units so layout matches drawing.\n    const ctm = elem.node()?.getScreenCTM?.();\n    const toScale = (s: number | undefined) => (s && s > 0 ? s : 1);\n    const scaleX = toScale(ctm?.a);\n    const scaleY = toScale(ctm?.d);\n\n    for (const t of texts) {\n      const bbox = computeDimensionOfText(elem, 1, t);\n      const width = bbox ? bbox.width / scaleX : t.length * fontSize;\n      const height = bbox ? bbox.height / scaleY : fontSize;\n      dimension.width = Math.max(dimension.width, width);\n      dimension.height = Math.max(dimension.height, height);\n    }\n    elem.remove();\n",
+      "meaning": "No-SVG unit fallback uses fontSize height; actual SVG uses browser text geometry with scale correction."
+    },
+    {
+      "path": "packages/mermaid/src/rendering-util/createText.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "711f26bbda94ae9b8020e5aa59e8b41692c8ae569de6fe080000dac4719f5536",
+      "first_line": 127,
+      "last_line": 141,
+      "byte_offset": 4319,
+      "byte_length": 510,
+      "span_sha256": "ddf1562ee0e0ddb62dc2170024a8351cb2de9c55577f4ba949915422c3aac3b1",
+      "text": "export function computeDimensionOfText(\n  parentNode: SVGGroup,\n  lineHeight: number,\n  text: string\n): DOMRect | undefined {\n  const testElement: D3TextElement = parentNode.append('text');\n  const testSpan: D3TSpanElement = createTspan(testElement, 1, lineHeight);\n  updateTextContentAndStyles(testSpan, [{ content: text, type: 'normal' }]);\n  const textDimension: DOMRect | undefined = testSpan.node()?.getBoundingClientRect();\n  if (textDimension) {\n    testElement.remove();\n  }\n  return textDimension;\n}\n\n",
+      "meaning": "Browser getBoundingClientRect provides measured title dimensions."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/chartBuilder/components/chartTitle.spec.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "ac5bb259c8237f6e3e73efeeec52225e5b75bb8fdd00c0766f10d6944923f7ea",
+      "first_line": 130,
+      "last_line": 150,
+      "byte_offset": 5021,
+      "byte_length": 888,
+      "span_sha256": "54013733177bf45816633900c465e1ae1c2cd2b8f29d4aefcbda20207cf3e9d1",
+      "text": "describe('ChartTitle space', () => {\n  it('drops the title instead of overflowing a chart too short to fit it', () => {\n    // The plot reserves 50% of the height, leaving 30px; the title needs 20 + 2 * 10 = 40px.\n    const config = { ...chartConfig, height: 60 };\n    const drawables = build(config, makeChartData('Title'));\n\n    expect(findGroup(drawables, 'chart-title')).toBeUndefined();\n    const plotBars = findGroup(drawables, 'plot.bar-plot-0');\n    if (plotBars?.type !== 'rect') {\n      throw new Error('bar plot was not rendered');\n    }\n    for (const bar of plotBars.data) {\n      expect(bar.y + bar.height).toBeLessThanOrEqual(config.height);\n    }\n  });\n\n  it('keeps the title when the chart is tall enough', () => {\n    const drawables = build({ ...chartConfig, height: 100 }, makeChartData('Title'));\n\n    expect(findGroup(drawables, 'chart-title')).toBeDefined();\n  });\n",
+      "meaning": "Executable foreign unit omission and tall-chart counterpart, plus all bar endpoints bounded by chart height."
+    },
+    {
+      "path": "packages/mermaid/src/schemas/config.schema.yaml",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "855e6fbb5d278f190f15a7660b44dca6a4699ca8077ab8b35579a4e8a64be019",
+      "first_line": 1521,
+      "last_line": 1540,
+      "byte_offset": 53715,
+      "byte_length": 504,
+      "span_sha256": "4337455420e0f097204f9578d52ae893640e9ea0f054aa4bbc6e2ab571f8e72b",
+      "text": "      width:\n        description: width of the chart\n        type: number\n        default: 700\n        minimum: 1\n      height:\n        description: height of the chart\n        type: number\n        default: 500\n        minimum: 1\n      titleFontSize:\n        description: Font size of the chart title\n        type: number\n        default: 20\n        minimum: 1\n      titlePadding:\n        description: Top and bottom space from the chart title\n        type: number\n        default: 10\n        minimum: 0\n",
+      "meaning": "Width/height/font size/padding defaults and allowed domains."
+    },
+    {
+      "path": "packages/mermaid/src/schemas/config.schema.yaml",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "855e6fbb5d278f190f15a7660b44dca6a4699ca8077ab8b35579a4e8a64be019",
+      "first_line": 1549,
+      "last_line": 1557,
+      "byte_offset": 54516,
+      "byte_length": 252,
+      "span_sha256": "b0ac7a0dccad88274f39904600051e93b4070e0deef4fc0d901e66634f27ae92",
+      "text": "      showTitle:\n        description: Should show the chart title\n        type: boolean\n        default: true\n      showLegend:\n        description: Should show a legend for named plots\n        type: boolean\n        default: true\n      legendFontSize:\n",
+      "meaning": "showTitle and showLegend default true."
+    },
+    {
+      "path": "packages/mermaid/src/schemas/config.schema.yaml",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "855e6fbb5d278f190f15a7660b44dca6a4699ca8077ab8b35579a4e8a64be019",
+      "first_line": 1571,
+      "last_line": 1582,
+      "byte_offset": 55131,
+      "byte_length": 434,
+      "span_sha256": "fea82625667e11703dfe6a6bda82f4453b536f9e3e17a27b895c8937915b7402",
+      "text": "        $ref: '#/$defs/XYChartAxisConfig'\n        default: { '$ref': '#/$defs/XYChartAxisConfig' }\n      chartOrientation:\n        description: How to plot will be drawn horizontal or vertical\n        tsType: '\"vertical\" | \"horizontal\"'\n        default: 'vertical'\n      plotReservedSpacePercent:\n        description: Minimum percent of space plots of the chart will take\n        type: number\n        default: 50\n        minimum: 30\n\n",
+      "meaning": "Vertical orientation default and plot reservation default50."
+    },
+    {
+      "path": "packages/mermaid/src/diagrams/xychart/xychartRenderer.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "8feeacd2b05ee0de6fb962d1558f15d7ea7a5ecb16bfa118c598422344c86153",
+      "first_line": 31,
+      "last_line": 48,
+      "byte_offset": 1168,
+      "byte_length": 560,
+      "span_sha256": "5534009f77d9cf181ba279ca92cbeb29ad2590fb892e3288c527264ba5f7ddc4",
+      "text": "\n  const svg = selectSvgElement(id);\n  const group = svg.append('g').attr('class', 'main');\n  const background = group\n    .append('rect')\n    .attr('width', chartConfig.width)\n    .attr('height', chartConfig.height)\n    .attr('class', 'background');\n\n  // @ts-ignore: TODO Fix ts errors\n  configureSvgSize(svg, chartConfig.height, chartConfig.width, true);\n\n  svg.attr('viewBox', `0 0 ${chartConfig.width} ${chartConfig.height}`);\n\n  background.attr('fill', themeConfig.backgroundColor);\n\n  db.setTmpSVGG(svg.append('g').attr('class', 'mermaid-tmp-group'));\n\n",
+      "meaning": "Actual SVG uses authored width/height/viewBox; real temporary SVG group enables browser dimensions."
+    },
+    {
+      "path": "docs/syntax/xyChart.md",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "ff076061a5ae1561c25ff008ed86e9e82d1296b5325bec870b2d5cdbe4e9c4c4",
+      "first_line": 47,
+      "last_line": 60,
+      "byte_offset": 2058,
+      "byte_length": 282,
+      "span_sha256": "15fcfdc4b5588323533b316165f84a3eca8a8cd82feb8b9311b4d94187315445",
+      "text": "### Title\n\nThe title is a short description of the chart and it will always render on top of the chart.\n\n#### Example\n\n```\nxychart\n    title \"This is a simple example\"\n    ...\n```\n\n> **Note**\n> If the title is a single word one no need to use `\"`, but if it has space `\"` is needed\n",
+      "meaning": "General prose says always top; narrower actual implementation/unit condition qualifies this prose."
+    },
+    {
+      "path": "docs/syntax/xyChart.md",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "ff076061a5ae1561c25ff008ed86e9e82d1296b5325bec870b2d5cdbe4e9c4c4",
+      "first_line": 134,
+      "last_line": 150,
+      "byte_offset": 4433,
+      "byte_length": 1660,
+      "span_sha256": "2a526bce436fa68dd9fdcdc1c1323595d78863bae14da2b39c37d344dae27512",
+      "text": "## Chart Configurations\n\n| Parameter                | Description                                                   | Default value |\n| ------------------------ | ------------------------------------------------------------- | :-----------: |\n| width                    | Width of the chart                                            |      700      |\n| height                   | Height of the chart                                           |      500      |\n| titlePadding             | Top and Bottom padding of the title                           |      10       |\n| titleFontSize            | Title font size                                               |      20       |\n| showTitle                | Title to be shown or not                                      |     true      |\n| showLegend               | Legend to be shown for named plots or not                     |     true      |\n| legendFontSize           | Legend font size                                              |      14       |\n| legendPadding            | Padding around the legend                                     |      10       |\n| xAxis                    | xAxis configuration                                           |  AxisConfig   |\n| yAxis                    | yAxis configuration                                           |  AxisConfig   |\n| chartOrientation         | 'vertical' or 'horizontal'                                    |  'vertical'   |\n| plotReservedSpacePercent | Minimum space plots will take inside the chart                |      50       |\n| showDataLabel            | Should show the value corresponding to the bar within the bar |     false     |\n",
+      "meaning": "Public metric config descriptions and defaults."
+    },
+    {
+      "path": "e2e/rendering/mmd-snapshots.spec.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "d4cebaf5f811a26f5954681d5e4c0235c28d146bedda1d07fc57bdfdd8364dbf",
+      "first_line": 41,
+      "last_line": 84,
+      "byte_offset": 1545,
+      "byte_length": 1942,
+      "span_sha256": "cde186a294faa3bed7d3dfe132df0b34838209c94e020b9decd5aee855e04db1",
+      "text": "const registerFixtureNode = (node: FixtureTree): void => {\n  for (const segment of [...node.children.keys()].sort()) {\n    test.describe(segment, () => {\n      registerFixtureNode(node.children.get(segment)!);\n    });\n  }\n\n  for (const relativePath of [...node.fixtures].sort()) {\n    // Read at registration time (sync, like the fixture file itself below):\n    // `tag` has to be a static option on the `test()` call, not something\n    // decided from inside the async test body.\n    const metadata = readFixtureMetadata(relativePath);\n    const tags = metadata?.tags?.map((tag) => (tag.startsWith('@') ? tag : `@${tag}`));\n\n    test(fixtureBaseName(relativePath), { tag: tags }, async ({ page }, testInfo) => {\n      if (metadata?.description) {\n        testInfo.annotations.push({ type: 'description', description: metadata.description });\n      } else {\n        // Not a failure — most fixtures don't have one yet — but flagged in the\n        // report rather than left silent, since a missing sidecar is otherwise\n        // invisible short of opening the fixture's folder directly.\n        testInfo.annotations.push({ type: 'metadata', description: 'No metadata found for test' });\n      }\n\n      let source: string;\n      try {\n        source = readFileSync(fixturePath(relativePath), 'utf8');\n      } catch (error) {\n        throw new Error(\n          `Failed to read mmd fixture ${relativePath}: ${error instanceof Error ? error.message : String(error)}`\n        );\n      }\n      const fixedClock = fixedClockFor(relativePath);\n      if (fixedClock) {\n        await page.clock.install({ time: new Date(fixedClock) });\n      }\n      // Mirror the fixture's storage path so Argos sheets group by diagram\n      // folder (e.g. diagrams/packet) rather than the runner spec file.\n      await imgSnapshotTest(page, testInfo, source, {\n        screenshotPath: `diagrams/${relativePath.replace(/\\.mmd$/i, '')}`,\n      });\n    });\n  }\n};\n",
+      "meaning": "Generic original full-source fixture runner; screenshot comparison is the original case obligation."
+    },
+    {
+      "path": "e2e/helpers/util.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "56fb233e38b19e8d13c1c5e95896e6d786b3e68154a3c8b3bdb5b2dc6286a44d",
+      "first_line": 73,
+      "last_line": 96,
+      "byte_offset": 2560,
+      "byte_length": 722,
+      "span_sha256": "025bc6ae27325d6dfdaaca3a4cc27e98ba874fb28f415b3ade8f6292b8186394",
+      "text": "export const imgSnapshotTest = async (\n  page: Page,\n  testInfo: TestInfo,\n  graphStr: string,\n  _options: E2EMermaidConfig = {},\n  api = false,\n  validation?: any\n): Promise<void> => {\n  const options: E2EMermaidConfig = {\n    ..._options,\n    fontFamily: _options.fontFamily ?? 'courier',\n    // @ts-ignore TODO: Fix type of fontSize\n    fontSize: _options.fontSize ?? '16px',\n    sequence: {\n      ...(_options.sequence ?? {}),\n      actorFontFamily: 'courier',\n      noteFontFamily: _options.sequence?.noteFontFamily ?? 'courier',\n      messageFontFamily: 'courier',\n    },\n  };\n\n  const url: string = mermaidUrl(graphStr, options, api);\n  await openURLAndVerifyRendering(page, testInfo, url, options, validation);\n};\n",
+      "meaning": "Browser font setup affects exact SVG measurement."
+    },
+    {
+      "path": "e2e/helpers/util.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "56fb233e38b19e8d13c1c5e95896e6d786b3e68154a3c8b3bdb5b2dc6286a44d",
+      "first_line": 124,
+      "last_line": 205,
+      "byte_offset": 4114,
+      "byte_length": 2742,
+      "span_sha256": "12dccc7025b80532b7e62b29622c44039ee377445286ddf933b1745619a6333b",
+      "text": "export const assertDiagramNotError = async (page: Page): Promise<void> => {\n  const svg = diagramSvg(page).first();\n  await expect(svg).not.toHaveAttribute('aria-roledescription', 'error');\n  await expect(svg.locator('.error-icon')).toHaveCount(0);\n};\n\nexport const openURLAndVerifyRendering = async (\n  page: Page,\n  testInfo: TestInfo,\n  url: string,\n  { screenshot = true, rejectErrorDiagram = true, ...options }: E2EMermaidConfig,\n  validation?: any\n): Promise<void> => {\n  const name: string = shortenScreenshotName(options.name ?? testInfo.titlePath.join(' '));\n\n  // Capture browser-side errors so a render failure reports the real cause\n  // instead of a bare \"svg not visible\" timeout.\n  const pageErrors: string[] = [];\n  const consoleErrors: string[] = [];\n  page.on('pageerror', (error) => pageErrors.push(`[pageerror] ${error.message}`));\n  page.on('console', (msg) => {\n    if (msg.type() === 'error') {\n      consoleErrors.push(`[console.error] ${msg.text()}`);\n    }\n  });\n\n  await startCoverage(page);\n  await page.goto(url);\n\n  // Prefer the explicit rendered flag from viewer.js; fall back to SVG visibility.\n  try {\n    await page.waitForFunction(() => (window as any).rendered === true, undefined, {\n      timeout: 5_000,\n    });\n  } catch {\n    try {\n      await diagramSvg(page).first().waitFor({ state: 'visible', timeout: 15_000 });\n    } catch (error) {\n      const details = [...pageErrors, ...consoleErrors];\n      if (details.length > 0) {\n        throw new Error(\n          `Diagram did not render (window.rendered never set, no SVG). Browser errors:\\n${details.join('\\n')}`\n        );\n      }\n      throw error;\n    }\n  }\n\n  // xssAttack() throws after injecting #the-malware and still leaves an SVG, so a\n  // catch-only check misses it. Do not fail on every pageerror: error-diagram\n  // tests and \"render after error\" cases throw mermaid parse errors on purpose.\n  const xssErrors = pageErrors.filter((msg) => msg.includes('XSS Succeeded'));\n  if (xssErrors.length > 0) {\n    throw new Error(`XSS payload executed during render:\\n${xssErrors.join('\\n')}`);\n  }\n\n  if (options.securityLevel === 'sandbox') {\n    const iframe = page.locator('iframe');\n    await expect(iframe).toBeVisible();\n    if (validation) {\n      await validation(iframe);\n    }\n  } else {\n    const svg = diagramSvg(page).first();\n    await expect(svg).toBeVisible();\n    await expect(svg).not.toHaveAttribute('viewbox'); // cspell:ignore viewbox\n\n    if (rejectErrorDiagram) {\n      await assertDiagramNotError(page);\n    }\n\n    if (validation) {\n      await validation(svg);\n    }\n  }\n\n  if (screenshot) {\n    await verifyScreenshot(page, testInfo, name, options.screenshotPath, url);\n  }\n\n  await collectCoverage(page, testInfo);\n};\n",
+      "meaning": "Original renderer invocation and render/error checks."
+    },
+    {
+      "path": "e2e/helpers/util.ts",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "full_sha256": "56fb233e38b19e8d13c1c5e95896e6d786b3e68154a3c8b3bdb5b2dc6286a44d",
+      "first_line": 207,
+      "last_line": 295,
+      "byte_offset": 6857,
+      "byte_length": 3785,
+      "span_sha256": "0c9aede6ac081a1a47ff8c4cd1646578e272201c511ac3a4903238ba34529be7",
+      "text": "export const verifyScreenshot = async (\n  page: Page,\n  testInfo: TestInfo,\n  name: string,\n  screenshotPath?: string,\n  pageUrl?: string\n): Promise<void> => {\n  const useAppli = !!process.env.USE_APPLI;\n  const useArgos = process.env.RUN_VISUAL_TEST === 'true';\n\n  // Capture only the rendered diagram SVG so each screenshot is a tight crop of\n  // the diagram rather than the whole viewport (mostly empty space). Fall back\n  // to the full page when there is no top-level diagram SVG — e.g. sandboxed\n  // diagrams (the SVG lives in an iframe) and the iife/xss/external-diagram tests.\n  const svg = diagramSvg(page).first();\n  const hasSvg = (await svg.count()) > 0;\n  const target = hasSvg ? svg : page;\n  const specRelPath = relative(testInfo.project.testDir, testInfo.file).split(sep).join('/');\n\n  if (useAppli) {\n    // One Applitools batch per diagram folder or spec file, a check per screenshot\n    // scoped to the diagram SVG (full window when there is none). API key, branch,\n    // and parent branch are read from the APPLITOOLS_* env vars by the SDK.\n    // Imported lazily so the SDK is only loaded for Applitools runs.\n    const { Eyes, ClassicRunner, Target } = await import('@applitools/eyes-playwright');\n    const runId = process.env.APPLITOOLS_BATCH_ID;\n    if (!runId) {\n      throw new Error(\n        'APPLITOOLS_BATCH_ID is unset; playwright.config.ts should seed it for USE_APPLI runs'\n      );\n    }\n    const eyes = new Eyes(new ClassicRunner());\n    eyes.setConfiguration({\n      appName: 'Mermaid',\n      batch: applitoolsBatch(runId, specRelPath, screenshotPath),\n    });\n    await eyes.open(page, 'Mermaid', applitoolsTestName(name, specRelPath, screenshotPath));\n    await eyes.check(\n      'Click!',\n      hasSvg ? Target.region('svg[aria-roledescription]') : Target.window().fully()\n    );\n    await eyes.close(true);\n    return;\n  }\n\n  if (useArgos) {\n    // Capture a native PNG; a dedicated CI job composites these into sheets\n    // (grouped by folder) and uploads them once.\n    const screenshotDir = process.env.SCREENSHOT_DIR ?? 'e2e/screenshots';\n    const sanitizeSegment = (segment: string) =>\n      segment.replace(/[^\\w.-]+/g, '-').replace(/^-+|-+$/g, '');\n    let outPath: string;\n    if (screenshotPath) {\n      // Mirror the source's storage path (e.g. diagrams/<type>/<name>) so the\n      // sheets group by that folder rather than the runner spec file.\n      const safeSubpath = screenshotPath.split('/').map(sanitizeSegment).join('/');\n      outPath = join(screenshotDir, `${safeSubpath}.png`);\n    } else {\n      // `name` carries the spec path + test title and may contain characters\n      // GitHub artifacts reject (\" : < > | * ?) or path separators; flatten it to\n      // a safe slug. The spec folder lives in specRelPath, which the batch job\n      // groups by, so the filename only needs to be unique within the spec.\n      outPath = join(screenshotDir, specRelPath, `${sanitizeSegment(name)}.png`);\n    }\n    mkdirSync(dirname(outPath), { recursive: true });\n    const buffer = await target.screenshot({ animations: 'disabled', scale: 'device' });\n    writeFileSync(outPath, buffer);\n    await writeArgosMetadataSidecar(\n      outPath,\n      buildCaptureMetadata({\n        testInfo,\n        screenshotPath,\n        url: pageUrl ?? page.url(),\n      })\n    );\n  } else {\n    const snapshotName = `${name}.png`;\n    const snapshotPath = testInfo.snapshotPath(snapshotName, { kind: 'screenshot' });\n\n    if (!existsSync(snapshotPath)) {\n      mkdirSync(dirname(snapshotPath), { recursive: true });\n      const screenshot = await target.screenshot({ animations: 'disabled', scale: 'device' });\n      writeFileSync(snapshotPath, screenshot);\n      return;\n    }\n\n    await expect(target).toHaveScreenshot(snapshotName);\n  }\n};\n",
+      "meaning": "Conditional Applitools/Argos/local snapshot comparison profiles; no native execution claimed."
+    }
+  ],
+  "obligations": {
+    "source_semantics": [
+      "Preserve complete authored title as source data even if a chosen presentation suppresses it.",
+      "Own named CPU series, all ten ordered samples, explicit two numeric domains, both axis titles and vertical orientation.",
+      "Single continuous line with all source-domain sample projections; exact data disclosure where quantization collides.",
+      "No spurious bar, series, title, sample, label or unowned ink; restore the same Node across240/40/240 and following sentinel."
+    ],
+    "foreign_unit_predicates": [
+      {
+        "path": "packages/mermaid/src/diagrams/xychart/chartBuilder/components/chartTitle.spec.ts",
+        "lines": [
+          131,
+          143
+        ],
+        "input_profile": "Synthetic bar chart Title, x band a/b/c, default config except height60 and showLegendfalse; not the E2E CPU source.",
+        "predicates": [
+          "chart-title undefined",
+          "plot.bar-plot-0 has type rect",
+          "every bar.y+bar.height <=60"
+        ]
+      },
+      {
+        "path": "packages/mermaid/src/diagrams/xychart/chartBuilder/components/chartTitle.spec.ts",
+        "lines": [
+          146,
+          150
+        ],
+        "predicates": [
+          "height100 chart-title defined"
+        ]
+      }
+    ],
+    "foreign_e2e": {
+      "path": "e2e/rendering/mmd-snapshots.spec.ts",
+      "fixture": "e2e/diagrams/xychart/nightly-check/should-drop-the-title-when-the-chart-is-too-short.mmd",
+      "condition": "tier collection may include nightly; selected screenshot backend/environment controls comparison",
+      "status": "not executed; original SVG pixels and font geometry remain separate pending obligations"
+    }
+  },
+  "title_visibility": {
+    "authored_title_nonempty": true,
+    "showTitle_default": true,
+    "plotReservedSpacePercent_default": 50,
+    "titleFontSize_default": 20,
+    "titlePadding_default": 10,
+    "foreign_unit_no_svg_calculation": {
+      "height": 60,
+      "reserved_plot_height": 30,
+      "remaining_height": 30,
+      "title_height": 20,
+      "padded_title_height": 40,
+      "visible": false
+    },
+    "actual_svg_condition": "measured_text_height + 2*titlePadding <= height - floor(height*plotReservedSpacePercent/100), showTitle and title nonempty",
+    "actual_svg_measurement_status": "Not run. Font/browser-specific actual height not claimed.",
+    "not_source_invalid": true
+  },
+  "proposed_native_profile": {
+    "recommended": "Retain existing fixed-cell semantic projection with complete authored title and full data; name original height-driven SVG title omission as an explicit non-equivalent pending original predicate. This source may only be promoted after independent source/profile review, strong geometry gate and candidate snapshot review.",
+    "alternative": "If exact omission parity is required, implement a separately reviewed title visibility feature using explicitly defined native metric semantics and source-only visibility facts; do not silently drop title from the source Model or assert browser metric parity.",
+    "closed_source_policy": "A uniform capability boundary may retain complete source for layout-affecting metric metadata not represented by an approved native projection. Do not introduce a height60/path/name/hash-specific fallback. Such source-positive fallback remains unmet, never a passed drawing."
+  },
+  "limits": {
+    "source_bytes": 222,
+    "series": 1,
+    "samples": 10,
+    "title_unicode_scalars": 21,
+    "source_axes_finite": true,
+    "source_values_finite": true,
+    "source_not_proven_resource_failure": true,
+    "canvas_work_caps": "Existing product caps unchanged; no native measurement/execution performed.",
+    "no_source_oracle_back_inference": true
+  },
+  "scope": {
+    "no_glyph_read": true,
+    "no_renderer_or_parser_execution": true,
+    "no_production_changes": true,
+    "no_fixture_or_manifest_or_snapshot_changes": true,
+    "no_original_denominator_change": true,
+    "original_2145_raw": 2145,
+    "body_projections": 593,
+    "official_sequence_bodies": 193,
+    "not_a_new_sequence_obligation": true,
+    "review_required": [
+      "Independent field/source review",
+      "Independent native projection vs original omission-predicate classification",
+      "Root-owned actual native geometry/negative/multiwidth execution",
+      "Original E2E snapshot behavior remains pending unless separately ported"
+    ]
+  }
+}

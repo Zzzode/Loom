@@ -1,0 +1,4 @@
+title(bytes=49)=&quot;before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after\u{202E}&quot;
+[directory] name(bytes=1)=&quot;/&quot; [id=0, level=-1]
+└── [directory] name(bytes=4)=&quot;root&quot;/ [id=1, level=0]
+    └── [file] name(bytes=8)=&quot;file.txt&quot; [id=2, level=2]

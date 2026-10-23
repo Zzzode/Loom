@@ -1,0 +1,13 @@
++---+    +---+    +---+    +---+    +---+
+| A |    | B |    | C |    | D |    | E |
++---+    +---+    +---+    +---+    +---+
+
+relations:
+id(bytes=1)="A" --> id(bytes=1)="B" : calls
+id(bytes=1)="A" --> id(bytes=1)="C" : reads
+id(bytes=1)="A" --> id(bytes=1)="D" : writes
+id(bytes=1)="B" ..> id(bytes=1)="D" : caches
+id(bytes=1)="C" ..> id(bytes=1)="D" : depends
+id(bytes=1)="D" --> id(bytes=1)="E" : emits
+id(bytes=1)="E" ..> id(bytes=1)="A" : feedback
+id(bytes=1)="B" o-- id(bytes=1)="C" : shares

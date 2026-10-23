@@ -1,0 +1,11 @@
++--------+
+| Animal |
++--------+
+
++-----+
+| Dog |
++-----+
+
+relations:
+id(bytes=6)="Animal" <|-- id(bytes=3)="Dog" : parent
+id(bytes=6)="Animal" <|-- id(bytes=3)="Dog" : base

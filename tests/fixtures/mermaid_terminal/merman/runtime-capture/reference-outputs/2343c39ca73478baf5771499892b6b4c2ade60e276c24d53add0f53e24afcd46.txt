@@ -1,0 +1,12 @@
+                 +--------+
+                 | Animal |
+                 +--------+
+                      ^
+                    Hello
+                    - l1
+                    - l2
+authored(bytes=23)="Hello<br/>- l1<br/>- l2"
+                      |
+                  +------+
+                  | Duck |
+                  +------+

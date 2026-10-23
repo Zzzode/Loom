@@ -1,0 +1,8 @@
+title(bytes=6)="Packet"
+accTitle(bytes=12)="Packet title"
+accDescr(bytes=18)="Packet description"
+row 1:
+  - range=[0..7] bits=8 label(bytes=6)="header"
+  - range=[8..15] bits=8 label(bytes=7)="payload"
+row 2:
+  - range=[16..31] bits=16 label(bytes=6)="footer"

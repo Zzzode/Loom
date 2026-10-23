@@ -1,0 +1,9 @@
+sequenceDiagram
+participant A
+participant B
+participant C
+A->>C: kickoff
+loop poll
+Note right of C: queued
+B->>C: check
+end

@@ -1,0 +1,12 @@
+classDiagram
+    direction TB
+    class Repository~T~
+    <<interface>> Repository~T~
+    class Service~T~ {
+      +get(id: String) T
+    }
+    class SqlRepo~T~ {
+      +get(id: String) T
+    }
+    Repository~T~ <|.. SqlRepo~T~
+    Service~T~ ..> Repository~T~ : depends

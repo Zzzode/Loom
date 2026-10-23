@@ -1,0 +1,6 @@
+sequenceDiagram
+participant cron job
+participant data svc
+cron job ()->>() data svc: run
+Note over cron job,data svc: nightly
+data svc-->>cron job: done

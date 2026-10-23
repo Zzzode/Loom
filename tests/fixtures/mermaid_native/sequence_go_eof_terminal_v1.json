@@ -1,0 +1,213 @@
+{
+  "schema": "sequence_go_eof_terminal_projection/v1",
+  "basis_file": {
+    "path": "tests/fixtures/mermaid_native/sequence_lifecycle_union24_facts.json",
+    "bytes": 110183,
+    "sha256": "9b29e9bb2c392e3c748cbfcd455425a8bb3cd0f2493580fe576d30bbc5f66b35"
+  },
+  "case_id": "go_lifecycle_source_5330763644ae19a6",
+  "input": "sequenceDiagram\nA->>B: x\ndestroy A",
+  "input_sha256": "5330763644ae19a66e48d1089cb8bad639264af83b03fed20fb2e07961edb47c",
+  "original_case": {
+    "id": "go_lifecycle_source_5330763644ae19a6",
+    "input": "sequenceDiagram\nA->>B: x\ndestroy A",
+    "input_sha256": "5330763644ae19a66e48d1089cb8bad639264af83b03fed20fb2e07961edb47c",
+    "expected": "source",
+    "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+    "frozen_bindings": [],
+    "original_function_bindings": [
+      {
+        "path": "pkg/sequence/create_test.go",
+        "function": "TestCreateDestroyErrors",
+        "input_index": 8,
+        "function_byte_offset": 3759,
+        "function_byte_length": 1545,
+        "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+        "source_literal_utf8_offset": 4890,
+        "conditional_profile": "original source/API conditions retained",
+        "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+        "original_error_substring": "must be followed by a message",
+        "original_error_case_name": "destroy at end of diagram",
+        "table_row_witness": {
+          "offset_utf8_bytes": 4858,
+          "text": "\t\t{\"destroy at end of diagram\", \"sequenceDiagram\\nA->>B: x\\ndestroy A\", \"must be followed by a message\"},",
+          "sha256": "8ddfe084dc800c0640d7a2df0dc057bbae019ed41f09b062aa15d031665e84ae"
+        },
+        "error_condition_witness": {
+          "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+          "offset_utf8_bytes": 5170
+        }
+      }
+    ],
+    "complete_source_row_witnesses": [
+      {
+        "offset_utf8_bytes": 0,
+        "text": "sequenceDiagram"
+      },
+      {
+        "offset_utf8_bytes": 16,
+        "text": "A->>B: x"
+      },
+      {
+        "offset_utf8_bytes": 25,
+        "text": "destroy A"
+      }
+    ]
+  },
+  "original_case_sha256": "8b2ab958300da54f53b94336530c24fa980418826dd94e512f0be7a0e008537b",
+  "original_function_file": {
+    "path": "tests/fixtures/mermaid_terminal/mermaid_ascii/upstream/pkg/sequence/create_test.go",
+    "bytes": 9626,
+    "sha256": "231a2bf9d3b4f352f6652c079fdb332d069ead55d669062fc3bd4777ffd0ca6e"
+  },
+  "original_function": {
+    "function": "TestCreateDestroyErrors",
+    "source_byte_offset": 3759,
+    "source_byte_length": 1545,
+    "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+    "line_start": 107,
+    "line_end": 128,
+    "function_source": "func TestCreateDestroyErrors(t *testing.T) {\n\tcases := []struct{ name, in, want string }{\n\t\t{\"create never bound to a message\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nparticipant D\", \"must be followed by a message\"},\n\t\t{\"create at end of diagram\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\", \"must be followed by a message\"},\n\t\t{\"created participant uninvolved\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nA->>B: y\", \"must receive the message\"},\n\t\t{\"created participant sends its own creating message\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nC->>A: hello\", \"must receive the message\"},\n\t\t{\"create reuses an existing id\", \"sequenceDiagram\\nA->>C: x\\ncreate participant C\\nA->>C: y\", \"id already exists\"},\n\t\t{\"create reuses a declared id\", \"sequenceDiagram\\nparticipant C\\nA->>B: x\\ncreate participant C\\nA->>C: y\", \"id already exists\"},\n\t\t{\"destroy uninvolved\", \"sequenceDiagram\\nA->>B: x\\ndestroy A\\nB->>C: y\", \"not involved in the following message\"},\n\t\t{\"destroy unknown participant\", \"sequenceDiagram\\nA->>B: x\\ndestroy Zed\\nA->>B: y\", \"unknown participant\"},\n\t\t{\"destroy at end of diagram\", \"sequenceDiagram\\nA->>B: x\\ndestroy A\", \"must be followed by a message\"},\n\t\t{\"create requires participant or actor\", \"sequenceDiagram\\nA->>B: x\\ncreate C\\nA->>C: y\", \"invalid syntax\"},\n\t}\n\tfor _, c := range cases {\n\t\tt.Run(c.name, func(t *testing.T) {\n\t\t\t_, err := Parse(c.in)\n\t\t\tif err == nil || !strings.Contains(err.Error(), c.want) {\n\t\t\t\tt.Errorf(\"want error containing %q, got %v\", c.want, err)\n\t\t\t}\n\t\t})\n\t}\n}",
+    "inputs": [
+      {
+        "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nparticipant D",
+        "input_sha256": "0c569f23bc3a41bd3a148c23ce96cb8fe483a1dd129175600f0cb93798e2fe81",
+        "source_literal_utf8_offset": 3887,
+        "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+        "config_profile": "original source/API conditions retained"
+      },
+      {
+        "input": "sequenceDiagram\nA->>B: x\ncreate participant C",
+        "input_sha256": "722efa400ff73f1400ae3841e7fa204c56bc26d314aea90840214c5878ca6343",
+        "source_literal_utf8_offset": 4018,
+        "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+        "config_profile": "original source/API conditions retained"
+      },
+      {
+        "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nA->>B: y",
+        "input_sha256": "7b1f8db9a2652a6307cbe318aa9461ca7e80ec6786ed7a12750121376412c959",
+        "source_literal_utf8_offset": 4140,
+        "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+        "config_profile": "original source/API conditions retained"
+      },
+      {
+        "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nC->>A: hello",
+        "input_sha256": "3dfd463228643baf7ccf6dcd7f200b1ffbba80732830fe5ebe31c785e2c01889",
+        "source_literal_utf8_offset": 4287,
+        "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+        "config_profile": "original source/API conditions retained"
+      },
+      {
+        "input": "sequenceDiagram\nA->>C: x\ncreate participant C\nA->>C: y",
+        "input_sha256": "f46bfa34bc06d233314afa7d276824f02cee2eb4eee876ab90c9d7673950b1b7",
+        "source_literal_utf8_offset": 4416,
+        "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+        "config_profile": "original source/API conditions retained"
+      },
+      {
+        "input": "sequenceDiagram\nparticipant C\nA->>B: x\ncreate participant C\nA->>C: y",
+        "input_sha256": "8160eff3408722be6f1ba361d14e977f0439007b90db2e609e3a46aa25e53e45",
+        "source_literal_utf8_offset": 4533,
+        "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+        "config_profile": "original source/API conditions retained"
+      },
+      {
+        "input": "sequenceDiagram\nA->>B: x\ndestroy A\nB->>C: y",
+        "input_sha256": "1977b79a43048c8406d9634f8eca263547bfb97957c5fa102e0f8eba2ecc610a",
+        "source_literal_utf8_offset": 4656,
+        "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+        "config_profile": "original source/API conditions retained"
+      },
+      {
+        "input": "sequenceDiagram\nA->>B: x\ndestroy Zed\nA->>B: y",
+        "input_sha256": "dcf1975fc2454ba3f1dd72a205f3cb0e08b5d777bcd057f5c21b608313bcf2d6",
+        "source_literal_utf8_offset": 4782,
+        "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+        "config_profile": "original source/API conditions retained"
+      },
+      {
+        "input": "sequenceDiagram\nA->>B: x\ndestroy A",
+        "input_sha256": "5330763644ae19a66e48d1089cb8bad639264af83b03fed20fb2e07961edb47c",
+        "source_literal_utf8_offset": 4890,
+        "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+        "config_profile": "original source/API conditions retained"
+      },
+      {
+        "input": "sequenceDiagram\nA->>B: x\ncreate C\nA->>C: y",
+        "input_sha256": "41e1b18078032e4f73c05cc95fc18d7c346e4c9916fafa3a6c67420c3950002c",
+        "source_literal_utf8_offset": 5007,
+        "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+        "config_profile": "original source/API conditions retained"
+      }
+    ],
+    "original_assertion_mapping_status": "pending actual full conditional/predicate translation; function input inventory is not an assertion pass"
+  },
+  "terminal_projection": {
+    "policy": "terminal_resolved_eof_no_death",
+    "expected": "whole_scene",
+    "number_encoding": "DisplayText",
+    "model": {
+      "title": "",
+      "actors": [
+        {
+          "id": "A",
+          "label": "A",
+          "role": "Participant"
+        },
+        {
+          "id": "B",
+          "label": "B",
+          "role": "Participant"
+        }
+      ],
+      "messages": [
+        {
+          "from": 0,
+          "to": 1,
+          "label": "x",
+          "arrow": "Filled",
+          "dashed": false,
+          "central_from": false,
+          "central_to": false,
+          "number": ""
+        }
+      ],
+      "notes": [],
+      "fragments": [],
+      "boxes": [],
+      "order": [
+        {
+          "kind": "Message",
+          "index": 0,
+          "part": 0
+        }
+      ]
+    },
+    "model_sha256": "e44fb1158329d4cd57de15224e7ab9b6a30c11075dbad3de9fcbdb8db88451f9"
+  },
+  "source_action_witnesses": [
+    {
+      "physical_line": 1,
+      "text": "sequenceDiagram",
+      "action": "diagram header; no actor/event"
+    },
+    {
+      "physical_line": 2,
+      "text": "A->>B: x",
+      "action": "ensure implicit A/B Participant; append one Filled solid Message(0->1,label x,hidden number), Message event0"
+    },
+    {
+      "physical_line": 3,
+      "text": "destroy A",
+      "action": "known alive A becomes logical pending destroy; no following successful business signal consumes it; no terminal Destroy event atEOF"
+    }
+  ],
+  "qualification": "Source-derived fixed JS actor + Merman resolved-business terminal lifetime projection; no frame-derived value, production/native execution or original Go Parse/error predicate pass. Immutable original expected=source/native_policy and entire original function are retained as historical source/API evidence, not silently rewritten.",
+  "foreign_api_debt": {
+    "function": "TestCreateDestroyErrors",
+    "input_index": 8,
+    "original_case_name": "destroy at end of diagram",
+    "original_error_substring": "must be followed by a message",
+    "status": "Original Go Parse/error-substring equivalence remains foreign and unverified; the reviewed terminal EOF source projection intentionally has a complete picture without a death."
+  }
+}

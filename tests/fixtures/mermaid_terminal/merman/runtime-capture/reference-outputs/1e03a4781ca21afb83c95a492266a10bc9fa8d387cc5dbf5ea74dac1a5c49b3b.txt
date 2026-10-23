@@ -1,0 +1,12 @@
+titleDisplay: chart(bytes=13)="Sales Revenue"
+titleDisplay: yAxis(bytes=14)="Revenue (in $)"
+# Bar 1  * Line 1
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=3)="jan" value=5000 pointLabel=none clipped=false}, {index=1 x(bytes=3)="feb" value=6000 pointLabel=none clipped=false}, {index=2 x(bytes=3)="mar" value=7500 pointLabel=none clipped=false}, {index=3 x(bytes=3)="apr" value=8200 pointLabel=none clipped=false}, {index=4 x(bytes=3)="may" value=9500 pointLabel=none clipped=false}, {index=5 x(bytes=3)="jun" value=10500 pointLabel=none clipped=false}, {index=6 x(bytes=3)="jul" value=11000 pointLabel=none clipped=false}, {index=7 x(bytes=3)="aug" value=10200 pointLabel=none clipped=false}, {index=8 x(bytes=3)="sep" value=9200 pointLabel=none clipped=false}, {index=9 x(bytes=3)="oct" value=8500 pointLabel=none clipped=false}, {index=10 x(bytes=3)="nov" value=7000 pointLabel=none clipped=false}, {index=11 x(bytes=3)="dec" value=6000 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=1 type=line title=none samples=[{index=0 x(bytes=3)="jan" value=5000 pointLabel=none clipped=false}, {index=1 x(bytes=3)="feb" value=6000 pointLabel=none clipped=false}, {index=2 x(bytes=3)="mar" value=7500 pointLabel=none clipped=false}, {index=3 x(bytes=3)="apr" value=8200 pointLabel=none clipped=false}, {index=4 x(bytes=3)="may" value=9500 pointLabel=none clipped=false}, {index=5 x(bytes=3)="jun" value=10500 pointLabel=none clipped=false}, {index=6 x(bytes=3)="jul" value=11000 pointLabel=none clipped=false}, {index=7 x(bytes=3)="aug" value=10200 pointLabel=none clipped=false}, {index=8 x(bytes=3)="sep" value=9200 pointLabel=none clipped=false}, {index=9 x(bytes=3)="oct" value=8500 pointLabel=none clipped=false}, {index=10 x(bytes=3)="nov" value=7000 pointLabel=none clipped=false}, {index=11 x(bytes=3)="dec" value=6000 pointLabel=none clipped=false}] orphanPointLabels=[]
+11000 +                   +-*---*-+
+ 9600 +               +-*-+### ###+-*---*-+
+ 8200 +       +-*---*-+### ### ### ### ###+-*-+
+ 6800 +       |### ### ### ### ### ### ### ###+-*-+
+ 5400 +#*---*-+### ### ### ### ### ### ### ### ###+-*#
+ 4000 +-+---+---+---+---+---+---+---+---+---+---+---+-
+       jan feb mar apr may jun jul aug sep oct nov dec

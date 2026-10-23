@@ -1,0 +1,3 @@
+node(bytes=49)=&quot;before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after
+\u{202E}&quot;
+id(bytes=4)=&quot;root&quot; shape(bytes=13)=&quot;mindmapCircle&quot;

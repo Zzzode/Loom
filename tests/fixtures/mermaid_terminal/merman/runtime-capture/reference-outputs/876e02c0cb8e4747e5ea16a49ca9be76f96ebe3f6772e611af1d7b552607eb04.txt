@@ -1,0 +1,15 @@
++--------+
+| Domain |
++--------+
+| +---+  |
+| | T |  |
+| +---+  |
++--------+
+
++------+
+| note |
+| same |
++------+
+
+relations:
+note(index=1, text(bytes=4)="same") .. id(bytes=1)="T" targetRef(bytes=8)="Domain.T"

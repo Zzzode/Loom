@@ -1,0 +1,13 @@
+titleDisplay: chart(bytes=13)="Basic xychart"
+titleDisplay: yAxis(bytes=9)="yaxisText"
+# sample bat  * Line 1
+xDomain: band categories=[bytes=9="category1", bytes=10="category 2", bytes=9="category3", bytes=9="category4"]
+values: # series=0 type=bar title(bytes=10)="sample bat" samples=[{index=0 x(bytes=9)="category1" value=52 pointLabel=none clipped=false}, {index=1 x(bytes=10)="category 2" value=96 pointLabel=none clipped=false}, {index=2 x(bytes=9)="category3" value=35 pointLabel=none clipped=false}, {index=3 x(bytes=9)="category4" value=10 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=1 type=line title=none samples=[{index=0 x(bytes=9)="category1" value=23 pointLabel=none clipped=false}, {index=1 x(bytes=10)="category 2" value=46 pointLabel=none clipped=false}, {index=2 x(bytes=9)="category3" value=75 pointLabel=none clipped=false}, {index=3 x(bytes=9)="category4" value=43 pointLabel=none clipped=false}] orphanPointLabels=[]
+ category1 +*+#
+category 2 +#+*+##
+ category3 +##++*
+ category4 + *+
+           ++--------+
+            10     150
+titleDisplay: xAxis(bytes=14)="this is x axis"

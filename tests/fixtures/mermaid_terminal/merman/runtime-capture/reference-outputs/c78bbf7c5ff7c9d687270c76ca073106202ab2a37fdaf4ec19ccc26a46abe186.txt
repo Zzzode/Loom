@@ -1,0 +1,18 @@
++------------------------+
+| <<interface>>          |
+| Class01                |
++------------------------+
+| -int privateChimp      |
+| +int publicGorilla     |
+| #int protectedMarmoset |
++------------------------+
+| -privateMethod()       |
+| +publicMethod()        |
+| #protectedMethod()     |
++------------------------+
+             ^
+           Cool
+             |
+    +----------------+
+    | AveryLongClass |
+    +----------------+

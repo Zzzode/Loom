@@ -1,0 +1,19 @@
++----------------------+
+| Same                 |
+| id(bytes=1)="\u{1B}" |
++----------------------+
+
++-----------------------+
+| Same                  |
+| id(bytes=6)="\\u{1B}" |
++-----------------------+
+
++----------------------+
+| Bridge               |
+| id(bytes=6)="bridge" |
++----------------------+
+
+relations:
+id(bytes=1)="\u{1B}" ||--|| id(bytes=6)="bridge"  : first
+id(bytes=6)="bridge" ||--|| id(bytes=6)="\\u{1B}" : second
+id(bytes=1)="\u{1B}" ||--|| id(bytes=6)="\\u{1B}" : spanning

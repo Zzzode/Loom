@@ -1,0 +1,9 @@
++------------------------------------------------------------------------------------------------------------------------------------------------------+
+| _**testẽζ➕Ø😀㌕ぼ**_                                                                                                                                |
++------------------------------------------------------------------------------------------------------------------------------------------------------+
+| type(bytes=26)="*__List~List~int~~sdfds__*" name(bytes=18)="**driversLicense**" keys=[bytes=2 "PK"] comment(bytes=23)="***The l😀icense #***"        |
+| type(bytes=6)="string" name(bytes=10)="last*Name*" keys=[] comment(bytes=0)=""                                                                       |
+| type(bytes=6)="string" name(bytes=9)="__phone__" keys=[bytes=2 "UK"] comment(bytes=0)=""                                                             |
+| type(bytes=20)="*string(99)~T~~~~~~*" name(bytes=9)="firstName" keys=[] comment(bytes=56)="Only __99__ <br>characters are a<br>llowed dsfsdfsdfsdfs" |
+| type(bytes=3)="int" name(bytes=5)="_age_" keys=[] comment(bytes=0)=""                                                                                |
++------------------------------------------------------------------------------------------------------------------------------------------------------+

@@ -1,0 +1,12 @@
+titleDisplay: chart(bytes=32)="Monthly Active Users (thousands)"
+titleDisplay: yAxis(bytes=9)="Users (k)"
+# Bar 1  * Line 1
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=3)="Jan" value=12 pointLabel=none clipped=false}, {index=1 x(bytes=3)="Feb" value=18 pointLabel=none clipped=false}, {index=2 x(bytes=3)="Mar" value=29 pointLabel=none clipped=false}, {index=3 x(bytes=3)="Apr" value=35 pointLabel=none clipped=false}, {index=4 x(bytes=3)="May" value=48 pointLabel=none clipped=false}, {index=5 x(bytes=3)="Jun" value=62 pointLabel=none clipped=false}, {index=6 x(bytes=3)="Jul" value=55 pointLabel=none clipped=false}, {index=7 x(bytes=3)="Aug" value=71 pointLabel=none clipped=false}, {index=8 x(bytes=3)="Sep" value=83 pointLabel=none clipped=false}, {index=9 x(bytes=3)="Oct" value=94 pointLabel=none clipped=false}, {index=10 x(bytes=3)="Nov" value=102 pointLabel=none clipped=false}, {index=11 x(bytes=3)="Dec" value=115 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=1 type=line title=none samples=[{index=0 x(bytes=3)="Jan" value=12 pointLabel=none clipped=false}, {index=1 x(bytes=3)="Feb" value=18 pointLabel=none clipped=false}, {index=2 x(bytes=3)="Mar" value=29 pointLabel=none clipped=false}, {index=3 x(bytes=3)="Apr" value=35 pointLabel=none clipped=false}, {index=4 x(bytes=3)="May" value=48 pointLabel=none clipped=false}, {index=5 x(bytes=3)="Jun" value=62 pointLabel=none clipped=false}, {index=6 x(bytes=3)="Jul" value=55 pointLabel=none clipped=false}, {index=7 x(bytes=3)="Aug" value=71 pointLabel=none clipped=false}, {index=8 x(bytes=3)="Sep" value=83 pointLabel=none clipped=false}, {index=9 x(bytes=3)="Oct" value=94 pointLabel=none clipped=false}, {index=10 x(bytes=3)="Nov" value=102 pointLabel=none clipped=false}, {index=11 x(bytes=3)="Dec" value=115 pointLabel=none clipped=false}] orphanPointLabels=[]
+120 +                                           +-*#
+ 96 +                                   +-*---*-+###
+ 72 +                   +-*-+   +-*---*-+### ### ###
+ 48 +               +-*-+###+-*-+### ### ### ### ###
+ 24 +#*---*---*---*-+### ### ### ### ### ### ### ###
+  0 +-+---+---+---+---+---+---+---+---+---+---+---+-
+     Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec

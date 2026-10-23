@@ -1,0 +1,10 @@
+title(bytes=22)="Repeated section names"
+direction: LR
+section(bytes=8)="Repeated"
+  - task(bytes=5)="2000 "
+    * event(bytes=25)="First in repeated section"
+section(bytes=8)="Repeated"
+  - task(bytes=5)="2001 "
+    * event(bytes=29)="Second section with same name"
+  - task(bytes=5)="2002 "
+    * event(bytes=10)="Third task"

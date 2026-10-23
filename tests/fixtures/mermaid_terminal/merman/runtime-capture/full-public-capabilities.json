@@ -1,0 +1,1119 @@
+{
+  "schema_version": 2,
+  "cli_contract_version": 6,
+  "package": {
+    "name": "merman-cli",
+    "version": "0.9.1"
+  },
+  "compatibility": {
+    "mermaid": "12.1.0",
+    "mmdc": "12.0.0"
+  },
+  "descriptor": {
+    "schema_version": 1,
+    "digest": "sha256:eef244eb1728b05d047257200bf15c4cf439ac9654100778205aaaf88f8ed2ed"
+  },
+  "commands": [
+    "batch",
+    "capabilities",
+    "completion",
+    "detect",
+    "fix",
+    "layout",
+    "lint",
+    "lint-rules",
+    "mmdc",
+    "parse",
+    "render",
+    "rustdoc"
+  ],
+  "diagram_families": [
+    "agentflow",
+    "architecture",
+    "block",
+    "c4",
+    "class",
+    "cynefin",
+    "er",
+    "eventmodeling",
+    "flowchart",
+    "gantt",
+    "gitGraph",
+    "info",
+    "ishikawa",
+    "journey",
+    "kanban",
+    "mindmap",
+    "packet",
+    "pie",
+    "quadrantChart",
+    "radar",
+    "railroad",
+    "requirement",
+    "sankey",
+    "sequence",
+    "state",
+    "swimlane",
+    "timeline",
+    "treeView",
+    "treemap",
+    "usecase",
+    "venn",
+    "wardley",
+    "xychart",
+    "zenuml"
+  ],
+  "capabilities": [
+    {
+      "id": "analysis",
+      "kind": "api",
+      "description": "Expose diagnostics and semantic analysis APIs.",
+      "implications": []
+    },
+    {
+      "id": "ascii",
+      "kind": "output",
+      "description": "Render supported Mermaid semantics as terminal text.",
+      "implications": []
+    },
+    {
+      "id": "icons",
+      "kind": "tool",
+      "description": "Compile CLI local Iconify pack loading.",
+      "implications": []
+    },
+    {
+      "id": "jpeg",
+      "kind": "output",
+      "description": "Export rendered diagrams as JPEG.",
+      "implications": []
+    },
+    {
+      "id": "layout-cytoscape",
+      "kind": "engine",
+      "description": "Enable Mermaid Cytoscape-backed layout behavior.",
+      "implications": [
+        "svg"
+      ]
+    },
+    {
+      "id": "layout-elk",
+      "kind": "engine",
+      "description": "Enable Mermaid ELK-backed layout behavior.",
+      "implications": [
+        "svg"
+      ]
+    },
+    {
+      "id": "markdown",
+      "kind": "tool",
+      "description": "Compile CLI Markdown batch conversion.",
+      "implications": []
+    },
+    {
+      "id": "math",
+      "kind": "engine",
+      "description": "Render Mermaid math labels with the selected math engine.",
+      "implications": [
+        "svg"
+      ]
+    },
+    {
+      "id": "native-fonts",
+      "kind": "adapter",
+      "description": "Compile reusable native font measurement for shared graphical text, wrapping, bounds and computed lengths; CLI use requires runtime opt-in and shares selected font bytes with native painting while reporting unsupported or missing-glyph fallbacks.",
+      "implications": []
+    },
+    {
+      "id": "network-icons",
+      "kind": "tool",
+      "description": "Compile CLI network icon loading commands.",
+      "implications": []
+    },
+    {
+      "id": "parallel-markdown",
+      "kind": "tool",
+      "description": "Compile parallel CLI Markdown batch processing.",
+      "implications": []
+    },
+    {
+      "id": "pdf",
+      "kind": "output",
+      "description": "Export rendered diagrams as PDF.",
+      "implications": []
+    },
+    {
+      "id": "png",
+      "kind": "output",
+      "description": "Export rendered diagrams as PNG.",
+      "implications": []
+    },
+    {
+      "id": "rustdoc",
+      "kind": "tool",
+      "description": "Compile checked static Mermaid fragment generation for Rustdoc.",
+      "implications": [
+        "layout-cytoscape",
+        "markdown",
+        "math"
+      ]
+    },
+    {
+      "id": "shell-completions",
+      "kind": "tool",
+      "description": "Compile CLI shell completion generation.",
+      "implications": []
+    },
+    {
+      "id": "svg",
+      "kind": "output",
+      "description": "Render Mermaid input as SVG.",
+      "implications": []
+    },
+    {
+      "id": "system-clock",
+      "kind": "adapter",
+      "description": "Compile the native system clock adapter.",
+      "implications": []
+    },
+    {
+      "id": "system-random",
+      "kind": "adapter",
+      "description": "Compile the native system randomness adapter.",
+      "implications": []
+    },
+    {
+      "id": "system-timezone",
+      "kind": "adapter",
+      "description": "Compile the native system time-zone adapter.",
+      "implications": []
+    },
+    {
+      "id": "system-timing",
+      "kind": "adapter",
+      "description": "Compile the native monotonic timing adapter.",
+      "implications": []
+    }
+  ],
+  "outputs": [
+    {
+      "id": "ascii",
+      "description": "Plain terminal text output.",
+      "media_type": "text/plain; charset=utf-8",
+      "system_fonts": null,
+      "embedded_images": null
+    },
+    {
+      "id": "jpeg",
+      "description": "JPEG image output.",
+      "media_type": "image/jpeg",
+      "system_fonts": {
+        "source_id": "host-system",
+        "discovery": "first-use",
+        "cache_scope": "process-global",
+        "host_dependent": true,
+        "caller_configurable": true,
+        "resource_bounded": false
+      },
+      "embedded_images": {
+        "source_ids": [
+          "data-url"
+        ],
+        "filesystem_access": false,
+        "network_access": false,
+        "caller_configurable": true,
+        "limits": {
+          "max_bytes_per_image": 16777216,
+          "max_total_bytes": 33554432,
+          "max_pixels_per_image": 16777216,
+          "max_total_pixels": 33554432
+        }
+      }
+    },
+    {
+      "id": "pdf",
+      "description": "Portable Document Format output.",
+      "media_type": "application/pdf",
+      "system_fonts": {
+        "source_id": "host-system",
+        "discovery": "first-use",
+        "cache_scope": "process-global",
+        "host_dependent": true,
+        "caller_configurable": true,
+        "resource_bounded": false
+      },
+      "embedded_images": {
+        "source_ids": [
+          "data-url"
+        ],
+        "filesystem_access": false,
+        "network_access": false,
+        "caller_configurable": true,
+        "limits": {
+          "max_bytes_per_image": 16777216,
+          "max_total_bytes": 33554432,
+          "max_pixels_per_image": 16777216,
+          "max_total_pixels": 33554432
+        }
+      }
+    },
+    {
+      "id": "png",
+      "description": "Portable Network Graphics output.",
+      "media_type": "image/png",
+      "system_fonts": {
+        "source_id": "host-system",
+        "discovery": "first-use",
+        "cache_scope": "process-global",
+        "host_dependent": true,
+        "caller_configurable": true,
+        "resource_bounded": false
+      },
+      "embedded_images": {
+        "source_ids": [
+          "data-url"
+        ],
+        "filesystem_access": false,
+        "network_access": false,
+        "caller_configurable": true,
+        "limits": {
+          "max_bytes_per_image": 16777216,
+          "max_total_bytes": 33554432,
+          "max_pixels_per_image": 16777216,
+          "max_total_pixels": 33554432
+        }
+      }
+    },
+    {
+      "id": "svg",
+      "description": "Scalable Vector Graphics output.",
+      "media_type": "image/svg+xml",
+      "system_fonts": null,
+      "embedded_images": null
+    }
+  ],
+  "native_fonts": {
+    "default_policy_scope": "mermaid-graphical-input",
+    "default_measurement": "deterministic",
+    "default_font_source": "none",
+    "default_system_discovery": "disabled",
+    "system_resources_bounded": true,
+    "selected_font_bytes_bounded": true,
+    "legacy_export_paths": "raw-svg-without-font-options-and-deterministic-mermaid-use-output-environment-contract",
+    "explicit_font_sources": "closed-set-unless-font-system-on",
+    "measurement_operations": [
+      "measure",
+      "computed-length",
+      "bbox-x",
+      "bbox-x-with-ascii-overhang",
+      "title-bbox-x",
+      "simple-bbox-width",
+      "raw-bbox-width",
+      "tspan-bbox-width",
+      "tspan-bbox-height",
+      "wrap-probe-bbox-width",
+      "simple-bbox-height",
+      "wrapped",
+      "wrapped-with-raw-width",
+      "bounding-client-rect-width",
+      "create-text-bbox-y-offset",
+      "mermaid-calculate-text-dimensions",
+      "canvas-measure-text-width",
+      "create-text-middle-bbox-y-offset",
+      "raw-bbox-height",
+      "raw-bbox-y-offset",
+      "raw-middle-bbox-y-offset",
+      "raw-hanging-bbox-y-offset"
+    ],
+    "measurement_phases": [
+      "layout",
+      "wrap",
+      "svg-bbox",
+      "computed-length"
+    ],
+    "unsupported_operations": "deterministic-fallback",
+    "missing_glyphs": "deterministic-fallback",
+    "browser_pixel_parity": false,
+    "system_discovery_compiled": true,
+    "system_discovery_runtime_available": true,
+    "embeds_fonts_in_svg": false,
+    "context_scope": "operation-owned"
+  },
+  "ascii": {
+    "schema_version": 1,
+    "output_schema_version": 3,
+    "report": {
+      "success_schema_version": 3,
+      "error_schema_version": 1,
+      "encoding": "plain",
+      "styled_output": false,
+      "success_stream": "output",
+      "error_stream": "stderr"
+    },
+    "families": [
+      {
+        "family": "agentflow",
+        "display_name": "agentflow",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "architecture",
+        "display_name": "architecture",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "block",
+        "display_name": "block",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "c4",
+        "display_name": "c4",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "class",
+        "display_name": "Class",
+        "semantic_coverage": "partial",
+        "primary_projection": "diagrammatic",
+        "structured_text_fallback": true,
+        "support_level": "partial",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "cynefin",
+        "display_name": "cynefin",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "er",
+        "display_name": "ER",
+        "semantic_coverage": "partial",
+        "primary_projection": "diagrammatic",
+        "structured_text_fallback": true,
+        "support_level": "partial",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "eventmodeling",
+        "display_name": "eventmodeling",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "flowchart",
+        "display_name": "Flowchart / graph",
+        "semantic_coverage": "partial",
+        "primary_projection": "diagrammatic",
+        "structured_text_fallback": true,
+        "support_level": "partial",
+        "layout_profiles": [
+          "canonical",
+          "compact",
+          "auto"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "gantt",
+        "display_name": "Gantt",
+        "semantic_coverage": "partial",
+        "primary_projection": "structured_text",
+        "structured_text_fallback": true,
+        "support_level": "summary",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "gitgraph",
+        "display_name": "GitGraph",
+        "semantic_coverage": "partial",
+        "primary_projection": "structured_text",
+        "structured_text_fallback": true,
+        "support_level": "summary",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "info",
+        "display_name": "info",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "ishikawa",
+        "display_name": "ishikawa",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "journey",
+        "display_name": "Journey",
+        "semantic_coverage": "partial",
+        "primary_projection": "structured_text",
+        "structured_text_fallback": true,
+        "support_level": "summary",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "kanban",
+        "display_name": "Kanban",
+        "semantic_coverage": "partial",
+        "primary_projection": "structured_text",
+        "structured_text_fallback": true,
+        "support_level": "summary",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "mindmap",
+        "display_name": "Mindmap",
+        "semantic_coverage": "partial",
+        "primary_projection": "structured_text",
+        "structured_text_fallback": true,
+        "support_level": "summary",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "packet",
+        "display_name": "Packet",
+        "semantic_coverage": "partial",
+        "primary_projection": "structured_text",
+        "structured_text_fallback": true,
+        "support_level": "summary",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "pie",
+        "display_name": "pie",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "quadrantchart",
+        "display_name": "quadrantchart",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "radar",
+        "display_name": "radar",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "railroad",
+        "display_name": "railroad",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "requirement",
+        "display_name": "requirement",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "sankey",
+        "display_name": "sankey",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "sequence",
+        "display_name": "Sequence",
+        "semantic_coverage": "partial",
+        "primary_projection": "diagrammatic",
+        "structured_text_fallback": true,
+        "support_level": "partial",
+        "layout_profiles": [
+          "canonical",
+          "compact",
+          "auto"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "state",
+        "display_name": "State",
+        "semantic_coverage": "partial",
+        "primary_projection": "diagrammatic",
+        "structured_text_fallback": true,
+        "support_level": "partial",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "swimlane",
+        "display_name": "Swimlane",
+        "semantic_coverage": "partial",
+        "primary_projection": "diagrammatic",
+        "structured_text_fallback": true,
+        "support_level": "partial",
+        "layout_profiles": [
+          "canonical",
+          "compact",
+          "auto"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "timeline",
+        "display_name": "Timeline",
+        "semantic_coverage": "partial",
+        "primary_projection": "structured_text",
+        "structured_text_fallback": true,
+        "support_level": "summary",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "treeView",
+        "display_name": "TreeView",
+        "semantic_coverage": "partial",
+        "primary_projection": "structured_text",
+        "structured_text_fallback": true,
+        "support_level": "summary",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "treemap",
+        "display_name": "treemap",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "usecase",
+        "display_name": "usecase",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "venn",
+        "display_name": "venn",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "wardley",
+        "display_name": "wardley",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      },
+      {
+        "family": "xychart",
+        "display_name": "XYChart",
+        "semantic_coverage": "partial",
+        "primary_projection": "diagrammatic",
+        "structured_text_fallback": true,
+        "support_level": "partial",
+        "layout_profiles": [
+          "canonical"
+        ],
+        "width_profiles": [
+          "unicode",
+          "cjk"
+        ],
+        "encodings": [
+          "plain",
+          "ansi16",
+          "ansi256",
+          "truecolor",
+          "html"
+        ],
+        "fallback_encodings": [
+          "plain"
+        ]
+      },
+      {
+        "family": "zenuml",
+        "display_name": "zenuml",
+        "semantic_coverage": null,
+        "primary_projection": "none",
+        "structured_text_fallback": false,
+        "support_level": "unsupported",
+        "layout_profiles": [],
+        "width_profiles": [],
+        "encodings": [],
+        "fallback_encodings": []
+      }
+    ],
+    "detected_type_mappings": [
+      {
+        "detected_type": "agentflow",
+        "family": "agentflow"
+      },
+      {
+        "detected_type": "architecture",
+        "family": "architecture"
+      },
+      {
+        "detected_type": "block",
+        "family": "block"
+      },
+      {
+        "detected_type": "c4",
+        "family": "c4"
+      },
+      {
+        "detected_type": "classDiagram",
+        "family": "class"
+      },
+      {
+        "detected_type": "cynefin",
+        "family": "cynefin"
+      },
+      {
+        "detected_type": "er",
+        "family": "er"
+      },
+      {
+        "detected_type": "eventmodeling",
+        "family": "eventmodeling"
+      },
+      {
+        "detected_type": "flowchart-elk",
+        "family": "flowchart"
+      },
+      {
+        "detected_type": "flowchart-v2",
+        "family": "flowchart"
+      },
+      {
+        "detected_type": "gantt",
+        "family": "gantt"
+      },
+      {
+        "detected_type": "gitGraph",
+        "family": "gitgraph"
+      },
+      {
+        "detected_type": "info",
+        "family": "info"
+      },
+      {
+        "detected_type": "ishikawa",
+        "family": "ishikawa"
+      },
+      {
+        "detected_type": "journey",
+        "family": "journey"
+      },
+      {
+        "detected_type": "kanban",
+        "family": "kanban"
+      },
+      {
+        "detected_type": "mindmap",
+        "family": "mindmap"
+      },
+      {
+        "detected_type": "packet",
+        "family": "packet"
+      },
+      {
+        "detected_type": "pie",
+        "family": "pie"
+      },
+      {
+        "detected_type": "quadrantChart",
+        "family": "quadrantchart"
+      },
+      {
+        "detected_type": "radar",
+        "family": "radar"
+      },
+      {
+        "detected_type": "railroad",
+        "family": "railroad"
+      },
+      {
+        "detected_type": "railroadAbnf",
+        "family": "railroad"
+      },
+      {
+        "detected_type": "railroadEbnf",
+        "family": "railroad"
+      },
+      {
+        "detected_type": "railroadPeg",
+        "family": "railroad"
+      },
+      {
+        "detected_type": "requirement",
+        "family": "requirement"
+      },
+      {
+        "detected_type": "sankey",
+        "family": "sankey"
+      },
+      {
+        "detected_type": "sequence",
+        "family": "sequence"
+      },
+      {
+        "detected_type": "stateDiagram",
+        "family": "state"
+      },
+      {
+        "detected_type": "swimlane",
+        "family": "flowchart"
+      },
+      {
+        "detected_type": "timeline",
+        "family": "timeline"
+      },
+      {
+        "detected_type": "treeView",
+        "family": "treeView"
+      },
+      {
+        "detected_type": "treemap",
+        "family": "treemap"
+      },
+      {
+        "detected_type": "usecase",
+        "family": "usecase"
+      },
+      {
+        "detected_type": "venn",
+        "family": "venn"
+      },
+      {
+        "detected_type": "wardley",
+        "family": "wardley"
+      },
+      {
+        "detected_type": "xychart",
+        "family": "xychart"
+      },
+      {
+        "detected_type": "zenuml",
+        "family": "zenuml"
+      }
+    ]
+  }
+}

@@ -1,0 +1,638 @@
+{
+  "project": "beautiful_mermaid",
+  "version": "1.1.3",
+  "tag": "v1.1.3",
+  "commit": "65f4e0ab8c289e9691a9e5bc4f9eac7108cf449b",
+  "url": "https://github.com/lukilabs/beautiful-mermaid",
+  "license": "MIT",
+  "import_kind": "Test inputs, upstream golden outputs, original test assertion source and test-only fixture parsing helpers. No rendering backend implementation.",
+  "files": [
+    {
+      "path": "src/__tests__/ascii-edge-styles.test.ts",
+      "sha256": "06dd4876685065a77ae7faaa5220ebf6c11bda9e64c71bbeccf7c8c490548e57",
+      "bytes": 3953
+    },
+    {
+      "path": "src/__tests__/ascii-multiline.test.ts",
+      "sha256": "baafc10e0e163fcadc0f99fe9430fae7e57b5fcd50861c2eeadc3727bbb55045",
+      "bytes": 6240
+    },
+    {
+      "path": "src/__tests__/ascii.test.ts",
+      "sha256": "b4c17ccdc061125b1cbe9b3136cf42f387d9ab719a161834bc28de6deafb51c5",
+      "bytes": 8270
+    },
+    {
+      "path": "src/__tests__/class-arrow-directions.test.ts",
+      "sha256": "f4dccdc20b32081a1af14d1510ac1d1414684ca522c4e8036a4eb381556955f7",
+      "bytes": 14901
+    },
+    {
+      "path": "src/__tests__/class-integration.test.ts",
+      "sha256": "ae5e60b1bc19ea4953def048bb9458fac311e8bde020e29b1629cfeaa17233f5",
+      "bytes": 3314
+    },
+    {
+      "path": "src/__tests__/class-parser.test.ts",
+      "sha256": "0e19f7749e64375720c12832d092aaba560b562e22fdc2f721983f2ffe238aa6",
+      "bytes": 7796
+    },
+    {
+      "path": "src/__tests__/edge-approach-direction.test.ts",
+      "sha256": "0ff513d0ab7b1ad92e90ed98605f6797adae0ff621382a733b44723203521f1f",
+      "bytes": 10112
+    },
+    {
+      "path": "src/__tests__/er-integration.test.ts",
+      "sha256": "85fd3366a35c0e8bf366b4c18a888decf553a1a5c8796150c2757d1ffa932556",
+      "bytes": 15527
+    },
+    {
+      "path": "src/__tests__/er-parser.test.ts",
+      "sha256": "0b61245dd7ebe539ca0f2221582bcb8e682178734388ea65a7361db12c11512b",
+      "bytes": 5827
+    },
+    {
+      "path": "src/__tests__/integration.test.ts",
+      "sha256": "28fb88802b26a6b823d894895c9175633a2dd97af2637a250b0cffa4eaaeabf8",
+      "bytes": 17320
+    },
+    {
+      "path": "src/__tests__/layout-disconnected.test.ts",
+      "sha256": "de59fafe8d6c65dd36afe6f3553035f82546cd8bf503bbb4868750db4bfc081c",
+      "bytes": 12289
+    },
+    {
+      "path": "src/__tests__/linkstyle.test.ts",
+      "sha256": "bb3dbd31a144dd8203207adc5854ae887e260e6f8ada9388e7f65fe0a10e37c5",
+      "bytes": 4341
+    },
+    {
+      "path": "src/__tests__/multiline-labels.test.ts",
+      "sha256": "48734886f741e48450c6cf44c1c258c02e0c3e662eeab01c212b85453b0efa01",
+      "bytes": 31684
+    },
+    {
+      "path": "src/__tests__/parser.test.ts",
+      "sha256": "cca85f4a8a748688aa5366e10ea4f0f90dc3b1a343f86aabaa589e2cc57c09c8",
+      "bytes": 30481
+    },
+    {
+      "path": "src/__tests__/renderer.test.ts",
+      "sha256": "195849cc4c092afa6fa8335042d26b812edfe4501954e3306289cf425ce0e54b",
+      "bytes": 20962
+    },
+    {
+      "path": "src/__tests__/sequence-integration.test.ts",
+      "sha256": "f158cdc8a144c5a17c1bd5a74d6ed39436c86aadc345b2920d3dc4748b798a82",
+      "bytes": 3554
+    },
+    {
+      "path": "src/__tests__/sequence-layout.test.ts",
+      "sha256": "2a1126eeac579fbfa6ca5937157978de4443f8c76a17b5387a976cf731d76780",
+      "bytes": 24697
+    },
+    {
+      "path": "src/__tests__/sequence-parser.test.ts",
+      "sha256": "5f220bdfe96b4b3b100352e30d02e522ef6e6cac316f14928bdad0466c08c2f1",
+      "bytes": 7342
+    },
+    {
+      "path": "src/__tests__/styles.test.ts",
+      "sha256": "707af819fbf7cef87ed7073d4956ed08f015d061164968b2ccc08a62bea1f164",
+      "bytes": 6169
+    },
+    {
+      "path": "src/__tests__/text-metrics.test.ts",
+      "sha256": "a54bef1cd1b3c24b61f19947f31e6fe6bd2c83a613413871bf0360a9f03ad7cd",
+      "bytes": 9420
+    },
+    {
+      "path": "src/__tests__/xychart-ascii.test.ts",
+      "sha256": "a4230c8b8faf38d03609cd92c5a939fb074153d1e103f2ddb7fe4ed85b3dad4d",
+      "bytes": 9575
+    },
+    {
+      "path": "src/__tests__/xychart-integration.test.ts",
+      "sha256": "0072a71183cf5513011808274f31268c1ea186b68f11e85e92920e5fea0243d0",
+      "bytes": 5227
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/ampersand_lhs.txt",
+      "sha256": "6aa900fa4a397f6da1d255b80232d598adcd64da249444ff5790aa192dc8222a",
+      "bytes": 265
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/ampersand_lhs_and_rhs.txt",
+      "sha256": "43f3e99d8e13088f13a548842b52490d1eb6d6243f2c56a851800dab28f4c21e",
+      "bytes": 269
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/ampersand_rhs.txt",
+      "sha256": "32f7dd79f0d94193689a9cc2bbb312c6448917099d83b934ccaf6d6656af4f96",
+      "bytes": 265
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/ampersand_td_fanin.txt",
+      "sha256": "1574a01653e32fbabc5ebaa96d1c6e183c4df7e14e49bfa60e85b51ac7c6f45e",
+      "bytes": 185
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/ampersand_td_fanout.txt",
+      "sha256": "4002eb18196c8daf624bb8f21ff2e66738dd6a58c6e1665858e1d1bf3415ad8a",
+      "bytes": 185
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/ampersand_without_edge.txt",
+      "sha256": "625e6ed58727697b0e8dd96990898b41b6aa7b25e05e9ff43137e41635a82480",
+      "bytes": 109
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/back_reference_from_child.txt",
+      "sha256": "0f511e5a781f5d7bbfc44e2b16943088b5a202ee14c33fc471389302c7598adf",
+      "bytes": 215
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/backlink_from_bottom.txt",
+      "sha256": "558ff8f40cb395db49b760f82ef081c0d51f9b64cfbc7e2674da2069c3503c4d",
+      "bytes": 443
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/backlink_from_top.txt",
+      "sha256": "3228985bb5df0cfeff836dfe1fd184125424c7f46d151e5a03d7c876860abf48",
+      "bytes": 443
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/backlink_with_short_y_padding.txt",
+      "sha256": "7f19d20e16d8436b3e64292a3a088f2c1bacd3d9ec1b916a11b0ce39c894917b",
+      "bytes": 405
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/cls_all_relationships.txt",
+      "sha256": "41b5ba86b9cd7389bf145b316f9b0c7dc29e6c8fdb0a7703b921f979f7fe4732",
+      "bytes": 590
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/cls_annotation.txt",
+      "sha256": "91a5cef23372d35c9ee0c2e6a9978608f29bd1ae660afd9614d5628276b18c4b",
+      "bytes": 565
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/cls_association.txt",
+      "sha256": "ca1eb433cfbb43a6820d1c8210c103ad44e4e7c158ced528616eb5fa42358c06",
+      "bytes": 224
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/cls_basic.txt",
+      "sha256": "8171b1ae456c0cab4ecb3c742bddc88c15788ba464c01590cba9a7cd691577ee",
+      "bytes": 269
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/cls_dependency.txt",
+      "sha256": "6a1c843a759549c786482eea1e86fe696753fa9f9b0c741eb29fb8da3fe83242",
+      "bytes": 209
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/cls_inheritance.txt",
+      "sha256": "dd9a0b91609c2f7403454d670b6f1fb79451d96ab89173b3a5e700ae14f82c77",
+      "bytes": 454
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/cls_methods.txt",
+      "sha256": "cde7a712de7d46a2db978997c1c99cc7653d5da4f63e53333d226fc1976d5735",
+      "bytes": 448
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/comments.txt",
+      "sha256": "87353e0624ae919628cc6b717763242ef0ed2829d806388ff24d586654ad8e85",
+      "bytes": 334
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/custom_padding.txt",
+      "sha256": "476be9a0619a28e013afb7096d6588e48dd6dd60255d5ef84dd1815c0aa9000e",
+      "bytes": 108
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/duplicate_labels.txt",
+      "sha256": "cbcd5e552e0769a57a9a8b5183157ad7ab92a80340e7489a20c3c071e9492a20",
+      "bytes": 451
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/er_attributes.txt",
+      "sha256": "14975ed615d3cef8b48ef2f3b87f20daafa4b50c47aaa1613fd74f8a582cd797",
+      "bytes": 457
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/er_basic.txt",
+      "sha256": "93ef1d1a518515a362aecbb016012cfe95d9e835ad85df14dedc7b567e35fe35",
+      "bytes": 133
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/er_identifying.txt",
+      "sha256": "2f104387b755cc970f5798994016c418af424dd82c8fd5b968c8d668c0fcb1d4",
+      "bytes": 403
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/flowchart_tb_simple.txt",
+      "sha256": "55245fc13d5bb8e43e9d71335b43cf7791f2c7bdafb015a3a0d731d48b4a13e0",
+      "bytes": 191
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/graph_bt_direction.txt",
+      "sha256": "a713ec6906c7688b4b6c023f807b059e15eaf36bde7168045e3d9791859a0cf5",
+      "bytes": 179
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/graph_tb_direction.txt",
+      "sha256": "f3a9a37ce07bd1d9d4e026db3c77e4781b07d6129dc346650ac0c212b6e1e0d3",
+      "bytes": 252
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/nested_subgraphs_with_labels.txt",
+      "sha256": "2bf8cba67e68c9c608127980a8cd22732d6aa8ede7c79185382c08232d408a2b",
+      "bytes": 515
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/preserve_order_of_definition.txt",
+      "sha256": "17f16f47311430db3b6ae0463c610d93d9af89b5c39b67c335d26fe25724aa75",
+      "bytes": 289
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/self_reference.txt",
+      "sha256": "1686a417deb81f540db347b8f487ecc3b00aaaa92d621425b3b77c81a8f88f6a",
+      "bytes": 77
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/self_reference_with_edge.txt",
+      "sha256": "0801bc25eb34812bb39d255a43d8c32118dc2372cc59d3e128e3cd0b37ef4dc7",
+      "bytes": 137
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/seq_basic.txt",
+      "sha256": "3bd25149c31e82e0ff8379d70ca56a5ce76d622a1752d451f62cdba5b27f1696",
+      "bytes": 434
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/seq_multiple_messages.txt",
+      "sha256": "ce6142f1726d892165f5f7138a4941005bcd3afc75965b2ddc398bb385c1054a",
+      "bytes": 852
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/seq_self_message.txt",
+      "sha256": "1ce1c8c6652393cd25dfc82159012bfec9edc15c4d1bd46530b0a33ffffea86e",
+      "bytes": 415
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/single_node.txt",
+      "sha256": "7d1c2fe6e421b5671be49a92b2c7559894ca0fd79115971b0b98790922e37659",
+      "bytes": 45
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/single_node_longer_name.txt",
+      "sha256": "6789bce521908e3c3b9d4781120ba3220c372de86dd77bd61036666bdf0781c2",
+      "bytes": 99
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_complex_mixed.txt",
+      "sha256": "84213ec94fcb250d26c2b8f5d5e745fe41eaf233d9e20b7333ab18354cf7a64e",
+      "bytes": 1454
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_complex_nested.txt",
+      "sha256": "a4c82fc51b224222c4884c779ceaf9abad860abfae70d6a323ac8561d0dacbf8",
+      "bytes": 629
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_direction_override.txt",
+      "sha256": "8f887b3c2d206d701eaffb109ad335e9032cf412e98be0cba1f55b77e74ecf07",
+      "bytes": 488
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_empty.txt",
+      "sha256": "f7cfb2b40f1bcb04a4d4d70716fdb21dc9add9ecbb6c2ec5691b67a3bcd67593",
+      "bytes": 118
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_mixed_nodes.txt",
+      "sha256": "80d7f01c7190746a6d0a9cdf63fc11addeb9aaa98e13e8f4543bfcd4a75eaef5",
+      "bytes": 458
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_mixed_nodes_td.txt",
+      "sha256": "cb385db9babbccdcf9b1a172b774c018d64c344c5c36431bf41bc7489e324bf2",
+      "bytes": 452
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_multiple_edges.txt",
+      "sha256": "9e35b8842f51c0a0d1cf54fc6f5e5187c40a76666853b825ee35b0d8265512fb",
+      "bytes": 729
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_multiple_nodes.txt",
+      "sha256": "20c1013ee0e49a02fcfca4ef2aaf44b4889de62bb71a43848141b7ddfa1aee74",
+      "bytes": 262
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_nested.txt",
+      "sha256": "8258d078dc0e84d2d95bb90d320d767bed6aaa02ce9dca8e43d846e71fb74e25",
+      "bytes": 307
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_nested_with_external.txt",
+      "sha256": "c958cb28563a54674f619567a0bb354d54559f1f9230e84b65b5f88a093a74a3",
+      "bytes": 895
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_node_outside_lr.txt",
+      "sha256": "726953f12c9807001cc35d00315787f98046a2990e10b78d8b5a9e0427080367",
+      "bytes": 352
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_single_node.txt",
+      "sha256": "085816503137ed6852dd05bc9ac789bdaeea6c255edb5f0758e8e0e56b720c83",
+      "bytes": 146
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_td_direction.txt",
+      "sha256": "d6a6106da40db3bfc5cc74b5385cd60119a37cc697896df01fc1b14e77f1cba9",
+      "bytes": 252
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_td_multiple.txt",
+      "sha256": "adcb74a770dd714b8ad0789f287a8d9b8df2be9e8be38373bffd198b6ddba129",
+      "bytes": 1195
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_td_multiple_paddingy.txt",
+      "sha256": "4a4b137bf72439e1017fa5215b3ca9c251f039976a63378f079cfadd7e338bfd",
+      "bytes": 1031
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_three_levels_nested.txt",
+      "sha256": "92c2251f9d612e4f32d45266077475158399f97f360c92bf654979c70d9ef76e",
+      "bytes": 525
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_three_separate.txt",
+      "sha256": "0865c3def2d105fccb50b169447c3a150587d0fc9e8c62c991d2c50754835d62",
+      "bytes": 496
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_two_separate.txt",
+      "sha256": "cf9990b2f17c0b24354503951c837de65aa9febf85a6a2767d165b67d957dec1",
+      "bytes": 287
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/subgraph_with_labels.txt",
+      "sha256": "fec871adbb48a9e10d2814a79b72213a7e7fe9bafb880958f2959de2375231b0",
+      "bytes": 630
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/three_nodes.txt",
+      "sha256": "40f05f6161f30d0922ea162f09cbc08f6c077b877851c9294e2c9763e28cd345",
+      "bytes": 159
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/three_nodes_single_line.txt",
+      "sha256": "79199982f65f966c1c0b29fd3af1ad10d7a8670053337ae3f17385eadbca5894",
+      "bytes": 157
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/two_layer_single_graph.txt",
+      "sha256": "521f133161bcab3dd4205d03b5941f9e96cc0f3e67399cdf42f610dba775c251",
+      "bytes": 269
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/two_layer_single_graph_longer_names.txt",
+      "sha256": "177272cab2228b747cb0ec121fade94b89d510208674973636ca9474b07e243c",
+      "bytes": 404
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/two_nodes_linked.txt",
+      "sha256": "29cde98983bda47c92241c9815e6681ae79ec8a630113239e3bdedfe06261b7f",
+      "bytes": 101
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/two_nodes_longer_names.txt",
+      "sha256": "0d492d15e0550bf2bd09202e9aa912f13312757d8780fec85e922f4ae4da06df",
+      "bytes": 221
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/two_root_nodes.txt",
+      "sha256": "fcd15f4830a0068a2b285fb2e5cb0dd6600d32101c34bb1ac885f4e9bf31a82a",
+      "bytes": 269
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/two_root_nodes_longer_names.txt",
+      "sha256": "850e41491fe118e73c46f4cd5650ead439f26b789cf96c16c53eaa2474be4305",
+      "bytes": 433
+    },
+    {
+      "path": "src/__tests__/testdata/ascii/two_single_root_nodes.txt",
+      "sha256": "58d958cc0499e8f26908b7bf2d72f3645e0f0f1cdb193c0c054e0a589fec2af6",
+      "bytes": 107
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/ampersand_lhs.txt",
+      "sha256": "e8e5bec46bde8a12f2f19bc04165dbadc2d42407cf100ef1c447cce27a83b48c",
+      "bytes": 401
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/ampersand_lhs_and_rhs.txt",
+      "sha256": "723562dddbcb9b5e18a6156da48038a75df02514baa57d73b1939f60da877ab8",
+      "bytes": 453
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/ampersand_rhs.txt",
+      "sha256": "188d4e88870cfacd617610a5308cf5959166397c5f4cf553fb1cfdd4422de070",
+      "bytes": 401
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/ampersand_without_edge.txt",
+      "sha256": "35dba31fc01b665a5f017a7557c6b202c4802d99aee48186c453591183a19d16",
+      "bytes": 173
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/back_reference_from_child.txt",
+      "sha256": "183076ed23aaec9ef6b89061cfecb6ba578ac9efe950ce9c6e2785f946386e63",
+      "bytes": 377
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/backlink_from_bottom.txt",
+      "sha256": "ac74788d1b4c68449a087f80454cc414ce964b7d82450e1cf058bb3ba5a4b3f2",
+      "bytes": 661
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/backlink_from_top.txt",
+      "sha256": "df613d02bf8ea3af733716c87e6b44df598ddf581a4a8e0d8e87ee49ab760e9a",
+      "bytes": 649
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/cls_all_relationships.txt",
+      "sha256": "56308cd64930cb8903467282ff1ca6e8e935d9552b51dffe0fe3e28772ada1a4",
+      "bytes": 902
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/cls_annotation.txt",
+      "sha256": "627d2cc43edcb206bc784d38b444fea145d8fc816ca7cef8a03cca8d92ac5ec3",
+      "bytes": 855
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/cls_association.txt",
+      "sha256": "02eeb12d7805bbe7e7c7cdedace9d89310b472b50461fbac865f86421c72e76e",
+      "bytes": 320
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/cls_basic.txt",
+      "sha256": "8060d888fea85de038296926e36fcfd15737d279af0e191afe8b75876784dee4",
+      "bytes": 417
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/cls_dependency.txt",
+      "sha256": "4b687a561cf07e44223fa79adea98db66ba83bcfe9313e26f18329cdda6c3d11",
+      "bytes": 301
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/cls_inheritance.txt",
+      "sha256": "b7176778597390c4a9deebeede72558c99146a03ce9c1eafc5638b75d1ee240b",
+      "bytes": 704
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/cls_methods.txt",
+      "sha256": "5f817f845fe7dcef9d1ff9c2de1b6322e7380322cdfb3f93bae9ff01aece9f2b",
+      "bytes": 624
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/comments.txt",
+      "sha256": "819b269f3da01aa5d9fbd353bb7b0fa3340f2322e7eb20337baa838dce560111",
+      "bytes": 480
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/duplicate_labels.txt",
+      "sha256": "5d4b62d75db36d6b6ad649017c912e11e1204e744bf3a1708cda06d99da8e347",
+      "bytes": 679
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/er_attributes.txt",
+      "sha256": "8e9447cd8571d86a132b3d6113105ef309f7bae6510f0a1354f994dc27b6c562",
+      "bytes": 731
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/er_basic.txt",
+      "sha256": "784d0a95fdca25381424226f6dca50f16efc44c289b5321c74253c2cfe2dc7d7",
+      "bytes": 237
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/er_identifying.txt",
+      "sha256": "fb0c2f503285e50d3d5adfac965d4a65ae6477e1151676f8879ea27e744f2a3f",
+      "bytes": 663
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/graph_bt_direction.txt",
+      "sha256": "247945d7cb3c98741afed692b67477e3560b02428dc78c6cd8f95fa9a013682c",
+      "bytes": 295
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/preserve_order_of_definition.txt",
+      "sha256": "7a40dddab2df8c6c75eec3d32a4ce310d7a8e9b893eaf87228c98f6abad5cfbf",
+      "bytes": 453
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/self_reference.txt",
+      "sha256": "879dd786099f73805a88685f902fba5e72a3020a0c30447c98a6968815311e3f",
+      "bytes": 131
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/self_reference_with_edge.txt",
+      "sha256": "d8faecfa63aaec87c5994a59bf1a7fd2afaf432f40450ab0a6181fa008bfb048",
+      "bytes": 231
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/seq_basic.txt",
+      "sha256": "2478653ffc81540e5ac761b584de76bd21ef60a6d656d7bdc53cd6e47a26830f",
+      "bytes": 662
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/seq_multiple_messages.txt",
+      "sha256": "01e9d3a29bee3e027e844e071606177ccdfe08c88349a0754838b7e040bfb2ae",
+      "bytes": 1258
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/seq_self_message.txt",
+      "sha256": "12993598ca0e75651912bcca7bbb3aeb30d3167879060a2e7b999964d363ebaf",
+      "bytes": 631
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/single_node.txt",
+      "sha256": "a009fdf35c40e1947cb92c678d315f4077ad7a92efaaa2b1e8843748b328f8be",
+      "bytes": 77
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/single_node_longer_name.txt",
+      "sha256": "5a63b98674083fdec5b019bafaaa9e7dc20b24a16a65a32f9342108dc56d1591",
+      "bytes": 167
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/three_nodes.txt",
+      "sha256": "bc0327a6497cd03e01f9b4a9c6371c41219ec496be750132788169c579273340",
+      "bytes": 275
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/three_nodes_single_line.txt",
+      "sha256": "54d5426351f255c83c47f74e251008d61068e11892b72cce3e1d93618780ea9d",
+      "bytes": 273
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/two_layer_single_graph.txt",
+      "sha256": "16944de2f12edf00bac59e85d94a653d130e8234de9b4aeebe9757dcf03a3025",
+      "bytes": 405
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/two_layer_single_graph_longer_names.txt",
+      "sha256": "01606b359c99da2ad08138a7e6622e0b3c0e98ee6e0a26bc0269e523eb742fb4",
+      "bytes": 598
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/two_nodes_linked.txt",
+      "sha256": "99b9a7d88c0216e4629e083ed5b02c442ddbd52ca823059b3217e903db84e7ba",
+      "bytes": 175
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/two_nodes_longer_names.txt",
+      "sha256": "d0dbd14043306dfdabbe134d75473b541d4d45b73633dae1324171293027ffea",
+      "bytes": 375
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/two_root_nodes.txt",
+      "sha256": "00fdd34deb34e252be4dc8c7487d9648af71a7a8e741c8c363f616fe25d9e459",
+      "bytes": 417
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/two_root_nodes_longer_names.txt",
+      "sha256": "d44880f502aa2077c377ea819174af123c562b770dafd8f3838051e87fa2f752",
+      "bytes": 661
+    },
+    {
+      "path": "src/__tests__/testdata/unicode/two_single_root_nodes.txt",
+      "sha256": "6a00c27169df39a10e22c99e0e8bf696241b296a86bb796f1fff47fa5884361c",
+      "bytes": 171
+    }
+  ],
+  "maintenance_generated_data": [
+    {
+      "path": "cases.json",
+      "sha256": "4a1fab2e4235ba475f00fe9c687bce0d1cb15f7bacf470c5d287a0ba957a4293",
+      "bytes": 484264
+    },
+    {
+      "path": "test_inventory.json",
+      "sha256": "345c3e43d56e4d5e0d8ee3bb44a5753eeecf6e7801d0e1bd23501ea27ebee954",
+      "bytes": 286869
+    },
+    {
+      "path": "README.md",
+      "sha256": "6f74444d205a6ca7479edfd0916c6dedfb420463c47689bb7fd21d42c5e1d295",
+      "bytes": 3038
+    }
+  ]
+}

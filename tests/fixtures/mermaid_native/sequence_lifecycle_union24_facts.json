@@ -1,0 +1,3168 @@
+{
+  "schema": 1,
+  "qualification": "Independent source-only hand transcription of the complete Go frozen/original-function lifecycle union. No Loom output, renderer or parser backend determines models. Source geometry and native fallback do not graduate original private API/error-string/ASCII predicates.",
+  "upstream": {
+    "repository": "https://github.com/AlexanderGrooff/mermaid-ascii",
+    "commit": "5f00e3d9ac9fc96a19859d502333e35b87d2ffea",
+    "license": "MIT",
+    "vendored_cases_sha256": "7783a2b6936999a6d8406475a49fe7bd1a258441423bc67bd0d5767bee0575b3",
+    "original_create_test_sha256": "231a2bf9d3b4f352f6652c079fdb332d069ead55d669062fc3bd4777ffd0ca6e",
+    "existing_source_supplement_sha256": "44ea6d8d0d7d8b90db2e741672ee7e999740ce26860a127bd9e784425268002b"
+  },
+  "counts": {
+    "union_distinct_inputs": 24,
+    "positive_inputs": 14,
+    "negative_source_policies": 10,
+    "frozen_source_bindings": 6,
+    "original_function_input_bindings": 21,
+    "original_functions": 9,
+    "positive_actors": 45,
+    "positive_messages": 49,
+    "positive_notes": 3,
+    "positive_fragments": 3,
+    "positive_order": 87,
+    "positive_boxes": 1,
+    "positive_create_events": 12,
+    "positive_destroy_events": 11
+  },
+  "cases": [
+    {
+      "id": "mermaid_ascii_ab1b07038e2dae74",
+      "input": "sequenceDiagram\nbox 日本語サービス\nparticipant A as 顧客\nparticipant B as 服务\nend\nactor C as 監査\nparticipant D as 数据库\nA->>B: 注文\nB-->>A: 応答\nB->>B: 自己\nNote over A,B: 注記\nalt 成功\n A-xC: 失敗\nelse 失敗\n C-)D: 完了\nend\nloop 再試行\n D<<->>A: 再送\nend\nactivate B\nB-->>D: 更新\ndeactivate B\ncreate participant E as 新規\nD->>E: 作成\ndestroy E\nA-xE: 終了",
+      "input_sha256": "ab1b07038e2dae74a8dc9c49978c64241bec3a3fc4c30b28e9c42dad82ec49ba",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "顧客",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "服务",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "監査",
+            "person": true
+          },
+          {
+            "id": "D",
+            "label": "数据库",
+            "person": false
+          },
+          {
+            "id": "E",
+            "label": "新規",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "注文",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "応答",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 1,
+            "label": "自己",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "失敗",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "label": "完了",
+            "dashed": false,
+            "arrow": "Async",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 3,
+            "to": 0,
+            "label": "再送",
+            "dashed": false,
+            "arrow": "Both",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 3,
+            "label": "更新",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "label": "作成",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 4,
+            "label": "終了",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0,
+              1
+            ],
+            "text": "注記",
+            "position": "over",
+            "after": 2
+          }
+        ],
+        "fragments": [
+          {
+            "kind": "alt",
+            "label": "成功",
+            "parent": -1,
+            "dividers": [
+              "失敗"
+            ]
+          },
+          {
+            "kind": "loop",
+            "label": "再試行",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Divide",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Deactivate",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 4,
+            "part": 0
+          }
+        ],
+        "boxes": [
+          {
+            "actors": [
+              0,
+              1
+            ],
+            "title": "日本語サービス",
+            "color": ""
+          }
+        ]
+      },
+      "frozen_bindings": [
+        {
+          "id": "mermaid_ascii_ab1b07038e2dae74",
+          "model_sha256": "28c239549ff86093b8e90252e9234701e79e11482551bed603993d6f6ad9e6ab",
+          "existing_source_supplement": {
+            "id": "mermaid_ascii_ab1b07038e2dae74",
+            "input_sha256": "ab1b07038e2dae74a8dc9c49978c64241bec3a3fc4c30b28e9c42dad82ec49ba",
+            "model_sha256": "28c239549ff86093b8e90252e9234701e79e11482551bed603993d6f6ad9e6ab",
+            "actor_declarations": [
+              {
+                "id": "A",
+                "role": "participant",
+                "created": false,
+                "byte_offset": 42,
+                "source": "participant A as 顧客"
+              },
+              {
+                "id": "B",
+                "role": "participant",
+                "created": false,
+                "byte_offset": 66,
+                "source": "participant B as 服务"
+              },
+              {
+                "id": "C",
+                "role": "actor",
+                "created": false,
+                "byte_offset": 94,
+                "source": "actor C as 監査"
+              },
+              {
+                "id": "D",
+                "role": "participant",
+                "created": false,
+                "byte_offset": 112,
+                "source": "participant D as 数据库"
+              },
+              {
+                "id": "E",
+                "role": "participant",
+                "created": true,
+                "byte_offset": 334,
+                "source": "create participant E as 新規"
+              }
+            ],
+            "implicit_role": "participant",
+            "authored_titles": [],
+            "color_regions": [
+              {
+                "kind": "box",
+                "source": "box 日本語サービス",
+                "byte_offset": 16,
+                "declaration": "日本語サービス",
+                "box_index": 0,
+                "title": "日本語サービス",
+                "color": ""
+              }
+            ],
+            "display_sensitive_source_fields": [],
+            "profile_extensions": [],
+            "explicit_break_fields": []
+          },
+          "original_provenance": [
+            {
+              "kind": "terminal-golden",
+              "line_end": 73,
+              "line_start": 1,
+              "path": "cmd/testdata/sequence/cjk_feature_matrix.txt",
+              "sha256": "8d5ef2c2a9301ad55bcdc9701a3ad237ab1552e6970715b71a4e63ba8770bbc2",
+              "test_name": "cjk_feature_matrix"
+            },
+            {
+              "kind": "terminal-golden",
+              "line_end": 73,
+              "line_start": 1,
+              "path": "cmd/testdata/sequence-ascii/cjk_feature_matrix.txt",
+              "sha256": "79d3864b42ce56320d8fecf7740b4ed0fecb63c7816549402dbd0c58b977f315",
+              "test_name": "cjk_feature_matrix"
+            }
+          ]
+        }
+      ],
+      "original_function_bindings": [],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "box 日本語サービス"
+        },
+        {
+          "offset_utf8_bytes": 42,
+          "text": "participant A as 顧客"
+        },
+        {
+          "offset_utf8_bytes": 66,
+          "text": "participant B as 服务"
+        },
+        {
+          "offset_utf8_bytes": 90,
+          "text": "end"
+        },
+        {
+          "offset_utf8_bytes": 94,
+          "text": "actor C as 監査"
+        },
+        {
+          "offset_utf8_bytes": 112,
+          "text": "participant D as 数据库"
+        },
+        {
+          "offset_utf8_bytes": 139,
+          "text": "A->>B: 注文"
+        },
+        {
+          "offset_utf8_bytes": 153,
+          "text": "B-->>A: 応答"
+        },
+        {
+          "offset_utf8_bytes": 168,
+          "text": "B->>B: 自己"
+        },
+        {
+          "offset_utf8_bytes": 182,
+          "text": "Note over A,B: 注記"
+        },
+        {
+          "offset_utf8_bytes": 204,
+          "text": "alt 成功"
+        },
+        {
+          "offset_utf8_bytes": 215,
+          "text": " A-xC: 失敗"
+        },
+        {
+          "offset_utf8_bytes": 229,
+          "text": "else 失敗"
+        },
+        {
+          "offset_utf8_bytes": 241,
+          "text": " C-)D: 完了"
+        },
+        {
+          "offset_utf8_bytes": 255,
+          "text": "end"
+        },
+        {
+          "offset_utf8_bytes": 259,
+          "text": "loop 再試行"
+        },
+        {
+          "offset_utf8_bytes": 274,
+          "text": " D<<->>A: 再送"
+        },
+        {
+          "offset_utf8_bytes": 291,
+          "text": "end"
+        },
+        {
+          "offset_utf8_bytes": 295,
+          "text": "activate B"
+        },
+        {
+          "offset_utf8_bytes": 306,
+          "text": "B-->>D: 更新"
+        },
+        {
+          "offset_utf8_bytes": 321,
+          "text": "deactivate B"
+        },
+        {
+          "offset_utf8_bytes": 334,
+          "text": "create participant E as 新規"
+        },
+        {
+          "offset_utf8_bytes": 365,
+          "text": "D->>E: 作成"
+        },
+        {
+          "offset_utf8_bytes": 379,
+          "text": "destroy E"
+        },
+        {
+          "offset_utf8_bytes": 389,
+          "text": "A-xE: 終了"
+        }
+      ]
+    },
+    {
+      "id": "mermaid_ascii_ca955ce25ff3f24a",
+      "input": "sequenceDiagram\n    participant a as Alice\n    a->>b: Hello Bob?\n    create actor d as Donald\n    a->>d: Hello Donald?",
+      "input_sha256": "ca955ce25ff3f24a141944715f6ecea9021717b9bbbea38c18b480e79d6b2564",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "a",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "b",
+            "label": "b",
+            "person": false
+          },
+          {
+            "id": "d",
+            "label": "Donald",
+            "person": true
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "Hello Donald?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [
+        {
+          "id": "mermaid_ascii_ca955ce25ff3f24a",
+          "model_sha256": "015bfcd78cbe89c993dc5596023b269179ff1b1ab05b58ea969793765a85ad5c",
+          "existing_source_supplement": {
+            "id": "mermaid_ascii_ca955ce25ff3f24a",
+            "input_sha256": "ca955ce25ff3f24a141944715f6ecea9021717b9bbbea38c18b480e79d6b2564",
+            "model_sha256": "015bfcd78cbe89c993dc5596023b269179ff1b1ab05b58ea969793765a85ad5c",
+            "actor_declarations": [
+              {
+                "id": "a",
+                "role": "participant",
+                "created": false,
+                "byte_offset": 16,
+                "source": "    participant a as Alice"
+              },
+              {
+                "id": "d",
+                "role": "actor",
+                "created": true,
+                "byte_offset": 65,
+                "source": "    create actor d as Donald"
+              }
+            ],
+            "implicit_role": "participant",
+            "authored_titles": [],
+            "color_regions": [],
+            "display_sensitive_source_fields": [],
+            "profile_extensions": [],
+            "explicit_break_fields": []
+          },
+          "original_provenance": [
+            {
+              "kind": "terminal-golden",
+              "line_end": 16,
+              "line_start": 1,
+              "path": "cmd/testdata/sequence/create_actor_alias.txt",
+              "sha256": "6ef72cca5953b4d185d84ec97dcee34c73b68108e8d7ecbe07c6cf2beb71645b",
+              "test_name": "create_actor_alias"
+            },
+            {
+              "kind": "terminal-golden",
+              "line_end": 16,
+              "line_start": 1,
+              "path": "cmd/testdata/sequence-ascii/create_actor_alias.txt",
+              "sha256": "25ee4a66c4e472d221d934df0f7c59e65da11c35ebce3fa96a03ecadd4f408e3",
+              "test_name": "create_actor_alias"
+            }
+          ]
+        }
+      ],
+      "original_function_bindings": [],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "    participant a as Alice"
+        },
+        {
+          "offset_utf8_bytes": 43,
+          "text": "    a->>b: Hello Bob?"
+        },
+        {
+          "offset_utf8_bytes": 65,
+          "text": "    create actor d as Donald"
+        },
+        {
+          "offset_utf8_bytes": 94,
+          "text": "    a->>d: Hello Donald?"
+        }
+      ]
+    },
+    {
+      "id": "mermaid_ascii_46133bc51991c2eb",
+      "input": "sequenceDiagram\n    Alice->>Bob: Hello Bob\n    create participant Carl\n    Alice->>Carl: Hi Carl\n    destroy Carl\n    Alice-xCarl: We are too many\n    destroy Bob\n    Bob->>Alice: I agree",
+      "input_sha256": "46133bc51991c2ebf0771327d7d0f2490a7cc3d870fd0aad04368d3e357f0736",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          },
+          {
+            "id": "Carl",
+            "label": "Carl",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "Hi Carl",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "We are too many",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "I agree",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [
+        {
+          "id": "mermaid_ascii_46133bc51991c2eb",
+          "model_sha256": "594e9e58419de1c12a0a1a39b0e9fd01ecf6239773d6d0111a83e25e849b678a",
+          "existing_source_supplement": {
+            "id": "mermaid_ascii_46133bc51991c2eb",
+            "input_sha256": "46133bc51991c2ebf0771327d7d0f2490a7cc3d870fd0aad04368d3e357f0736",
+            "model_sha256": "594e9e58419de1c12a0a1a39b0e9fd01ecf6239773d6d0111a83e25e849b678a",
+            "actor_declarations": [
+              {
+                "id": "Carl",
+                "role": "participant",
+                "created": true,
+                "byte_offset": 43,
+                "source": "    create participant Carl"
+              }
+            ],
+            "implicit_role": "participant",
+            "authored_titles": [],
+            "color_regions": [],
+            "display_sensitive_source_fields": [],
+            "profile_extensions": [],
+            "explicit_break_fields": []
+          },
+          "original_provenance": [
+            {
+              "kind": "terminal-golden",
+              "line_end": 25,
+              "line_start": 1,
+              "path": "cmd/testdata/sequence/create_destroy.txt",
+              "sha256": "c874a45da7c811d718c751d440da5018d05c581ed7d3ac1fcd1deadd9fa91dcb",
+              "test_name": "create_destroy"
+            },
+            {
+              "kind": "terminal-golden",
+              "line_end": 25,
+              "line_start": 1,
+              "path": "cmd/testdata/sequence-ascii/create_destroy.txt",
+              "sha256": "b7cba4126cca8ea4adff3fef74a6f5466bc3c156f1eda62a552d19d07457e073",
+              "test_name": "create_destroy"
+            }
+          ]
+        }
+      ],
+      "original_function_bindings": [],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "    Alice->>Bob: Hello Bob"
+        },
+        {
+          "offset_utf8_bytes": 43,
+          "text": "    create participant Carl"
+        },
+        {
+          "offset_utf8_bytes": 71,
+          "text": "    Alice->>Carl: Hi Carl"
+        },
+        {
+          "offset_utf8_bytes": 97,
+          "text": "    destroy Carl"
+        },
+        {
+          "offset_utf8_bytes": 114,
+          "text": "    Alice-xCarl: We are too many"
+        },
+        {
+          "offset_utf8_bytes": 147,
+          "text": "    destroy Bob"
+        },
+        {
+          "offset_utf8_bytes": 163,
+          "text": "    Bob->>Alice: I agree"
+        }
+      ]
+    },
+    {
+      "id": "mermaid_ascii_254409c5bf321a07",
+      "input": "sequenceDiagram\nparticipant A\nparticipant B\nparticipant C\nA->>B: hi\ndestroy A\nA->>B: bye\nNote over B: xxxxxxxxxxxxxxxxx\nB->>C: after",
+      "input_sha256": "254409c5bf321a07eda7191eadaed85b905ad4db29eab27c09bfe0dfea2ba717",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "hi",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "label": "bye",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "after",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              1
+            ],
+            "text": "xxxxxxxxxxxxxxxxx",
+            "position": "over",
+            "after": 1
+          }
+        ],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [
+        {
+          "id": "mermaid_ascii_254409c5bf321a07",
+          "model_sha256": "18477e6777ad8f652bf57db00caefcdc2272fecd8fd1b8fda4b1593b89cdc671",
+          "existing_source_supplement": {
+            "id": "mermaid_ascii_254409c5bf321a07",
+            "input_sha256": "254409c5bf321a07eda7191eadaed85b905ad4db29eab27c09bfe0dfea2ba717",
+            "model_sha256": "18477e6777ad8f652bf57db00caefcdc2272fecd8fd1b8fda4b1593b89cdc671",
+            "actor_declarations": [
+              {
+                "id": "A",
+                "role": "participant",
+                "created": false,
+                "byte_offset": 16,
+                "source": "participant A"
+              },
+              {
+                "id": "B",
+                "role": "participant",
+                "created": false,
+                "byte_offset": 30,
+                "source": "participant B"
+              },
+              {
+                "id": "C",
+                "role": "participant",
+                "created": false,
+                "byte_offset": 44,
+                "source": "participant C"
+              }
+            ],
+            "implicit_role": "participant",
+            "authored_titles": [],
+            "color_regions": [],
+            "display_sensitive_source_fields": [],
+            "profile_extensions": [],
+            "explicit_break_fields": []
+          },
+          "original_provenance": [
+            {
+              "input_line": 153,
+              "kind": "terminal-inline-assertions",
+              "line_end": 182,
+              "line_start": 151,
+              "path": "pkg/sequence/create_test.go",
+              "test_name": "TestCreateDestroyPreservesNotes"
+            }
+          ]
+        }
+      ],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyPreservesNotes",
+          "input_index": 0,
+          "function_byte_offset": 6371,
+          "function_byte_length": 1011,
+          "function_sha256": "6a8ba55efd53752c032ef3e6c7111ebaedea55323af7d0e240a11ad1fde11f47",
+          "source_literal_utf8_offset": 6487,
+          "conditional_profile": "both Unicode and ASCII original configurations",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "participant A"
+        },
+        {
+          "offset_utf8_bytes": 30,
+          "text": "participant B"
+        },
+        {
+          "offset_utf8_bytes": 44,
+          "text": "participant C"
+        },
+        {
+          "offset_utf8_bytes": 58,
+          "text": "A->>B: hi"
+        },
+        {
+          "offset_utf8_bytes": 68,
+          "text": "destroy A"
+        },
+        {
+          "offset_utf8_bytes": 78,
+          "text": "A->>B: bye"
+        },
+        {
+          "offset_utf8_bytes": 89,
+          "text": "Note over B: xxxxxxxxxxxxxxxxx"
+        },
+        {
+          "offset_utf8_bytes": 120,
+          "text": "B->>C: after"
+        }
+      ]
+    },
+    {
+      "id": "mermaid_ascii_e6b23a6c33cb0234",
+      "input": "sequenceDiagram\nAlice->>Bob: hello\ncreate participant Carl\nAlice->>Carl: hi\ndestroy Carl\nAlice-xCarl: bye\nBob->>Alice: done",
+      "input_sha256": "e6b23a6c33cb02344b4645ebe83927b149a734dec694bb020a0c7f28e7ceed29",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          },
+          {
+            "id": "Carl",
+            "label": "Carl",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "hello",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "hi",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "bye",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "done",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [
+        {
+          "id": "mermaid_ascii_e6b23a6c33cb0234",
+          "model_sha256": "bf68c4a9871f39943367e008a7c57b9d5e84e62865a177de4ab408df84377e4d",
+          "existing_source_supplement": {
+            "id": "mermaid_ascii_e6b23a6c33cb0234",
+            "input_sha256": "e6b23a6c33cb02344b4645ebe83927b149a734dec694bb020a0c7f28e7ceed29",
+            "model_sha256": "bf68c4a9871f39943367e008a7c57b9d5e84e62865a177de4ab408df84377e4d",
+            "actor_declarations": [
+              {
+                "id": "Carl",
+                "role": "participant",
+                "created": true,
+                "byte_offset": 35,
+                "source": "create participant Carl"
+              }
+            ],
+            "implicit_role": "participant",
+            "authored_titles": [],
+            "color_regions": [],
+            "display_sensitive_source_fields": [],
+            "profile_extensions": [],
+            "explicit_break_fields": []
+          },
+          "original_provenance": [
+            {
+              "input_line": 187,
+              "kind": "terminal-inline-assertions",
+              "line_end": 232,
+              "line_start": 186,
+              "path": "pkg/sequence/create_test.go",
+              "test_name": "TestCreateDestroyRendering"
+            }
+          ]
+        }
+      ],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyRendering",
+          "input_index": 0,
+          "function_byte_offset": 7538,
+          "function_byte_length": 1444,
+          "function_sha256": "46112187e45dbc3d41eaba11f87b4fe318b0dd8fb9fd4dc81171f792dee7ddab",
+          "source_literal_utf8_offset": 7603,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "Alice->>Bob: hello"
+        },
+        {
+          "offset_utf8_bytes": 35,
+          "text": "create participant Carl"
+        },
+        {
+          "offset_utf8_bytes": 59,
+          "text": "Alice->>Carl: hi"
+        },
+        {
+          "offset_utf8_bytes": 76,
+          "text": "destroy Carl"
+        },
+        {
+          "offset_utf8_bytes": 89,
+          "text": "Alice-xCarl: bye"
+        },
+        {
+          "offset_utf8_bytes": 106,
+          "text": "Bob->>Alice: done"
+        }
+      ]
+    },
+    {
+      "id": "mermaid_ascii_da929b472803be2b",
+      "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nA->>+C: work\nC-->>-A: result\ndestroy C\nA-xC: close",
+      "input_sha256": "da929b472803be2b8d53be6acf33fcfb3cf660a3b35bee330c58ccff4570c55d",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "x",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "work",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 2,
+            "to": 0,
+            "label": "result",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "close",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Deactivate",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 2,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [
+        {
+          "id": "mermaid_ascii_da929b472803be2b",
+          "model_sha256": "613171b2420afaf3e9b0d605118c9ba64361baeb425b29cfeeccc19b80457840",
+          "existing_source_supplement": {
+            "id": "mermaid_ascii_da929b472803be2b",
+            "input_sha256": "da929b472803be2b8d53be6acf33fcfb3cf660a3b35bee330c58ccff4570c55d",
+            "model_sha256": "613171b2420afaf3e9b0d605118c9ba64361baeb425b29cfeeccc19b80457840",
+            "actor_declarations": [
+              {
+                "id": "C",
+                "role": "participant",
+                "created": true,
+                "byte_offset": 25,
+                "source": "create participant C"
+              }
+            ],
+            "implicit_role": "participant",
+            "authored_titles": [],
+            "color_regions": [],
+            "display_sensitive_source_fields": [],
+            "profile_extensions": [],
+            "explicit_break_fields": []
+          },
+          "original_provenance": [
+            {
+              "input_line": 237,
+              "kind": "terminal-inline-assertions",
+              "line_end": 251,
+              "line_start": 236,
+              "path": "pkg/sequence/create_test.go",
+              "test_name": "TestCreateDestroyWithActivation"
+            }
+          ]
+        }
+      ],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyWithActivation",
+          "input_index": 0,
+          "function_byte_offset": 9129,
+          "function_byte_length": 496,
+          "function_sha256": "d9e6465adbc3938772be91e170854fbaa71a0687850a26028b1ee91d1c8dfcc3",
+          "source_literal_utf8_offset": 9199,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "create participant C"
+        },
+        {
+          "offset_utf8_bytes": 46,
+          "text": "A->>+C: work"
+        },
+        {
+          "offset_utf8_bytes": 59,
+          "text": "C-->>-A: result"
+        },
+        {
+          "offset_utf8_bytes": 75,
+          "text": "destroy C"
+        },
+        {
+          "offset_utf8_bytes": 85,
+          "text": "A-xC: close"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_1781353bce81e9da",
+      "input": "sequenceDiagram\nparticipant a as Alice\na ->>b: Hello Bob?\ncreate participant c\nb-->>c: Hello c!\nc ->> b: Hello b?\ncreate actor d as Donald\na ->> d: Hello Donald?",
+      "input_sha256": "1781353bce81e9da3fba5947713463d4053a89fc6fd1a0583351b91e65eb30dd",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "a",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "b",
+            "label": "b",
+            "person": false
+          },
+          {
+            "id": "c",
+            "label": "c",
+            "person": false
+          },
+          {
+            "id": "d",
+            "label": "Donald",
+            "person": true
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Hello c!",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 2,
+            "to": 1,
+            "label": "Hello b?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 3,
+            "label": "Hello Donald?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateParticipant",
+          "input_index": 0,
+          "function_byte_offset": 316,
+          "function_byte_length": 1171,
+          "function_sha256": "f818950a8334bd3b6d11b6f323f590bd922b9ad160c22a75f405988df129b084",
+          "source_literal_utf8_offset": 376,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "participant a as Alice"
+        },
+        {
+          "offset_utf8_bytes": 39,
+          "text": "a ->>b: Hello Bob?"
+        },
+        {
+          "offset_utf8_bytes": 58,
+          "text": "create participant c"
+        },
+        {
+          "offset_utf8_bytes": 79,
+          "text": "b-->>c: Hello c!"
+        },
+        {
+          "offset_utf8_bytes": 96,
+          "text": "c ->> b: Hello b?"
+        },
+        {
+          "offset_utf8_bytes": 114,
+          "text": "create actor d as Donald"
+        },
+        {
+          "offset_utf8_bytes": 139,
+          "text": "a ->> d: Hello Donald?"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_16d3b47bb62187c8",
+      "input": "sequenceDiagram\nparticipant a as Alice\na ->>b: Hello Bob?\ndestroy a\nb-->>a: Hello Alice!\nb ->> c: Where is Alice?\ndestroy c\nb ->> c: Where are you?",
+      "input_sha256": "16d3b47bb62187c890160a65e6a3928478520162907976731e9d9eb46a03e6a3",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "a",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "b",
+            "label": "b",
+            "person": false
+          },
+          {
+            "id": "c",
+            "label": "c",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Hello Alice!",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Where is Alice?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Where are you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 2,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestDestroyParticipant",
+          "input_index": 0,
+          "function_byte_offset": 1565,
+          "function_byte_length": 909,
+          "function_sha256": "89eb067fa969f4d14e99fb52f77044d34ec5f5546a514c6bb4a7ee66104d55f7",
+          "source_literal_utf8_offset": 1626,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "participant a as Alice"
+        },
+        {
+          "offset_utf8_bytes": 39,
+          "text": "a ->>b: Hello Bob?"
+        },
+        {
+          "offset_utf8_bytes": 58,
+          "text": "destroy a"
+        },
+        {
+          "offset_utf8_bytes": 68,
+          "text": "b-->>a: Hello Alice!"
+        },
+        {
+          "offset_utf8_bytes": 89,
+          "text": "b ->> c: Where is Alice?"
+        },
+        {
+          "offset_utf8_bytes": 114,
+          "text": "destroy c"
+        },
+        {
+          "offset_utf8_bytes": 124,
+          "text": "b ->> c: Where are you?"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_401b5f10ebccc4e4",
+      "input": "sequenceDiagram\na ->>b: Hello Bob?\ncreate participant c\nb ->>c: Hello c!\nc ->> b: Hello b?\ndestroy c\nb ->> c : Bye c !",
+      "input_sha256": "401b5f10ebccc4e43c0b04f9bdcc29d4898e213d5aa252f58c6e249fdf20b7b3",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "a",
+            "label": "a",
+            "person": false
+          },
+          {
+            "id": "b",
+            "label": "b",
+            "person": false
+          },
+          {
+            "id": "c",
+            "label": "c",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Hello c!",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 2,
+            "to": 1,
+            "label": "Hello b?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Bye c !",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 2,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateAndDestroySameParticipant",
+          "input_index": 0,
+          "function_byte_offset": 2590,
+          "function_byte_length": 535,
+          "function_sha256": "1a15b7f5a588e8da724012f08d2b00a809cd7f8464e7340cba704320aaa708ba",
+          "source_literal_utf8_offset": 2664,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "a ->>b: Hello Bob?"
+        },
+        {
+          "offset_utf8_bytes": 35,
+          "text": "create participant c"
+        },
+        {
+          "offset_utf8_bytes": 56,
+          "text": "b ->>c: Hello c!"
+        },
+        {
+          "offset_utf8_bytes": 73,
+          "text": "c ->> b: Hello b?"
+        },
+        {
+          "offset_utf8_bytes": 91,
+          "text": "destroy c"
+        },
+        {
+          "offset_utf8_bytes": 101,
+          "text": "b ->> c : Bye c !"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_9eee0d577024de3b",
+      "input": "sequenceDiagram\nGW->>C: x\ncreate participant Auth Service\nGW->>Auth Service: validate\ndestroy Auth Service\nGW-xAuth Service: close",
+      "input_sha256": "9eee0d577024de3bc92f0941c88f3f46916ef1e3f413f943d484311fe9003405",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "GW",
+            "label": "GW",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          },
+          {
+            "id": "Auth Service",
+            "label": "Auth Service",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "x",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "validate",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "close",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 2,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroySpacedNames",
+          "input_index": 0,
+          "function_byte_offset": 3252,
+          "function_byte_length": 369,
+          "function_sha256": "31f9a3cb6fe3eba9e9539a31abf45b307aaa02418765e757ab35d90f673b508a",
+          "source_literal_utf8_offset": 3319,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "GW->>C: x"
+        },
+        {
+          "offset_utf8_bytes": 26,
+          "text": "create participant Auth Service"
+        },
+        {
+          "offset_utf8_bytes": 58,
+          "text": "GW->>Auth Service: validate"
+        },
+        {
+          "offset_utf8_bytes": 86,
+          "text": "destroy Auth Service"
+        },
+        {
+          "offset_utf8_bytes": 107,
+          "text": "GW-xAuth Service: close"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_0c569f23bc3a41bd",
+      "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nparticipant D",
+      "input_sha256": "0c569f23bc3a41bd3a148c23ce96cb8fe483a1dd129175600f0cb93798e2fe81",
+      "expected": "source",
+      "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyErrors",
+          "input_index": 0,
+          "function_byte_offset": 3759,
+          "function_byte_length": 1545,
+          "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+          "source_literal_utf8_offset": 3887,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+          "original_error_substring": "must be followed by a message",
+          "original_error_case_name": "create never bound to a message",
+          "table_row_witness": {
+            "offset_utf8_bytes": 3849,
+            "text": "\t\t{\"create never bound to a message\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nparticipant D\", \"must be followed by a message\"},",
+            "sha256": "08411ac256fa927fa4392b9e95bdf164df37c3db784ce647d76b4d2d2d3d5096"
+          },
+          "error_condition_witness": {
+            "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+            "offset_utf8_bytes": 5170
+          }
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "create participant C"
+        },
+        {
+          "offset_utf8_bytes": 46,
+          "text": "participant D"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_722efa400ff73f14",
+      "input": "sequenceDiagram\nA->>B: x\ncreate participant C",
+      "input_sha256": "722efa400ff73f1400ae3841e7fa204c56bc26d314aea90840214c5878ca6343",
+      "expected": "source",
+      "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyErrors",
+          "input_index": 1,
+          "function_byte_offset": 3759,
+          "function_byte_length": 1545,
+          "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+          "source_literal_utf8_offset": 4018,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+          "original_error_substring": "must be followed by a message",
+          "original_error_case_name": "create at end of diagram",
+          "table_row_witness": {
+            "offset_utf8_bytes": 3987,
+            "text": "\t\t{\"create at end of diagram\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\", \"must be followed by a message\"},",
+            "sha256": "66e34c91451dc08ae9182e6d3141ad4c8f78c9c50136a96c5e251396bac1b43d"
+          },
+          "error_condition_witness": {
+            "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+            "offset_utf8_bytes": 5170
+          }
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "create participant C"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_7b1f8db9a2652a63",
+      "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nA->>B: y",
+      "input_sha256": "7b1f8db9a2652a6307cbe318aa9461ca7e80ec6786ed7a12750121376412c959",
+      "expected": "source",
+      "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyErrors",
+          "input_index": 2,
+          "function_byte_offset": 3759,
+          "function_byte_length": 1545,
+          "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+          "source_literal_utf8_offset": 4140,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+          "original_error_substring": "must receive the message",
+          "original_error_case_name": "created participant uninvolved",
+          "table_row_witness": {
+            "offset_utf8_bytes": 4103,
+            "text": "\t\t{\"created participant uninvolved\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nA->>B: y\", \"must receive the message\"},",
+            "sha256": "b1abb63d353d9b3be6a67be2962d0cf8c54b49ab913cf51af0bc62fceedddda8"
+          },
+          "error_condition_witness": {
+            "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+            "offset_utf8_bytes": 5170
+          }
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "create participant C"
+        },
+        {
+          "offset_utf8_bytes": 46,
+          "text": "A->>B: y"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_3dfd463228643baf",
+      "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nC->>A: hello",
+      "input_sha256": "3dfd463228643baf7ccf6dcd7f200b1ffbba80732830fe5ebe31c785e2c01889",
+      "expected": "source",
+      "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyErrors",
+          "input_index": 3,
+          "function_byte_offset": 3759,
+          "function_byte_length": 1545,
+          "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+          "source_literal_utf8_offset": 4287,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+          "original_error_substring": "must receive the message",
+          "original_error_case_name": "created participant sends its own creating message",
+          "table_row_witness": {
+            "offset_utf8_bytes": 4230,
+            "text": "\t\t{\"created participant sends its own creating message\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nC->>A: hello\", \"must receive the message\"},",
+            "sha256": "5217a0d1c9d2cb22752b62f5a7a7e1b918de42a7cc91a10f210594bef5560b06"
+          },
+          "error_condition_witness": {
+            "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+            "offset_utf8_bytes": 5170
+          }
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "create participant C"
+        },
+        {
+          "offset_utf8_bytes": 46,
+          "text": "C->>A: hello"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_f46bfa34bc06d233",
+      "input": "sequenceDiagram\nA->>C: x\ncreate participant C\nA->>C: y",
+      "input_sha256": "f46bfa34bc06d233314afa7d276824f02cee2eb4eee876ab90c9d7673950b1b7",
+      "expected": "source",
+      "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyErrors",
+          "input_index": 4,
+          "function_byte_offset": 3759,
+          "function_byte_length": 1545,
+          "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+          "source_literal_utf8_offset": 4416,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+          "original_error_substring": "id already exists",
+          "original_error_case_name": "create reuses an existing id",
+          "table_row_witness": {
+            "offset_utf8_bytes": 4381,
+            "text": "\t\t{\"create reuses an existing id\", \"sequenceDiagram\\nA->>C: x\\ncreate participant C\\nA->>C: y\", \"id already exists\"},",
+            "sha256": "abbf7c890a6d30f1b9ae47ec9c40fb0f71e167ee9db5fbfc1fb077b2f83e7f69"
+          },
+          "error_condition_witness": {
+            "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+            "offset_utf8_bytes": 5170
+          }
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>C: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "create participant C"
+        },
+        {
+          "offset_utf8_bytes": 46,
+          "text": "A->>C: y"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_8160eff3408722be",
+      "input": "sequenceDiagram\nparticipant C\nA->>B: x\ncreate participant C\nA->>C: y",
+      "input_sha256": "8160eff3408722be6f1ba361d14e977f0439007b90db2e609e3a46aa25e53e45",
+      "expected": "source",
+      "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyErrors",
+          "input_index": 5,
+          "function_byte_offset": 3759,
+          "function_byte_length": 1545,
+          "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+          "source_literal_utf8_offset": 4533,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+          "original_error_substring": "id already exists",
+          "original_error_case_name": "create reuses a declared id",
+          "table_row_witness": {
+            "offset_utf8_bytes": 4499,
+            "text": "\t\t{\"create reuses a declared id\", \"sequenceDiagram\\nparticipant C\\nA->>B: x\\ncreate participant C\\nA->>C: y\", \"id already exists\"},",
+            "sha256": "eb4ef33b1bda64923d7ea46b4e1c68234c3f853fa39a5de5b7cf74a72eee39b3"
+          },
+          "error_condition_witness": {
+            "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+            "offset_utf8_bytes": 5170
+          }
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "participant C"
+        },
+        {
+          "offset_utf8_bytes": 30,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 39,
+          "text": "create participant C"
+        },
+        {
+          "offset_utf8_bytes": 60,
+          "text": "A->>C: y"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_1977b79a43048c84",
+      "input": "sequenceDiagram\nA->>B: x\ndestroy A\nB->>C: y",
+      "input_sha256": "1977b79a43048c8406d9634f8eca263547bfb97957c5fa102e0f8eba2ecc610a",
+      "expected": "source",
+      "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyErrors",
+          "input_index": 6,
+          "function_byte_offset": 3759,
+          "function_byte_length": 1545,
+          "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+          "source_literal_utf8_offset": 4656,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+          "original_error_substring": "not involved in the following message",
+          "original_error_case_name": "destroy uninvolved",
+          "table_row_witness": {
+            "offset_utf8_bytes": 4631,
+            "text": "\t\t{\"destroy uninvolved\", \"sequenceDiagram\\nA->>B: x\\ndestroy A\\nB->>C: y\", \"not involved in the following message\"},",
+            "sha256": "4abcc94220396c856fb28977dbef25eabbf66786f4ef64a26f53d8852fb87a88"
+          },
+          "error_condition_witness": {
+            "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+            "offset_utf8_bytes": 5170
+          }
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "destroy A"
+        },
+        {
+          "offset_utf8_bytes": 35,
+          "text": "B->>C: y"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_dcf1975fc2454ba3",
+      "input": "sequenceDiagram\nA->>B: x\ndestroy Zed\nA->>B: y",
+      "input_sha256": "dcf1975fc2454ba3f1dd72a205f3cb0e08b5d777bcd057f5c21b608313bcf2d6",
+      "expected": "source",
+      "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyErrors",
+          "input_index": 7,
+          "function_byte_offset": 3759,
+          "function_byte_length": 1545,
+          "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+          "source_literal_utf8_offset": 4782,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+          "original_error_substring": "unknown participant",
+          "original_error_case_name": "destroy unknown participant",
+          "table_row_witness": {
+            "offset_utf8_bytes": 4748,
+            "text": "\t\t{\"destroy unknown participant\", \"sequenceDiagram\\nA->>B: x\\ndestroy Zed\\nA->>B: y\", \"unknown participant\"},",
+            "sha256": "2d87f6af9e0cc5f7261dcc284ebc8d6b9129000c336f63bbdda9422ab81afe50"
+          },
+          "error_condition_witness": {
+            "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+            "offset_utf8_bytes": 5170
+          }
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "destroy Zed"
+        },
+        {
+          "offset_utf8_bytes": 37,
+          "text": "A->>B: y"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_5330763644ae19a6",
+      "input": "sequenceDiagram\nA->>B: x\ndestroy A",
+      "input_sha256": "5330763644ae19a66e48d1089cb8bad639264af83b03fed20fb2e07961edb47c",
+      "expected": "source",
+      "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyErrors",
+          "input_index": 8,
+          "function_byte_offset": 3759,
+          "function_byte_length": 1545,
+          "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+          "source_literal_utf8_offset": 4890,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+          "original_error_substring": "must be followed by a message",
+          "original_error_case_name": "destroy at end of diagram",
+          "table_row_witness": {
+            "offset_utf8_bytes": 4858,
+            "text": "\t\t{\"destroy at end of diagram\", \"sequenceDiagram\\nA->>B: x\\ndestroy A\", \"must be followed by a message\"},",
+            "sha256": "8ddfe084dc800c0640d7a2df0dc057bbae019ed41f09b062aa15d031665e84ae"
+          },
+          "error_condition_witness": {
+            "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+            "offset_utf8_bytes": 5170
+          }
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "destroy A"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_41e1b18078032e4f",
+      "input": "sequenceDiagram\nA->>B: x\ncreate C\nA->>C: y",
+      "input_sha256": "41e1b18078032e4f73c05cc95fc18d7c346e4c9916fafa3a6c67420c3950002c",
+      "expected": "source",
+      "native_policy": "Preserve complete original source for this invalid/unbound lifecycle construct. This is not Go Parse or error-substring equivalence.",
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyErrors",
+          "input_index": 9,
+          "function_byte_offset": 3759,
+          "function_byte_length": 1545,
+          "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+          "source_literal_utf8_offset": 5007,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass.",
+          "original_error_substring": "invalid syntax",
+          "original_error_case_name": "create requires participant or actor",
+          "table_row_witness": {
+            "offset_utf8_bytes": 4964,
+            "text": "\t\t{\"create requires participant or actor\", \"sequenceDiagram\\nA->>B: x\\ncreate C\\nA->>C: y\", \"invalid syntax\"},",
+            "sha256": "a7bbd92683b9ee25dd764cac95e5b27ed85300bcecd2a98f6738b2d928a2a566"
+          },
+          "error_condition_witness": {
+            "text": "if err == nil || !strings.Contains(err.Error(), c.want) {",
+            "offset_utf8_bytes": 5170
+          }
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "create C"
+        },
+        {
+          "offset_utf8_bytes": 34,
+          "text": "A->>C: y"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_3500291b8b9522e7",
+      "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nloop retry\nA->>C: hi\nend",
+      "input_sha256": "3500291b8b9522e78d59d9a142667a4376e7783304a213e112ace078b336df7c",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "x",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "hi",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "loop",
+            "label": "retry",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyIntervening",
+          "input_index": 0,
+          "function_byte_offset": 5528,
+          "function_byte_length": 699,
+          "function_sha256": "f073ef265a161f1307cf8c2bbb77bb5fc6439e2bb81e9a900fd4d28cafffdf6f",
+          "source_literal_utf8_offset": 5632,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "create participant C"
+        },
+        {
+          "offset_utf8_bytes": 46,
+          "text": "loop retry"
+        },
+        {
+          "offset_utf8_bytes": 57,
+          "text": "A->>C: hi"
+        },
+        {
+          "offset_utf8_bytes": 67,
+          "text": "end"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_ed9ebc41cbfab51c",
+      "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nNote over A: thinking\nA->>C: hi",
+      "input_sha256": "ed9ebc41cbfab51ca567e7979f86dfb06bcf90c5ab2ddace2b3782dab7251bb6",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "x",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "hi",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [
+          {
+            "actors": [
+              0
+            ],
+            "text": "thinking",
+            "position": "over",
+            "after": 0
+          }
+        ],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Note",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyIntervening",
+          "input_index": 1,
+          "function_byte_offset": 5528,
+          "function_byte_length": 699,
+          "function_sha256": "f073ef265a161f1307cf8c2bbb77bb5fc6439e2bb81e9a900fd4d28cafffdf6f",
+          "source_literal_utf8_offset": 5736,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "create participant C"
+        },
+        {
+          "offset_utf8_bytes": 46,
+          "text": "Note over A: thinking"
+        },
+        {
+          "offset_utf8_bytes": 68,
+          "text": "A->>C: hi"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_6176138eeb111c22",
+      "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nparticipant D\nA->>C: hi",
+      "input_sha256": "6176138eeb111c2290f610930c3d79af4aca4e897b25abf4fbc0290522fa2b46",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          },
+          {
+            "id": "D",
+            "label": "D",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "x",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "hi",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyIntervening",
+          "input_index": 2,
+          "function_byte_offset": 5528,
+          "function_byte_length": 699,
+          "function_sha256": "f073ef265a161f1307cf8c2bbb77bb5fc6439e2bb81e9a900fd4d28cafffdf6f",
+          "source_literal_utf8_offset": 5846,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "create participant C"
+        },
+        {
+          "offset_utf8_bytes": 46,
+          "text": "participant D"
+        },
+        {
+          "offset_utf8_bytes": 60,
+          "text": "A->>C: hi"
+        }
+      ]
+    },
+    {
+      "id": "go_lifecycle_source_0d3d10a4f98d9ea7",
+      "input": "sequenceDiagram\nA->>B: x\ndestroy B\nactivate A\nA-xB: bye",
+      "input_sha256": "0d3d10a4f98d9ea71c56b19bd6180727ba5de7cd2be992981f888c0e1c105c16",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "x",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "label": "bye",
+            "dashed": false,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "boxes": []
+      },
+      "frozen_bindings": [],
+      "original_function_bindings": [
+        {
+          "path": "pkg/sequence/create_test.go",
+          "function": "TestCreateDestroyIntervening",
+          "input_index": 3,
+          "function_byte_offset": 5528,
+          "function_byte_length": 699,
+          "function_sha256": "f073ef265a161f1307cf8c2bbb77bb5fc6439e2bb81e9a900fd4d28cafffdf6f",
+          "source_literal_utf8_offset": 5948,
+          "conditional_profile": "original source/API conditions retained",
+          "original_assertions": "Pending complete native predicate/API/conditional mapping; a source geometry success is not a Go function pass."
+        }
+      ],
+      "complete_source_row_witnesses": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "A->>B: x"
+        },
+        {
+          "offset_utf8_bytes": 25,
+          "text": "destroy B"
+        },
+        {
+          "offset_utf8_bytes": 35,
+          "text": "activate A"
+        },
+        {
+          "offset_utf8_bytes": 46,
+          "text": "A-xB: bye"
+        }
+      ]
+    }
+  ],
+  "original_function_catalog": {
+    "path": "pkg/sequence/create_test.go",
+    "sha256": "231a2bf9d3b4f352f6652c079fdb332d069ead55d669062fc3bd4777ffd0ca6e",
+    "functions": [
+      {
+        "function": "TestCreateParticipant",
+        "source_byte_offset": 316,
+        "source_byte_length": 1171,
+        "function_sha256": "f818950a8334bd3b6d11b6f323f590bd922b9ad160c22a75f405988df129b084",
+        "line_start": 13,
+        "line_end": 45,
+        "function_source": "func TestCreateParticipant(t *testing.T) {\n\td, err := Parse(\"sequenceDiagram\\nparticipant a as Alice\\na ->>b: Hello Bob?\\ncreate participant c\\nb-->>c: Hello c!\\nc ->> b: Hello b?\\ncreate actor d as Donald\\na ->> d: Hello Donald?\")\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\tbyID := map[string]*Participant{}\n\tfor _, p := range d.Participants {\n\t\tbyID[p.ID] = p\n\t}\n\tif byID[\"c\"] == nil || byID[\"c\"].Label != \"c\" {\n\t\tt.Errorf(\"c not declared with its own label: %+v\", byID[\"c\"])\n\t}\n\tif byID[\"d\"] == nil || byID[\"d\"].Label != \"Donald\" {\n\t\tt.Errorf(\"create actor alias lost: %+v\", byID[\"d\"])\n\t}\n\tif len(d.Created) != 2 {\n\t\tt.Fatalf(\"want 2 created participants, got %d\", len(d.Created))\n\t}\n\t// The create event must sit immediately before its message.\n\tfor i, ev := range d.Events {\n\t\tif ev.Kind != EventCreate {\n\t\t\tcontinue\n\t\t}\n\t\tif i+1 >= len(d.Events) || d.Events[i+1].Kind != EventMessage {\n\t\t\tt.Errorf(\"create event for %q is not followed by its message\", ev.Participant.ID)\n\t\t\tcontinue\n\t\t}\n\t\tmsg := d.Events[i+1].Message\n\t\tif msg.From != ev.Participant && msg.To != ev.Participant {\n\t\t\tt.Errorf(\"create event for %q bound to an unrelated message\", ev.Participant.ID)\n\t\t}\n\t}\n}",
+        "inputs": [
+          {
+            "input": "sequenceDiagram\nparticipant a as Alice\na ->>b: Hello Bob?\ncreate participant c\nb-->>c: Hello c!\nc ->> b: Hello b?\ncreate actor d as Donald\na ->> d: Hello Donald?",
+            "input_sha256": "1781353bce81e9da3fba5947713463d4053a89fc6fd1a0583351b91e65eb30dd",
+            "source_literal_utf8_offset": 376,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "original source/API conditions retained"
+          }
+        ],
+        "original_assertion_mapping_status": "pending actual full conditional/predicate translation; function input inventory is not an assertion pass"
+      },
+      {
+        "function": "TestDestroyParticipant",
+        "source_byte_offset": 1565,
+        "source_byte_length": 909,
+        "function_sha256": "89eb067fa969f4d14e99fb52f77044d34ec5f5546a514c6bb4a7ee66104d55f7",
+        "line_start": 48,
+        "line_end": 72,
+        "function_source": "func TestDestroyParticipant(t *testing.T) {\n\td, err := Parse(\"sequenceDiagram\\nparticipant a as Alice\\na ->>b: Hello Bob?\\ndestroy a\\nb-->>a: Hello Alice!\\nb ->> c: Where is Alice?\\ndestroy c\\nb ->> c: Where are you?\")\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\tvar destroyed []string\n\tfor i, ev := range d.Events {\n\t\tif ev.Kind != EventDestroy {\n\t\t\tcontinue\n\t\t}\n\t\tdestroyed = append(destroyed, ev.Participant.ID)\n\t\t// The destroy event must sit immediately after its message.\n\t\tif i == 0 || d.Events[i-1].Kind != EventMessage {\n\t\t\tt.Errorf(\"destroy event for %q is not preceded by its message\", ev.Participant.ID)\n\t\t\tcontinue\n\t\t}\n\t\tmsg := d.Events[i-1].Message\n\t\tif msg.From != ev.Participant && msg.To != ev.Participant {\n\t\t\tt.Errorf(\"destroy event for %q bound to an unrelated message\", ev.Participant.ID)\n\t\t}\n\t}\n\tif strings.Join(destroyed, \",\") != \"a,c\" {\n\t\tt.Errorf(\"destroyed = %v, want [a c]\", destroyed)\n\t}\n}",
+        "inputs": [
+          {
+            "input": "sequenceDiagram\nparticipant a as Alice\na ->>b: Hello Bob?\ndestroy a\nb-->>a: Hello Alice!\nb ->> c: Where is Alice?\ndestroy c\nb ->> c: Where are you?",
+            "input_sha256": "16d3b47bb62187c890160a65e6a3928478520162907976731e9d9eb46a03e6a3",
+            "source_literal_utf8_offset": 1626,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "original source/API conditions retained"
+          }
+        ],
+        "original_assertion_mapping_status": "pending actual full conditional/predicate translation; function input inventory is not an assertion pass"
+      },
+      {
+        "function": "TestCreateAndDestroySameParticipant",
+        "source_byte_offset": 2590,
+        "source_byte_length": 535,
+        "function_sha256": "1a15b7f5a588e8da724012f08d2b00a809cd7f8464e7340cba704320aaa708ba",
+        "line_start": 76,
+        "line_end": 91,
+        "function_source": "func TestCreateAndDestroySameParticipant(t *testing.T) {\n\td, err := Parse(\"sequenceDiagram\\na ->>b: Hello Bob?\\ncreate participant c\\nb ->>c: Hello c!\\nc ->> b: Hello b?\\ndestroy c\\nb ->> c : Bye c !\")\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\tvar kinds []string\n\tfor _, ev := range d.Events {\n\t\tswitch ev.Kind {\n\t\tcase EventCreate, EventDestroy:\n\t\t\tkinds = append(kinds, ev.Kind.String()+\":\"+ev.Participant.ID)\n\t\t}\n\t}\n\tif strings.Join(kinds, \",\") != \"create:c,destroy:c\" {\n\t\tt.Errorf(\"events = %v, want create:c then destroy:c\", kinds)\n\t}\n}",
+        "inputs": [
+          {
+            "input": "sequenceDiagram\na ->>b: Hello Bob?\ncreate participant c\nb ->>c: Hello c!\nc ->> b: Hello b?\ndestroy c\nb ->> c : Bye c !",
+            "input_sha256": "401b5f10ebccc4e43c0b04f9bdcc29d4898e213d5aa252f58c6e249fdf20b7b3",
+            "source_literal_utf8_offset": 2664,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "original source/API conditions retained"
+          }
+        ],
+        "original_assertion_mapping_status": "pending actual full conditional/predicate translation; function input inventory is not an assertion pass"
+      },
+      {
+        "function": "TestCreateDestroySpacedNames",
+        "source_byte_offset": 3252,
+        "source_byte_length": 369,
+        "function_sha256": "31f9a3cb6fe3eba9e9539a31abf45b307aaa02418765e757ab35d90f673b508a",
+        "line_start": 95,
+        "line_end": 103,
+        "function_source": "func TestCreateDestroySpacedNames(t *testing.T) {\n\td, err := Parse(\"sequenceDiagram\\nGW->>C: x\\ncreate participant Auth Service\\nGW->>Auth Service: validate\\ndestroy Auth Service\\nGW-xAuth Service: close\")\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\tif len(d.Created) != 1 || d.Created[0].ID != \"Auth Service\" {\n\t\tt.Errorf(\"spaced created name mishandled: %+v\", d.Created)\n\t}\n}",
+        "inputs": [
+          {
+            "input": "sequenceDiagram\nGW->>C: x\ncreate participant Auth Service\nGW->>Auth Service: validate\ndestroy Auth Service\nGW-xAuth Service: close",
+            "input_sha256": "9eee0d577024de3bc92f0941c88f3f46916ef1e3f413f943d484311fe9003405",
+            "source_literal_utf8_offset": 3319,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "original source/API conditions retained"
+          }
+        ],
+        "original_assertion_mapping_status": "pending actual full conditional/predicate translation; function input inventory is not an assertion pass"
+      },
+      {
+        "function": "TestCreateDestroyErrors",
+        "source_byte_offset": 3759,
+        "source_byte_length": 1545,
+        "function_sha256": "7d57fd5bbc6b682567816080aa63896400bf7deabadaa723ce6cdd06f0035f05",
+        "line_start": 107,
+        "line_end": 128,
+        "function_source": "func TestCreateDestroyErrors(t *testing.T) {\n\tcases := []struct{ name, in, want string }{\n\t\t{\"create never bound to a message\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nparticipant D\", \"must be followed by a message\"},\n\t\t{\"create at end of diagram\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\", \"must be followed by a message\"},\n\t\t{\"created participant uninvolved\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nA->>B: y\", \"must receive the message\"},\n\t\t{\"created participant sends its own creating message\", \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nC->>A: hello\", \"must receive the message\"},\n\t\t{\"create reuses an existing id\", \"sequenceDiagram\\nA->>C: x\\ncreate participant C\\nA->>C: y\", \"id already exists\"},\n\t\t{\"create reuses a declared id\", \"sequenceDiagram\\nparticipant C\\nA->>B: x\\ncreate participant C\\nA->>C: y\", \"id already exists\"},\n\t\t{\"destroy uninvolved\", \"sequenceDiagram\\nA->>B: x\\ndestroy A\\nB->>C: y\", \"not involved in the following message\"},\n\t\t{\"destroy unknown participant\", \"sequenceDiagram\\nA->>B: x\\ndestroy Zed\\nA->>B: y\", \"unknown participant\"},\n\t\t{\"destroy at end of diagram\", \"sequenceDiagram\\nA->>B: x\\ndestroy A\", \"must be followed by a message\"},\n\t\t{\"create requires participant or actor\", \"sequenceDiagram\\nA->>B: x\\ncreate C\\nA->>C: y\", \"invalid syntax\"},\n\t}\n\tfor _, c := range cases {\n\t\tt.Run(c.name, func(t *testing.T) {\n\t\t\t_, err := Parse(c.in)\n\t\t\tif err == nil || !strings.Contains(err.Error(), c.want) {\n\t\t\t\tt.Errorf(\"want error containing %q, got %v\", c.want, err)\n\t\t\t}\n\t\t})\n\t}\n}",
+        "inputs": [
+          {
+            "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nparticipant D",
+            "input_sha256": "0c569f23bc3a41bd3a148c23ce96cb8fe483a1dd129175600f0cb93798e2fe81",
+            "source_literal_utf8_offset": 3887,
+            "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>B: x\ncreate participant C",
+            "input_sha256": "722efa400ff73f1400ae3841e7fa204c56bc26d314aea90840214c5878ca6343",
+            "source_literal_utf8_offset": 4018,
+            "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nA->>B: y",
+            "input_sha256": "7b1f8db9a2652a6307cbe318aa9461ca7e80ec6786ed7a12750121376412c959",
+            "source_literal_utf8_offset": 4140,
+            "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nC->>A: hello",
+            "input_sha256": "3dfd463228643baf7ccf6dcd7f200b1ffbba80732830fe5ebe31c785e2c01889",
+            "source_literal_utf8_offset": 4287,
+            "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>C: x\ncreate participant C\nA->>C: y",
+            "input_sha256": "f46bfa34bc06d233314afa7d276824f02cee2eb4eee876ab90c9d7673950b1b7",
+            "source_literal_utf8_offset": 4416,
+            "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nparticipant C\nA->>B: x\ncreate participant C\nA->>C: y",
+            "input_sha256": "8160eff3408722be6f1ba361d14e977f0439007b90db2e609e3a46aa25e53e45",
+            "source_literal_utf8_offset": 4533,
+            "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>B: x\ndestroy A\nB->>C: y",
+            "input_sha256": "1977b79a43048c8406d9634f8eca263547bfb97957c5fa102e0f8eba2ecc610a",
+            "source_literal_utf8_offset": 4656,
+            "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>B: x\ndestroy Zed\nA->>B: y",
+            "input_sha256": "dcf1975fc2454ba3f1dd72a205f3cb0e08b5d777bcd057f5c21b608313bcf2d6",
+            "source_literal_utf8_offset": 4782,
+            "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>B: x\ndestroy A",
+            "input_sha256": "5330763644ae19a66e48d1089cb8bad639264af83b03fed20fb2e07961edb47c",
+            "source_literal_utf8_offset": 4890,
+            "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>B: x\ncreate C\nA->>C: y",
+            "input_sha256": "41e1b18078032e4f73c05cc95fc18d7c346e4c9916fafa3a6c67420c3950002c",
+            "source_literal_utf8_offset": 5007,
+            "classification": "native whole-source negative policy; original Go Parse/error-substring assertion remains separate",
+            "config_profile": "original source/API conditions retained"
+          }
+        ],
+        "original_assertion_mapping_status": "pending actual full conditional/predicate translation; function input inventory is not an assertion pass"
+      },
+      {
+        "function": "TestCreateDestroyIntervening",
+        "source_byte_offset": 5528,
+        "source_byte_length": 699,
+        "function_sha256": "f073ef265a161f1307cf8c2bbb77bb5fc6439e2bb81e9a900fd4d28cafffdf6f",
+        "line_start": 133,
+        "line_end": 147,
+        "function_source": "func TestCreateDestroyIntervening(t *testing.T) {\n\tcases := map[string]string{\n\t\t\"fragment between\":    \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nloop retry\\nA->>C: hi\\nend\",\n\t\t\"note between\":        \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nNote over A: thinking\\nA->>C: hi\",\n\t\t\"declaration between\": \"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nparticipant D\\nA->>C: hi\",\n\t\t\"activation between\":  \"sequenceDiagram\\nA->>B: x\\ndestroy B\\nactivate A\\nA-xB: bye\",\n\t}\n\tfor name, in := range cases {\n\t\tt.Run(name, func(t *testing.T) {\n\t\t\tif _, err := Parse(in); err != nil {\n\t\t\t\tt.Errorf(\"statements between create/destroy and its message should be allowed: %v\", err)\n\t\t\t}\n\t\t})\n\t}\n}",
+        "inputs": [
+          {
+            "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nloop retry\nA->>C: hi\nend",
+            "input_sha256": "3500291b8b9522e78d59d9a142667a4376e7783304a213e112ace078b336df7c",
+            "source_literal_utf8_offset": 5632,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nNote over A: thinking\nA->>C: hi",
+            "input_sha256": "ed9ebc41cbfab51ca567e7979f86dfb06bcf90c5ab2ddace2b3782dab7251bb6",
+            "source_literal_utf8_offset": 5736,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nparticipant D\nA->>C: hi",
+            "input_sha256": "6176138eeb111c2290f610930c3d79af4aca4e897b25abf4fbc0290522fa2b46",
+            "source_literal_utf8_offset": 5846,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "original source/API conditions retained"
+          },
+          {
+            "input": "sequenceDiagram\nA->>B: x\ndestroy B\nactivate A\nA-xB: bye",
+            "input_sha256": "0d3d10a4f98d9ea71c56b19bd6180727ba5de7cd2be992981f888c0e1c105c16",
+            "source_literal_utf8_offset": 5948,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "original source/API conditions retained"
+          }
+        ],
+        "original_assertion_mapping_status": "pending actual full conditional/predicate translation; function input inventory is not an assertion pass"
+      },
+      {
+        "function": "TestCreateDestroyPreservesNotes",
+        "source_byte_offset": 6371,
+        "source_byte_length": 1011,
+        "function_sha256": "6a8ba55efd53752c032ef3e6c7111ebaedea55323af7d0e240a11ad1fde11f47",
+        "line_start": 151,
+        "line_end": 182,
+        "function_source": "func TestCreateDestroyPreservesNotes(t *testing.T) {\n\tfor _, ascii := range []bool{false, true} {\n\t\td, err := Parse(\"sequenceDiagram\\nparticipant A\\nparticipant B\\nparticipant C\\nA->>B: hi\\ndestroy A\\nA->>B: bye\\nNote over B: xxxxxxxxxxxxxxxxx\\nB->>C: after\")\n\t\tif err != nil {\n\t\t\tt.Fatal(err)\n\t\t}\n\t\tcfg := diagram.DefaultConfig()\n\t\tcfg.UseAscii = ascii\n\t\tout, err := Render(d, cfg)\n\t\tif err != nil {\n\t\t\tt.Fatal(err)\n\t\t}\n\t\t// The note box must have the same number of border cells on each of its\n\t\t// three rows: a blanked lifeline column cannot punch through it.\n\t\tvar noteRows []string\n\t\tfor _, line := range strings.Split(out, \"\\n\") {\n\t\t\tif strings.Contains(line, \"xxxxx\") {\n\t\t\t\tnoteRows = append(noteRows, line)\n\t\t\t}\n\t\t}\n\t\tif len(noteRows) != 1 {\n\t\t\tt.Fatalf(\"ascii=%v: expected one note text row, got %d:\\n%s\", ascii, len(noteRows), out)\n\t\t}\n\t\tside := \"│\"\n\t\tif ascii {\n\t\t\tside = \"|\"\n\t\t}\n\t\tif strings.Count(noteRows[0], side) < 2 {\n\t\t\tt.Errorf(\"ascii=%v: note box lost a border:\\n%s\", ascii, out)\n\t\t}\n\t}\n}",
+        "inputs": [
+          {
+            "input": "sequenceDiagram\nparticipant A\nparticipant B\nparticipant C\nA->>B: hi\ndestroy A\nA->>B: bye\nNote over B: xxxxxxxxxxxxxxxxx\nB->>C: after",
+            "input_sha256": "254409c5bf321a07eda7191eadaed85b905ad4db29eab27c09bfe0dfea2ba717",
+            "source_literal_utf8_offset": 6487,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "both Unicode and ASCII original configurations"
+          }
+        ],
+        "original_assertion_mapping_status": "pending actual full conditional/predicate translation; function input inventory is not an assertion pass"
+      },
+      {
+        "function": "TestCreateDestroyRendering",
+        "source_byte_offset": 7538,
+        "source_byte_length": 1444,
+        "function_sha256": "46112187e45dbc3d41eaba11f87b4fe318b0dd8fb9fd4dc81171f792dee7ddab",
+        "line_start": 186,
+        "line_end": 232,
+        "function_source": "func TestCreateDestroyRendering(t *testing.T) {\n\td, err := Parse(\"sequenceDiagram\\nAlice->>Bob: hello\\ncreate participant Carl\\nAlice->>Carl: hi\\ndestroy Carl\\nAlice-xCarl: bye\\nBob->>Alice: done\")\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\tout, err := Render(d, diagram.DefaultConfig())\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\tlines := strings.Split(strings.TrimRight(out, \"\\n\"), \"\\n\")\n\tvar carlCol int\n\tfor _, p := range d.Participants {\n\t\tif p.ID == \"Carl\" {\n\t\t\tcarlCol = p.Index\n\t\t}\n\t}\n\tif carlCol != 2 {\n\t\tt.Fatalf(\"Carl should keep declaration order, got index %d\", carlCol)\n\t}\n\t// Rows before the creating message must not draw Carl's lifeline: the\n\t// \"hello\" message row is the widest point where that is observable.\n\tfor i, line := range lines {\n\t\tif strings.Contains(line, \"hello\") {\n\t\t\t// The row under the header and the hello rows precede creation.\n\t\t\tfor _, before := range lines[3:i] {\n\t\t\t\tif strings.Count(before, \"│\") > 2 {\n\t\t\t\t\tt.Errorf(\"created lifeline drawn before creation: %q\", before)\n\t\t\t\t}\n\t\t\t}\n\t\t\tbreak\n\t\t}\n\t}\n\tif !strings.ContainsRune(out, '×') {\n\t\tt.Errorf(\"destroyed lifeline should end with a marker:\\n%s\", out)\n\t}\n\t// After the marker, Carl's column stays blank.\n\tseenMarker := false\n\tfor _, line := range lines {\n\t\tr := []rune(line)\n\t\tif seenMarker && len(r) > 24 && r[24] == '│' {\n\t\t\tt.Errorf(\"lifeline continues after destruction: %q\", line)\n\t\t}\n\t\tif strings.ContainsRune(line, '×') {\n\t\t\tseenMarker = true\n\t\t}\n\t}\n}",
+        "inputs": [
+          {
+            "input": "sequenceDiagram\nAlice->>Bob: hello\ncreate participant Carl\nAlice->>Carl: hi\ndestroy Carl\nAlice-xCarl: bye\nBob->>Alice: done",
+            "input_sha256": "e6b23a6c33cb02344b4645ebe83927b149a734dec694bb020a0c7f28e7ceed29",
+            "source_literal_utf8_offset": 7603,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "original source/API conditions retained"
+          }
+        ],
+        "original_assertion_mapping_status": "pending actual full conditional/predicate translation; function input inventory is not an assertion pass"
+      },
+      {
+        "function": "TestCreateDestroyWithActivation",
+        "source_byte_offset": 9129,
+        "source_byte_length": 496,
+        "function_sha256": "d9e6465adbc3938772be91e170854fbaa71a0687850a26028b1ee91d1c8dfcc3",
+        "line_start": 236,
+        "line_end": 251,
+        "function_source": "func TestCreateDestroyWithActivation(t *testing.T) {\n\td, err := Parse(\"sequenceDiagram\\nA->>B: x\\ncreate participant C\\nA->>+C: work\\nC-->>-A: result\\ndestroy C\\nA-xC: close\")\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\tout, err := Render(d, diagram.DefaultConfig())\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\tif !strings.ContainsRune(out, '┃') {\n\t\tt.Errorf(\"activation lost on a created participant:\\n%s\", out)\n\t}\n\tif !strings.ContainsRune(out, '×') {\n\t\tt.Errorf(\"destruction marker missing:\\n%s\", out)\n\t}\n}",
+        "inputs": [
+          {
+            "input": "sequenceDiagram\nA->>B: x\ncreate participant C\nA->>+C: work\nC-->>-A: result\ndestroy C\nA-xC: close",
+            "input_sha256": "da929b472803be2b8d53be6acf33fcfb3cf660a3b35bee330c58ccff4570c55d",
+            "source_literal_utf8_offset": 9199,
+            "classification": "source-positive complete drawing obligation",
+            "config_profile": "original source/API conditions retained"
+          }
+        ],
+        "original_assertion_mapping_status": "pending actual full conditional/predicate translation; function input inventory is not an assertion pass"
+      }
+    ]
+  },
+  "outside_scope": {
+    "remaining_title": "mermaid_ascii_c3b1faed91d6f5f6 remains a distinct frontmatter/title obligation",
+    "no_production": "Only scratch source facts are authored; no native fixture, test or production source is changed.",
+    "role_and_display": "Frozen original models and existing independently sourced role/display facts are preserved byte-semantically as frozen bindings; the hand model expresses the stronger source actor roles and exact terminal display fields."
+  }
+}

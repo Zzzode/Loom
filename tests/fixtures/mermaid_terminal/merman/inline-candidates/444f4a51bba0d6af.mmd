@@ -1,0 +1,11 @@
+sequenceDiagram
+box Pair
+participant A
+participant B
+end
+participant C
+alt choose
+A->>C: yes
+else retry
+A->>C: no
+end

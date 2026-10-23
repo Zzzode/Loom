@@ -1,0 +1,12 @@
+              ┌───┐
+              │ A │
+              └───┘
+       \u{9}endpoint\u{D}
+authored(bytes=10)="\tendpoint\r"
+                │
+              label
+                ▼
+              many
+              ┌───┐
+              │ B │
+              └───┘

@@ -1,0 +1,379 @@
+{
+  "schema": 1,
+  "kind": "termaid_two_existing_profile_source_supplement",
+  "author": "/root/corpus_review",
+  "source_contract_reviewer": "/root/corpus_oracle",
+  "qualification": "Exact2 complete source-reviewed native projections only; no geometry execution or foreign appearance/CSS certification",
+  "base_facts_path": "mermaid_native/sequence_termaid47_facts.json",
+  "base_facts_sha256": "ffdbc54a64e18841a1fede1f7d2cd446b872cc572c143eb0614e9591832f6231",
+  "source_contract_review_sha256": "8e3c383906118827b843ce8c3bc6525b2734fb73c3627713fdbe1f34e49580a5",
+  "native_model_schema": "sequence_native_single_role_number_text/v1",
+  "summary": {
+    "supplement_sources": 2,
+    "base_reviewed_models": 45,
+    "combined_reviewed_models": 47,
+    "remaining_native_source_profiles_pending": 0,
+    "combined_fields": {
+      "actors": 114,
+      "messages": 146,
+      "notes": 13,
+      "fragments": 47,
+      "order": 286
+    }
+  },
+  "cases": [
+    {
+      "id": "termaid/62b40963a141861282a3",
+      "vendor": "termaid",
+      "input": "sequenceDiagram\n  Alice->>Bob: Hello\n  destroy Bob\n  Bob-->>Alice: Goodbye",
+      "input_sha256": "62b40963a141861282a3ddaee67e622724ec3d3686828d6932220216c8fbff1e",
+      "manifest": "tests/fixtures/mermaid_terminal/termaid/cases.json",
+      "manifest_sha256": "f828e1939c15c0ea44cec661119f2606a993e4538b531fee59e5b73757170094",
+      "json_pointer": "/cases/480",
+      "case_sha256": "591ea86910b166c10126191cb4a331d29f169e3b923d71e51048e204d01e0ba1",
+      "primary_model_pointer": "/cases/480/expectation/upstream_semantic_model",
+      "primary_model_sha256": "5f42f54b6163fa60871c97a58beba68921a20b76b620c77bb331890c9544673f",
+      "original_provenance": [
+        {
+          "path": "tests/test_sequence.py",
+          "line_start": 559,
+          "line_end": 559,
+          "test_name": "TestSequenceDestroyAndRect.test_destroy_rendered",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "62b40963a141861282a3ddaee67e622724ec3d3686828d6932220216c8fbff1e",
+          "input_preprocessing": "none"
+        }
+      ],
+      "original_snapshots": [
+        {
+          "path": "reference_outputs/62b40963a141861282a3-44136fa355b3.txt",
+          "sha256": "8f8f37bafefd90e2a43b15e891f5ff55a373c62ab4259ab94db2663f75061671",
+          "kind": "generated_upstream_reference",
+          "options": {}
+        }
+      ],
+      "original_assertions": [
+        {
+          "path": "upstream/tests/test_sequence.py",
+          "line_start": 558,
+          "line_end": 566,
+          "test_name": "TestSequenceDestroyAndRect.test_destroy_rendered",
+          "kind": "original_assertion_source",
+          "upstream_path": "tests/test_sequence.py"
+        }
+      ],
+      "original_obligations": [],
+      "complete_physical_source_witnesses": [
+        {
+          "line": 1,
+          "byte_offset": 0,
+          "byte_length": 16,
+          "source": "sequenceDiagram\n",
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b"
+        },
+        {
+          "line": 2,
+          "byte_offset": 16,
+          "byte_length": 21,
+          "source": "  Alice->>Bob: Hello\n",
+          "sha256": "bcf26f73dfa839849ff433c2a34f3f1727360ab6272289dee49a54c5a05075db"
+        },
+        {
+          "line": 3,
+          "byte_offset": 37,
+          "byte_length": 14,
+          "source": "  destroy Bob\n",
+          "sha256": "bfa84572d34c0bc53dee256caa97b88239223a41e8853a0b40c38045ed94da23"
+        },
+        {
+          "line": 4,
+          "byte_offset": 51,
+          "byte_length": 23,
+          "source": "  Bob-->>Alice: Goodbye",
+          "sha256": "baba6a0376c0ab9ffb6982ecd68797a0338160aa97d3b7e9c26962b717db3ba0"
+        }
+      ],
+      "native_model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "role": "Participant"
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "role": "Participant"
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Goodbye",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": ""
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 1,
+            "part": 0
+          }
+        ],
+        "boxes": [],
+        "title": ""
+      },
+      "native_model_sha256": "824517760985151b5761b3af186a6665c38933008524e4ecb5a13a037b19910a",
+      "number_encoding": "DisplayText",
+      "status": "independently_source_reviewed_existing_profile_Model_not_native_execution",
+      "original_typed_model": {
+        "__type__": "SequenceDiagram",
+        "participants": [
+          {
+            "__type__": "Participant",
+            "id": "Alice",
+            "label": "Alice",
+            "kind": "participant"
+          },
+          {
+            "__type__": "Participant",
+            "id": "Bob",
+            "label": "Bob",
+            "kind": "participant"
+          }
+        ],
+        "events": [
+          {
+            "__type__": "Message",
+            "source": "Alice",
+            "target": "Bob",
+            "label": "Hello",
+            "line_type": "solid",
+            "arrow_type": "arrow"
+          },
+          {
+            "__type__": "DestroyEvent",
+            "participant": "Bob"
+          },
+          {
+            "__type__": "Message",
+            "source": "Bob",
+            "target": "Alice",
+            "label": "Goodbye",
+            "line_type": "dotted",
+            "arrow_type": "arrow"
+          }
+        ],
+        "autonumber": false,
+        "warnings": []
+      },
+      "base_case_pointer": "/cases/12",
+      "base_case_sha256": "80f94a8ba6ceff7bfc03e20af83635453810c915b66b42df96d25748a1181c08",
+      "source_contract_review_sha256": "8e3c383906118827b843ce8c3bc6525b2734fb73c3627713fdbe1f34e49580a5",
+      "native_model_schema": "sequence_native_single_role_number_text/v1",
+      "historical_unresolved_source_profile_questions": [
+        "Review whole destroy-before-next-message source against existing native lifetime scheduling; no schema or pixel-driven repair applied."
+      ],
+      "typed_projection": {
+        "raw_typed_event_order": [
+          "Message0",
+          "DestroyBobDeclaration",
+          "Message1"
+        ],
+        "native_complete_episode_order": [
+          "Message0",
+          "Message1",
+          "DestroyBob"
+        ],
+        "declaration_line": 3,
+        "associated_message_line": 4,
+        "associated_message_index": 1,
+        "destroyed_actor_index": 1,
+        "why": "The declaration records the next signal index; the next associated message is Bob as sender. Native Destroy owns the terminal death only after that complete route. Raw AST is retained unchanged.",
+        "source_order_not_silently_rewritten": true
+      },
+      "remaining_original_obligations": [
+        "Original raw Termaid AST event chronology remains Message/DestroyEvent/Message; original parser predicate is not replaced by normalized native order.",
+        "Original X or U+2573 appearance predicate, exact foreign glyph/layout/SVG death coordinates, API and ASCII obligations remain independently pending."
+      ]
+    },
+    {
+      "id": "termaid/3f3d6f82c8b374fb669b",
+      "vendor": "termaid",
+      "input": "sequenceDiagram\nparticipant A\nrect empty scope\nend",
+      "input_sha256": "3f3d6f82c8b374fb669b0e829d4b87cb19beb668107f3bc6421ab5a9a39da12f",
+      "manifest": "tests/fixtures/mermaid_terminal/termaid/cases.json",
+      "manifest_sha256": "f828e1939c15c0ea44cec661119f2606a993e4538b531fee59e5b73757170094",
+      "json_pointer": "/cases/506",
+      "case_sha256": "debe7c80a2cde74c03af03cec5606d65d82168ee2c335ed0936988372c90fcb0",
+      "primary_model_pointer": "/cases/506/expectation/upstream_semantic_model",
+      "primary_model_sha256": "e75507d316a1101513abafe2eb56f2873b437d51d8aff67723b9a22a9c59ba56",
+      "original_provenance": [
+        {
+          "path": "tests/test_sequence_scopes.py",
+          "line_start": 109,
+          "line_end": 109,
+          "test_name": "test_empty_scope_keeps_complete_label_and_borders",
+          "kind": "executed_public_render",
+          "options": {},
+          "executed_input_sha256": "3f3d6f82c8b374fb669b0e829d4b87cb19beb668107f3bc6421ab5a9a39da12f",
+          "input_preprocessing": "none"
+        }
+      ],
+      "original_snapshots": [
+        {
+          "path": "reference_outputs/3f3d6f82c8b374fb669b-44136fa355b3.txt",
+          "sha256": "30cc8fcaa3f7580de2fdcbfb6c016793c6d4a34835da1be08522ce3659fb60b4",
+          "kind": "generated_upstream_reference",
+          "options": {}
+        }
+      ],
+      "original_assertions": [
+        {
+          "path": "upstream/tests/test_sequence_scopes.py",
+          "line_start": 108,
+          "line_end": 112,
+          "test_name": "test_empty_scope_keeps_complete_label_and_borders",
+          "kind": "original_assertion_source",
+          "upstream_path": "tests/test_sequence_scopes.py"
+        }
+      ],
+      "original_obligations": [],
+      "complete_physical_source_witnesses": [
+        {
+          "line": 1,
+          "byte_offset": 0,
+          "byte_length": 16,
+          "source": "sequenceDiagram\n",
+          "sha256": "5da24f8a276eceb9f0e982a294c6a09c4e67f7e95b38553c3671445ac9a7c16b"
+        },
+        {
+          "line": 2,
+          "byte_offset": 16,
+          "byte_length": 14,
+          "source": "participant A\n",
+          "sha256": "090b0c23b414640d322c895b7d952d0dbb399f28d111bcee9250bb7d68c11359"
+        },
+        {
+          "line": 3,
+          "byte_offset": 30,
+          "byte_length": 17,
+          "source": "rect empty scope\n",
+          "sha256": "58b37610e27162048d0bbf95d251bdc002c03ea078f657dd726d1afa979d2f0e"
+        },
+        {
+          "line": 4,
+          "byte_offset": 47,
+          "byte_length": 3,
+          "source": "end",
+          "sha256": "361e48d0308f20e32dba5fb56328baf18d72ef0ccb43b84f5c262d2a6a1fc6c8"
+        }
+      ],
+      "native_model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "role": "Participant"
+          }
+        ],
+        "messages": [],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "rect",
+            "label": "empty scope",
+            "parent": -1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          }
+        ],
+        "boxes": [],
+        "title": ""
+      },
+      "native_model_sha256": "43d7bb856f8b7ccaa8d41de562ada7dd2077faee883df22ce2c875439850da4f",
+      "number_encoding": "DisplayText",
+      "status": "independently_source_reviewed_existing_profile_Model_not_native_execution",
+      "original_typed_model": {
+        "__type__": "SequenceDiagram",
+        "participants": [
+          {
+            "__type__": "Participant",
+            "id": "A",
+            "label": "A",
+            "kind": "participant"
+          }
+        ],
+        "events": [
+          {
+            "__type__": "Block",
+            "kind": "rect",
+            "label": "empty scope",
+            "events": [],
+            "sections": []
+          }
+        ],
+        "autonumber": false,
+        "warnings": []
+      },
+      "base_case_pointer": "/cases/35",
+      "base_case_sha256": "8bc62e0c9eba4f573873967e993e0d297d4618832a249de9514d867e7d210cf3",
+      "source_contract_review_sha256": "8e3c383906118827b843ce8c3bc6525b2734fb73c3627713fdbe1f34e49580a5",
+      "native_model_schema": "sequence_native_single_role_number_text/v1",
+      "historical_unresolved_source_profile_questions": [
+        "Review rect empty-scope text as source color/label and foreign CSS behavior; no automatic drawing/error classification assigned."
+      ],
+      "typed_projection": {
+        "source_value": "empty scope",
+        "native_semantics": "Exact literal rect empty scope caption, complete closed region and Open/Close ownership; one A participant remains a nonempty drawing.",
+        "termaid_original_predicate": "[rect] empty scope and frame left<right/top<bottom",
+        "primary_mermaid_semantics": "Rest-of-line supplies fill value, not a caption. CSS validity and browser handling of empty scope are unasserted.",
+        "native_vs_foreign_boundary": "Existing declared monochrome token-to-caption projection preserves authored data; it does not certify CSS color, browser fill or foreign literal bracket appearance.",
+        "box_color_parser_applies": false
+      },
+      "remaining_original_obligations": [
+        "Original literal bracketed [rect] title and complete frame predicate remain explicitly mapped, not automatically certified by rect VALUE native spelling.",
+        "Mermaid CSS fill/browser rendering, original SVG/color pixels, exact foreign glyph/layout and ASCII/API obligations remain independently pending."
+      ]
+    }
+  ]
+}

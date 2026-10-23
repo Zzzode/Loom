@@ -1,0 +1,12 @@
++---------------------------------------------------------------------------------------------------+
+| _customer_order                                                                                   |
++---------------------------------------------------------------------------------------------------+
+| type(bytes=6)="bigint" name(bytes=2)="id" keys=[bytes=2 "PK"] comment(bytes=0)=""                 |
+| type(bytes=6)="bigint" name(bytes=11)="customer_id" keys=[bytes=2 "FK"] comment(bytes=0)=""       |
+| type(bytes=4)="text" name(bytes=16)="shipping_address" keys=[] comment(bytes=0)=""                |
+| type(bytes=4)="text" name(bytes=15)="delivery_method" keys=[] comment(bytes=0)=""                 |
+| type(bytes=24)="timestamp_with_time_zone" name(bytes=10)="ordered_at" keys=[] comment(bytes=0)="" |
+| type(bytes=7)="numeric" name(bytes=16)="total_tax_amount" keys=[] comment(bytes=0)=""             |
+| type(bytes=7)="numeric" name(bytes=11)="total_price" keys=[] comment(bytes=0)=""                  |
+| type(bytes=4)="text" name(bytes=14)="payment_method" keys=[] comment(bytes=0)=""                  |
++---------------------------------------------------------------------------------------------------+

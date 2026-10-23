@@ -1,0 +1,644 @@
+{
+  "schema": 1,
+  "kind": "config110_masked_destroy_native_supplement/v1",
+  "source_review_sha256": "7f819194fb862dd0f62c9449f86e8ecd3c5f6cb0e607c46357608416c177c5d3",
+  "role_source_proposal_sha256": "8e8a5ac892f0f8cfc6e3ff63676e629982e920784b4f7cdd12f0aa5e7584be98",
+  "source_binding": {
+    "id": "official-raw-sequence/8ab33aac13881555",
+    "ordinal": 99,
+    "original116_ordinal": 103,
+    "path": "sequence/nightly-check/v2-classic-participant-creation-and-destruction.mmd",
+    "input_sha256": "8ab33aac1388155585c1d7f386c029a65b82b0f94b4d956950e0098f94dfcdad",
+    "body_offset_utf8_bytes": 268,
+    "body_sha256": "acf8179406d9fbcfaaceb09f5d728b552838d7d61a14d2f25583b78800fad74e",
+    "original_row_canonical_sha256": "5ed7fda58a95748e9584c727d62628b8949c012023692425c14c3d70ad630176"
+  },
+  "model": {
+    "title": "",
+    "actors": [
+      {
+        "id": "A",
+        "label": "A",
+        "role": "Participant"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "role": "Participant"
+      },
+      {
+        "id": "participant0",
+        "label": "participant0",
+        "role": "Participant"
+      },
+      {
+        "id": "actor1",
+        "label": "actor1",
+        "role": "Actor"
+      },
+      {
+        "id": "boundary2",
+        "label": "boundary2",
+        "role": "Boundary"
+      },
+      {
+        "id": "control3",
+        "label": "control3",
+        "role": "Control"
+      },
+      {
+        "id": "entity4",
+        "label": "entity4",
+        "role": "Entity"
+      },
+      {
+        "id": "database5",
+        "label": "database5",
+        "role": "Database"
+      },
+      {
+        "id": "collections6",
+        "label": "collections6",
+        "role": "Collections"
+      },
+      {
+        "id": "queue7",
+        "label": "queue7",
+        "role": "Queue"
+      }
+    ],
+    "messages": [
+      {
+        "from": 0,
+        "to": 2,
+        "label": "Hello participant",
+        "arrow": "Filled",
+        "dashed": false,
+        "central_from": false,
+        "central_to": false,
+        "number": ""
+      },
+      {
+        "from": 0,
+        "to": 3,
+        "label": "Hello actor",
+        "arrow": "Filled",
+        "dashed": false,
+        "central_from": false,
+        "central_to": false,
+        "number": ""
+      },
+      {
+        "from": 0,
+        "to": 4,
+        "label": "Hello boundary",
+        "arrow": "Filled",
+        "dashed": false,
+        "central_from": false,
+        "central_to": false,
+        "number": ""
+      },
+      {
+        "from": 0,
+        "to": 5,
+        "label": "Hello control",
+        "arrow": "Filled",
+        "dashed": false,
+        "central_from": false,
+        "central_to": false,
+        "number": ""
+      },
+      {
+        "from": 0,
+        "to": 6,
+        "label": "Hello entity",
+        "arrow": "Filled",
+        "dashed": false,
+        "central_from": false,
+        "central_to": false,
+        "number": ""
+      },
+      {
+        "from": 0,
+        "to": 7,
+        "label": "Hello database",
+        "arrow": "Filled",
+        "dashed": false,
+        "central_from": false,
+        "central_to": false,
+        "number": ""
+      },
+      {
+        "from": 0,
+        "to": 8,
+        "label": "Hello collections",
+        "arrow": "Filled",
+        "dashed": false,
+        "central_from": false,
+        "central_to": false,
+        "number": ""
+      },
+      {
+        "from": 0,
+        "to": 9,
+        "label": "Hello queue",
+        "arrow": "Filled",
+        "dashed": false,
+        "central_from": false,
+        "central_to": false,
+        "number": ""
+      }
+    ],
+    "notes": [],
+    "fragments": [],
+    "boxes": [],
+    "order": [
+      {
+        "kind": "Create",
+        "index": 2,
+        "part": 0
+      },
+      {
+        "kind": "Message",
+        "index": 0,
+        "part": 0
+      },
+      {
+        "kind": "Create",
+        "index": 3,
+        "part": 0
+      },
+      {
+        "kind": "Message",
+        "index": 1,
+        "part": 0
+      },
+      {
+        "kind": "Create",
+        "index": 4,
+        "part": 0
+      },
+      {
+        "kind": "Message",
+        "index": 2,
+        "part": 0
+      },
+      {
+        "kind": "Create",
+        "index": 5,
+        "part": 0
+      },
+      {
+        "kind": "Message",
+        "index": 3,
+        "part": 0
+      },
+      {
+        "kind": "Create",
+        "index": 6,
+        "part": 0
+      },
+      {
+        "kind": "Message",
+        "index": 4,
+        "part": 0
+      },
+      {
+        "kind": "Create",
+        "index": 7,
+        "part": 0
+      },
+      {
+        "kind": "Message",
+        "index": 5,
+        "part": 0
+      },
+      {
+        "kind": "Create",
+        "index": 8,
+        "part": 0
+      },
+      {
+        "kind": "Message",
+        "index": 6,
+        "part": 0
+      },
+      {
+        "kind": "Create",
+        "index": 9,
+        "part": 0
+      },
+      {
+        "kind": "Message",
+        "index": 7,
+        "part": 0
+      }
+    ]
+  },
+  "model_sha256": "46ce3bfdedcf3ed5a01d001f9001a92bdba50089517f93ee79412b0794204e14",
+  "declarations": [
+    {
+      "line": 10,
+      "id": "A",
+      "authored_type": "participant",
+      "description": null,
+      "early_return": false,
+      "creating": false,
+      "span": {
+        "line": 10,
+        "offset_utf8_bytes": 284,
+        "bytes": 43,
+        "sha256": "188c69af342cf432e362b10743ba1ba197e2b5b5ab44d1d3fc4ae28ff54a6b8f"
+      }
+    },
+    {
+      "line": 11,
+      "id": "B",
+      "authored_type": "participant",
+      "description": null,
+      "early_return": false,
+      "creating": false,
+      "span": {
+        "line": 11,
+        "offset_utf8_bytes": 327,
+        "bytes": 43,
+        "sha256": "1ac841a3396d8b949438d890bd96481b0d31e0871031d943ae42f103eebdf7e5"
+      }
+    },
+    {
+      "line": 12,
+      "id": "participant0",
+      "authored_type": "participant",
+      "description": null,
+      "early_return": false,
+      "creating": true,
+      "span": {
+        "line": 12,
+        "offset_utf8_bytes": 370,
+        "bytes": 61,
+        "sha256": "65650748a1d2225056789265fa708775b7e0ceac84e0ffd3a56eecd6eb9fc6f1"
+      }
+    },
+    {
+      "line": 15,
+      "id": "A",
+      "authored_type": "actor",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 15,
+        "offset_utf8_bytes": 494,
+        "bytes": 37,
+        "sha256": "b1d48c9684767b3ee3f1ba91a0baa281655bf87e89c47b01b6e5d734e439f5df"
+      }
+    },
+    {
+      "line": 16,
+      "id": "B",
+      "authored_type": "actor",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 16,
+        "offset_utf8_bytes": 531,
+        "bytes": 37,
+        "sha256": "6667bbb2bce0bdc057c8077bc3b4c15cbabc87bf77677ad89b3372d1a711a43a"
+      }
+    },
+    {
+      "line": 17,
+      "id": "actor1",
+      "authored_type": "actor",
+      "description": null,
+      "early_return": false,
+      "creating": true,
+      "span": {
+        "line": 17,
+        "offset_utf8_bytes": 568,
+        "bytes": 49,
+        "sha256": "390cf563cbba78a67871d9858eb74baebc9169cb6f04abca1aa7f9d4219452e9"
+      }
+    },
+    {
+      "line": 19,
+      "id": "A",
+      "authored_type": "boundary",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 19,
+        "offset_utf8_bytes": 645,
+        "bytes": 40,
+        "sha256": "0c859e7d3a37a6e85694e123795b5c94e6f096f727b90d970452208f6641b62e"
+      }
+    },
+    {
+      "line": 20,
+      "id": "B",
+      "authored_type": "boundary",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 20,
+        "offset_utf8_bytes": 685,
+        "bytes": 40,
+        "sha256": "307ffa1d126cdfce41f6454e71486e6b6e1acc415ed294f0fe41938f23348965"
+      }
+    },
+    {
+      "line": 21,
+      "id": "boundary2",
+      "authored_type": "boundary",
+      "description": null,
+      "early_return": false,
+      "creating": true,
+      "span": {
+        "line": 21,
+        "offset_utf8_bytes": 725,
+        "bytes": 55,
+        "sha256": "49fd12e111b52231a3396bba49beb84d40f1c9436fb3b22a327f3abfc8cefd7f"
+      }
+    },
+    {
+      "line": 24,
+      "id": "A",
+      "authored_type": "control",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 24,
+        "offset_utf8_bytes": 834,
+        "bytes": 39,
+        "sha256": "52a155369452a60e100652be5114dd208132f25e9a23f3e56666836953a2b7da"
+      }
+    },
+    {
+      "line": 25,
+      "id": "B",
+      "authored_type": "control",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 25,
+        "offset_utf8_bytes": 873,
+        "bytes": 39,
+        "sha256": "9a31f5c000af241d4ff3b07818d7808ed19379d60d97f04bcda7a896d7868700"
+      }
+    },
+    {
+      "line": 26,
+      "id": "control3",
+      "authored_type": "control",
+      "description": null,
+      "early_return": false,
+      "creating": true,
+      "span": {
+        "line": 26,
+        "offset_utf8_bytes": 912,
+        "bytes": 53,
+        "sha256": "4cd665378e4930a748c1b208798835bd87796bd5036000b891b0366d353d8b8d"
+      }
+    },
+    {
+      "line": 28,
+      "id": "A",
+      "authored_type": "entity",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 28,
+        "offset_utf8_bytes": 997,
+        "bytes": 38,
+        "sha256": "ca32a9f798aa7030f7d6080aebdbc18f3a90bb3712384047a2050ffc3acecee2"
+      }
+    },
+    {
+      "line": 29,
+      "id": "B",
+      "authored_type": "entity",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 29,
+        "offset_utf8_bytes": 1035,
+        "bytes": 38,
+        "sha256": "f8d7649e3cc5c7d9bf0f743d32d32900308abc67315055245f8eadad49822b49"
+      }
+    },
+    {
+      "line": 30,
+      "id": "entity4",
+      "authored_type": "entity",
+      "description": null,
+      "early_return": false,
+      "creating": true,
+      "span": {
+        "line": 30,
+        "offset_utf8_bytes": 1073,
+        "bytes": 51,
+        "sha256": "66035dfc156c611aae678c428c392c5e14b5ed2b068b69daba61721c9ec1b8df"
+      }
+    },
+    {
+      "line": 33,
+      "id": "A",
+      "authored_type": "database",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 33,
+        "offset_utf8_bytes": 1172,
+        "bytes": 40,
+        "sha256": "1bf37c043566161fb8260cf94febecc9392c7781521e71bd55666e18ace6145a"
+      }
+    },
+    {
+      "line": 34,
+      "id": "B",
+      "authored_type": "database",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 34,
+        "offset_utf8_bytes": 1212,
+        "bytes": 40,
+        "sha256": "b9b0f79be154a2948a0a830a3d53813793db10d6b3da50066cf41fcf903cade2"
+      }
+    },
+    {
+      "line": 35,
+      "id": "database5",
+      "authored_type": "database",
+      "description": null,
+      "early_return": false,
+      "creating": true,
+      "span": {
+        "line": 35,
+        "offset_utf8_bytes": 1252,
+        "bytes": 55,
+        "sha256": "22aed7942a0dfe5669b275a31e66d8649f94b5279ed61deb8617c639a9ce5866"
+      }
+    },
+    {
+      "line": 37,
+      "id": "A",
+      "authored_type": "collections",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 37,
+        "offset_utf8_bytes": 1341,
+        "bytes": 43,
+        "sha256": "5946bf33a55ab73ce4745b2fa446205e236a08a3944928c1efca8ea1ef2592e1"
+      }
+    },
+    {
+      "line": 38,
+      "id": "B",
+      "authored_type": "collections",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 38,
+        "offset_utf8_bytes": 1384,
+        "bytes": 43,
+        "sha256": "df51047411b61c7b1d1060627a03ebed8f85ef480e928a66368cf3de4e94ba0b"
+      }
+    },
+    {
+      "line": 39,
+      "id": "collections6",
+      "authored_type": "collections",
+      "description": null,
+      "early_return": false,
+      "creating": true,
+      "span": {
+        "line": 39,
+        "offset_utf8_bytes": 1427,
+        "bytes": 61,
+        "sha256": "9cc924de3e1d61c9a53b49717c3b45cfa9e0b926aa218c2b3602ab46c190b109"
+      }
+    },
+    {
+      "line": 42,
+      "id": "A",
+      "authored_type": "queue",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 42,
+        "offset_utf8_bytes": 1551,
+        "bytes": 37,
+        "sha256": "2740b76f90c4499af0ee83bb1139cc8d5511ae8f1a67ecf39498a721f0f8193f"
+      }
+    },
+    {
+      "line": 43,
+      "id": "B",
+      "authored_type": "queue",
+      "description": null,
+      "early_return": true,
+      "creating": false,
+      "span": {
+        "line": 43,
+        "offset_utf8_bytes": 1588,
+        "bytes": 37,
+        "sha256": "4d80f65a52a2185a10fe28b20d351a8e7883e318d56fdb69d768048921a2def0"
+      }
+    },
+    {
+      "line": 44,
+      "id": "queue7",
+      "authored_type": "queue",
+      "description": null,
+      "early_return": false,
+      "creating": true,
+      "span": {
+        "line": 44,
+        "offset_utf8_bytes": 1625,
+        "bytes": 49,
+        "sha256": "b0d406df6ac80f917eab4c534a56f03abe0470c61e4eaaea4247a792edc465b8"
+      }
+    }
+  ],
+  "destroy_maps": [
+    {
+      "actor": "participant0",
+      "message_index": 1,
+      "created_receiver": "actor1",
+      "span": {
+        "line": 14,
+        "offset_utf8_bytes": 471,
+        "bytes": 23,
+        "sha256": "874c070ab07e573523ff852b5344dcae9e8811103582d780adb989dea98b6d86"
+      }
+    },
+    {
+      "actor": "boundary2",
+      "message_index": 3,
+      "created_receiver": "control3",
+      "span": {
+        "line": 23,
+        "offset_utf8_bytes": 814,
+        "bytes": 20,
+        "sha256": "aefe3cad84a8d9664db516e73b007918cfbdc39255cf078de016ad7995b18542"
+      }
+    },
+    {
+      "actor": "entity4",
+      "message_index": 5,
+      "created_receiver": "database5",
+      "span": {
+        "line": 32,
+        "offset_utf8_bytes": 1154,
+        "bytes": 18,
+        "sha256": "363f242ffd4bb77793472fe2e1ded1c49a0926bede0865bed9c4feb369433527"
+      }
+    },
+    {
+      "actor": "collections6",
+      "message_index": 7,
+      "created_receiver": "queue7",
+      "span": {
+        "line": 41,
+        "offset_utf8_bytes": 1528,
+        "bytes": 23,
+        "sha256": "127195d587b47e9c15e0d69a41b8eaa98ca502189753c72e5050982b7e163654"
+      }
+    }
+  ],
+  "creating_receivers": [
+    "participant0",
+    "actor1",
+    "boundary2",
+    "control3",
+    "entity4",
+    "database5",
+    "collections6",
+    "queue7"
+  ],
+  "logical_guard_after_signals": [
+    null,
+    "participant0",
+    "participant0",
+    "boundary2",
+    "boundary2",
+    "entity4",
+    "entity4",
+    "collections6"
+  ],
+  "number_encoding": "DisplayText"
+}

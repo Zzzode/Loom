@@ -1,0 +1,352 @@
+{
+  "schema": "er_description30_native_source_controls/v1",
+  "source_design_sha256": "2abbb0eed50137e100f494d78186abded90cee97e86c74251dd8540726104071",
+  "source_review_sha256": "98809b13ee5e8cc43a30b3af700ae48fc04d2623721c655e694683efe0890fb7",
+  "qualification": "Exact source-authored nine positives/twenty-one finite unsupported whole-source controls; one shared literal complete ER graph. Description is opaque documentation, not a title/graph label. No original206 or foreign assertion certified.",
+  "whole_Model": {
+    "family": "er",
+    "direction": "TB",
+    "entities": [
+      {
+        "id": "A",
+        "label": "A",
+        "shape": "box",
+        "owner": "",
+        "headers": [
+          [
+            "A"
+          ]
+        ],
+        "rows": []
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "shape": "box",
+        "owner": "",
+        "headers": [
+          [
+            "B"
+          ]
+        ],
+        "rows": []
+      }
+    ],
+    "relations": [
+      {
+        "source": "A",
+        "target": "B",
+        "label": "owns",
+        "start": "card:one",
+        "end": "card:zero-many",
+        "stroke": "solid",
+        "order": 0
+      }
+    ],
+    "groups": [],
+    "notes": []
+  },
+  "whole_Model_sha256": "c14f6c9943db7eb9dab4f05d8b6100d288ec99dbb2c4b6e6b10275b0193d0725",
+  "cases": [
+    {
+      "ordinal": 0,
+      "name": "folded_minimal",
+      "positive": true,
+      "source": "---\ndescription: >-\n  Plain documentation.\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 75,
+      "source_sha256": "074860843f12bd6e47f543fbe45018320b212ec58a3ddfb242c9b625c2d34747",
+      "diagram_title": null,
+      "whole_Model_sha256": "c14f6c9943db7eb9dab4f05d8b6100d288ec99dbb2c4b6e6b10275b0193d0725"
+    },
+    {
+      "ordinal": 1,
+      "name": "inline_with_literal_punctuation",
+      "positive": true,
+      "source": "---\ndescription: Don't turn inner & or `code` or [text] into fields.\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 101,
+      "source_sha256": "5bb13f959946cba0db0c627da13026785f14ce2f72b9f57ceb2102a3afcd0018",
+      "diagram_title": null,
+      "whole_Model_sha256": "c14f6c9943db7eb9dab4f05d8b6100d288ec99dbb2c4b6e6b10275b0193d0725"
+    },
+    {
+      "ordinal": 2,
+      "name": "folded_opaque_syntax",
+      "positive": true,
+      "source": "---\ndescription: >-\n  config:\n  look: handDrawn\n  erDiagram\n  X ||--|| Y : not business\n  ---\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 126,
+      "source_sha256": "59e2528065a947aae208f2e3ef88ca240c56e2b306f1326bef7ae6534014d0b6",
+      "diagram_title": null,
+      "whole_Model_sha256": "c14f6c9943db7eb9dab4f05d8b6100d288ec99dbb2c4b6e6b10275b0193d0725"
+    },
+    {
+      "ordinal": 3,
+      "name": "description_then_known_config",
+      "positive": true,
+      "source": "---\ndescription: >-\n  Documentation with #, quotes \" and apostrophe don't.\nconfig:\n  logLevel: 1\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 129,
+      "source_sha256": "ffddf87158173a4b706b328ac4c33646cbb5571a8abb43886abc4f3cf0a0e014",
+      "diagram_title": null,
+      "whole_Model_sha256": "c14f6c9943db7eb9dab4f05d8b6100d288ec99dbb2c4b6e6b10275b0193d0725"
+    },
+    {
+      "ordinal": 4,
+      "name": "known_config_then_description",
+      "positive": true,
+      "source": "---\nconfig:\n  logLevel: 1\ndescription: A plain inline description.\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 99,
+      "source_sha256": "815fbdc5aff129219caa69a1b8e2bb1f462c2e48d4739fa67a1b463a8251d41f",
+      "diagram_title": null,
+      "whole_Model_sha256": "c14f6c9943db7eb9dab4f05d8b6100d288ec99dbb2c4b6e6b10275b0193d0725"
+    },
+    {
+      "ordinal": 5,
+      "name": "title_description_independent",
+      "positive": true,
+      "source": "---\ntitle: Authored title\ndescription: >-\n  A different documentation line.\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 108,
+      "source_sha256": "4d8691215141ebee21ada8de0b2b5759da1a533d162f50d2fe876655045fb55d",
+      "diagram_title": "Authored title",
+      "whole_Model_sha256": "c14f6c9943db7eb9dab4f05d8b6100d288ec99dbb2c4b6e6b10275b0193d0725"
+    },
+    {
+      "ordinal": 6,
+      "name": "folded_blank_line",
+      "positive": true,
+      "source": "---\ndescription: >-\n\n  One line.\n\n  Another line.\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 82,
+      "source_sha256": "4a7655fe637e6caebdb85d157942f0415d6c2a685f6b4e567c446a47a0df0c6f",
+      "diagram_title": null,
+      "whole_Model_sha256": "c14f6c9943db7eb9dab4f05d8b6100d288ec99dbb2c4b6e6b10275b0193d0725"
+    },
+    {
+      "ordinal": 7,
+      "name": "inline_CRLF",
+      "positive": true,
+      "source": "---\r\ndescription: A complete physical CRLF example.\r\n---\r\nerDiagram\r\nA ||--o{ B : owns\r\n",
+      "source_utf8_bytes": 88,
+      "source_sha256": "88feaf60970005080e70b647106cec471fe56b0fdd3672fc766120fbb6177053",
+      "diagram_title": null,
+      "whole_Model_sha256": "c14f6c9943db7eb9dab4f05d8b6100d288ec99dbb2c4b6e6b10275b0193d0725"
+    },
+    {
+      "ordinal": 8,
+      "name": "noninitial_plain_arrow",
+      "positive": true,
+      "source": "---\ndescription: -> brief with inner apostrophe\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 80,
+      "source_sha256": "f4aea383f8a612216b0da780131fe2692826538ed0ee6324fec3b3783e038a2a",
+      "diagram_title": null,
+      "whole_Model_sha256": "c14f6c9943db7eb9dab4f05d8b6100d288ec99dbb2c4b6e6b10275b0193d0725"
+    },
+    {
+      "ordinal": 9,
+      "name": "duplicate_description",
+      "positive": false,
+      "source": "---\ndescription: One\ndescription: Two\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 70,
+      "source_sha256": "87906b5fe9a3dc8370e256a5b2923448ae6a55c24120737a3b02f7afaf7cafe0",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 10,
+      "name": "nested_description_not_root",
+      "positive": false,
+      "source": "---\nconfig:\n  description: text\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 64,
+      "source_sha256": "5009d27320c116c0d95fc642bc8e1c17cde528c7ffd2db00a4f6070d3f2c0798",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 11,
+      "name": "empty_config_not_rescued",
+      "positive": false,
+      "source": "---\ndescription: Text\nconfig:\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 62,
+      "source_sha256": "f1d374c692b58870c0ad6ae750212c5db11c09d33b63d4988166a2c641833fac",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 12,
+      "name": "unknown_root_not_swallowed",
+      "positive": false,
+      "source": "---\ndescription: >-\n  Text\nlook: handDrawn\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 75,
+      "source_sha256": "4080726510d589650475b86963788f96ba76bddd2d957f75d7038304d21c0b44",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 13,
+      "name": "unknown_config_after_documentation",
+      "positive": false,
+      "source": "---\ndescription: >-\n  Text\nconfig:\n  htmlLabels: false\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 87,
+      "source_sha256": "36415e62c2e2f84c5e349b9e23900681c6f5841460e8b142c7c2e5fda1d89a2a",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 14,
+      "name": "no_closing_fence",
+      "positive": false,
+      "source": "---\ndescription: >-\n  Text\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 55,
+      "source_sha256": "835546418ec056951e28da4b98a59bd7d42836ebcb02e296be66668962993db1",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 15,
+      "name": "indented_closing_fence_only",
+      "positive": false,
+      "source": "---\ndescription: >-\n  Text\n  ---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 61,
+      "source_sha256": "5e0251bb9c79791e3c6dec73625ae706c08dcf274d656737a82f1eab437c712b",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 16,
+      "name": "one_space_block",
+      "positive": false,
+      "source": "---\ndescription: >-\n Text\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 58,
+      "source_sha256": "9728e2042a0c8c87c56e474d41b5738000820568c661ff02ceec3496314b3868",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 17,
+      "name": "tab_block_indent",
+      "positive": false,
+      "source": "---\ndescription: >-\n\tText\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 58,
+      "source_sha256": "04df9d92e89d4ec7fb663bb39a32b3b344b96cc8d93b925d3ab89a199588367d",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 18,
+      "name": "four_space_block_outside_finite_profile",
+      "positive": false,
+      "source": "---\ndescription: >-\n    Text\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 61,
+      "source_sha256": "7b2fff998a164730da07a853af3deb181cf472cc09d5a438ecd896a6fc81a0d3",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 19,
+      "name": "inline_continuation_outside_finite_profile",
+      "positive": false,
+      "source": "---\ndescription: One\n  Two\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 59,
+      "source_sha256": "7d81fed6d47ac21be97b0520eae8b83d535018f45a4a734f1993552a271cbc76",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 20,
+      "name": "literal_block_outside_finite_profile",
+      "positive": false,
+      "source": "---\ndescription: |\n  Text\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 58,
+      "source_sha256": "b9ac35789af68dc73f148dbfda6dca34987ee76e4472f060ca755e818c12d4d5",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 21,
+      "name": "folded_chomp_other_outside_profile",
+      "positive": false,
+      "source": "---\ndescription: >\n  Text\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 58,
+      "source_sha256": "d526d5f9bf4b5de2f19a0ff9ea2eda357f11e97bb0de76b3d44526f4bc0820c2",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 22,
+      "name": "quoted_inline_outside_profile",
+      "positive": false,
+      "source": "---\ndescription: \"Text\"\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 56,
+      "source_sha256": "df3d896d7e40979c7b99b07e85f345eb50a18eee4470ef5fd35d68710546e612",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 23,
+      "name": "empty_scalar_outside_profile",
+      "positive": false,
+      "source": "---\ndescription:\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 49,
+      "source_sha256": "77661596777b8866a3f57eb8ec64c14ac9218907ef713f6db80372bff686683e",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 24,
+      "name": "mapping_in_plain_scalar",
+      "positive": false,
+      "source": "---\ndescription: text: nested\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 62,
+      "source_sha256": "4bc8380ad29bcc9b2569e3a215c0c105ca1212b139d6ddd9a1712305b67ef748",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 25,
+      "name": "invalid_plain_comma",
+      "positive": false,
+      "source": "---\ndescription: ,text\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 55,
+      "source_sha256": "8cec1ced8c44f7fa08013de9fffc9cfc1eda437c0526728cd3d8871f61c09d33",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 26,
+      "name": "invalid_plain_list_open",
+      "positive": false,
+      "source": "---\ndescription: [text]\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 56,
+      "source_sha256": "4a7e0c7c765ac3b84c79662898dee5d5b53ce9d958e196f270506100f3345448",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 27,
+      "name": "internal_bare_CR",
+      "positive": false,
+      "source": "---\ndescription: One\rTwo\n---\nerDiagram\nA ||--o{ B : owns\n",
+      "source_utf8_bytes": 57,
+      "source_sha256": "6a5ac029b50bbbd4618ff2be8caa389083eda9b531d4a1f0fe566ec4b3469c34",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 28,
+      "name": "wrong_family_body",
+      "positive": false,
+      "source": "---\ndescription: Text\n---\nclassDiagram\nclass A\n",
+      "source_utf8_bytes": 47,
+      "source_sha256": "e6a68e41c8ae14cef12f285f318eed726ce0882c26eedec430441952e84b74b3",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    },
+    {
+      "ordinal": 29,
+      "name": "body_not_discarded",
+      "positive": false,
+      "source": "---\ndescription: Text\n---\nerDiagram\nA ||--o{ B : owns\nunknown body statement !\n",
+      "source_utf8_bytes": 79,
+      "source_sha256": "84772fa565fcf383c510557ecf084f107bd907de50f8d5552b9e198948d9e260",
+      "diagram_title": null,
+      "whole_Model_sha256": null
+    }
+  ]
+}

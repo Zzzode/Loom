@@ -1,0 +1,12 @@
+titleDisplay: chart(bytes=3)="Ops"
+# Bar 1  * Line 1
+xDomain: band categories=[bytes=1="A", bytes=1="B", bytes=1="C"]
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=1)="A" value=1 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=4 pointLabel=none clipped=false}, {index=2 x(bytes=1)="C" value=2 pointLabel=none clipped=false}] orphanPointLabels=[]
+values: * series=1 type=line title=none samples=[{index=0 x(bytes=1)="A" value=2 pointLabel=none clipped=false}, {index=1 x(bytes=1)="B" value=3 pointLabel=none clipped=false}, {index=2 x(bytes=1)="C" value=5 pointLabel=none clipped=false}] orphanPointLabels=[]
+  6 +
+4.8 +       +-*
+3.6 +   +-*-+
+2.4 + *-+### ###
+1.2 +### ### ###
+  0 +-+---+---+-
+      A   B   C

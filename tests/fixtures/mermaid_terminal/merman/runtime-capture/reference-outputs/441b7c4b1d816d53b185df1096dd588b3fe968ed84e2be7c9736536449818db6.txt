@@ -1,0 +1,3 @@
+gitGraph direction(bytes=2)=&quot;LR&quot; current(bytes=15)=&quot;&lt;node &amp; title&gt;\u{1B}&quot;
+title(bytes=15)=&quot;&lt;node &amp; title&gt;\u{1B}&quot;
+branches=[bytes=15 &quot;&lt;node &amp; title&gt;\u{1B}&quot;]

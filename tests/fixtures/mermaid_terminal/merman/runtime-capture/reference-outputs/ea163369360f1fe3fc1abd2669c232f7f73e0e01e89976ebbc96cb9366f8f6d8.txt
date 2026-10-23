@@ -1,0 +1,4 @@
+title(bytes=27)="Café 👩‍💻 🇺🇸"
+actors=[bytes=5 "Alice"]
+section(bytes=4)="Work"
+  - task(bytes=4)="Task" score=5 people=[bytes=5 "Alice"]

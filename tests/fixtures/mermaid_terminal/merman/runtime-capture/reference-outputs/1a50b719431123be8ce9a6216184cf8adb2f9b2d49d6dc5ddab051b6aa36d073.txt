@@ -1,0 +1,26 @@
++----------+
+| CUSTOMER |
++----------+
+
++-------+
+| ORDER |
++-------+
+
++-----------+
+| LINE-ITEM |
++-----------+
+
++---------+
+| ADDRESS |
++---------+
+
++---------+
+| INVOICE |
++---------+
+
+relations:
+id(bytes=8)="CUSTOMER" ||--o{ id(bytes=5)="ORDER"     : places
+id(bytes=5)="ORDER"    ||--|{ id(bytes=9)="LINE-ITEM" : contains
+id(bytes=8)="CUSTOMER" ||--|{ id(bytes=7)="ADDRESS"   : invoiced at
+id(bytes=8)="CUSTOMER" ||--|{ id(bytes=7)="ADDRESS"   : receives goods at
+id(bytes=5)="ORDER"    ||--o{ id(bytes=7)="INVOICE"   : liable for

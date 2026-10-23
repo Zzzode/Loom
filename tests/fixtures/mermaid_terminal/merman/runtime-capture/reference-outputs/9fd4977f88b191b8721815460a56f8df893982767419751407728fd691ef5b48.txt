@@ -1,0 +1,12 @@
+titleDisplay: chart(bytes=29)="Line chart with many category"
+titleDisplay: yAxis(bytes=9)="yaxisText"
+xDomain: band categories=[bytes=9="category1", bytes=10="category 2", bytes=9="category3", bytes=9="category4", bytes=9="category5", bytes=9="category6", bytes=9="category7"]
+values: * series=0 type=line title(bytes=11)="sample line" samples=[{index=0 x(bytes=9)="category1" value=52 pointLabel=none clipped=false}, {index=1 x(bytes=10)="category 2" value=96 pointLabel=none clipped=false}, {index=2 x(bytes=9)="category3" value=35 pointLabel=none clipped=false}, {index=3 x(bytes=9)="category4" value=10 pointLabel=none clipped=false}, {index=4 x(bytes=9)="category5" value=87 pointLabel=none clipped=false}, {index=5 x(bytes=9)="category6" value=34 pointLabel=none clipped=false}, {index=6 x(bytes=9)="category7" value=67 pointLabel=none clipped=false}] orphanPointLabels=[]
+150 +
+122 +
+ 94 +   +-*-+       +-*-+
+ 66 + *-+   |       |   |   +-*
+ 38 +       +-*---*-+   +-*-+
+ 10 +-+---+---+---+---+---+---+-
+     cat cat cat cat cat cat cat
+titleDisplay: xAxis(bytes=14)="this is x axis"

@@ -1,0 +1,7 @@
++---+    +---+    +---+
+| A |    | B |    | C |
++---+    +---+    +---+
+
+relations:
+id(bytes=1)="A" ||--|| id(bytes=1)="B" : short
+id(bytes=1)="A" ||--|| id(bytes=1)="C" : long

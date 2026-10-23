@@ -1,0 +1,392 @@
+famil
+y: fl
+owcha
+rt
+model
+.accD
+escr:
+ null
+model
+.accT
+itle:
+ null
+model
+.clas
+sDefs
+: {}
+model
+.dire
+ction
+: "LR
+"
+model
+.edge
+Defau
+lts.i
+nterp
+olate
+: nul
+l
+model
+.edge
+Defau
+lts.s
+tyle:
+ []
+model
+.edge
+s[0].
+anima
+te: n
+ull
+model
+.edge
+s[0].
+anima
+tion:
+ null
+model
+.edge
+s[0].
+arrow
+: "--
+>"
+model
+.edge
+s[0].
+class
+es: [
+]
+model
+.edge
+s[0].
+endMa
+rker:
+ "poi
+nt"
+model
+.edge
+s[0].
+from:
+ "A"
+model
+.edge
+s[0].
+id: "
+L_A_B
+_0"
+model
+.edge
+s[0].
+inter
+polat
+e: nu
+ll
+model
+.edge
+s[0].
+isUse
+rDefi
+nedId
+: fal
+se
+model
+.edge
+s[0].
+label
+: nul
+l
+model
+.edge
+s[0].
+label
+Type:
+ "tex
+t"
+model
+.edge
+s[0].
+lengt
+h: 1
+model
+.edge
+s[0].
+start
+Marke
+r: "n
+one"
+model
+.edge
+s[0].
+strok
+e: "n
+ormal
+"
+model
+.edge
+s[0].
+strok
+eKind
+: "no
+rmal"
+model
+.edge
+s[0].
+style
+: []
+model
+.edge
+s[0].
+to: "
+B"
+model
+.edge
+s[0].
+type:
+ "arr
+ow_po
+int"
+model
+.edge
+s[0].
+visib
+ility
+: "vi
+sible
+"
+model
+.keyw
+ord: 
+"flow
+chart
+"
+model
+.node
+s[0].
+asset
+Heigh
+t: nu
+ll
+model
+.node
+s[0].
+asset
+Width
+: nul
+l
+model
+.node
+s[0].
+class
+es: [
+]
+model
+.node
+s[0].
+const
+raint
+: nul
+l
+model
+.node
+s[0].
+form:
+ null
+model
+.node
+s[0].
+haveC
+allba
+ck: f
+alse
+model
+.node
+s[0].
+icon:
+ null
+model
+.node
+s[0].
+id: "
+A"
+model
+.node
+s[0].
+img: 
+null
+model
+.node
+s[0].
+label
+: "Al
+pha"
+model
+.node
+s[0].
+label
+Type:
+ "tex
+t"
+model
+.node
+s[0].
+layou
+tShap
+e: "s
+quare
+Rect"
+model
+.node
+s[0].
+link:
+ null
+model
+.node
+s[0].
+linkT
+arget
+: nul
+l
+model
+.node
+s[0].
+pos: 
+null
+model
+.node
+s[0].
+shape
+: "sq
+uare"
+model
+.node
+s[0].
+style
+s: []
+model
+.node
+s[1].
+asset
+Heigh
+t: nu
+ll
+model
+.node
+s[1].
+asset
+Width
+: nul
+l
+model
+.node
+s[1].
+class
+es: [
+]
+model
+.node
+s[1].
+const
+raint
+: nul
+l
+model
+.node
+s[1].
+form:
+ null
+model
+.node
+s[1].
+haveC
+allba
+ck: f
+alse
+model
+.node
+s[1].
+icon:
+ null
+model
+.node
+s[1].
+id: "
+B"
+model
+.node
+s[1].
+img: 
+null
+model
+.node
+s[1].
+label
+: "Be
+ta"
+model
+.node
+s[1].
+label
+Type:
+ "tex
+t"
+model
+.node
+s[1].
+layou
+tShap
+e: "s
+quare
+Rect"
+model
+.node
+s[1].
+link:
+ null
+model
+.node
+s[1].
+linkT
+arget
+: nul
+l
+model
+.node
+s[1].
+pos: 
+null
+model
+.node
+s[1].
+shape
+: "sq
+uare"
+model
+.node
+s[1].
+style
+s: []
+model
+.subg
+raphs
+: []
+model
+.tool
+tips:
+ {}
+model
+.type
+: "fl
+owcha
+rt-v2
+"
+model
+.vert
+exCal
+ls[0]
+: "A"
+model
+.vert
+exCal
+ls[1]
+: "B"

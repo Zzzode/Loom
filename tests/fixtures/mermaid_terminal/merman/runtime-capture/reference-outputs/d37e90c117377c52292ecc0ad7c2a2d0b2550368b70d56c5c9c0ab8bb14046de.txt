@@ -1,0 +1,10 @@
+xDomain: band categories=[bytes=16="cat1  with space", bytes=8="cat2asdf", bytes=4="cat3"]
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=16)="cat1  with space" value=1 pointLabel=none clipped=false}, {index=1 x(bytes=8)="cat2asdf" value=none pointLabel=none clipped=false}, {index=2 x(bytes=4)="cat3" value=none pointLabel=none clipped=false}] orphanPointLabels=[]
+1 +
+1 +
+1 +###
+1 +###
+1 +###
+1 +-+---+---+-
+   cat cat cat
+titleDisplay: xAxis(bytes=9)="xAxisName"

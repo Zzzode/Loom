@@ -1,0 +1,79 @@
+{
+  "schema": "loom.flow_ascii_rows_source_subset/v1",
+  "status": "test_first_pending_producer",
+  "parent_grid18_asset": {
+    "path": "fixtures/mermaid_native/merman_flow_grid18_original_assertions.v1.json",
+    "sha256": "19bf29c8c80f6348ea2d67ee981fb4e9c792366f20eb000ef71ed755e80b3839",
+    "bytes": 123094
+  },
+  "source_design": {
+    "path": "build/mermaid-renderer-research-20261020/full-obligation-audit/flow-ascii-native-rows-source-design-r4/FOUR_MODELS.json",
+    "sha256": "b93a46078d8dd5946308ad05e4477339c89c946187156f4b2b1e26626c4c8510"
+  },
+  "scope": {
+    "original_functions": 2,
+    "direct_assertion_sites": 2,
+    "runtime_inputs": 4,
+    "remaining_original_functions": 16,
+    "remaining_direct_assertion_sites": 42,
+    "remaining_runtime_inputs": 55
+  },
+  "cases": [
+    {
+      "case_id": "merman/0beda8865b7ddb3532e4",
+      "input": "flowchart LR\nA[开始] -->|处理🚀| B[完成]",
+      "input_sha256": "0beda8865b7ddb3532e4461e9004adb015156a94798cab0249b98f34dfdf1ab4",
+      "input_utf8_bytes": 48,
+      "parent_function_name": "direction_and_labels::flowchart_parser_cjk_and_emoji_labels_reserve_terminal_cells",
+      "flow400_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"开始\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"完成\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"处理🚀\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "flow400_model_sha256": "82c13347e26968999fe1cad247689392895f5520509fedd94356f036e86aa512"
+    },
+    {
+      "case_id": "merman/13713ab9c4d1b5d28ae2",
+      "input": "graph LR\nA[Γειά]-->|ετικέτα|B[Κόσμος]",
+      "input_sha256": "13713ab9c4d1b5d28ae2bc5d2718a35f5f8380aee685369ec91daa10786cbd4a",
+      "input_utf8_bytes": 54,
+      "parent_function_name": "direction_and_labels::flowchart_parser_multibyte_reference_labels_render_readably",
+      "flow400_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Γειά\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Κόσμος\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"ετικέτα\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "flow400_model_sha256": "7d470eb051ca6373b894111c76ad4c0eb6f5a5e7fb1e7646827583cfb3f9a8b1"
+    },
+    {
+      "case_id": "merman/c19fc56efeca30ef862e",
+      "input": "graph LR\nA[Café]-->|résumé|B[Über]",
+      "input_sha256": "c19fc56efeca30ef862e3152113c5d3fc8461f92b2709c79e4c3cdb490b0128c",
+      "input_utf8_bytes": 38,
+      "parent_function_name": "direction_and_labels::flowchart_parser_multibyte_reference_labels_render_readably",
+      "flow400_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Café\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Über\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"résumé\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "flow400_model_sha256": "c5502d79b4079e47a1d7d41b3c73955b37b45f3fee44229f2a223ccec872cce6"
+    },
+    {
+      "case_id": "merman/c6b88bede9f8e643f263",
+      "input": "graph LR\nA[Привет]-->|метка|B[Мир]",
+      "input_sha256": "c6b88bede9f8e643f2630abab4520b9037db4947ef4b26cfe410fb1eb8758fa7",
+      "input_utf8_bytes": 48,
+      "parent_function_name": "direction_and_labels::flowchart_parser_multibyte_reference_labels_render_readably",
+      "flow400_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Привет\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Мир\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"метка\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "flow400_model_sha256": "8629fbd633739dbb9b5b8e91cc974369e9156d0dfc2df0ffeaa6a2171334b3df"
+    }
+  ],
+  "controls": [
+    {
+      "id": "synthetic/dotted-labeled-link",
+      "input": "flowchart LR\nA[one] -.->|dotted| B[two]",
+      "input_sha256": "37b9611db2a5967873b49ce3b5883f11d224482517600b50e96dbf3580173093",
+      "input_utf8_bytes": 39,
+      "flow400_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"one\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"two\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"dotted\",\"style\":\"dotted\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "flow400_model_sha256": "1f4bab24fe98c8d5e1d9f8112356b78dad92a9f9021218d2afd8a5af7b004369",
+      "expectation": "explicit_ascii_whole_source_fallback"
+    },
+    {
+      "id": "synthetic/thick-labeled-link",
+      "input": "flowchart LR\nA[one] ==>|thick| B[two]",
+      "input_sha256": "a5d71aa47df69e5cd0c8b7301e20321d7c867e43c0f28f2a2e96f7a81a53a33f",
+      "input_utf8_bytes": 37,
+      "flow400_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"one\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"two\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"thick\",\"style\":\"thick\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "flow400_model_sha256": "1bd5926e99051d8e60324c5667ddc2269dc71b4ff42b6728a0078fc653dd33f9",
+      "expectation": "explicit_ascii_whole_source_fallback"
+    }
+  ]
+}

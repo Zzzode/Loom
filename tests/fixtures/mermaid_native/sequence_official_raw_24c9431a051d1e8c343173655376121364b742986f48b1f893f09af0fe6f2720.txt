@@ -1,0 +1,19 @@
+┌───────┐                 ┌─────┐
+│ Alice │                 │ Bob │
+└───────┘                 └─────┘
+    │                        │
+    │                        │
+    │ I'm short              │
+    │ but also               │
+    │ multiline              │
+    ├────────────────────────▶
+    │                        │
+    │                        │
+    │ Short as well          │
+    │   and also             │
+    │   multiline            │
+    ◀────────────────────────┤
+    │                        │
+    │                        │
+
+AFTER_MERMAID

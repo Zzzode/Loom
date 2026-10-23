@@ -1,0 +1,5419 @@
+{
+  "schema_version": 1,
+  "scope": "ALL102 exact Merman XY authored sources; independently reviewed source/model facts only",
+  "status": "scratch compact export awaiting independent mapping review and promotion; not rendering coverage",
+  "source_facts_sha256": "345eacce08f47a1d3cfa6375d8f013c2a94465e29600005dc8748785d944bfbf",
+  "source_C1_review": {
+    "reviewer": "/root/corpus_review",
+    "record_sha256": "96165752bff0e6f5a2167b0116a10a095fd9ec2b5b906f3cf8550c1a8b9d354a"
+  },
+  "source_case_file_sha256": "89ce2ef6ad779481285ce61b771a64fd059b17a824eb2c292934ff13393562db",
+  "vendor": "merman",
+  "primary_model_selection": "Exact C1-frozen primary parse model reference; never selected from Loom output or a passing render",
+  "primary_mermaid_source_references": {
+    "band_extent_truncation": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/xychartDb.ts",
+      "file_sha256": "2025f06822a83157bdaca0ca9d8f6a9f44e6b885a42501c72c6cc68d09da08c9",
+      "git_blob": "bd7f4b5dacfa718583f972d454a6403361627e9d",
+      "line_start": 136,
+      "line_end": 148,
+      "byte_start": 4208,
+      "byte_end": 4793,
+      "span_sha256": "fa5b24d78adee3e99f9af98db93b8dd2b41a44a794554de4eab5b84d75b29002"
+    },
+    "plain_text_quoted_vs_unquoted_grammar": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/parser/xychart.jison",
+      "file_sha256": "ce1e4904b3c2036ac29cc62b6e6561058b00e4bc9c9bbf661873451bb55bf0fc",
+      "git_blob": "36349a40cbda05a20c6a89453d5c1508c5867e3c",
+      "line_start": 49,
+      "line_end": 76,
+      "byte_start": 2258,
+      "byte_end": 3646,
+      "span_sha256": "bdf7ca4a34a5fa363d676ebbe881384be1aa401eca1339cc1766febf55f5d5aa"
+    },
+    "plain_text_alphaNum_token_concatenation": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/parser/xychart.jison",
+      "file_sha256": "ce1e4904b3c2036ac29cc62b6e6561058b00e4bc9c9bbf661873451bb55bf0fc",
+      "git_blob": "36349a40cbda05a20c6a89453d5c1508c5867e3c",
+      "line_start": 160,
+      "line_end": 175,
+      "byte_start": 6767,
+      "byte_end": 7141,
+      "span_sha256": "8b57d99dbcab1d645a727abe2f7c83d2a6c881755db0eb75ab6cf91c2354950e"
+    },
+    "textSanitizer_and_axis_labels": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/xychartDb.ts",
+      "file_sha256": "2025f06822a83157bdaca0ca9d8f6a9f44e6b885a42501c72c6cc68d09da08c9",
+      "git_blob": "bd7f4b5dacfa718583f972d454a6403361627e9d",
+      "line_start": 74,
+      "line_end": 106,
+      "byte_start": 2008,
+      "byte_end": 3010,
+      "span_sha256": "a9efe001b220933c5c11499b7338cb77ee81fc5dda655623042dfe0f38fff3e7"
+    },
+    "textSanitizer_dataset_titles": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/xychartDb.ts",
+      "file_sha256": "2025f06822a83157bdaca0ca9d8f6a9f44e6b885a42501c72c6cc68d09da08c9",
+      "git_blob": "bd7f4b5dacfa718583f972d454a6403361627e9d",
+      "line_start": 177,
+      "line_end": 202,
+      "byte_start": 5559,
+      "byte_end": 6337,
+      "span_sha256": "5d53c65bf6e2f235e41f7dfb3efcdb0e3bd277159095c84d77d3efde41e2c49f"
+    },
+    "numeric_per_series_uniform_coordinates": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/xychartDb.ts",
+      "file_sha256": "2025f06822a83157bdaca0ca9d8f6a9f44e6b885a42501c72c6cc68d09da08c9",
+      "git_blob": "bd7f4b5dacfa718583f972d454a6403361627e9d",
+      "line_start": 151,
+      "line_end": 161,
+      "byte_start": 4798,
+      "byte_end": 5207,
+      "span_sha256": "d6645ad192656f39dbaffe134483c77827b0844dd0462394e626d315fac6bc31"
+    },
+    "default_automatic_x_range_first_plot": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/xychartDb.ts",
+      "file_sha256": "2025f06822a83157bdaca0ca9d8f6a9f44e6b885a42501c72c6cc68d09da08c9",
+      "git_blob": "bd7f4b5dacfa718583f972d454a6403361627e9d",
+      "line_start": 125,
+      "line_end": 134,
+      "byte_start": 3732,
+      "byte_end": 4207,
+      "span_sha256": "5b5c67db92f98f07a4bee1f0060562161e1a2782512bf220e31b98c2b59c8773"
+    },
+    "repeated_title_and_empty_grammar": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/parser/xychart.jison",
+      "file_sha256": "ce1e4904b3c2036ac29cc62b6e6561058b00e4bc9c9bbf661873451bb55bf0fc",
+      "git_blob": "36349a40cbda05a20c6a89453d5c1508c5867e3c",
+      "line_start": 94,
+      "line_end": 111,
+      "byte_start": 3887,
+      "byte_end": 4934,
+      "span_sha256": "da20d60b3de73a7109bb8f422b8384595a7c0d0d07898687357c03a8d05063dd"
+    },
+    "unvalidated_authored_axis_ranges": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/xychartDb.ts",
+      "file_sha256": "2025f06822a83157bdaca0ca9d8f6a9f44e6b885a42501c72c6cc68d09da08c9",
+      "git_blob": "bd7f4b5dacfa718583f972d454a6403361627e9d",
+      "line_start": 91,
+      "line_end": 108,
+      "byte_start": 2464,
+      "byte_end": 3116,
+      "span_sha256": "3e28f17aa06ca4a989362e46729f193898e0759160f941babc13a40f288dc9a4"
+    },
+    "svg_linear_axis_unclamped": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/chartBuilder/components/axis/linearAxis.ts",
+      "file_sha256": "cf9ef534a30fab9460d010443f7dbe427e63967298300efefdb4427af9481aed",
+      "git_blob": "8107732d9389b46eda1a9730ad55a3f6560e118c",
+      "line_start": 19,
+      "line_end": 36,
+      "byte_start": 684,
+      "byte_end": 1279,
+      "span_sha256": "8262aed072ba65338efbaf243591c9dafa1f2cb36f674bc9b932a4401b62e840"
+    },
+    "svg_bar_domain_boundary_baseline": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/diagrams/xychart/chartBuilder/components/plot/barPlot.ts",
+      "file_sha256": "93487501e99a76e67f478da7100081766f643fcdd4c48de2c6ca3485152a704b",
+      "git_blob": "cf7d4e516dec1dcec77a76becbb632f502f50fca",
+      "line_start": 27,
+      "line_end": 56,
+      "byte_start": 819,
+      "byte_end": 1743,
+      "span_sha256": "a8fa74b5d1b7e6cab6824214aad6f4729c76aea8a4ea4435a37078bcf3e7fdbc"
+    },
+    "xychart_config_schema_known_properties": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "path": "packages/mermaid/src/schemas/config.schema.yaml",
+      "file_sha256": "855e6fbb5d278f190f15a7660b44dca6a4699ca8077ab8b35579a4e8a64be019",
+      "git_blob": "8505aef4758ed31d0a99ed5944fa021faf704060",
+      "line_start": 1504,
+      "line_end": 1590,
+      "byte_start": 53292,
+      "byte_end": 55847,
+      "span_sha256": "edd8dbdef055fbd9a8176cd04369e491ea1930e781e1379374609571cecf9a4b"
+    }
+  },
+  "primary_terminal_profile_references": {
+    "directed_range_normalization_and_clip": {
+      "repository": "https://github.com/Latias94/merman",
+      "commit": "f6202f702dbde0a75049b1a62b3124feae709b3d",
+      "path": "crates/merman-ascii/src/xychart/plot.rs",
+      "file_sha256": "a820caf352e21eb9cf67f3e611654e127e9029392064c75d81fc8eaf96240145",
+      "git_blob": "587795f6d31c43bd8019742558fde96160e10a92",
+      "line_start": 348,
+      "line_end": 365,
+      "byte_start": 11555,
+      "byte_end": 12014,
+      "span_sha256": "844b8d1586d22f0c0fe99bfddd50b2bca01a12c7524b5b7fc89352e0aeea1cb4"
+    },
+    "horizontal_bar_from_first_domain_boundary": {
+      "repository": "https://github.com/Latias94/merman",
+      "commit": "f6202f702dbde0a75049b1a62b3124feae709b3d",
+      "path": "crates/merman-ascii/src/xychart/plot.rs",
+      "file_sha256": "a820caf352e21eb9cf67f3e611654e127e9029392064c75d81fc8eaf96240145",
+      "git_blob": "587795f6d31c43bd8019742558fde96160e10a92",
+      "line_start": 2778,
+      "line_end": 2803,
+      "byte_start": 94615,
+      "byte_end": 95397,
+      "span_sha256": "fa9ebc158a46896c19db8616defb8d994220dac40aae8e35393ae808baae5de7"
+    },
+    "bar_height_from_normalized_range": {
+      "repository": "https://github.com/Latias94/merman",
+      "commit": "f6202f702dbde0a75049b1a62b3124feae709b3d",
+      "path": "crates/merman-ascii/src/xychart/plot.rs",
+      "file_sha256": "a820caf352e21eb9cf67f3e611654e127e9029392064c75d81fc8eaf96240145",
+      "git_blob": "587795f6d31c43bd8019742558fde96160e10a92",
+      "line_start": 2964,
+      "line_end": 2969,
+      "byte_start": 99926,
+      "byte_end": 100188,
+      "span_sha256": "2d9dc3653bb400b324cfd2c4060d1f51f54d6ed8063d8d3471626d7922647254"
+    }
+  },
+  "cases": [
+    {
+      "id": "merman/ae7dbec924b56e479d94",
+      "input_sha256": "ae7dbec924b56e479d9484e5a7f8ad59562dfbcc5bfec06e7f200e9e81488c99",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24003,
+        "path": "oracle-models/ae7dbec924b56e479d9484e5a7f8ad59562dfbcc5bfec06e7f200e9e81488c99.json",
+        "root_keys": [
+          "orientation",
+          "title",
+          "accTitle",
+          "accDescr",
+          "xAxis",
+          "yAxis",
+          "plots",
+          "type",
+          "config"
+        ],
+        "sha256": "86249e2ff6fa8989f78ac68fe78062aef72404ce0464383c52d49c029dd7d82d",
+        "source": "merman-cli parse 0.9.1 deterministic, maintenance only, not terminal rendering"
+      },
+      "typed_facts_canonical_sha256": "74d55d787312729ce464a15b1b3edb879087118489a672eb85c1a7968bceeddb",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          6.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/af87b4fddc136fe8f670",
+      "input_sha256": "af87b4fddc136fe8f670ce37da805300aacf6c6aacb52131cc86f217c6903b8d",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24060,
+        "path": "oracle-models/af87b4fddc136fe8f670ce37da805300aacf6c6aacb52131cc86f217c6903b8d.json",
+        "root_keys": [
+          "orientation",
+          "title",
+          "accTitle",
+          "accDescr",
+          "xAxis",
+          "yAxis",
+          "plots",
+          "type",
+          "config"
+        ],
+        "sha256": "b7c332634daaaeb9395359589ae333773590b95494f1187c746c929f6005b632",
+        "source": "merman-cli parse 0.9.1 deterministic, maintenance only, not terminal rendering"
+      },
+      "typed_facts_canonical_sha256": "e7dc2937d6bbd43cbb58c4e9e78f41843cd7577520a899b262822eca6fdd4959",
+      "authored_header_orientation": "horizontal",
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/0575388ac37eb858ef54",
+      "input_sha256": "0575388ac37eb858ef54e48fa1690a5aa871e61014ff569275041782229c2d0b",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24459,
+        "path": "runtime-capture/oracle-models/c349d9a8c733402b3acb119548f1daf20eb2e2fe1aacef44e443f1ff606c740c.json",
+        "sha256": "c349d9a8c733402b3acb119548f1daf20eb2e2fe1aacef44e443f1ff606c740c",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "1922f9a781aee568c11dd747426c8714e7223e39ff742ce50733fdc3c45fb819",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          120.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/0cfc570b349a718a0f18",
+      "input_sha256": "0cfc570b349a718a0f1842049a506a95bfd2486a6f18d78b95d5a8358e21dfc4",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24387,
+        "path": "runtime-capture/oracle-models/7d72f61dbd12bad2e1160c0ca5ab4fc1fd27e7c038f92bb02918c6c201b9baec.json",
+        "sha256": "7d72f61dbd12bad2e1160c0ca5ab4fc1fd27e7c038f92bb02918c6c201b9baec",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "3789738010eb434779bf363a8523a94de1e524408407b99ab50cfd449eda6fcc",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          10.0,
+          150.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [
+        {
+          "series_index": 0,
+          "raw_count": 8,
+          "typed_count": 7,
+          "raw_values": [
+            52.0,
+            96.0,
+            35.0,
+            10.0,
+            87.0,
+            34.0,
+            67.0,
+            99.0
+          ],
+          "typed_values": [
+            52.0,
+            96.0,
+            35.0,
+            10.0,
+            87.0,
+            34.0,
+            67.0
+          ],
+          "classification": "official_explicit_band_extent_truncation",
+          "omitted_authored_tail": [
+            99.0
+          ]
+        }
+      ],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/0d141f0cc422fa199ee3",
+      "input_sha256": "0d141f0cc422fa199ee33397423d437a267b3cb78edbf1515261148d33b3ef94",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23895,
+        "path": "runtime-capture/oracle-models/4d52b1fc6433a0de333cea4d06363d54f047a83218eb958cbc8fbefe3a733a52.json",
+        "sha256": "4d52b1fc6433a0de333cea4d06363d54f047a83218eb958cbc8fbefe3a733a52",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "a7e4eb3834ad6c85d3d779793ec4714d7bd97b6b418e1f52d24f50cd7f2b96c8",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 49
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": null
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/0fda862e7d39ad81ff9d",
+      "input_sha256": "0fda862e7d39ad81ff9da093d41226f7a6397073adfcd476b3f27f8f90ab1994",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24521,
+        "path": "runtime-capture/oracle-models/d594bcaa4883790b64d684331864a7f858441a56a490bc7de01ac2920729d0cc.json",
+        "sha256": "d594bcaa4883790b64d684331864a7f858441a56a490bc7de01ac2920729d0cc",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "4020ed96c92cedc0f5c72f0f18e54f0834084b46b9fab468a794c3180c99f9a4",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "titleColor"
+          ],
+          "value": "#ff0000",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 43,
+            "byte_end": 71
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ff0000\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "backgroundColor"
+          ],
+          "value": "#f0f8ff",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 6,
+            "byte_start": 71,
+            "byte_end": 104
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#f0f8ff\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "yAxisLabelColor"
+          ],
+          "value": "#ee82ee",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 104,
+            "byte_end": 137
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ee82ee\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "yAxisTitleColor"
+          ],
+          "value": "#7fffd4",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 8,
+            "byte_start": 137,
+            "byte_end": 170
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#7fffd4\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "yAxisTickColor"
+          ],
+          "value": "#87ceeb",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 9,
+            "byte_start": 170,
+            "byte_end": 202
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#87ceeb\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "yAxisLineColor"
+          ],
+          "value": "#ff6347",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 10,
+            "byte_start": 202,
+            "byte_end": 234
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ff6347\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "xAxisLabelColor"
+          ],
+          "value": "#7fffd4",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 11,
+            "byte_start": 234,
+            "byte_end": 267
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#7fffd4\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "xAxisTitleColor"
+          ],
+          "value": "#ee82ee",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 12,
+            "byte_start": 267,
+            "byte_end": 300
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ee82ee\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "xAxisTickColor"
+          ],
+          "value": "#ff6347",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 13,
+            "byte_start": 300,
+            "byte_end": 332
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ff6347\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "xAxisLineColor"
+          ],
+          "value": "#87ceeb",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 14,
+            "byte_start": 332,
+            "byte_end": 364
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#87ceeb\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "plotColorPalette"
+          ],
+          "value": "#008000, #faba63",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 15,
+            "byte_start": 364,
+            "byte_end": 407
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#008000, #faba63\""
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/1465019ee2ee57a21217",
+      "input_sha256": "1465019ee2ee57a21217497b69c6a0547653aa7c338b509fa5da6d3255714fa3",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23928,
+        "path": "runtime-capture/oracle-models/cf60266283cbc46018338d450686543198f70b3e9c175b3bf0daf1ce2f90fbff.json",
+        "sha256": "cf60266283cbc46018338d450686543198f70b3e9c175b3bf0daf1ce2f90fbff",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "2b95bb7dc0c4d666c47ead68a1e35d1fc2e6aaaa367f97720ad58879bd3e8d03",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          3000.0,
+          12000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        },
+        {
+          "path": [
+            "xyChart",
+            "chartOrientation"
+          ],
+          "value": "horizontal",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 47,
+            "byte_end": 80
+          },
+          "mapping_category": "semantic_orientation",
+          "raw_scalar": "horizontal"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/1c6eefd22f3dc00ae3fc",
+      "input_sha256": "1c6eefd22f3dc00ae3fc98cbb623b8c47f00734ff291d289f5c05d3e8a8c72ee",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24109,
+        "path": "runtime-capture/oracle-models/46e7ac3189b1879ab70963fbf17ab7d3d1bc95227353ec9a8af20590d0980e81.json",
+        "sha256": "46e7ac3189b1879ab70963fbf17ab7d3d1bc95227353ec9a8af20590d0980e81",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "c297f06d13432d05d9d3db17c1f9ee43d06e4a47b574521cf98c3a495bdfe982",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/23469e2dc57ae1e3902c",
+      "input_sha256": "23469e2dc57ae1e3902c441ddabad06ae03f7bba3b7cdfec4d861c5f13ac0869",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23986,
+        "path": "runtime-capture/oracle-models/f61052c8e9c25e3596dd90e1f3152db1ea035dcedd851d9268d7ba9456f4dd03.json",
+        "sha256": "f61052c8e9c25e3596dd90e1f3152db1ea035dcedd851d9268d7ba9456f4dd03",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "71e91a0a94d510f80697849b5b4581d6a23221916bd1dd4040e0e36359f4e786",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/26b0cd5e3c3bcf2c2d0c",
+      "input_sha256": "26b0cd5e3c3bcf2c2d0cbbc02df82376d779b0ec1893940495460009622029fe",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24550,
+        "path": "runtime-capture/oracle-models/ea317da7618aab403ab33459a933bfa57e2380003d6c09ca98bcf33f6c00025d.json",
+        "sha256": "ea317da7618aab403ab33459a933bfa57e2380003d6c09ca98bcf33f6c00025d",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "31b25c2f5fa48b8dbf0de52ffd3defeea8ba1c20bf398bbcf2566dcd60474b9f",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/2a560d9f1a4a77ccb143",
+      "input_sha256": "2a560d9f1a4a77ccb143082697bff160ad7f9f3fe3425b9b8ddbd0e30cfc44ac",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24558,
+        "path": "runtime-capture/oracle-models/859c91cd1e5752165e3e9c0e6cebe0de93f1aa8a4d458865a2784dc592448bb5.json",
+        "sha256": "859c91cd1e5752165e3e9c0e6cebe0de93f1aa8a4d458865a2784dc592448bb5",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "4020ed96c92cedc0f5c72f0f18e54f0834084b46b9fab468a794c3180c99f9a4",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showLabel"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 34,
+            "byte_end": 57
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showLabel"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 68,
+            "byte_end": 91
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/2a57e931cd044d7c216d",
+      "input_sha256": "2a57e931cd044d7c216dc9e4778b88e6a11800161341f3da10dfbab8eed353f3",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23971,
+        "path": "runtime-capture/oracle-models/50d494e519ad6f0e6ad72899a7c526b4f1af037ad764082c9ca4af329f6cd2a1.json",
+        "sha256": "50d494e519ad6f0e6ad72899a7c526b4f1af037ad764082c9ca4af329f6cd2a1",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "196a8f7de02f8f37df280c950703386287ace2b506f18c8153d2ca7c982e1f5c",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/2b48cb647797484bdb43",
+      "input_sha256": "2b48cb647797484bdb43f159b545134e03e2edeba1f704bcdf459b378d8e86f5",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23992,
+        "path": "runtime-capture/oracle-models/a2cf6be237448493786b866d052b78d95847f0fbaeb0a3d07ce1c1ec70e161c0.json",
+        "sha256": "a2cf6be237448493786b866d052b78d95847f0fbaeb0a3d07ce1c1ec70e161c0",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "370cfdf65d51556325be8a76c7503ae45a40cedce809c76b18dfd2bd9fdbe860",
+      "authored_header_orientation": "vertical",
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          100000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "theme"
+          ],
+          "value": "default",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 3,
+            "byte_start": 12,
+            "byte_end": 29
+          },
+          "mapping_category": "authored_theme_profile_mapping_required",
+          "raw_scalar": "default"
+        },
+        {
+          "path": [
+            "xyChart",
+            "showLegend"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 40,
+            "byte_end": 61
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "true"
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "backgroundColor"
+          ],
+          "value": "#123456",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 8,
+            "byte_start": 92,
+            "byte_end": 125
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#123456\""
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/2b64d066d87691438eb2",
+      "input_sha256": "2b64d066d87691438eb27efc14a7a55e4052e3e142b1f58bc2ed828b6fb5e5d0",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23917,
+        "path": "runtime-capture/oracle-models/3bd28ea12f50dc39e2b820b2801248e47f7000d9b5aa30ad303ab21e9df0d072.json",
+        "sha256": "3bd28ea12f50dc39e2b820b2801248e47f7000d9b5aa30ad303ab21e9df0d072",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "6487e36bdb33b92785c4287742d7b86eb3de8aee9f2615eaa2bcbfaf6be354e1",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/334a9b8332ecd21f2677",
+      "input_sha256": "334a9b8332ecd21f26774fcc7830a1984cae6677963668c3ac09c0355bb538d2",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24243,
+        "path": "runtime-capture/oracle-models/2073423bf1e92ac4e9827748f9cf2f5ee33d000f1db30e2748c755fa7d7ac660.json",
+        "sha256": "2073423bf1e92ac4e9827748f9cf2f5ee33d000f1db30e2748c755fa7d7ac660",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "68692ab5e5fbbacad30b4c1dc38ffd3f5b98e411b7b1f42732a5cdd8bafe4090",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "chartOrientation"
+          ],
+          "value": "horizontal",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 56
+          },
+          "mapping_category": "semantic_orientation",
+          "raw_scalar": "horizontal"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/3390df4173003c7ed0f9",
+      "input_sha256": "3390df4173003c7ed0f90bdc0f7b3eadd97572cfcdb7f8970b05ba3b0af20d88",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24557,
+        "path": "runtime-capture/oracle-models/8924a0900902be54c77fec5df5f1fcd66d68c8473f83a16f3c6661278f18682d.json",
+        "sha256": "8924a0900902be54c77fec5df5f1fcd66d68c8473f83a16f3c6661278f18682d",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "e6659cd8e201354427829985f917764e6fcd0a7194863268a04547cd35e9fba1",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/34c16c3cf878be987664",
+      "input_sha256": "34c16c3cf878be987664aab7dcb661564b793bed31b94ddea33c42fdde6e6c8a",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24955,
+        "path": "runtime-capture/oracle-models/4c123acceeb189cb41605e53082580ba40a0222e54da34b73458d6346598c8f9.json",
+        "sha256": "4c123acceeb189cb41605e53082580ba40a0222e54da34b73458d6346598c8f9",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "5b164259ed9a7475d030fa6cb85ff200a92a2439bede60ca575aae24e60b2a1f",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [
+        {
+          "path": [
+            "theme"
+          ],
+          "value": "dark",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 3,
+            "byte_start": 12,
+            "byte_end": 26
+          },
+          "mapping_category": "authored_theme_profile_mapping_required",
+          "raw_scalar": "dark"
+        },
+        {
+          "path": [
+            "xyChart",
+            "width"
+          ],
+          "value": 200.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 37,
+            "byte_end": 52
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "200"
+        },
+        {
+          "path": [
+            "xyChart",
+            "height"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 6,
+            "byte_start": 52,
+            "byte_end": 67
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "plotReservedSpacePercent"
+          ],
+          "value": 100.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 67,
+            "byte_end": 101
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "100"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/38399d9b6f84b66f397b",
+      "input_sha256": "38399d9b6f84b66f397be3a42b5a03e6359ad78b5f71766c25ca776587292354",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24181,
+        "path": "runtime-capture/oracle-models/033d0543c2cca165e216ef81d03b68d69ffd1cb84c571e997be8041d74b48d36.json",
+        "sha256": "033d0543c2cca165e216ef81d03b68d69ffd1cb84c571e997be8041d74b48d36",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "f00e017d7b59e3bce683a24e483b0e3bf9a81cbc5c8064ecc6c9329a4b0dee58",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          10.0,
+          150.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [
+        {
+          "series_index": 0,
+          "raw_count": 8,
+          "typed_count": 7,
+          "raw_values": [
+            52.0,
+            96.0,
+            35.0,
+            10.0,
+            87.0,
+            34.0,
+            67.0,
+            99.0
+          ],
+          "typed_values": [
+            52.0,
+            96.0,
+            35.0,
+            10.0,
+            87.0,
+            34.0,
+            67.0
+          ],
+          "classification": "official_explicit_band_extent_truncation",
+          "omitted_authored_tail": [
+            99.0
+          ]
+        }
+      ],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/3a58c3109d056fcd45a0",
+      "input_sha256": "3a58c3109d056fcd45a016798faef244c195fbcbab8a9abbfa8b48900ef993c6",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23895,
+        "path": "runtime-capture/oracle-models/0dfec11dd4e2b9a55bf42d8e650edabcbf6549b2ab1c2fa15d3395b097c49349.json",
+        "sha256": "0dfec11dd4e2b9a55bf42d8e650edabcbf6549b2ab1c2fa15d3395b097c49349",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "b42b9adf2c07771d9b75f7c41da18bb5c1513a846798a4beacdc52231907d0c8",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          5.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/3ed4094769d676b210bb",
+      "input_sha256": "3ed4094769d676b210bb2c770fe72b3626e1c864858c33492abb3fe9c5c75cac",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24558,
+        "path": "runtime-capture/oracle-models/39a5e3b10a6ab453e598ad6e6a318864dcac3c83b31bb3db606856192c011718.json",
+        "sha256": "39a5e3b10a6ab453e598ad6e6a318864dcac3c83b31bb3db606856192c011718",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "4020ed96c92cedc0f5c72f0f18e54f0834084b46b9fab468a794c3180c99f9a4",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showAxisLine"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 34,
+            "byte_end": 60
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showAxisLine"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 71,
+            "byte_end": 97
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/3fe83bcd87a0b6f4b75e",
+      "input_sha256": "3fe83bcd87a0b6f4b75e7f7ee3ae6ae3f997ed564bc0e4611226c85a0492f80e",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23900,
+        "path": "runtime-capture/oracle-models/437c4db38686504feca5b0105ef295fa4f09e90d32ac12d6a48694e0690c597a.json",
+        "sha256": "437c4db38686504feca5b0105ef295fa4f09e90d32ac12d6a48694e0690c597a",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "1b11db196613fe615e4e002e4b047f658a8012371b9dbe5b4632902fff046c4d",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [
+        {
+          "field": "yAxis.title",
+          "raw_token": "\"  yAxisName has space   \"",
+          "quoted": true,
+          "authored_text_before_grammar": "  yAxisName has space   ",
+          "grammar_text_before_sanitizer": "  yAxisName has space   ",
+          "resolved_text": "yAxisName has space",
+          "transformations": [
+            "textSanitizer_outer_whitespace_trim"
+          ],
+          "source_span": {
+            "line": 2,
+            "byte_start": 8,
+            "byte_end": 45
+          }
+        }
+      ],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/40cbcbf662ff791b8d4a",
+      "input_sha256": "40cbcbf662ff791b8d4a399972bb3ce8e6e4affbde6d11e0f19a0dddfefe458b",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23958,
+        "path": "runtime-capture/oracle-models/8b42d0942857dbb9b66c68603da29da420aa6ebf2c07452e47d38ac3b88278b0.json",
+        "sha256": "8b42d0942857dbb9b66c68603da29da420aa6ebf2c07452e47d38ac3b88278b0",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "5743f2f34396b54e094eed2f9b72aca7e61535517556695d1b0516f8158c7692",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/4191b7b5dc6ecbe6b734",
+      "input_sha256": "4191b7b5dc6ecbe6b73464417555919ff9b13c4c17be733fe9032b25f572fd6b",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24575,
+        "path": "runtime-capture/oracle-models/3fdae3870032e4fbf4151171d05009af3b7e05bd2843ab50275f3d114da06e0a.json",
+        "sha256": "3fdae3870032e4fbf4151171d05009af3b7e05bd2843ab50275f3d114da06e0a",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "31b25c2f5fa48b8dbf0de52ffd3defeea8ba1c20bf398bbcf2566dcd60474b9f",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "width"
+          ],
+          "value": 900.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 25,
+            "byte_end": 44
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "900"
+        },
+        {
+          "path": [
+            "xyChart",
+            "height"
+          ],
+          "value": 600.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 44,
+            "byte_end": 64
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "600"
+        },
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 6,
+            "byte_start": 64,
+            "byte_end": 92
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "titleColor"
+          ],
+          "value": "#ff0000",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 9,
+            "byte_start": 129,
+            "byte_end": 163
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ff0000\""
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/4230c2e1a5ded0d65e31",
+      "input_sha256": "4230c2e1a5ded0d65e3176d5005205fc5d869d8a1581856e8cf4360748121617",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23920,
+        "path": "runtime-capture/oracle-models/087167ef1435f0138477a259448dbf23eacf7b3a5af7fc91610db5eabd948556.json",
+        "sha256": "087167ef1435f0138477a259448dbf23eacf7b3a5af7fc91610db5eabd948556",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "2cfe944f94c0653951e8858054251a547a636582e436219954f79052377279fc",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showTitle"
+          ],
+          "value": false,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 232
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showLabel"
+          ],
+          "value": false,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 232
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showTitle"
+          ],
+          "value": false,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 232
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showTick"
+          ],
+          "value": false,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 232
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showAxisLine"
+          ],
+          "value": false,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 232
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showLabel"
+          ],
+          "value": false,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 232
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showTitle"
+          ],
+          "value": false,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 232
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showTick"
+          ],
+          "value": false,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 232
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showAxisLine"
+          ],
+          "value": false,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 232
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": null
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/4239cdd92c167316194c",
+      "input_sha256": "4239cdd92c167316194cf9e44291aafbf9ac9f0ede0ec283f41b1e4694ce978a",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23909,
+        "path": "runtime-capture/oracle-models/f4191bb8e15e2608607a4996cff0c34c7c11a519c3840cac8baac2a10a4b6a08.json",
+        "sha256": "f4191bb8e15e2608607a4996cff0c34c7c11a519c3840cac8baac2a10a4b6a08",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "8f02afc4ed337071f819c9bc55b268785b5269e9c05e6df9d41334d1f3a50007",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          100.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/4536e1d2bba281160f01",
+      "input_sha256": "4536e1d2bba281160f015ec4a57d5f13e68101cccae1152f9ab1ada0f66b1c4b",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24955,
+        "path": "runtime-capture/oracle-models/4c123acceeb189cb41605e53082580ba40a0222e54da34b73458d6346598c8f9.json",
+        "sha256": "4c123acceeb189cb41605e53082580ba40a0222e54da34b73458d6346598c8f9",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "5b164259ed9a7475d030fa6cb85ff200a92a2439bede60ca575aae24e60b2a1f",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [
+        {
+          "path": [
+            "theme"
+          ],
+          "value": "dark",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 3,
+            "byte_start": 12,
+            "byte_end": 26
+          },
+          "mapping_category": "authored_theme_profile_mapping_required",
+          "raw_scalar": "dark"
+        },
+        {
+          "path": [
+            "xyChart",
+            "width"
+          ],
+          "value": 200.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 37,
+            "byte_end": 52
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "200"
+        },
+        {
+          "path": [
+            "xyChart",
+            "height"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 6,
+            "byte_start": 52,
+            "byte_end": 67
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "plotReservedSpacePercent"
+          ],
+          "value": 100.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 67,
+            "byte_end": 101
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "100"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/468d4936e16c6a14d94b",
+      "input_sha256": "468d4936e16c6a14d94b03c7961db3d4721800f5154340f91eb382af51dd7ae7",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24239,
+        "path": "runtime-capture/oracle-models/e4f7796460be224441989eddecc798e00148fa9929e3a151aac27a62a6822c98.json",
+        "sha256": "e4f7796460be224441989eddecc798e00148fa9929e3a151aac27a62a6822c98",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "2285435608d8641321306c9260644f12611695981ec3fbf986693f8c7ec0f2de",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/47bf83c00ac7e8730b46",
+      "input_sha256": "47bf83c00ac7e8730b46849557f7cb4abeb8a163338d190eda06bd0cd4524632",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24531,
+        "path": "runtime-capture/oracle-models/ab93de410f92c2e04264243d0c1553018fe7f818bf5167a6a443a1efad1e45ff.json",
+        "sha256": "ab93de410f92c2e04264243d0c1553018fe7f818bf5167a6a443a1efad1e45ff",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "c06eb779d85b05f28a25f6dc148dea60ef3b2d27c3959eaeb8caa3225672a904",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/4bfa9b0b6ff611a098f1",
+      "input_sha256": "4bfa9b0b6ff611a098f142fb243ca36853c615d0407cc2c716ecdfacdfc7d53b",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24961,
+        "path": "runtime-capture/oracle-models/6d5f263e52b8882f2c9830e95558cee31ce0de281dbabab108b0cd05e043f6cf.json",
+        "sha256": "6d5f263e52b8882f2c9830e95558cee31ce0de281dbabab108b0cd05e043f6cf",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "fe592eaef4a7d954aaa7a23cf045a33f49be5f6aaf8567152cc72509c17cfb55",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [
+        {
+          "path": [
+            "theme"
+          ],
+          "value": "dark",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 3,
+            "byte_start": 12,
+            "byte_end": 26
+          },
+          "mapping_category": "authored_theme_profile_mapping_required",
+          "raw_scalar": "dark"
+        },
+        {
+          "path": [
+            "xyChart",
+            "width"
+          ],
+          "value": 200.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 37,
+            "byte_end": 52
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "200"
+        },
+        {
+          "path": [
+            "xyChart",
+            "height"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 6,
+            "byte_start": 52,
+            "byte_end": 67
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showLabel"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 8,
+            "byte_start": 78,
+            "byte_end": 101
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showTitle"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 9,
+            "byte_start": 101,
+            "byte_end": 124
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showTick"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 10,
+            "byte_start": 124,
+            "byte_end": 146
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showAxisLine"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 11,
+            "byte_start": 146,
+            "byte_end": 172
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showLabel"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 13,
+            "byte_start": 183,
+            "byte_end": 206
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showTitle"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 14,
+            "byte_start": 206,
+            "byte_end": 229
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showTick"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 15,
+            "byte_start": 229,
+            "byte_end": 251
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showAxisLine"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 16,
+            "byte_start": 251,
+            "byte_end": 277
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/506f4a1e821982f95384",
+      "input_sha256": "506f4a1e821982f95384287df78270dbfd75a722907f32b7a2d836223847dd1c",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24178,
+        "path": "runtime-capture/oracle-models/0b1c9a0d1682b25b80002ab2ebc589210d2936c06e8670beceefab3e826215d3.json",
+        "sha256": "0b1c9a0d1682b25b80002ab2ebc589210d2936c06e8670beceefab3e826215d3",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "15e4456319a6891795264647d23f1d80c5ed3e8d55b29f18f2479c9466bf57b9",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          10.0,
+          150.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [
+        {
+          "series_index": 0,
+          "raw_count": 8,
+          "typed_count": 7,
+          "raw_values": [
+            52.0,
+            96.0,
+            35.0,
+            10.0,
+            87.0,
+            34.0,
+            67.0,
+            99.0
+          ],
+          "typed_values": [
+            52.0,
+            96.0,
+            35.0,
+            10.0,
+            87.0,
+            34.0,
+            67.0
+          ],
+          "classification": "official_explicit_band_extent_truncation",
+          "omitted_authored_tail": [
+            99.0
+          ]
+        }
+      ],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/59b5415a0a3b8cb73f0d",
+      "input_sha256": "59b5415a0a3b8cb73f0de6a51c0f21fe1b44df37ec0cca5316da3e23b3d896f7",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23924,
+        "path": "runtime-capture/oracle-models/85536b3f79fff62ca3c4db21ff142e2c09e2d515c37c5aefeefb5a736bae91c6.json",
+        "sha256": "85536b3f79fff62ca3c4db21ff142e2c09e2d515c37c5aefeefb5a736bae91c6",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "ce81c018e3b7395040779de37f34bbcc857736dcf0a4924b322c16bb5ac11326",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          3000.0,
+          12000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/6579ddc484aed474454e",
+      "input_sha256": "6579ddc484aed474454e05524be433e04353c61d6a646349dcda6fac6d07f23f",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23941,
+        "path": "runtime-capture/oracle-models/0bbc76c8d6a24a16a737319a7bc29e637a6af3a9b25ae9de563f77302cc13869.json",
+        "sha256": "0bbc76c8d6a24a16a737319a7bc29e637a6af3a9b25ae9de563f77302cc13869",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "90be4885c9526b2015eb46a64e644b89d2274fe591b2a05ea9ab01a2d7839585",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/7068173027edf7cd3157",
+      "input_sha256": "7068173027edf7cd3157a1d061b48d92df4a0f4724225e8073bb3195d43056cd",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23956,
+        "path": "runtime-capture/oracle-models/8cdf2f88ed5c2d3691e10c93c0aecafb2359a1fa3b208469be6dfd4cba189107.json",
+        "sha256": "8cdf2f88ed5c2d3691e10c93c0aecafb2359a1fa3b208469be6dfd4cba189107",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "261ac6c1bd56e07001bff6ba59e2e4efccb0c3aa220dea94e0cb84212854a1ca",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/7148a157607508d3582e",
+      "input_sha256": "7148a157607508d3582eefac01fb5647aae495cd823341f07fdf8102c8f024c6",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23880,
+        "path": "runtime-capture/oracle-models/c23c8e871ff0a0f29ce9464bd94847a66c657a4ea744d3582a9e912cf3f08fb4.json",
+        "sha256": "c23c8e871ff0a0f29ce9464bd94847a66c657a4ea744d3582a9e912cf3f08fb4",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "8e94cc00b06cbed77a9e4754b1522bdd72a0f2dc67417e9beab8ecdd3c9fbaf7",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          1.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": "raw Basic source is ordinary geometry; Unicode/control injections are typed-model-only foreign predicates"
+    },
+    {
+      "id": "merman/71cc16091fba71ae5c00",
+      "input_sha256": "71cc16091fba71ae5c00b2e975fcc6e6366f0e9a28f8368d3fd3e753dbcd8588",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23909,
+        "path": "runtime-capture/oracle-models/3a1de694cb7a16eb3526d4064311ca4f4696f9e6c9b5dde5394187aae7263995.json",
+        "sha256": "3a1de694cb7a16eb3526d4064311ca4f4696f9e6c9b5dde5394187aae7263995",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "48ab230c5dd921adf10bb0a32d9b9999e8b8494f32449ecbf7c8d93407851f1c",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/7219a84dd2f74f666a80",
+      "input_sha256": "7219a84dd2f74f666a807d511dd5d253f295f29aeb8a8a58d0e3c0ca33ca48ee",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23954,
+        "path": "runtime-capture/oracle-models/6f0b7dd19fad5f82900ade521ff086004fa5eef582efc2570d92572a49683c49.json",
+        "sha256": "6f0b7dd19fad5f82900ade521ff086004fa5eef582efc2570d92572a49683c49",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "4b1efe53e6f5cc2d2dc7db5193313d70f0137007e9bde20eaa4a2376c683b9e5",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/7251b8be9bba61798e2a",
+      "input_sha256": "7251b8be9bba61798e2ad25d4f9dac8af02c99bb3c7fb0313acc02fd526c23dd",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23899,
+        "path": "runtime-capture/oracle-models/0a0180c8a78634c4a92fe0458be23dab4ac1fb1e5f95fcc0a0a332a72af43a35.json",
+        "sha256": "0a0180c8a78634c4a92fe0458be23dab4ac1fb1e5f95fcc0a0a332a72af43a35",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "3943c55f4fb4e5a9f89f4ebc61efadb2eeb28334fb65d24cdbb2412fd6195cf5",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          5.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/738e32a2c8019553e8c2",
+      "input_sha256": "738e32a2c8019553e8c2be4f355790d76121abc6f755c6b3dcf38bb66aa850fc",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24521,
+        "path": "runtime-capture/oracle-models/82ae2658c6fb0f10a39543be80636f1eaae1ea6a5a8f8ab02e0705566b43ab34.json",
+        "sha256": "82ae2658c6fb0f10a39543be80636f1eaae1ea6a5a8f8ab02e0705566b43ab34",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "a8330e3f9dffddf8554e42c67959205c389c725d6a48f6ffd9c5082c5f19de13",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/742e2ba13da1c0bc8857",
+      "input_sha256": "742e2ba13da1c0bc885755e6f2e2dd75dec52aab696728bb306f60e1fe817c57",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 25561,
+        "path": "runtime-capture/oracle-models/ad1fc6694729d201865b0ac07d22e9743ed524cb979443a389244b94f5263612.json",
+        "sha256": "ad1fc6694729d201865b0ac07d22e9743ed524cb979443a389244b94f5263612",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "65a962c0d6185f32419633aad50eb05083791d24cad644fc94c74eaf9e33a029",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "theme"
+          ],
+          "value": "base",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 3,
+            "byte_start": 12,
+            "byte_end": 26
+          },
+          "mapping_category": "authored_theme_profile_mapping_required",
+          "raw_scalar": "base"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/76934683ae5dc045dbae",
+      "input_sha256": "76934683ae5dc045dbae859ffa1a5ff0d1f05acfeef175d577ff41095f8b5d7e",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 26737,
+        "path": "runtime-capture/oracle-models/c7af052c82feab0d5d1158e84359098cc97b693625ca60f877c968a0e323b899.json",
+        "sha256": "c7af052c82feab0d5d1158e84359098cc97b693625ca60f877c968a0e323b899",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "ecc6eee9b3a87c402044d140650352850da126f3fe3f7dc5823f582e26d818d3",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "theme"
+          ],
+          "value": "forest",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 3,
+            "byte_start": 12,
+            "byte_end": 28
+          },
+          "mapping_category": "authored_theme_profile_mapping_required",
+          "raw_scalar": "forest"
+        },
+        {
+          "path": [
+            "xyChart",
+            "width"
+          ],
+          "value": 1000.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 39,
+            "byte_end": 55
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "1000"
+        },
+        {
+          "path": [
+            "xyChart",
+            "height"
+          ],
+          "value": 600.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 6,
+            "byte_start": 55,
+            "byte_end": 71
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "600"
+        },
+        {
+          "path": [
+            "xyChart",
+            "titlePadding"
+          ],
+          "value": 5.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 71,
+            "byte_end": 91
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "5"
+        },
+        {
+          "path": [
+            "xyChart",
+            "titleFontSize"
+          ],
+          "value": 10.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 8,
+            "byte_start": 91,
+            "byte_end": 113
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "10"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "labelFontSize"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 10,
+            "byte_start": 124,
+            "byte_end": 148
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "labelPadding"
+          ],
+          "value": 10.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 11,
+            "byte_start": 148,
+            "byte_end": 171
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "10"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "titleFontSize"
+          ],
+          "value": 30.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 12,
+            "byte_start": 171,
+            "byte_end": 195
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "30"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "titlePadding"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 13,
+            "byte_start": 195,
+            "byte_end": 218
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "tickLength"
+          ],
+          "value": 10.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 14,
+            "byte_start": 218,
+            "byte_end": 239
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "10"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "tickWidth"
+          ],
+          "value": 5.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 15,
+            "byte_start": 239,
+            "byte_end": 258
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "5"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "axisLineWidth"
+          ],
+          "value": 5.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 16,
+            "byte_start": 258,
+            "byte_end": 281
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "5"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "labelFontSize"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 18,
+            "byte_start": 292,
+            "byte_end": 316
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "labelPadding"
+          ],
+          "value": 10.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 19,
+            "byte_start": 316,
+            "byte_end": 339
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "10"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "titleFontSize"
+          ],
+          "value": 30.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 20,
+            "byte_start": 339,
+            "byte_end": 363
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "30"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "titlePadding"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 21,
+            "byte_start": 363,
+            "byte_end": 386
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "tickLength"
+          ],
+          "value": 10.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 22,
+            "byte_start": 386,
+            "byte_end": 407
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "10"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "tickWidth"
+          ],
+          "value": 5.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 23,
+            "byte_start": 407,
+            "byte_end": 426
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "5"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "axisLineWidth"
+          ],
+          "value": 5.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 24,
+            "byte_start": 426,
+            "byte_end": 449
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "5"
+        },
+        {
+          "path": [
+            "xyChart",
+            "chartOrientation"
+          ],
+          "value": "horizontal",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 25,
+            "byte_start": 449,
+            "byte_end": 482
+          },
+          "mapping_category": "semantic_orientation",
+          "raw_scalar": "horizontal"
+        },
+        {
+          "path": [
+            "xyChart",
+            "plotReservedSpacePercent"
+          ],
+          "value": 60.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 26,
+            "byte_start": 482,
+            "byte_end": 515
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "60"
+        },
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 27,
+            "byte_start": 515,
+            "byte_end": 539
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/7a3a4cfd44ca5c60aaa4",
+      "input_sha256": "7a3a4cfd44ca5c60aaa46f2856e13d7f108039b7097c08486e5c272c1259754d",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23929,
+        "path": "runtime-capture/oracle-models/b1ec48321ec1d1b08d51fe516464a45c91cca65ab43bac45b1d37b018f69d2c0.json",
+        "sha256": "b1ec48321ec1d1b08d51fe516464a45c91cca65ab43bac45b1d37b018f69d2c0",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "f13ef5796a56ac7dc34c51519e44a64bb9ee9a3ba1877cd13ca59976f07e380e",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/7b7ed6ad2b62a73d1288",
+      "input_sha256": "7b7ed6ad2b62a73d1288726fcd6e7d68e7cc0f17c583ef8ed1d829e43647c961",
+      "source_obligation": "public_empty_state_obligation",
+      "primary_model_reference": {
+        "bytes": 23817,
+        "path": "runtime-capture/oracle-models/e2813321edaa1428c3987d98928219c0f8ee797686d8ecc38ff797adb4c51f2c.json",
+        "sha256": "e2813321edaa1428c3987d98928219c0f8ee797686d8ecc38ff797adb4c51f2c",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "798c2ce945ffcc4eef48a0d95198c993aab08bace0920c071c1a9cbb09928937",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/7bf539ed4935bd063b28",
+      "input_sha256": "7bf539ed4935bd063b28276d89bcac9ecb269a60a6e02f49f93703be4247a14c",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23928,
+        "path": "runtime-capture/oracle-models/bcf5419217f98a8224562ef7af5f71dbd8c137d6d3960d3355a590092a28b189.json",
+        "sha256": "bcf5419217f98a8224562ef7af5f71dbd8c137d6d3960d3355a590092a28b189",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "a5f1ed43d8b108d128ac0f219f47f32906117c9c2f83d27c7e4905cc019a2bbe",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          -2.4,
+          3.5
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/7c40b524079c65f8b63f",
+      "input_sha256": "7c40b524079c65f8b63fc799936d3bdfa3595e5c52748d7b5530c57664068adc",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23958,
+        "path": "runtime-capture/oracle-models/a1a88f834dbcd48af8399d84cfebdee2a8d23dfdae52b0b0e8f068aec653034e.json",
+        "sha256": "a1a88f834dbcd48af8399d84cfebdee2a8d23dfdae52b0b0e8f068aec653034e",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "e86284cf0f0433c677463c6b3bbae2da6a2ac0390b39fa8cae4d04ba6443a53e",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/804c98ab5c760b722e99",
+      "input_sha256": "804c98ab5c760b722e995ffccd74d54e4bd358be942db27ffdd4d749c4bc91e8",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24558,
+        "path": "runtime-capture/oracle-models/fa5d58f4dac1d86e977a7615f5ea0a377fc8bdc5bbfd1ebffdb83acd5e46838f.json",
+        "sha256": "fa5d58f4dac1d86e977a7615f5ea0a377fc8bdc5bbfd1ebffdb83acd5e46838f",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "4020ed96c92cedc0f5c72f0f18e54f0834084b46b9fab468a794c3180c99f9a4",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showTick"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 34,
+            "byte_end": 56
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showTick"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 67,
+            "byte_end": 89
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/83af26d25cc380d2005d",
+      "input_sha256": "83af26d25cc380d2005d21beebc14b9422ce5fde7476c477f1170312a8b552ad",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23972,
+        "path": "runtime-capture/oracle-models/2007d3b74657bd781d6a9f8d3c5220d82c129d86fc9d8b78a52c626bfcbf8d58.json",
+        "sha256": "2007d3b74657bd781d6a9f8d3c5220d82c129d86fc9d8b78a52c626bfcbf8d58",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "183936f13659b08c258338430699aba0b1f56cfd49ebc69d90f75faf13376ecf",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          12000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [
+        {
+          "series_index": 0,
+          "raw_count": 20,
+          "typed_count": 3,
+          "raw_values": [
+            5000.0,
+            6000.0,
+            7500.0,
+            8200.0,
+            9500.0,
+            10500.0,
+            11000.0,
+            10200.0,
+            9200.0,
+            8500.0,
+            7000.0,
+            6000.0,
+            3000.0,
+            2000.0,
+            500.0,
+            2000.0,
+            3000.0,
+            11000.0,
+            5000.0,
+            6000.0
+          ],
+          "typed_values": [
+            5000.0,
+            6000.0,
+            7500.0
+          ],
+          "classification": "official_explicit_band_extent_truncation",
+          "omitted_authored_tail": [
+            8200.0,
+            9500.0,
+            10500.0,
+            11000.0,
+            10200.0,
+            9200.0,
+            8500.0,
+            7000.0,
+            6000.0,
+            3000.0,
+            2000.0,
+            500.0,
+            2000.0,
+            3000.0,
+            11000.0,
+            5000.0,
+            6000.0
+          ]
+        }
+      ],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/849085d741016c9335f0",
+      "input_sha256": "849085d741016c9335f02dcdfc6252ec5080b9d325c8a70ac40b5299c0313d0f",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24550,
+        "path": "runtime-capture/oracle-models/ea317da7618aab403ab33459a933bfa57e2380003d6c09ca98bcf33f6c00025d.json",
+        "sha256": "ea317da7618aab403ab33459a933bfa57e2380003d6c09ca98bcf33f6c00025d",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "31b25c2f5fa48b8dbf0de52ffd3defeea8ba1c20bf398bbcf2566dcd60474b9f",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/88050d11f4a8870db912",
+      "input_sha256": "88050d11f4a8870db912434e0ce08400f2cb1ace7809751d26177c7b41448f89",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23944,
+        "path": "runtime-capture/oracle-models/92c4c63a948744283076245c5998b14de08b2caf372882ec76b6b42938477ce5.json",
+        "sha256": "92c4c63a948744283076245c5998b14de08b2caf372882ec76b6b42938477ce5",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "faeedd6f020cfca4a5e0a226806e7eda10b43cacbed47898ce7aa47755619a1d",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/8b87d96bf3d739887fc7",
+      "input_sha256": "8b87d96bf3d739887fc7b181411a1383abd6e0278dea7246d859cdf044a227ae",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23888,
+        "path": "runtime-capture/oracle-models/27be21ff981962ca18d73a9b7a43234d24b64a7ce0ca028ce8dae9a4256b8c01.json",
+        "sha256": "27be21ff981962ca18d73a9b7a43234d24b64a7ce0ca028ce8dae9a4256b8c01",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "bcdebe08af8ee1b62d9f74ddafd84bacad39c134f7fd42f42cf19d318b1019e9",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "x-axis": [
+          45.5,
+          1.34
+        ],
+        "y-axis": [
+          45.5,
+          33.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [
+        {
+          "series_index": 0,
+          "sample_index": 0,
+          "value": 1.0
+        }
+      ],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/8d26606bfb96f8e5c412",
+      "input_sha256": "8d26606bfb96f8e5c41213f7d582828cd8512d84e4e6d2246cd1d41a5649b79c",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23952,
+        "path": "runtime-capture/oracle-models/dedd6b70500c531b26c1b6536b3443140f1852f19840d3860381089f19b60c4c.json",
+        "sha256": "dedd6b70500c531b26c1b6536b3443140f1852f19840d3860381089f19b60c4c",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "5982afdfccc9f178d852a010207f11830e7f4d5e9b52732dbe145b266de36067",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          100.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/8e2b29ded49a7e9ef0f4",
+      "input_sha256": "8e2b29ded49a7e9ef0f44539f1ce0091a89087650397a5958f84b0840a639ae3",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23881,
+        "path": "runtime-capture/oracle-models/68af962413669bf4a296ebced4749609017e916bb3c8eb91d59f4cd3c0d465b8.json",
+        "sha256": "68af962413669bf4a296ebced4749609017e916bb3c8eb91d59f4cd3c0d465b8",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "390f57c5b87224ceaf0d393df37b80ac8874f240b728f7cea7082bd73896bc30",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/93f0e9dadd2c5c259dd3",
+      "input_sha256": "93f0e9dadd2c5c259dd37c2b958989291f56faf604edfda183dbcff0d53e693a",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24407,
+        "path": "runtime-capture/oracle-models/0413d3d49dc14f866791d8e2737aa51d363563868e32945cb684bcf281c9d801.json",
+        "sha256": "0413d3d49dc14f866791d8e2737aa51d363563868e32945cb684bcf281c9d801",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "9e843e8ffb4acb5e25b0415bfe841d03083a811be05a1e4d16a580a90d68242a",
+      "authored_header_orientation": "horizontal",
+      "explicit_axis_domains": {
+        "y-axis": [
+          10.0,
+          150.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [
+        {
+          "series_index": 1,
+          "raw_count": 4,
+          "typed_count": 3,
+          "raw_values": [
+            11.0,
+            45.5,
+            67.0,
+            23.0
+          ],
+          "typed_values": [
+            11.0,
+            45.5,
+            67.0
+          ],
+          "classification": "official_explicit_band_extent_truncation",
+          "omitted_authored_tail": [
+            23.0
+          ]
+        }
+      ],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/95713fa70777f7bda028",
+      "input_sha256": "95713fa70777f7bda028a846b3c19e2eada414c4ab8a10dd4240998eb65ab21b",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23937,
+        "path": "runtime-capture/oracle-models/b3ed46b1f497389b9114460c05a7dc4c35fa6bc0751dfde312a50cb48b078b6d.json",
+        "sha256": "b3ed46b1f497389b9114460c05a7dc4c35fa6bc0751dfde312a50cb48b078b6d",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "d5bf509224e1b9ef14584197dd146de8c2700c7f60fb08c2761d486cfbab7b61",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "x-axis": [
+          45.5,
+          0.34
+        ],
+        "y-axis": [
+          45.5,
+          0.33
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/9bc72e53b583e12e01d4",
+      "input_sha256": "9bc72e53b583e12e01d4d40ed58a3ab85646edcf08abb31bdc7201580bcb85e4",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24550,
+        "path": "runtime-capture/oracle-models/ea317da7618aab403ab33459a933bfa57e2380003d6c09ca98bcf33f6c00025d.json",
+        "sha256": "ea317da7618aab403ab33459a933bfa57e2380003d6c09ca98bcf33f6c00025d",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "31b25c2f5fa48b8dbf0de52ffd3defeea8ba1c20bf398bbcf2566dcd60474b9f",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/9c890fc9196c5893c9ea",
+      "input_sha256": "9c890fc9196c5893c9eae7e07ea4f7f13edbdd7030e658a377926aa2140220e3",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23956,
+        "path": "runtime-capture/oracle-models/a2db168749115de2ba837c174766d71ea986f374b8b2322d2e25ff4798ba18d0.json",
+        "sha256": "a2db168749115de2ba837c174766d71ea986f374b8b2322d2e25ff4798ba18d0",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "b70bb428376c7f0e32aeab750df74c973346ebb5b85c8a962240fa46c2f54c44",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          100.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        },
+        {
+          "path": [
+            "xyChart",
+            "chartOrientation"
+          ],
+          "value": "horizontal",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 47,
+            "byte_end": 80
+          },
+          "mapping_category": "semantic_orientation",
+          "raw_scalar": "horizontal"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/a0fbcfdd315ff3a7a3e8",
+      "input_sha256": "a0fbcfdd315ff3a7a3e8d9b9b5875d1931c1a76135ea0da3ea27f8326d793634",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23917,
+        "path": "runtime-capture/oracle-models/3bd28ea12f50dc39e2b820b2801248e47f7000d9b5aa30ad303ab21e9df0d072.json",
+        "sha256": "3bd28ea12f50dc39e2b820b2801248e47f7000d9b5aa30ad303ab21e9df0d072",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "6487e36bdb33b92785c4287742d7b86eb3de8aee9f2615eaa2bcbfaf6be354e1",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/a2ae77ba741297d0670c",
+      "input_sha256": "a2ae77ba741297d0670ccdf4c28c39509f15b0cb42dcaa45b3a88add8d19970f",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23929,
+        "path": "runtime-capture/oracle-models/b1ec48321ec1d1b08d51fe516464a45c91cca65ab43bac45b1d37b018f69d2c0.json",
+        "sha256": "b1ec48321ec1d1b08d51fe516464a45c91cca65ab43bac45b1d37b018f69d2c0",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "f13ef5796a56ac7dc34c51519e44a64bb9ee9a3ba1877cd13ca59976f07e380e",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/a53a46ba0a8801f9ab45",
+      "input_sha256": "a53a46ba0a8801f9ab45db6c625394c2200e52954993a96738b28f70de836bba",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23877,
+        "path": "runtime-capture/oracle-models/4cc0cf6f6294d5fcd70350bd09a6a9275c0f253e6c487eae8a0025c2636d53c2.json",
+        "sha256": "4cc0cf6f6294d5fcd70350bd09a6a9275c0f253e6c487eae8a0025c2636d53c2",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "e24211388397647ea483b2c3a8dd7b9b377e209480eaadd0b77eff7d6d31715a",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          1.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/aa1b960c08021c182bc4",
+      "input_sha256": "aa1b960c08021c182bc4433d39c3bd64232bdb6a2fff480140742df9d58b9954",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24307,
+        "path": "runtime-capture/oracle-models/d3310695d4275d02e53a6e1ba3cbb4e5a7be2a2a2f463e30f843c4a9067d460d.json",
+        "sha256": "d3310695d4275d02e53a6e1ba3cbb4e5a7be2a2a2f463e30f843c4a9067d460d",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "838bc75e029e2d4c8487bbae41ca5f1203c9b8cfd2d99c815d31ea44d0b03ac7",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/aad891514338a8ec1149",
+      "input_sha256": "aad891514338a8ec11498ab6c3a4108744d51f1a4314dc5826160eab79c10f5a",
+      "source_obligation": "public_empty_state_obligation",
+      "primary_model_reference": {
+        "bytes": 23828,
+        "path": "runtime-capture/oracle-models/c009e69f436f9aedda2c76b2e86b3e32e7ef320bf3644e384874cad6c9f5e3a1.json",
+        "sha256": "c009e69f436f9aedda2c76b2e86b3e32e7ef320bf3644e384874cad6c9f5e3a1",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "f39211d2cf1314d9e7e856b002145b153c7415f7039de73c779607ba6edae7a0",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/ad4cef3d32e9f763f999",
+      "input_sha256": "ad4cef3d32e9f763f999d2fbf054687b4fb65561982ac9e9d9dcbd07886c09bb",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23897,
+        "path": "runtime-capture/oracle-models/2e565d010cb42ebcb20bb5dace6b5d3668b8f9c1b16b24f3aff3ce5f04e31ef4.json",
+        "sha256": "2e565d010cb42ebcb20bb5dace6b5d3668b8f9c1b16b24f3aff3ce5f04e31ef4",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "ee0fbd82fba0db97c7c860331f32bc45d8d29304746f7e9f77780487598b14e6",
+      "authored_header_orientation": "horizontal",
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 49
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": null
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/ada5297b3962a5dd64f0",
+      "input_sha256": "ada5297b3962a5dd64f0528fa1b58d5dd3335bf7a8c66b70ef1060e362c1a663",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24198,
+        "path": "runtime-capture/oracle-models/580755f954122bf85db45db5129db7e7be54fa8ffb20056dc0256705d34b5c6c.json",
+        "sha256": "580755f954122bf85db45db5129db7e7be54fa8ffb20056dc0256705d34b5c6c",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "0c3793e5b73806dfffb3552ac8d982a51ea350e1061df0af5cbe6373c15fa259",
+      "authored_header_orientation": "horizontal",
+      "explicit_axis_domains": {
+        "y-axis": [
+          10.0,
+          150.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/b5039ed2614c14a02464",
+      "input_sha256": "b5039ed2614c14a024642fefd54e4f63656cbd6a906b707fcfc7ddf4ccc22bd9",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23928,
+        "path": "runtime-capture/oracle-models/9a8eb542b51a6d4e601e11e9e704ca069fd382f4608994f9f01b1c3f223826b7.json",
+        "sha256": "9a8eb542b51a6d4e601e11e9e704ca069fd382f4608994f9f01b1c3f223826b7",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "ed366d91aada643e1a1ed75a23588214b051844ca6e7dd77243e9d046a3f76fc",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "theme"
+          ],
+          "value": "default",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 3,
+            "byte_start": 12,
+            "byte_end": 29
+          },
+          "mapping_category": "authored_theme_profile_mapping_required",
+          "raw_scalar": "default"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/b50974f5288abac7cfe4",
+      "input_sha256": "b50974f5288abac7cfe4cd0f66d9084936a2588216809a6231fae4e841df10fe",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24394,
+        "path": "runtime-capture/oracle-models/686f86faa9ef0cdb882e07e0f99d4bcbe913e7ab1a008c6a174dad0faaf6536e.json",
+        "sha256": "686f86faa9ef0cdb882e07e0f99d4bcbe913e7ab1a008c6a174dad0faaf6536e",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "ca2980831e3feb967e02f9535d75fbe67d67e0ad94e3767c00ec87f12b07f84b",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          12000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        },
+        {
+          "path": [
+            "xyChart",
+            "chartOrientation"
+          ],
+          "value": "horizontal",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 47,
+            "byte_end": 80
+          },
+          "mapping_category": "semantic_orientation",
+          "raw_scalar": "horizontal"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/b5ca281ffb3aa4312164",
+      "input_sha256": "b5ca281ffb3aa4312164af899c0eb46713c7749ce0aa13d51de65a169ff63aec",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23903,
+        "path": "runtime-capture/oracle-models/38ccaa748a9bb13fcf80e9243660929668f712f8cf1cc8ccb2460d1bbceed5be.json",
+        "sha256": "38ccaa748a9bb13fcf80e9243660929668f712f8cf1cc8ccb2460d1bbceed5be",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "edf38530f70f075a4ecddbc45dd6c965145333ebc92d016199e590eacba87b28",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          8.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/b5cecba0def962c8ac4a",
+      "input_sha256": "b5cecba0def962c8ac4a2f609a39a62902bff6acbec7600c073482a35292f33d",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24545,
+        "path": "runtime-capture/oracle-models/cb94b0e7c6f814f0ab2fd346082dd8cba2416fb4ac425baf228742373d844bb9.json",
+        "sha256": "cb94b0e7c6f814f0ab2fd346082dd8cba2416fb4ac425baf228742373d844bb9",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "2e690913be4098227738ab82848b0f33086c7aadc71db73bf228f6d2d9573ecb",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/b604437a8712ffdbffb4",
+      "input_sha256": "b604437a8712ffdbffb4dab1c722763ff596be154acbce6d12890ff6bc9d1a2d",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24521,
+        "path": "runtime-capture/oracle-models/d594bcaa4883790b64d684331864a7f858441a56a490bc7de01ac2920729d0cc.json",
+        "sha256": "d594bcaa4883790b64d684331864a7f858441a56a490bc7de01ac2920729d0cc",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "4020ed96c92cedc0f5c72f0f18e54f0834084b46b9fab468a794c3180c99f9a4",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "titleColor"
+          ],
+          "value": "#ff0000",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 43,
+            "byte_end": 71
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ff0000\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "backgroundColor"
+          ],
+          "value": "#f0f8ff",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 6,
+            "byte_start": 71,
+            "byte_end": 104
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#f0f8ff\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "yAxisLabelColor"
+          ],
+          "value": "#ee82ee",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 104,
+            "byte_end": 137
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ee82ee\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "yAxisTitleColor"
+          ],
+          "value": "#7fffd4",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 8,
+            "byte_start": 137,
+            "byte_end": 170
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#7fffd4\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "yAxisTickColor"
+          ],
+          "value": "#87ceeb",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 9,
+            "byte_start": 170,
+            "byte_end": 202
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#87ceeb\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "yAxisLineColor"
+          ],
+          "value": "#ff6347",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 10,
+            "byte_start": 202,
+            "byte_end": 234
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ff6347\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "xAxisLabelColor"
+          ],
+          "value": "#7fffd4",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 11,
+            "byte_start": 234,
+            "byte_end": 267
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#7fffd4\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "xAxisTitleColor"
+          ],
+          "value": "#ee82ee",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 12,
+            "byte_start": 267,
+            "byte_end": 300
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ee82ee\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "xAxisTickColor"
+          ],
+          "value": "#ff6347",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 13,
+            "byte_start": 300,
+            "byte_end": 332
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#ff6347\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "xAxisLineColor"
+          ],
+          "value": "#87ceeb",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 14,
+            "byte_start": 332,
+            "byte_end": 364
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#87ceeb\""
+        },
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "plotColorPalette"
+          ],
+          "value": "#008000, #faba63",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 15,
+            "byte_start": 364,
+            "byte_end": 407
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "\"#008000, #faba63\""
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/b7e2e0438a13f8dff541",
+      "input_sha256": "b7e2e0438a13f8dff541004a93678b9485a6035406c2d2d4ad61e11b78ce8b74",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24242,
+        "path": "runtime-capture/oracle-models/f4a976ede23fa1c63ec9b5ac6bb4378bef62de5cf635e7fdf3ec6a6fb8cbb9cb.json",
+        "sha256": "f4a976ede23fa1c63ec9b5ac6bb4378bef62de5cf635e7fdf3ec6a6fb8cbb9cb",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "68692ab5e5fbbacad30b4c1dc38ffd3f5b98e411b7b1f42732a5cdd8bafe4090",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        },
+        {
+          "path": [
+            "xyChart",
+            "chartOrientation"
+          ],
+          "value": "horizontal",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 47,
+            "byte_end": 80
+          },
+          "mapping_category": "semantic_orientation",
+          "raw_scalar": "horizontal"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/b944e4dfd0d536898b9c",
+      "input_sha256": "b944e4dfd0d536898b9cdf82261417f4aea7437492130d4fb65ecff0ac12e478",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23899,
+        "path": "runtime-capture/oracle-models/14f25dcb507c1e093d8a7ad188ff79003635e136ca4d7988be9d0f1789d2f9ed.json",
+        "sha256": "14f25dcb507c1e093d8a7ad188ff79003635e136ca4d7988be9d0f1789d2f9ed",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "5e65c09570f4275e8528bf038f79879be82f4eae55a883415a2ece6ab93ca65d",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [
+        {
+          "field": "xAxis.title",
+          "raw_token": "\"  xAxisName has space   \"",
+          "quoted": true,
+          "authored_text_before_grammar": "  xAxisName has space   ",
+          "grammar_text_before_sanitizer": "  xAxisName has space   ",
+          "resolved_text": "xAxisName has space",
+          "transformations": [
+            "textSanitizer_outer_whitespace_trim"
+          ],
+          "source_span": {
+            "line": 2,
+            "byte_start": 8,
+            "byte_end": 45
+          }
+        }
+      ],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/b96f6fc90f5537138c89",
+      "input_sha256": "b96f6fc90f5537138c899704becb9ee290e937c5273862f075168dbb72f486e2",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23880,
+        "path": "runtime-capture/oracle-models/cb6f93d4a52e3ce2e279eabbd6bd5355846dc13f4b73ab4435a435afa751ca79.json",
+        "sha256": "cb6f93d4a52e3ce2e279eabbd6bd5355846dc13f4b73ab4435a435afa751ca79",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "55ccce2c93a773729ca298eed4502a85a67817ad5f1190fec7f078b631812eca",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/bbbbb8060c1a4b938c61",
+      "input_sha256": "bbbbb8060c1a4b938c61a245ea3007141657620914b3e620bef5ec669963d513",
+      "source_obligation": "public_empty_state_obligation",
+      "primary_model_reference": {
+        "bytes": 23839,
+        "path": "runtime-capture/oracle-models/8f3f65df0db5866e7b28191a196f687b23d3036f22bb9df8df11c2505fd5221d.json",
+        "sha256": "8f3f65df0db5866e7b28191a196f687b23d3036f22bb9df8df11c2505fd5221d",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "c79f871cc7a342cbe2bc4643aa4d8706a131918462ab7dada11585c0b1b07256",
+      "authored_header_orientation": "horizontal",
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/be76c5e68481288670b7",
+      "input_sha256": "be76c5e68481288670b7d70640e209281e2962aa40e54c159c254c305eb5c51a",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 26738,
+        "path": "runtime-capture/oracle-models/d96f28f2c38f427f6b363c9362713092c18c44fa433e9e56cd1944055579cbd1.json",
+        "sha256": "d96f28f2c38f427f6b363c9362713092c18c44fa433e9e56cd1944055579cbd1",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "ecc6eee9b3a87c402044d140650352850da126f3fe3f7dc5823f582e26d818d3",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "theme"
+          ],
+          "value": "forest",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 3,
+            "byte_start": 12,
+            "byte_end": 28
+          },
+          "mapping_category": "authored_theme_profile_mapping_required",
+          "raw_scalar": "forest"
+        },
+        {
+          "path": [
+            "xyChart",
+            "width"
+          ],
+          "value": 1000.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 39,
+            "byte_end": 55
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "1000"
+        },
+        {
+          "path": [
+            "xyChart",
+            "height"
+          ],
+          "value": 600.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 6,
+            "byte_start": 55,
+            "byte_end": 71
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "600"
+        },
+        {
+          "path": [
+            "xyChart",
+            "titlePadding"
+          ],
+          "value": 5.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 71,
+            "byte_end": 91
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "5"
+        },
+        {
+          "path": [
+            "xyChart",
+            "titleFontSize"
+          ],
+          "value": 10.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 8,
+            "byte_start": 91,
+            "byte_end": 113
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "10"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "labelFontSize"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 10,
+            "byte_start": 124,
+            "byte_end": 148
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "labelPadding"
+          ],
+          "value": 10.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 11,
+            "byte_start": 148,
+            "byte_end": 171
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "10"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "titleFontSize"
+          ],
+          "value": 30.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 12,
+            "byte_start": 171,
+            "byte_end": 195
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "30"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "titlePadding"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 13,
+            "byte_start": 195,
+            "byte_end": 218
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "tickLength"
+          ],
+          "value": 10.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 14,
+            "byte_start": 218,
+            "byte_end": 239
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "10"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "tickWidth"
+          ],
+          "value": 5.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 15,
+            "byte_start": 239,
+            "byte_end": 258
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "5"
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "axisLineWidth"
+          ],
+          "value": 5.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 16,
+            "byte_start": 258,
+            "byte_end": 281
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "5"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "labelFontSize"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 18,
+            "byte_start": 292,
+            "byte_end": 316
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "labelPadding"
+          ],
+          "value": 10.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 19,
+            "byte_start": 316,
+            "byte_end": 339
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "10"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "titleFontSize"
+          ],
+          "value": 30.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 20,
+            "byte_start": 339,
+            "byte_end": 363
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "30"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "titlePadding"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 21,
+            "byte_start": 363,
+            "byte_end": 386
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "tickLength"
+          ],
+          "value": 10.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 22,
+            "byte_start": 386,
+            "byte_end": 407
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "10"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "tickWidth"
+          ],
+          "value": 5.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 23,
+            "byte_start": 407,
+            "byte_end": 426
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "5"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "axisLineWidth"
+          ],
+          "value": 5.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 24,
+            "byte_start": 426,
+            "byte_end": 449
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "5"
+        },
+        {
+          "path": [
+            "xyChart",
+            "chartOrientation"
+          ],
+          "value": "horizontal",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 25,
+            "byte_start": 449,
+            "byte_end": 482
+          },
+          "mapping_category": "semantic_orientation",
+          "raw_scalar": "horizontal"
+        },
+        {
+          "path": [
+            "xyChart",
+            "plotReservedSpacePercent"
+          ],
+          "value": 60.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 26,
+            "byte_start": 482,
+            "byte_end": 515
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "60"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/be81f5221ceb8d3b96e1",
+      "input_sha256": "be81f5221ceb8d3b96e18e5bcbe25d32928703c62f2edf9bfd792657147390d7",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23915,
+        "path": "runtime-capture/oracle-models/a27aff3f4aa0897cc674a3594c3719a7b1dee6402d9a8194dbfda3fc3c019d1f.json",
+        "sha256": "a27aff3f4aa0897cc674a3594c3719a7b1dee6402d9a8194dbfda3fc3c019d1f",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "e01a7a6e966a17347683cb9ffb93cda096ee806482e8d15cf0312464f2772948",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/c3847f5def746d8ceb9d",
+      "input_sha256": "c3847f5def746d8ceb9d1fd8e345b5faf2e2038f4e45256699290276e1181e8d",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23896,
+        "path": "runtime-capture/oracle-models/491d4b86ba9acee32f6be28af3c8f51374bbf53276be3d94a2289544a99a458a.json",
+        "sha256": "491d4b86ba9acee32f6be28af3c8f51374bbf53276be3d94a2289544a99a458a",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "a7e4eb3834ad6c85d3d779793ec4714d7bd97b6b418e1f52d24f50cd7f2b96c8",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/c394d4264757f9f12b44",
+      "input_sha256": "c394d4264757f9f12b446f34b1939b9cd7a67d97c207d163e5a19335ca617c0e",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24120,
+        "path": "runtime-capture/oracle-models/b278b2cba21c8306405e88d5b196ddbc18283561d442bff55800d0318d7efa23.json",
+        "sha256": "b278b2cba21c8306405e88d5b196ddbc18283561d442bff55800d0318d7efa23",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "64ac8f24fd668b33276473efc429b326a397b08e6fd11f5cc70daf471a1fc8f6",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/c4876244e23f0133de04",
+      "input_sha256": "c4876244e23f0133de04ed612d46566bdad803afdec4ba58fd44a1209d92585a",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23881,
+        "path": "runtime-capture/oracle-models/fbcea8e57e3eebc67c471250fbd577bc6e5598cf8dcd9d2229190df4d2a68811.json",
+        "sha256": "fbcea8e57e3eebc67c471250fbd577bc6e5598cf8dcd9d2229190df4d2a68811",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "0e9e32842363006a36408890691c2490370136dd8d30595f18bcecb73fcad24a",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/c49260ce97f3719a1bdf",
+      "input_sha256": "c49260ce97f3719a1bdffe98fb701e5cdd253cb49b29fd60e6bf09fdfb230ea1",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23898,
+        "path": "runtime-capture/oracle-models/9b01bf198e28bcdc15d7d28de68216671170878b040b52276c7e2bd9b485fc21.json",
+        "sha256": "9b01bf198e28bcdc15d7d28de68216671170878b040b52276c7e2bd9b485fc21",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "4136bcd9f84d730a687e37f6cbe9cc7b7d1539e4dcbe9f766cb5a288d126d96f",
+      "authored_header_orientation": "horizontal",
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 49
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": null
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/c72edeefc2511714d434",
+      "input_sha256": "c72edeefc2511714d434c562e48b58e7f7a5f0a28d26df99ae3f6c62f6231961",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23934,
+        "path": "runtime-capture/oracle-models/956a8bcdb4784fbb3660d48cdf467cbe9d0de5bbbf954c2b03432cf0090c0243.json",
+        "sha256": "956a8bcdb4784fbb3660d48cdf467cbe9d0de5bbbf954c2b03432cf0090c0243",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "9b3b53ca6b482b5a9001a6b4ae41bad6e5472ca5ceb32b1c02c9aabc11498c12",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [
+        {
+          "series_index": 0,
+          "category_index": 2,
+          "category": "cat3",
+          "typed_value": null,
+          "obligation": "retain authored category port/order; no fabricated zero or data mark"
+        }
+      ],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/cbd65c7f26c8e2a3ff40",
+      "input_sha256": "cbd65c7f26c8e2a3ff408fc41a1ff849a408f4a114cc7e3774794431812c7074",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24556,
+        "path": "runtime-capture/oracle-models/d6bceb373e3ddd475a4d37d8fdd7bee01d2717dc8e2a7fa819033e1d539fe05f.json",
+        "sha256": "d6bceb373e3ddd475a4d37d8fdd7bee01d2717dc8e2a7fa819033e1d539fe05f",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "4020ed96c92cedc0f5c72f0f18e54f0834084b46b9fab468a794c3180c99f9a4",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/d132fb3382109612f2a2",
+      "input_sha256": "d132fb3382109612f2a2998a4cc3d48e3bbc2edec8b44b11b782c01d9c3f14b4",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24238,
+        "path": "runtime-capture/oracle-models/ef47ddb3262ad5229c0d7dce6462b2c8bcc1bc84bc67dbedc36faff1bd785b10.json",
+        "sha256": "ef47ddb3262ad5229c0d7dce6462b2c8bcc1bc84bc67dbedc36faff1bd785b10",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "2285435608d8641321306c9260644f12611695981ec3fbf986693f8c7ec0f2de",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/d191355da1e4302cfae5",
+      "input_sha256": "d191355da1e4302cfae551e54b8c24ba111076823deb24df68555813bb31d6d7",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24093,
+        "path": "runtime-capture/oracle-models/c0d45f82c9af375b987646c338cfebce1db6a196f39d54291d4e1f9b9aca6496.json",
+        "sha256": "c0d45f82c9af375b987646c338cfebce1db6a196f39d54291d4e1f9b9aca6496",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "1d5294e5cb5a99c8de9253cabda0aa6f24b35a59f3e2efae46735339baaf7b8b",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "x-axis": [
+          0.0,
+          2.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/d253903164ded24f8da5",
+      "input_sha256": "d253903164ded24f8da58e41fdb6096de2070e96a1841391d7899660f755be37",
+      "source_obligation": "public_empty_state_obligation",
+      "primary_model_reference": {
+        "bytes": 23817,
+        "path": "runtime-capture/oracle-models/e2813321edaa1428c3987d98928219c0f8ee797686d8ecc38ff797adb4c51f2c.json",
+        "sha256": "e2813321edaa1428c3987d98928219c0f8ee797686d8ecc38ff797adb4c51f2c",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "798c2ce945ffcc4eef48a0d95198c993aab08bace0920c071c1a9cbb09928937",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/d27d99be2e8f56c3b6d4",
+      "input_sha256": "d27d99be2e8f56c3b6d4012c14f310ddaacc4d512b6b97d05b8766f0e4e96a88",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24483,
+        "path": "runtime-capture/oracle-models/f9d4de1da8a0e77d7b65e07dd4dba6ff9472fa30b3dcc0bf7308d2a6f57060cd.json",
+        "sha256": "f9d4de1da8a0e77d7b65e07dd4dba6ff9472fa30b3dcc0bf7308d2a6f57060cd",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "670c38adc9255b79518ce3cbd30c71cd917e93daa708bc6580871de2e6da6dbb",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/d6e65f39f09c1e239bf6",
+      "input_sha256": "d6e65f39f09c1e239bf6f5281a6c5cc27eb16ee7e6bd197af6dbbf204af7c961",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23908,
+        "path": "runtime-capture/oracle-models/c56fa11a4d89e9772fbe58340a97d7261f06f58274336b445cf0ccfa58da8903.json",
+        "sha256": "c56fa11a4d89e9772fbe58340a97d7261f06f58274336b445cf0ccfa58da8903",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "a0ff9bfd9fb3c4fa5a9b3eb056387c80a37e10b5b81f8ba799bfbe6d91daedaf",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.001,
+          0.005
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/e02006a83b444bc3033d",
+      "input_sha256": "e02006a83b444bc3033d141fc33d286cf877291ee9ca4d6b2f0f3ef00569812e",
+      "source_obligation": "public_empty_state_obligation",
+      "primary_model_reference": {
+        "bytes": 23836,
+        "path": "runtime-capture/oracle-models/923215d4658e1fb6720184fa07592e9a570a48b58e34a87d641ebb4a6bdb976e.json",
+        "sha256": "923215d4658e1fb6720184fa07592e9a570a48b58e34a87d641ebb4a6bdb976e",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "e4de097a8df6dacc8fc2d0ae3f74399df1754a1cfd41fa093347c3c342b9a0fe",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/e05849d74172029c24af",
+      "input_sha256": "e05849d74172029c24afd0a4cd7d6df2af8c6691cbe25a8dd643a311b98612f5",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24527,
+        "path": "runtime-capture/oracle-models/c8231b4d0c03d93426733e3b76f953cd1adf27af4c5f3df063a3a378f6db5d6e.json",
+        "sha256": "c8231b4d0c03d93426733e3b76f953cd1adf27af4c5f3df063a3a378f6db5d6e",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "1b17b21209079496aa60a5e9878b1c480501491bbba787a54ad6fc87d9014db9",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/e08b0c527f3a15fff9df",
+      "input_sha256": "e08b0c527f3a15fff9dfb0c175d3985ce66993f1108a7b8960e4333aa6c5a257",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24954,
+        "path": "runtime-capture/oracle-models/35c3ebed52c59ad8a927436b31fda0d0372bc9e13b6e0fd5b8a919cd5d3c819c.json",
+        "sha256": "35c3ebed52c59ad8a927436b31fda0d0372bc9e13b6e0fd5b8a919cd5d3c819c",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "fe592eaef4a7d954aaa7a23cf045a33f49be5f6aaf8567152cc72509c17cfb55",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [
+        {
+          "path": [
+            "theme"
+          ],
+          "value": "dark",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 3,
+            "byte_start": 12,
+            "byte_end": 26
+          },
+          "mapping_category": "authored_theme_profile_mapping_required",
+          "raw_scalar": "dark"
+        },
+        {
+          "path": [
+            "xyChart",
+            "width"
+          ],
+          "value": 200.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 37,
+            "byte_end": 52
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "200"
+        },
+        {
+          "path": [
+            "xyChart",
+            "height"
+          ],
+          "value": 20.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 6,
+            "byte_start": 52,
+            "byte_end": 67
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "20"
+        },
+        {
+          "path": [
+            "xyChart",
+            "plotReservedSpacePercent"
+          ],
+          "value": 100.0,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 67,
+            "byte_end": 101
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": "100"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/e09ec704d153a3b146db",
+      "input_sha256": "e09ec704d153a3b146db6955a76d59fd1ebd27f5384ce9109a74865fec6c1c39",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23937,
+        "path": "runtime-capture/oracle-models/529d40e6fa5411aba011c1b804a54cacdcdb6ae341b167a9b2c9b402fdacbd16.json",
+        "sha256": "529d40e6fa5411aba011c1b804a54cacdcdb6ae341b167a9b2c9b402fdacbd16",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "ca73ea0ff003198ab5e5c9d0d6c5f947525f9e856af59cb9fbe7f074dfdbda31",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/e129388167382a04e9f9",
+      "input_sha256": "e129388167382a04e9f9d15fe80d26693a56ec91565552c7d11a64038681c637",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24570,
+        "path": "runtime-capture/oracle-models/2a21f202ad01740815c237ac7fd0cd7df8acbab94756eefde1dfce3e6d304c56.json",
+        "sha256": "2a21f202ad01740815c237ac7fd0cd7df8acbab94756eefde1dfce3e6d304c56",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "ecc6eee9b3a87c402044d140650352850da126f3fe3f7dc5823f582e26d818d3",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "width"
+          ],
+          "value": 1000,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "height"
+          ],
+          "value": 600,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "titlePadding"
+          ],
+          "value": 5,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "titleFontSize"
+          ],
+          "value": 10,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "labelFontSize"
+          ],
+          "value": "20",
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "labelPadding"
+          ],
+          "value": 10,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "titleFontSize"
+          ],
+          "value": 30,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "titlePadding"
+          ],
+          "value": 20,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "tickLength"
+          ],
+          "value": 10,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "tickWidth"
+          ],
+          "value": 5,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "labelFontSize"
+          ],
+          "value": "20",
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "labelPadding"
+          ],
+          "value": 10,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "titleFontSize"
+          ],
+          "value": 30,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "titlePadding"
+          ],
+          "value": 20,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "tickLength"
+          ],
+          "value": 10,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "tickWidth"
+          ],
+          "value": 5,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "plotBorderWidth"
+          ],
+          "value": 5,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "legacy_or_unknown_authored_config_not_present_in_pinned_model_review_required",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "chartOrientation"
+          ],
+          "value": "horizontal",
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "semantic_orientation",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "plotReservedSpacePercent"
+          ],
+          "value": 60,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 445
+          },
+          "mapping_category": "svg_units_layout_style_profile_mapping_required",
+          "raw_scalar": null
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/e38d2009076692e2096a",
+      "input_sha256": "e38d2009076692e2096af82eb9ca78c091f943fa564b76a3da086cdd2c7bc344",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24558,
+        "path": "runtime-capture/oracle-models/409cc89966eb583b0f5e3cc2df9215bba1d8a12aeefa1bb0cfc7f6a161dcbbeb.json",
+        "sha256": "409cc89966eb583b0f5e3cc2df9215bba1d8a12aeefa1bb0cfc7f6a161dcbbeb",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "4020ed96c92cedc0f5c72f0f18e54f0834084b46b9fab468a794c3180c99f9a4",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          4000.0,
+          11000.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "xAxis",
+            "showTitle"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 34,
+            "byte_end": 57
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        },
+        {
+          "path": [
+            "xyChart",
+            "yAxis",
+            "showTitle"
+          ],
+          "value": false,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 7,
+            "byte_start": 68,
+            "byte_end": 91
+          },
+          "mapping_category": "semantic_visibility",
+          "raw_scalar": "false"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/e52cdbcd37786e88ebc9",
+      "input_sha256": "e52cdbcd37786e88ebc968d953acffe5826346b09db66017d246b0e0348716b3",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24484,
+        "path": "runtime-capture/oracle-models/0321f5b3aa6ee79d6566763f4a1f624293ac02144c49d96cbace64c298526712.json",
+        "sha256": "0321f5b3aa6ee79d6566763f4a1f624293ac02144c49d96cbace64c298526712",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "887a58d4de8fc2be634d69f2f1d9537fd09440b21f90b48551a8f07c390e3740",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/e99c0372aad3ad5c0078",
+      "input_sha256": "e99c0372aad3ad5c007885b17fd65cc86a51a8614f18f39d437269bfcbb29977",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23985,
+        "path": "runtime-capture/oracle-models/4492ab21122f984227a3b8bd6afc0cc369509632abcf070ec0421aea84ffa01a.json",
+        "sha256": "4492ab21122f984227a3b8bd6afc0cc369509632abcf070ec0421aea84ffa01a",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "71e91a0a94d510f80697849b5b4581d6a23221916bd1dd4040e0e36359f4e786",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 49
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": null
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/ec60b8a277bb36d02d78",
+      "input_sha256": "ec60b8a277bb36d02d78ed5c9b19dfc012f2e714b9e33febb52ed1efaf42dd4a",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23966,
+        "path": "runtime-capture/oracle-models/75bf37c22c7219392566525a601fa6951616d7dd32de5a21cac020b51258528b.json",
+        "sha256": "75bf37c22c7219392566525a601fa6951616d7dd32de5a21cac020b51258528b",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "226b8c66f1f2e6d8fb98a420cd740dc9cbb1920dfe28ab89361a36e6c5763ea7",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [
+        {
+          "series_index": 0,
+          "category_index": 1,
+          "category": "cat2asdf",
+          "typed_value": null,
+          "obligation": "retain authored category port/order; no fabricated zero or data mark"
+        },
+        {
+          "series_index": 0,
+          "category_index": 2,
+          "category": "cat3",
+          "typed_value": null,
+          "obligation": "retain authored category port/order; no fabricated zero or data mark"
+        }
+      ],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [
+        {
+          "field": "xAxis.categories[1]",
+          "raw_token": "   cat2 asdf ",
+          "quoted": false,
+          "authored_text_before_grammar": "cat2 asdf",
+          "grammar_text_before_sanitizer": "cat2asdf",
+          "resolved_text": "cat2asdf",
+          "transformations": [
+            "unquoted_alphaNum_whitespace_lexically_skipped"
+          ],
+          "source_span": {
+            "line": 2,
+            "byte_start": 8,
+            "byte_end": 73
+          }
+        }
+      ],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/f0ee73a29c41df146077",
+      "input_sha256": "f0ee73a29c41df146077632f3e958525b7088d2e93d2056e2d71fb8959302290",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23894,
+        "path": "runtime-capture/oracle-models/16591002228f5aa0b26dfb681fec261c4cab260d4c91d1d84db261f6a7cf6693.json",
+        "sha256": "16591002228f5aa0b26dfb681fec261c4cab260d4c91d1d84db261f6a7cf6693",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "a7e4eb3834ad6c85d3d779793ec4714d7bd97b6b418e1f52d24f50cd7f2b96c8",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 82
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "showDataLabelOutsideBar"
+          ],
+          "value": true,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 82
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": null
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/f248b6991b99619a837a",
+      "input_sha256": "f248b6991b99619a837a8e2ce0b25d7b84f915289a04d5cd9878d3498fb81095",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23944,
+        "path": "runtime-capture/oracle-models/92c4c63a948744283076245c5998b14de08b2caf372882ec76b6b42938477ce5.json",
+        "sha256": "92c4c63a948744283076245c5998b14de08b2caf372882ec76b6b42938477ce5",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "faeedd6f020cfca4a5e0a226806e7eda10b43cacbed47898ce7aa47755619a1d",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {},
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/f2e3365ed39de8ce6973",
+      "input_sha256": "f2e3365ed39de8ce69739c3d701206760cb0a7f715390d392dea11871861dceb",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23898,
+        "path": "runtime-capture/oracle-models/de561d2a4a768a80b285a98ffd06cfa2eb09ca58baa43fd3c50d551a30bb6865.json",
+        "sha256": "de561d2a4a768a80b285a98ffd06cfa2eb09ca58baa43fd3c50d551a30bb6865",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "ee0fbd82fba0db97c7c860331f32bc45d8d29304746f7e9f77780487598b14e6",
+      "authored_header_orientation": "horizontal",
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/f50b2db43a0801593459",
+      "input_sha256": "f50b2db43a08015934592b821c12976bb63fc0cb491eae9c3a67d288449b6070",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23913,
+        "path": "runtime-capture/oracle-models/b8daa198907edff158db1a660079360ed8dc4c5edbd17f07a010ba59507c5a65.json",
+        "sha256": "b8daa198907edff158db1a660079360ed8dc4c5edbd17f07a010ba59507c5a65",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "9ea0ad15aebfaf269c6ae3494d88e9b29258e26ca41f883f3f965832fc893646",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          100.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        },
+        {
+          "path": [
+            "xyChart",
+            "chartOrientation"
+          ],
+          "value": "horizontal",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 47,
+            "byte_end": 80
+          },
+          "mapping_category": "semantic_orientation",
+          "raw_scalar": "horizontal"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/f5f012ca4e7055701b83",
+      "input_sha256": "f5f012ca4e7055701b834cea909c39809f0e53e235aa6606cbb3491d70e3cc34",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23958,
+        "path": "runtime-capture/oracle-models/032eb6b96f84f4082eb1504974d9f68cec631de89325c908fa3cb75aee1e23f9.json",
+        "sha256": "032eb6b96f84f4082eb1504974d9f68cec631de89325c908fa3cb75aee1e23f9",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "a845b0f69430c3a970cb035cb2b87896efdd271866eed14f57f205a80ebb7866",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          -10.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 4,
+            "byte_start": 23,
+            "byte_end": 47
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": "true"
+        },
+        {
+          "path": [
+            "xyChart",
+            "chartOrientation"
+          ],
+          "value": "horizontal",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 47,
+            "byte_end": 80
+          },
+          "mapping_category": "semantic_orientation",
+          "raw_scalar": "horizontal"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/f6e1865fc70d2c098e9c",
+      "input_sha256": "f6e1865fc70d2c098e9ccd2d249a2631237074a3b893d18df6296371de9a96fb",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23882,
+        "path": "runtime-capture/oracle-models/2b231cce31563bd2300c00b69bd34ea2e2611dbf0b30ca0f449236c268494c57.json",
+        "sha256": "2b231cce31563bd2300c00b69bd34ea2e2611dbf0b30ca0f449236c268494c57",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "00aa35dc025bdaa3d101fef699a80392dcf895054e0ca016a8652c542f6d2f32",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          45.5,
+          33.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [
+        {
+          "series_index": 0,
+          "sample_index": 0,
+          "value": 1.0
+        }
+      ],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/f8d89363e95de9e9505f",
+      "input_sha256": "f8d89363e95de9e9505fe1b70b5196d74eeb8348ba140f62ba0ae4eebd4af00f",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24407,
+        "path": "runtime-capture/oracle-models/0413d3d49dc14f866791d8e2737aa51d363563868e32945cb684bcf281c9d801.json",
+        "sha256": "0413d3d49dc14f866791d8e2737aa51d363563868e32945cb684bcf281c9d801",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "9e843e8ffb4acb5e25b0415bfe841d03083a811be05a1e4d16a580a90d68242a",
+      "authored_header_orientation": "horizontal",
+      "explicit_axis_domains": {
+        "y-axis": [
+          10.0,
+          150.0
+        ]
+      },
+      "authored_config_fields": [],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [
+        {
+          "series_index": 1,
+          "raw_count": 4,
+          "typed_count": 3,
+          "raw_values": [
+            11.0,
+            45.5,
+            67.0,
+            23.0
+          ],
+          "typed_values": [
+            11.0,
+            45.5,
+            67.0
+          ],
+          "classification": "official_explicit_band_extent_truncation",
+          "omitted_authored_tail": [
+            23.0
+          ]
+        }
+      ],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/fbe6837b9d1a9a5dfe23",
+      "input_sha256": "fbe6837b9d1a9a5dfe236abba0807caf5cb10dc5903af438e9717bf7da5688d2",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 24474,
+        "path": "runtime-capture/oracle-models/69d5e391c83a48b6485fb3771e36f8cbfdb2af597929e8c92143391649f4878f.json",
+        "sha256": "69d5e391c83a48b6485fb3771e36f8cbfdb2af597929e8c92143391649f4878f",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "f0354ff05640b69796aefab156f03be984003e2949aebc980cabfdc8c3d60a61",
+      "authored_header_orientation": null,
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          50.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "themeVariables",
+            "xyChart",
+            "plotColorPalette"
+          ],
+          "value": "#000000, #0000FF, #00FF00, #FF0000",
+          "syntax": "frontmatter_leaf",
+          "source_span": {
+            "line": 5,
+            "byte_start": 43,
+            "byte_end": 104
+          },
+          "mapping_category": "authored_theme_role_or_palette_profile_mapping_required",
+          "raw_scalar": "'#000000, #0000FF, #00FF00, #FF0000'"
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    },
+    {
+      "id": "merman/fc1e5eee7ed383d16702",
+      "input_sha256": "fc1e5eee7ed383d16702124b659397dc63e22d9d4033064cdbd187b0c180fbfb",
+      "source_obligation": "public_nonempty_data_obligation",
+      "primary_model_reference": {
+        "bytes": 23896,
+        "path": "runtime-capture/oracle-models/cdab507ac62c9aae34351dbfdfc427c7e1f8ca245c71725cac222a38b66964a8.json",
+        "sha256": "cdab507ac62c9aae34351dbfdfc427c7e1f8ca245c71725cac222a38b66964a8",
+        "source": "pinned public parse compatibility_json, maintenance only"
+      },
+      "typed_facts_canonical_sha256": "ee0fbd82fba0db97c7c860331f32bc45d8d29304746f7e9f77780487598b14e6",
+      "authored_header_orientation": "horizontal",
+      "explicit_axis_domains": {
+        "y-axis": [
+          0.0,
+          10.0
+        ]
+      },
+      "authored_config_fields": [
+        {
+          "path": [
+            "xyChart",
+            "showDataLabel"
+          ],
+          "value": true,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 82
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": null
+        },
+        {
+          "path": [
+            "xyChart",
+            "showDataLabelOutsideBar"
+          ],
+          "value": true,
+          "syntax": "init_json_leaf",
+          "source_span": {
+            "line": 1,
+            "byte_start": 0,
+            "byte_end": 82
+          },
+          "mapping_category": "semantic_value_disclosure",
+          "raw_scalar": null
+        }
+      ],
+      "band_missing_sample_slots": [],
+      "source_model_data_transformations": [],
+      "text_resolution_deltas": [],
+      "projected_values_outside_authored_y": [],
+      "post_parse_model_test_isolation": null
+    }
+  ]
+}

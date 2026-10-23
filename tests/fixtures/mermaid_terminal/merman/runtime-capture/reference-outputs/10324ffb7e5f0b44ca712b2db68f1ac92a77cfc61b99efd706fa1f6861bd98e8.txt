@@ -1,0 +1,8 @@
+xDomain: band categories=[bytes=1="A"]
+yDomain: linear authored=[0,1] resolved=[0,1]
+values: * series=0 type=line title=none samples=[{index=0 x(bytes=1)="A" value=2 pointLabel(bytes=4)="peak" clipped=true}] orphanPointLabels=[bytes=8="detached"]
+ *
+
+
+
+

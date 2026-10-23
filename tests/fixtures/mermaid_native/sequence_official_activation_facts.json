@@ -1,0 +1,702 @@
+{
+  "schema": 1,
+  "qualification": "Independent source-only manually transcribed models, before new renderer execution; not a snapshot promotion or original official assertion pass.",
+  "upstream": {
+    "repository": "https://github.com/mermaid-js/mermaid",
+    "tag": "mermaid@12.2.0",
+    "tag_object": "ee1fdbcebe057cae346232efb6df066215565bec",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "tree": "58f6617da68d7f2b8a58161175db5db5a971cd82",
+    "root": "e2e/diagrams",
+    "license_sha256": "ec9fb67dcb25eccc416ed56e1aab819222c805a2a4bfe4cb19e7556bf2ffde80"
+  },
+  "scope": "All activation-bearing sources among the complete193 sequence diagnostic suffixes.",
+  "counts": {
+    "actors": 15,
+    "messages": 21,
+    "notes": 0,
+    "fragments": 6,
+    "order": 47,
+    "activate": 9,
+    "deactivate": 5
+  },
+  "cases": [
+    {
+      "path": "sequence/nightly-check/should-render-a-single-and-nested-opt-with-long-test-overflowing.mmd",
+      "raw_sha256": "18edf1e21f3b25f23218f0256d7a8421d311f610a7f7f02e84a42d6e88a885d3",
+      "body_offset_utf8_bytes": 292,
+      "body_sha256": "2e756c9ff70d414d8fb114cd27cb01dacf408c9480e7af34c221761c137b77cd",
+      "body": "sequenceDiagram\n  participant A\n  participant B\n  participant C\n  participant D\n  participant E\n  participant G\n\n  A ->>+ B: Task 1\n  opt this is an opt with a long title that will overflow\n  B ->>+ C: Task 2\n  C -->>- B: Return\n  end\n\n  A ->> D: Task 3\n  opt this is another opt with a long title that will overflow\n  D ->>+ E: Task 4\n  opt this is a nested opt with a long title that will overflow\n  E ->>+ G: Task 5\n  G -->>- E: Return\n  end\n  E ->> E: Task 6\n  end\n  D -->> A: Complete\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          },
+          {
+            "id": "D",
+            "label": "D",
+            "person": false
+          },
+          {
+            "id": "E",
+            "label": "E",
+            "person": false
+          },
+          {
+            "id": "G",
+            "label": "G",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Task 1",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Task 2",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 2,
+            "to": 1,
+            "label": "Return",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 3,
+            "label": "Task 3",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "label": "Task 4",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "label": "Task 5",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 5,
+            "to": 4,
+            "label": "Return",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 4,
+            "to": 4,
+            "label": "Task 6",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 3,
+            "to": 0,
+            "label": "Complete",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "opt",
+            "label": "this is an opt with a long title that will overflow",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "opt",
+            "label": "this is another opt with a long title that will overflow",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "opt",
+            "label": "this is a nested opt with a long title that will overflow",
+            "parent": 1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Deactivate",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Deactivate",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          }
+        ]
+      },
+      "activation_statement_witnesses": [
+        {
+          "offset_utf8_bytes": 113,
+          "text": "  A ->>+ B: Task 1"
+        },
+        {
+          "offset_utf8_bytes": 190,
+          "text": "  B ->>+ C: Task 2"
+        },
+        {
+          "offset_utf8_bytes": 209,
+          "text": "  C -->>- B: Return"
+        },
+        {
+          "offset_utf8_bytes": 317,
+          "text": "  D ->>+ E: Task 4"
+        },
+        {
+          "offset_utf8_bytes": 400,
+          "text": "  E ->>+ G: Task 5"
+        },
+        {
+          "offset_utf8_bytes": 419,
+          "text": "  G -->>- E: Return"
+        }
+      ],
+      "projection": "Native terminal activation strips and literal fragment color captions; body only, no raw frontmatter/config/theme/wrapping parity."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-a-single-and-nested-rects.mmd",
+      "raw_sha256": "548f98f0a32bfaa4c101e133d9b55bb652a7a890f829444da3817ee6454c829d",
+      "body_offset_utf8_bytes": 173,
+      "body_sha256": "010bcdf0acd08e163b6ce2aa6e28a9ef886cde16a188785ad1c3f3c7535e99dc",
+      "body": "sequenceDiagram\n  participant A\n  participant B\n  participant C\n  participant D\n  participant E\n  participant G\n\n  A ->>+ B: Task 1\n  rect rgb(178, 102, 255)\n  B ->>+ C: Task 2\n  C -->>- B: Return\n  end\n\n  A ->> D: Task 3\n  rect rgb(0, 128, 255)\n  D ->>+ E: Task 4\n  rect rgb(0, 204, 0)\n  E ->>+ G: Task 5\n  G -->>- E: Return\n  end\n  E ->> E: Task 6\n  end\n  D -->> A: Complete\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "A",
+            "label": "A",
+            "person": false
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "person": false
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "person": false
+          },
+          {
+            "id": "D",
+            "label": "D",
+            "person": false
+          },
+          {
+            "id": "E",
+            "label": "E",
+            "person": false
+          },
+          {
+            "id": "G",
+            "label": "G",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Task 1",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Task 2",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 2,
+            "to": 1,
+            "label": "Return",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 3,
+            "label": "Task 3",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "label": "Task 4",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "label": "Task 5",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 5,
+            "to": 4,
+            "label": "Return",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 4,
+            "to": 4,
+            "label": "Task 6",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 3,
+            "to": 0,
+            "label": "Complete",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [
+          {
+            "kind": "rect",
+            "label": "rgb(178, 102, 255)",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "rect",
+            "label": "rgb(0, 128, 255)",
+            "parent": -1,
+            "dividers": []
+          },
+          {
+            "kind": "rect",
+            "label": "rgb(0, 204, 0)",
+            "parent": 1,
+            "dividers": []
+          }
+        ],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Deactivate",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Open",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Deactivate",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Close",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          }
+        ]
+      },
+      "activation_statement_witnesses": [
+        {
+          "offset_utf8_bytes": 113,
+          "text": "  A ->>+ B: Task 1"
+        },
+        {
+          "offset_utf8_bytes": 158,
+          "text": "  B ->>+ C: Task 2"
+        },
+        {
+          "offset_utf8_bytes": 177,
+          "text": "  C -->>- B: Return"
+        },
+        {
+          "offset_utf8_bytes": 246,
+          "text": "  D ->>+ E: Task 4"
+        },
+        {
+          "offset_utf8_bytes": 287,
+          "text": "  E ->>+ G: Task 5"
+        },
+        {
+          "offset_utf8_bytes": 306,
+          "text": "  G -->>- E: Return"
+        }
+      ],
+      "projection": "Native terminal activation strips and literal fragment color captions; body only, no raw frontmatter/config/theme/wrapping parity."
+    },
+    {
+      "path": "sequence/nightly-check/should-render-central-connections-with-activations.mmd",
+      "raw_sha256": "20f0c7f23ebe4861480c167b7bacd6d8bc71a0ae81f7321478e6b94f7602281d",
+      "body_offset_utf8_bytes": 379,
+      "body_sha256": "d28b46732327a2c2d7f38f049d89deb3cb8569dd3e6baea138f57bafa1a9bca2",
+      "body": "sequenceDiagram\n  participant Alice\n  participant Bob\n  participant Charlie\n  Alice ()->>() Bob: Activate Bob\n  activate Bob\n  Bob ()-->> Charlie: Message to Charlie\n  Bob ()->>() Alice: Response to Alice\n  deactivate Bob\n",
+      "expected": "drawing",
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          },
+          {
+            "id": "Charlie",
+            "label": "Charlie",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Activate Bob",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": true,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Message to Charlie",
+            "dashed": true,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Response to Alice",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": true,
+            "central_to": true,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Activate",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Deactivate",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      },
+      "activation_statement_witnesses": [
+        {
+          "offset_utf8_bytes": 110,
+          "text": "  activate Bob"
+        },
+        {
+          "offset_utf8_bytes": 205,
+          "text": "  deactivate Bob"
+        }
+      ],
+      "projection": "Native terminal activation strips and literal fragment color captions; body only, no raw frontmatter/config/theme/wrapping parity."
+    }
+  ]
+}

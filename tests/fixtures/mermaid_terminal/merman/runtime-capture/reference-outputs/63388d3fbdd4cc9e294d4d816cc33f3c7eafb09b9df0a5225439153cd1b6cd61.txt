@@ -1,0 +1,8 @@
+xDomain: band categories=[bytes=1="A", bytes=1="B"]
+10 +
+ 8 +     8
+ 6 +    ###
+ 4 + 4  ###
+ 2 +### ###
+ 0 +-+---+-
+     A   B

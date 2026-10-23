@@ -1,0 +1,314 @@
+{
+  "schema": "class_endpoint_single_role_geodesic_papers/proposed-v1",
+  "author": "agent:/root/corpus_oracle",
+  "papers": [
+    {
+      "name": "source_owned",
+      "source": "classDiagram\ndirection LR\nclass A\nclass B\nA \"1\" --> B\n",
+      "source_sha256": "3a6c8b6dc8b6b365f9e9c717b5b09406f5d45ac40ab42f567f71f7f4fb5a1b02",
+      "whole_native_model": {
+        "family": "class",
+        "direction": "LR",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [],
+            "shape": "box",
+            "owner": ""
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "headers": [
+              [
+                "B"
+              ]
+            ],
+            "rows": [],
+            "shape": "box",
+            "owner": ""
+          }
+        ],
+        "relations": [
+          {
+            "source": "A",
+            "target": "B",
+            "source_text": "1",
+            "target_text": null,
+            "label": "",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "order": 0
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "whole_native_model_sha256": "ec2cdb80d458d429e73ed0a6b0af61ef22ca8888a66d6c5c6f506e903e1a0b1d",
+      "independent_good": {
+        "width": 44,
+        "height": 16,
+        "literal_rows": [
+          "                                            ",
+          "                                            ",
+          "  ┌──────┐                      ┌──────┐    ",
+          "  │A     │                      │B     │    ",
+          "  │      │                      │      │    ",
+          "  │      ├────1────────────────▶┤      │    ",
+          "  │      │                      │      │    ",
+          "  │      │                      │      │    ",
+          "  └──────┘                      └──────┘    ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "AFTER_RELATIONS_SEMANTICS                   ",
+          "                                            "
+        ],
+        "label_cells": [
+          [
+            14,
+            5
+          ]
+        ],
+        "directed_route_anchors": [
+          [
+            10,
+            5
+          ],
+          [
+            30,
+            5
+          ]
+        ],
+        "actual_gap": [
+          [
+            13,
+            5
+          ],
+          [
+            15,
+            5
+          ]
+        ],
+        "prefix_units": 3,
+        "gap_units": 2,
+        "suffix_units": 15
+      },
+      "same_Model_wrong_endpoint_bad": {
+        "width": 44,
+        "height": 16,
+        "literal_rows": [
+          "                                            ",
+          "                                            ",
+          "  ┌──────┐                      ┌──────┐    ",
+          "  │A     │                      │B     │    ",
+          "  │      │                      │      │    ",
+          "  │      ├─────────────────1───▶┤      │    ",
+          "  │      │                      │      │    ",
+          "  │      │                      │      │    ",
+          "  └──────┘                      └──────┘    ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "AFTER_RELATIONS_SEMANTICS                   ",
+          "                                            "
+        ],
+        "label_cells": [
+          [
+            27,
+            5
+          ]
+        ],
+        "directed_route_anchors": [
+          [
+            10,
+            5
+          ],
+          [
+            30,
+            5
+          ]
+        ],
+        "actual_gap": [
+          [
+            26,
+            5
+          ],
+          [
+            28,
+            5
+          ]
+        ],
+        "prefix_units": 16,
+        "gap_units": 2,
+        "suffix_units": 2
+      },
+      "qualification": "Two complete literal scenes, not production output. Old oracle acceptance and repaired behavior still require root test-first."
+    },
+    {
+      "name": "target_owned",
+      "source": "classDiagram\ndirection LR\nclass A\nclass B\nA --> \"1\" B\n",
+      "source_sha256": "071fa5917201e93d18779ff4f83d69988817d696a6363a6ddebfcfcc6c2e35c6",
+      "whole_native_model": {
+        "family": "class",
+        "direction": "LR",
+        "entities": [
+          {
+            "id": "A",
+            "label": "A",
+            "headers": [
+              [
+                "A"
+              ]
+            ],
+            "rows": [],
+            "shape": "box",
+            "owner": ""
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "headers": [
+              [
+                "B"
+              ]
+            ],
+            "rows": [],
+            "shape": "box",
+            "owner": ""
+          }
+        ],
+        "relations": [
+          {
+            "source": "A",
+            "target": "B",
+            "source_text": null,
+            "target_text": "1",
+            "label": "",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "order": 0
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "whole_native_model_sha256": "9412441bd527b7491847428ccc0df43a6d377eebc5da3919283656aba8331769",
+      "independent_good": {
+        "width": 44,
+        "height": 16,
+        "literal_rows": [
+          "                                            ",
+          "                                            ",
+          "  ┌──────┐                      ┌──────┐    ",
+          "  │A     │                      │B     │    ",
+          "  │      │                      │      │    ",
+          "  │      ├─────────────────1───▶┤      │    ",
+          "  │      │                      │      │    ",
+          "  │      │                      │      │    ",
+          "  └──────┘                      └──────┘    ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "AFTER_RELATIONS_SEMANTICS                   ",
+          "                                            "
+        ],
+        "label_cells": [
+          [
+            27,
+            5
+          ]
+        ],
+        "directed_route_anchors": [
+          [
+            10,
+            5
+          ],
+          [
+            30,
+            5
+          ]
+        ],
+        "actual_gap": [
+          [
+            26,
+            5
+          ],
+          [
+            28,
+            5
+          ]
+        ],
+        "prefix_units": 16,
+        "gap_units": 2,
+        "suffix_units": 2
+      },
+      "same_Model_wrong_endpoint_bad": {
+        "width": 44,
+        "height": 16,
+        "literal_rows": [
+          "                                            ",
+          "                                            ",
+          "  ┌──────┐                      ┌──────┐    ",
+          "  │A     │                      │B     │    ",
+          "  │      │                      │      │    ",
+          "  │      ├────1────────────────▶┤      │    ",
+          "  │      │                      │      │    ",
+          "  │      │                      │      │    ",
+          "  └──────┘                      └──────┘    ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "                                            ",
+          "AFTER_RELATIONS_SEMANTICS                   ",
+          "                                            "
+        ],
+        "label_cells": [
+          [
+            14,
+            5
+          ]
+        ],
+        "directed_route_anchors": [
+          [
+            10,
+            5
+          ],
+          [
+            30,
+            5
+          ]
+        ],
+        "actual_gap": [
+          [
+            13,
+            5
+          ],
+          [
+            15,
+            5
+          ]
+        ],
+        "prefix_units": 3,
+        "gap_units": 2,
+        "suffix_units": 15
+      },
+      "qualification": "Two complete literal scenes, not production output. Old oracle acceptance and repaired behavior still require root test-first."
+    }
+  ]
+}

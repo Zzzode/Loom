@@ -1,0 +1,4 @@
+node(bytes=4)="Root" id(bytes=4)="root"
+|-- node(bytes=7)="Child 1" id(bytes=6)="child1"
+|   \-- node(bytes=4)="Leaf" id(bytes=4)="leaf"
+\-- node(bytes=7)="Child 2" id(bytes=6)="child2"

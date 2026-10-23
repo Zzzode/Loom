@@ -1,0 +1,10 @@
+title(bytes=8)="Timeline"
+accTitle(bytes=14)="Timeline title"
+accDescr(bytes=20)="Timeline description"
+direction: TD
+section(bytes=8)="Planning"
+  - task(bytes=6)="Design"
+    * event(bytes=7)="Kickoff"
+  - task(bytes=9)="Implement"
+    * event(bytes=10)="Build spec"
+    * event(bytes=6)="Review"

@@ -1,0 +1,19 @@
++-------+                                     +-----+     +---------+
+| Alice |                                     | Bob |     | Charlie |
++---+---+                                     +--+--+     +----+----+
+    |                                            |             |
+    | 1. Solid arrow with circle at destination  |             |
+    +------------------------------------------->o             |
+    |                                            |             |
+    | 2. Dotted arrow with circle at destination |             |
+    +...........................................>o             |
+    |                                            |             |
+    | 3. Open arrow with circle at destination   |             |
+    +--------------------------------------------o             |
+    |                                            |             |
+    | 4. Cross arrow with circle at destination  |             |
+    +...........................................xo             |
+    |                                            |             |
+    | 5. Close arrow with circle at destination  |             |
+    +...........................................)o             |
+    |                                            |             |

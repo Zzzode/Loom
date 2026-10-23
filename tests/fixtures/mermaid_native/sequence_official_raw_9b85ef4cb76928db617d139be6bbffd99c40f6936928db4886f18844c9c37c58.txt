@@ -1,0 +1,27 @@
+┌───────┐                                              ┌─────┐                                              ┌─────────┐
+│ Alice │                                              │ Bob │                                              │ Charlie │
+└───────┘                                              └─────┘                                              └─────────┘
+    │                                                     │                                                      │
+    │                                                     │                                                      │
+    │ 1. Solid arrow with circle at destination           │                                                      │
+    ├────────────────────────────────────────────────────▶○                                                      │
+    │                                                     │                                                      │
+    │                                                     │                                                      │
+    │ 2. Dotted arrow with circle at destination          │                                                      │
+    ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄▶○                                                      │
+    │                                                     │                                                      │
+    │                                                     │                                                      │
+    │ 3. Open arrow with circle at destination            │                                                      │
+    ├─────────────────────────────────────────────────────○                                                      │
+    │                                                     │                                                      │
+    │                                                     │                                                      │
+    │ 4. Cross arrow with circle at destination           │                                                      │
+    ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄×○                                                      │
+    │                                                     │                                                      │
+    │                                                     │                                                      │
+    │ 5. Close arrow with circle at destination           │                                                      │
+    ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄›○                                                      │
+    │                                                     │                                                      │
+    │                                                     │                                                      │
+
+AFTER_MERMAID

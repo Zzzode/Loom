@@ -1,0 +1,3 @@
+group(bytes=49)="before\u{1B}]8;;https://example.invalid\u{7}link\u{9B}after
+\u{202E}"
+[id(bytes=4)="todo"]

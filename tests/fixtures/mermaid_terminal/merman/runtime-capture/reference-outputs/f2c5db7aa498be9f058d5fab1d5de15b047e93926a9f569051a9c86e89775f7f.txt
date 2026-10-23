@@ -1,0 +1,22 @@
++-------+                                        +-----+     +---------+
+| Alice |                                        | Bob |     | Charlie |
++---+---+                                        +--+--+     +----+----+
+    |                                               |             |
+    | 1. Dual central with bidirectional solid LTR  |             |
+    o<--------------------------------------------->o             |
+    |                                               |             |
+    | 2. Dual central with bidirectional solid RTL  |             |
+    o<--------------------------------------------->o             |
+    |                                               |             |
+    | 3. Dual central with bidirectional dotted LTR |             |
+    o<.............................................>o             |
+    |                                               |             |
+    | 4. Dual central with bidirectional dotted RTL |             |
+    o<.............................................>o             |
+    |                                               |             |
+    | 5. Central at end with bidirectional LTR      |             |
+    +<--------------------------------------------->o             |
+    |                                               |             |
+    | 6. Central at start with bidirectional RTL    |             |
+    |<--------------------------------------------->o             |
+    |                                               |             |

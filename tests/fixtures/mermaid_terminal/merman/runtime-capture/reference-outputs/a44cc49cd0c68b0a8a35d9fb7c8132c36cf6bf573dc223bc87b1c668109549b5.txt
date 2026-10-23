@@ -1,0 +1,11 @@
++---+
+| A |
++---+
+
++---+
+| B |
++---+
+
+relations:
+id(bytes=1)="A" ||--|| id(bytes=1)="B" : owns
+id(bytes=1)="A" ||..o{ id(bytes=1)="B" : contains

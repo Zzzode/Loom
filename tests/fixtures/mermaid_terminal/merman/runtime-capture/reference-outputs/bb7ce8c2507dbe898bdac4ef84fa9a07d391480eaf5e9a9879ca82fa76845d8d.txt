@@ -1,0 +1,11 @@
+titleDisplay: chart(bytes=13)="Sales Revenue"
+titleDisplay: yAxis(bytes=14)="Revenue (in $)"
+values: # series=0 type=bar title=none samples=[{index=0 x(bytes=3)="jan" value=4000 pointLabel=none clipped=false}] orphanPointLabels=[]
+12000 +
+10200 +
+ 8400 +
+ 6600 +
+ 4800 +400
+ 3000 +-+-
+       jan
+titleDisplay: xAxis(bytes=6)="Months"

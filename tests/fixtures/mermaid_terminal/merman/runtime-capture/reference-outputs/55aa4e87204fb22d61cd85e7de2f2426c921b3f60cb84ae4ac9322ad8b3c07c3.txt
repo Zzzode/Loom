@@ -1,0 +1,24 @@
++-------+                             +-----+                             +---------+
+| Alice |                             | Bob |                             | Charlie |
++---+---+                             +--+--+                             +----+----+
+    |                                    |                                     |
+    | Bidirectional solid self-reference |                                     |
+    +<-+                                 |                                     |
+    |  |                                 |                                     |
+    |<-+                                 |                                     |
+    |                                    |                                     |
+    |                                    | Bidirectional dotted self-reference |
+    |                                    +<.+                                  |
+    |                                    |  |                                  |
+    |                                    |<.+                                  |
+    |                                    |                                     |
+    |                                    |                                     | Another bidirectional solid
+    |                                    |                                     +<-+
+    |                                    |                                     |  |
+    |                                    |                                     |<-+
+    |                                    |                                     |
+    | Another bidirectional dotted       |                                     |
+    +<.+                                 |                                     |
+    |  |                                 |                                     |
+    |<.+                                 |                                     |
+    |                                    |                                     |

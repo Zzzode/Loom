@@ -1,0 +1,365 @@
+{
+  "schema": 1,
+  "qualification": "Independent source-only all193 body audit. Exact original bytes and body suffixes checked. No production rendering, parser API or current output used to classify or transcribe expected Models. Raw frontmatter semantics remain independent and unpromoted.",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b"
+  },
+  "counts": {
+    "cases": 1,
+    "actors": 5,
+    "messages": 10,
+    "notes": 0,
+    "fragments": 0,
+    "boxes": 0,
+    "order": 16,
+    "create": 3,
+    "destroy": 3
+  },
+  "cases": [
+    {
+      "path": "sequence/nightly-check/should-render-a-sequence-diagram-with-basic-actor-creation-and-destruction.mmd",
+      "raw_sha256": "caa0d994e5bffc1f6291e3b57cc9327af1ef397576d3e18dc9c6b619ced14c49",
+      "body_offset_utf8_bytes": 245,
+      "body_sha256": "93d419bb2110957f62e911b83240215ae47fd10cfec0edac3c06bfe2db0a9b44",
+      "lifecycle_statement_count": 6,
+      "lifecycle_source_witnesses": [
+        {
+          "offset_utf8_bytes": 101,
+          "text": "  create participant Polo",
+          "sha256": "7f694eeab235d9c16b208c7f0f9c4822f698de98767166f87c890cf4143111d6"
+        },
+        {
+          "offset_utf8_bytes": 154,
+          "text": "  create actor Ola1 as Ola",
+          "sha256": "624353a617368dff1bf46be8fb78dc396341d34a452070ec2ff3209f039c153b"
+        },
+        {
+          "offset_utf8_bytes": 228,
+          "text": "  destroy Ola1",
+          "sha256": "a4d6f0c6d81fa77822f235faafa18f6e5367dc3ad5ee338e8d12383d4cd85b42"
+        },
+        {
+          "offset_utf8_bytes": 292,
+          "text": "  create participant Ola2 as Ola",
+          "sha256": "30bb87805fce96e313866976c53511ea06eb7197e0b885e4988849939201462b"
+        },
+        {
+          "offset_utf8_bytes": 355,
+          "text": "  destroy Alice",
+          "sha256": "7accf7c02f78fc129e90ecac76bbed66936fc7249d617a309d55f9e1b1d985bf"
+        },
+        {
+          "offset_utf8_bytes": 401,
+          "text": "  destroy Bob",
+          "sha256": "5e8e1ad15303d93f668d544e732de2869689a263cd49e4d9d01ef4d17b16e083"
+        }
+      ],
+      "profile": "source_positive",
+      "blockers": [],
+      "model": {
+        "actors": [
+          {
+            "id": "Alice",
+            "label": "Alice",
+            "person": false
+          },
+          {
+            "id": "Bob",
+            "label": "Bob",
+            "person": false
+          },
+          {
+            "id": "Polo",
+            "label": "Polo",
+            "person": false
+          },
+          {
+            "id": "Ola1",
+            "label": "Ola",
+            "person": true
+          },
+          {
+            "id": "Ola2",
+            "label": "Ola",
+            "person": false
+          }
+        ],
+        "messages": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "Hello Bob, how are you ?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "Fine, thank you. And you?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "label": "Hi Polo!",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "label": "Hiii",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 3,
+            "to": 0,
+            "label": "Hi too",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 3,
+            "label": "Bye!",
+            "dashed": true,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "label": "And now?",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 4,
+            "label": "Hello again",
+            "dashed": false,
+            "arrow": "Filled",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 0,
+            "to": 4,
+            "label": "Bye for me!",
+            "dashed": true,
+            "arrow": "Cross",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          },
+          {
+            "from": 4,
+            "to": 1,
+            "label": "The end",
+            "dashed": true,
+            "arrow": "Unheaded",
+            "central_from": false,
+            "central_to": false,
+            "number": 0
+          }
+        ],
+        "notes": [],
+        "fragments": [],
+        "boxes": [],
+        "order": [
+          {
+            "kind": "Message",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 1,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 2,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 5,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 3,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 6,
+            "part": 0
+          },
+          {
+            "kind": "Create",
+            "index": 4,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 7,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 8,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 0,
+            "part": 0
+          },
+          {
+            "kind": "Message",
+            "index": 9,
+            "part": 0
+          },
+          {
+            "kind": "Destroy",
+            "index": 1,
+            "part": 0
+          }
+        ]
+      },
+      "complete_source_rows": [
+        {
+          "offset_utf8_bytes": 0,
+          "text": "sequenceDiagram",
+          "sha256": "536f52ac1f79d0918360fd422c6ac8467d8c9747024ff84bcb9598cea84d5567"
+        },
+        {
+          "offset_utf8_bytes": 16,
+          "text": "  Alice ->> Bob: Hello Bob, how are you ?",
+          "sha256": "e6fb09ee9a57c2447b302d365aa19db7961ca044644896117ec0d6bb6a63d2a9"
+        },
+        {
+          "offset_utf8_bytes": 58,
+          "text": "  Bob ->> Alice: Fine, thank you. And you?",
+          "sha256": "2329aa7a60aa62c9838a66d7b10a2ec144ac6b347ba44c9d3bc9f5c9a1e4d691"
+        },
+        {
+          "offset_utf8_bytes": 101,
+          "text": "  create participant Polo",
+          "sha256": "7f694eeab235d9c16b208c7f0f9c4822f698de98767166f87c890cf4143111d6"
+        },
+        {
+          "offset_utf8_bytes": 127,
+          "text": "  Alice ->> Polo: Hi Polo!",
+          "sha256": "c4d39cd67415b113140ba22db5c6a588e556596a03b25cdc2d0db7f60a051e4c"
+        },
+        {
+          "offset_utf8_bytes": 154,
+          "text": "  create actor Ola1 as Ola",
+          "sha256": "624353a617368dff1bf46be8fb78dc396341d34a452070ec2ff3209f039c153b"
+        },
+        {
+          "offset_utf8_bytes": 181,
+          "text": "  Polo ->> Ola1: Hiii",
+          "sha256": "32b1f9668a1467aa3e94558f4936f4ad3277fa77d0fc88a44dd827e96878900b"
+        },
+        {
+          "offset_utf8_bytes": 203,
+          "text": "  Ola1 ->> Alice: Hi too",
+          "sha256": "72d8c2ac618169b77c711351a558d2bc755af76da8d0cfade2e8de21fb991ef0"
+        },
+        {
+          "offset_utf8_bytes": 228,
+          "text": "  destroy Ola1",
+          "sha256": "a4d6f0c6d81fa77822f235faafa18f6e5367dc3ad5ee338e8d12383d4cd85b42"
+        },
+        {
+          "offset_utf8_bytes": 243,
+          "text": "  Alice --x Ola1: Bye!",
+          "sha256": "4bc2043ee54cf74f21da8bacd26a75dbe017d4bee2a537b03ed684f2d6779646"
+        },
+        {
+          "offset_utf8_bytes": 266,
+          "text": "  Alice ->> Bob: And now?",
+          "sha256": "013718bcddd27746126b6ba4b1da56c77cfa25791d61a08d2347c3222e843730"
+        },
+        {
+          "offset_utf8_bytes": 292,
+          "text": "  create participant Ola2 as Ola",
+          "sha256": "30bb87805fce96e313866976c53511ea06eb7197e0b885e4988849939201462b"
+        },
+        {
+          "offset_utf8_bytes": 325,
+          "text": "  Alice ->> Ola2: Hello again",
+          "sha256": "985a9d6ef479ea1003caf86faf0d8ad7a5de290b1eb85a59acbd35e8bcb2f24d"
+        },
+        {
+          "offset_utf8_bytes": 355,
+          "text": "  destroy Alice",
+          "sha256": "7accf7c02f78fc129e90ecac76bbed66936fc7249d617a309d55f9e1b1d985bf"
+        },
+        {
+          "offset_utf8_bytes": 371,
+          "text": "  Alice --x Ola2: Bye for me!",
+          "sha256": "344f5448a202b259d9a69b8289a1be80b5a1db766c19d7ead71b59b9389e3640"
+        },
+        {
+          "offset_utf8_bytes": 401,
+          "text": "  destroy Bob",
+          "sha256": "5e8e1ad15303d93f668d544e732de2869689a263cd49e4d9d01ef4d17b16e083"
+        },
+        {
+          "offset_utf8_bytes": 415,
+          "text": "  Ola2 --> Bob: The end",
+          "sha256": "a20c065a65049de03312ee6d359092e71ae7fed6e52070c14300db553f82c2c0"
+        }
+      ]
+    }
+  ]
+}

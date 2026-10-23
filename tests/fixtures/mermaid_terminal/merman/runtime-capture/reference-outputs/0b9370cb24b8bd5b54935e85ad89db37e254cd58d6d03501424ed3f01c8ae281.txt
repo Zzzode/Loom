@@ -1,0 +1,57 @@
+<span style="color:#a1a1aa">┌──────────────────────────────────────────┐</span>                              
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span>                              
+<span style="color:#a1a1aa">│</span>             <span style="color:#27272a">browser / agent</span>              <span style="color:#a1a1aa">│</span>                              
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span>                              
+<span style="color:#a1a1aa">└─────────────────────</span><span style="color:#71717a">┬</span><span style="color:#a1a1aa">────────────────────┘</span>                              
+                      <span style="color:#71717a">│</span>                                                   
+                      <span style="color:#71717a">│</span>                                                   
+                      <span style="color:#71717a">│</span>                                                   
+                      <span style="color:#71717a">│</span>                                                   
+                      <span style="color:#52525b">▼</span>                                                   
+<span style="color:#a1a1aa">┌──────────────────────────────────────────┐</span>                              
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span>                              
+<span style="color:#a1a1aa">│</span> <span style="color:#27272a">*.docs.mysampleapp.net (Route53 subzone,</span> <span style="color:#a1a1aa">│</span>                              
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span><span style="color:#71717a">─┐</span>                            
+<span style="color:#a1a1aa">│</span>    <span style="color:#27272a">delegated to mysampleapps account)</span>    <span style="color:#a1a1aa">│</span> <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">└─────────────────────</span><span style="color:#71717a">┬</span><span style="color:#a1a1aa">────────────────────┘</span> <span style="color:#71717a">│</span>                            
+                      <span style="color:#71717a">│</span>                      <span style="color:#71717a">│</span>                            
+                      <span style="color:#71717a">│</span>                      <span style="color:#71717a">│</span>                            
+                      <span style="color:#71717a">│</span>                      <span style="color:#71717a">│</span>                            
+                      <span style="color:#71717a">│</span>                      <span style="color:#71717a">│</span>                            
+                      <span style="color:#52525b">▼</span>                      <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">┌──────────────────────────────────────────┐</span> <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">│</span> <span style="color:#27272a">upload app (Lambda, Python): GET / form,</span> <span style="color:#a1a1aa">│</span> <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">│</span>  <span style="color:#27272a">POST /upload, POST /api/deploy (IAM),</span>   <span style="color:#71717a">├─┼┐</span><span style="color:#27272a">writes</span>                     
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">││</span>                           
+<span style="color:#a1a1aa">│</span>                  <span style="color:#27272a">boto3</span>                   <span style="color:#a1a1aa">│</span> <span style="color:#71717a">││</span>                           
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">││</span>                           
+<span style="color:#a1a1aa">└─────────────────────</span><span style="color:#71717a">┬</span><span style="color:#a1a1aa">────────────────────┘</span> <span style="color:#71717a">││</span>                           
+                      <span style="color:#71717a">┆</span>                      <span style="color:#71717a">││</span>                           
+                      <span style="color:#71717a">┆</span>                      <span style="color:#71717a">││</span>                           
+             <span style="color:#27272a">CreateInvalidation</span>              <span style="color:#71717a">││</span><span style="color:#27272a">reserve / check owner</span>      
+                      <span style="color:#71717a">┆</span>                      <span style="color:#71717a">││</span>                           
+                      <span style="color:#52525b">▼</span>                      <span style="color:#71717a">││</span>                           
+<span style="color:#a1a1aa">┌──────────────────────────────────────────┐</span> <span style="color:#71717a">││</span>  <span style="color:#a1a1aa">┌───────────────────────┐</span>
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">││</span>  <span style="color:#a1a1aa">│</span>                       <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">│</span> <span style="color:#27272a">CloudFront distribution: wildcard cert,</span>  <span style="color:#a1a1aa">│</span> <span style="color:#71717a">││</span>  <span style="color:#a1a1aa">│</span>                       <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">││</span>  <span style="color:#a1a1aa">│</span>                       <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">│</span>   <span style="color:#27272a">Host-to-prefix CF Function, WAF VPN</span>    <span style="color:#a1a1aa">│</span><span style="color:#52525b">◄</span><span style="color:#71717a">┤└─</span><span style="color:#52525b">►</span><span style="color:#a1a1aa">│</span> <span style="color:#27272a">DynamoDB reservations</span> <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">│</span>   <span style="color:#a1a1aa">│</span>                       <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">│</span>           <span style="color:#27272a">allowlist, OAC to S3</span>           <span style="color:#a1a1aa">│</span> <span style="color:#71717a">│</span>   <span style="color:#a1a1aa">│</span>                       <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">│</span>   <span style="color:#a1a1aa">│</span>                       <span style="color:#a1a1aa">│</span>
+<span style="color:#a1a1aa">└─────────────────────</span><span style="color:#71717a">┬</span><span style="color:#a1a1aa">────────────────────┘</span> <span style="color:#71717a">│</span>   <span style="color:#a1a1aa">└───────────────────────┘</span>
+                      <span style="color:#71717a">│</span>                      <span style="color:#71717a">│</span>                            
+                      <span style="color:#71717a">│</span>                      <span style="color:#71717a">│</span>                            
+                    <span style="color:#27272a">reads</span>                    <span style="color:#71717a">│</span>                            
+                      <span style="color:#71717a">│</span>                      <span style="color:#71717a">│</span>                            
+                      <span style="color:#52525b">▼</span>                      <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">┌──────────────────────────────────────────┐</span> <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">│</span>          <span style="color:#27272a">S3 bucket mysampleapp:</span>          <span style="color:#a1a1aa">│</span> <span style="color:#71717a">│</span>                            
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span><span style="color:#52525b">◄</span><span style="color:#71717a">┘</span>                            
+<span style="color:#a1a1aa">│</span>           <span style="color:#27272a">sites/subdomain/...</span>            <span style="color:#a1a1aa">│</span>                              
+<span style="color:#a1a1aa">│</span>                                          <span style="color:#a1a1aa">│</span>                              
+<span style="color:#a1a1aa">└──────────────────────────────────────────┘</span>                              

@@ -55,6 +55,8 @@ target_sources(loom_ui_visual PRIVATE
     ui/visual/mermaid_requirement_impl.cpp
     # RFC 0031 E6a: thin forwarders for the exported testing seam.
     ui/visual/mermaid_testing_seams.cpp
+    # RFC 0031 E6b: per-instance Mermaid layout-rows LRU.
+    ui/visual/mermaid_cache_impl.cpp
     # HTML serializer for CommonMark/GFM conformance testing.
     ui/visual/markdown_html_impl.cpp
 )

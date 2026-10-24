@@ -18,6 +18,58 @@ export namespace loom::ui::mermaid {
 [[nodiscard]] std::optional<ftxui::Element> render_mermaid(
     std::string_view source, ftxui::Element fallback, bool use_ascii);
 
+/// RFC 0031 E6b: per-instance LRU cache of immutable laid-out diagram ROWS
+/// (std::vector<std::string>), never ftxui::Element. Width/theme are not key
+/// components: a fresh node is built per render from the cached rows, so a
+/// width toggle stays inside the node and never invalidates entries.
+///
+/// The cache is owned per instance (one StreamingMarkdown, one message
+/// list); it is never process-global and is unrelated to the 256-entry
+/// process-global markdown token LRU.
+class LayoutRowsCache {
+public:
+    /// @param max_entries  bounded entry count (LRU eviction)
+    /// @param max_bytes    bounded sum of retained row bytes (LRU eviction)
+    LayoutRowsCache(std::size_t max_entries, std::size_t max_bytes);
+    ~LayoutRowsCache();
+    // Deep copy: the hash index is rebuilt against the new LRU nodes. Owners
+    // (MessagesListInput) are copyable value structs; a copy starts with the
+    // same retained rows but has independent LRU state thereafter.
+    LayoutRowsCache(const LayoutRowsCache&);
+    LayoutRowsCache& operator=(const LayoutRowsCache&);
+    LayoutRowsCache(LayoutRowsCache&&) noexcept;
+    LayoutRowsCache& operator=(LayoutRowsCache&&) noexcept;
+
+    /// Return the rows for (source, use_ascii), laying out on a miss and
+    /// retaining the result. A present EMPTY vector is the cached
+    /// whole-source-rejection sentinel (distinct from the returned
+    /// std::optional being engaged): the caller must still run the normal
+    /// finish/fallback path so the surface is reproduced exactly.
+    [[nodiscard]] std::optional<std::vector<std::string>>
+    get_or_layout(std::string_view source, bool use_ascii);
+
+    /// Get-or-layout through this cache, then finish into a FRESH node via
+    /// the same finish step render_mermaid uses. Cached rejections reproduce
+    /// the whole-source fallback (nullopt). This is the cached drop-in for
+    /// the two render_mermaid entry points; no Element is ever retained.
+    [[nodiscard]] std::optional<ftxui::Element>
+    render(std::string_view source, bool use_ascii, ftxui::Element fallback);
+
+    /// Drop every retained entry (document/session reset boundary).
+    void clear();
+
+    [[nodiscard]] std::size_t size() const noexcept;
+    [[nodiscard]] std::size_t byte_size() const noexcept;
+    [[nodiscard]] std::size_t entry_capacity() const noexcept;
+    [[nodiscard]] std::size_t byte_capacity() const noexcept;
+    [[nodiscard]] std::size_t hits() const noexcept;
+    [[nodiscard]] std::size_t misses() const noexcept;
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
+};
+
 } // namespace loom::ui::mermaid
 
 // Sole reviewed test seam (RFC 0031 E6a). These complete types are exported

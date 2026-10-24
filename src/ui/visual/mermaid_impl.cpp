@@ -2460,9 +2460,25 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     return decision;
 }
 
-std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Element fallback) {
-    if (!fallback || source.empty() || source.size() > kSourceLimit) return {};
+// RFC 0031 E6b: layout-only seam. This is the exact pre-E6b dispatch body
+// of the two-argument render_mermaid, plus the explicit-ASCII routing of
+// the three-argument entry point; it owns a fresh Work budget per call and
+// returns immutable rows (nullopt = whole-source rejection).
+std::optional<std::vector<std::string>> detail::layout_mermaid_rows(
+    std::string_view source, bool use_ascii) {
+    if (source.empty() || source.size() > kSourceLimit) return {};
     Work work;
+    if (use_ascii) {
+        // An explicit bare Flow header is owned by the closed ASCII Flow
+        // profile. Rejected Flow never falls through to GitGraph as a
+        // label-like foreign input.
+        if (ascii_flow_header(source)) {
+            auto rows = detail::flow_ascii_rows(source, work);
+            return rows ? std::optional<std::vector<std::string>>(std::move(rows->ascii))
+                        : std::nullopt;
+        }
+        return detail::gitgraph_layout(source, work, true);
+    }
     std::optional<std::vector<std::string>> lines;
     if (const auto diagram = parse(source, work))
         lines = flow_layout(*diagram, work);
@@ -2500,22 +2516,31 @@ std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Ele
             break;
         }
     }
-    return finish_mermaid(std::move(lines), std::move(fallback));
+    return lines;
+}
+
+std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Element fallback) {
+    if (!fallback) return {};
+    // RFC 0031 E6b: layout seam + fresh-node finish.
+    return finish_mermaid(detail::layout_mermaid_rows(source, false), std::move(fallback));
 }
 
 // The existing two-argument entrypoint owns the default dispatch. Explicit
 // ASCII currently admits the source-faithful GitGraph profile only.
 std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Element fallback, bool use_ascii) {
+    if (!fallback) return {};
     if (!use_ascii) return render_mermaid(source, std::move(fallback));
-    if (!fallback || source.empty() || source.size() > kSourceLimit) return {};
-    Work work;
-    // An explicit bare Flow header is owned by the closed ASCII Flow profile.
-    // Rejected Flow never falls through to GitGraph as a label-like foreign input.
-    if (ascii_flow_header(source)) {
-        auto rows = detail::flow_ascii_rows(source, work);
-        return rows ? finish_mermaid(std::move(rows->ascii), std::move(fallback)) : std::optional<ftxui::Element>{};
-    }
-    return finish_mermaid(detail::gitgraph_layout(source, work, true), std::move(fallback));
+    return finish_mermaid(detail::layout_mermaid_rows(source, true), std::move(fallback));
+}
+
+// RFC 0031 E6b: cached path. Rows come from the per-instance cache (which
+// calls the detail seam on a miss); the node is always freshly built here,
+// so a cached success never bypasses the finish path and width flips remain
+// per-node state.
+std::optional<ftxui::Element> LayoutRowsCache::render(
+    std::string_view source, bool use_ascii, ftxui::Element fallback) {
+    if (!fallback) return {};
+    return finish_mermaid(get_or_layout(source, use_ascii), std::move(fallback));
 }
 
 } // namespace loom::ui::mermaid

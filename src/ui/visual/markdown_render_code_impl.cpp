@@ -100,7 +100,13 @@ namespace {
                                         const MarkdownOptions& opts) {
     auto source = render_source_code_block(tok, opts);
     if (tok.code_lang == "mermaid" && tok.code_fence_closed) {
-        if (auto diagram = mermaid::render_mermaid(tok.code_content, source)) {
+        // RFC 0031 E6b: an attached per-instance rows cache memoizes the
+        // layout (exact source bytes, ASCII bit); either way a FRESH node is
+        // built from the rows, so dim/width behavior is unchanged.
+        auto diagram = opts.mermaid_rows_cache
+            ? opts.mermaid_rows_cache->render(tok.code_content, false, source)
+            : mermaid::render_mermaid(tok.code_content, source);
+        if (diagram) {
             return opts.dim_color ? *diagram | dim : *diagram;
         }
     }

@@ -28,6 +28,9 @@ import loom.types.types;                  // arch-check: keep-import
 import loom.ui.messages.messages_list;    // UnseenDivider
 import loom.ui.messages.virtual_list;     // JumpHandle / VirtualListState
 import loom.ui.chrome.fullscreen_layout;  // StickyPrompt
+// RFC 0031 E6b: complete type for the MessagesListInput mermaid cache member
+// cleared by reset_virtual_renderer_state below (visual ranks below screens).
+import loom.ui.visual.mermaid;  // arch-check: keep-import — named only through MessagesListInput's by-value LayoutRowsCache member (.clear())
 
 export namespace loom::ui::repl_screen {
 
@@ -287,6 +290,9 @@ inline void ClearRepinState(MessagesStore& store) {
 inline void reset_virtual_renderer_state(MessagesStore& store) {
     store.render_input.chain_timings.clear();
     store.render_input.chain_update_due.reset();
+    // RFC 0031 E6b: the owning document/session was cleared or replaced;
+    // committed-row layout rows must never survive across it.
+    store.render_input.mermaid_rows_cache.clear();
     store.rendered_content_height_lines.reset();
     store.virtual_renderer_mode =
         ::loom::ui::messages_list::VirtualRendererMode::Static;

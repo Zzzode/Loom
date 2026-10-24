@@ -203,10 +203,12 @@ auto render_payload_row(const MessagesListInput& input,
             // Streaming text row uses StreamingMarkdown (repeated-frame cache).
             // Thread the shared instance from the input so
             // RenderAssistantTextMessageFaithful can call streaming_md->update()
-            // instead of full render_markdown.
+            // instead of full render_markdown. Committed rows share the
+            // input's per-list Mermaid layout-rows cache (RFC 0031 E6b).
             Element el = RenderAssistantTextMessageFaithful(
                 fd, add_margin, /*is_selected=*/is_selected,
-                /*streaming_md=*/input.streaming_md);
+                /*streaming_md=*/input.streaming_md,
+                /*mermaid_rows_cache=*/&input.mermaid_rows_cache);
             (void)frame_count;
             return el;
         }

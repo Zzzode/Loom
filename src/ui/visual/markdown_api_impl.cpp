@@ -11,6 +11,7 @@ module loom.ui.visual.markdown;
 
 import std;
 import loom.ui.foundation.theme_provider;
+import loom.ui.visual.mermaid;
 
 namespace loom::ui {
 
@@ -297,7 +298,9 @@ Element StreamingMarkdown::update(std::string_view content) {
         return last_render_;
     // Blank lines are not safe parse boundaries inside lists or fences, and
     // references may depend on later definitions. Use one document context.
-    last_render_ = render_markdown(content);
+    MarkdownOptions opts;
+    opts.mermaid_rows_cache = &mermaid_rows_cache_;
+    last_render_ = render_markdown(content, opts);
     last_content_ = content;
     last_palette_ = palette;
     return last_render_;
@@ -307,6 +310,9 @@ void StreamingMarkdown::reset() {
     last_content_.clear();
     last_render_.reset();
     last_palette_ = nullptr;
+    // RFC 0031 E6b: a new response/document never reuses a prior document's
+    // laid-out rows.
+    mermaid_rows_cache_.clear();
 }
 
 /// Clear the global markdown token cache.

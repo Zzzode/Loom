@@ -31,6 +31,9 @@ import std;
 import loom.ui.messages.message_components;
 import loom.ui.messages.message_timestamp;
 import loom.ui.visual.markdown;
+// RFC 0031 E6b: the faithful renderer threads the nullable per-list
+// layout-rows cache handle through MarkdownOptions.
+import loom.ui.visual.mermaid;
 // R7: BLACK_CIRCLE selection recoloring uses palette.suggestion +
 // message_actions_background tokens (not inline RGB) so light/daltonized
 // variants stay faithful.  Figures provides kBullet (U+25CF).
@@ -531,7 +534,8 @@ class AssistantTextMessageComponent : public ComponentBase {
     const AssistantTextMessageData& data,
     bool add_margin = true,
     bool is_selected = false,
-    ::loom::ui::StreamingMarkdown* streaming_md = nullptr) {
+    ::loom::ui::StreamingMarkdown* streaming_md = nullptr,
+    ::loom::ui::mermaid::LayoutRowsCache* mermaid_rows_cache = nullptr) {
     // Unescape literal "\n" before markdown rendering — same fix as BuildBody().
     // Without this, models that emit JSON-escaped newlines produce one long
     // clipped line and markdown line-boundary patterns (* list, headings) fail.
@@ -539,9 +543,16 @@ class AssistantTextMessageComponent : public ComponentBase {
         detail::strip_prompt_xml_tags(data.content));
     // Streaming text uses StreamingMarkdown (complete-document context)
     // so live and committed text share parsing and layout rules.
-    Element body = (data.is_streaming && streaming_md)
-        ? streaming_md->update(cleaned)
-        : ::loom::ui::render_markdown(cleaned);
+    Element body;
+    if (data.is_streaming && streaming_md) {
+        body = streaming_md->update(cleaned);
+    } else {
+        // RFC 0031 E6b: committed rows reuse the per-list layout-rows cache
+        // on repeated window paints; null renders uncached (dialogs/tests).
+        MarkdownOptions opts;
+        opts.mermaid_rows_cache = mermaid_rows_cache;
+        body = ::loom::ui::render_markdown(cleaned, opts);
+    }
     return RenderAssistantTextMessageFaithful(data, std::move(body), add_margin, is_selected);
 }
 

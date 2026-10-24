@@ -63,6 +63,14 @@ std::optional<std::vector<std::string>> charts_layout(std::string_view source, W
 std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source, Work& work, bool use_ascii = false);
 std::optional<std::vector<std::string>> relations_layout(std::string_view source, Work& work, bool class_envelope = false, bool requirement_input = false);
 
+// RFC 0031 E6b: the layout-only seam behind both public render_mermaid
+// entry points. It runs the current family dispatch with a fresh Work budget
+// and returns immutable string ROWS — never an ftxui::Element. Nullopt (or
+// an empty vector) is the whole-source rejection outcome; width/theme flips
+// happen later inside a freshly constructed node. The per-instance
+// LayoutRowsCache calls this seam on a miss.
+std::optional<std::vector<std::string>> layout_mermaid_rows(std::string_view source, bool use_ascii);
+
 struct Point {
     int x = 0;
     int y = 0;

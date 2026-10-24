@@ -220,6 +220,41 @@ TEST(MarkdownRender, StreamingMarkdownIncremental) {
     EXPECT_NE(out.find("import std;"), std::string::npos);
 }
 
+// RFC 0031 E6b: StreamingMarkdown owns its per-instance Mermaid layout-rows
+// cache. Streaming frames with a closed fence must render byte-identically to
+// uncached render_markdown, and reset() must not corrupt later documents.
+TEST(MarkdownRender, StreamingMarkdownMermaidRowsAcrossFramesAndReset) {
+    auto capture = [](ftxui::Element element) {
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(200),
+                                            ftxui::Dimension::Fixed(24));
+        ftxui::Render(screen, std::move(element));
+        std::string result;
+        for (int y = 0; y < screen.dimy(); ++y) {
+            for (int x = 0; x < screen.dimx(); ++x)
+                result += screen.PixelAt(x, y).character;
+            result += '\n';
+        }
+        return result;
+    };
+    const std::string doc1 =
+        "intro\n```mermaid\nflowchart TD\nA[X] --> B[Y]\n```\n";
+    const std::string doc2 =
+        "other\n```mermaid\nflowchart TD\nC[One] --> D[Two]\n```\n";
+
+    StreamingMarkdown sm;
+    // Growing-delta frames keep the closed fence stable; cached rows must
+    // produce exactly the uncached surface on every frame.
+    for (const std::string suffix : {"", "m", "mo", "mor", "more text"}) {
+        const std::string grown = doc1 + suffix;
+        EXPECT_EQ(capture(sm.update(grown)), capture(render_markdown(grown)))
+            << "frame: " << grown;
+    }
+    // A brand-new document after reset renders correctly and independently.
+    sm.reset();
+    EXPECT_EQ(capture(sm.update(doc2)), capture(render_markdown(doc2)));
+    EXPECT_EQ(capture(sm.update(doc1)), capture(render_markdown(doc1)));
+}
+
 // ── Line wrapping tests ─────────────────────────────────────────────────
 
 // Count non-empty lines in rendered output.

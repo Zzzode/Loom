@@ -10,6 +10,7 @@
 
 import std;
 import loom.ui.visual.markdown;
+import loom.ui.visual.mermaid;
 import loom.serdes.json;
 import loom.crypto.crypto;
 
@@ -316,6 +317,216 @@ TEST(MermaidTerminal, InventoryOracleRejectsMutation) {
     EXPECT_THROW(validate_inventory(temporary, bytes), std::runtime_error);
     fs::create_symlink(kRoot / "beautiful_mermaid/upstream/src/__tests__/testdata/unicode/single_node.txt", asset);
     EXPECT_THROW(validate_inventory(temporary, bytes), std::runtime_error);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// RFC 0031 E6b: per-instance Mermaid layout-rows cache.
+// ─────────────────────────────────────────────────────────────────────
+namespace e6b {
+constexpr std::string_view kChainLR =
+    "flowchart LR\nS[Start] --> P[Process] --> Q[Queue] --> E[End]";
+constexpr std::string_view kNodeTD = "flowchart TD\nA[X] --> B[Y]";
+constexpr std::string_view kAscii = "flowchart LR\nA[Start] -->|go| B[End]";
+// Header without any statement: every family rejects it whole-source.
+constexpr std::string_view kRejected = "flowchart TD\n";
+
+std::string variant(int n) {
+    return "flowchart TD\nA[Alpha" + std::to_string(n) +
+           "] --> B[Beta" + std::to_string(n) + "]";
+}
+} // namespace e6b
+
+using loom::ui::mermaid::LayoutRowsCache;
+
+TEST(MermaidRowsCache, IdenticalSourceAndAsciiReusesRows) {
+    LayoutRowsCache cache(16, 1u << 20);
+    const auto first = cache.get_or_layout(e6b::kNodeTD, false);
+    ASSERT_TRUE(first.has_value());
+    ASSERT_FALSE(first->empty());
+    const auto second = cache.get_or_layout(e6b::kNodeTD, false);
+    ASSERT_TRUE(second.has_value());
+    EXPECT_EQ(*first, *second);
+    EXPECT_EQ(cache.size(), 1u);
+    EXPECT_GT(cache.byte_size(), 0u);
+    EXPECT_EQ(cache.misses(), 1u);
+    EXPECT_EQ(cache.hits(), 1u);
+}
+
+TEST(MermaidRowsCache, AsciiBitPartitionsKey) {
+    LayoutRowsCache cache(16, 1u << 20);
+    const auto unicode_rows = cache.get_or_layout(e6b::kAscii, false);
+    const auto ascii_rows = cache.get_or_layout(e6b::kAscii, true);
+    ASSERT_TRUE(unicode_rows.has_value() && !unicode_rows->empty());
+    ASSERT_TRUE(ascii_rows.has_value() && !ascii_rows->empty());
+    EXPECT_NE(*unicode_rows, *ascii_rows);
+    EXPECT_EQ(cache.size(), 2u);
+    EXPECT_EQ(cache.misses(), 2u);
+    EXPECT_EQ(cache.hits(), 0u);
+    // Repeats hit their own partition and stay stable.
+    EXPECT_EQ(cache.get_or_layout(e6b::kAscii, false), unicode_rows);
+    EXPECT_EQ(cache.get_or_layout(e6b::kAscii, true), ascii_rows);
+    EXPECT_EQ(cache.hits(), 2u);
+    EXPECT_EQ(cache.size(), 2u);
+}
+
+TEST(MermaidRowsCache, CrlfBytesArePartOfKey) {
+    LayoutRowsCache cache(16, 1u << 20);
+    const std::string crlf = "flowchart TD\r\nA[X] --> B[Y]";
+    const auto lf_rows = cache.get_or_layout(e6b::kNodeTD, false);
+    const auto crlf_rows = cache.get_or_layout(crlf, false);
+    ASSERT_TRUE(lf_rows.has_value() && !lf_rows->empty());
+    ASSERT_TRUE(crlf_rows.has_value() && !crlf_rows->empty());
+    // Two distinct entries even though the parser projects both to the
+    // same diagram rows.
+    EXPECT_EQ(cache.size(), 2u);
+    EXPECT_EQ(cache.misses(), 2u);
+    EXPECT_EQ(cache.get_or_layout(e6b::kNodeTD, false), lf_rows);
+    EXPECT_EQ(cache.get_or_layout(crlf, false), crlf_rows);
+    EXPECT_EQ(cache.hits(), 2u);
+}
+
+TEST(MermaidRowsCache, NegativeResultCachedAndReproducesFallback) {
+    auto fallback = ftxui::text("source-fallback");
+    // Uncached baseline: the rejected source returns no diagram.
+    ASSERT_FALSE(loom::ui::mermaid::render_mermaid(e6b::kRejected, fallback).has_value());
+
+    LayoutRowsCache cache(16, 1u << 20);
+    const auto first = cache.get_or_layout(e6b::kRejected, false);
+    ASSERT_TRUE(first.has_value());        // engaged...
+    EXPECT_TRUE(first->empty());          // ...empty rejection sentinel
+    EXPECT_EQ(cache.size(), 1u);
+    const auto second = cache.get_or_layout(e6b::kRejected, false);
+    ASSERT_TRUE(second.has_value());
+    EXPECT_TRUE(second->empty());
+    EXPECT_EQ(cache.misses(), 1u);
+    EXPECT_EQ(cache.hits(), 1u);
+    // The cached rejection reproduces the whole-source fallback disposition.
+    auto again = ftxui::text("source-fallback");
+    EXPECT_FALSE(cache.render(e6b::kRejected, false, std::move(again)).has_value());
+}
+
+TEST(MermaidRowsCache, EntryCountEvictionIsLru) {
+    LayoutRowsCache cache(2, 1u << 20);
+    const auto s1 = e6b::variant(1);
+    const auto s2 = e6b::variant(2);
+    const auto s3 = e6b::variant(3);
+    ASSERT_FALSE(cache.get_or_layout(s1, false)->empty());
+    ASSERT_FALSE(cache.get_or_layout(s2, false)->empty());
+    ASSERT_FALSE(cache.get_or_layout(s3, false)->empty());
+    EXPECT_EQ(cache.size(), 2u);
+    EXPECT_EQ(cache.misses(), 3u);
+    // s1 was the LRU front and is gone; re-requesting it is a miss that
+    // evicts s2 in turn.
+    ASSERT_FALSE(cache.get_or_layout(s1, false)->empty());
+    EXPECT_EQ(cache.misses(), 4u);
+    EXPECT_EQ(cache.size(), 2u);
+    // Order is now [s3, s1]: both hit.
+    ASSERT_FALSE(cache.get_or_layout(s3, false)->empty());
+    ASSERT_FALSE(cache.get_or_layout(s1, false)->empty());
+    EXPECT_EQ(cache.hits(), 2u);
+    EXPECT_EQ(cache.size(), 2u);
+}
+
+TEST(MermaidRowsCache, ByteCapBoundsRetention) {
+    // A 1-byte cap serves every call but retains nothing.
+    LayoutRowsCache uncapped(8, 1);
+    const auto served = uncapped.get_or_layout(e6b::kNodeTD, false);
+    ASSERT_TRUE(served.has_value() && !served->empty());
+    EXPECT_EQ(uncapped.size(), 0u);
+    EXPECT_EQ(uncapped.byte_size(), 0u);
+    const auto served_again = uncapped.get_or_layout(e6b::kNodeTD, false);
+    EXPECT_EQ(*served, *served_again);
+    EXPECT_EQ(uncapped.misses(), 2u);
+    EXPECT_EQ(uncapped.hits(), 0u);
+
+    // A tight-but-positive cap (the larger single-entry size) evicts the
+    // prior entry to fit the new one.
+    LayoutRowsCache node_seed(8, 1u << 20);
+    LayoutRowsCache big_seed(8, 1u << 20);
+    ASSERT_FALSE(node_seed.get_or_layout(e6b::kNodeTD, false)->empty());
+    ASSERT_FALSE(big_seed.get_or_layout(e6b::variant(9), false)->empty());
+    const auto node_bytes = node_seed.byte_size();
+    const auto tight_cap = std::max(node_bytes, big_seed.byte_size());
+    LayoutRowsCache tight(8, tight_cap);
+    ASSERT_FALSE(tight.get_or_layout(e6b::kNodeTD, false)->empty());
+    EXPECT_EQ(tight.size(), 1u);
+    ASSERT_FALSE(tight.get_or_layout(e6b::variant(9), false)->empty());
+    EXPECT_EQ(tight.size(), 1u);
+    // kNodeTD was evicted to keep total bytes at/below the cap; re-requesting
+    // it is another miss that evicts variant(9) in turn.
+    EXPECT_FALSE(tight.get_or_layout(e6b::kNodeTD, false)->empty());
+    EXPECT_EQ(tight.misses(), 3u);
+    EXPECT_EQ(tight.hits(), 0u);
+    EXPECT_LE(tight.byte_size(), tight.byte_capacity());
+}
+
+TEST(MermaidRowsCache, ClearDropsEntriesAndCounters) {
+    LayoutRowsCache cache(16, 1u << 20);
+    ASSERT_FALSE(cache.get_or_layout(e6b::kNodeTD, false)->empty());
+    ASSERT_FALSE(cache.get_or_layout(e6b::variant(5), false)->empty());
+    ASSERT_FALSE(cache.get_or_layout(e6b::kNodeTD, false)->empty());
+    EXPECT_EQ(cache.size(), 2u);
+    EXPECT_GT(cache.byte_size(), 0u);
+    cache.clear();
+    EXPECT_EQ(cache.size(), 0u);
+    EXPECT_EQ(cache.byte_size(), 0u);
+    EXPECT_EQ(cache.hits(), 0u);
+    EXPECT_EQ(cache.misses(), 0u);
+    // Fresh miss after reset.
+    ASSERT_FALSE(cache.get_or_layout(e6b::kNodeTD, false)->empty());
+    EXPECT_EQ(cache.misses(), 1u);
+}
+
+TEST(MermaidRowsCache, Width240And40ShareRowsWithFreshNodeGeometry) {
+    LayoutRowsCache cache(16, 1u << 20);
+    const auto rows = cache.get_or_layout(e6b::kChainLR, false);
+    ASSERT_TRUE(rows.has_value() && !rows->empty());
+
+    auto render_diagram = [&] {
+        return cache.render(
+            e6b::kChainLR, false,
+            loom::ui::render_markdown(fenced(std::string(e6b::kChainLR), "text")));
+    };
+    constexpr int kHeight = 40;
+    auto d1 = render_diagram();
+    ASSERT_TRUE(d1.has_value());
+    const auto wide = capture(*d1, 240, kHeight);
+    const auto plain_wide =
+        capture(loom::ui::render_markdown(fenced(std::string(e6b::kChainLR), "text")),
+                240, kHeight);
+    const auto plain_narrow =
+        capture(loom::ui::render_markdown(fenced(std::string(e6b::kChainLR), "text")),
+                40, kHeight);
+    // The chain draws at 240 but is wider than 40.
+    ASSERT_NE(wide, plain_wide);
+    ASSERT_NE(wide, plain_narrow);
+
+    auto d2 = render_diagram();
+    ASSERT_TRUE(d2.has_value());
+    // At 40 the SAME cached rows reproduce the source fallback: the width
+    // flip happens inside the fresh MermaidNode, not the cache.
+    EXPECT_EQ(capture(*d2, 40, kHeight), plain_narrow);
+    auto d3 = render_diagram();
+    ASSERT_TRUE(d3.has_value());
+    // A third fresh node restores the wide diagram byte-for-byte.
+    EXPECT_EQ(capture(*d3, 240, kHeight), wide);
+    EXPECT_EQ(cache.misses(), 1u);
+    EXPECT_EQ(cache.hits(), 3u);
+}
+
+TEST(MermaidRowsCache, MarkdownCallSiteConservesCells) {
+    const auto markdown = fenced(std::string(e6b::kNodeTD), "mermaid");
+    const auto uncached = capture(loom::ui::render_markdown(markdown), 240, 40);
+
+    loom::ui::MarkdownOptions opts;
+    LayoutRowsCache cache(16, 1u << 20);
+    opts.mermaid_rows_cache = &cache;
+    const auto once = capture(loom::ui::render_markdown(markdown, opts), 240, 40);
+    const auto twice = capture(loom::ui::render_markdown(markdown, opts), 240, 40);
+    EXPECT_EQ(once, uncached);
+    EXPECT_EQ(twice, uncached);
+    EXPECT_EQ(cache.misses(), 1u);
+    EXPECT_EQ(cache.hits(), 1u);
 }
 } // namespace
 

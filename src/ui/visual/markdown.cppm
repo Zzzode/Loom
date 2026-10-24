@@ -25,6 +25,11 @@ export module loom.ui.visual.markdown;
 
 import std;
 import loom.ui.foundation.design_tokens;
+// RFC 0031 E6b: MarkdownOptions names the per-instance layout-rows cache
+// type exported here. The primary interface is self-contained (the heavy
+// detail partition and parser bodies are not reachable through it), so this
+// adds none of the parser/code-highlight closure to the markdown BMI.
+import loom.ui.visual.mermaid;
 
 export namespace loom::ui {
 
@@ -44,6 +49,12 @@ struct MarkdownOptions {
     std::string theme_name;
     /// Maximum number of cached tokenized documents (LRU)
     std::size_t cache_max_size = 256;
+    /// RFC 0031 E6b: optional PER-INSTANCE cache for laid-out Mermaid rows.
+    /// Null by default, so every existing call site renders uncached. The
+    /// pointed-at cache is owned by a StreamingMarkdown or a message list;
+    /// it is never the process-global token cache. Width/theme are not part
+    /// of its key, so dim application and width toggles share cached rows.
+    ::loom::ui::mermaid::LayoutRowsCache* mermaid_rows_cache = nullptr;
 };
 
 // ============================================================
@@ -634,6 +645,10 @@ private:
     std::string last_content_;
     Element last_render_;
     const loom::ui::design::tokens::Palette* last_palette_ = nullptr;
+    /// RFC 0031 E6b: per-stream layout-rows cache (a distinct instance from
+    /// every message-list scroll cache). Cleared by reset(). A stream shows a
+    /// tiny stable set of closed diagrams across growing-delta frames.
+    mermaid::LayoutRowsCache mermaid_rows_cache_{16, 1u << 20};
 };
 
 // ============================================================

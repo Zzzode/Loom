@@ -99,6 +99,9 @@ import loom.ui.messages.virtual_list;   // P0-3: VirtualMessageList types + fact
 // messages_list_payload_row.cpp (faithful dispatch) — keeping them out of
 // this interface's BMI.
 import loom.ui.visual.markdown;   // arch-check: keep-import — StreamingMarkdown* member (global-qualified; checker sees only unqualified uses)
+// RFC 0031 E6b: complete type for the per-list Mermaid layout-rows cache
+// member below (visual ranks below messages; no upward edge).
+import loom.ui.visual.mermaid;
 import loom.ui.foundation.theme_provider;  // palette tokens for role colors
 // =========================================================================
 // Palette helpers — read from the current theme's palette tokens.
@@ -306,6 +309,12 @@ inline constexpr std::size_t kVirtualExitThreshold = 60;
 static_assert(kVirtualExitThreshold < kVirtualEnterThreshold,
               "Hysteresis band requires exit < enter");
 
+// RFC 0031 E6b: per-list Mermaid layout-rows cache sizing for the scroll
+// path. A 12-row virtual window with hysteresis is covered by 32 entries;
+// the row-byte cap bounds memory for a handful of heavy diagrams.
+inline constexpr std::size_t kScrollMermaidCacheEntries = 32;
+inline constexpr std::size_t kScrollMermaidCacheBytes = 512u << 10;
+
 /// Decide the renderer mode for this frame using the hysteresis band.
 /// Static→Virtual when visible > kVirtualEnterThreshold.
 /// Virtual→Static when visible < kVirtualExitThreshold.
@@ -404,6 +413,16 @@ struct MessagesListInput {
     /// so the body uses repeated-frame caching instead of full re-parse.
     /// Nullptr = not streaming / use plain render_markdown.
     ::loom::ui::StreamingMarkdown*    streaming_md = nullptr;
+
+    /// RFC 0031 E6b: per-message-list cache of laid-out Mermaid rows used by
+    /// COMMITTED rows on every window paint (the virtual-scroll repeat path).
+    /// A distinct instance from every StreamingMarkdown cache; never the
+    /// process-global token cache. Persisted across frames on
+    /// MessagesStore::render_input and cleared at session/document reset via
+    /// reset_virtual_renderer_state(). `mutable`: row rendering takes a const
+    /// input reference and the cache is logical memoization state.
+    mutable ::loom::ui::mermaid::LayoutRowsCache
+        mermaid_rows_cache{kScrollMermaidCacheEntries, kScrollMermaidCacheBytes};
 
     /// Optional pointer to a RowClickTracker that the renderer populates
     /// with screen-space boxes of clickable rows (thinking blocks, etc.).

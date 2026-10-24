@@ -113,6 +113,35 @@ one residual hole; the `tools/arch/test_mermaid_privacy.py` source scan (no
 test TU declares the module, imports it directly, or names `mermaid::detail`)
 is the load-bearing gate for that property.
 
+**Per-instance Mermaid layout-rows cache (RFC 0031 E6b).** Measurement
+justified a cache only for repeated identical layouts (streaming R≈0.997 at
+~90% of update time; virtual-scroll R≈0.991 at ~89% of row time; record in
+`docs/dev/mermaid-e6b-cache-decision.md`), so the cache caches immutable
+`std::vector<std::string>` ROWS, never `ftxui::Element`: `MermaidNode`
+mutates its diagram/fallback child in `SetBox`, and a shared node across
+rows or widths would alias that state. A narrow detail seam
+`layout_mermaid_rows(source, use_ascii)` owns the exact pre-E6b dispatch
+with a fresh `Work` per call; the public `render_mermaid` keeps both
+signatures and becomes seam lookup plus the unchanged `finish_mermaid`,
+which builds a FRESH node per render — so a width flip (240 vs 40) stays
+inside the node and never invalidates rows, dim is still applied by the
+caller, and a cached success can never bypass the finish path. The cache is
+strictly per-instance — a 16-entry/1 MiB one inside `StreamingMarkdown` and
+a distinct 32-entry/512 KiB one on `MessagesListInput` for committed scroll
+rows, threaded by an additive nullable `MarkdownOptions::mermaid_rows_cache`
+(default null, other call sites unchanged). It is never process-global and
+is unrelated to the 256-entry global token LRU, which must not grow into a
+global graph cache. The key is FNV-1a-64 over the EXACT `code_content`
+bytes (CRLF included, no trim/normalize) with the `use_ascii` bit folded in
+and an exact-key recheck after the hash hit; there is deliberately no width
+or theme component. A present-but-empty vector is the rejection sentinel
+(distinct from a miss), so a Work-budget reject and its repeat reproduce the
+same whole-source fallback. LRU eviction honors both an entry cap and a row
+byte cap; an entry larger than the byte cap is served but not retained. Both
+caches clear at their existing document/session reset boundaries
+(`StreamingMarkdown::reset()`, `reset_virtual_renderer_state()`), so a new
+stream or `/clear`/`/resume` can never serve a prior document's rows.
+
 **Server model capacities (RFC 0029).** The configured service's
 `data[].context_length` is read once per runtime root, before native tool policy
 snapshots. An exact endpoint/wire/credential-bound immutable snapshot is reused;

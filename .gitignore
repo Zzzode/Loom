@@ -37,3 +37,6 @@ ext.json
 settings.json.lock
 settings.local.json
 settings.local.json.lock
+
+# CMake-generated compile database; cmake/LinkCompileCommands.cmake manages this symlink
+/compile_commands.json

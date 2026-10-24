@@ -21,6 +21,24 @@ Non-goals:
 - Extending body grammar or the parent-edge router is out of scope.
 - StateDiagram v1 contributes zero qualifying originals (38 config, 4 init).
 
+## T1-A update — strict-first parent-router retry (2026-10-25)
+
+`plan_parent_routes` now runs a strict-first two-pass plan. Pass 1 is the
+original sequence-order BFS with the one-cell moat (connectors never cross,
+touch, or share). On full-plan failure exactly one deterministic bounded
+relaxed whole-plan pass routes same-lane commit trunks first and may run
+adjacent to or through an already-laid connector; commit markers and
+painted caption/tag/branch spans stay sealed. The retry is bounded: one
+attempt, a fresh Work budget per layout, every relaxed-pass BFS expansion
+Work-metered per dequeue (at most grid x edges, the same ceiling the strict
+prepayment already covered), and unchanged canvas limits (240 x 1024,
+1,000,000 Work). Pass-1 output is consumed whenever pass 1 succeeds, so the
+14 attested route-debt rows now draw while every previously drawing input
+renders byte-identical (verified cell-by-cell in both presets). The two LR
+nine-branch rows still cannot close in the 218-column canvas and classify
+as canvas capacity debt with the two TB/BT 276-column rows; the reviewed
+native-route-debt set is empty pending a future corpus expansion.
+
 ## Mechanical selection
 
 Closed column-0 fence, no top-level `config:`, no body `%%{`, over
@@ -31,33 +49,34 @@ v2 94/4, v1 38/4).
 
 ## Blocker detection
 
-Six classes are fixed source-content detectors; one class is an
-**execution-attested reviewed set** — `parse_gitgraph` accepts the body but
-`plan_parent_routes` cannot close a parent edge in the bounded grid. Routing
-feasibility is not textually decidable, so that set is sha-bound to this
-pinned corpus and additions require a new independent review row; the C++
-cohort gate empirically enforces every outcome.
+Six classes are fixed source-content detectors; the seventh, the
+**execution-attested reviewed set** (`gitgraph-native-parent-route-debt`),
+is currently empty (see the T1-A update below). Routing feasibility is not
+textually decidable, so any future addition is sha-bound to the pinned
+corpus and requires a new independent review row; the C++ cohort gate
+empirically enforces every outcome.
 
 - `gitgraph-empty-quoted-tag` — 3
-- `gitgraph-native-parent-route-debt` — 16
-- `gitgraph-canvas-dimension-overflow` — 2
+- `gitgraph-canvas-dimension-overflow` — 4
 - `gitgraph-title-not-projected` — 1
 - `gitgraph-multiline-quoted-branch-label` — 1
 - `state-composite-divider` — 1
 - `state-composite-brace-on-next-line` — 3
+- `gitgraph-native-parent-route-debt` — 0 (retired by T1-A)
 
-The two TB/BT nine-branch rows exceed the 240-column canvas (276 columns) and
-are `gitgraph-canvas-dimension-overflow`; the two LR nine-branch rows are 218
-columns (inside the canvas) but still unroutable and are classed as native
-parent-route debt.
+The two TB/BT nine-branch rows exceed the 240-column canvas (276 columns);
+the two LR nine-branch rows are 218 columns (inside the canvas) but remain
+unroutable in the packed ten-lane canvas even after the T1-A strict-first
+retry. All four are `gitgraph-canvas-dimension-overflow`.
 
 ## Predictions
 
-**42 predicted-draw (41 gitGraph, 1 stateDiagram-v2),
-27 predicted-blocked.** Width policy: 240
+**56 predicted-draw (55 gitGraph, 1 stateDiagram-v2),
+13 predicted-blocked** after T1-A (E2a originally registered 42 draw / 27
+blocked). Width policy: 240
 only; `narrow_40` uniformly `source`; `restored_240` equals `wide_240`.
 
-## The 27 blocked rows
+## The 13 blocked rows
 
 ### 1. `git/nightly-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag.mmd`
 
@@ -86,64 +105,10 @@ gitGraph
   # ... (excerpt: 2 more lines)
 ```
 
-### 2. `git/nightly-check/11-should-render-a-simple-gitgraph-with-cherry-pick-commit.mmd`
+### 2. `git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd`
 
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  Gitgraph with a single cherry-pick command carrying no tag at all, the
-  baseline untagged cherry-pick case.
----
-gitGraph
-  commit id: "ZERO"
-  branch develop
-  commit id:"A"
-  checkout main
-  commit id:"ONE"
-  checkout develop
-  commit id:"B"
-  checkout main
-  commit id:"TWO"
-  cherry-pick id:"A"
-  commit id:"THREE"
-  checkout develop
-  # ... (excerpt: 1 more lines)
-```
-
-### 3. `git/nightly-check/11-should-render-a-simple-gitgraph-with-two-cherry-pick-commit.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  Gitgraph exercising two separate cherry-pick commands - one cherry-picking
-  a commit from develop onto main, another cherry-picking a commit from a
-  featureA sub-branch - followed by a merge of featureA back into develop.
----
-gitGraph
-  commit id: "ZERO"
-  branch develop
-  commit id:"A"
-  checkout main
-  commit id:"ONE"
-  checkout develop
-  commit id:"B"
-  branch featureA
-  commit id:"FIX"
-  commit id: "FIX-2"
-  checkout main
-  # ... (excerpt: 7 more lines)
-```
-
-### 4. `git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
+- **predicted-blocked** — `gitgraph-canvas-dimension-overflow`
+- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)` — With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the bounded strict-first parent router (strict pass plus one relaxed whole-plan retry) still cannot close an edge in the packed ten-lane canvas.
 
 ```mermaid-source
 ---
@@ -167,34 +132,7 @@ gitGraph
   # ... (excerpt: 27 more lines)
 ```
 
-### 5. `git/nightly-check/13-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  Gitgraph with three branches (main, nice_feature, very_nice_feature)
-  where the final merge into main sets a custom commit id ("12345") and
-  custom tag ("my merge commit"), without overriding the commit type.
----
-gitGraph
-  commit id: "1"
-  commit id: "2"
-  branch nice_feature
-  checkout nice_feature
-  commit id: "3"
-  checkout main
-  commit id: "4"
-  checkout nice_feature
-  branch very_nice_feature
-  checkout very_nice_feature
-  commit id: "5"
-  # ... (excerpt: 10 more lines)
-```
-
-### 6. `git/nightly-check/27-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch.mmd`
+### 3. `git/nightly-check/27-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch.mmd`
 
 - **predicted-blocked** — `gitgraph-empty-quoted-tag`
 - Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42` — parse_cherry_pick requires a non-empty quoted tag; tag: "" decodes to no label.
@@ -221,37 +159,10 @@ gitGraph TB:
   # ... (excerpt: 2 more lines)
 ```
 
-### 7. `git/nightly-check/28-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  Vertical gitgraph with two cherry-pick commands (from develop and from a
-  featureA sub-branch) plus a merge of featureA into develop, the
-  vertical-orientation counterpart of the two-cherry-pick test.
----
-gitGraph TB:
-  commit id: "ZERO"
-  branch develop
-  commit id:"A"
-  checkout main
-  commit id:"ONE"
-  checkout develop
-  commit id:"B"
-  branch featureA
-  commit id:"FIX"
-  commit id: "FIX-2"
-  checkout main
-  # ... (excerpt: 7 more lines)
-```
-
-### 8. `git/nightly-check/29-should-render-commits-for-more-than-8-branches-vertical-branch.mmd`
+### 4. `git/nightly-check/29-should-render-commits-for-more-than-8-branches-vertical-branch.mmd`
 
 - **predicted-blocked** — `gitgraph-canvas-dimension-overflow`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); :449-552 (plan_parent_routes)` — With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the greedy BFS parent router still cannot close an edge.
+- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)` — With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the bounded strict-first parent router (strict pass plus one relaxed whole-plan retry) still cannot close an edge in the packed ten-lane canvas.
 
 ```mermaid-source
 ---
@@ -275,85 +186,7 @@ gitGraph TB:
   # ... (excerpt: 27 more lines)
 ```
 
-### 9. `git/nightly-check/33-should-render-a-simple-gitgraph-overlapping-commits.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  Default-orientation gitgraph where branch1 accumulates more commits than
-  main between its branch point and merge back, causing commits to land at
-  overlapping positions - a layout stress test for overlapping commits.
----
-gitGraph
-  commit id:"s1"
-  commit id:"s2"
-  branch branch1
-  commit id:"s3"
-  commit id:"s4"
-  checkout main
-  commit id:"s5"
-  checkout branch1
-  commit id:"s6"
-  commit id:"s7"
-  merge main
-```
-
-### 10. `git/nightly-check/35-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  Vertical counterpart of the two-branches-from-the-same-commit test:
-  feature-001 and feature-002 both branch off main from the same point,
-  with feature-002 merged into feature-001.
----
-gitGraph TB:
-  commit id:"1-abcdefg"
-  commit id:"2-abcdefg"
-  branch feature-001
-  commit id:"3-abcdefg"
-  commit id:"4-abcdefg"
-  checkout main
-  branch feature-002
-  commit id:"5-abcdefg"
-  checkout feature-001
-  merge feature-002
-```
-
-### 11. `git/nightly-check/38-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  LR-orientation gitgraph extending the not-used-immediately scenario one
-  level further: branch x is created and later used, and a sub-branch y is
-  created off x and also not used until later, before both merge back
-  into x.
----
-gitGraph LR:
-  commit id:"1-abcdefg"
-  branch x
-  checkout main
-  commit id:"2-abcdefg"
-  checkout x
-  commit id:"3-abcdefg"
-  checkout main
-  merge x
-  checkout x
-  branch y
-  # ... (excerpt: 6 more lines)
-```
-
-### 12. `git/nightly-check/62-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch-bottom-to-top.mmd`
+### 5. `git/nightly-check/62-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch-bottom-to-top.mmd`
 
 - **predicted-blocked** — `gitgraph-empty-quoted-tag`
 - Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42` — parse_cherry_pick requires a non-empty quoted tag; tag: "" decodes to no label.
@@ -380,37 +213,10 @@ gitGraph BT:
   # ... (excerpt: 1 more lines)
 ```
 
-### 13. `git/nightly-check/63-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch-bottom-to-top.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  BT gitGraph with two separate cherry-pick operations — one from develop and one from a nested
-  featureA branch — combined with a later merge of featureA into develop, testing multiple
-  cherry-picks alongside branching and merging.
----
-gitGraph BT:
-  commit id: "ZERO"
-  branch develop
-  commit id:"A"
-  checkout main
-  commit id:"ONE"
-  checkout develop
-  commit id:"B"
-  branch featureA
-  commit id:"FIX"
-  commit id: "FIX-2"
-  checkout main
-  # ... (excerpt: 7 more lines)
-```
-
-### 14. `git/nightly-check/64-should-render-commits-for-more-than-8-branches-vertical-branch-bottom-to-top.mmd`
+### 6. `git/nightly-check/64-should-render-commits-for-more-than-8-branches-vertical-branch-bottom-to-top.mmd`
 
 - **predicted-blocked** — `gitgraph-canvas-dimension-overflow`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); :449-552 (plan_parent_routes)` — With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the greedy BFS parent router still cannot close an edge.
+- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)` — With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the bounded strict-first parent router (strict pass plus one relaxed whole-plan retry) still cannot close an edge in the packed ten-lane canvas.
 
 ```mermaid-source
 ---
@@ -434,7 +240,7 @@ gitGraph BT:
   # ... (excerpt: 27 more lines)
 ```
 
-### 15. `git/nightly-check/66-should-render-a-simple-gitgraph-with-a-title-vertical-branch-bottom-to-top.mmd`
+### 7. `git/nightly-check/66-should-render-a-simple-gitgraph-with-a-title-vertical-branch-bottom-to-top.mmd`
 
 - **predicted-blocked** — `gitgraph-title-not-projected`
 - Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:348-403` — GitGraph has no title projection; admitting a titled row would silently drop the title.
@@ -450,116 +256,10 @@ gitGraph BT:
   commit id: "1-abcdefg"
 ```
 
-### 16. `git/nightly-check/68-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch-bottom-to-top.mmd`
+### 8. `git/nightly-check/74-should-render-commits-for-more-than-8-branches-using-switch-instead-of-checkout.mmd`
 
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  BT gitGraph where two feature branches (feature-001 and feature-002) both fork from the same
-  point on main, then feature-002 is merged directly into feature-001 rather than back into main —
-  testing merges between sibling branches.
----
-gitGraph BT:
-  commit id:"1-abcdefg"
-  commit id:"2-abcdefg"
-  branch feature-001
-  commit id:"3-abcdefg"
-  commit id:"4-abcdefg"
-  checkout main
-  branch feature-002
-  commit id:"5-abcdefg"
-  checkout feature-001
-  merge feature-002
-```
-
-### 17. `git/nightly-check/7-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  Default left-to-right gitGraph with nested nice_feature/very_nice_feature branches and a tagged,
-  custom-id merge commit — the horizontal counterpart to the BT version of this scenario.
----
-gitGraph
-  commit id: "1"
-  commit id: "2"
-  branch nice_feature
-  checkout nice_feature
-  commit id: "3"
-  checkout main
-  commit id: "4"
-  checkout nice_feature
-  branch very_nice_feature
-  checkout very_nice_feature
-  commit id: "5"
-  checkout main
-  # ... (excerpt: 9 more lines)
-```
-
-### 18. `git/nightly-check/70-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch-bottom-to-top.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  BT gitGraph with a branch x and a sub-branch y of x, where neither is checked out immediately
-  after being declared, followed by merges of x into main and y into x — testing deferred usage of
-  nested sub-branches.
----
-gitGraph BT:
-  commit id:"1-abcdefg"
-  branch x
-  checkout main
-  commit id:"2-abcdefg"
-  checkout x
-  commit id:"3-abcdefg"
-  checkout main
-  merge x
-  checkout x
-  branch y
-  checkout x
-  # ... (excerpt: 5 more lines)
-```
-
-### 19. `git/nightly-check/73-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-using-switch-instead-of-checkout.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  Same nested-branch, tagged-merge-commit scenario as the checkout-based version, but using the
-  `switch` keyword in place of `checkout` throughout, verifying `switch` is a functional alias.
----
-gitGraph
-  commit id: "1"
-  commit id: "2"
-  branch nice_feature
-  switch nice_feature
-  commit id: "3"
-  switch main
-  commit id: "4"
-  switch nice_feature
-  branch very_nice_feature
-  switch very_nice_feature
-  commit id: "5"
-  switch main
-  # ... (excerpt: 9 more lines)
-```
-
-### 20. `git/nightly-check/74-should-render-commits-for-more-than-8-branches-using-switch-instead-of-checkout.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
+- **predicted-blocked** — `gitgraph-canvas-dimension-overflow`
+- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)` — With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the bounded strict-first parent router (strict pass plus one relaxed whole-plan retry) still cannot close an edge in the packed ten-lane canvas.
 
 ```mermaid-source
 ---
@@ -583,34 +283,7 @@ gitGraph
   # ... (excerpt: 27 more lines)
 ```
 
-### 21. `git/nightly-check/77-should-render-a-bt-gitgraph-with-three-branches-and-multiple-merges-regression-6593.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  Regression test for issue #6593: BT gitGraph with two sibling branches (nice_feature and
-  very_nice_feature) both forked from main, each merged back into main independently, verifying
-  correct rendering of multiple separate merges into the same branch.
----
-gitGraph BT:
-  commit id: "1"
-  commit id: "2"
-  branch nice_feature
-  checkout main
-  commit id: "3"
-  checkout nice_feature
-  commit id: "4"
-  checkout main
-  branch very_nice_feature
-  checkout very_nice_feature
-  commit id: "5"
-  # ... (excerpt: 10 more lines)
-```
-
-### 22. `git/nightly-check/97-should-render-branch-labels-with-multi-line-text-aligned-with-background-in-lr-layout.mmd`
+### 9. `git/nightly-check/97-should-render-branch-labels-with-multi-line-text-aligned-with-background-in-lr-layout.mmd`
 
 - **predicted-blocked** — `gitgraph-multiline-quoted-branch-label`
 - Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:55-64` — Cursor::quoted scans one physical line; a quoted label split across lines cannot close.
@@ -633,34 +306,7 @@ gitGraph LR:
   commit id: "5"
 ```
 
-### 23. `git/pr-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag.mmd`
-
-- **predicted-blocked** — `gitgraph-native-parent-route-debt`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)` — parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation.
-
-```mermaid-source
----
-description: >-
-  Gitgraph on main and develop branches where a `cherry-pick` command carries
-  a custom tag: ("snapshot"), verifying tagged cherry-pick commits render
-  correctly alongside ordinary commits.
----
-gitGraph
-  commit id: "ZERO"
-  branch develop
-  commit id:"A"
-  checkout main
-  commit id:"ONE"
-  checkout develop
-  commit id:"B"
-  checkout main
-  commit id:"TWO"
-  cherry-pick id:"A" tag: "snapshot"
-  commit id:"THREE"
-  # ... (excerpt: 2 more lines)
-```
-
-### 24. `state-diagram-v2/nightly-check/should-align-dividers-correctly.mmd`
+### 10. `state-diagram-v2/nightly-check/should-align-dividers-correctly.mmd`
 
 - **predicted-blocked** — `state-composite-divider`
 - Witness: `src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)` — A standalone '--' region divider reaches edge parsing where identifier('--') is rejected.
@@ -683,7 +329,7 @@ stateDiagram-v2
   }
 ```
 
-### 25. `state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd`
+### 11. `state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd`
 
 - **predicted-blocked** — `state-composite-brace-on-next-line`
 - Witness: `src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)` — A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected.
@@ -710,7 +356,7 @@ stateDiagram-v2
   # ... (excerpt: 52 more lines)
 ```
 
-### 26. `state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd`
+### 12. `state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd`
 
 - **predicted-blocked** — `state-composite-brace-on-next-line`
 - Witness: `src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)` — A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected.
@@ -737,7 +383,7 @@ stateDiagram-v2
   # ... (excerpt: 49 more lines)
 ```
 
-### 27. `state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd`
+### 13. `state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd`
 
 - **predicted-blocked** — `state-composite-brace-on-next-line`
 - Witness: `src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)` — A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected.
@@ -764,17 +410,16 @@ stateDiagram-v2
   # ... (excerpt: 54 more lines)
 ```
 
-
 ## Full row ledger
 
 | Path | Family | Metadata | Prediction | 240/40/restored | Blocker |
 |---|---|---|---|---|---|
 | `git/nightly-check/1-should-render-a-simple-gitgraph-with-commit-on-main-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-empty-quoted-tag |
-| `git/nightly-check/11-should-render-a-simple-gitgraph-with-cherry-pick-commit.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
-| `git/nightly-check/11-should-render-a-simple-gitgraph-with-two-cherry-pick-commit.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
-| `git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
-| `git/nightly-check/13-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
+| `git/nightly-check/11-should-render-a-simple-gitgraph-with-cherry-pick-commit.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
+| `git/nightly-check/11-should-render-a-simple-gitgraph-with-two-cherry-pick-commit.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
+| `git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-canvas-dimension-overflow |
+| `git/nightly-check/13-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/1433-should-render-a-simple-gitgraph-with-a-title.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/15-should-render-a-simple-gitgraph-with-commit-on-main-branch-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/16-should-render-a-simple-gitgraph-with-commit-on-main-branch-with-id-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
@@ -786,16 +431,16 @@ stateDiagram-v2
 | `git/nightly-check/25-should-render-a-simple-gitgraph-with-cherry-pick-commit-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/26-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/27-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-empty-quoted-tag |
-| `git/nightly-check/28-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
+| `git/nightly-check/28-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/29-should-render-commits-for-more-than-8-branches-vertical-branch.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-canvas-dimension-overflow |
 | `git/nightly-check/31-should-render-a-simple-gitgraph-with-a-title-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/32-should-render-a-simple-gitgraph-overlapping-commits-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
-| `git/nightly-check/33-should-render-a-simple-gitgraph-overlapping-commits.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
+| `git/nightly-check/33-should-render-a-simple-gitgraph-overlapping-commits.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/34-should-render-a-simple-gitgraph-with-two-branches-from-same-commit.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
-| `git/nightly-check/35-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
+| `git/nightly-check/35-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/36-should-render-gitgraph-with-branch-that-is-not-used-immediately.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/37-should-render-gitgraph-with-branch-that-is-not-used-immediately-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
-| `git/nightly-check/38-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
+| `git/nightly-check/38-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/39-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/4-should-render-a-simple-gitgraph-with-tags-committypes-on-main-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/40-should-render-a-simple-gitgraph-with-cherry-pick-merge-commit.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
@@ -810,24 +455,24 @@ stateDiagram-v2
 | `git/nightly-check/60-should-render-a-simple-gitgraph-with-cherry-pick-commit-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/61-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/62-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-empty-quoted-tag |
-| `git/nightly-check/63-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
+| `git/nightly-check/63-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/64-should-render-commits-for-more-than-8-branches-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-canvas-dimension-overflow |
 | `git/nightly-check/65-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/66-should-render-a-simple-gitgraph-with-a-title-vertical-branch-bottom-to-top.mmd` | gitGraph | description,title | predicted-blocked | source/source/source | gitgraph-title-not-projected |
-| `git/nightly-check/68-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
+| `git/nightly-check/68-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/69-should-render-gitgraph-with-branch-that-is-not-used-immediately-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
-| `git/nightly-check/7-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
-| `git/nightly-check/70-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
-| `git/nightly-check/73-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-using-switch-instead-of-checkout.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
-| `git/nightly-check/74-should-render-commits-for-more-than-8-branches-using-switch-instead-of-checkout.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
+| `git/nightly-check/7-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
+| `git/nightly-check/70-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
+| `git/nightly-check/73-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-using-switch-instead-of-checkout.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
+| `git/nightly-check/74-should-render-commits-for-more-than-8-branches-using-switch-instead-of-checkout.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-canvas-dimension-overflow |
 | `git/nightly-check/75-should-render-a-gitgraph-with-multiple-tags-on-a-merge-commit-on-bottom-to-top-orientation.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/76-should-render-a-bt-gitgraph-with-branch-ordering-and-merge-from-right-branch-regression-6593.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/76-should-render-a-gitgraph-with-multiple-tags-on-a-merge-commit-on-left-to-right-orientation.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
-| `git/nightly-check/77-should-render-a-bt-gitgraph-with-three-branches-and-multiple-merges-regression-6593.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
+| `git/nightly-check/77-should-render-a-bt-gitgraph-with-three-branches-and-multiple-merges-regression-6593.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/78-should-render-a-bt-gitgraph-with-cherry-pick-regression-6593.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/79-should-render-a-bt-gitgraph-with-two-cherry-picks-regression-6593.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/97-should-render-branch-labels-with-multi-line-text-aligned-with-background-in-lr-layout.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-multiline-quoted-branch-label |
-| `git/pr-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-native-parent-route-debt |
+| `git/pr-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/pr-check/17-should-render-a-simple-gitgraph-with-different-committypes-on-main-branch-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/pr-check/3-should-render-a-simple-gitgraph-with-different-committypes-on-main-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/pr-check/30-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
@@ -848,6 +493,16 @@ stateDiagram-v2
   parse-accepts-but-unroutable rows plus two LR-vs-TB attribution fixes; all
   are reflected here. The reviewer re-derived the full partition against
   `plan_parent_routes` and the public renderer, not the ledger.
+- Round 3 (T1-A, 2026-10-25): implementation verification — after the
+  strict-first retry the cohort partitions 56 draw / 13 source; all 42
+  pre-change draw rows captured byte-identical (character and background
+  per cell) in debug and release, the 14 retired route-debt rows draw with
+  descriptions hidden, and the four nine-branch rows keep whole source.
+  Full `ctest -L mermaid` is green in both presets apart from the
+  pre-existing machine-timing flake `E2E_Pty_Mermaid` (it also fails on
+  pristine master isolated on this host); the E6c mandatory-gap roster and
+  its SHA pin are unchanged. The retired-set claim awaits independent
+  ledger review like every earlier change to the reviewed set.
 
 ## Graduation checklist
 

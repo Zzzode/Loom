@@ -458,7 +458,7 @@ std::optional<ParentRoutePlan> plan_parent_routes(
     const GitGraph& graph, const std::vector<Point>& positions,
     const std::vector<std::pair<std::size_t, std::size_t>>& parents,
     const std::vector<std::string>& captions, const std::vector<Point>& branch_guides,
-    int width, int height, Work& work, bool use_ascii) {
+    int width, int height, Work& work, bool use_ascii, bool horizontal_flow) {
     if (width <= 0 || height <= 0 || positions.size() != graph.commits.size() ||
         captions.size() != graph.commits.size() || branch_guides.size() != graph.branches.size()) return {};
     const auto grid_cells = static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
@@ -466,97 +466,174 @@ std::optional<ParentRoutePlan> plan_parent_routes(
     if (grid_cells > std::numeric_limits<std::size_t>::max() / kWorkspaceUnit ||
         parents.size() > std::numeric_limits<std::size_t>::max() / grid_cells) return {};
     const auto searches = grid_cells * parents.size();
-    std::size_t fee = grid_cells * kWorkspaceUnit;
-    if (searches > (std::numeric_limits<std::size_t>::max() - fee) / 4u) return {};
-    fee += searches * 4u;
+    std::size_t pass_fee = grid_cells * kWorkspaceUnit;
+    if (searches > (std::numeric_limits<std::size_t>::max() - pass_fee) / 4u) return {};
+    pass_fee += searches * 4u;
     constexpr std::size_t kRouteSlotFee = sizeof(std::vector<Point>) + 64u;
-    if (fee > std::numeric_limits<std::size_t>::max() - 4096u ||
-        parents.size() > (std::numeric_limits<std::size_t>::max() - fee - 4096u) / kRouteSlotFee) return {};
-    fee += parents.size() * kRouteSlotFee + 4096u;
-    if (!work.spend(fee)) return {};
+    if (pass_fee > std::numeric_limits<std::size_t>::max() - 4096u ||
+        parents.size() > (std::numeric_limits<std::size_t>::max() - pass_fee - 4096u) / kRouteSlotFee) return {};
+    pass_fee += parents.size() * kRouteSlotFee + 4096u;
 
-    std::vector<unsigned char> occupied(grid_cells, 0u), routed(grid_cells, 0u);
     const auto index_of = [&](Point point) { return static_cast<std::size_t>(point.y * width + point.x); };
-    for (const auto marker : positions) {
-        if (marker.x < 0 || marker.y < 0 || marker.x >= width || marker.y >= height || occupied[index_of(marker)] != 0u)
-            return {};
-        occupied[index_of(marker)] = 2u;
-    }
-    for (std::size_t index = 0u; index < graph.commits.size(); ++index) {
-        const auto marker = positions[index];
-        if (!reserve_parent_span(occupied, width, height, {marker.x + 3, marker.y}, cells(captions[index]))) return {};
-        for (std::size_t tag = 0u; tag < graph.commits[index].tags.size(); ++tag) {
-            const auto tag_width = cells(graph.commits[index].tags[tag]) + 2;
-            if (!reserve_parent_span(occupied, width, height,
-                                     {marker.x + 3, marker.y + 1 + static_cast<int>(tag)}, tag_width)) return {};
-        }
-    }
-    for (std::size_t index = 0u; index < graph.branches.size(); ++index) {
-        const auto body = branch_caption(graph.branches[index], graph, use_ascii);
-        const auto guide = branch_guides[index];
-        const Point caption{guide.x + 3, guide.y};
-        // Keep parent paths out of the lane guide, separator and complete ref.
-        if (!reserve_parent_span(occupied, width, height, {caption.x - 3, caption.y}, 3) ||
-            !reserve_parent_span(occupied, width, height, caption, cells(body))) return {};
-    }
+    constexpr std::array<Point, 4> kSteps{{{0, -1}, {1, 0}, {0, 1}, {-1, 0}}};
 
-    ParentRoutePlan plan;
-    plan.paths.reserve(parents.size());
+    // Commit markers (2) are permanent obstacles; reserved caption/tag/branch
+    // spans (1) keep connectors out of painted labels. The reservation is
+    // identical for both passes, so it is rebuilt from scratch on retry.
+    const auto build_workspace = [&]() -> std::optional<std::pair<std::vector<unsigned char>,
+                                                                  std::vector<unsigned char>>> {
+        std::vector<unsigned char> occupied(grid_cells, 0u), routed(grid_cells, 0u);
+        for (const auto marker : positions) {
+            if (marker.x < 0 || marker.y < 0 || marker.x >= width || marker.y >= height ||
+                occupied[index_of(marker)] != 0u)
+                return {};
+            occupied[index_of(marker)] = 2u;
+        }
+        for (std::size_t index = 0u; index < graph.commits.size(); ++index) {
+            const auto marker = positions[index];
+            if (!reserve_parent_span(occupied, width, height, {marker.x + 3, marker.y}, cells(captions[index]))) return {};
+            for (std::size_t tag = 0u; tag < graph.commits[index].tags.size(); ++tag) {
+                const auto tag_width = cells(graph.commits[index].tags[tag]) + 2;
+                if (!reserve_parent_span(occupied, width, height,
+                                         {marker.x + 3, marker.y + 1 + static_cast<int>(tag)}, tag_width)) return {};
+            }
+        }
+        for (std::size_t index = 0u; index < graph.branches.size(); ++index) {
+            const auto body = branch_caption(graph.branches[index], graph, use_ascii);
+            const auto guide = branch_guides[index];
+            const Point caption{guide.x + 3, guide.y};
+            // Keep parent paths out of the lane guide, separator and complete ref.
+            if (!reserve_parent_span(occupied, width, height, {caption.x - 3, caption.y}, 3) ||
+                !reserve_parent_span(occupied, width, height, caption, cells(body))) return {};
+        }
+        return std::pair{std::move(occupied), std::move(routed)};
+    };
+
+    // One whole-plan routing pass. Pass 1 (strict) routes edges in commit
+    // sequence order, treats every reserved/laid cell as an obstacle and keeps
+    // a one-cell moat around every prior route, so connectors never cross,
+    // touch, or share. Pass 2 (relaxed) routes the same-lane commit trunks
+    // first and may run adjacent to or through an earlier connector; commit
+    // markers and painted-label spans stay sealed in both passes.
+    //
+    // The BFS scratch arrays are allocated once by the caller: the strict
+    // prepayment already covers them, so the retry rebuilds only the two byte
+    // workspaces. The relaxed pass additionally meters its BFS expansions as
+    // they happen (four units per dequeued cell, at most grid * edges in
+    // total) instead of prepaying the full worst-case search a second time.
     std::vector<int> previous(grid_cells, -1);
     std::vector<int> queue;
     queue.reserve(grid_cells);
-    constexpr std::array<Point, 4> kSteps{{{0, -1}, {1, 0}, {0, 1}, {-1, 0}}};
-    const auto touches_prior_route = [&](Point point) {
-        for (const auto step : kSteps) {
-            const Point neighbor{point.x + step.x, point.y + step.y};
-            if (neighbor.x >= 0 && neighbor.y >= 0 && neighbor.x < width && neighbor.y < height &&
-                routed[index_of(neighbor)] != 0u) return true;
+    const auto run_pass = [&](std::vector<unsigned char>& occupied, std::vector<unsigned char>& routed,
+                              bool strict) -> std::optional<ParentRoutePlan> {
+        ParentRoutePlan plan;
+        plan.paths.reserve(parents.size());
+        std::vector<std::size_t> order(parents.size());
+        std::iota(order.begin(), order.end(), std::size_t{0u});
+        if (!strict) {
+            const auto same_lane = [&](std::size_t child, std::size_t parent) {
+                return horizontal_flow ? positions[child].y == positions[parent].y
+                                       : positions[child].x == positions[parent].x;
+            };
+            // Stable partition: lane trunks before cross-lane connectors, each
+            // group still in commit sequence. Laying the spines first keeps
+            // the backward merges and second parents from sealing the trunk.
+            std::stable_sort(order.begin(), order.end(), [&](std::size_t left, std::size_t right) {
+                return same_lane(parents[left].first, parents[left].second) >
+                       same_lane(parents[right].first, parents[right].second);
+            });
         }
-        return false;
-    };
-    for (const auto [child, parent] : parents) {
-        if (child >= positions.size() || parent >= positions.size() || child == parent) return {};
-        const int source = static_cast<int>(index_of(positions[child]));
-        const int target = static_cast<int>(index_of(positions[parent]));
-        std::fill(previous.begin(), previous.end(), -1);
-        queue.clear(); queue.push_back(source); previous[static_cast<std::size_t>(source)] = source;
-        for (std::size_t read = 0u; read < queue.size(); ++read) {
-            const int current = queue[read];
-            if (current == target) break;
-            const Point here{current % width, current / width};
+        const auto touches_prior_route = [&](Point point) {
             for (const auto step : kSteps) {
-                const Point next{here.x + step.x, here.y + step.y};
-                if (next.x < 0 || next.y < 0 || next.x >= width || next.y >= height) continue;
-                const int next_index = static_cast<int>(index_of(next));
-                if (previous[static_cast<std::size_t>(next_index)] >= 0 ||
-                    (next_index != target && (occupied[static_cast<std::size_t>(next_index)] != 0u ||
-                                               touches_prior_route(next)))) continue;
-                previous[static_cast<std::size_t>(next_index)] = current;
-                queue.push_back(next_index);
+                const Point neighbor{point.x + step.x, point.y + step.y};
+                if (neighbor.x >= 0 && neighbor.y >= 0 && neighbor.x < width && neighbor.y < height &&
+                    routed[index_of(neighbor)] != 0u) return true;
             }
+            return false;
+        };
+        for (const std::size_t edge : order) {
+            const auto [child, parent] = parents[edge];
+            if (child >= positions.size() || parent >= positions.size() || child == parent) return {};
+            const int source = static_cast<int>(index_of(positions[child]));
+            const int target = static_cast<int>(index_of(positions[parent]));
+            std::fill(previous.begin(), previous.end(), -1);
+            queue.clear();
+            queue.push_back(source);
+            previous[static_cast<std::size_t>(source)] = source;
+            for (std::size_t read = 0u; read < queue.size(); ++read) {
+                const int current = queue[read];
+                if (current == target) break;
+                if (!strict && !work.spend(4u)) return {};
+                const Point here{current % width, current / width};
+                for (const auto step : kSteps) {
+                    const Point next{here.x + step.x, here.y + step.y};
+                    if (next.x < 0 || next.y < 0 || next.x >= width || next.y >= height) continue;
+                    const int next_index = static_cast<int>(index_of(next));
+                    if (previous[static_cast<std::size_t>(next_index)] >= 0) continue;
+                    if (next_index != target) {
+                        const auto cell = static_cast<std::size_t>(next_index);
+                        if (strict) {
+                            if (occupied[cell] != 0u || touches_prior_route(next)) continue;
+                        } else {
+                            // Markers and painted-label spans stay sealed; an
+                            // already-laid connector cell may be reused.
+                            if (occupied[cell] == 2u || (occupied[cell] == 1u && routed[cell] == 0u)) continue;
+                        }
+                    }
+                    previous[static_cast<std::size_t>(next_index)] = current;
+                    queue.push_back(next_index);
+                }
+            }
+            if (previous[static_cast<std::size_t>(target)] < 0) return {};
+            std::size_t length = 1u;
+            for (int current = target; current != source; current = previous[static_cast<std::size_t>(current)]) ++length;
+            if (length > (std::numeric_limits<std::size_t>::max() - 64u) / (sizeof(Point) + 16u) ||
+                !work.spend(length * (sizeof(Point) + 16u) + 64u)) return {};
+            std::vector<Point> route;
+            route.reserve(length);
+            for (int current = target;; current = previous[static_cast<std::size_t>(current)]) {
+                route.push_back({current % width, current / width});
+                if (current == source) break;
+            }
+            std::ranges::reverse(route);
+            for (const auto point : route) {
+                const auto point_index = index_of(point);
+                if (point_index == static_cast<std::size_t>(source) || point_index == static_cast<std::size_t>(target)) continue;
+                if (strict) {
+                    if (occupied[point_index] != 0u) return {};
+                } else if (occupied[point_index] == 2u ||
+                           (occupied[point_index] == 1u && routed[point_index] == 0u)) {
+                    return {};
+                }
+                occupied[point_index] = 1u;
+                routed[point_index] = 1u;
+            }
+            plan.paths.push_back(std::move(route));
         }
-        if (previous[static_cast<std::size_t>(target)] < 0) return {};
-        std::size_t length = 1u;
-        for (int current = target; current != source; current = previous[static_cast<std::size_t>(current)]) ++length;
-        if (length > (std::numeric_limits<std::size_t>::max() - 64u) / (sizeof(Point) + 16u) ||
-            !work.spend(length * (sizeof(Point) + 16u) + 64u)) return {};
-        std::vector<Point> route;
-        route.reserve(length);
-        for (int current = target;; current = previous[static_cast<std::size_t>(current)]) {
-            route.push_back({current % width, current / width});
-            if (current == source) break;
-        }
-        std::ranges::reverse(route);
-        for (const auto point : route) {
-            const auto point_index = index_of(point);
-            if (point_index == static_cast<std::size_t>(source) || point_index == static_cast<std::size_t>(target)) continue;
-            if (occupied[point_index] != 0u) return {};
-            occupied[point_index] = 1u;
-            routed[point_index] = 1u;
-        }
-        plan.paths.push_back(std::move(route));
-    }
-    return plan;
+        return plan;
+    };
+
+    // Pass 1: the exact strict plan. Every input that routes today must keep
+    // this plan byte-for-byte; the relaxed retry exists only for full failure.
+    if (!work.spend(pass_fee)) return {};
+    auto workspace = build_workspace();
+    if (!workspace) return {};
+    if (auto plan = run_pass(workspace->first, workspace->second, true)) return plan;
+
+    // Pass 2: one deterministic bounded whole-plan retry that permits
+    // route-cell crossing after strict failure. Its output is consumable only
+    // because pass 1 failed; pass-1 success never reaches this branch. The
+    // retry rebuilds only the byte workspaces (the int BFS scratch is reused)
+    // and pays for its actual, grid*edges-bounded expansions per dequeue.
+    constexpr std::size_t kRelaxedUnit = 2u * sizeof(unsigned char) + 16u;
+    std::size_t relaxed_fee = grid_cells * kRelaxedUnit;
+    if (relaxed_fee > std::numeric_limits<std::size_t>::max() - 4096u ||
+        parents.size() > (std::numeric_limits<std::size_t>::max() - relaxed_fee - 4096u) / kRouteSlotFee) return {};
+    relaxed_fee += parents.size() * kRouteSlotFee + 4096u;
+    if (!work.spend(relaxed_fee)) return {};
+    workspace = build_workspace();
+    if (!workspace) return {};
+    return run_pass(workspace->first, workspace->second, false);
 }
 
 bool draw_parent_routes(Canvas& canvas, const ParentRoutePlan& plan, bool use_ascii) {
@@ -668,7 +745,7 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
         int planned_width = 0, planned_height = 0;
         if (!checked_dimension(static_cast<std::size_t>(width), static_cast<std::size_t>(height), planned_width, planned_height, work)) return {};
         const auto route_plan = plan_parent_routes(graph, positions, parents, captions, branch_guides,
-                                                   planned_width, planned_height, work, use_ascii);
+                                                   planned_width, planned_height, work, use_ascii, true);
         if (!route_plan) return {};
         Canvas canvas(planned_width, planned_height, work);
         if (!draw_parent_routes(canvas, *route_plan, use_ascii)) return {};
@@ -705,7 +782,7 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
     int planned_width = 0, planned_height = 0;
     if (!checked_dimension(static_cast<std::size_t>(width), static_cast<std::size_t>(height), planned_width, planned_height, work)) return {};
     const auto route_plan = plan_parent_routes(graph, positions, parents, captions, branch_guides,
-                                               planned_width, planned_height, work, use_ascii);
+                                               planned_width, planned_height, work, use_ascii, false);
     if (!route_plan) return {};
     Canvas canvas(planned_width, planned_height, work);
     if (!draw_parent_routes(canvas, *route_plan, use_ascii)) return {};

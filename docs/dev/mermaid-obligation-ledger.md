@@ -53,7 +53,7 @@ Per-gate frozen counts and roster rows:
 
 | Gate (new ctest name) | Roster key | Frozen counts | Rows |
 |---|---|---|---:|
-| `MermaidCapabilityReport.OfficialMatrix` | `official_matrix` | ER errors 6/pending 144/admitted 62; Flow errors 9/decoded 54/pending 346; Class errors 30/decoded 237/pending 48/admitted 211; drawn_at_240 582/2145 | 94 |
+| `MermaidCapabilityReport.OfficialMatrix` | `official_matrix` | ER errors 6/pending 144/admitted 62; Flow errors 10/decoded 54/pending 346 (T1-B: one pending-config original now draws unreviewed art); Class errors 30/decoded 237/pending 48/admitted 211; drawn_at_240 596/2145 | 96 |
 | `MermaidCapabilityReport.Flow400CompleteSources` | — (counts-only) | errors 9 at matrix; visited 400, decoded/positive/mutated 54, pending 346, zero non-gap errors | 0 |
 | `MermaidCapabilityReport.MermanXY102` | `merman_xy102` | 102 inputs, 85 candidate/17 fallback, partition 3/17/82/0, geometry 77, empty 5, profile pending 20, zero errors | 20 |
 | `MermaidCapabilityReport.Class481` | `class481` | matched/mutated 341, pending 137, 3 positive fallbacks (`merman/5974d9abfc8f91652b9b`, `merman/a254b69141639fa8b045`, `merman/c50650cbac88ef419784`) | 140 |
@@ -66,15 +66,20 @@ Per-gate frozen counts and roster rows:
 | `MermaidCapabilityReport.Requirement11P1P6` | `requirement11_p1p6` | complete 8, geometry 1 (P1), fallbacks 1 (P3 expected control), P5 negatives 10 | 1 |
 | `MermaidCapabilityReport.Requirement11Overflow` | `requirement11_overflow` | complete 1, fallbacks 1, errors 1 (LR case index 0) | 1 |
 
-`drawn_at_240` is 582 rather than the E1-era 540 solely because E2a admitted
-the reviewed config-free gitGraph/state cohort (+42); every other frozen count
-matches the pre-E2a red baseline. Both presets show 809/810 under
-`ctest -L mermaid -j8`, the single failure being the pre-existing real-PTY
-timing flake `E2E_Pty_Mermaid` (passes alone on an unloaded machine and is not
-a renderer report). Rule for later phases: any renderer-driven outcome change
-(gain or loss) must update the roster (via `--write`, followed by independent
-review) and the frozen constants **in the same change**; expectation changes
-still go only through this ledger, never through renderer output.
+`drawn_at_240` rose from the E1-era 540 to 582 when E2a admitted the reviewed
+config-free gitGraph/state cohort (+42), then to 596 when T1-A retired 14
+gitGraph native-route rows through the strict-first parent-router retry (+14;
+the E2a cohort ledger now partitions 56 draw / 13 source); every other frozen
+count matches the pre-E2a red baseline. Under `ctest -L mermaid -j8` debug is
+819/819 and release 818/819 on this host; the sole failure is the pre-existing
+real-PTY timing flake `E2E_Pty_Mermaid` (it also fails isolated on pristine
+master here — 5/5 isolated pristine runs failed — while passing under parallel
+scheduling, and it is not a renderer report). Rule for later phases: any
+renderer-driven outcome change (gain or loss) must update the roster (via
+`--write`, followed by independent review) and the frozen constants **in the
+same change**; expectation changes still go only through this ledger, never
+through renderer output. T1-A required no roster rewrite: official_matrix
+exempts E2a cohort rows, so its gap rows and the SHA pin stayed byte-identical.
 
 ### Capability-expansion task list after RFC 0031 (next coverage work)
 
@@ -90,10 +95,12 @@ a row earns drawing credit only when the bounded native parser AND layout
 complete it; a source the router cannot close stays whole-source and stays
 registered, never silently degrading to partial art.
 
-Current native admission (full original files, 240 columns) after E2a is
-**582 / 2,145**: Flow 54/400, Sequence 193/193, Class 211/285, ER 62/206,
-stateDiagram-v2 11/103, stateDiagram v1 0/42, Requirement 11/172, Pie 7/24,
-xychart 2/48, gitGraph 55/135. Sequence is the only fully covered family.
+Current native admission (full original files, 240 columns) after E2a plus
+T1-A is **596 / 2,145**: Flow 54/400, Sequence 193/193, Class 211/285, ER
+62/206, stateDiagram-v2 11/103, stateDiagram v1 0/42, Requirement 11/172,
+Pie 7/24, xychart 2/48, gitGraph 55/135 originals (41 after E2a + 14 from
+T1-A; all 71 non-cohort git originals carry config/init and keep source).
+Sequence is the only fully covered family.
 
 Tasks are ordered by leverage (shared root cause first); counts are the
 frozen, reviewed gap rows each task must retire.
@@ -113,9 +120,85 @@ retained but must be read with this narrower scope; T1's true first deliverable 
 the gitGraph 14-row set, not Flow400.
 
 
+### T1 executed checkpoint (2026-10-25): bounded strict-first edge routing
+
+Both routers are now deterministic two-pass, strict-first planners
+(`plan_parent_routes` gitGraph; flow `Router`). Pass 1 is the literal
+historical router and its plan is returned on success; on any edge failure
+exactly ONE bounded relaxed whole-plan pass repaints on a fresh fixed canvas,
+allowing routes to run adjacent/cross (commit markers, node/label cells,
+group-frame corners and port cells stay sealed). Every extra expansion and the
+second pass spend Work from the single 1,000,000 budget (hard attempt cap 1,
+no nesting, no RNG), so uncloseable graphs still return whole-source; the
+240x1024 canvas and Work cap are unchanged.
+
+Result: the 14 gitGraph parent-route-debt cohort rows draw (41 -> 55 of 135;
+drawn_at_240 582 -> 596); their folded descriptions stay hidden. On the
+official corpus only ONE Flow original additionally routes
+(flowchart/nightly-check/dagre/7213, closed-vocab `config: layout: dagre`):
+it has no immutable Model snapshot yet, so per the whole-null protocol it is
+registered in the gap roster (`flow_whole_null_unmet`, plus its
+body_diagnostic) rather than counted as drawn — it awaits the normal reviewed
+snapshot step, it is not a regression. The recon's "~44 topology-bound flow
+rows" overestimated: at execution only 2/337 flow fallbacks ever reach the
+router; 335 are upstream parser/envelope/HTML/config debt (RFC 0030 Phase D /
+body grammar). Hard capacity cases (276-column TB/BT and LR 218-column
+9-branch gitGraph, long-label placement, Work-exhausted dense K8) stay
+whole-source.
+
+Conservation: a full 3093-fixture cell dump at pristine HEAD vs T1 shows
+exactly 18 changed renders, every one fallback -> native art, and zero
+previously-drawing source changed; dual-preset -Werror, `ctest -L mermaid`
+820/821 with only the pre-existing load-sensitive E2E_Pty_Mermaid flake, the
+gap roster verified byte-identical across presets, and the fuzz smoke (6451
+runs incl. dense/back-edge inputs) clean at 662 MiB peak.
+
+T1-A DELIVERY (2026-10-25): the gitGraph half is done. `plan_parent_routes` now
+runs the original strict BFS as pass 1 and, only on full-plan failure, one
+deterministic bounded relaxed whole-plan pass that lays lane trunks first and
+allows route-cell crossing (markers and painted-label spans stay sealed). All
+14 geometric rows retired to predicted-draw with the 42 pre-change draw rows
+byte-identical in both presets; the two LR nine-branch rows still fail in the
+218-column packed canvas and, with the two 276-column TB/BT rows, remain
+whole-source under `gitgraph-canvas-dimension-overflow`.
+
+T1-B DELIVERY (2026-10-25): the flow half is done. `detail::Router` now takes
+an optional crossing grid; `flow_layout` runs the historical strict routing
+as pass 1 and, only after the whole strict plan fails, one deterministic
+bounded relaxed whole-plan pass over a fresh canvas that may cross earlier
+connector interiors (node/label cells, group-frame corners and arrow/port
+heads stay sealed; junction bits persist so crossings render correctly).
+Pass 1 is untouched and its output is consumed whenever it succeeds, so all
+63 previously drawing Flow400 originals and every other drawing flow input
+(classic, group-endpoint, linkprofile3, terminal goldens) render
+byte-identical in both presets — verified by a full 400-row cell dump diff
+(one changed fixture: the rescued row). The relaxed pass charges its own
+workspace fee and a once-per-pass multi-source search fee; it can never grow
+the canvas or the 1,000,000 Work budget, and an unfunded retry is the same
+whole-source result as before. Measured against the production
+parser/planner, the recon's ~44 topology rows overstated the official corpus:
+of the 337 observed flow fallbacks only two ever reach the router (335 are
+parser/envelope/HTML/config debt, out of scope). Exactly one rescues —
+`flowchart/nightly-check/dagre/7213-...right-angles...mmd` (parallel edges
+plus fan-out across subgraph frames); the other
+(`issue-4648-sibling-subgraphs...mmd`) exhausts Work during the
+config-frontmatter double parse/placement and stays source. Synthetic probes
+show the mechanism closes the dense class up to its budget (K5–K7 complete
+graphs and a K3,3 cross-group mesh now draw; K8 and the densest labeled
+meshes stay whole-source at the Work cap). Because the one rescued original
+carries a `config: layout: dagre` frontmatter and has no bound Model, its new
+native art is booked as `flow_whole_null_unmet` (its body-diagnostic track as
+`ordinary_source_fallback_expected`) pending independent Model review:
+Flow errors 9 -> 10 and official_matrix gaps 94 -> 96 (roster regenerated via
+`verify_e6c_gap_roster.py --write`, pins and `kGateRowCounts` updated in the
+same change). Flow decoded/admitted stays 54/400, pending 346, and
+drawn_at_240 stays 596 — unreviewed art is a review queue item, not drawing
+credit.
+
+
 | Task | Scope | Frozen gap rows | Root cause / work |
 |---|---|---:|---|
-| T1 bounded edge router | Flow + GitGraph shared layout engine | Flow400 pending 346 (no roster), matrix flowchart 56, gitGraph native-parent-route 16 | `plan_parent_routes` is a greedy 4-connected BFS that cannot back-track or detour in the bounded canvas; long cross-lane edges, backward merges and cherry-pick second parents, and dense multi-branch graphs fail to close geometry even though every body parses. Upgrade to an obstruction-aware channel/backtracking router. Highest leverage: one engine unlocks Flow346 and most of the 16 gitGraph route-debt rows. |
+| T1 bounded edge router | Flow + GitGraph shared layout engine | Flow400 pending 346 (no roster), matrix flowchart 56, ~~gitGraph native-parent-route 16~~ **14 retired by T1-A (2026-10-25); 2 LR nine-branch rows remain as canvas capacity debt**, ~~flow ~44 topology~~ **T1-B (2026-10-25): measured 2 official rows reach the router; 1 retired, 1 Work-capped — 335 of 337 fallbacks are parser/envelope debt** | `plan_parent_routes` is a greedy 4-connected BFS that cannot back-track or detour in the bounded canvas; long cross-lane edges, backward merges and cherry-pick second parents, and dense multi-branch graphs fail to close geometry even though every body parses. Both halves now use a strict-first two-pass retry (pass 1 unchanged; one bounded relaxed crossing retry after full failure) rather than a full backtracking engine: T1-A for `plan_parent_routes`, T1-B for the flow `detail::Router`. The remaining flow gap is upstream parser/envelope/HTML/config admission (out of T1 scope), plus Work-budget capacity debt on the densest graphs and hard 240-column placement rejects. |
 | T2 Class geometry | classDiagram | class481 137+3, class285 48+26, endpoint29 3, caption 2, notes18 6 (225 rows) | Member partition/style compartments, stereotype/direction annotation placement, note connectors and long relationship-cardinality labels do not get complete cells; bodies parse. Complete the per-row cell geometry. |
 | T3 ER table layout | erDiagram | ER206 pending 144 + matrix 6 | Multi-attribute column alignment/separation, cross-table cardinal tag (`||--o{`)避让 and multi-table grouping geometry. |
 | T4 Requirement graph | requirementDiagram | requirement11 2 + matrix 1, plus ~160 pending | Build on the existing requirement lexer + SCC ordering: complete requirement/element boxes, contains/excludes/copies/verifies edges and cross-layer edge geometry. |

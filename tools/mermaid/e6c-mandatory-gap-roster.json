@@ -353,6 +353,20 @@
         ]
       },
       {
+        "fixture": "flowchart/nightly-check/dagre/7213-should-render-dagre-edges-with-right-angles-not-curves.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/7213-should-render-dagre-edges-with-right-angles-not-curves.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
         "fixture": "flowchart/nightly-check/dagre/74-dagre-handle-labels-for-multiple-edges-from-and-to-the-same-couple-of-nodes.mmd",
         "track": "body_diagnostic",
         "gaps": [

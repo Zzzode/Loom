@@ -13,8 +13,12 @@ Six blocker classes come from fixed source-content detectors; a seventh
 class (native parent-route debt) cannot be decided textually and is an
 execution-attested, independently reviewed set: parse_gitgraph accepts the
 body but plan_parent_routes cannot close an edge. That set is sha-bound to
-this pinned corpus and additions require a new review row. The classification
-vocabulary is closed and enforced by the C++ cohort gate.
+this pinned corpus and additions require a new review row. The original
+16-row attested set was retired by the bounded strict-first parent-router
+retry (14 rows now draw; the two LR 9-branch rows are capacity debt and
+classify via the branch-count detector), so the reviewed set is currently
+empty. The classification vocabulary is closed and enforced by the C++
+cohort gate.
 
 E2a pre-registers the 240-column admission only. ``narrow_40`` is uniformly
 ``source`` and ``restored_240`` must equal ``wide_240``; this conservative
@@ -61,17 +65,20 @@ WITNESS = {
         "parse_cherry_pick requires a non-empty quoted tag; tag: \"\" decodes to no label.",
     ),
     "gitgraph-canvas-dimension-overflow": (
-        "src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); "
-        ":449-552 (plan_parent_routes)",
+        "src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); "
+        ":457-637 (plan_parent_routes)",
         "With nine declared branches the TB/BT lane layout is 276 columns and is "
         "rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns "
-        "but the greedy BFS parent router still cannot close an edge.",
+        "but the bounded strict-first parent router (strict pass plus one relaxed "
+        "whole-plan retry) still cannot close an edge in the packed ten-lane canvas.",
     ),
     "gitgraph-native-parent-route-debt": (
-        "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one "
-        "edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source "
-        "review attested each row; this is native layout debt, not an envelope limitation.",
+        "src/ui/visual/mermaid_gitgraph_impl.cpp:457-637 (plan_parent_routes)",
+        "parse_gitgraph accepts the body but plan_parent_routes cannot close one edge "
+        "in the bounded canvas, so layout_gitgraph returns nullopt. The 2026-10-24 "
+        "attested set of 16 rows was retired by the strict-first retry: 14 draw through "
+        "the relaxed pass and the two nine-branch LR rows are canvas capacity debt; the "
+        "reviewed set is empty until a future corpus expansion attests new rows.",
     ),
     "state-composite-brace-on-next-line": (
         "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
@@ -91,29 +98,19 @@ WITNESS = {
 GIT_BRANCH_LIMIT = 8
 
 # Native layout-capacity debt attested by independent source review against
-# plan_parent_routes (parser accepts; the bounded greedy BFS router cannot
-# close a parent edge for these interleaved branch/merge/cherry-pick graphs).
+# plan_parent_routes (parser accepts; the bounded parent router cannot close
+# a parent edge for these interleaved branch/merge/cherry-pick graphs).
 # These are not detectable by a lexical source pattern short of re-running the
 # router, so they are recorded as a reviewed set; the C++ gate empirically
 # enforces that each keeps whole source. Additions require a new review row.
-NATIVE_ROUTE_DEBT = {
-    "git/nightly-check/11-should-render-a-simple-gitgraph-with-cherry-pick-commit.mmd",
-    "git/nightly-check/11-should-render-a-simple-gitgraph-with-two-cherry-pick-commit.mmd",
-    "git/nightly-check/13-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type.mmd",
-    "git/nightly-check/28-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch.mmd",
-    "git/nightly-check/33-should-render-a-simple-gitgraph-overlapping-commits.mmd",
-    "git/nightly-check/35-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch.mmd",
-    "git/nightly-check/38-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately.mmd",
-    "git/nightly-check/63-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch-bottom-to-top.mmd",
-    "git/nightly-check/68-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch-bottom-to-top.mmd",
-    "git/nightly-check/7-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit.mmd",
-    "git/nightly-check/70-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch-bottom-to-top.mmd",
-    "git/nightly-check/73-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-using-switch-instead-of-checkout.mmd",
-    "git/nightly-check/77-should-render-a-bt-gitgraph-with-three-branches-and-multiple-merges-regression-6593.mmd",
-    "git/pr-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag.mmd",
-    "git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd",
-    "git/nightly-check/74-should-render-commits-for-more-than-8-branches-using-switch-instead-of-checkout.mmd",
-}
+#
+# The 16 rows attested on 2026-10-24 were all retired by the strict-first
+# parent-router retry (T1-A): the 14 interleaved branch/merge/cherry-pick
+# rows now draw through the one bounded relaxed whole-plan pass, and the two
+# LR nine-branch rows remain blocked as canvas capacity debt and classify
+# through the > GIT_BRANCH_LIMIT detector below. The set is empty until a
+# future corpus expansion attests genuinely new router debt.
+NATIVE_ROUTE_DEBT: set[str] = set()
 
 
 def split_source(text):
@@ -150,9 +147,10 @@ def git_blocker(rel, keys, body_lines):
     for line in body_lines:
         if re.search(r"tag:\s*\"\"", line):
             return "gitgraph-empty-quoted-tag"
-    # The execution-attested reviewed set takes precedence: the two LR
-    # 9-branch rows are unroutable at 218 columns even though checked_dimension
-    # would accept that width; only the TB/BT 9-branch rows hit the 240 limit.
+    # The execution-attested reviewed set takes precedence over the textual
+    # branch-count detector when non-empty (it is currently empty; see the
+    # NATIVE_ROUTE_DEBT note). The two LR 9-branch rows therefore classify as
+    # canvas capacity debt here alongside the TB/BT 9-branch rows.
     if rel in NATIVE_ROUTE_DEBT:
         return "gitgraph-native-parent-route-debt"
     branches = sum(

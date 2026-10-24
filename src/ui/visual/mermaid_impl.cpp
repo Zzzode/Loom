@@ -1254,6 +1254,18 @@ struct FlowTextCollector {
         return true;
     }
 
+    // Re-arm after a discarded strict routing pass so the single bounded
+    // relaxed retry repaints onto a fresh canvas. Same dimensions and bounds
+    // as prepare(), charged anew; the strict pass's partial owner/glyph
+    // records are discarded and never reach finish().
+    bool restart(int width, int height, std::size_t literal_cell_bound, std::size_t literal_bytes) {
+        prepared_ = false;
+        owners_.clear();
+        glyphs_.clear();
+        ascii_rows_.reset();
+        return prepare(width, height, literal_cell_bound, literal_bytes);
+    }
+
     std::optional<int> row_count(std::string_view value) {
         if (!prepared_ || !charge({value.size() * 2u + 32u})) return {};
         int count = 1;
@@ -1782,15 +1794,59 @@ class Router {
     std::vector<int> distance_, parent_;
     std::vector<unsigned> seen_;
     unsigned search_ = 0;
+    // Strict-first pass 2 only: cells painted by earlier connector interiors.
+    // When non-null the A* expansion may enter such a blocked cell (route
+    // crossing); node/label cells, frame corners, port heads and temporary
+    // reservations are never marked, so terminals and painted art stay sealed.
+    // Nullptr selects the exact strict search pass 1 always used.
+    const std::vector<unsigned char>* crossable_ = nullptr;
+    // Relaxed mode shares one terminal/origin scratch across all edges, paid
+    // once per pass instead of per connection() call (the strict pass keeps
+    // its per-call allocation and fee untouched).
+    std::vector<int> terminal_relaxed_, origin_relaxed_;
+    bool relaxed_scratch_paid_ = false;
+    // Mirrors Canvas::free (one Work unit per probe, inside bounds) but treats
+    // marked earlier-connector cells as enterable in the relaxed pass.
+    bool enterable(Point point) const {
+        if (!canvas_.work.spend() || !canvas_.inside(point)) return false;
+        if (!canvas_.at(point).blocked) return true;
+        return crossable_ != nullptr &&
+               (*crossable_)[static_cast<std::size_t>(canvas_.index(point))] != 0u;
+    }
 public:
-    explicit Router(Canvas& canvas) : canvas_(canvas), distance_(canvas.cells.size()), parent_(canvas.cells.size()), seen_(canvas.cells.size()) {}
+    explicit Router(Canvas& canvas, const std::vector<unsigned char>* crossable = nullptr)
+        : canvas_(canvas), distance_(canvas.cells.size()), parent_(canvas.cells.size()),
+          seen_(canvas.cells.size()), crossable_(crossable) {
+        if (crossable != nullptr) {
+            terminal_relaxed_.assign(canvas.cells.size(), -1);
+            origin_relaxed_.assign(canvas.cells.size(), -1);
+        }
+    }
     // Landing cells are terminals, entered only toward their node border.
     // A multi-source search chooses ports using actual route length, avoiding
     // long detours around the source which can enclose its remaining ports.
     std::optional<Connection> connection(const std::vector<Port>& sources, const std::vector<Port>& targets,
                                          const std::unordered_set<int>& used) {
-        if (!canvas_.work.spend(canvas_.cells.size() * 2)) return {};
-        std::vector<int> terminal(canvas_.cells.size(), -1), origin(canvas_.cells.size(), -1);
+        const bool relaxed = crossable_ != nullptr;
+        if (relaxed) {
+            // One workspace fee for the whole relaxed pass, charged on the
+            // first multi-source search.
+            if (!relaxed_scratch_paid_) {
+                if (!canvas_.work.spend(canvas_.cells.size() * 2)) return {};
+                relaxed_scratch_paid_ = true;
+            }
+            std::fill(terminal_relaxed_.begin(), terminal_relaxed_.end(), -1);
+            std::fill(origin_relaxed_.begin(), origin_relaxed_.end(), -1);
+        } else if (!canvas_.work.spend(canvas_.cells.size() * 2)) return {};
+        std::vector<int> terminal_strict, origin_strict;
+        std::vector<int>* terminal = &terminal_relaxed_;
+        std::vector<int>* origin = &origin_relaxed_;
+        if (!relaxed) {
+            terminal_strict.assign(canvas_.cells.size(), -1);
+            origin_strict.assign(canvas_.cells.size(), -1);
+            terminal = &terminal_strict;
+            origin = &origin_strict;
+        }
         Point low{canvas_.width, canvas_.height}, high{-1, -1};
         for (std::size_t n = 0; n < targets.size(); ++n) {
             if (!canvas_.work.spend()) return {};
@@ -1799,7 +1855,7 @@ public:
             if (used.contains(canvas_.index(port.border)) || !canvas_.free(port.outside) || !canvas_.free(before) ||
                 !(canvas_.at(port.outside).allowed & direction_bits(port.normal)) ||
                 !(canvas_.at(before).allowed & direction_bits(port.normal))) continue;
-            terminal[static_cast<std::size_t>(canvas_.index(port.outside))] = static_cast<int>(n);
+            (*terminal)[static_cast<std::size_t>(canvas_.index(port.outside))] = static_cast<int>(n);
             low.x = std::min(low.x, port.outside.x); low.y = std::min(low.y, port.outside.y);
             high.x = std::max(high.x, port.outside.x); high.y = std::max(high.y, port.outside.y);
         }
@@ -1818,9 +1874,9 @@ public:
             if (used.contains(canvas_.index(port.border)) || !canvas_.free(port.outside) ||
                 !(canvas_.at(port.outside).allowed & direction_bits(port.normal))) continue;
             const auto index = static_cast<std::size_t>(canvas_.index(port.outside));
-            if (seen_[index] == search_ || terminal[index] >= 0) continue;
+            if (seen_[index] == search_ || (*terminal)[index] >= 0) continue;
             seen_[index] = search_; distance_[index] = 0; parent_[index] = -1;
-            origin[index] = static_cast<int>(n);
+            (*origin)[index] = static_cast<int>(n);
             queue.emplace(heuristic(port.outside), serial++, static_cast<int>(index));
         }
         while (!queue.empty()) {
@@ -1831,8 +1887,9 @@ public:
             const auto index = static_cast<std::size_t>(current_index);
             const Point current{current_index % canvas_.width, current_index / canvas_.width};
             if (priority != distance_[index] + heuristic(current)) continue;
-            if (terminal[index] >= 0) {
-                Connection result{{}, static_cast<std::size_t>(origin[index]), static_cast<std::size_t>(terminal[index])};
+            if ((*terminal)[index] >= 0) {
+                Connection result{{}, static_cast<std::size_t>((*origin)[index]),
+                                  static_cast<std::size_t>((*terminal)[index])};
                 for (int at = current_index; at >= 0; at = parent_[static_cast<std::size_t>(at)]) {
                     if (!canvas_.work.spend()) return {};
                     result.path.push_back({at % canvas_.width, at / canvas_.width});
@@ -1843,15 +1900,15 @@ public:
             for (const auto step : kSteps) {
                 if (!canvas_.work.spend()) return {};
                 const auto next = current + step;
-                if (!canvas_.free(next) || !(canvas_.at(current).allowed & direction_bits(step)) ||
+                if (!enterable(next) || !(canvas_.at(current).allowed & direction_bits(step)) ||
                     !(canvas_.at(next).allowed & direction_bits(Point{} - step))) continue;
                 const auto next_index = static_cast<std::size_t>(canvas_.index(next));
-                const auto target = terminal[next_index];
+                const auto target = (*terminal)[next_index];
                 if (target >= 0 && step != Point{} - targets[static_cast<std::size_t>(target)].normal) continue;
                 const auto cost = distance_[index] + 1;
                 if (seen_[next_index] == search_ && cost >= distance_[next_index]) continue;
                 seen_[next_index] = search_; distance_[next_index] = cost;
-                parent_[next_index] = current_index; origin[next_index] = origin[index];
+                parent_[next_index] = current_index; (*origin)[next_index] = (*origin)[index];
                 queue.emplace(cost + heuristic(next), serial++, static_cast<int>(next_index));
             }
         }
@@ -1885,7 +1942,7 @@ public:
             for (const auto step : kSteps) {
                 if (!canvas_.work.spend()) return {};
                 const auto next = current + step;
-                if (!canvas_.free(next)) continue;
+                if (!enterable(next)) continue;
                 if (!(canvas_.at(current).allowed & direction_bits(step)) ||
                     !(canvas_.at(next).allowed & direction_bits(Point{} - step))) continue;
                 const auto next_index = static_cast<std::size_t>(canvas_.index(next));
@@ -1903,7 +1960,8 @@ public:
 
 bool draw_path(Canvas& canvas, const std::vector<Point>& path, Point before, Point after,
                bool arrow_start, bool arrow_end, Stroke stroke = Stroke::Solid,
-               std::optional<Point> prefixed_head = {}, std::optional<Point> suffixed_head = {}) {
+               std::optional<Point> prefixed_head = {}, std::optional<Point> suffixed_head = {},
+               std::vector<unsigned char>* routed = nullptr) {
     if (path.empty() || (arrow_start && arrow_end && path.size() + prefixed_head.has_value() + suffixed_head.has_value() == 1u))
         return false;
     const auto prefix = prefixed_head ? 1u : 0u;
@@ -1921,8 +1979,17 @@ bool draw_path(Canvas& canvas, const std::vector<Point>& path, Point before, Poi
         auto glyph = line_glyph(bits);
         if (bits == (kLeft | kRight) && stroke != Stroke::Solid) glyph = stroke == Stroke::Dotted ? "┄" : "━";
         if (bits == (kUp | kDown) && stroke != Stroke::Solid) glyph = stroke == Stroke::Dotted ? "┆" : "┃";
-        if (!canvas.put(current, arrow_start && n == 0 ? arrow(before - current) :
-                                 arrow_end && n + 1u == total ? arrow(after - current) : glyph)) return false;
+        const bool head = (arrow_start && n == 0) || (arrow_end && n + 1u == total);
+        const auto painted = arrow_start && n == 0 ? arrow(before - current) :
+                             arrow_end && n + 1u == total ? arrow(after - current) : glyph;
+        if (!canvas.put(current, painted)) return false;
+        // Relaxed pass bookkeeping: arrow heads stay sealed (never marked),
+        // line interiors become crossable and their union bits persist so a
+        // later connector crossing here renders the correct junction glyph.
+        if (routed != nullptr && !head) {
+            (*routed)[static_cast<std::size_t>(canvas.index(current))] = 1u;
+            canvas.at(current).bits = bits;
+        }
     }
     return true;
 }
@@ -1953,7 +2020,8 @@ struct ScopedBlockedCell {
 
 bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
              const std::optional<std::string>& label_text, bool arrow_start, bool arrow_end,
-             Stroke stroke = Stroke::Solid, FlowTextCollector* collector = nullptr) {
+             Stroke stroke = Stroke::Solid, FlowTextCollector* collector = nullptr,
+             std::vector<unsigned char>* routed = nullptr) {
     const auto start = arrow_start ? from.outside + from.normal : from.outside;
     const auto goal = to.outside + to.normal;
     if (from.border == to.border || !canvas.free(from.outside) || !canvas.free(start) ||
@@ -1973,7 +2041,7 @@ bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
         target_hold.release();
         source_head.release();
         if (!path) return false;
-        if (!draw_path(canvas, *path, from.border, to.border, arrow_start, arrow_end, stroke, prefix, suffix)) return false;
+        if (!draw_path(canvas, *path, from.border, to.border, arrow_start, arrow_end, stroke, prefix, suffix, routed)) return false;
         if (!arrow_start && !source_port(canvas, from)) return false;
         return arrow_end || source_port(canvas, to);
     }
@@ -2015,8 +2083,8 @@ bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
             if (!first || !second) continue;
             target_hold.release();
             source_head.release();
-            if (!draw_path(canvas, *first, from.border, {left.x + 1, left.y}, arrow_start, false, stroke, prefix) ||
-                !draw_path(canvas, *second, {right.x - 1, right.y}, to.border, false, arrow_end, stroke, {}, suffix)) return false;
+            if (!draw_path(canvas, *first, from.border, {left.x + 1, left.y}, arrow_start, false, stroke, prefix, {}, routed) ||
+                !draw_path(canvas, *second, {right.x - 1, right.y}, to.border, false, arrow_end, stroke, {}, suffix, routed)) return false;
             reserve(true);
             if (!paint_multiline(canvas, collector, position, *label_text, length)) {
                 // The ordinary branch returns as before. The collector may fail
@@ -2111,13 +2179,44 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
         if (!collector->prepare(width, height,
             (graph.vertices.size() + graph.edges.size()) * static_cast<std::size_t>(kLabelLimit), literal_bytes)) return {};
     }
+    const auto canvas_area = static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
+    // One whole-plan paint-and-route attempt over a fresh canvas. Pass 1
+    // (strict) reproduces the historical routing byte-for-byte: connector
+    // cells are sealed once laid, so edges never cross. Pass 2 (relaxed) runs
+    // only after a full strict failure; it may cross earlier connector
+    // interiors while node/label cells, frame corners and port heads stay
+    // sealed. Both passes are deterministic and metered by the same Work.
+    const auto attempt = [&](bool strict) -> std::optional<std::vector<std::string>> {
+    std::vector<unsigned char> routed;
+    FlowTextCollector* pass_collector = collector;
+    if (!strict) {
+        // The discarded strict pass may have recorded label owners. Re-arm the
+        // collector with its identical bounds before repainting.
+        if (collector &&
+            !collector->restart(width, height,
+                (graph.vertices.size() + graph.edges.size()) *
+                    static_cast<std::size_t>(kLabelLimit),
+                literal_bytes)) {
+            return {};
+        }
+        // Rebuild fee for the second workspace: the crossing byte grid plus a
+        // fixed slack. The fresh canvas and the Router's BFS scratch are
+        // allocated once per pass; the multi-source search charges its own
+        // shared workspace fee on the first edge (instead of per edge as in
+        // the strict pass). A fresh Work per layout means a failed strict pass
+        // already spent its budget; an unaffordable retry is the same
+        // whole-source result as today.
+        if (canvas_area > std::numeric_limits<std::size_t>::max() - 4096u) return {};
+        if (!work.spend(canvas_area + 4096u)) return {};
+        routed.assign(canvas_area, 0u);
+    }
     Canvas canvas(width, height, work);
     if (region) for (const auto& [index, box] : region->groups)
         if (index >= graph.groups.size() || !group_frame(canvas, box, graph.groups[index].text)) return {};
     for (std::size_t n = 0; n < placed->size(); ++n)
-        if (!node_box(canvas, (*placed)[n], graph.vertices[n], collector)) return {};
+        if (!node_box(canvas, (*placed)[n], graph.vertices[n], pass_collector)) return {};
 
-    Router router(canvas);
+    Router router(canvas, strict ? nullptr : &routed);
     std::unordered_set<int> used_ports;
     const auto route_one = [&](const Edge& edge, const EndpointBox& source_box, const EndpointBox& target_box) {
         const auto& from = source_box.box;
@@ -2141,7 +2240,8 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
             if (!connection) return false;
             const auto& source = sources[connection->source];
             const auto& target = targets[connection->target];
-            if (!draw_path(canvas, connection->path, source.border, target.border, false, true, edge.stroke) ||
+            if (!draw_path(canvas, connection->path, source.border, target.border, false, true,
+                           edge.stroke, {}, {}, strict ? nullptr : &routed) ||
                 !source_port(canvas, source)) return false;
             used_ports.insert(canvas.index(source.border)); used_ports.insert(canvas.index(target.border));
             return true;
@@ -2152,7 +2252,7 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
                 if (!work.remaining) return false;
                 if (used_ports.contains(canvas.index(target.border))) continue;
                 if (!connect(canvas, router, source, target, edge.text, edge.arrow_start, edge.arrow_end,
-                             edge.stroke, collector)) continue;
+                             edge.stroke, pass_collector, strict ? nullptr : &routed)) continue;
                 used_ports.insert(canvas.index(source.border));
                 used_ports.insert(canvas.index(target.border));
                 return true;
@@ -2167,7 +2267,9 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
             return a.distance < b.distance;
         });
         for (const auto& route : tagged_routing_order)
-            if (!route_one(graph.edges[route.edge], route.from, route.to)) return {};
+            if (!route_one(graph.edges[route.edge], route.from, route.to)) {
+                return std::optional<std::vector<std::string>>{};
+            }
     } else {
         // The private parser only creates vertex endpoints on this branch, but
         // validate that invariant before the unchanged index-based route sort.
@@ -2189,13 +2291,25 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
         for (const auto index : routing_order) {
             const auto& edge = graph.edges[index];
             if (!route_one(edge, {(*placed)[edge.from.index], graph.vertices[edge.from.index].shape},
-                            {(*placed)[edge.to.index], graph.vertices[edge.to.index].shape})) return {};
+                            {(*placed)[edge.to.index], graph.vertices[edge.to.index].shape})) {
+                return std::optional<std::vector<std::string>>{};
+            }
         }
     }
 
-    auto lines = collector ? collector->finish(canvas) : std::optional<std::vector<std::string>>{canvas.lines()};
+    auto lines = pass_collector
+        ? pass_collector->finish(canvas)
+        : std::optional<std::vector<std::string>>{canvas.lines()};
     if (!lines || lines->empty()) return {};
     return lines;
+    };
+
+    // Pass 1: the exact strict plan. Every input that routes today keeps this
+    // output; the relaxed retry exists only for full-plan failure, and its
+    // result is consumed only when pass 1 failed.
+    if (auto lines = attempt(true)) return lines;
+    // Pass 2: one deterministic bounded whole-plan retry permitting crossings.
+    return attempt(false);
 }
 
 bool ascii_flow_header(std::string_view source) {
@@ -2480,9 +2594,9 @@ std::optional<std::vector<std::string>> detail::layout_mermaid_rows(
         return detail::gitgraph_layout(source, work, true);
     }
     std::optional<std::vector<std::string>> lines;
-    if (const auto diagram = parse(source, work))
+    if (const auto diagram = parse(source, work)) {
         lines = flow_layout(*diagram, work);
-    else {
+    } else {
         // RFC 0031 E4: ordered family probes replace the mutable flag cluster.
         // Classification is one textual scan; execution spends exactly the
         // charges the legacy flags did. nullopt means the legacy route bailed

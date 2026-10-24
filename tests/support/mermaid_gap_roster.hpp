@@ -43,8 +43,8 @@ inline constexpr std::string_view kRosterRelPath =
 
 // Frozen ledger pins. The verifier script parses these exact constants, so
 // there is a single source of truth for size and SHA-256.
-inline constexpr std::size_t kRosterBytes = 61620;
-inline constexpr std::string_view kRosterSha256 = "29611b1dae04a3c5b30d14fa904ece3be6ab37d924ae6621079e7633afcd6f1d";
+inline constexpr std::size_t kRosterBytes = 62087;
+inline constexpr std::string_view kRosterSha256 = "8ebea8348439d0b93dc9e50fdc6101ce321968141a149f155d89acb66da33f2b";
 
 // Flow400CompleteSources deliberately has no roster: its pending/decoded
 // membership is determined by immutable Model authority assets and is pinned
@@ -70,7 +70,7 @@ inline bool is_gate_name(std::string_view name) {
 // Frozen per-gate roster row counts, checked by the Integrity test.
 inline constexpr std::array<std::pair<std::string_view, std::size_t>, 11>
     kGateRowCounts{{
-        {"official_matrix", 94},
+        {"official_matrix", 96},
         {"merman_xy102", 20},
         {"class481", 140},
         {"class285", 74},

@@ -3627,4 +3627,82 @@ TEST(MermaidFlowLinkProfile3Oracle, AllFourFacesKeepEndpointMarkersAndStrokeOwne
     EXPECT_EQ(goods,36u);EXPECT_EQ(rejections,108u);
 }
 
+// RFC 0031 T1-B: strict-first bounded flow router retry. Dense edge sets
+// whose channels the strict disjoint-cell router cannot close now fall back
+// to exactly one deterministic whole-plan retry that may cross earlier
+// connector interiors (node/label cells, frame corners and port heads stay
+// sealed). Inputs the strict pass can route are byte-identical; only a full
+// strict failure consumes the relaxed result.
+namespace {
+std::string t1b_complete_graph(int nodes) {
+    const auto name = [](int n) { return std::string(1, static_cast<char>('A' + n)); };
+    std::string source = "flowchart TB\n";
+    for (int i = 0; i < nodes; ++i)
+        for (int j = i + 1; j < nodes; ++j)
+            source += name(i) + " --> " + name(j) + "\n";
+    return source;
+}
+
+std::string t1b_cross_group_mesh() {
+    std::string source =
+        "flowchart LR\n"
+        "subgraph G1\na1\na2\na3\nend\n"
+        "subgraph G2\nb1\nb2\nb3\nend\n";
+    for (int i = 1; i <= 3; ++i)
+        for (int j = 1; j <= 3; ++j)
+            source += "a" + std::to_string(i) + " --> b" + std::to_string(j) + "\n";
+    return source;
+}
+
+std::string t1b_labeled_mesh(int nodes) {
+    std::string source = "flowchart LR\n";
+    for (int i = 0; i < nodes; ++i)
+        for (int j = 0; j < nodes; ++j)
+            if (i != j)
+                source += std::string(1, static_cast<char>('A' + i)) + " -->|" +
+                    std::to_string(i) + "," + std::to_string(j) + "| " +
+                    std::string(1, static_cast<char>('A' + j)) + "\n";
+    return source;
+}
+
+// Draws at the 240 native width and renders deterministically across the
+// 240 -> 40 -> 240 width cycle. Narrow-frame content is intentionally out of
+// scope: a dense rescued graph near the 40-column boundary clips rather than
+// flipping, which is unrelated to the strict-first router retry.
+void t1b_check_rescued_drawing(std::string_view source) {
+    auto element = loom::ui::render_markdown(fenced(source,"mermaid"));
+    auto ordinary = loom::ui::render_markdown(fenced(source,"text"));
+    element->ComputeRequirement();
+    const int height = std::min(1040,std::max({32,element->requirement().min_y+8,
+        static_cast<int>(std::count(source.begin(),source.end(),'\n'))+12}));
+    const auto wide = capture(element,240,height);
+    EXPECT_NE(wide, capture(ordinary,240,height));
+    (void)capture(element,40,height);
+    EXPECT_EQ(capture(element,240,height), wide);
+}
+} // namespace
+
+TEST(MermaidFlowRouter, StrictFirstRelaxedRetryRescuesDenseTopology) {
+    // K5: ten edges over five ranks seal every strict channel; the strict
+    // whole-plan route fails and the one bounded crossing retry must close
+    // it. Pre-T1-B these sources were whole-source fallback.
+    SCOPED_TRACE("case K5");
+    t1b_check_rescued_drawing(t1b_complete_graph(5));
+    // K3,3 across two group frames: nine cross-frame edges must likewise be
+    // completed by the relaxed pass without unsealing frame corners or nodes.
+    SCOPED_TRACE("case K33");
+    check_source_policy(t1b_cross_group_mesh(), true);
+    // Labeled dense mesh: edge-caption reservations still hold while the
+    // connector segments detour through the crossing pass.
+    SCOPED_TRACE("case labeled4");
+    check_source_policy(t1b_labeled_mesh(4), true);
+}
+
+TEST(MermaidFlowRouter, RelaxedRetryIsBoundedAndKeepsWholeSourceWhenUncloseable) {
+    // K8 exhausts the strict pass against the fixed 1,000,000 Work budget; the
+    // single retry cannot be funded, so the complete source is retained
+    // exactly as before T1-B. No canvas growth, no partial art.
+    check_source_policy(t1b_complete_graph(8));
+}
+
 } // namespace

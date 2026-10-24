@@ -2970,7 +2970,13 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_GroupEndpoint15";
         });
         EXPECT_EQ(group_endpoint15_selected,15);
-        EXPECT_EQ(flows.decoded,54u);EXPECT_EQ(flows.pending,346u);EXPECT_EQ(flows.errors,9u);EXPECT_EQ(flows.resources,0u);
+        // RFC 0031 T1-B: errors rose 9 -> 10 because the strict-first router
+        // retry now draws one pending-config original
+        // (flowchart/nightly-check/dagre/7213-...mmd) that has no bound Model;
+        // its native art is booked as flow_whole_null_unmet until an
+        // independent Model review certifies it. Decoded/pending are
+        // Model-driven and unchanged.
+        EXPECT_EQ(flows.decoded,54u);EXPECT_EQ(flows.pending,346u);EXPECT_EQ(flows.errors,10u);EXPECT_EQ(flows.resources,0u);
         EXPECT_EQ(flows.admitted,54u);EXPECT_EQ(flows.mutated,54u);
         for(const auto count:applications) projection_consumed(count);
         role_batch_consumed(role_counts,role_batch.facts.root());role_consumption_validated=true;
@@ -3006,7 +3012,7 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         const auto gap_diff = gap_roster::diff_gate(*roster, "official_matrix",
                                                      published->root().get("mandatory_gaps"));
         EXPECT_TRUE(gap_diff.ok()) << gap_diff.render("official_matrix");
-        EXPECT_EQ(observed_gap_rows.size(), std::size_t(94));
+        EXPECT_EQ(observed_gap_rows.size(), std::size_t(96));
     }
 }
 TEST(MermaidOfficial, OracleRejectsChangedLabelsMissingArrowsAndWrongFallback) {

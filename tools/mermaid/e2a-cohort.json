@@ -27,8 +27,8 @@
     "git": 64,
     "state_v2": 5,
     "state_v1_qualified": 0,
-    "predicted_draw": 42,
-    "predicted_blocked": 27
+    "predicted_draw": 56,
+    "predicted_blocked": 13
   },
   "blocker_vocabulary": [
     "gitgraph-title-not-projected",
@@ -117,19 +117,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/11-should-render-a-simple-gitgraph-with-two-cherry-pick-commit.mmd",
@@ -149,19 +144,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd",
@@ -188,10 +178,10 @@
         "restored_240": "source"
       },
       "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+        "kind": "gitgraph-canvas-dimension-overflow",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)",
+        "detail": "With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the bounded strict-first parent router (strict pass plus one relaxed whole-plan retry) still cannot close an edge in the packed ten-lane canvas."
       },
       "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
     },
@@ -213,19 +203,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/1433-should-render-a-simple-gitgraph-with-a-title.mmd",
@@ -547,19 +532,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/29-should-render-commits-for-more-than-8-branches-vertical-branch.mmd",
@@ -587,9 +567,9 @@
       },
       "blocker": {
         "kind": "gitgraph-canvas-dimension-overflow",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); :449-552 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); :449-552 (plan_parent_routes)",
-        "detail": "With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the greedy BFS parent router still cannot close an edge."
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)",
+        "detail": "With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the bounded strict-first parent router (strict pass plus one relaxed whole-plan retry) still cannot close an edge in the packed ten-lane canvas."
       },
       "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
     },
@@ -665,19 +645,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/34-should-render-a-simple-gitgraph-with-two-branches-from-same-commit.mmd",
@@ -724,19 +699,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/36-should-render-gitgraph-with-branch-that-is-not-used-immediately.mmd",
@@ -810,19 +780,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/39-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch.mmd",
@@ -1225,19 +1190,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/64-should-render-commits-for-more-than-8-branches-vertical-branch-bottom-to-top.mmd",
@@ -1265,9 +1225,9 @@
       },
       "blocker": {
         "kind": "gitgraph-canvas-dimension-overflow",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); :449-552 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:426-435 (checked_dimension); :449-552 (plan_parent_routes)",
-        "detail": "With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the greedy BFS parent router still cannot close an edge."
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)",
+        "detail": "With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the bounded strict-first parent router (strict pass plus one relaxed whole-plan retry) still cannot close an edge in the packed ten-lane canvas."
       },
       "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
     },
@@ -1349,19 +1309,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/69-should-render-gitgraph-with-branch-that-is-not-used-immediately-vertical-branch-bottom-to-top.mmd",
@@ -1408,19 +1363,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/70-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch-bottom-to-top.mmd",
@@ -1440,19 +1390,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/73-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-using-switch-instead-of-checkout.mmd",
@@ -1472,19 +1417,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/74-should-render-commits-for-more-than-8-branches-using-switch-instead-of-checkout.mmd",
@@ -1511,10 +1451,10 @@
         "restored_240": "source"
       },
       "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
+        "kind": "gitgraph-canvas-dimension-overflow",
+        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)",
+        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); :457-637 (plan_parent_routes)",
+        "detail": "With nine declared branches the TB/BT lane layout is 276 columns and is rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns but the bounded strict-first parent router (strict pass plus one relaxed whole-plan retry) still cannot close an edge in the packed ten-lane canvas."
       },
       "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
     },
@@ -1617,19 +1557,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/78-should-render-a-bt-gitgraph-with-cherry-pick-regression-6593.mmd",
@@ -1735,19 +1670,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-native-parent-route-debt",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:449-560 (plan_parent_routes)",
-        "detail": "parse_gitgraph accepts the body but the greedy BFS parent-edge router cannot close one edge in the bounded canvas, so layout_gitgraph returns nullopt. Independent source review attested each row; this is native layout debt, not an envelope limitation."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/pr-check/17-should-render-a-simple-gitgraph-with-different-committypes-on-main-branch-vertical-branch.mmd",

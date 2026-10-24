@@ -76,6 +76,64 @@ a renderer report). Rule for later phases: any renderer-driven outcome change
 review) and the frozen constants **in the same change**; expectation changes
 still go only through this ledger, never through renderer output.
 
+### Capability-expansion task list after RFC 0031 (next coverage work)
+
+This is the forward-looking companion to the executed RFC 0031 checkpoints
+above. RFC 0031 removed structural/architectural debt (one envelope, five
+relations units, an ordered probe table, coarse Work charges, a private
+detail partition, non-failing reports, a fuzz harness and a per-instance row
+cache); it did **not** add body grammar or layout geometry. The remaining
+gap is therefore almost entirely *native layout/protocol capacity*, tracked
+row-by-row in `tools/mermaid/e6c-mandatory-gap-roster.json` (356 rows) and
+the per-family semantic ledgers. Every task below keeps the standing rule:
+a row earns drawing credit only when the bounded native parser AND layout
+complete it; a source the router cannot close stays whole-source and stays
+registered, never silently degrading to partial art.
+
+Current native admission (full original files, 240 columns) after E2a is
+**582 / 2,145**: Flow 54/400, Sequence 193/193, Class 211/285, ER 62/206,
+stateDiagram-v2 11/103, stateDiagram v1 0/42, Requirement 11/172, Pie 7/24,
+xychart 2/48, gitGraph 55/135. Sequence is the only fully covered family.
+
+Tasks are ordered by leverage (shared root cause first); counts are the
+frozen, reviewed gap rows each task must retire.
+
+| Task | Scope | Frozen gap rows | Root cause / work |
+|---|---|---:|---|
+| T1 bounded edge router | Flow + GitGraph shared layout engine | Flow400 pending 346 (no roster), matrix flowchart 56, gitGraph native-parent-route 16 | `plan_parent_routes` is a greedy 4-connected BFS that cannot back-track or detour in the bounded canvas; long cross-lane edges, backward merges and cherry-pick second parents, and dense multi-branch graphs fail to close geometry even though every body parses. Upgrade to an obstruction-aware channel/backtracking router. Highest leverage: one engine unlocks Flow346 and most of the 16 gitGraph route-debt rows. |
+| T2 Class geometry | classDiagram | class481 137+3, class285 48+26, endpoint29 3, caption 2, notes18 6 (225 rows) | Member partition/style compartments, stereotype/direction annotation placement, note connectors and long relationship-cardinality labels do not get complete cells; bodies parse. Complete the per-row cell geometry. |
+| T3 ER table layout | erDiagram | ER206 pending 144 + matrix 6 | Multi-attribute column alignment/separation, cross-table cardinal tag (`||--o{`)避让 and multi-table grouping geometry. |
+| T4 Requirement graph | requirementDiagram | requirement11 2 + matrix 1, plus ~160 pending | Build on the existing requirement lexer + SCC ordering: complete requirement/element boxes, contains/excludes/copies/verifies edges and cross-layer edge geometry. |
+| T5a State grammar (next-line brace/divider) | stateDiagram-v2 | state85 3+1 = 4 small, independent rows | Accept a composite whose `{` opens on its own physical line and a standalone `--` region divider (currently lexical rejects even though bounded parsing exists). Small, self-contained, can land first. |
+| T5b State composite geometry | stateDiagram(-v2) | state85 remaining 10 + ~124 pending | Nested composite frames, fork/join/choice/history pseudostates and concurrency regions. |
+| T6 Pie geometry | pie | ~17 pending | Percentage-label placement, multi-slice start angles, zero/extreme-value bounds. |
+| T7 XY chart geometry | xychart-beta | merman_xy102 profile_pending 20, plus ~26 pending | Ticks/grid/axis titles, stacked bars and multi-series layout over the 82 rows whose value geometry already closes. |
+| T8 gitGraph semantic config (RFC 0031 E2b) | gitGraph | the 62 config/init-bearing git originals | `mainBranchName`/`showBranches`/`showCommitLabel`/`rotateCommitLabel`/`parallelCommits` change content, ordering, visibility or orientation, so they are projected profiles, not ignorable config; they need the E2b per-key whitelist plus RFC 0030 Phase D style decisions. |
+| T9 Cross-cutting: style/HTML projection (RFC 0030 Phase D) | all families | prerequisite for styled originals | No RGB/HTML exists; design the semantic projection layer and palette-token mapping. Unblocks styled config (with E2b) and richer themed diagrams; independent of the layout routers. |
+| T10 Linux execution gate | verification infra | n/a | The only unclosed execution gate from RFC 0031 E1/E5/E6a/E6b: BMI PSS before/after and serial dual-preset ctest on a Linux/Homebrew-LLVM box; macOS has no `/proc`. Required before large layout changes land without a memory/perf gate. |
+
+Recommended order and rationale:
+
+1. **T1 first** — it is the shared root cause of 346 Flow + ~16 GitGraph gaps
+   (the largest single block). The gitGraph router is literally a copy of the
+   same greedy connector.
+2. **T5a can land any time** (four rows, pure lexical, no layout risk) and
+   **T10 as early as possible** so subsequent layout/perf work is gated on
+   Linux.
+3. Then by descending gap size with decreasing coupling:
+   T2 (class) -> T3 (ER) -> T4 (requirement) -> T5b (state composites)
+   -> T6 (pie) -> T7 (xychart).
+4. **T9 (style projection)** runs in parallel with T2-T7 and is the design
+   prerequisite for **T8/E2b** (themed/config-bearing originals).
+
+Acceptance for every task is mechanical, not aspirational: the named
+`MermaidCapabilityReport.*` gate goes green as its roster rows move to drawn;
+the gap roster is regenerated (`verify_e6c_gap_roster.py --write`) and
+independently re-reviewed in the SAME change; drawn_at_240 and the official
+matrix family counts increase with zero source-fallback regressions on
+previously drawn rows. Rows whose only blocker is the envelope were already
+cleared in E2a and must not reappear here.
+
 
 The current source-owned LinkProfile3 checkpoint independently closes three complete originals in both consumers: formal drawing coverage is **525/2145 (24.48%)**, Flow **39/400 (9.75%)**. Each source has five actual public captures and six meaningful negatives; 36 independent four-face goods and 108 physical negatives pass. Complete Flow53 and Official30 execute per preset with 81 pass, two mandatory capability failures and zero errors. The preceding complete nine-target first pass is 789/777 pass/12 fail/zero errors per preset. Keep those runs distinct: the last correction changes only test-private repeated-baseline handling, and the other seven targets were not rerun. Both runs freeze all 13,902 source pins. Source fallback and resource failures earn no drawing credit. Evidence: `root-flow-linkprofile3-complete-native-official-dual-proof-r12.json` and `root-flow-linkprofile3-complete-full-nine-dual-proof-r10.json`.
 

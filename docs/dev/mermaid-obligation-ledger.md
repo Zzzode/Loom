@@ -27,6 +27,56 @@ The durable test entrypoints remain those in
 
 ## Latest executed checkpoint and remaining scope
 
+### RFC 0031 E6c checkpoint (2026-10-24): mandatory gates become reviewed capability reports
+
+The 12 deliberately-red mandatory-completion gates were renamed into
+permanently non-failing `MermaidCapabilityReport.*` tests (12 renames, zero
+tests added or removed; two new `MermaidCapabilityRoster.*` integrity tests
+bring the Mermaid label to 810 registered ctests, of which 798 are the strict
+green regression subset selected by `-L mermaid -E '^MermaidCapabilityReport\.'`).
+Enumeration, JSON/MD report emission, resource/integrity/provenance checks and
+zero-non-gap-error assertions are unchanged and stay hard failures; only the
+aspiration-tier "100% admission" assertions were removed. The frozen observed
+counts are now explicit strict `EXPECT_EQ` pins, and each report serializes a
+canonical `mandatory_gaps` array diffed both directions against the reviewed
+ledger.
+
+Roster: `tools/mermaid/e6c-mandatory-gap-roster.json`, schema
+`e6c_mandatory_gap_roster/v1`, **61620 bytes**, SHA-256
+`29611b1dae04a3c5b30d14fa904ece3be6ab37d924ae6621079e7633afcd6f1d`, pins in
+`tests/support/mermaid_gap_roster.hpp`; verified across debug and release by
+`python3 -I tools/mermaid/verify_e6c_gap_roster.py
+--build-dirs build/debug/tests/ui,build/release/tests/ui` (serialized gap sets
+are byte-stable across presets; 356 roster rows total).
+
+Per-gate frozen counts and roster rows:
+
+| Gate (new ctest name) | Roster key | Frozen counts | Rows |
+|---|---|---|---:|
+| `MermaidCapabilityReport.OfficialMatrix` | `official_matrix` | ER errors 6/pending 144/admitted 62; Flow errors 9/decoded 54/pending 346; Class errors 30/decoded 237/pending 48/admitted 211; drawn_at_240 582/2145 | 94 |
+| `MermaidCapabilityReport.Flow400CompleteSources` | — (counts-only) | errors 9 at matrix; visited 400, decoded/positive/mutated 54, pending 346, zero non-gap errors | 0 |
+| `MermaidCapabilityReport.MermanXY102` | `merman_xy102` | 102 inputs, 85 candidate/17 fallback, partition 3/17/82/0, geometry 77, empty 5, profile pending 20, zero errors | 20 |
+| `MermaidCapabilityReport.Class481` | `class481` | matched/mutated 341, pending 137, 3 positive fallbacks (`merman/5974d9abfc8f91652b9b`, `merman/a254b69141639fa8b045`, `merman/c50650cbac88ef419784`) | 140 |
+| `MermaidCapabilityReport.Class285` | `class285` | decoded 237, matched/mutated 211, pending 48 | 74 |
+| `MermaidCapabilityReport.ClassEndpoint29` | `class_endpoint29` | matched/mutated 26, the same three fallback ids | 3 |
+| `MermaidCapabilityReport.State85` | `state85` | matched/mutated 71, geometry_errors 1, positive_pending 7, original_policy 1 (`termaid/17f03f94ca1a30b6bf67`), choice_policy 1 (`merman/2419c8d227ab4bcb368d`) | 14 |
+| `MermaidCapabilityReport.ClassCaptionStarvation8` | `class_caption_starvation8` | matched/mutated 6, fallbacks 2 (`unequal_multiline_and_marker`, `foreign_owner_keeps_caption`) | 2 |
+| `MermaidCapabilityReport.StateReverseEscape` | `state_reverse_escape` | matched/mutated 8, fallback 1 (`original_b91_whole_immutable`) | 1 |
+| `MermaidCapabilityReport.ClassNotes18` | `class_notes18` | original 18/decoded 22, strong 16; fallbacks at application ordinals 272-277 | 6 |
+| `MermaidCapabilityReport.Requirement11P1P6` | `requirement11_p1p6` | complete 8, geometry 1 (P1), fallbacks 1 (P3 expected control), P5 negatives 10 | 1 |
+| `MermaidCapabilityReport.Requirement11Overflow` | `requirement11_overflow` | complete 1, fallbacks 1, errors 1 (LR case index 0) | 1 |
+
+`drawn_at_240` is 582 rather than the E1-era 540 solely because E2a admitted
+the reviewed config-free gitGraph/state cohort (+42); every other frozen count
+matches the pre-E2a red baseline. Both presets show 809/810 under
+`ctest -L mermaid -j8`, the single failure being the pre-existing real-PTY
+timing flake `E2E_Pty_Mermaid` (passes alone on an unloaded machine and is not
+a renderer report). Rule for later phases: any renderer-driven outcome change
+(gain or loss) must update the roster (via `--write`, followed by independent
+review) and the frozen constants **in the same change**; expectation changes
+still go only through this ledger, never through renderer output.
+
+
 The current source-owned LinkProfile3 checkpoint independently closes three complete originals in both consumers: formal drawing coverage is **525/2145 (24.48%)**, Flow **39/400 (9.75%)**. Each source has five actual public captures and six meaningful negatives; 36 independent four-face goods and 108 physical negatives pass. Complete Flow53 and Official30 execute per preset with 81 pass, two mandatory capability failures and zero errors. The preceding complete nine-target first pass is 789/777 pass/12 fail/zero errors per preset. Keep those runs distinct: the last correction changes only test-private repeated-baseline handling, and the other seven targets were not rerun. Both runs freeze all 13,902 source pins. Source fallback and resource failures earn no drawing credit. Evidence: `root-flow-linkprofile3-complete-native-official-dual-proof-r12.json` and `root-flow-linkprofile3-complete-full-nine-dual-proof-r10.json`.
 
 The preceding R2 AST source index includes 277 complete selected files (22 Beautiful, 32 Go ASCII, 132 Merman, 54 mmdflux, 37 Termaid). This closes the four formerly omitted Merman support roots and 11 complete mmdflux sources behind 126 slices. Root independently verifies the index validator and all 22 package members. Termaid has 25 parametrized function containers and 27 decorator sites; two stacked decorators require explicit Cartesian expansion. These are source facts, not executed assertions or a complete semantic denominator.

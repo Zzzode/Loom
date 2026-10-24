@@ -380,6 +380,50 @@ fixes; no full-suite Mermaid compatibility claim is made. The source fallback
 counts and unresolved assertions remain visible instead of being reclassified
 as drawing passes.
 
+### RFC 0031 E6c named Mermaid gate (2026-10-24)
+
+All Mermaid ctests carry the `mermaid` label (the 11 `tests/ui` Mermaid
+gtest binaries plus `E2E_Pty_Mermaid`):
+
+```sh
+# Full gate (810 tests on the post-E2a tree).
+ctest --preset debug -L mermaid -j8
+# Strict green regression subset: excludes the 12 non-failing reports.
+ctest --preset debug -L mermaid -E '^MermaidCapabilityReport\.' -j8
+```
+
+The 12 former mandatory-completion gates are renamed
+`MermaidCapabilityReport.*` (12 renames, zero add/delete of those gates; two
+new `MermaidCapabilityRoster.*` integrity tests are the only new names), never
+fail on a capability gap, and pin frozen counts plus a reviewed
+`mandatory_gaps` roster instead:
+
+```sh
+python3 -I tools/mermaid/verify_e6c_gap_roster.py \
+  --build-dirs build/debug/tests/ui,build/release/tests/ui
+```
+
+The roster (`tools/mermaid/e6c-mandatory-gap-roster.json`, 61620 bytes,
+SHA-256 `29611b1dae04a3c5b30d14fa904ece3be6ab37d924ae6621079e7633afcd6f1d`)
+is byte-stable across presets. Renames: `MermaidOfficial.CompleteCapabilityMatrix`
+→ `MermaidCapabilityReport.OfficialMatrix`;
+`MermaidFlowSemantics.Official400CompleteSourceNativeMandatoryGate` →
+`MermaidCapabilityReport.Flow400CompleteSources`;
+`MermaidChartsSemantics.CompleteMermanXY102Batch` →
+`MermaidCapabilityReport.MermanXY102`; and in the relations binary
+`…Class481…`, `…All29WholeSourcesStayMandatoryIncludingOneProjectionDebt`,
+`…EveryWholeSourceIsObservedBeforeDecodeAndKeepsItsMandatoryDisposition`,
+`…EightCompletePublicSourcesStayMandatoryBeforeDecodeAndMutants`,
+`…EveryWholeOriginalIsObservedBeforeDecodeAndRemainsMandatory`,
+`…EveryFullSourceIsCapturedBeforeDecodeAndMandatory`,
+`…AllWholeOriginalSourcesAreCapturedBeforeNewNoteDecode`,
+`…IndependentP1ThroughP6ControlsKeepEnvelopeAndFourDirectionObligations`,
+`…CompleteOverflowSourcesKeepSccAndIncomparablePeersInPhysicalColumns` →
+`MermaidCapabilityReport.{Class481,ClassEndpoint29,State85,
+ClassCaptionStarvation8,Class285,StateReverseEscape,ClassNotes18,
+Requirement11P1P6,Requirement11Overflow}` respectively.
+
+
 ## Integrity and updates
 
 `inventory.lock.json` fixes every imported file, case manifest, case-ID set and

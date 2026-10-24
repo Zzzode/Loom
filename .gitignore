@@ -40,3 +40,7 @@ settings.local.json.lock
 
 # CMake-generated compile database; cmake/LinkCompileCommands.cmake manages this symlink
 /compile_commands.json
+
+# libFuzzer mutable outputs
+tests/fuzz/corpus-out/
+tests/fuzz/artifacts/

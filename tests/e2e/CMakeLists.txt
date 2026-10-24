@@ -206,6 +206,7 @@ endforeach()
 add_test(NAME E2E_Pty_Mermaid COMMAND e2e_pty_shutdown mermaid)
 set_tests_properties(E2E_Pty_Mermaid PROPERTIES
     TIMEOUT 45
+    LABELS "mermaid"
     ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
     SKIP_RETURN_CODE 125)
 

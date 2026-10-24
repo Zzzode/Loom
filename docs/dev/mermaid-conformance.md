@@ -1,5 +1,11 @@
 # Official Mermaid terminal capability matrix
 
+> **RFC 0031 E6c (2026-10-24):** the 12 mandatory-completion gates are now
+> permanently non-failing `MermaidCapabilityReport.*` capability reports pinned
+> against the reviewed gap roster; see
+> [Outcomes and reproducible reports](#rfc-0031-e6c-permanently-non-failing-capability-reports-2026-10-24).
+> Run `ctest -L mermaid` for the full gate.
+
 The native `MermaidOfficial.*` tests exercise Loom's production Markdown/FTXUI
 renderer against the complete pinned upstream corpus. The acceptance target is
 100% of applicable official and terminal-suite obligations; the current renderer
@@ -1104,7 +1110,7 @@ There is no aggregate floor that trades a failing case for an unrelated success.
 
 ```bash
 cmake --build --preset debug --target test_mermaid_official
-ctest --preset debug -R '^MermaidOfficial\.' --output-on-failure -j1
+ctest --preset debug -R '^MermaidOfficial\.|^MermaidCapabilityReport\.|^MermaidCapabilityRoster\.' --output-on-failure -j1
 ```
 
 Reports are written to
@@ -1129,6 +1135,71 @@ variable unset. Tests deliberately mutate labels, remove arrows, swap expected
 fallback and corrupt the manifest to verify that the oracle rejects bad results.
 Derived grammar regressions in `test_markdown_render.cpp` are labeled separately;
 they do not increase the official-file or body-diagnostic denominators.
+
+### RFC 0031 E6c: permanently non-failing capability reports (2026-10-24)
+
+The 12 deliberately-red "mandatory completion" gates no longer fail on an
+aspiration (100% admission). They are `MermaidCapabilityReport.*` tests that
+still enumerate every input and emit the same JSON/MD reports, while:
+
+- aspiration assertions are removed and the frozen observed counts are
+  explicit strict `EXPECT_EQ` pins (any renderer-driven gain *or* loss moves a
+  pin and fails until the ledger is updated in the same change);
+- each report gained a root `mandatory_gaps` array (the matrix report also
+  carries `target_whole_sources_admitted` / `mandatory_remaining` per family;
+  the Flow400 report carries `complete_source_target` /
+  `mandatory_pending_remains` and has no roster, since its pending/decoded
+  membership is set by immutable Model authority assets);
+- the observed gap set is diffed both directions against the reviewed ledger
+  `tools/mermaid/e6c-mandatory-gap-roster.json`
+  (schema `e6c_mandatory_gap_roster/v1`, byte size 61620,
+  SHA-256 `29611b1dae04a3c5b30d14fa904ece3be6ab37d924ae6621079e7633afcd6f1d`),
+  whose size/SHA are pinned in `tests/support/mermaid_gap_roster.hpp`. Resource,
+  integrity, provenance and unmapped-message failures stay hard failures; the
+  matrix error mapper returns `unknown` for any unlisted message.
+
+The 12 reporters are:
+
+| ctest name | Report | Frozen headline counts |
+|---|---|---|
+| `MermaidCapabilityReport.OfficialMatrix` | `mermaid-official-matrix.{json,md}` | drawn_at_240 582/2145; Flow admitted 54/pending 346/errors 9; Class admitted 211/decoded 237/pending 48/errors 30; ER admitted 62/pending 144/errors 6; Requirement 11; Pie 7; 94 gap rows |
+| `MermaidCapabilityReport.Flow400CompleteSources` | `mermaid-flow-official400-whole-source.json` | visited 400, decoded/positive/mutated 54, pending 346, zero errors |
+| `MermaidCapabilityReport.MermanXY102` | `mermaid-merman-xy102-C2-semantics.json` | 102 inputs, 85 candidate/17 fallback, 82 active/20 profile pending, geometry 77, empty 5, partition 3/17/82/0 |
+| `MermaidCapabilityReport.Class481` | `mermaid-class481-native.json` | matched/mutated 341, pending 137, 3 positive fallbacks (140 gap rows) |
+| `MermaidCapabilityReport.Class285` | `mermaid-official-class285-source-scenes.json` | decoded 237, matched/mutated 211, pending 48 (74 gap rows) |
+| `MermaidCapabilityReport.ClassEndpoint29` | `mermaid-class-endpoint29-source-scenes.json` | matched/mutated 26, 3 named source fallbacks |
+| `MermaidCapabilityReport.State85` | `mermaid-state85-whole-source-scenes.json` | matched 71, geometry_errors 1, positive_pending 7, original_policy 1, choice_policy 1 (14 gap rows) |
+| `MermaidCapabilityReport.ClassCaptionStarvation8` | `mermaid-class-caption-starvation-source-scenes.json` | matched 6, fallbacks 2 |
+| `MermaidCapabilityReport.StateReverseEscape` | `mermaid-state-narrow-reverse-source-scenes.json` | matched 8, fallback 1 (`original_b91_whole_immutable`) |
+| `MermaidCapabilityReport.ClassNotes18` | `mermaid-class-notes18-whole-sources.json` | strong 16/22 decoded, six original fallbacks (application ordinals 272-277) |
+| `MermaidCapabilityReport.Requirement11P1P6` | `mermaid-requirement11-independent-controls.json` | complete 8, geometry 1 (P1 fallback); P3 and the 10 P5 negatives remain strict controls |
+| `MermaidCapabilityReport.Requirement11Overflow` | `mermaid-requirement11-overflow-peers-native.json` | complete 1, fallbacks 1, errors 1 (LR case 0) |
+
+`drawn_at_240` moved from the E1-era 540 to **582** solely because RFC 0031
+E2a admitted the reviewed config-free gitGraph/state cohort; no other count
+moved. Expectation changes go only through the human obligation ledger and the
+reviewed roster — never through renderer output.
+
+The named gates:
+
+```bash
+# Full Mermaid gate (810 tests: 798 strict regressions + 12 reports).
+ctest --preset debug -L mermaid -j8
+
+# Strict green regression subset (no capability reports).
+ctest --preset debug -L mermaid -E '^MermaidCapabilityReport\.' -j8
+
+# Roster ledger verification across both presets (python3 -I).
+python3 -I tools/mermaid/verify_e6c_gap_roster.py \
+  --build-dirs build/debug/tests/ui,build/release/tests/ui
+```
+
+`MermaidCapabilityRoster.Integrity` and
+`MermaidCapabilityRoster.UnknownMatrixErrorCategoryIsRejected` guard the roster
+file itself (schema, pinned size/SHA, gate keys, no duplicate rows, every
+matrix roster fixture present in `manifest.json`, and the closed error-message
+mapping). The serialized `mandatory_gaps` arrays are byte-stable across the
+debug and release presets.
 
 ## Measured results and corrections
 

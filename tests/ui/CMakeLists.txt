@@ -123,7 +123,7 @@ target_compile_definitions(test_mermaid_official PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_official
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 180)
+    PROPERTIES TIMEOUT 180 LABELS "mermaid")
 
 add_executable(test_mermaid_terminal test_mermaid_terminal.cpp)
 target_link_libraries(test_mermaid_terminal
@@ -132,7 +132,7 @@ target_compile_definitions(test_mermaid_terminal PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_terminal
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 300)
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
 add_executable(test_mermaid_flow_semantics test_mermaid_flow_semantics.cpp)
 target_link_libraries(test_mermaid_flow_semantics
@@ -141,7 +141,7 @@ target_compile_definitions(test_mermaid_flow_semantics PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_flow_semantics
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 300)
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
 # RFC 0030: GitGraph source-bound terminal first-red assertions.
 add_executable(test_mermaid_gitgraph_semantics
@@ -153,7 +153,7 @@ target_compile_definitions(test_mermaid_gitgraph_semantics PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_gitgraph_semantics
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 300)
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
 add_executable(test_mermaid_charts_semantics test_mermaid_charts_semantics.cpp)
 target_link_libraries(test_mermaid_charts_semantics
@@ -162,7 +162,7 @@ target_compile_definitions(test_mermaid_charts_semantics PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_charts_semantics
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 300)
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
 add_executable(test_mermaid_sequence_semantics test_mermaid_sequence_semantics.cpp)
 target_link_libraries(test_mermaid_sequence_semantics
@@ -171,7 +171,7 @@ target_compile_definitions(test_mermaid_sequence_semantics PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_sequence_semantics
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 300)
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
 add_executable(test_mermaid_relations_semantics test_mermaid_relations_semantics.cpp)
 target_link_libraries(test_mermaid_relations_semantics
@@ -180,28 +180,28 @@ target_compile_definitions(test_mermaid_relations_semantics PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_relations_semantics
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 300)
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
 add_executable(test_mermaid_envelope test_mermaid_envelope.cpp)
 target_link_libraries(test_mermaid_envelope
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_envelope
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 120)
+    PROPERTIES TIMEOUT 120 LABELS "mermaid")
 
 add_executable(test_mermaid_probe test_mermaid_probe.cpp)
 target_link_libraries(test_mermaid_probe
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_probe
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 120)
+    PROPERTIES TIMEOUT 120 LABELS "mermaid")
 
 add_executable(test_mermaid_e2a_cohort test_mermaid_e2a_cohort.cpp)
 target_link_libraries(test_mermaid_e2a_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_e2a_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 300)
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
 # ---------------------------------------------------------------------------
 # Text-content property tests for the FTXUI terminal renderer.
@@ -370,7 +370,7 @@ target_compile_definitions(test_mermaid_flow_classic_shapes PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_flow_classic_shapes
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 300)
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
 # ASCII Flow Grid18 source-first public profile. It remains in the existing
 # Flow semantic target so its Flow400 authority and per-source ledgers stay local.

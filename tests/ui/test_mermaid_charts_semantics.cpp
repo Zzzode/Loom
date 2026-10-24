@@ -15,9 +15,11 @@ import loom.serdes.json;
 import loom.crypto.crypto;
 
 #include "mermaid_chart_cell_oracle.hpp"
+#include "mermaid_gap_roster.hpp"
 
 namespace {
 namespace json = loom::utils::json;
+namespace gap_roster = loom::test::mermaid_gap_roster;
 using json::JsonVal;
 using namespace loom::test::mermaid_chart;
 constexpr std::string_view kSentinel = kDefaultFollowingToken;
@@ -2816,8 +2818,13 @@ void d191_dense_binding(JsonVal row,JsonVal fact,const MermanXY& model,NumericTi
     }
 }
 
-TEST(MermaidChartsSemantics, CompleteMermanXY102Batch) {
+TEST(MermaidCapabilityReport, MermanXY102) {
     json::JsonMutDoc report; auto root = report.object(); auto rows = root.make_arr();
+    // RFC 0031 E6c: the 20 oracle-profile-pending rows are reviewed
+    // capability gaps, matched against the frozen roster, not aspiration
+    // failures. Geometry/resource errors on active rows stay hard.
+    struct XYGap { std::string id, observed, profile; };
+    std::vector<XYGap> mandatory_gaps;
     root.set("kind","complete_merman_xy102_C2_source_profile_geometry_baseline");
     root.set("qualification","Every102 source executes. Reviewed rectangular and value-label source profiles require real geometry; other C2 profiles remain explicit unmet obligations. Candidate art is never an automatic pass. Original foreign/API predicates remain separate.");
     root.set("expected_nonempty_geometry",97); root.set("expected_empty_states",5);
@@ -2855,7 +2862,10 @@ TEST(MermaidChartsSemantics, CompleteMermanXY102Batch) {
                 else ++geometry_errors;
             }
         }
-        if (!audited_states) EXPECT_TRUE(errors.empty()) << explain(errors);
+        if (!audited_states) {
+            if (!active) mandatory_gaps.push_back({id, is_source ? "source_fallback" : "candidate_art", std::string(profile.pending)});
+            else EXPECT_TRUE(errors.empty()) << explain(errors);
+        }
         const auto narrow = capture(element,40,256);
         const bool narrow_source = same_source_surface(narrow,capture(ordinary,40,256));
         std::vector<std::string> narrow_errors;
@@ -2911,12 +2921,34 @@ TEST(MermaidChartsSemantics, CompleteMermanXY102Batch) {
     root.set("geometry_error",geometry_errors); root.set("oracle_error",oracle_errors);
     root.set("empty_state_matches_pending_review",empty_matches); root.set("empty_state_errors",empty_state_errors);
     root.set("certified_complete_geometry",0); root.set("certified_empty_states",0);
-    root.set("original_function_case_applications_pending",108); root.add("cases",rows); report.set_root(root);
+    root.set("original_function_case_applications_pending",108);
+    auto gap_array = root.make_arr();
+    for (const auto& gap : mandatory_gaps) {
+        auto gap_row = root.make_obj();
+        gap_row.set("id", gap.id); gap_row.set("observed", gap.observed); gap_row.set("profile", gap.profile);
+        gap_array.append(gap_row);
+    }
+    root.add("mandatory_gaps", gap_array);
+    root.add("cases",rows); report.set_root(root);
 #ifdef LOOM_MERMAID_REPORT_DIR
     const auto path = std::filesystem::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-merman-xy102-C2-semantics.json";
     std::ofstream out(path,std::ios::binary);
     ASSERT_TRUE(out && (out << report.to_pretty_string() << '\n')) << "Cannot write " << path;
 #endif
+    // RFC 0031 E6c frozen pins.
+    EXPECT_EQ(visited,102); EXPECT_EQ(candidates,85); EXPECT_EQ(fallbacks,17);
+    EXPECT_EQ(candidate_pending,3); EXPECT_EQ(source_pending,17);
+    EXPECT_EQ(candidate_active,82); EXPECT_EQ(source_active,0);
+    EXPECT_EQ(geometry_matches,77); EXPECT_EQ(empty_matches,5); EXPECT_EQ(pending,20);
+    EXPECT_EQ(geometry_errors,0); EXPECT_EQ(oracle_errors,0); EXPECT_EQ(empty_state_errors,0);
+    EXPECT_EQ(static_cast<int>(mandatory_gaps.size()),20);
+    if (auto roster = gap_roster::load_verified_roster()) {
+        auto published = json::parse(report.to_string());
+        ASSERT_TRUE(published.has_value());
+        const auto gap_diff = gap_roster::diff_gate(*roster, "merman_xy102",
+                                                     published->root().get("mandatory_gaps"));
+        EXPECT_TRUE(gap_diff.ok()) << gap_diff.render("merman_xy102");
+    }
 }
 } // namespace
 

@@ -5,6 +5,7 @@ module;
 module loom.ui.visual.mermaid;
 
 import std;
+import :detail;
 import loom.serdes.json;
 
 namespace loom::ui::mermaid::detail {
@@ -403,7 +404,7 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
     // every source/envelope scan below.
     if (source.size() > (std::numeric_limits<std::size_t>::max() - kChartParseFixed) / kChartParsePerByte ||
         !work.spend(kChartParseFixed + kChartParsePerByte * source.size())) return {};
-    const auto envelope = parse_envelope(source,work);
+    const auto envelope = detail::parse_envelope(source,work);
     if (!envelope) return {};
     enum class Profile { Plain, PieDescription, PieConfig, Xy } profile = Profile::Plain;
     if (envelope->has_frontmatter) {

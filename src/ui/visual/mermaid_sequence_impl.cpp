@@ -5,6 +5,7 @@ module;
 module loom.ui.visual.mermaid;
 
 import std;
+import :detail;
 import loom.serdes.json;
 
 namespace loom::ui::mermaid::detail {
@@ -1976,7 +1977,7 @@ std::optional<Sequence> parse(std::string_view source, Work& work) {
             std::string full;
             full.reserve(line.size() + 1u + source.size());
             full.append(line); full.push_back('\n'); full.append(source);
-            const auto envelope = parse_envelope(full, work);
+            const auto envelope = detail::parse_envelope(full, work);
             if (!envelope || !envelope->has_frontmatter ||
                 !sequence_frontmatter(envelope->raw_frontmatter, diagram, work)) return {};
             const auto body_offset = static_cast<std::size_t>(envelope->raw_body.data() - full.data());

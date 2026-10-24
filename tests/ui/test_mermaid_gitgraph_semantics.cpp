@@ -1,8 +1,7 @@
 // RFC 0030 GitGraph terminal assertion port. This test owns its source ledger,
 // PixelAt capture, cell oracle, and report. It imports no producer semantic
-// record, parser result, route, or native report.
-module;
-
+// record, parser result, route, or native report. Parser reach comes solely
+// from the loom.ui.visual.mermaid.testing seam facade (RFC 0031 E6a).
 #include <gtest/gtest.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
@@ -11,17 +10,18 @@ module;
 #include <filesystem>
 #include <fstream>
 #include <iterator>
-module loom.ui.visual.mermaid;
 
 import std;
 import loom.ui.visual.markdown;
+import loom.ui.visual.mermaid.testing;
 import loom.serdes.json;
 import loom.crypto.crypto;
 
-// Compile-time module-privacy probe: this test translation unit belongs to the
-// existing Mermaid module but exports no declaration and contributes no credit.
-static_assert(loom::ui::mermaid::detail::kWorkLimit == 1'000'000u);
-static_assert(std::is_same_v<decltype(loom::ui::mermaid::detail::Work::remaining), std::size_t>);
+// Seam-shape pin (RFC 0031 E6a): this translation unit is detached from the
+// production module; the reviewed seam must keep this exact Work budget and
+// remaining-field shape.
+static_assert(loom::ui::mermaid::testing::kWorkLimit == 1'000'000u);
+static_assert(std::is_same_v<decltype(loom::ui::mermaid::testing::Work::remaining), std::size_t>);
 
 namespace {
 namespace fs = std::filesystem;
@@ -936,7 +936,7 @@ MutationCounts prove_nonempty_controls(const Grid& good,const Model& model,Work&
     return out;
 }
 
-namespace native_git = loom::ui::mermaid::detail;
+namespace native_git = loom::ui::mermaid::testing;
 
 native_git::GitDirection native_direction(std::string_view direction) {
     if(direction=="LR")return native_git::GitDirection::LR;

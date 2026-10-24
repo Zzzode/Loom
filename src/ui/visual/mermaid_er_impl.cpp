@@ -3,6 +3,7 @@ module;
 module loom.ui.visual.mermaid;
 
 import std;
+import :detail;
 import loom.serdes.json;
 
 namespace loom::ui::mermaid::detail {
@@ -95,7 +96,7 @@ std::optional<ErEnvelope> er_source_envelope(std::string_view source,Work& work)
         return ErEnvelope{source.substr(newline+1),{}};
     }
     if(!work.spend(4u*sizeof(bool)+16u))return {};
-    const auto parsed=parse_envelope(source,work);
+    const auto parsed=detail::parse_envelope(source,work);
     if(!parsed||!parsed->has_frontmatter)return {};
     bool description_seen=false,config_seen=false,title_seen=false;
     unsigned consumed=0;

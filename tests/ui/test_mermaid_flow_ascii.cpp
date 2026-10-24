@@ -1,16 +1,16 @@
 // Source-first ASCII Flow contract for the four closed Grid18 inputs.
-// The same-module declaration reads producer-owned canonical rows; public
+// Producer-owned canonical rows arrive through the
+// loom.ui.visual.mermaid.testing seam facade (RFC 0031 E6a); public
 // assertions still capture the real Mermaid element through PixelAt.
-module;
 #include <gtest/gtest.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/string.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
-module loom.ui.visual.mermaid;
 import std;
 import loom.ui.visual.markdown;
+import loom.ui.visual.mermaid.testing;
 import loom.serdes.json;
 import loom.crypto.crypto;
 
@@ -21,7 +21,7 @@ namespace fs = std::filesystem;
 namespace json = loom::utils::json;
 using json::JsonVal;
 namespace flow = loom::test::mermaid_flow;
-namespace private_flow = loom::ui::mermaid::detail;
+namespace private_flow = loom::ui::mermaid::testing;
 using flow::Grid;
 using flow::Model;
 using flow::OracleWork;

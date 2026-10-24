@@ -3,6 +3,7 @@ module;
 module loom.ui.visual.mermaid;
 
 import std;
+import :detail;
 
 namespace loom::ui::mermaid::detail {
 namespace {
@@ -171,7 +172,7 @@ std::string_view requirement_relation_text(RequirementRelation value) {
 std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,Work& work) {
     if(source.size()>kSourceLimit||source.find('\r')!=std::string_view::npos||
        !source.starts_with("---\n")||!work.spend(source.size()*2u+96u))return {};
-    const auto envelope=parse_envelope(source,work);
+    const auto envelope=detail::parse_envelope(source,work);
     if(!envelope||!envelope->has_frontmatter||!envelope->description)return {};
     for(const auto& event:envelope->events) {
         if(event.blank||event.comment)continue;

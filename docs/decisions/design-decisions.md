@@ -86,6 +86,33 @@ path is the independently reviewed, sha-bound ledger
 execution-attested in that ledger rather than guessed textually, and no
 expectation changes from rendered output.
 
+**Mermaid module privacy (RFC 0031 E6a).** The renderer's private surface
+(Canvas/Cell/Point/glyph primitives, the four `*_layout` declarations,
+`unicode_text`/`validated_plain_label`, the relations private model and the
+remaining private constants) lives in a non-exported module implementation
+partition `loom.ui.visual.mermaid:detail`; production implementation units
+reach it with the short `import :detail;`, and the partition explicitly
+imports the primary. This is the compiler-enforced half of the boundary: an
+external `import loom.ui.visual.mermaid;` cannot name
+`loom::ui::mermaid::detail` ("no member named 'detail'"), and partitions are
+not importable outside their module (`import M:detail;` does not parse for a
+non-member). The one reviewed test seam — `kWorkLimit`, `Work`, the Envelope
+and GitGraph clusters, `FlowAsciiRows`, the E4 probe cluster and their parser
+entry points — is exported in `loom::ui::mermaid::testing` in the primary
+interface. The seam types must be defined (not merely aliased) in the
+exported namespace because an exported function signature cannot name a
+partition-only type; detail aliases them for its own layout code, and thin
+forwarders in a private implementation unit bridge the testing entry points
+to the detail implementations. Tests never declare the production module;
+they import only the `loom.ui.visual.mermaid.testing` facade, whose sole
+content is the wide `export import loom.ui.visual.mermaid;` — clang 23 does
+not transitively expose complete types through narrow exported
+using-declarations, so the wide re-export is forced. A translation unit that
+itself declares the module can still attach to the partition, which is the
+one residual hole; the `tools/arch/test_mermaid_privacy.py` source scan (no
+test TU declares the module, imports it directly, or names `mermaid::detail`)
+is the load-bearing gate for that property.
+
 **Server model capacities (RFC 0029).** The configured service's
 `data[].context_length` is read once per runtime root, before native tool policy
 snapshots. An exact endpoint/wire/credential-bound immutable snapshot is reused;

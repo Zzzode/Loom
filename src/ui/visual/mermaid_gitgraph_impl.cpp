@@ -5,6 +5,7 @@ module;
 module loom.ui.visual.mermaid;
 
 import std;
+import :detail;
 import loom.serdes.json;
 
 namespace loom::ui::mermaid::detail {
@@ -724,7 +725,7 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
 // rendered. A top-level config key, any body init directive, or any title
 // (gitGraph has no title projection) keeps the whole source.
 std::optional<std::string_view> git_frontmatter_body(std::string_view source, Work& work) {
-    const auto envelope = parse_envelope(source, work);
+    const auto envelope = detail::parse_envelope(source, work);
     if (!envelope || !envelope->has_frontmatter || !envelope->init.empty()) return {};
     bool description_seen = false;
     for (const auto& event : envelope->events) {
@@ -760,7 +761,7 @@ std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source,
         if (!admitted) return {};
         body = *admitted;
     }
-    const auto graph = parse_gitgraph(body, work);
+    const auto graph = detail::parse_gitgraph(body, work);
     if (!graph) return {};
     return layout_gitgraph(*graph, work, use_ascii);
 }

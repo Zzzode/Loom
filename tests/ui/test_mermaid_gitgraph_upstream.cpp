@@ -1,7 +1,8 @@
 // Direct assertion port from the complete pinned Termaid GitGraph test file.
 // The independent Native30 cell oracle owns geometry; this unit preserves the
 // original parser/output predicates and reports unmapped API options as debt.
-module;
+// Parser reach comes solely from the loom.ui.visual.mermaid.testing seam
+// facade (RFC 0031 E6a).
 #include <gtest/gtest.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
@@ -9,14 +10,15 @@ module;
 #include <filesystem>
 #include <fstream>
 #include <iterator>
-module loom.ui.visual.mermaid;
+
 import std;
 import loom.ui.visual.markdown;
+import loom.ui.visual.mermaid.testing;
 import loom.serdes.json;
 import loom.crypto.crypto;
 
 namespace {
-namespace original_git = loom::ui::mermaid::detail;
+namespace original_git = loom::ui::mermaid::testing;
 namespace original_json = loom::utils::json;
 using OriginalValue = original_json::JsonVal;
 const std::filesystem::path kOriginalTests{LOOM_TESTS_DIR};

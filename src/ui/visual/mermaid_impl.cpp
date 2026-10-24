@@ -7,6 +7,7 @@ module;
 module loom.ui.visual.mermaid;
 
 import std;
+import :detail;
 
 namespace loom::ui::mermaid {
 namespace {
@@ -979,7 +980,7 @@ std::optional<std::string_view> flow_envelope_body(std::string_view source, Work
     // The whole-envelope profile accepts CRLF, never a hidden bare CR.
     for (std::size_t n = 0; n < source.size(); ++n)
         if (source[n] == '\r' && (n + 1u == source.size() || source[n + 1u] != '\n')) return {};
-    const auto envelope = parse_envelope(source, work);
+    const auto envelope = detail::parse_envelope(source, work);
     if (!envelope || !envelope->has_frontmatter) return {};
     if (envelope->raw_frontmatter.find('\t') != std::string_view::npos) return {};
     enum ConfigBit : unsigned { Layout = 1u, Font = 2u, RootHtml = 4u, Flowchart = 8u,

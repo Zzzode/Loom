@@ -15,6 +15,10 @@ target_sources(loom_ui_visual
         ui/visual/file_edit_tool_diff.cppm
         ui/visual/markdown.cppm
         ui/visual/mermaid.cppm
+        # RFC 0031 E6a: non-exported detail partition and test-only facade
+        # module; both provide module names, so the scanner must see them.
+        ui/visual/mermaid_detail.cppm
+        ui/visual/mermaid_testing.cppm
         ui/visual/structured_diff.cppm
 )
 # Module implementation units for loom.ui.visual.markdown (RFC 0001 Phase C
@@ -49,6 +53,8 @@ target_sources(loom_ui_visual PRIVATE
     ui/visual/mermaid_er_impl.cpp
     ui/visual/mermaid_state_impl.cpp
     ui/visual/mermaid_requirement_impl.cpp
+    # RFC 0031 E6a: thin forwarders for the exported testing seam.
+    ui/visual/mermaid_testing_seams.cpp
     # HTML serializer for CommonMark/GFM conformance testing.
     ui/visual/markdown_html_impl.cpp
 )

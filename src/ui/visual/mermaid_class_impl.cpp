@@ -5,6 +5,7 @@ module;
 module loom.ui.visual.mermaid;
 
 import std;
+import :detail;
 import loom.serdes.json;
 
 namespace loom::ui::mermaid::detail {
@@ -342,7 +343,7 @@ std::optional<ClassEnvelope> class_source_envelope(std::string_view source,Work&
     ClassEnvelope envelope;ClassMeta meta;
     std::string_view body=source;
     if(source.starts_with("---")) {
-        const auto parsed=parse_envelope(source,work);
+        const auto parsed=detail::parse_envelope(source,work);
         if(!parsed||!parsed->has_frontmatter)return {};
         bool config_seen=false,title_seen=false,description_seen=false;
         std::map<std::string,unsigned> owner_seen;

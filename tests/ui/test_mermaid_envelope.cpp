@@ -1,22 +1,20 @@
-// RFC 0031 E1 structural envelope tests. This translation unit is a module
-// implementation unit so it can exercise the private detail parser directly.
-module;
-
+// RFC 0031 E1 structural envelope tests. This translation unit reaches the
+// closed parser exclusively through the loom.ui.visual.mermaid.testing seam
+// facade (RFC 0031 E6a); it never declares the production module.
 #include <gtest/gtest.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 
-module loom.ui.visual.mermaid;
-
 import std;
 import loom.ui.visual.markdown;
+import loom.ui.visual.mermaid.testing;
 
 namespace {
 
-using loom::ui::mermaid::detail::Envelope;
-using loom::ui::mermaid::detail::EnvelopeScalarForm;
-using loom::ui::mermaid::detail::Work;
-using loom::ui::mermaid::detail::parse_envelope;
+using loom::ui::mermaid::testing::Envelope;
+using loom::ui::mermaid::testing::EnvelopeScalarForm;
+using loom::ui::mermaid::testing::Work;
+using loom::ui::mermaid::testing::parse_envelope;
 
 std::optional<Envelope> parse(std::string_view source, Work& work) {
     return parse_envelope(source, work);
@@ -284,18 +282,18 @@ TEST(MermaidEnvelope, WorkBudgetSharedAcrossPhases) {
     for (std::size_t remaining = 1u; remaining < 5000000u; ++remaining) {
         Work work;
         work.remaining = remaining;
-        if (loom::ui::mermaid::detail::flow_ascii_rows(source, work)) { threshold = remaining; break; }
+        if (loom::ui::mermaid::testing::flow_ascii_rows(source, work)) { threshold = remaining; break; }
     }
     ASSERT_GT(threshold, 0u);
     {
         Work work;
         work.remaining = threshold - 1u;
-        EXPECT_FALSE(loom::ui::mermaid::detail::flow_ascii_rows(source, work));
+        EXPECT_FALSE(loom::ui::mermaid::testing::flow_ascii_rows(source, work));
     }
     {
         Work work;
         work.remaining = threshold;
-        EXPECT_TRUE(loom::ui::mermaid::detail::flow_ascii_rows(source, work));
+        EXPECT_TRUE(loom::ui::mermaid::testing::flow_ascii_rows(source, work));
     }
     // A phase reset would let parse-only balances lay out; assert the
     // threshold is well above the parse-only share by confirming a balance a

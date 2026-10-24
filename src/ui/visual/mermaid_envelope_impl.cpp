@@ -3,6 +3,7 @@ module;
 module loom.ui.visual.mermaid;
 
 import std;
+import :detail;
 
 namespace loom::ui::mermaid::detail {
 namespace {

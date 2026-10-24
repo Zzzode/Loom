@@ -5,6 +5,7 @@ module;
 module loom.ui.visual.mermaid;
 
 import std;
+import :detail;
 
 namespace loom::ui::mermaid::detail {
 // UML and state diagrams share entity identity and orthogonal relationships;
@@ -1093,7 +1094,7 @@ struct StateEnvelope {
 };
 std::optional<StateEnvelope> state_source_envelope(std::string_view source,Work& work) {
     if(!source.starts_with("---")||!work.spend(4u*sizeof(bool)+16u))return {};
-    const auto parsed=parse_envelope(source,work);
+    const auto parsed=detail::parse_envelope(source,work);
     if(!parsed||!parsed->has_frontmatter||!parsed->init.empty())return {};
     bool description_seen=false,title_seen=false;
     StateEnvelope result;

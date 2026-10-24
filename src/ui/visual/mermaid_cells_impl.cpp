@@ -5,6 +5,7 @@ module;
 module loom.ui.visual.mermaid;
 
 import std;
+import :detail;
 
 namespace loom::ui::mermaid::detail {
 
@@ -50,11 +51,22 @@ std::optional<std::string> validated_plain_label(std::string_view text) {
     return result;
 }
 
+} // namespace loom::ui::mermaid::detail
+
+// RFC 0031 E6a: Work is an exported seam type; its sole body is defined in
+// the testing namespace even though the detail partition aliases the type
+// for Canvas and every layout routine.
+namespace loom::ui::mermaid::testing {
+
 bool Work::spend(std::size_t count) {
     if (count > remaining) { remaining = 0; return false; }
     remaining -= count;
     return true;
 }
+
+} // namespace loom::ui::mermaid::testing
+
+namespace loom::ui::mermaid::detail {
 
 std::vector<std::string_view> label_rows(std::string_view text) {
     std::vector<std::string_view> rows;

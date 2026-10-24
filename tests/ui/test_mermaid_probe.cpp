@@ -1,24 +1,22 @@
-// RFC 0031 E4: ordered family probe-table invariants. This is a module
-// implementation unit and drives detail::classify_mermaid directly.
-module;
-
+// RFC 0031 E4: ordered family probe-table invariants. This unit drives the
+// classify probe through the loom.ui.visual.mermaid.testing seam facade
+// (RFC 0031 E6a); it never declares the production module.
 #include <gtest/gtest.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 
-module loom.ui.visual.mermaid;
-
 import std;
+import loom.ui.visual.mermaid.testing;
 
 namespace {
-using loom::ui::mermaid::detail::MermaidProbeFamily;
-using loom::ui::mermaid::detail::Work;
+using loom::ui::mermaid::testing::MermaidProbeFamily;
+using loom::ui::mermaid::testing::Work;
 
-std::optional<loom::ui::mermaid::detail::MermaidProbeDecision>
+std::optional<loom::ui::mermaid::testing::MermaidProbeDecision>
 classify(const std::string& source, std::size_t remaining = 1'000'000) {
     Work work;
     work.remaining = remaining;
-    return loom::ui::mermaid::detail::classify_mermaid(source, work);
+    return loom::ui::mermaid::testing::classify_mermaid(source, work);
 }
 
 } // namespace

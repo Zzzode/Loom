@@ -10,7 +10,7 @@
 
 import std;
 import loom.ui.visual.markdown;
-import loom.ui.visual.mermaid;
+import loom.ui.visual.mermaid.testing;
 import loom.serdes.json;
 import loom.crypto.crypto;
 

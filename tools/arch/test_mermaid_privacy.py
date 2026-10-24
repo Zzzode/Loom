@@ -60,10 +60,16 @@ EXPORT_IMPORT_RE = re.compile(r"^\s*export\s+import\s+loom\.ui\.visual\.mermaid\
 
 def scan_test_tree() -> list[str]:
     failures: list[str] = []
+    # tests/fuzz is exempt: a libFuzzer target is a MODULE IMPLEMENTATION UNIT
+    # (it declares the production module and imports :detail to drive the
+    # non-exported parse/layout entry points), not an isolated assertion TU.
+    fuzz_dir = TESTS_DIR / "fuzz"
     for path in sorted(TESTS_DIR.rglob("*")):
         if not path.is_file():
             continue
         try:
+            if fuzz_dir in path.parents:
+                continue
             text = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue

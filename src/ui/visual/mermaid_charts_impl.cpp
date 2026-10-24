@@ -12,6 +12,14 @@ namespace {
 constexpr std::array<std::string_view,16> kFills{{
     "█","░","▒","▓","▉","▊","▋","▌","▍","▎","▏","■","#","*","+","="}};
 constexpr int kPlotHeight = 20,kHorizontalSpan = 40,kPieCapacity = 40;
+// RFC 0031 E5: one parse boundary fee dominates the former per-line,
+// per-event and per-scanner-token bookkeeping. Every deleted scan is a
+// capped linear walk over the <=65536-byte source (the 2/byte term covers a
+// two-pass walk); inputs that survive validation are bounded by the
+// 256-glyph label limit, <=256 categories, <=32 series and <=16 pie slices,
+// whose fixed storage the constant term dominates.
+constexpr std::size_t kChartParsePerByte = 2u;
+constexpr std::size_t kChartParseFixed = 32768u;
 constexpr std::string_view kPieSubcellLegend =
     "Scale: 40 cells = 100%; dot = positive share below 0.5 cell";
 std::string_view trim_chart(std::string_view s) {
@@ -127,14 +135,13 @@ bool chart_color_value(std::string_view value) {
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     });
 }
-bool xy_visual_envelope(const Envelope& envelope,Chart& chart,Work& work) {
+bool xy_visual_envelope(const Envelope& envelope,Chart& chart) {
     constexpr std::array<std::string_view,5> kMaps{{"xyChart","xyChart.xAxis","xyChart.yAxis",
         "themeVariables","themeVariables.xyChart"}};
     std::set<std::string> maps,maps_with_children;
     std::map<std::string,int> child_indent;
     bool config_seen = false;
     for (const EnvelopeEvent& event : envelope.events) {
-        if (!work.spend(event.path.size()+event.value.size()+2u)) return false;
         if (event.blank) continue; // the old line splitter dropped blank lines
         if (event.comment) return false;
         if (event.top_level) {
@@ -226,15 +233,16 @@ std::optional<std::string> xy_text(std::string_view text,bool quoted = false) {
     }
     return chart_label(joined);
 }
-std::optional<std::string> xy_series_text(std::string_view text,Work& work,bool unicode = false) {
+std::optional<std::string> xy_series_text(std::string_view text,bool unicode = false) {
     // In the pinned grammar a reserved lexer token cannot be alphaNum text.
     // Longest matching ASCII letter runs keep names such as lineTitle1 valid.
+    // RFC 0031 E5: the per-char walk is input-bounded scanner work; the parse
+    // entry fee dominates it.
     constexpr std::array<std::string_view,9> reserved{{"title","line","bar","xychart-beta","xychart",
         "x-axis","y-axis","vertical","horizontal"}};
     auto alpha = [](unsigned char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
     auto lower = [](unsigned char c) { return c >= 'A' && c <= 'Z' ? static_cast<unsigned char>(c-'A'+'a') : c; };
     for (std::size_t at = 0; at < text.size();) {
-        if (!work.spend()) return {};
         const auto c = static_cast<unsigned char>(text[at]);
         if (c >= 128) {
             if (!unicode) return {}; // Existing series names still require quotes.
@@ -242,11 +250,8 @@ std::optional<std::string> xy_series_text(std::string_view text,Work& work,bool 
         }
         if (!alpha(c)) { ++at; continue; }
         std::size_t end = at+1;
-        while (end < text.size() && alpha(static_cast<unsigned char>(text[end]))) {
-            if (!work.spend()) return {}; ++end;
-        }
+        while (end < text.size() && alpha(static_cast<unsigned char>(text[end]))) ++end;
         for (const auto keyword : reserved) {
-            if (!work.spend(keyword.size()+1)) return {};
             if (keyword.size() < end-at || keyword.size() > text.size()-at) continue;
             bool matches = true;
             for (std::size_t n = 0; n < keyword.size(); ++n)
@@ -302,8 +307,7 @@ bool xy_axis(std::string_view rest,bool x,std::string& title,std::vector<std::st
 }
 // RFC 0031 E1: the shared envelope extracted the directive span and JSON
 // text; the reviewed xyChart boolean profile is still family validation.
-bool xy_init_json(std::string_view json,Chart& chart,Work& work) {
-    if (!work.spend(json.size())) return false;
+bool xy_init_json(std::string_view json,Chart& chart) {
     const auto document = loom::utils::json::parse(json);
     if (!document || !document->root().is_obj() || document->root().size() != 1) return false;
     const auto options = document->root().get("xyChart");
@@ -312,7 +316,7 @@ bool xy_init_json(std::string_view json,Chart& chart,Work& work) {
     std::set<std::string_view> seen;
     options.iter_obj([&](loom::utils::json::JsonVal key,loom::utils::json::JsonVal value) {
         const auto name = key.as_str();
-        if (!work.spend(name.size()+4) || !seen.insert(name).second || !value.is_bool()) { valid = false; return; }
+        if (!seen.insert(name).second || !value.is_bool()) { valid = false; return; }
         if (name == "showDataLabel") label = value.as_bool();
         else if (name == "showDataLabelOutsideBar") outside = value.as_bool();
         else valid = false;
@@ -320,11 +324,11 @@ bool xy_init_json(std::string_view json,Chart& chart,Work& work) {
     if (!valid) return false;
     chart.show_data = label; chart.show_data_outside = outside; return true;
 }
-std::optional<std::string> pie_title(std::string_view text,Work& work) {
+std::optional<std::string> pie_title(std::string_view text) {
     // The primary TITLE converter trims and collapses horizontal whitespace.
-    // Prepay the normalized string before allocating it.
-    if (text.size() > kSourceLimit ||
-        !work.spend(text.size()*(2u*sizeof(std::string)+8u)+128u)) return {};
+    // RFC 0031 E5: the normalized copy is a validated <=256-glyph label; the
+    // parse entry fee dominates its storage.
+    if (text.size() > kSourceLimit) return {};
     text = trim_chart(text);
     if (text.empty()) return std::string{};
     if (text.front() == '"') {
@@ -345,7 +349,7 @@ std::optional<std::string> pie_title(std::string_view text,Work& work) {
 // RFC 0031 E1: the reviewed Pie folded-description profile stays stricter
 // than the shared structural reader — literal `description: >-` header and
 // every payload line indented by exactly two physical spaces.
-bool pie_description_frontmatter(const Envelope& envelope,Work& work) {
+bool pie_description_frontmatter(const Envelope& envelope) {
     const auto& description = envelope.description;
     if (!description || description->form != EnvelopeScalarForm::Folded ||
         description->header != ">-") return false;
@@ -354,7 +358,6 @@ bool pie_description_frontmatter(const Envelope& envelope,Work& work) {
         const auto newline = rest.find('\n');
         auto raw = rest.substr(0,newline == std::string_view::npos ? rest.size() : newline);
         if (raw.ends_with('\r')) raw.remove_suffix(1);
-        if (!work.spend(raw.size()+1u)) return false;
         if (first) {
             if (raw != "description: >-") return false;
             first = false;
@@ -369,10 +372,9 @@ bool pie_description_frontmatter(const Envelope& envelope,Work& work) {
 }
 // The narrow Pie config profile admits exactly config.pie.textPosition with
 // a plain numeric scalar in the reviewed 0..1 range; nothing else.
-bool pie_config_frontmatter(const Envelope& envelope,Work& work) {
+bool pie_config_frontmatter(const Envelope& envelope) {
     bool config_seen = false,pie_seen = false,position_seen = false;
     for (const EnvelopeEvent& event : envelope.events) {
-        if (!work.spend(event.path.size()+event.value.size()+2u)) return false;
         if (event.blank) continue; // the old line splitter dropped blank lines
         if (event.comment) return false;
         if (event.top_level) {
@@ -396,7 +398,11 @@ bool pie_config_frontmatter(const Envelope& envelope,Work& work) {
     return config_seen && pie_seen && position_seen;
 }
 std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view source,Chart& chart,Work& work) {
-    if (source.empty() || source.size() > kSourceLimit || !work.spend(source.size())) return {};
+    if (source.empty() || source.size() > kSourceLimit) return {};
+    // Parse boundary fee (RFC 0031 E5), charged before the envelope read and
+    // every source/envelope scan below.
+    if (source.size() > (std::numeric_limits<std::size_t>::max() - kChartParseFixed) / kChartParsePerByte ||
+        !work.spend(kChartParseFixed + kChartParsePerByte * source.size())) return {};
     const auto envelope = parse_envelope(source,work);
     if (!envelope) return {};
     enum class Profile { Plain, PieDescription, PieConfig, Xy } profile = Profile::Plain;
@@ -405,19 +411,19 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
         const bool pie_config = std::ranges::any_of(envelope->config,
             [](const EnvelopeEvent& event){ return event.path == "pie.textPosition"; });
         if (envelope->description) {
-            if (pie_config || !pie_description_frontmatter(*envelope,work)) return {};
+            if (pie_config || !pie_description_frontmatter(*envelope)) return {};
             profile = Profile::PieDescription;
         } else if (pie_config) {
-            if (!pie_config_frontmatter(*envelope,work)) return {};
+            if (!pie_config_frontmatter(*envelope)) return {};
             profile = Profile::PieConfig;
         } else {
-            if (!xy_visual_envelope(*envelope,chart,work)) return {};
+            if (!xy_visual_envelope(*envelope,chart)) return {};
             profile = Profile::Xy;
         }
         chart.configured = true;
     } else if (!envelope->init.empty()) {
         if (envelope->init.size() != 1u) return {};
-        if (!xy_init_json(envelope->init.front().json,chart,work)) return {};
+        if (!xy_init_json(envelope->init.front().json,chart)) return {};
         chart.configured = true;
         profile = Profile::Xy;
     }
@@ -456,13 +462,13 @@ std::optional<Chart> parse_chart(std::string_view source,Work& work) {
         chart.pie = true;
         // This new physical-line check belongs only to the approved Pie
         // extension. Existing XY source cost and behavior remain unchanged.
-        if (!work.spend(source.size()+64u)) return {};
+        // RFC 0031 E5: the linear CR scan is covered by the parse entry fee.
         for (std::size_t at = 0; at < source.size(); ++at)
             if (source[at] == '\r' && (at+1u == source.size() || source[at+1u] != '\n')) return {};
         if (take_word(header,"showData")) chart.show_data = true;
         if (!header.empty()) {
             if (!take_word(header,"title")) return {};
-            auto title = pie_title(header,work); if (!title) return {};
+            auto title = pie_title(header); if (!title) return {};
             chart.title = std::move(*title); title_seen = true; header = {};
         }
     } else if (take_word(header,"xychart-beta") || take_word(header,"xychart")) {
@@ -473,7 +479,7 @@ std::optional<Chart> parse_chart(std::string_view source,Work& work) {
     std::string_view xy_title;
     int bars = 0,line_series = 0;
     for (std::size_t n = 1; n < lines->size(); ++n) {
-        auto line = (*lines)[n]; if (!work.spend(line.size()+1)) return {};
+        auto line = (*lines)[n];
         auto rest = line;
         if (take_word(rest,"title")) {
             if (!chart.pie) {
@@ -484,7 +490,7 @@ std::optional<Chart> parse_chart(std::string_view source,Work& work) {
             }
             if (title_seen) return {};
             title_seen = true;
-            auto title = pie_title(rest,work);
+            auto title = pie_title(rest);
             if (!title) return {};
             chart.title = std::move(*title); continue;
         }
@@ -517,7 +523,7 @@ std::optional<Chart> parse_chart(std::string_view source,Work& work) {
             series.name = *resolved; series.named = true;
         } else if (!rest.empty() && rest.front() != '[') {
             const auto bracket = rest.find('['); if (bracket == std::string_view::npos) return {};
-            const auto resolved = xy_series_text(rest.substr(0,bracket),work); if (!resolved) return {};
+            const auto resolved = xy_series_text(rest.substr(0,bracket)); if (!resolved) return {};
             series.name = *resolved; series.named = true; rest = trim_chart(rest.substr(bracket));
         }
         const auto values = list(rest); if (!values) return {};
@@ -535,10 +541,9 @@ std::optional<Chart> parse_chart(std::string_view source,Work& work) {
             // Rescan only this empty profile, preserving nonempty/Pie Work.
             for (std::size_t n = 1; n < lines->size(); ++n) {
                 auto rest = (*lines)[n];
-                if (!work.spend(rest.size()+1)) return {};
                 if (take_word(rest,"title")) {
                     const bool quoted = !rest.empty() && rest.front() == '"';
-                    auto title = quoted ? take_quoted(rest) : xy_series_text(rest,work,true);
+                    auto title = quoted ? take_quoted(rest) : xy_series_text(rest,true);
                     if (quoted && !rest.empty()) return {};
                     if (quoted && title) title = xy_text(*title,true);
                     if (!title) return {};
@@ -550,7 +555,7 @@ std::optional<Chart> parse_chart(std::string_view source,Work& work) {
                     // band text token must not enter a reserved lexer state.
                     const auto values = list(rest); if (!values) return {};
                     for (const auto token : *values)
-                        if (token.front() != '"' && !xy_series_text(token,work,true)) return {};
+                        if (token.front() != '"' && !xy_series_text(token,true)) return {};
                     continue;
                 }
                 rest = (*lines)[n];
@@ -565,7 +570,7 @@ std::optional<Chart> parse_chart(std::string_view source,Work& work) {
                     // In axis_data a digit is NUMBER_WITH_DECIMAL, not the
                     // NUM token accepted by alphaNum outside that lexer state.
                     if (title.find_first_of("0123456789") != std::string_view::npos ||
-                        !xy_series_text(title,work,true)) return {};
+                        !xy_series_text(title,true)) return {};
                 }
             }
             return chart;
@@ -583,7 +588,6 @@ std::optional<Chart> parse_chart(std::string_view source,Work& work) {
         // valid dataset. Never apply this to inferred or numeric x coordinates.
         if (!chart.categories.empty()) for (auto& series : chart.series) {
             if (series.values.size() <= chart.categories.size()) continue;
-            if (!work.spend(series.values.size()-chart.categories.size()+1)) return {};
             series.values.resize(chart.categories.size());
         }
         if (chart.categories.empty() && !chart.x_domain && !chart.series.empty()) {
@@ -603,7 +607,7 @@ std::optional<Chart> parse_chart(std::string_view source,Work& work) {
             if (series.bar ? (chart.x_domain || (chart.categories.size() != 1 || chart.categories.front() != "1") || series.values.size() != 1)
                            : !reversed_x) return {};
             for (const auto value : series.values)
-                if (!work.spend() || value > chart.domain->first) return {};
+                if (value > chart.domain->first) return {};
         }
         if (chart.x_domain) {
             // The terminal projection places uniformly sampled numeric x
@@ -618,7 +622,6 @@ std::optional<Chart> parse_chart(std::string_view source,Work& work) {
             if (!std::isfinite(step) || step == 0 || ((step < 0) != reversed_x)) return {};
             double previous = lo;
             for (std::size_t n = 0; n < count; ++n) {
-                if (!work.spend(64)) return {};
                 const double value = count == 1 ? lo : n+1 == count ? hi : lo+step*static_cast<double>(n);
                 if (!std::isfinite(value) || value < std::min(lo,hi) || value > std::max(lo,hi) ||
                     (n && (reversed_x ? value >= previous : value <= previous))) return {};
@@ -655,9 +658,14 @@ std::optional<std::vector<std::string>> pie_chart(const Chart& chart,Work& work)
     // Exhausting this palette preserves the complete source, never reused keys.
     if (chart.slices.size() > kFills.size()) return {};
     struct PieRenderRow { int extent = 0; bool subcell = false; std::string suffix; };
-    // Prepay all new extent scans, suffix strings, row-vector storage, title
-    // glyph inspection and canvas width planning before their first allocation.
+    // Prepay all new extent scans (including the slices^2 duplicate scan,
+    // RFC 0031 E5), suffix strings, row-vector storage, title glyph
+    // inspection and canvas width planning before their first allocation.
+    constexpr std::size_t kPieDuplicatePerPair = 8u;
+    if (chart.slices.size() > std::numeric_limits<std::size_t>::max() / chart.slices.size() /
+            kPieDuplicatePerPair) return {};
     if (!work.spend(chart.slices.size()*(sizeof(PieRenderRow)+4u*sizeof(std::string)+512u)+
+                    chart.slices.size()*chart.slices.size()*kPieDuplicatePerPair+
                     (chart.title.size()+1u)*(8u*sizeof(std::string)+32u)+4096u)) return {};
     double total = 0; int label = 0;
     for (const auto& slice : chart.slices) {
@@ -678,7 +686,6 @@ std::optional<std::vector<std::string>> pie_chart(const Chart& chart,Work& work)
         if (subcell && !(ideal < 0.5)) return {};
         bool disclosure = chart.show_data;
         for (std::size_t other = 0; other < chart.slices.size(); ++other) {
-            if (!work.spend()) return {};
             const int other_extent = static_cast<int>(std::floor(kPieCapacity*(chart.slices[other].value/total)+0.5));
             if (!subcell && chart.slices[other].value != slice.value && other_extent == extent) disclosure = true;
         }
@@ -754,7 +761,8 @@ std::optional<std::vector<std::string>> empty_xy_chart(const Chart& chart,Work& 
     if (!work.spend(64+chart.categories.size()*32)) return {};
     std::vector<std::string> rows;
     auto add = [&](std::string_view prefix,std::string_view value = {}) {
-        if (!work.spend(prefix.size()+value.size()+1)) return false;
+        // RFC 0031 E5: rows are <=256 validated category labels plus a fixed
+        // preamble; their byte total is source-bounded and prepaid at parse.
         std::string row(prefix); row += value;
         if (label_width(row) > kWidthLimit) return false;
         rows.push_back(std::move(row)); return true;
@@ -953,14 +961,15 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart,Work& work) 
         }
     }
     std::set<std::uint32_t> composites;
+    // RFC 0031 E5: these two owners-vector walks are area-bounded and already
+    // prepaid by the area fees above (and the <=255-entry ordered-set cost by
+    // the parse fixed term); only the grammar booleans remain.
     for (std::size_t at = 0; at < owners.size(); ++at) {
-        if (!work.spend()) return {};
         const auto mask = owners[at];
         const bool axis = chart.horizontal ? static_cast<int>(at%static_cast<std::size_t>(width)) == left :
             static_cast<int>(at/static_cast<std::size_t>(width)) == bottom;
         if (shared_axis && axis && std::popcount(mask) > 1) return {};
         if (std::popcount(mask) > 1) {
-            if (!work.spend(16)) return {}; // Bound ordered-set comparisons for at most256 entries.
             composites.insert(mask);
             if (composites.size() > 255) return {};
         }
@@ -971,7 +980,6 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart,Work& work) 
         // The same visible mark must never mean both a single data line on an
         // axis and a different multi-series ownership set elsewhere.
         for (std::size_t i = 0; i < owners.size(); ++i) {
-            if (!work.spend()) return {};
             const auto mask = owners[i]; if (std::popcount(mask) != 1) continue;
             const auto series = static_cast<std::size_t>(std::countr_zero(mask));
             if (chart.series[series].bar || line_style[series] != 0) continue;

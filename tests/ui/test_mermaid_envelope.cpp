@@ -242,6 +242,67 @@ TEST(MermaidEnvelope, WorkBudgetExhaustionRejected) {
     EXPECT_FALSE(parse(source, work));
 }
 
+// RFC 0031 E5: the envelope charges in two phases. A balance that clears the
+// entry fee but not the frontmatter fee can only parse a no-frontmatter
+// envelope; a frontmatter source rejects after its closing fence is found.
+TEST(MermaidEnvelope, WorkBudgetSplitPhase) {
+    const std::string source =
+        "---\n"
+        "description: x\n"
+        "---\n"
+        "flowchart TD\n";
+    // Balance above the entry fee but below the frontmatter fee: the
+    // frontmatter source rejects (fee fires only on the has_frontmatter path).
+    {
+        Work work;
+        work.remaining = 3072u + 3u * source.size() + 1u;
+        EXPECT_FALSE(parse(source, work));
+    }
+    // The same balance parses a no-frontmatter envelope, proving the
+    // frontmatter term is never charged without a closing fence.
+    {
+        const std::string plain = "pie title T\n\"a\" : 1\n";
+        Work work;
+        work.remaining = 3072u + 3u * source.size() + 1u;
+        const auto envelope = parse(plain, work);
+        ASSERT_TRUE(envelope);
+        EXPECT_FALSE(envelope->has_frontmatter);
+    }
+    // A fresh full budget parses the frontmatter source through both phases.
+    {
+        Work work;
+        EXPECT_TRUE(parse(source, work));
+    }
+}
+
+// RFC 0031 E5: one cumulative Work covers parse and layout; it is never reset
+// between phases. Probe the smallest balance that lets a tiny bare flow run
+// parse and layout back to back, and pin the boundary.
+TEST(MermaidEnvelope, WorkBudgetSharedAcrossPhases) {
+    const std::string source = "flowchart LR\nA[A] -->|go| B[B]\n";
+    std::size_t threshold = 0;
+    for (std::size_t remaining = 1u; remaining < 5000000u; ++remaining) {
+        Work work;
+        work.remaining = remaining;
+        if (loom::ui::mermaid::detail::flow_ascii_rows(source, work)) { threshold = remaining; break; }
+    }
+    ASSERT_GT(threshold, 0u);
+    {
+        Work work;
+        work.remaining = threshold - 1u;
+        EXPECT_FALSE(loom::ui::mermaid::detail::flow_ascii_rows(source, work));
+    }
+    {
+        Work work;
+        work.remaining = threshold;
+        EXPECT_TRUE(loom::ui::mermaid::detail::flow_ascii_rows(source, work));
+    }
+    // A phase reset would let parse-only balances lay out; assert the
+    // threshold is well above the parse-only share by confirming a balance a
+    // little above the parse entry fee still fails.
+    EXPECT_GT(threshold, 4096u);
+}
+
 } // namespace
 
 TEST(MermaidEnvelope, EmptyDescriptionHeaderCollectsBlock) {

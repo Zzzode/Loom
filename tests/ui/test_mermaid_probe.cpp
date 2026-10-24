@@ -30,7 +30,9 @@ TEST(MermaidProbe, BareAndConfiguredFlowHeadersResolveToFlow) {
         "---\ndescription: x\n---\nflowchart LR\nA-->B\n");
     ASSERT_TRUE(configured.has_value());
     EXPECT_EQ(configured->family, MermaidProbeFamily::Flow);
-    EXPECT_GT(configured->prepay, 0u);
+    // RFC 0031 E5: the prefix walk is folded into the single classify probe
+    // fee; decision.prepay stays zero for every family.
+    EXPECT_EQ(configured->prepay, 0u);
 }
 
 TEST(MermaidProbe, SequenceRoutesBareTitledAndMultilineDirective) {
@@ -42,7 +44,8 @@ TEST(MermaidProbe, SequenceRoutesBareTitledAndMultilineDirective) {
     auto titled = classify("---\ntitle: T\n---\nsequenceDiagram\nA->>B: x\n");
     ASSERT_TRUE(titled.has_value());
     EXPECT_EQ(titled->family, MermaidProbeFamily::Sequence);
-    EXPECT_GT(titled->prepay, 0u);
+    // RFC 0031 E5: folded prefix walk — prepay stays zero.
+    EXPECT_EQ(titled->prepay, 0u);
 
     auto multiline = classify(
         "%%{init: {\n  \"theme\":\"base\"\n}%%\nsequenceDiagram\nA->>B: x\n");

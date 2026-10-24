@@ -15,6 +15,16 @@ constexpr std::size_t kInitTotalLimit = 8u * 1024u;
 constexpr std::size_t kConfigEntryLimit = 128u;
 constexpr std::size_t kConfigDepthLimit = 4u;
 
+// RFC 0031 E5 coarse boundary fees. The entry fee is charged before the
+// vector<Line> allocation and dominates the fixed struct charge plus the
+// whole split_lines scan. The frontmatter fee is charged only on the
+// has_frontmatter path; it dominates the block collection/event/path/value
+// copies at 8/frontmatter-byte plus the <=8192-byte init raw/json copies.
+constexpr std::size_t kEnvelopeEntryFixed = 3072u;
+constexpr std::size_t kEnvelopeEntryPerByte = 3u;
+constexpr std::size_t kEnvelopeFrontmatterFixed = 1024u;
+constexpr std::size_t kEnvelopeFrontmatterPerByte = 8u;
+
 struct Line {
     std::string_view raw;   // excluding the trailing newline and CR
     std::string_view text;  // raw after leading spaces
@@ -56,8 +66,9 @@ bool block_form(EnvelopeScalarForm form) {
     return form == EnvelopeScalarForm::Literal || form == EnvelopeScalarForm::Folded;
 }
 
-bool split_lines(std::string_view source, Work& work, std::vector<Line>& out) {
-    if (!work.spend(source.size() / 8u + 64u)) return false;
+// RFC 0031 E5: line splitting is an O(source) scan; the single entry fee in
+// parse_envelope dominates every former per-line Work charge.
+bool split_lines(std::string_view source, std::vector<Line>& out) {
     std::size_t at = 0;
     std::size_t number = 1;
     while (at < source.size()) {
@@ -75,7 +86,6 @@ bool split_lines(std::string_view source, Work& work, std::vector<Line>& out) {
         line.text = raw.substr(static_cast<std::size_t>(line.indent));
         line.blank = line.text.empty();
         line.comment = !line.blank && line.text.front() == '#';
-        if (!work.spend(raw.size() + 1u)) return false;
         out.push_back(line);
         at = line.next;
         if (newline == std::string_view::npos) break;
@@ -84,14 +94,12 @@ bool split_lines(std::string_view source, Work& work, std::vector<Line>& out) {
     return true;
 }
 
-bool copy_string(Work& work, std::string& out, std::string_view value, std::size_t extra = 1u) {
-    if (!work.spend(value.size() + extra)) return false;
+void copy_string(std::string& out, std::string_view value) {
     out.assign(value);
-    return true;
 }
 
 bool collect_block(const std::vector<Line>& lines, std::size_t& index, int parent_indent,
-                   Work& work, std::string& out, bool deindent = false) {
+                   std::string& out, bool deindent = false) {
     std::string block;
     std::size_t at = index + 1u;
     std::size_t first = at;
@@ -101,7 +109,6 @@ bool collect_block(const std::vector<Line>& lines, std::size_t& index, int paren
         if (!line.blank && line.indent <= parent_indent) break;
         if (line.tab_indent) return false;
         if (!line.blank) common = std::min(common, static_cast<std::size_t>(line.indent));
-        if (!work.spend(line.raw.size() + 1u)) return false;
         block.append(line.raw);
         block.push_back('\n');
     }
@@ -151,10 +158,13 @@ std::string_view directive_json(std::string_view raw) {
 
 std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
-    if (!work.spend(8u * sizeof(Envelope) + 32u * sizeof(EnvelopeEvent) + 128u)) return {};
+    // Entry boundary fee: charged before the vector<Line> allocation/scan.
+    if (source.size() > (std::numeric_limits<std::size_t>::max() - kEnvelopeEntryFixed) /
+                            kEnvelopeEntryPerByte ||
+        !work.spend(kEnvelopeEntryFixed + kEnvelopeEntryPerByte * source.size())) return {};
 
     std::vector<Line> lines;
-    if (!split_lines(source, work, lines)) return {};
+    split_lines(source, lines);
     if (lines.empty()) return {};
 
     Envelope envelope;
@@ -166,7 +176,20 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
             if (lines[n].indent == 0 && lines[n].raw == "---") { close_line = n; break; }
         }
         if (close_line == 0) return {};
-        if (!work.spend(lines[close_line].start)) return {};
+        // Frontmatter boundary fee, only on the has_frontmatter path, charged
+        // before any block collection/event copy. The init term is paid only
+        // when the source actually contains a leading directive (the raw/json
+        // copies are charged at the kInitTotalLimit cap, as their total is
+        // known only after those copies run).
+        const std::size_t frontmatter_bytes = lines[close_line].start;
+        const bool has_init_directive = source.find("%%{") != std::string_view::npos;
+        constexpr std::size_t kInitCopyTerm = 2u * kInitTotalLimit;
+        const std::size_t init_term = has_init_directive ? kInitCopyTerm : 0u;
+        if (frontmatter_bytes >
+                (std::numeric_limits<std::size_t>::max() - kEnvelopeFrontmatterFixed - init_term) /
+                    kEnvelopeFrontmatterPerByte ||
+            !work.spend(kEnvelopeFrontmatterFixed + init_term +
+                        kEnvelopeFrontmatterPerByte * frontmatter_bytes)) return {};
         envelope.has_frontmatter = true;
         envelope.raw_frontmatter = source.substr(lines[1].start,
             close_line > 1 ? lines[close_line].start - lines[1].start : 0u);
@@ -206,9 +229,9 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
         if (end - line.start > kInitLimit) return {};
         if (!directive_tail_blank(source,line.start,end)) return {};
         EnvelopeInit init;
-        if (!copy_string(work, init.raw, source.substr(line.start, end - line.start))) return {};
+        copy_string(init.raw, source.substr(line.start, end - line.start));
         const auto json = directive_json(init.raw);
-        if (!copy_string(work, init.json, json)) return {};
+        copy_string(init.json, json);
         init.begin = line.start;
         init.end = end;
         envelope.init.push_back(std::move(init));
@@ -240,7 +263,7 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
         event.line = line.number;
         event.indent = line.indent;
         if (line.blank) { event.blank = true; envelope.events.push_back(std::move(event)); continue; }
-        if (line.comment) { event.comment = true; if (!copy_string(work, event.value, line.text)) return {}; envelope.events.push_back(std::move(event)); continue; }
+        if (line.comment) { event.comment = true; copy_string(event.value, line.text); envelope.events.push_back(std::move(event)); continue; }
         if (line.tab_indent) return {};
         if (line.indent == root_indent) {
             in_config = false;
@@ -253,7 +276,7 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
             const auto raw_value = trim_ws(value);
             const auto structural = strip_comment(raw_value);
             event.top_level = true;
-            if (!copy_string(work, event.path, key)) return {};
+            copy_string(event.path, key);
             if (key == "title" || key == "description" || key == "config") {
                 for (const auto& seen : seen_paths) if (seen == key) return {};
                 seen_paths.emplace_back(key);
@@ -273,28 +296,28 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
             std::string text;
             const bool description_block = key == "description" && (structural.empty() || block_form(form));
             if (description_block) {
-                if (!collect_block(lines, n, root_indent, work, text)) return {};
+                if (!collect_block(lines, n, root_indent, text)) return {};
             } else if (block_form(form)) {
                 return {};
-            } else if (!copy_string(work, text, raw_value)) return {};
+            } else copy_string(text, raw_value);
             if (key == "description") {
                 if (description_seen || text.size() > kDescriptionLimit) return {};
                 description_seen = true;
                 EnvelopeScalar scalar;
                 scalar.text = text; scalar.form = form; scalar.line = line.number;
-                if (!copy_string(work, scalar.header, raw_value)) return {};
+                copy_string(scalar.header, raw_value);
                 envelope.description = std::move(scalar);
-                if (!copy_string(work, event.value, text)) return {};
+                copy_string(event.value, text);
             } else if (key == "title") {
                 if (title_seen || text.size() > kTitleLimit) return {};
                 title_seen = true;
                 EnvelopeScalar scalar;
                 scalar.text = text; scalar.form = form; scalar.line = line.number;
-                if (!copy_string(work, scalar.header, raw_value)) return {};
+                copy_string(scalar.header, raw_value);
                 envelope.title = std::move(scalar);
-                if (!copy_string(work, event.value, text)) return {};
+                copy_string(event.value, text);
             } else {
-                if (!copy_string(work, event.value, text)) return {};
+                copy_string(event.value, text);
             }
             envelope.events.push_back(std::move(event));
             continue;
@@ -314,7 +337,6 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
         const auto parent = config_stack.back().second;
         std::string path = parent.empty() ? std::string(key) : parent + "." + std::string(key);
         if (std::ranges::find(seen_paths, path) != seen_paths.end()) return {};
-        if (!work.spend(path.size() + 1u)) return {};
         seen_paths.push_back(path);
         if (static_cast<std::size_t>(std::count(path.begin(), path.end(), '.')) >= kConfigDepthLimit) return {};
         event.path = path;
@@ -323,14 +345,13 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
         event.form = form;
         if (structural.empty()) {
             event.namespace_entry = true;
-            if (!work.spend(1u)) return {};
             config_stack.emplace_back(line.indent, path);
         } else {
             std::string text;
             if (block_form(form)) {
-                if (!collect_block(lines, n, line.indent, work, text, true)) return {};
-            } else if (!copy_string(work, text, raw_value)) return {};
-            if (!copy_string(work, event.value, text)) return {};
+                if (!collect_block(lines, n, line.indent, text, true)) return {};
+            } else copy_string(text, raw_value);
+            copy_string(event.value, text);
             envelope.config.push_back(event);
             if (envelope.config.size() > kConfigEntryLimit) return {};
         }

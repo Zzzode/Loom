@@ -395,6 +395,8 @@ struct MermaidProbeDecision {
     MermaidProbeFamily family = MermaidProbeFamily::Charts;
     bool class_envelope = false;
     bool requirement_input = false;
+    // RFC 0031 E5: the former per-family prepay accumulator is folded into
+    // the single classify_mermaid probe fee; this stays zero for the switch.
     std::size_t prepay = 0;
 };
 std::optional<MermaidProbeDecision> classify_mermaid(std::string_view source, Work& work);

@@ -382,7 +382,8 @@ struct Diagram {
     std::size_t group_counter = 0;
     bool has_group_endpoint = false;
     std::optional<std::size_t> vertex(std::string id, Work& work, bool& cross_owner_membership_request) {
-        if (!work.spend(4u * sizeof(std::size_t) + 4u * sizeof(bool) + 4u * sizeof(int) + 16u)) return {};
+        (void)work; // RFC 0031 E5: per-vertex bookkeeping folded into the
+                   // whole-body flow_parse_prepay (both profiles).
         if (std::ranges::any_of(groups, [&](const Group& group) { return group.id == id; })) return {};
         for (std::size_t n = 0; n < vertices.size(); ++n)
             if (vertices[n].id == id) {
@@ -400,6 +401,8 @@ struct Diagram {
 };
 
 bool flow_envelope_parse_prepay(std::string_view body, Work& work);
+bool flow_parse_prepay(std::string_view body, Work& work, bool full_profile,
+                       bool upgrade_to_full = false);
 
 struct GroupHeader {
     std::optional<std::string> id;
@@ -436,9 +439,10 @@ std::optional<GroupHeader> flow_group_header(Scanner& group) {
 }
 
 std::optional<Shape> flow_shape_data(Scanner& scanner, Work& work) {
-    // This closed source form adds bounded Scanner views and a shape token before
-    // it consumes any shape-data byte. The branch owns no generic YAML object.
-    if (!work.spend(4u * sizeof(std::string_view) + 4u * sizeof(bool) + 48u) || !scanner.take("@{")) return {};
+    // RFC 0031 E5: this closed fixed-token production is covered by the
+    // whole-body flow_parse_prepay fee.
+    (void)work;
+    if (!scanner.take("@{")) return {};
     scanner.space();
     if (!scanner.take("shape")) return {};
     scanner.space();
@@ -462,11 +466,10 @@ bool classic_opener(std::string_view text) {
 
 struct ClassicDeclaration { Shape shape; std::string text; };
 std::optional<ClassicDeclaration> classic_declaration(Scanner& scanner, Work& work) {
-    // The eleven bracket forms are a closed Flow production. Reserve every
-    // bounded close-delimiter scan and label payload before inspecting one.
-    constexpr std::size_t kScanUnit = 8u * sizeof(std::string_view) +
-        4u * sizeof(std::string) + 96u;
-    if (!work.spend(scanner.rest.size() * kScanUnit + 16u * sizeof(std::string_view) + 128u)) return {};
+    // RFC 0031 E5: the eleven bracket forms are a closed Flow production; the
+    // allocation-free close-delimiter scan is input-bounded and folded into
+    // the whole-body flow_parse_prepay fee.
+    (void)work;
     struct Form { std::string_view open, close; Shape shape; };
     // Prefix forms are ordered longest-first. The bracket/slash alternatives
     // stay explicit: this is not an alias table or a generic metadata parser.
@@ -568,7 +571,6 @@ std::optional<Endpoint> flow_endpoint(Scanner& scanner, Diagram& graph, Work& wo
     // participate because the parser keeps no title lookup table.
     for (std::size_t index = 0u; index < graph.groups.size(); ++index) {
         const auto& group = graph.groups[index];
-        if (!work.spend(id->size() + group.id.size() + 2u * sizeof(std::size_t) + 16u)) return {};
         if (group.id != *id) continue;
         scanner.space();
         // A group name is an endpoint only. It cannot acquire a vertex shape,
@@ -586,19 +588,14 @@ std::optional<Endpoint> flow_endpoint(Scanner& scanner, Diagram& graph, Work& wo
 
 bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::string_view original,
                     bool already_prepaid, bool& saw_reopen, bool& cross_owner_membership_request) {
-    // Bare Flow takes a bounded statement-local fee before Scanner/id/title
-    // materialization.  It is intentionally not the configured/reopen whole-body prepay.
-    if (!work.spend(text.size() * 4u + 8u * sizeof(std::size_t) +
-                    7u * sizeof(bool) + 2u * sizeof(std::string_view) + 48u)) return false;
+    // RFC 0031 E5: the former bounded statement-local fee is covered by the
+    // whole-body flow_parse_prepay (bare or configured profile) charged at
+    // parse() entry; only the reopen profile activation below still charges.
     if (text == "end") {
-        if (graph.group_stack.empty() ||
-            !work.spend(2u * sizeof(std::size_t) + 2u * sizeof(std::string) + 32u)) return false;
+        if (graph.group_stack.empty()) return false;
         const auto completed_index = graph.group_stack.back();
         auto& completed = graph.groups[completed_index];
         if (completed.implicit_id) {
-            if (!work.spend((graph.vertices.size() + graph.groups.size()) *
-                            (2u * sizeof(std::size_t) + 2u * sizeof(bool) + 16u) +
-                            2u * sizeof(std::string) + 64u)) return false;
             auto generated = "subGraph" + std::to_string(graph.group_counter);
             if (std::ranges::any_of(graph.vertices, [&](const Vertex& vertex) { return vertex.id == generated; }) ||
                 std::ranges::any_of(graph.groups, [&](const Group& candidate) {
@@ -611,31 +608,27 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
     }
     if (text.starts_with("subgraph ") || text.starts_with("subgraph\t")) {
         Scanner group{text}; group.take("subgraph");
-        if (graph.group_stack.size() >= kGroupDepthLimit ||
-            !work.spend(2u * sizeof(std::optional<std::size_t>) + 2u * sizeof(std::optional<std::string>) +
-                        4u * sizeof(std::size_t) + 4u * sizeof(bool) + 64u)) return false;
+        if (graph.group_stack.size() >= kGroupDepthLimit) return false;
         auto header = flow_group_header(group);
         if (!header || (header->id && std::ranges::any_of(graph.vertices,
             [&](const Vertex& v) { return v.id == *header->id; }))) return false;
         std::optional<std::size_t> existing;
         if (header->id) for (std::size_t n = 0; n < graph.groups.size(); ++n) {
-            if (!work.spend(graph.groups[n].id.size() + header->id->size() +
-                            2u * sizeof(std::size_t) + 8u)) return false;
             if (graph.groups[n].id == *header->id) { existing = n; break; }
         }
         if (existing) {
-            if (!work.spend(graph.group_stack.size() * (sizeof(std::size_t) + 4u) +
-                            4u * sizeof(std::size_t) + 32u)) return false;
             const int parent = graph.group_stack.empty() ? -1 : static_cast<int>(graph.group_stack.back());
             if (graph.groups[*existing].implicit_id || graph.groups[*existing].parent != parent ||
                 std::ranges::find(graph.group_stack, *existing) != graph.group_stack.end()) return false;
-            // Only a newly activated bare repeat pays this whole-source bound.
-            // Earlier live elements are included in its future relocation bound.
-            if (!saw_reopen && !already_prepaid && !flow_envelope_parse_prepay(original, work)) return false;
+            // Only a newly activated bare repeat pays the delta to the
+            // full-source profile, instead of the whole full bound on top of
+            // the already-paid bare profile. Earlier live elements are
+            // included in its future relocation bound.
+            if (!saw_reopen && !already_prepaid) {
+                if (!flow_parse_prepay(original, work, true, true)) return false;
+            }
         } else if (graph.groups.size() >= kGroupLimit) return false;
         if (existing) {
-            if (!work.spend(graph.groups[*existing].text.size() + header->title.size() +
-                            2u * sizeof(std::size_t) + 4u * sizeof(bool) + 16u)) return false;
             if (graph.groups[*existing].text != header->title) return false;
             saw_reopen = true;
             graph.group_stack.push_back(*existing); return true;
@@ -660,8 +653,6 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
     bool uses_group_endpoint = false;
     auto nodes = [&]() -> std::optional<std::vector<Endpoint>> {
         constexpr std::size_t kEndpointSlots = 64u;
-        constexpr std::size_t kEndpointGrowthState =
-            2u * sizeof(std::size_t) + sizeof(Endpoint) + 16u;
         std::vector<Endpoint> result;
         while (true) {
             const auto endpoint = flow_endpoint(scanner, graph, work, cross_owner_membership_request);
@@ -672,9 +663,7 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
             if (result.size() == result.capacity()) {
                 const auto capacity = result.capacity();
                 const auto next_capacity = capacity == 0u ? 1u : std::min(kEndpointSlots, capacity * 2u);
-                if (next_capacity <= capacity ||
-                    !work.spend(next_capacity * sizeof(Endpoint) +
-                                result.size() * sizeof(Endpoint) + kEndpointGrowthState)) return {};
+                if (next_capacity <= capacity) return {};
                 result.reserve(next_capacity);
             }
             uses_group_endpoint = uses_group_endpoint || endpoint->kind == EndpointKind::Group;
@@ -688,16 +677,8 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
     if (!from) return false;
     bool emitted_link = false;
     scanner.space();
-    // The complete-link/edgeText lexer can inspect the statement suffix, but
-    // must not recharge that same suffix once per segment of a valid chain.
-    // Pay this bounded statement scan once before any LINK or EDGE_TEXT byte
-    // is examined; labels and Edge copies remain independently prepaid below.
-    constexpr std::size_t link_state_charge =
-        4u * sizeof(LinkLexeme) + 2u * sizeof(StartLink) + 4u * sizeof(std::string_view) + 64u;
-    if (!scanner.rest.empty() &&
-        (scanner.rest.size() > (work.remaining > link_state_charge ?
-                               (work.remaining - link_state_charge) / 2u : 0u) ||
-         !work.spend(scanner.rest.size() * 2u + link_state_charge))) return false;
+    // RFC 0031 E5: the former bounded per-statement LINK/EDGE_TEXT scan and
+    // label copies are covered by the whole-body flow_parse_prepay fee.
     while (!scanner.rest.empty()) {
         LinkLexeme link = complete_flow_link(scanner.rest);
         std::optional<std::string> edge_label;
@@ -707,8 +688,7 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
             // Preserve pipe labels for every fully recognized stroke form.
             if (scanner.take("|")) {
                 const auto raw = scanner.enclosed_view('|');
-                if (!raw || raw->size() > work.remaining / (2u * sizeof(std::string) + 8u) ||
-                    !work.spend(raw->size() * (2u * sizeof(std::string) + 8u) + 2u * sizeof(std::string))) return false;
+                if (!raw) return false;
                 edge_label = label(*raw, true);
                 if (!edge_label) return false;
             }
@@ -719,8 +699,7 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
             const auto text_and_link = edge_text_until_link(scanner.rest, start);
             if (!text_and_link) return false;
             const auto raw = trim(text_and_link->first);
-            if (raw.empty() || raw.size() > work.remaining / (2u * sizeof(std::string) + 8u) ||
-                !work.spend(raw.size() * (2u * sizeof(std::string) + 8u) + 2u * sizeof(std::string))) return false;
+            if (raw.empty()) return false;
             edge_label = label(raw, true);
             if (!edge_label) return false;
             link = text_and_link->second;
@@ -743,11 +722,6 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
                               edge_label || link.stroke != Stroke::Solid || link.arrow_start ||
                               !link.arrow_end || link.minimum_length != 1)) return false;
         graph.has_group_endpoint = graph.has_group_endpoint || carries_group;
-        const auto copies = from->size() * to->size();
-        const auto label_bytes = edge_label ? edge_label->size() : 0u;
-        if (label_bytes && copies > work.remaining / (2u * label_bytes)) return false;
-        const auto edge_charge = copies * (4u * sizeof(Edge) + 32u) + copies * 2u * label_bytes;
-        if (!work.spend(edge_charge)) return false;
         for (const auto a : *from) for (const auto b : *to)
             graph.edges.push_back({a, b, edge_label, link.stroke, link.arrow_start, link.arrow_end, link.minimum_length});
         emitted_link = true;
@@ -759,7 +733,13 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
 
 std::optional<Diagram> parse(std::string_view source, Work& work, bool already_prepaid = false) {
     if (source.empty() || source.size() > kSourceLimit) return {};
-    if (!work.spend(8u * sizeof(bool) + 4u * sizeof(std::size_t) + 2u * sizeof(std::string_view) + 64u)) return {};
+    // RFC 0031 E5: the bare whole-body profile is charged as soon as a valid
+    // graph/flowchart header is recognized (the configured/envelope path has
+    // already paid the full profile). Charging follows the allocation-free
+    // header peek rather than function entry, so non-Flow sources that share
+    // this first-attempt parser pay nothing before classification, exactly as
+    // the former fixed entry charge behaved.
+    bool prepaid = already_prepaid;
     const auto original = source;
     bool saw_reopen = false, cross_owner_membership_request = false;
     for (const auto byte : source) {
@@ -810,6 +790,10 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
                 else if (header.rest == "RL") diagram.direction = Direction::Left;
                 else return {};
                 have_header = true;
+                if (!prepaid) {
+                    if (!flow_parse_prepay(original, work, false)) return {};
+                    prepaid = true;
+                }
             } else {
                 if (!flow_statement(statement, diagram, work, original, already_prepaid, saw_reopen,
                                     cross_owner_membership_request)) return {};
@@ -820,10 +804,10 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
     if (!have_header || !have_statement || !diagram.group_stack.empty() ||
         (diagram.vertices.empty() && diagram.groups.empty())) return {};
     if (saw_reopen) {
-        if (!work.spend(4u * sizeof(bool) + 2u * sizeof(std::size_t) + 16u)) return {};
+        // RFC 0031 E5: the bounded reopen validation walks are covered by the
+        // full profile (activated on first reopen) / bare linear term.
         if (cross_owner_membership_request) return {};
         for (const auto& group : diagram.groups) {
-            if (!work.spend(sizeof(std::optional<Direction>) + sizeof(std::size_t) + 8u)) return {};
             if (group.direction.has_value()) return {};
         }
     }
@@ -831,10 +815,88 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
 }
 
 
-// Complete Flow envelopes and the first real bare group reopen activate this
-// existing bound. Ordinary bare sources never activate the full prepayment.
-bool flow_envelope_parse_prepay(std::string_view body, Work& work) {
+// Returns the total coarse parse bound for the selected profile.
+std::size_t flow_parse_prepay_total(std::string_view body, bool full_profile) {
+    if (body.empty() || body.size() > kSourceLimit) return std::numeric_limits<std::size_t>::max();
+    std::size_t legacy_identifiers = 0, numeric_identifiers = 0, group_words = 0;
+    for (std::size_t at = 0; at < body.size();) {
+        if (!id_start(body[at])) { ++at; continue; }
+        const auto first = at++;
+        while (at < body.size() && id_char(body[at])) ++at;
+        ++legacy_identifiers;
+        if (body.substr(first, at - first) == "subgraph") ++group_words;
+    }
+    for (std::size_t at = 0; at < body.size();) {
+        if (!flow_id_start(body[at])) { ++at; continue; }
+        const bool digit_start = !id_start(body[at]);
+        ++at;
+        while (at < body.size() && flow_id_continue(body, at)) ++at;
+        if (digit_start) ++numeric_identifiers;
+    }
+    const auto identifiers = legacy_identifiers + numeric_identifiers;
+    const auto add = [](std::size_t total, std::size_t count, std::size_t unit) {
+        if (!unit || count > (std::numeric_limits<std::size_t>::max() - total) / unit)
+            return std::numeric_limits<std::size_t>::max();
+        return total + count * unit;
+    };
+    std::size_t total = 16u * (sizeof(Diagram) + sizeof(std::optional<Diagram>)) +
+                        16u * sizeof(std::size_t) + 256u;
+    total = add(total, body.size(), 4u);
+    if (!full_profile) {
+        constexpr std::size_t kIdentifierUnit =
+            8u * sizeof(std::vector<std::size_t>) + 8u * sizeof(std::size_t) + 64u +
+            (64u + kGroupLimit + 8u) * (2u * sizeof(std::size_t) + 8u);
+        constexpr std::size_t kBarePerByte = 60u;
+        constexpr std::size_t kBareLinearUnit = 34u;
+        constexpr std::size_t kBareLinearVertices = 64u;
+        constexpr std::size_t kBareLinearEdges = 128u;
+        constexpr std::size_t kBareFixed = 4096u;
+        total = add(total, body.size(), kBarePerByte);
+        total = add(total, identifiers + 1u, kIdentifierUnit);
+        total = add(total, kBareLinearVertices * kBareLinearEdges, kBareLinearUnit);
+        if (total > std::numeric_limits<std::size_t>::max() - kBareFixed)
+            return std::numeric_limits<std::size_t>::max();
+        return total + kBareFixed;
+    }
+    const auto vertices = std::min<std::size_t>(64u, identifiers);
+    const auto groups = std::min(kGroupLimit, group_words);
+    const auto edges = identifiers >= 12u ? 128u : std::min<std::size_t>(128u, identifiers * identifiers);
+    const auto depth = std::min(kGroupDepthLimit, groups);
+    const auto bytes = body.size() + 1u;
+    total = add(total, bytes, 4u * sizeof(std::string_view) + 4u * sizeof(std::size_t) + 32u);
+    total = add(total, bytes, 32u * sizeof(std::string) + 512u);
+    total = add(total, vertices, 8u * sizeof(Vertex));
+    total = add(total, groups, 8u * sizeof(Group));
+    total = add(total, edges, 8u * sizeof(Edge));
+    total = add(total, depth, 8u * sizeof(std::size_t));
+    total = add(total, identifiers + 1u, 8u * sizeof(std::vector<std::size_t>) + 8u * sizeof(std::size_t) + 64u +
+           (64u + kGroupLimit + 8u) * (2u * sizeof(std::size_t) + 8u));
+    total = add(total, edges, 8u * (body.size() + 1u));
+    return total;
+}
+
+// RFC 0031 E5: whole-body coarse parse prepayment with two deliberately
+// distinct profiles. upgrade_to_full is set only when a bare parse activates
+// the full profile on its first group reopen: it charges the delta so the
+// source pays once at the full-profile total, never both profiles.
+bool flow_parse_prepay(std::string_view body, Work& work, bool full_profile,
+                       bool upgrade_to_full) {
     if (body.empty() || body.size() > kSourceLimit) return false;
+    if (upgrade_to_full) {
+        const auto bare = flow_parse_prepay_total(body, false);
+        const auto full = flow_parse_prepay_total(body, true);
+        if (full < bare) {
+            // The full profile's analytic total is below what the bare profile
+            // already charged; the bare fee dominates.
+            return work.spend(0);
+        }
+        const auto delta = full - bare;
+        if (delta > work.remaining) {
+            static_cast<void>(work.spend(std::numeric_limits<std::size_t>::max()));
+            return false;
+        }
+        return work.spend(delta);
+    }
     const auto charge = [&](std::size_t count, std::size_t unit) {
         if (unit && count > work.remaining / unit) {
             static_cast<void>(work.spend(std::numeric_limits<std::size_t>::max()));
@@ -865,6 +927,28 @@ bool flow_envelope_parse_prepay(std::string_view body, Work& work) {
         if (digit_start) ++numeric_identifiers;
     }
     const auto identifiers = legacy_identifiers + numeric_identifiers;
+    if (!full_profile) {
+        // Bare profile: 60/byte dominates the deleted statement fees
+        // (4/byte plus label scans at <=56/byte); the per-identifier unit is
+        // the same vertex/index-table bound as the full profile below;
+        // 64*128*34 dominates the linear vertex/group/edge scans (endpoint
+        // group comparisons, reopen validation); a fixed term covers the
+        // per-statement constants under the declaration caps.
+        constexpr std::size_t kBarePerByte = 60u;
+        constexpr std::size_t kBareLinearUnit = 34u;
+        constexpr std::size_t kBareLinearVertices = 64u;
+        constexpr std::size_t kBareLinearEdges = 128u;
+        constexpr std::size_t kBareFixed = 4096u;
+        constexpr std::size_t kIdentifierUnit =
+            8u * sizeof(std::vector<std::size_t>) + 8u * sizeof(std::size_t) + 64u +
+            (64u + kGroupLimit + 8u) * (2u * sizeof(std::size_t) + 8u);
+        if (body.size() > work.remaining / kBarePerByte) return false;
+        if (!work.spend(kBarePerByte * body.size()) ||
+            !charge(identifiers + 1u, kIdentifierUnit) ||
+            !charge(kBareLinearVertices * kBareLinearEdges, kBareLinearUnit) ||
+            !work.spend(kBareFixed)) return false;
+        return true;
+    }
     const auto vertices = std::min<std::size_t>(64u, identifiers);
     const auto groups = std::min(kGroupLimit, group_words);
     const auto edges = identifiers >= 12u ? 128u : std::min<std::size_t>(128u, identifiers * identifiers);
@@ -884,6 +968,10 @@ bool flow_envelope_parse_prepay(std::string_view body, Work& work) {
                (64u + kGroupLimit + 8u) * (2u * sizeof(std::size_t) + 8u)) ||
         !charge(edges, 8u * (body.size() + 1u))) return false;
     return true;
+}
+
+bool flow_envelope_parse_prepay(std::string_view body, Work& work) {
+    return flow_parse_prepay(body, work, true);
 }
 
 std::optional<std::string_view> flow_envelope_body(std::string_view source, Work& work) {
@@ -1004,14 +1092,11 @@ std::optional<std::string_view> flow_envelope_body(std::string_view source, Work
 
 struct Box { int x; int y; int width; int height = 5; };
 std::optional<Box> node_size(const Vertex& node,Work& work) {
-    // Classic forms add label-row/glyph measurement and a fixed discrete
-    // profile. This prepayment covers their Scanner-owned label scan and the
-    // direct profile sizing before either allocation-oriented helper runs.
-    if (classic_shape(node.shape) && !work.spend((node.text.size() + 1u) *
-        (8u * sizeof(std::string_view) + 4u * sizeof(std::string) + 128u) + 512u)) return {};
-    // Only Decision's expanded contour adds measurement work. Existing
-    // rectangular and rounded measurements retain their complete dimensions.
-    if(node.shape==Shape::Decision&&!work.spend((node.text.size()+1u)*(8u*sizeof(std::string_view)+4u*sizeof(std::string)+64u)+256u))return {};
+    // RFC 0031 E5: the classic/decision label-row measurement is linear in
+    // validated <=kLabelLimit labels; its bookkeeping is folded into the parse
+    // prepay (bare profile) and the collector literal_bytes term (full
+    // profile). The parameter is retained for the shared call chain.
+    (void)work;
     const int rows=static_cast<int>(label_rows(node.text).size());
     if (classic_shape(node.shape)) {
         if (rows != 1) return {};
@@ -1151,8 +1236,14 @@ struct FlowTextCollector {
         // The collector is the only new owner of this index and retained literal
         // copies. Row output is charged later from the real cropped geometry and
         // literal byte totals, before either output vector is allocated.
+        // RFC 0031 E5: the classic/decision node_size label measurement
+        // (former 352/literal-byte fee) is folded into this term.
+        constexpr std::size_t kClassicMeasurePerByte =
+            8u * sizeof(std::string_view) + 4u * sizeof(std::string) + 128u;
+        constexpr std::size_t kClassicMeasureFixed = 64u * 512u;
         if (!charge({area * sizeof(int),
-                     literal_cell_bound * sizeof(std::string), literal_bytes,
+                     literal_cell_bound * sizeof(std::string),
+                     literal_bytes * (1u + kClassicMeasurePerByte) + kClassicMeasureFixed,
                      2u * area + 4096u})) return false;
         owners_.assign(area, 0);
         glyphs_.reserve(literal_cell_bound);
@@ -2159,11 +2250,13 @@ bool requirement_prefix_header(std::string_view line) {
     return true;
 }
 std::optional<PrefixOwner> sequence_prefix_route(std::string_view source, Work& work) {
+    // RFC 0031 E5: this linear source walk is dominated by the single
+    // classify_mermaid probe fee.
+    (void)work;
     bool frontmatter = false, seen_frontmatter = false, directive = false;
     while (!source.empty()) {
         const auto end = source.find('\n');
         auto line = source.substr(0, end);
-        if (!work.spend(line.size() + 1)) return {};
         source = end == std::string_view::npos ? std::string_view{} : source.substr(end + 1);
         if (line.ends_with('\r')) line.remove_suffix(1);
         line = trim(line);
@@ -2181,7 +2274,6 @@ std::optional<PrefixOwner> sequence_prefix_route(std::string_view source, Work& 
         while (line.starts_with(';')) line = trim(line.substr(1));
         if(line.starts_with("sequenceDiagram"))return PrefixOwner::Sequence;
         if(line.starts_with("classDiagram")) {
-            if(!work.spend(line.size()+32u))return {};
             return class_prefix_header(line)?PrefixOwner::Class:PrefixOwner::Other;
         }
         return PrefixOwner::Other;
@@ -2237,13 +2329,21 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     using detail::MermaidProbeDecision;
     using detail::MermaidProbeFamily;
 
+    // RFC 0031 E5: the probe-table boundary fee replaces the former flag
+    // bookkeeping. The fixed term equals the historic fixed flag fees. A
+    // frontmatter peek adds 1/peek-byte (the legacy prefix_work accumulation)
+    // plus a small constant dominating the deleted body-line charges.
+    constexpr std::size_t kProbePerPeekByte = 1u;
+    constexpr std::size_t kProbePeekFixed = 600u;
+    constexpr std::size_t kProbeFixed = 192u;
+    std::size_t peek_bytes = 0;
+    bool has_frontmatter_peek = false;
+
     // ---- textual scan (byte-identical to the legacy header/peek loops) ----
     auto remaining = source;
     std::string_view header;
     bool multiline_directive = false;
-    if (!work.spend(8u * sizeof(bool))) return std::nullopt;
     bool class_envelope_seen = false, class_peek = false;
-    if (!work.spend(8u * sizeof(bool) + 40u)) return std::nullopt;
     bool flow = false, requirement = false;
     while (!remaining.empty()) {
         const auto end = remaining.find('\n');
@@ -2258,15 +2358,15 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
         remaining.remove_prefix(end + 1);
     }
     bool sequence = false, er = false, gitgraph = false, state = false;
-    std::size_t prefix_work = 0;
     if (header == "---") {
+        has_frontmatter_peek = true;
         auto peek = remaining;
         bool opening = true;
         bool closed = false;
         while (!peek.empty()) {
             const auto end = peek.find('\n');
             auto line = peek.substr(0, end);
-            prefix_work += line.size() + 1;
+            peek_bytes += line.size() + 1;
             peek = end == std::string_view::npos ? std::string_view{} : peek.substr(end + 1);
             if (line.ends_with('\r')) line.remove_suffix(1);
             if (opening) { opening = false; continue; }
@@ -2278,7 +2378,6 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             while (line.starts_with(';')) line = trim(line.substr(1));
             if (line.starts_with("%%{") && !line.ends_with("}%%")) multiline_directive = true;
             if (line.empty() || line.starts_with("%%")) continue;
-            if (!work.spend(line.size() * 2u + 5u * sizeof(bool) + 80u)) return std::nullopt;
             flow = (line.starts_with("flowchart") &&
                     (line.size() == 9u || line[9] == ' ' || line[9] == '\t')) ||
                    (line.starts_with("graph") &&
@@ -2291,7 +2390,6 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                        (line.size() == 8u || line[8] == ' ' || line[8] == '\t' || line[8] == ':');
             state = line == "stateDiagram-v2" || line == "stateDiagram";
             if (line.starts_with("classDiagram")) {
-                if (!work.spend(line.size() + 32u)) return std::nullopt;
                 class_peek = class_prefix_header(line);
             }
             break;
@@ -2301,28 +2399,38 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     // (never ORs) the peeked class/sequence flags.
     bool class_flag = class_peek;
     if (multiline_directive && !sequence && !header.starts_with("sequenceDiagram")) {
+        // A directive header without a frontmatter fence still walks the full
+        // source once; count that span in the bounded probe term.
+        if (!has_frontmatter_peek) peek_bytes = std::max(peek_bytes, source.size());
         const auto probe = sequence_prefix_route(source, work);
-        if (!probe) return std::nullopt; // Work exhaustion / hard reject
+        if (!probe) return std::nullopt; // hard reject
         sequence = *probe == PrefixOwner::Sequence;
         class_flag = *probe == PrefixOwner::Class;
     }
 
+    // Charge after the peek span is known; the multiline route above walks the
+    // source one extra time and is bounded by the same term.
+    const std::size_t probe_total = kProbeFixed +
+        (has_frontmatter_peek || multiline_directive ?
+         kProbePeekFixed + kProbePerPeekByte * peek_bytes : 0u);
+    if (probe_total > work.remaining) return std::nullopt;
+    if (!work.spend(probe_total)) return std::nullopt;
+
     // ---- ordered probes, first match wins; Charts is the terminal fallback ----
+    // RFC 0031 E5: the old per-family prepay accumulator is dominated by the
+    // probe fee above; decision.prepay stays zero for the switch.
     MermaidProbeDecision decision;
 
     if (flow) {
         decision.family = MermaidProbeFamily::Flow;
-        decision.prepay = prefix_work;
         return decision;
     }
     if (header.starts_with("sequenceDiagram") || sequence) {
         decision.family = MermaidProbeFamily::Sequence;
-        decision.prepay = sequence ? prefix_work : 0;
         return decision;
     }
     if (header.starts_with("gitGraph") || gitgraph) {
         decision.family = MermaidProbeFamily::GitGraph;
-        decision.prepay = gitgraph ? prefix_work : 0;
         return decision;
     }
 
@@ -2348,7 +2456,6 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     decision.class_envelope =
         class_flag || (class_envelope_seen && class_prefix_header(header));
     decision.requirement_input = header_requirement || requirement;
-    decision.prepay = (er || class_flag || requirement || state) ? prefix_work : 0;
     return decision;
 }
 
@@ -2367,7 +2474,6 @@ std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Ele
         if (!decision) return {};
         switch (decision->family) {
         case detail::MermaidProbeFamily::Flow: {
-            if (!work.spend(decision->prepay)) return {};
             const auto body = flow_envelope_body(source, work);
             if (!body || !flow_envelope_parse_prepay(*body, work)) return {};
             const auto diagram = parse(*body, work, true);
@@ -2376,18 +2482,15 @@ std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Ele
             break;
         }
         case detail::MermaidProbeFamily::Sequence:
-            if (decision->prepay && !work.spend(decision->prepay)) return {};
             lines = detail::sequence_layout(source, work);
             break;
         case detail::MermaidProbeFamily::GitGraph:
-            if (decision->prepay && !work.spend(decision->prepay)) return {};
             lines = detail::gitgraph_layout(source, work);
             break;
         case detail::MermaidProbeFamily::Class:
         case detail::MermaidProbeFamily::Er:
         case detail::MermaidProbeFamily::State:
         case detail::MermaidProbeFamily::Requirement:
-            if (decision->prepay && !work.spend(decision->prepay)) return {};
             lines = detail::relations_layout(source, work,
                 decision->class_envelope, decision->requirement_input);
             break;

@@ -15,6 +15,13 @@ constexpr std::size_t kGitBranchLimit = 32u;
 constexpr std::size_t kGitTagLimit = 8u;
 constexpr std::size_t kGitParentLimit = 2u;
 
+// RFC 0031 E5: the single parse entry fee dominates the former per-command
+// charges (commit/branch allocations, bounded id/reset scans, at most one
+// init directive and the per-line numbering sum) for every grammar-feasible
+// source under the 64-commit/32-branch caps.
+constexpr std::size_t kGitParsePerByte = 12u;
+constexpr std::size_t kGitParseFixed = 65536u;
+
 std::string_view trim_git(std::string_view value) {
     while (!value.empty() && (value.front() == ' ' || value.front() == '\t' || value.front() == '\r')) value.remove_prefix(1);
     while (!value.empty() && (value.back() == ' ' || value.back() == '\t' || value.back() == '\r')) value.remove_suffix(1);
@@ -112,9 +119,10 @@ std::optional<std::size_t> commit_index(const GitGraph& graph, std::string_view 
     return {};
 }
 
-std::optional<std::string> next_automatic_id(GitGraph& graph, Work& work) {
+std::optional<std::string> next_automatic_id(GitGraph& graph) {
+    // RFC 0031 E5: bounded by kGitCommitLimit attempts; the parse entry fee
+    // dominates the former per-attempt charge.
     for (std::size_t attempts = 0u; attempts < kGitCommitLimit; ++attempts) {
-        if (!work.spend(32u)) return {};
         const auto candidate = std::to_string(graph.automatic_id++);
         if (!commit_index(graph, candidate)) return candidate;
     }
@@ -122,10 +130,9 @@ std::optional<std::string> next_automatic_id(GitGraph& graph, Work& work) {
 }
 
 bool add_commit(GitGraph& graph, std::string id, GitType type, std::vector<std::string> tags,
-                std::vector<std::string> parents, std::string_view operation, Work& work) {
+                std::vector<std::string> parents, std::string_view operation) {
     if (graph.commits.size() >= kGitCommitLimit || parents.size() > kGitParentLimit ||
-        tags.size() > kGitTagLimit || !work.spend(sizeof(GitCommit) + tags.size() * (sizeof(std::string) + 32u) +
-                                                  parents.size() * (sizeof(std::string) + 32u) + 128u)) return false;
+        tags.size() > kGitTagLimit) return false;
     const auto current = branch_index(graph, graph.current_branch);
     if (!current || id.empty() || commit_index(graph, id)) return false;
     for (const auto& parent : parents) if (!commit_index(graph, parent)) return false;
@@ -152,7 +159,7 @@ std::optional<GitType> parse_type(Cursor& cursor) {
     return {};
 }
 
-bool parse_commit(GitGraph& graph, std::string_view line, Work& work) {
+bool parse_commit(GitGraph& graph, std::string_view line) {
     Cursor cursor{line};
     if (!cursor.word("commit")) return false;
     std::optional<std::string> id;
@@ -177,31 +184,31 @@ bool parse_commit(GitGraph& graph, std::string_view line, Work& work) {
             return false;
         }
     }
-    if (!id) id = next_automatic_id(graph, work);
+    if (!id) id = next_automatic_id(graph);
     if (!id) return false;
     std::vector<std::string> parents;
     const auto current = branch_index(graph, graph.current_branch);
     if (!current) return false;
     if (graph.branches[*current].head != "∅") parents.push_back(graph.branches[*current].head);
     return add_commit(graph, std::move(*id), type.value_or(GitType::Normal), std::move(tags), std::move(parents),
-                      graph.commit_after_reset ? "commit_after_reset" : "commit", work);
+                      graph.commit_after_reset ? "commit_after_reset" : "commit");
 }
 
-bool parse_branch(GitGraph& graph, std::string_view line, Work& work) {
+bool parse_branch(GitGraph& graph, std::string_view line) {
     Cursor cursor{line};
     if (!cursor.word("branch")) return false;
     auto name = cursor.reference();
     if (!name || branch_index(graph, *name) || graph.branches.size() >= kGitBranchLimit) return false;
     int order = -1;
     if (!cursor.done()) {
-        if (!work.spend(line.size() * 4u + 128u) || !cursor.take("order:")) return false;
+        if (!cursor.take("order:")) return false;
         const auto value = cursor.decimal();
         if (!value || !cursor.done()) return false;
         const auto parsed = std::from_chars(value->data(), value->data() + value->size(), order);
         if (parsed.ec != std::errc{} || parsed.ptr != value->data() + value->size() || order < 0) return false;
     }
     const auto current = branch_index(graph, graph.current_branch);
-    if (!current || !work.spend(sizeof(GitBranch) + 128u)) return false;
+    if (!current) return false;
     // A branch starts at, and initially points to, the current branch head.
     // Retaining both values closes the first child commit's parent relation.
     const auto inherited_head = graph.branches[*current].head;
@@ -219,7 +226,7 @@ bool parse_checkout(GitGraph& graph, std::string_view line) {
     return true;
 }
 
-bool parse_merge(GitGraph& graph, std::string_view line, Work& work) {
+bool parse_merge(GitGraph& graph, std::string_view line) {
     Cursor cursor{line};
     if (!cursor.word("merge")) return false;
     auto source = cursor.reference();
@@ -245,13 +252,13 @@ bool parse_merge(GitGraph& graph, std::string_view line, Work& work) {
     const auto current = branch_index(graph, graph.current_branch);
     const auto merged = branch_index(graph, *source);
     if (!current || !merged || *current == *merged || graph.branches[*current].head == "∅" || graph.branches[*merged].head == "∅") return false;
-    if (!id) id = next_automatic_id(graph, work);
+    if (!id) id = next_automatic_id(graph);
     if (!id) return false;
     return add_commit(graph, std::move(*id), type.value_or(GitType::Normal), std::move(tags),
-                      {graph.branches[*current].head, graph.branches[*merged].head}, "merge", work);
+                      {graph.branches[*current].head, graph.branches[*merged].head}, "merge");
 }
 
-bool parse_cherry_pick(GitGraph& graph, std::string_view line, Work& work) {
+bool parse_cherry_pick(GitGraph& graph, std::string_view line) {
     Cursor cursor{line};
     if (!cursor.word("cherry-pick")) return false;
     std::optional<std::string> source_id, parent;
@@ -279,10 +286,10 @@ bool parse_cherry_pick(GitGraph& graph, std::string_view line, Work& work) {
     auto id = graph.commits[*source].id + "-cherry";
     if (commit_index(graph, id)) return false;
     return add_commit(graph, std::move(id), GitType::Normal, std::move(tags),
-                      {graph.branches[*current].head, graph.commits[*source].id}, "cherry_pick", work);
+                      {graph.branches[*current].head, graph.commits[*source].id}, "cherry_pick");
 }
 
-bool parse_reset(GitGraph& graph, std::string_view line, Work& work) {
+bool parse_reset(GitGraph& graph, std::string_view line) {
     Cursor cursor{line};
     if (!cursor.word("reset")) return false;
     auto target = cursor.reference();
@@ -301,7 +308,9 @@ bool parse_reset(GitGraph& graph, std::string_view line, Work& work) {
     if (!current || !source || graph.branches[*source].head == "∅") return false;
     std::string head = graph.branches[*source].head;
     while (depth-- > 0u) {
-        if (!work.spend(64u)) return false;
+        // Bounded by the existing commit chain (<= kGitCommitLimit links);
+        // a missing ancestor rejects. RFC 0031 E5 folds the per-step charge
+        // into the parse entry fee.
         const auto index = commit_index(graph, head);
         if (!index || graph.commits[*index].parents.empty()) return false;
         head = graph.commits[*index].parents.front();
@@ -311,11 +320,10 @@ bool parse_reset(GitGraph& graph, std::string_view line, Work& work) {
     return true;
 }
 
-bool parse_init(GitGraph& graph, std::string_view line, Work& work) {
+bool parse_init(GitGraph& graph, std::string_view line) {
     line = trim_git(line);
     constexpr std::string_view prefix = "%%{init:";
     if (!line.starts_with(prefix) || !line.ends_with("}%%")) return false;
-    if (!work.spend(line.size() * 4u + 1024u)) return false;
     const auto document = loom::utils::json::parse(std::string(line.substr(prefix.size(), line.size() - prefix.size() - 3u)));
     if (!document || !document->root().is_obj()) return false;
     bool valid = true, seen_name = false, seen_commit_label = false;
@@ -346,26 +354,26 @@ bool parse_init(GitGraph& graph, std::string_view line, Work& work) {
 } // namespace
 
 std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work) {
-    if (source.empty() || source.size() > kSourceLimit || !work.spend(source.size() * 8u + 16384u)) return {};
+    if (source.empty() || source.size() > kSourceLimit) return {};
+    if (source.size() > (std::numeric_limits<std::size_t>::max() - kGitParseFixed) / kGitParsePerByte ||
+        !work.spend(source.size() * kGitParsePerByte + kGitParseFixed)) return {};
     GitGraph graph;
     if (!work.spend(kGitCommitLimit * (sizeof(GitCommit) + 192u) + kGitBranchLimit * (sizeof(GitBranch) + 128u))) return {};
     graph.commits.reserve(kGitCommitLimit);
     graph.branches.reserve(kGitBranchLimit);
 
     bool seen_header = false, seen_init = false;
-    std::size_t line_number = 0u;
     while (!source.empty()) {
         const auto end = source.find('\n');
         auto line = source.substr(0u, end);
         source = end == std::string_view::npos ? std::string_view{} : source.substr(end + 1u);
-        ++line_number;
         line = trim_git(line);
         if (line.empty()) continue;
         // A directive changes graph semantics.  It is accepted only in the
         // pre-header position and only for the one fully represented init
         // shape below; a generic comment remains non-semantic.
         if (line.starts_with("%%{")) {
-            if (seen_header || seen_init || !line.starts_with("%%{init:") || !parse_init(graph, line, work)) return {};
+            if (seen_header || seen_init || !line.starts_with("%%{init:") || !parse_init(graph, line)) return {};
             seen_init = true;
             continue;
         }
@@ -392,11 +400,10 @@ std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work) {
             seen_header = true;
             continue;
         }
-        bool parsed = parse_commit(graph, line, work) || parse_branch(graph, line, work) ||
-                      parse_checkout(graph, line) || parse_merge(graph, line, work) ||
-                      parse_cherry_pick(graph, line, work) || parse_reset(graph, line, work);
+        bool parsed = parse_commit(graph, line) || parse_branch(graph, line) ||
+                      parse_checkout(graph, line) || parse_merge(graph, line) ||
+                      parse_cherry_pick(graph, line) || parse_reset(graph, line);
         if (!parsed) return {};
-        if (!work.spend(line_number + 8u)) return {};
     }
     if (!seen_header || graph.commit_after_reset || graph.branches.empty()) return {};
     return graph;

@@ -22,6 +22,10 @@ bool id_start(char value) {
 bool id_char(char value) { return id_start(value) || (value >= '0' && value <= '9'); }
 
 std::optional<std::string> sequence_display_row(std::string_view input, Work& work) {
+    // RFC 0031 E5: per-scalar/output bookkeeping folded into the parse entry
+    // fee (and the layout declaration fee for the identity display path); the
+    // parameter is retained for the shared call chain.
+    (void)work;
     std::string out;
     bool base = false;
     for (std::size_t at = 0; at < input.size();) {
@@ -43,7 +47,7 @@ std::optional<std::string> sequence_display_row(std::string_view input, Work& wo
             (trailing == 3 && scalar < 0x10000) || scalar > 0x10ffff ||
             (scalar >= 0xd800 && scalar <= 0xdfff)) return {};
         const auto unit = std::string(input.substr(start, at - start));
-        if (!work.spend(unit.size() * 4 + 16)) return {};
+        // RFC 0031 E5: per-scalar bookkeeping folded into the parse entry fee.
         const bool unsafe = scalar < 0x20 || (scalar >= 0x7f && scalar <= 0x9f) ||
             scalar == 0xfeff || scalar == 0x200b || scalar == 0x061c ||
             scalar == 0x200e || scalar == 0x200f || scalar == 0x2028 || scalar == 0x2029 ||
@@ -60,7 +64,8 @@ std::optional<std::string> sequence_display_row(std::string_view input, Work& wo
             if (ftxui::string_width(unit) > 0) base = true;
         }
     }
-    if (!work.spend(out.size() * 5)) return {};
+    // RFC 0031 E5: the output-size charge is folded into the parse entry fee
+    // (and the layout declaration fee for the identity display path).
     // Blank decoded rows retain their exact padding. The complete label must
     // still contain text and obey the aggregate display limit.
     if (out.find_first_not_of(' ') == std::string::npos) return out;
@@ -70,22 +75,19 @@ std::optional<std::string> sequence_display_row(std::string_view input, Work& wo
 // Protect a complete primary-style ASCII entity atom before statement syntax.
 // Its spelling remains raw until a supported text field decodes it once.
 std::optional<std::size_t> sequence_atom_size(std::string_view input, Work& work) {
+    // RFC 0031 E5: per-char atom scanning is input-bounded and covered by the
+    // parse entry fee; the call-chain Work parameter is retained.
+    (void)work;
     if (input.empty() || input.front() != '#') return 0;
-    if (!work.spend()) return {};
     std::size_t end = 1;
-    while (end < input.size() && id_char(input[end])) {
-        if (!work.spend()) return {};
-        ++end;
-    }
-    if (end < input.size() && !work.spend()) return {};
+    while (end < input.size() && id_char(input[end])) ++end;
     return end > 1 && end < input.size() && input[end] == ';' ? end + 1 : 0;
 }
 
 std::optional<std::string> sequence_text_row(std::string_view input, Work& work) {
     if (input.find('#') == std::string_view::npos) return sequence_display_row(input, work);
-    // Decoding never expands the raw byte length. Charge the copy/scan before
-    // allocating, then keep the same Work for atom scans and Safe display.
-    if (!work.spend(input.size())) return {};
+    // Decoding never expands the raw byte length. The decode/scan work is
+    // covered by the parse entry fee (RFC 0031 E5).
     std::string decoded;
     decoded.reserve(input.size());
     for (std::size_t at = 0; at < input.size();) {
@@ -109,27 +111,25 @@ std::optional<std::string> sequence_text_row(std::string_view input, Work& work)
 
 enum class LabelSyntax { Plain, Text, Metadata, BoxCaption, Identity };
 std::optional<std::string_view> source_nowrap_text(std::string_view input,Work& work) {
+    (void)work; // RFC 0031 E5: fixed-prefix scan folded into the parse entry fee.
     input=trim(input);
     if (input.starts_with("wrap:")||input.starts_with(":wrap:")) return {};
     const auto count=input.starts_with(":nowrap:")?8u:input.starts_with("nowrap:")?7u:0u;
-    if (count&&!work.spend(count)) return {};
     return trim(input.substr(count));
 }
 // Complete raw BR ownership precedes entity decoding. This local predicate is
 // shared by the two Text/Metadata label paths; other label roles stay closed.
 std::optional<std::size_t> sequence_raw_break_size(std::string_view input, Work& work) {
+    (void)work; // RFC 0031 E5: input-bounded scan folded into the parse entry fee.
     if (input.empty() || input.front() != '<') return 0;
-    if (!work.spend(4)) return {};
     if (input.size() < 3 || (input[1] != 'b' && input[1] != 'B') ||
         (input[2] != 'r' && input[2] != 'R')) return 0;
     std::size_t at = 3;
     while (at < input.size()) {
-        if (!work.spend()) return {};
         const auto byte = static_cast<unsigned char>(input[at]);
         if (byte != 0x20 && (byte < 0x09 || byte > 0x0d)) break;
         ++at;
     }
-    if (!work.spend(2)) return {};
     if (at < input.size() && input[at] == '/') ++at;
     if (at == input.size() || input[at] != '>') return 0;
     return at + 1;
@@ -150,7 +150,7 @@ std::optional<std::string> sequence_label(std::string_view input, Work& work,
         (!text_syntax && input.find('#') != std::string_view::npos) ||
         input.find(static_cast<char>(96)) != std::string_view::npos) return {};
     if (syntax==LabelSyntax::BoxCaption&&input.find('&')!=std::string_view::npos) {
-        if (!work.spend(input.size())) return {};
+        // RFC 0031 E5: linear '&' scan covered by the parse entry fee.
         // Bare caption punctuation is literal; no HTML entity decoder is added.
         for (auto at=input.find('&');at!=std::string_view::npos;at=input.find('&',at+1)) {
             const auto end=input.find_first_of("; \t&",at+1);
@@ -170,7 +170,6 @@ std::optional<std::string> sequence_label(std::string_view input, Work& work,
             // Keep all non-BR bytes in one row; splitting at an arbitrary '<'
             // could turn an attached combining scalar into a false new base.
             do {
-                if (!work.spend()) return {};
                 ++end;
             } while (end < input.size() && input[end] != '<');
             if (end == input.size()) end = std::string_view::npos;
@@ -333,7 +332,9 @@ constexpr std::string_view kSequenceMetadataWords[]{"links", "link", "properties
 bool sequence_initial_prefix_allowed(std::string_view text, Work& work, std::string_view* metadata = nullptr) {
     // Each INITIAL caller has already front-trimmed its syntax operand.
     // Quoted IDs keep the existing native Go literal-identity profile. Prefix
-    // probes are fixed-size, allocation-free and add no old-path Work charge.
+    // probes are fixed-size, allocation-free input-bounded scans; RFC 0031 E5
+    // folds their bookkeeping into the parse entry fee.
+    (void)work;
     for (const auto word : kSequenceMetadataWords) {
         if (text.size() <= word.size() ||
             (text[word.size()] != ' ' && text[word.size()] != '\t')) continue;
@@ -344,14 +345,9 @@ bool sequence_initial_prefix_allowed(std::string_view text, Work& work, std::str
             if (folded != word[n]) { matches = false; break; }
         }
         if (!matches) continue;
-        if (!work.spend(word.size())) return false;
         std::size_t at = word.size();
-        while (at < text.size() && (text[at] == ' ' || text[at] == '\t')) {
-            if (!work.spend()) return false;
-            ++at;
-        }
+        while (at < text.size() && (text[at] == ' ' || text[at] == '\t')) ++at;
         if (at == text.size()) return true;
-        if (!work.spend()) return false;
         const auto next = static_cast<unsigned char>(text[at]);
         // INITIAL's four metadata tokens exclude these operator/delimiter
         // characters. Unknown non-ASCII separator ambiguity stays whole source;
@@ -407,15 +403,15 @@ std::optional<SequenceSourceLabel> sequence_source_label(std::string_view input,
         return SequenceSourceLabel{std::move(*label), std::nullopt};
     }
     input = selected.text;
-    if (!work.spend(selected.prefix + input.size() * 24 + 128)) return {};
+    // RFC 0031 E5: the wrapped-label decode/emit scans below are covered by
+    // the parse entry fee (the label is <= kLabelLimit validated cells).
     if (!identity && (input.find('`') != std::string_view::npos ||
         (syntax != LabelSyntax::BoxCaption && input.find('&') != std::string_view::npos))) return {};
     if (syntax == LabelSyntax::BoxCaption) for (std::size_t at = 0; at < input.size(); ++at) {
-        if (!work.spend()) return {};
         if (input[at] != '&') continue;
         auto end = at + 1;
         while (end < input.size() && input[end] != ' ' && input[end] != '\t' && input[end] != '<') {
-            if (!work.spend() || input[end] == ';') return {};
+            if (input[end] == ';') return {};
             ++end;
         }
     }
@@ -431,7 +427,6 @@ std::optional<SequenceSourceLabel> sequence_source_label(std::string_view input,
         std::string decoded;
         decoded.reserve(raw.size());
         for (std::size_t at = 0; at < raw.size();) {
-            if (!work.spend()) return false;
             if (identity || raw[at] != '#') { decoded += raw[at++]; continue; }
             constexpr std::pair<std::string_view, std::string_view> atoms[]{
                 {"#35;", "#"}, {"#59;", ";"}, {"#38;", "&"}, {"#9829;", "♥"},
@@ -439,7 +434,6 @@ std::optional<SequenceSourceLabel> sequence_source_label(std::string_view input,
             bool found = false;
             for (const auto& [spelling, value] : atoms) {
                 if (!text_syntax && spelling == "#38;") continue;
-                if (!work.spend()) return false;
                 if (std::string_view(raw).substr(at).starts_with(spelling)) {
                     decoded += value; at += spelling.size(); found = true; break;
                 }
@@ -450,8 +444,7 @@ std::optional<SequenceSourceLabel> sequence_source_label(std::string_view input,
         bool base = false;
         auto emit = [&](std::string_view text, int cells, bool space, bool disclosure) {
             if (cells <= 0 || cells > static_cast<int>(kLabelLimit) ||
-                total > kLabelLimit - static_cast<std::size_t>(cells) ||
-                !work.spend(text.size() * 4 + sizeof(SequenceWrapAtom) * 2)) return false;
+                total > kLabelLimit - static_cast<std::size_t>(cells)) return false;
             total += static_cast<std::size_t>(cells);
             result.text += text;
             paragraphs.back().push_back({std::string(text), cells, space, disclosure});
@@ -460,7 +453,6 @@ std::optional<SequenceSourceLabel> sequence_source_label(std::string_view input,
         };
         auto flush = [&] {
             if (literal.empty()) return true;
-            if (!work.spend(literal.size() * 48 + 64)) return false;
             const auto glyphs = ftxui::Utf8ToGlyphs(literal);
             std::string restored;
             for (const auto& glyph : glyphs) restored += glyph;
@@ -476,7 +468,6 @@ std::optional<SequenceSourceLabel> sequence_source_label(std::string_view input,
                 for (const std::uint32_t scalar : {0x20u, 0xa0u, 0x1680u, 0x2000u, 0x2001u, 0x2002u,
                      0x2003u, 0x2004u, 0x2005u, 0x2006u, 0x2007u, 0x2008u, 0x2009u, 0x200au,
                      0x202fu, 0x205fu, 0x3000u}) {
-                    if (!work.spend()) return false;
                     // UTF8 encoding is bounded to three bytes for this set.
                     std::string encoded;
                     if (scalar < 0x80) encoded += static_cast<char>(scalar);
@@ -490,7 +481,6 @@ std::optional<SequenceSourceLabel> sequence_source_label(std::string_view input,
             literal.clear(); return true;
         };
         for (std::size_t at = 0; at < decoded.size();) {
-            if (!work.spend()) return false;
             const auto lead = static_cast<unsigned char>(decoded[at]);
             std::size_t bytes = 1; std::uint32_t scalar = lead;
             if (lead >= 0xc2 && lead <= 0xdf) { bytes = 2; scalar &= 31; }
@@ -505,7 +495,6 @@ std::optional<SequenceSourceLabel> sequence_source_label(std::string_view input,
             }
             if ((bytes == 2 && scalar < 0x80) || (bytes == 3 && scalar < 0x800) ||
                 (bytes == 4 && scalar < 0x10000) || scalar > 0x10ffff || (scalar >= 0xd800 && scalar <= 0xdfff)) return false;
-            if (!work.spend(bytes * 24 + 96)) return false;
             const std::string unit = decoded.substr(at, bytes); at += bytes;
             const bool unsafe = scalar < 0x20 || (scalar >= 0x7f && scalar <= 0x9f) || scalar == 0xfeff ||
                 scalar == 0x200b || scalar == 0x061c || scalar == 0x200e || scalar == 0x200f ||
@@ -534,7 +523,6 @@ std::optional<SequenceSourceLabel> sequence_source_label(std::string_view input,
             if (!size) return {};
             if (*size != 0) { raw_break = *size; break; }
             do {
-                if (!work.spend()) return {};
                 ++end;
             } while (end < input.size() && input[end] != '<');
             if (end == input.size()) end = std::string_view::npos;
@@ -1294,8 +1282,9 @@ std::optional<std::string> sequence_directive_json(std::string_view text, Work& 
 }
 
 bool sequence_directive(std::string_view& source, Sequence& graph, Work& work) {
-    // Prepaid quote-aware wrapper scan; only a complete leading directive is consumed.
-    if (!work.spend(source.size() + 32)) return false;
+    // RFC 0031 E5: the quote-aware wrapper scan is covered by the parse entry
+    // fee (and the frontmatter fee when the directive precedes the header);
+    // the nested JSON/config readers keep their own profile fees.
     std::size_t close = std::string_view::npos;
     char quote = 0; bool escaped = false;
     for (std::size_t at = 3; at + 2 < source.size(); ++at) {
@@ -1347,15 +1336,14 @@ bool sequence_description_scalar(std::string_view value, Work& work) {
 // Description is an opaque documentation string in the pinned frontmatter
 // contract. Consume only this finite folded-scalar profile, never business text.
 bool sequence_description_block(std::string_view& source, Work& work) {
-    // Pay for all delimiter/physical-line lookahead before searching. Views keep
-    // the original body and any in-body init directive completely untouched.
-    if (!work.spend(source.size() + 32)) return false;
+    // RFC 0031 E5: delimiter/physical-line lookahead is frontmatter-bounded and
+    // covered by the sequence_frontmatter entry fee. Views keep the original
+    // body and any in-body init directive completely untouched.
     std::optional<std::size_t> indentation;
     while (!source.empty()) {
         const auto end = source.find('\n');
         auto line = source.substr(0, end);
         if (line.ends_with('\r')) line.remove_suffix(1);
-        if (!work.spend(line.size() + 16)) return false;
         if (trim(line).empty() && line.find('\t') != std::string_view::npos) return false;
         if (!trim(line).empty()) {
             const auto indent = line.find_first_not_of(' ');
@@ -1370,7 +1358,79 @@ bool sequence_description_block(std::string_view& source, Work& work) {
     return true;
 }
 
+// RFC 0031 E5: the finite frontmatter block-map reader charges once at entry.
+// 12/frontmatter-byte dominates the former per-line (12/byte+64), path
+// duplicate (paths quadratic over <=128 config entries) and scalar fees over
+// the <=16384-byte frontmatter span.
+constexpr std::size_t kSequenceFrontmatterPerByte = 12u;
+constexpr std::size_t kSequenceFrontmatterFixed = 4096u;
+
+// RFC 0031 E5: the single parse boundary fee dominates every deleted
+// per-byte/per-line scanner charge. The base is measured in one
+// allocation-free pass:
+//  - free comment physical lines (`%%`, lone-`#` atoms, blanks) and the
+//    leading frontmatter span were uncharged (or carry their own
+//    envelope/frontmatter fee), so they are excluded;
+//  - role-declaration lines (`@{`) keep their own retained 8/byte profile
+//    fee in role_declaration/role_fields, so they are excluded here;
+//  - metadata/acctitle lines keep their retained raw-scalar fees, so only
+//    the base scan term counts their bytes;
+//  - every other content line pays the 2/byte CR/accessibility base plus
+//    128/statement (dominating per-statement constants and the bounded
+//    activation/event walks); the colon-tail term, capped per line at
+//    kLabelLimit*2 bytes, dominates the <=176/byte label decode paths.
+constexpr std::size_t kSequenceParseContentPerByte = 2u;
+constexpr std::size_t kSequenceParsePerStatement = 128u;
+constexpr std::size_t kSequenceParseTailPerByte = 176u;
+constexpr std::size_t kSequenceParseTailCapPerLine = kLabelLimit * 2u;
+
+std::size_t sequence_parse_fee(std::string_view source) {
+    std::size_t content = 0, tail = 0, statements = 0;
+    bool in_frontmatter = false;
+    bool first_checked = false;
+    for (auto rest = source; !rest.empty();) {
+        const auto end = rest.find('\n');
+        auto line = rest.substr(0, end);
+        rest = end == std::string_view::npos ? std::string_view{} : rest.substr(end + 1);
+        if (line.ends_with('\r')) line.remove_suffix(1);
+        auto trimmed = trim(line);
+        if (trimmed.empty()) continue;
+        if (!first_checked) {
+            first_checked = true;
+            if (trimmed == "---") { in_frontmatter = true; continue; }
+        }
+        if (in_frontmatter) {
+            if (trimmed == "---") in_frontmatter = false;
+            continue;
+        }
+        // Comment physical lines were skipped before any statement fee.
+        if (trimmed.starts_with("%%")) continue;
+        if (trimmed.front() == '#' && trimmed.find(';') == std::string_view::npos) continue;
+        // Role declarations and metadata/acctitle setters keep their own
+        // retained per-byte profile fees.
+        const bool role_line = line.find("@{") != std::string_view::npos;
+        const bool profile_line = role_line ||
+            trimmed.starts_with("links ") || trimmed.starts_with("link ") ||
+            trimmed.starts_with("properties ") || trimmed.starts_with("details ") ||
+            trimmed.starts_with("acctitle") || trimmed.starts_with("accdescr");
+        content += line.size();
+        ++statements;
+        if (!profile_line) {
+            if (const auto colon = line.find(':'); colon != std::string_view::npos) {
+                const auto tail_size = line.size() - colon - 1u;
+                tail += std::min(tail_size, kSequenceParseTailCapPerLine);
+            }
+        }
+    }
+    return kSequenceParseContentPerByte * content +
+           kSequenceParsePerStatement * statements +
+           kSequenceParseTailPerByte * tail;
+}
+
 bool sequence_frontmatter(std::string_view frontmatter, Sequence& graph, Work& work) {
+    if (frontmatter.size() > (std::numeric_limits<std::size_t>::max() - kSequenceFrontmatterFixed) /
+            kSequenceFrontmatterPerByte ||
+        !work.spend(kSequenceFrontmatterFixed + kSequenceFrontmatterPerByte * frontmatter.size())) return false;
     auto source = frontmatter;
     // A finite block-map reader, not the permissive shared YAML parser.
     std::vector<std::pair<std::size_t, std::string>> parents;
@@ -1385,7 +1445,6 @@ bool sequence_frontmatter(std::string_view frontmatter, Sequence& graph, Work& w
         auto line = source.substr(0, end);
         source = end == std::string_view::npos ? std::string_view{} : source.substr(end + 1);
         if (line.ends_with('\r')) line.remove_suffix(1);
-        if (!work.spend(line.size() * 12 + 64)) return false;
         if (trim(line).empty()) continue;
         const auto indent = line.find_first_not_of(' ');
         if (indent == std::string_view::npos || line[indent] == '\t') return false;
@@ -1404,7 +1463,7 @@ bool sequence_frontmatter(std::string_view frontmatter, Sequence& graph, Work& w
         if (sibling != child_indents.end()) { if (sibling->second != indent) return false; }
         else child_indents.emplace_back(parent, indent);
         std::string path = parents.empty() ? std::string(key) : parents.back().second + "." + std::string(key);
-        if (!work.spend(path.size() * (seen.size() + 1) + 1) || std::ranges::find(seen, path) != seen.end()) return false;
+        if (std::ranges::find(seen, path) != seen.end()) return false;
         seen.push_back(path);
         const auto raw = field.substr(colon + 1);
         if (!raw.empty() && raw.front() != ' ' && raw.front() != '\t') return false;
@@ -1418,7 +1477,6 @@ bool sequence_frontmatter(std::string_view frontmatter, Sequence& graph, Work& w
             // Quoted strings below use the existing complete scalar decoder.
             const auto first = static_cast<unsigned char>(value.front());
             if (!id_start(value.front()) && first < 0x80) return false;
-            if (!work.spend(value.size() + 1)) return false;
             std::string lower(value);
             for (auto& ch : lower) if (ch >= 'A' && ch <= 'Z') ch = static_cast<char>(ch + ('a' - 'A'));
             if (lower == "null" || lower == "true" || lower == "false") return false;
@@ -1489,7 +1547,7 @@ bool sequence_metadata_prefix(std::string_view text) {
 }
 
 bool sequence_metadata(std::string_view text, std::string_view kind, Work& work) {
-    if (!work.spend(text.size() * 8 + 64)) return false;
+    // RFC 0031 E5: per-statement metadata scan covered by the parse entry fee.
     const auto space = text.find_first_of(" \t");
     const auto body = trim(text.substr(space));
     const auto colon = body.find(':');
@@ -1886,6 +1944,11 @@ StatementSyntax statement_syntax(std::string_view statement) {
 
 std::optional<Sequence> parse(std::string_view source, Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
+    // Parse boundary fee (RFC 0031 E5), measured in one allocation-free pass
+    // and charged before any scan or allocation. The frontmatter/config/CSS/role
+    // readers keep their own nested profile fees on top.
+    const auto parse_fee = sequence_parse_fee(source);
+    if (!work.spend(parse_fee)) return {};
     Sequence diagram;
     bool have_header = false;
     bool have_frontmatter = false;
@@ -1896,7 +1959,6 @@ std::optional<Sequence> parse(std::string_view source, Work& work) {
             first = trim(first);
             if (first.starts_with("%%{")) {
                 const auto prefix = static_cast<std::size_t>(first.data() - source.data());
-                if (!work.spend(prefix)) return {};
                 source.remove_prefix(prefix);
                 if (!sequence_directive(source, diagram, work)) return {};
                 continue;
@@ -1907,7 +1969,7 @@ std::optional<Sequence> parse(std::string_view source, Work& work) {
         source = end == std::string_view::npos ? std::string_view{} : source.substr(end + 1);
         if (line.ends_with('\r')) line.remove_suffix(1);
         if (!have_header && line == "---") {
-            if (have_frontmatter || !work.spend(line.size() + 1)) return {};
+            if (have_frontmatter) return {};
             // Reconstruct the full source only to let the shared envelope
             // reader locate the closing fence; the caller keeps its original
             // view for the body offset.
@@ -1952,14 +2014,11 @@ std::optional<Sequence> parse(std::string_view source, Work& work) {
             if (!atom) return {};
             // Complete atoms are data, including unsupported ones. Only an
             // unprotected standalone hash line is a comment in this profile.
-            if (*atom == 0) {
-                if (!work.spend(line.size())) return {};
-                continue;
-            }
+            if (*atom == 0) continue;
         }
         // Statement ownership matters: quotes protect ID syntax, while
         // TXT/LINE quotes are literal data and cannot hide a semicolon.
-        if (!work.spend(line.size()*2+128)) return {};
+        // RFC 0031 E5: the per-statement fee folds into the parse entry fee.
         bool quoted = false;
         bool escaped = false;
         bool config = false;
@@ -2010,10 +2069,8 @@ std::optional<Sequence> parse(std::string_view source, Work& work) {
                 if (*atom != 0) { at += *atom - 1; continue; }
                 // INITIAL may begin again after a semicolon. Only a blank
                 // current statement prefix owns this standalone comment.
-                if (!work.spend(at - start + 1)) return {};
                 if (trim(line.substr(start, at - start)).empty()) {
                     const auto tail = line.substr(at);
-                    if (!work.spend(tail.size())) return {};
                     // Primary preprocessing turns CR into a physical LF; do
                     // not swallow possible business after that unreviewed split.
                     if (tail.find('\r') != std::string_view::npos) return {};
@@ -2130,11 +2187,24 @@ bool new_role_figure(Canvas& canvas, const Box& box, Role role) {
 }
 
 std::optional<std::vector<std::string>> layout(Sequence& diagram, Work& work) {
-    if (!work.spend(diagram.events.size() + diagram.participants.size() + diagram.messages.size() +
-                    diagram.notes.size() + diagram.fragments.size() + diagram.groups.size())) return {};
     if (diagram.participants.empty() && diagram.fragments.empty()) return std::vector<std::string>{""};
+    // RFC 0031 E5: one declaration-count boundary fee dominates the former
+    // per-event/participant visit charges and the per-label-byte scans below
+    // (participant text, message number+label, pack_label atoms at up to
+    // 20/byte for a one-byte atom, each label validated <= kLabelLimit).
+    std::size_t total_label_bytes = 0;
+    for (const auto& participant : diagram.participants) total_label_bytes += participant.text.size();
+    for (const auto& message : diagram.messages)
+        total_label_bytes += message.number.size() + 2u + message.text.size();
+    const std::size_t counts = diagram.events.size() + diagram.participants.size() +
+                               diagram.messages.size() + diagram.notes.size() +
+                               diagram.fragments.size() + diagram.groups.size();
+    constexpr std::size_t kLayoutPerLabelByte = 20u;
+    constexpr std::size_t kLayoutPerCount = 200u;
+    if (total_label_bytes > (std::numeric_limits<std::size_t>::max() - counts * kLayoutPerCount) /
+            kLayoutPerLabelByte ||
+        !work.spend(kLayoutPerLabelByte * total_label_bytes + kLayoutPerCount * counts)) return {};
     if (diagram.has_wrapped_labels) for (auto& actor : diagram.participants) {
-        if (!work.spend()) return {};
         if (!actor.wrapped) continue;
         auto packed = sequence_pack_label(*actor.wrapped, 12, {}, work);
         if (!packed) return {};
@@ -2143,7 +2213,6 @@ std::optional<std::vector<std::string>> layout(Sequence& diagram, Work& work) {
     std::vector<std::size_t> active_depth(diagram.participants.size()),max_depth(diagram.participants.size());
     bool has_activation = false;
     for (const auto& event : diagram.events) {
-        if (!work.spend()) return {};
         if (event.kind == EventKind::Activate) {
             has_activation = true;
             max_depth[event.index] = std::max(max_depth[event.index], ++active_depth[event.index]);
@@ -2158,7 +2227,6 @@ std::optional<std::vector<std::string>> layout(Sequence& diagram, Work& work) {
         std::size_t glyphs = 0, cells = 0;
         const auto rows = label_rows(label);
         for (const auto row : rows) {
-            if (!work.spend(row.size())) return {};
             glyphs += ftxui::Utf8ToGlyphs(std::string(row)).size();
             cells += static_cast<std::size_t>(ftxui::string_width(std::string(row)));
         }
@@ -2175,7 +2243,6 @@ std::optional<std::vector<std::string>> layout(Sequence& diagram, Work& work) {
     for (const auto& participant : diagram.participants) {
         header_height = std::max(header_height, static_cast<int>(label_rows(participant.text).size()) + 2);
         if (participant.role != Role::Participant && participant.role != Role::Actor) {
-            if (!work.spend()) return {};
             has_new_role = true; figure_rows = std::max(figure_rows, role_height(participant.role));
         }
     }
@@ -2195,7 +2262,7 @@ std::optional<std::vector<std::string>> layout(Sequence& diagram, Work& work) {
         const int source_gap = std::max(7, longest + 4);
         int content = 0;
         for (std::size_t n = 0; n < diagram.participants.size(); ++n) {
-            if (!work.spend(diagram.participants[n].text.size() * 3 + 1) || diagram.groups.front().actors[n] != n) return {};
+            if (diagram.groups.front().actors[n] != n) return {};
             content += std::max(7, label_width(diagram.participants[n].text) + 4);
             if (n + 1 < diagram.participants.size()) content += source_gap;
         }
@@ -2204,7 +2271,6 @@ std::optional<std::vector<std::string>> layout(Sequence& diagram, Work& work) {
             const int node = std::max(7, label_width(diagram.participants[n].text) + 4);
             const int center = left + node / 2;
             for (std::size_t m = 0; m < diagram.messages.size(); ++m) {
-                if (!work.spend()) return {};
                 const auto& message = diagram.messages[m];
                 if (!message.wrapped && message.from == n && message.to == n)
                     content = std::max(content, center + std::max(4, label_width(labels[m]) + 3) + 2);
@@ -2256,7 +2322,6 @@ std::optional<std::vector<std::string>> layout(Sequence& diagram, Work& work) {
             // Reuse the existing local gaps only for a measured excess.
             int conservative=0,last_center=0;
             for (const auto& participant:diagram.participants) {
-                if (!work.spend(participant.text.size()*3+1)) return {};
                 const int node_width=std::max(7,label_width(participant.text)+4);
                 last_center=conservative+node_width/2;
                 conservative+=node_width+gap;
@@ -2276,13 +2341,11 @@ std::optional<std::vector<std::string>> layout(Sequence& diagram, Work& work) {
             boxes.reserve(count); centers.reserve(count);
             std::vector<int> gaps(count ? count - 1 : 0, 7);
             for (const auto& participant : diagram.participants) {
-                if (!work.spend(participant.text.size() * 3 + 1)) return {};
                 boxes.push_back({0, figure_rows, std::max(7, label_width(participant.text) + 4),
                                  static_cast<int>(label_rows(participant.text).size()) + 2});
             }
             for (std::size_t n = 0; n < diagram.messages.size(); ++n) {
                 if (diagram.messages[n].wrapped) continue;
-                if (!work.spend(labels[n].size() * 3 + 1)) return {};
                 const auto& message = diagram.messages[n];
                 const auto first = std::min(message.from, message.to);
                 if (first + 1 >= count) continue; // Existing last-self extent remains below.
@@ -2757,7 +2820,8 @@ std::optional<std::vector<std::string>> layout(Sequence& diagram, Work& work) {
 } // namespace
 
 std::optional<std::vector<std::string>> sequence_layout(std::string_view source, Work& work) {
-    if (!work.spend(source.size())) return {};
+    // RFC 0031 E5: the parse boundary fee charged inside parse() dominates
+    // the former entry charge here.
     auto sequence = parse(source, work);
     if (!sequence) return {};
     auto lines = layout(*sequence, work);

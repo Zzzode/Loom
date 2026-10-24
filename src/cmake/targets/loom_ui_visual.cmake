@@ -42,7 +42,13 @@ target_sources(loom_ui_visual PRIVATE
     ui/visual/mermaid_sequence_impl.cpp
     ui/visual/mermaid_charts_impl.cpp
     ui/visual/mermaid_gitgraph_impl.cpp
-    ui/visual/mermaid_relations_impl.cpp
+    # Relations family split core + class/er/state/requirement implementation
+    # units (RFC 0031 E3): single module loom.ui.visual.mermaid.
+    ui/visual/mermaid_relations_core_impl.cpp
+    ui/visual/mermaid_class_impl.cpp
+    ui/visual/mermaid_er_impl.cpp
+    ui/visual/mermaid_state_impl.cpp
+    ui/visual/mermaid_requirement_impl.cpp
     # HTML serializer for CommonMark/GFM conformance testing.
     ui/visual/markdown_html_impl.cpp
 )

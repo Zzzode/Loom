@@ -19,6 +19,7 @@
         "CMAKE_CXX_EXTENSIONS": "OFF",
         "CMAKE_CXX_SCAN_FOR_MODULES": "ON",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/cmake/LinkCompileCommands.cmake",
         "LOOM_BUILD_JOBS": "0",
         "LOOM_LINK_JOBS": "0",
         "LOOM_SCAN_JOBS": "4",

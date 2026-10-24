@@ -1,0 +1,1762 @@
+{
+  "schema": "e6c_mandatory_gap_roster/v1",
+  "description": "RFC 0031 E6c reviewed ledger of mandatory-completion capability gaps still open in the native terminal Mermaid renderer. Generated from serialized report mandatory_gaps arrays, independently audited row by row, then frozen by byte size and SHA-256 in tests/support/mermaid_gap_roster.hpp. Renderer output is not expectation evidence: every change here requires ledger review.",
+  "review": {
+    "status": "reviewed",
+    "date": "2026-10-24",
+    "phase": "RFC 0031 E6c",
+    "note": "Every row audited against its converted reporter, report and pinned authority source: exact error-message mapping for official_matrix, frozen ids/outcomes for the ten id/name/ordinal-keyed gates, counts reconciled with strict EXPECT pins."
+  },
+  "gates": {
+    "official_matrix": [
+      {
+        "fixture": "class-diagram/nightly-check/2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality-2.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/pr-check/2-should-render-a-simple-class-diagrams-with-cardinality-3.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-dark-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-color-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-color-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-dark-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-color-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-color-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/dark-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "generic_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/default-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "generic_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/forest-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "generic_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-dark-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-color-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-color-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "mapped_positive_still_source"
+        ]
+      },
+      {
+        "fixture": "class-diagram/visual-check/neutral-theme.mmd",
+        "track": "original",
+        "gaps": [
+          "generic_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "conf-and-directives/pr-check/no-config-use-default.mmd",
+        "track": "original",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "er-diagram/nightly-check/should-render-relationship-labels-with-line-breaks.mmd",
+        "track": "original",
+        "gaps": [
+          "er206_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "er-diagram/visual-check/an-er-diagram-with-relationships-with-unicode-text-default.mmd",
+        "track": "original",
+        "gaps": [
+          "er206_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "er-diagram/visual-check/an-er-diagram-with-relationships-with-unicode-text-elk-layout.mmd",
+        "track": "original",
+        "gaps": [
+          "er206_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "er-diagram/visual-check/an-er-diagram-with-unicode-text-default.mmd",
+        "track": "original",
+        "gaps": [
+          "er206_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "er-diagram/visual-check/an-er-diagram-with-unicode-text-elk-layout.mmd",
+        "track": "original",
+        "gaps": [
+          "er206_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "er-diagram/visual-check/relationship-labels-with-line-breaks-elk-layout.mmd",
+        "track": "original",
+        "gaps": [
+          "er206_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/8292-elk-edge-label-jog.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/2050-dagre-handling-of-different-rendering-direction-in-subgraphs.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/2050-dagre-handling-of-different-rendering-direction-in-subgraphs.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/2388-dagre-handling-default-in-the-node-name.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/4-dagre-length-of-edges.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/4-dagre-length-of-edges.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/54-dagre-handle-nested-subgraphs-with-outgoing-links.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/6088-6-should-handle-diamond-shape-intersections.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/74-dagre-handle-labels-for-multiple-edges-from-and-to-the-same-couple-of-nodes.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/sub-graphs.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/handdrawn/should-honor-minimum-edge-length-as-specified-by-the-user.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-line-breaks.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-trapezoid-and-inverse-trapezoid-vertex-options.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/handdrawn/should-render-labels-with-numbers-at-the-start.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/handdrawn/should-render-subgraphs-with-a-title-starting-with-a-digit.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/redux-color-subgraphs/01-should-render-subgraphs-subgraph-containers.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/redux-color-subgraphs/05-should-render-subgraphs-subgraph-containers.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/redux-color-subgraphs/09-should-render-subgraphs-subgraph-containers.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/redux-color-subgraphs/13-should-render-subgraphs-subgraph-containers.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/pr-check/1-shapes-layout-default.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/pr-check/2-layout-dagre-subgraphs.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/pr-check/3-layout-elk-subgraphs.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/10-should-render-subgraphs-with-a-title-starting-with-a-digit.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/2050-handling-of-different-rendering-direction-in-subgraphs.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/2050-handling-of-different-rendering-direction-in-subgraphs.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/2388-handling-default-in-the-node-name.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/3-should-render-a-simple-flowchart-with-line-breaks.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/35-should-honor-minimum-edge-length-as-specified-by-the-user.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/4-length-of-edges.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/4-should-render-a-simple-flowchart-with-trapezoid-and-inverse-trapezoid-vertex-options.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/4b-labeled-open-edges-should-not-have-arrowheads.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/5064-should-render-when-subgraph-child-has-links-to-outside-node-and-subgraph.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/5064-should-render-when-subgraph-child-has-links-to-outside-node-and-subgraph.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/54-handle-nested-subgraphs-with-outgoing-links.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/55-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/55-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/57-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/57-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/69-should-render-subgraphs-with-adhoc-list-headings.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/74-handle-labels-for-multiple-edges-from-and-to-the-same-couple-of-nodes.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/8-should-render-labels-with-numbers-at-the-start.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/issue-4648-nested-subgraph-with-external-connection.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/issue-4648-nested-subgraph-with-external-connection.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/issue-4648-sibling-subgraphs-with-different-directions-and-external-connections.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/should-render-a-diamond-shaped-node-using-shape-config.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/should-render-a-rounded-rectangle-and-a-normal-rectangle.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/should-render-a-stadium-shaped-node.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/should-render-subgraphs-with-title-margins-set-lr-and-htmllabels-set-to-false.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/should-render-subgraphs-with-title-margins-set-lr.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/should-render-subgraphs-with-title-margins-set-td.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/subgraph-titles-wider-than-children.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/visual-check/v2-18-should-render-nested-subgraphs-with-edge-from-cluster-containing-extractable-subgraph.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd",
+        "track": "original",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      }
+    ],
+    "merman_xy102": [
+      {
+        "id": "merman/0cfc570b349a718a0f18",
+        "observed": "source_fallback",
+        "profile": "indexed_complete_category_disclosure_profile_pending"
+      },
+      {
+        "id": "merman/1c6eefd22f3dc00ae3fc",
+        "observed": "source_fallback",
+        "profile": "ragged_per_series_numeric_coordinates_profile_pending"
+      },
+      {
+        "id": "merman/2a560d9f1a4a77ccb143",
+        "observed": "source_fallback",
+        "profile": "partial_or_hidden_axis_profile_pending"
+      },
+      {
+        "id": "merman/2b48cb647797484bdb43",
+        "observed": "source_fallback",
+        "profile": "named_singleton_owner_profile_pending"
+      },
+      {
+        "id": "merman/3ed4094769d676b210bb",
+        "observed": "source_fallback",
+        "profile": "partial_or_hidden_axis_profile_pending"
+      },
+      {
+        "id": "merman/4230c2e1a5ded0d65e31",
+        "observed": "source_fallback",
+        "profile": "partial_or_hidden_axis_profile_pending"
+      },
+      {
+        "id": "merman/4bfa9b0b6ff611a098f1",
+        "observed": "source_fallback",
+        "profile": "partial_or_hidden_axis_profile_pending"
+      },
+      {
+        "id": "merman/7c40b524079c65f8b63f",
+        "observed": "source_fallback",
+        "profile": "named_singleton_owner_profile_pending"
+      },
+      {
+        "id": "merman/804c98ab5c760b722e99",
+        "observed": "source_fallback",
+        "profile": "partial_or_hidden_axis_profile_pending"
+      },
+      {
+        "id": "merman/8b87d96bf3d739887fc7",
+        "observed": "candidate_art",
+        "profile": "directed_reverse_domain_profile_pending"
+      },
+      {
+        "id": "merman/95713fa70777f7bda028",
+        "observed": "candidate_art",
+        "profile": "directed_reverse_domain_profile_pending"
+      },
+      {
+        "id": "merman/aa1b960c08021c182bc4",
+        "observed": "source_fallback",
+        "profile": "ragged_per_series_numeric_coordinates_profile_pending"
+      },
+      {
+        "id": "merman/c72edeefc2511714d434",
+        "observed": "source_fallback",
+        "profile": "retained_null_band_slot_profile_pending"
+      },
+      {
+        "id": "merman/d27d99be2e8f56c3b6d4",
+        "observed": "source_fallback",
+        "profile": "extended_line_keys_and_overlap_sets_profile_pending"
+      },
+      {
+        "id": "merman/e129388167382a04e9f9",
+        "observed": "source_fallback",
+        "profile": "unknown_plotBorderWidth_profile_unresolved"
+      },
+      {
+        "id": "merman/e38d2009076692e2096a",
+        "observed": "source_fallback",
+        "profile": "partial_or_hidden_axis_profile_pending"
+      },
+      {
+        "id": "merman/e52cdbcd37786e88ebc9",
+        "observed": "source_fallback",
+        "profile": "extended_line_keys_and_overlap_sets_profile_pending"
+      },
+      {
+        "id": "merman/ec60b8a277bb36d02d78",
+        "observed": "source_fallback",
+        "profile": "indexed_complete_category_disclosure_profile_pending"
+      },
+      {
+        "id": "merman/f5f012ca4e7055701b83",
+        "observed": "source_fallback",
+        "profile": "inside_outside_or_terminal_value_label_profile_pending"
+      },
+      {
+        "id": "merman/f6e1865fc70d2c098e9c",
+        "observed": "candidate_art",
+        "profile": "directed_reverse_domain_profile_pending"
+      }
+    ],
+    "class481": [
+      {
+        "id": "mmdflux/850c81da7b98241272f8",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "mmdflux/1139301835dc73551c93",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "mmdflux/43830537eded115851b9",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "mmdflux/8b3e4ab50cfc9f0c7cec",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/73e5b06922c1fbcd9e72",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/d8c3667378bb71d4aec1",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/01f53b9e79db0fe31e23",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/01fe0886b54ac8f881ae",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/08d9006ad21e20c2a5fa",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/09b0e7b8cbd130ea7195",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/09b693ce13b0bac11862",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/0bb1ad5707d9ec3ecc6a",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/0c32afb9ba913bb4f266",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/0cb771b313d751e31782",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/0d33a2afb95c3e4ca939",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/0df8a615a40112bf8510",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/0e809f8b629ea7296b4b",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/0f597b75730642f53afd",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/10d26810ef6f00574997",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/10fe849cd7de71a86d19",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/14b60a4b4087a638ad3b",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/1627e83290ef295ed4e4",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/1f32207391d91587b9fd",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/21b5f61fb6136396b37f",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/228434f17ea5ecd4da9d",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/23094777645be48261cc",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/2462b37935563eb70c78",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/2b204bb8c16f1dc17f0f",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/2bbbbba6c61e330c4a95",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/2c745b1c95beee970988",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/2cf1afc1d08b25353073",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/2d2e70a6d4d7aef668d2",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/2e4cbf0a69a59484444a",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/2e5dd5e142a8ec7f1424",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/30fcb5b2a384228a34cb",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/337b27ab213729fdaaf0",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/35072ea890247cd8e628",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/375e710c9bd06130c04d",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/386aae76a09b8e87eda6",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/3ba113b066012bbe9f60",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/3ff05492b486d2dd45f1",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/40c94835387cbaf6b4ac",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/40f89ae5df1db908d0bf",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/43a1ed833e8d34ed0a0a",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/47385203edd898b4210d",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/4e28fe87f5d20128e2fa",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/4f0a7a26f2b9a794748c",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/4fa7040920669722d525",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/500154a2ebe2ea23e19e",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/54140eacf2e26753667d",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/5614bf8a71d246a6091e",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/5974d9abfc8f91652b9b",
+        "outcome": "complete_source_positive_unmet"
+      },
+      {
+        "id": "merman/5afda0e9e5d4408438f8",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/5b3689aa2f591243ff5d",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/5cba209973b1f362789a",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/618353c4e48dac71d499",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/6490c8785058ba40c35c",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/6580525067b17c5d261a",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/66b4524a05053304e644",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/689177d12cef44f246e9",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/69e8f3bf67d48c443c68",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/6ca3be19c9791fea8d17",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/6e4ab5dd00a04691634c",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/6f3cbbe0ca98e2e652b4",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/73500fcfdc6ba76a69dd",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/73d91578730d0ea54643",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/77f8647587a9fd03e981",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/78326fcaea2c31e718f8",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/7bac5ecf004fc807bff7",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/7e062883d8272d776f54",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/81691e2a29765346e899",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/868293f37711aaac3a32",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/86f50cf83ec10fa2ffab",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/87ef9ceacee74158a925",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/8b617777a9ad567d7d6f",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/8bf75bf2d364a9e523d3",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/8c36fe51879439abe025",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/8c5c676ca78ec3b2fd2e",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/8cd718bb5e87b9444bbf",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/908fa9fdc4e08f5eaf29",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/93da4f2c6d26528cab09",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/95fa272c072ba3d7a449",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/99ac23c537d2e7bf6a7e",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/a1aa7f03fd18eb73792c",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/a254b69141639fa8b045",
+        "outcome": "complete_source_positive_unmet"
+      },
+      {
+        "id": "merman/a49bee4b33a1079e71de",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/a5595c5b92983f9fefd6",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/a5b45904a3ca34bd411b",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/a69f1bdd926c240ab31d",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/adf91b9780856ecf8a61",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/ae620721ca51b322f2ac",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/ae91d8c13908d53c28fb",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/af6ad6c44a3f876349cb",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/b06c5b3c315577675c07",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/b62acbbdfe2d84a7105c",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/b6cffc13df2e67e21679",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/b748773195c45c55088b",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/b8a93a81b230ea1ad760",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/ba47c9426936503b3519",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/bc06236e060fb6145634",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/bc3212d092aba7ad4453",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/bce309d85859d0359b6e",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/c50650cbac88ef419784",
+        "outcome": "complete_source_positive_unmet"
+      },
+      {
+        "id": "merman/c5aa3d328205e4f40dea",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/c8b9d333edb5ae452854",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/ca0594bc7b3e7e3de6d0",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/cd2c5b320a8731144014",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/cdee467071837f2e5d94",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/d14c6b557bcd5fb31e57",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/d4ff3af661dcb48a2a18",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/d62dbee645235428c39d",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/d767472395cdecac7d44",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/d78faa229106248f2910",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/d8142d901771e8497336",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/db4bcf506c8e2b471334",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/dc527f04b75083402eea",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/dd185ece3802ff93890f",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/df1c2a1605cfaf5dbf81",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/e070c7a72635c1195476",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/e3834de4760b3583c40c",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/e45ebd0853f94b656ac8",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/e47afaa4f10f2ba8a972",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/e5b6ad8475a25e2f60d7",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/e5f34cf8820d212e4765",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/e78858a50692bc74dac2",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/e940979a4f6fbad2ac4d",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/ed40b5ca664684676160",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/ee54f9f5b493f4830947",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/f09ef6870564e33a7df2",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/f0a52afe5b35fa3bf44a",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/f29da21f1bfd511e9e3c",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/f49d449fe7895f9421f0",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/f5b5ec284aba362a27f7",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/f60015c167e5a12fe2f2",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/f91449deb55589d824aa",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/f9d2058b636b79a59949",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/f9e7430b121dba818c60",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/fa7e2db4c9f00796ab9e",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/fb726beeffa03f0dc1ce",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      },
+      {
+        "id": "merman/ffce12549d2ae52325bf",
+        "outcome": "remaining_whole_source_or_native_protocol_pending"
+      }
+    ],
+    "class285": [
+      {
+        "fixture": "class-diagram/nightly-check/10-should-render-a-simple-class-diagram-with-clickable-callback-2.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/10-should-render-a-simple-class-diagram-with-clickable-callback-3.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/10-should-render-a-simple-class-diagram-with-clickable-callback.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/13-should-render-a-simple-class-diagram-with-css-classes-applied-2.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/13-should-render-a-simple-class-diagram-with-css-classes-applied-3.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/13-should-render-a-simple-class-diagram-with-css-classes-applied.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/14-should-render-a-simple-class-diagram-with-css-classes-applied-directly-2.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/14-should-render-a-simple-class-diagram-with-css-classes-applied-directly-3.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/14-should-render-a-simple-class-diagram-with-css-classes-applied-directly.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/15-should-render-a-simple-class-diagram-with-css-classes-applied-to-multiple-classes.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes-2.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality-2.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link-2.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link-3.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-10-should-render-a-simple-class-diagram-with-clickable-callback.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-13-should-render-a-simple-class-diagram-with-css-classes-applied.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-14-should-render-a-simple-class-diagram-with-css-classes-applied-directly.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-9-should-render-a-simple-class-diagram-with-clickable-link.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-style-definition.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-10-should-render-a-simple-class-diagram-with-clickable-callback.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-13-should-render-a-simple-class-diagram-with-css-classes-applied.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-14-should-render-a-simple-class-diagram-with-css-classes-applied-directly.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-9-should-render-a-simple-class-diagram-with-clickable-link.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-style-definition.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition-2.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/pr-check/2-should-render-a-simple-class-diagrams-with-cardinality-3.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-dark-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-color-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-color-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-dark-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-color-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-color-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/dark-theme.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/visual-check/default-theme.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/visual-check/forest-theme.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-dark-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-color-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-color-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-theme.mmd",
+        "outcome": "mandatory_complete_positive_unmet"
+      },
+      {
+        "fixture": "class-diagram/visual-check/neutral-theme.mmd",
+        "outcome": "whole_source_semantic_profile_pending"
+      }
+    ],
+    "class_endpoint29": [
+      {
+        "id": "merman/5974d9abfc8f91652b9b",
+        "outcome": "source_positive_unmet"
+      },
+      {
+        "id": "merman/a254b69141639fa8b045",
+        "outcome": "source_positive_unmet"
+      },
+      {
+        "id": "merman/c50650cbac88ef419784",
+        "outcome": "source_positive_unmet"
+      }
+    ],
+    "state85": [
+      {
+        "id": "merman/b91ddcfa6c0a3e962274",
+        "outcome": "mandatory_source_positive_unmet"
+      },
+      {
+        "id": "merman/2419c8d227ab4bcb368d",
+        "outcome": "choice_display_contract_pending"
+      },
+      {
+        "id": "merman/2f8341799bbc976b1bf7",
+        "outcome": "mandatory_source_positive_unmet"
+      },
+      {
+        "id": "merman/84e5bf3b383ddfe16e63",
+        "outcome": "mandatory_positive_source_profile_unmet"
+      },
+      {
+        "id": "merman/b0fe0fab825fd9af4bfa",
+        "outcome": "mandatory_positive_source_profile_unmet"
+      },
+      {
+        "id": "merman/c3dea945a1e89691f12d",
+        "outcome": "mandatory_source_positive_unmet"
+      },
+      {
+        "id": "mmdflux/8a47982e6df24de2db60",
+        "outcome": "mandatory_source_positive_unmet"
+      },
+      {
+        "id": "mmdflux/b1da815a268f93b34b58",
+        "outcome": "mandatory_source_positive_unmet"
+      },
+      {
+        "id": "mmdflux/34165c91ad7915e8875a",
+        "outcome": "mandatory_positive_source_profile_unmet"
+      },
+      {
+        "id": "mmdflux/10962d83070bb48b3d2f",
+        "outcome": "mandatory_positive_source_profile_unmet"
+      },
+      {
+        "id": "mmdflux/17d68bbfe39896a12f20",
+        "outcome": "mandatory_positive_source_profile_unmet"
+      },
+      {
+        "id": "mmdflux/b1bd9a4530b64fee3288",
+        "outcome": "mandatory_positive_source_profile_unmet"
+      },
+      {
+        "id": "mmdflux/c0f35284a5ac9e8b9496",
+        "outcome": "mandatory_positive_source_profile_unmet"
+      },
+      {
+        "id": "termaid/17f03f94ca1a30b6bf67",
+        "outcome": "original_malformed_error_API_policy_pending"
+      }
+    ],
+    "class_caption_starvation8": [
+      {
+        "name": "unequal_multiline_and_marker",
+        "outcome": "mandatory_complete_positive_source_unmet"
+      },
+      {
+        "name": "foreign_owner_keeps_caption",
+        "outcome": "mandatory_complete_positive_source_unmet"
+      }
+    ],
+    "state_reverse_escape": [
+      {
+        "name": "original_b91_whole_immutable",
+        "outcome": "mandatory_complete_contract_unmet"
+      }
+    ],
+    "class_notes18": [
+      {
+        "application_ordinal": 272,
+        "outcome": "original_application_wide_source_fallback"
+      },
+      {
+        "application_ordinal": 273,
+        "outcome": "original_application_wide_source_fallback"
+      },
+      {
+        "application_ordinal": 274,
+        "outcome": "original_application_wide_source_fallback"
+      },
+      {
+        "application_ordinal": 275,
+        "outcome": "original_application_wide_source_fallback"
+      },
+      {
+        "application_ordinal": 276,
+        "outcome": "original_application_wide_source_fallback"
+      },
+      {
+        "application_ordinal": 277,
+        "outcome": "original_application_wide_source_fallback"
+      }
+    ],
+    "requirement11_p1p6": [
+      {
+        "id": "P1",
+        "outcome": "geometry_marker_route_label_or_unclaimed_ink",
+        "error": "Requirement11 mandatory control may not fallback"
+      }
+    ],
+    "requirement11_overflow": [
+      {
+        "index": 0,
+        "outcome": "verification_error",
+        "error_prefix": "Requirement11 whole overflow peer source fallback"
+      }
+    ]
+  }
+}

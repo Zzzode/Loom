@@ -97,6 +97,21 @@ xychart 2/48, gitGraph 55/135. Sequence is the only fully covered family.
 
 Tasks are ordered by leverage (shared root cause first); counts are the
 frozen, reviewed gap rows each task must retire.
+SCOPE CORRECTION (T1 recon, 2026-10-24): the Flow400 "346 pending = router debt"
+premise in the first draft of this table was wrong. A bit-faithful probe re-derived
+each fallback against the production planner: only about **44 / 337 observed flow
+fallbacks (~13%) are pure layout-router debt** (38 of those 44 fail at edge search,
+5 at placement width), and roughly **285-295 (~85%) are upstream parser/envelope/
+grammar blockers** the router never sees — ~102 init directives, ~37 frontmatter
+config/title, ~66 `@{shape}` tokens, ~50 HTML/icon labels and ~10-20 link-glyph/
+raw-string rows; those belong to RFC 0030 Phase D (style/HTML projection) and future
+body-grammar work, NOT to T1. The genuinely router-rescuable set is therefore
+**gitGraph 14 geometric rows + ~44 topology-bound flow rows + ~23 subgraph/labeled
+rows**, and 4 dense graphs (2 gitGraph TB/BT at 276 columns, 2 flow placement-width)
+are hard 240-column limits that must keep whole-source. The per-task counts below are
+retained but must be read with this narrower scope; T1's true first deliverable is
+the gitGraph 14-row set, not Flow400.
+
 
 | Task | Scope | Frozen gap rows | Root cause / work |
 |---|---|---:|---|

@@ -189,6 +189,13 @@ gtest_discover_tests(test_mermaid_envelope
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 120)
 
+add_executable(test_mermaid_probe test_mermaid_probe.cpp)
+target_link_libraries(test_mermaid_probe
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_probe
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 120)
+
 add_executable(test_mermaid_e2a_cohort test_mermaid_e2a_cohort.cpp)
 target_link_libraries(test_mermaid_e2a_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)

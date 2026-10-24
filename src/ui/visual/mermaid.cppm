@@ -384,4 +384,19 @@ std::optional<StateNoteBlock> state_note_block(std::string_view original,std::si
 std::optional<RequirementDiagram> parse_requirement(std::string_view source,Work& work);
 std::optional<RelationDiagram> project_requirement(const RequirementDiagram& parsed,Work& work);
 
+// RFC 0031 E4: ordered family probe classification, factored out of the
+// dispatcher. The scan is purely textual (it must not gate on parse_envelope,
+// which rejects shapes the textual classifier historically tolerated); the
+// execution switch spends the same charges the legacy flag cluster did.
+enum class MermaidProbeFamily : unsigned char {
+    Flow, Sequence, GitGraph, Class, Er, State, Requirement, Charts
+};
+struct MermaidProbeDecision {
+    MermaidProbeFamily family = MermaidProbeFamily::Charts;
+    bool class_envelope = false;
+    bool requirement_input = false;
+    std::size_t prepay = 0;
+};
+std::optional<MermaidProbeDecision> classify_mermaid(std::string_view source, Work& work);
+
 } // namespace loom::ui::mermaid::detail

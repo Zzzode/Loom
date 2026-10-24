@@ -2233,6 +2233,125 @@ std::optional<detail::FlowAsciiRows> detail::flow_ascii_rows(std::string_view so
     return ascii_flow_rows(source, work);
 }
 
+std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string_view source, Work& work) {
+    using detail::MermaidProbeDecision;
+    using detail::MermaidProbeFamily;
+
+    // ---- textual scan (byte-identical to the legacy header/peek loops) ----
+    auto remaining = source;
+    std::string_view header;
+    bool multiline_directive = false;
+    if (!work.spend(8u * sizeof(bool))) return std::nullopt;
+    bool class_envelope_seen = false, class_peek = false;
+    if (!work.spend(8u * sizeof(bool) + 40u)) return std::nullopt;
+    bool flow = false, requirement = false;
+    while (!remaining.empty()) {
+        const auto end = remaining.find('\n');
+        header = remaining.substr(0, end);
+        if (header.ends_with('\r')) header.remove_suffix(1);
+        header = trim(header);
+        while (header.starts_with(';')) header = trim(header.substr(1));
+        if (header.starts_with("%%{") && !header.ends_with("}%%")) multiline_directive = true;
+        if (header.starts_with("%%{") && header.ends_with("}%%")) class_envelope_seen = true;
+        if (!header.empty() && !header.starts_with("%%")) break;
+        if (end == std::string_view::npos) break;
+        remaining.remove_prefix(end + 1);
+    }
+    bool sequence = false, er = false, gitgraph = false, state = false;
+    std::size_t prefix_work = 0;
+    if (header == "---") {
+        auto peek = remaining;
+        bool opening = true;
+        bool closed = false;
+        while (!peek.empty()) {
+            const auto end = peek.find('\n');
+            auto line = peek.substr(0, end);
+            prefix_work += line.size() + 1;
+            peek = end == std::string_view::npos ? std::string_view{} : peek.substr(end + 1);
+            if (line.ends_with('\r')) line.remove_suffix(1);
+            if (opening) { opening = false; continue; }
+            if (!closed) {
+                if (line == "---") closed = true;
+                continue;
+            }
+            line = trim(line);
+            while (line.starts_with(';')) line = trim(line.substr(1));
+            if (line.starts_with("%%{") && !line.ends_with("}%%")) multiline_directive = true;
+            if (line.empty() || line.starts_with("%%")) continue;
+            if (!work.spend(line.size() * 2u + 5u * sizeof(bool) + 80u)) return std::nullopt;
+            flow = (line.starts_with("flowchart") &&
+                    (line.size() == 9u || line[9] == ' ' || line[9] == '\t')) ||
+                   (line.starts_with("graph") &&
+                    (line.size() == 5u || line[5] == ' ' || line[5] == '\t'));
+            sequence = line.starts_with("sequenceDiagram");
+            er = line.starts_with("erDiagram") &&
+                 (line.size() == 9 || line[9] == ' ' || line[9] == '\t');
+            requirement = requirement_prefix_header(line);
+            gitgraph = line.starts_with("gitGraph") &&
+                       (line.size() == 8u || line[8] == ' ' || line[8] == '\t' || line[8] == ':');
+            state = line == "stateDiagram-v2" || line == "stateDiagram";
+            if (line.starts_with("classDiagram")) {
+                if (!work.spend(line.size() + 32u)) return std::nullopt;
+                class_peek = class_prefix_header(line);
+            }
+            break;
+        }
+    }
+    // Legacy semantics: when the multiline-directive route runs it OVERWRITES
+    // (never ORs) the peeked class/sequence flags.
+    bool class_flag = class_peek;
+    if (multiline_directive && !sequence && !header.starts_with("sequenceDiagram")) {
+        const auto probe = sequence_prefix_route(source, work);
+        if (!probe) return std::nullopt; // Work exhaustion / hard reject
+        sequence = *probe == PrefixOwner::Sequence;
+        class_flag = *probe == PrefixOwner::Class;
+    }
+
+    // ---- ordered probes, first match wins; Charts is the terminal fallback ----
+    MermaidProbeDecision decision;
+
+    if (flow) {
+        decision.family = MermaidProbeFamily::Flow;
+        decision.prepay = prefix_work;
+        return decision;
+    }
+    if (header.starts_with("sequenceDiagram") || sequence) {
+        decision.family = MermaidProbeFamily::Sequence;
+        decision.prepay = sequence ? prefix_work : 0;
+        return decision;
+    }
+    if (header.starts_with("gitGraph") || gitgraph) {
+        decision.family = MermaidProbeFamily::GitGraph;
+        decision.prepay = gitgraph ? prefix_work : 0;
+        return decision;
+    }
+
+    // Relations family: the execution switch calls one relations_layout for
+    // all four; the subfamily label documents the probe order only.
+    const bool header_requirement = requirement_prefix_header(header);
+    const bool relations_owner =
+        header.starts_with("classDiagram") || header.starts_with("erDiagram") ||
+        header.starts_with("stateDiagram") || header_requirement ||
+        er || class_flag || requirement || state;
+    if (!relations_owner) {
+        decision.family = MermaidProbeFamily::Charts;
+        return decision;
+    }
+    if (header_requirement || requirement)
+        decision.family = MermaidProbeFamily::Requirement;
+    else if (class_flag || header.starts_with("classDiagram"))
+        decision.family = MermaidProbeFamily::Class;
+    else if (state || header.starts_with("stateDiagram"))
+        decision.family = MermaidProbeFamily::State;
+    else
+        decision.family = MermaidProbeFamily::Er;
+    decision.class_envelope =
+        class_flag || (class_envelope_seen && class_prefix_header(header));
+    decision.requirement_input = header_requirement || requirement;
+    decision.prepay = (er || class_flag || requirement || state) ? prefix_work : 0;
+    return decision;
+}
+
 std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Element fallback) {
     if (!fallback || source.empty() || source.size() > kSourceLimit) return {};
     Work work;
@@ -2240,103 +2359,42 @@ std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Ele
     if (const auto diagram = parse(source, work))
         lines = flow_layout(*diagram, work);
     else {
-        auto remaining = source;
-        std::string_view header;
-        bool multiline_directive = false;
-        // Two new dispatch flags have real fixed initialization/access work.
-        if(!work.spend(8u*sizeof(bool)))return {};
-        bool class_envelope_seen=false,configured_class=false;
-        // Requirement adds one private routing predicate to this fallback
-        // path; it owns no shared configuration or parser state.
-        if (!work.spend(8u * sizeof(bool) + 40u)) return {};
-        bool configured_flow = false, configured_requirement = false;
-        while (!remaining.empty()) {
-            const auto end = remaining.find('\n');
-            header = remaining.substr(0, end);
-            if (header.ends_with('\r')) header.remove_suffix(1);
-            header = trim(header);
-            while (header.starts_with(';')) header = trim(header.substr(1));
-            if (header.starts_with("%%{") && !header.ends_with("}%%")) multiline_directive = true;
-            if(header.starts_with("%%{")&&header.ends_with("}%%"))class_envelope_seen=true;
-            if (!header.empty() && !header.starts_with("%%")) break;
-            if (end == std::string_view::npos) break;
-            remaining.remove_prefix(end + 1);
-        }
-        bool titled_sequence = false,configured_er = false;
-        // RFC 0031 E2a: frontmatter-bearing gitGraph/state sources classify on
-        // the first post-fence body line instead of falling through to charts.
-        bool configured_gitgraph = false, configured_state = false;
-        std::size_t prefix_work = 0;
-        if (header == "---") {
-            auto peek = remaining;
-            bool opening = true;
-            bool closed = false;
-            while (!peek.empty()) {
-                const auto end = peek.find('\n');
-                auto line = peek.substr(0, end);
-                prefix_work += line.size() + 1;
-                peek = end == std::string_view::npos ? std::string_view{} : peek.substr(end + 1);
-                if (line.ends_with('\r')) line.remove_suffix(1);
-                if (opening) { opening = false; continue; }
-                if (!closed) {
-                    if (line == "---") closed = true;
-                    continue;
-                }
-                line = trim(line);
-                while (line.starts_with(';')) line = trim(line.substr(1));
-                if (line.starts_with("%%{") && !line.ends_with("}%%")) multiline_directive = true;
-                if (line.empty() || line.starts_with("%%")) continue;
-                if (!work.spend(line.size() * 2u + 5u * sizeof(bool) + 80u)) return {};
-                configured_flow = (line.starts_with("flowchart") &&
-                    (line.size() == 9u || line[9] == ' ' || line[9] == '\t')) ||
-                    (line.starts_with("graph") && (line.size() == 5u || line[5] == ' ' || line[5] == '\t'));
-                titled_sequence = line.starts_with("sequenceDiagram");
-                configured_er = line.starts_with("erDiagram") &&
-                    (line.size() == 9 || line[9] == ' ' || line[9] == '\t');
-                configured_requirement = requirement_prefix_header(line);
-                configured_gitgraph = line.starts_with("gitGraph") &&
-                    (line.size() == 8u || line[8] == ' ' || line[8] == '\t' || line[8] == ':');
-                configured_state = line == "stateDiagram-v2" || line == "stateDiagram";
-                if(line.starts_with("classDiagram")){
-                    if(!work.spend(line.size()+32u))return {};
-                    configured_class=class_prefix_header(line);
-                }
-                break;
-            }
-        }
-        if (multiline_directive && !titled_sequence && !header.starts_with("sequenceDiagram")) {
-            const auto probe = sequence_prefix_route(source, work);
-            if (!probe) return {};
-            titled_sequence = *probe==PrefixOwner::Sequence;
-            configured_class = *probe==PrefixOwner::Class;
-        }
-        if (configured_flow) {
-            if (!work.spend(prefix_work)) return {};
+        // RFC 0031 E4: ordered family probes replace the mutable flag cluster.
+        // Classification is one textual scan; execution spends exactly the
+        // charges the legacy flags did. nullopt means the legacy route bailed
+        // on Work exhaustion before selecting an owner (whole-source result).
+        const auto decision = detail::classify_mermaid(source, work);
+        if (!decision) return {};
+        switch (decision->family) {
+        case detail::MermaidProbeFamily::Flow: {
+            if (!work.spend(decision->prepay)) return {};
             const auto body = flow_envelope_body(source, work);
             if (!body || !flow_envelope_parse_prepay(*body, work)) return {};
             const auto diagram = parse(*body, work, true);
             if (!diagram) return {};
             lines = flow_layout(*diagram, work);
+            break;
         }
-        else if (header.starts_with("sequenceDiagram") || titled_sequence) {
-            if (titled_sequence && !work.spend(prefix_work)) return {};
+        case detail::MermaidProbeFamily::Sequence:
+            if (decision->prepay && !work.spend(decision->prepay)) return {};
             lines = detail::sequence_layout(source, work);
-        }
-        else if (configured_gitgraph) {
-            if (!work.spend(prefix_work)) return {};
+            break;
+        case detail::MermaidProbeFamily::GitGraph:
+            if (decision->prepay && !work.spend(decision->prepay)) return {};
             lines = detail::gitgraph_layout(source, work);
-        }
-        else if (header.starts_with("gitGraph")) {
-            lines = detail::gitgraph_layout(source, work);
-        }
-        else if (header.starts_with("classDiagram") || header.starts_with("erDiagram") || header.starts_with("stateDiagram") ||
-                 requirement_prefix_header(header) || configured_er || configured_class || configured_requirement || configured_state) {
-            if ((configured_er||configured_class||configured_requirement||configured_state) && !work.spend(prefix_work)) return {};
-            lines = detail::relations_layout(source, work,configured_class||(class_envelope_seen&&class_prefix_header(header)),
-                requirement_prefix_header(header)||configured_requirement);
-        }
-        else
+            break;
+        case detail::MermaidProbeFamily::Class:
+        case detail::MermaidProbeFamily::Er:
+        case detail::MermaidProbeFamily::State:
+        case detail::MermaidProbeFamily::Requirement:
+            if (decision->prepay && !work.spend(decision->prepay)) return {};
+            lines = detail::relations_layout(source, work,
+                decision->class_envelope, decision->requirement_input);
+            break;
+        case detail::MermaidProbeFamily::Charts:
             lines = detail::charts_layout(source, work);
+            break;
+        }
     }
     return finish_mermaid(std::move(lines), std::move(fallback));
 }

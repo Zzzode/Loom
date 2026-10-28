@@ -524,7 +524,36 @@ inline bool class_endpoint_text_domain(std::string_view text,Work& work){
         std::ranges::all_of(text,[](unsigned char c){return c=='\n'||(c>=0x20&&c<=0x7e);});
 }
 struct Trace {std::size_t a,b;std::array<int,3> strokes{};std::set<int> labels;std::vector<int> path;bool valid=true;};
-inline std::vector<std::string> check_scene(const Grid& grid,const Model& model,const std::vector<Rect>& outlines_,const std::vector<int>& assignment,Work& work,bool self_face_policy=false,const ClassPresentation* presentation=nullptr,std::string_view following_token=kRelationsFollowingToken,std::optional<int>* unclaimed_following_row=nullptr){
+// ER-only evidence from a complete successful scene assignment. The caller
+// keeps the referenced Grid/Model alive and unchanged; each mutant rematches.
+struct ErLabelBridge {
+    std::size_t relation_index=0;
+    int relation_order=0;
+    Rect label_box;
+    Point left,right;
+};
+class ErLabelContactsWitness {
+public:
+    ErLabelContactsWitness()=default;
+    ErLabelContactsWitness(const ErLabelContactsWitness&)=delete;
+    ErLabelContactsWitness& operator=(const ErLabelContactsWitness&)=delete;
+    [[nodiscard]] bool valid() const noexcept {return grid_&&model_;}
+    [[nodiscard]] const Grid* grid() const noexcept {return grid_;}
+    [[nodiscard]] const Model* model() const noexcept {return model_;}
+    [[nodiscard]] std::span<const ErLabelBridge> bridges() const noexcept {
+        return valid()?std::span<const ErLabelBridge>(bridges_):std::span<const ErLabelBridge>{};
+    }
+private:
+    const Grid* grid_=nullptr;
+    const Model* model_=nullptr;
+    std::vector<ErLabelBridge> bridges_;
+    friend std::vector<std::string> validate_impl(const Grid&,const Model&,Work&,bool,
+        const ClassPresentation*,bool,ClassCardWitness*,std::string_view,
+        std::optional<int>*,ErLabelContactsWitness*);
+};
+
+inline std::vector<std::string> check_scene(const Grid& grid,const Model& model,const std::vector<Rect>& outlines_,const std::vector<int>& assignment,Work& work,bool self_face_policy=false,const ClassPresentation* presentation=nullptr,std::string_view following_token=kRelationsFollowingToken,std::optional<int>* unclaimed_following_row=nullptr,std::vector<ErLabelBridge>* successful_er_bridges=nullptr){
+    if(successful_er_bridges)successful_er_bridges->clear();
     work.spend(4u*sizeof(std::string_view)+4u*sizeof(std::optional<int>)+4u*sizeof(void*)+64u);
     if(presentation&&!class_presentation_title(grid,*presentation,work))return {"Class presentation title prefix differs"};
     std::vector<std::string> errors;const auto total=model.entities.size();
@@ -794,6 +823,38 @@ inline std::vector<std::string> check_scene(const Grid& grid,const Model& model,
     };
     const auto demand_count=model.relations.size()+linked_notes.size();
     if(class_notes)work.spend(linked_notes.size()*sizeof(int)+128u);
+    // The ER-only eligibility check also runs inside the existing trace
+    // assignment search, so an invalid contact never hides a later solution.
+    auto er_contacts=[&](std::size_t n,const Trace& trace,std::vector<ErLabelBridge>* output)->std::string_view {
+        const auto& edge=model.relations[n];std::size_t bridged=0;
+        for(std::size_t i=1;i<trace.path.size();++i){
+            work.spend(32u);auto left=grid.point(trace.path[i-1]);auto right=grid.point(trace.path[i]);
+            if(std::abs(left.x-right.x)+std::abs(left.y-right.y)==1)continue;
+            if(left.y!=right.y||left.x==right.x)return "ER bridge witness has nonhorizontal jump";
+            if(left.x>right.x)std::swap(left,right);
+            const Label* owned=nullptr;
+            for(const int label:trace.labels){
+                work.spend(16u);const auto& candidate=labels[static_cast<std::size_t>(label)];
+                if(candidate.box.l==left.x&&candidate.box.r==right.x&&left.y>candidate.box.t&&left.y<candidate.box.b&&candidate.text==edge.label){
+                    if(owned)return "ER bridge witness has ambiguous label gap";owned=&candidate;
+                }
+            }
+            if(!owned||!(route_bits(left)&R)||!(route_bits(right)&L))
+                return "ER bridge witness lacks matched reciprocal label contacts";
+            for(const auto point:{left,right}){
+                for(std::size_t e=0;e<total;++e){work.spend(8u);if(entity(e).boundary(point)||entity(e).interior(point))return "ER bridge contact overlaps entity";}
+                for(std::size_t g=0;g<model.groups.size();++g){work.spend(8u);if(group(g).boundary(point))return "ER bridge contact overlaps group boundary";}
+                for(const auto& endpoint:ports)for(const auto marker:endpoint.marker_cells){work.spend(8u);if(marker==point)return "ER bridge contact overlaps marker";}
+            }
+            if(output){
+                work.spend(2u*sizeof(ErLabelBridge)+owned->box.shape.size()*4u+128u);
+                output->push_back({n,edge.order,owned->box,left,right});
+            }
+            ++bridged;
+        }
+        if(bridged!=trace.labels.size())return "ER bridge witness does not cover selected label";
+        return {};
+    };
     std::vector<bool> used(traces.size()),used_ports(ports.size()),used_path(grid.cells.size());std::vector<int> selected(demand_count,-1);
     // Every declared relation has two real endpoint ports and its own shaft.
     // Fork/join bars may own many distinct ports; reusing a physical head or
@@ -805,6 +866,7 @@ inline std::vector<std::string> check_scene(const Grid& grid,const Model& model,
             bool overlap=false;for(int cell:trace.path){work.spend();if(used_path[static_cast<std::size_t>(cell)]){overlap=true;break;}}if(overlap)continue;
             if(n<model.relations.size()){
                 if(!matches(model.relations[n],trace,false)&&!matches(model.relations[n],trace,true))continue;
+                if(successful_er_bridges&&!er_contacts(n,trace,nullptr).empty())continue;
             }else{
                 const auto [which,target]=linked_notes[n-model.relations.size()];
                 if(!matches_note(which,target,trace,false)&&!matches_note(which,target,trace,true))continue;
@@ -928,13 +990,35 @@ inline std::vector<std::string> check_scene(const Grid& grid,const Model& model,
         if(following&&y==*following)continue;
         for(int x=0;x<grid.width;++x){work.spend();const auto value=grid.at({x,y});if(value!=" "&&!value.empty()&&!claimed[static_cast<std::size_t>(grid.index({x,y}))])return {"Unclaimed text/control/marker/route glyph exposes a lost or extra fact"};}
     }
-    if(errors.empty()){
+    if(errors.empty()&&successful_er_bridges){
+        if(model.family!="er"||selected.size()!=model.relations.size())
+            return {"ER bridge witness requires exact ER relation selection"};
+        work.spend(2u*sizeof(std::vector<ErLabelBridge>)+model.relations.size()*sizeof(ErLabelBridge)+128u);
+        std::vector<ErLabelBridge> pending;pending.reserve(model.relations.size());
+        for(std::size_t n=0;n<model.relations.size();++n){
+            work.spend(32u);
+            const auto reason=er_contacts(n,traces[static_cast<std::size_t>(selected[n])],&pending);
+            if(!reason.empty())return {std::string(reason)};
+        }
+        // No allocation or fallible Work payment follows publication below.
+        work.spend(4u*sizeof(std::optional<int>)+4u*sizeof(void*)+64u);
+        if(unclaimed_following_row)*unclaimed_following_row=following;
+        successful_er_bridges->swap(pending);
+    }else if(errors.empty()){
         work.spend(4u*sizeof(std::optional<int>)+4u*sizeof(void*)+64u);
         if(unclaimed_following_row)*unclaimed_following_row=following;
     }
     return errors;
 }
-inline std::vector<std::string> validate_impl(const Grid& grid,const Model& model,Work& work,bool self_face_policy=false,const ClassPresentation* presentation=nullptr,bool state_descriptions=false,ClassCardWitness* successful_card=nullptr,std::string_view following_token=kRelationsFollowingToken,std::optional<int>* unclaimed_following_row=nullptr){
+inline std::vector<std::string> validate_impl(const Grid& grid,const Model& model,Work& work,bool self_face_policy=false,const ClassPresentation* presentation=nullptr,bool state_descriptions=false,ClassCardWitness* successful_card=nullptr,std::string_view following_token=kRelationsFollowingToken,std::optional<int>* unclaimed_following_row=nullptr,ErLabelContactsWitness* successful_er=nullptr){
+    if(successful_er){
+        successful_er->grid_=nullptr;successful_er->model_=nullptr;successful_er->bridges_.clear();
+        if(model.family!="er")throw std::runtime_error("ER bridge witness requires ER Model");
+        if(model.relations.size()>128)throw std::runtime_error("ER bridge witness relation limit exceeded");
+        work.spend(sizeof(ErLabelContactsWitness)+2u*sizeof(std::vector<ErLabelBridge>)+model.relations.size()*sizeof(ErLabelBridge)+256u);
+    }
+    std::unique_ptr<std::vector<ErLabelBridge>> er_candidate;
+    if(successful_er){er_candidate=std::make_unique<std::vector<ErLabelBridge>>();er_candidate->reserve(model.relations.size());}
     if(successful_card){*successful_card={};work.spend(sizeof(ClassCardWitness)+64u);if(model.family!="class"||!presentation)throw std::runtime_error("Class card witness requires presented Class Model");}
     work.spend(4u*sizeof(std::string_view)+8u*sizeof(std::optional<int>)+4u*sizeof(void*)+64u);
     std::optional<int> chosen_following;
@@ -989,7 +1073,7 @@ inline std::vector<std::string> validate_impl(const Grid& grid,const Model& mode
     std::vector<int> assignment(choices.size(),-1);std::vector<bool> used(frames.size());std::size_t tries=0;std::vector<std::string> last{"No exact semantic assignment"};
     auto assign=[&](auto&& self,std::size_t at)->bool{work.spend();if(++tries>10000)throw std::runtime_error("Relation identity assignment exhausted");if(at==choices.size()){
         work.spend(4u*sizeof(std::optional<int>)+64u);std::optional<int> candidate_following;
-        last=check_scene(grid,model,frames,assignment,work,self_face_policy,presentation,following_token,&candidate_following);
+        last=check_scene(grid,model,frames,assignment,work,self_face_policy,presentation,following_token,&candidate_following,er_candidate.get());
         if(last.empty()){work.spend(2u*sizeof(std::optional<int>)+8u);chosen_following=candidate_following;return true;}return false;
     }for(const int n:choices[at])if(!used[static_cast<std::size_t>(n)]){assignment[at]=n;used[static_cast<std::size_t>(n)]=true;if(self(self,at+1))return true;used[static_cast<std::size_t>(n)]=false;}return false;};
     if(assign(assign,0)){
@@ -1002,6 +1086,10 @@ inline std::vector<std::string> validate_impl(const Grid& grid,const Model& mode
         }
         work.spend(4u*sizeof(std::optional<int>)+4u*sizeof(void*)+64u);
         if(unclaimed_following_row)*unclaimed_following_row=chosen_following;
+        if(successful_er){
+            successful_er->bridges_.swap(*er_candidate);
+            successful_er->grid_=&grid;successful_er->model_=&model;
+        }
         return {};
     }return last;
 }

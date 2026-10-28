@@ -6,9 +6,9 @@
 
 namespace loom::test::mermaid_flow {
 
-inline constexpr std::size_t kFlow400ClassicAssetBytes = 11171u;
+inline constexpr std::size_t kFlow400ClassicAssetBytes = 19764u;
 inline constexpr std::string_view kFlow400ClassicAssetSha =
-    "78e63e8d6952a48a93df4787b06e026c83f8289fe23bda404a379256fe510d4e";
+    "9b8580bda97015356b3bd442c4a698a3cda1e6d686aec731d3d1820ec281f79d";
 
 struct Flow400ClassicDocuments { OracleWork asset_work; json::JsonDoc supplement; };
 
@@ -32,7 +32,7 @@ inline void flow400_classic_keys(JsonVal value,std::initializer_list<std::string
 inline std::size_t flow400_classic_expected(JsonVal row) {
     const auto ordinal=flow400_number(row.get("base_authority").get("ordinal"));
     const auto expected=flow400_number(row.get("native_requirement").get("exact_rejections"));
-    const std::size_t fixed=ordinal==244u?5u:ordinal==295u?4u:ordinal==376u?4u:0u;
+    const std::size_t fixed=ordinal==244u?5u:ordinal==41u?5u:(ordinal==13u||ordinal==40u||ordinal==295u||ordinal==376u)?4u:0u;
     flow400_require(fixed>0u&&expected==fixed,"Flow400 Classic exact mutation count");return fixed;
 }
 
@@ -58,6 +58,13 @@ inline void flow400_classic_envelope(JsonVal envelope,JsonVal row) {
         if(profile=="description_config_dagre") {
             flow400_require(ordinal==244u&&flow400_text(envelope.get("body_header"))=="flowchart TD","Flow400 Classic dagre body header");
             flow400_classic_keys(config,{"layout"},"dagre config");flow400_require(flow400_text(config.get("layout"))=="dagre","Flow400 Classic dagre config");
+        } else if(profile=="description_config_dagre_title_top_margin_zero") {
+            flow400_require((ordinal==13u&&flow400_text(envelope.get("body_header"))=="flowchart TD")||
+                ((ordinal==40u||ordinal==41u)&&flow400_text(envelope.get("body_header"))=="flowchart LR"),"Flow400 Classic titleTopMargin body header");
+            flow400_classic_keys(config,{"layout","flowchart"},"dagre titleTopMargin config");
+            flow400_require(flow400_text(config.get("layout"))=="dagre","Flow400 Classic titleTopMargin dagre config");
+            const auto flowchart=config.get("flowchart");flow400_classic_keys(flowchart,{"titleTopMargin"},"titleTopMargin namespace");
+            flow400_require(flow400_number(flowchart.get("titleTopMargin"))==0u,"Flow400 Classic titleTopMargin value");
         } else {
             flow400_require(profile=="description_config_font_courier"&&ordinal==295u&&flow400_text(envelope.get("body_header"))=="graph TD",
                 "Flow400 Classic courier body header");
@@ -80,7 +87,11 @@ inline void flow400_classic_model_shape(const Model& model,std::size_t ordinal) 
         flow400_require(value.from==index(from)&&value.to==index(to)&&value.label==label&&value.style=="solid"&&!value.start&&value.end,
             "Flow400 Classic Model edge identity");
     };
-    if(ordinal==244u) {
+    if(ordinal==13u) {
+        flow400_require(model.direction=="TB"&&model.nodes.size()==2u&&model.edges.size()==1u&&model.groups.empty(),
+            "Flow400 Classic titleTopMargin Model cardinality");
+        node("A",Shape::Rectangle,"A");node("B",Shape::Rectangle,"B");edge(0u,"A","B","");
+    } else if(ordinal==244u) {
         flow400_require(model.direction=="TB"&&model.nodes.size()==6u&&model.edges.size()==5u&&model.groups.size()==3u,"Flow400 Classic dagre Model cardinality");
         node("A",Shape::Rectangle,"Client");node("B",Shape::Rectangle,"Cache");node("C",Shape::Rectangle,"API");
         node("D",Shape::Cylinder,"Database");node("E",Shape::Rectangle,"Auth Service");node("F",Shape::Cylinder,"Sessions");
@@ -96,6 +107,19 @@ inline void flow400_classic_model_shape(const Model& model,std::size_t ordinal) 
         node("C",Shape::Decision,"Let me thinksssss\nssssssssssssssssssssss\nsssssssssssssssssssssssssss");
         node("D",Shape::Parallelogram,"Laptop");node("E",Shape::ParallelogramAlt,"iPhone");node("F",Shape::Rectangle,"Car");
         edge(0u,"A","B","Get money");edge(1u,"B","C","");edge(2u,"C","D","One");edge(3u,"C","E","Two");edge(4u,"C","F","Three");
+    } else if(ordinal==40u) {
+        flow400_require(model.direction=="LR"&&model.nodes.size()==3u&&model.edges.size()==2u&&model.groups.empty(),
+            "Flow400 Classic diamond fanout Model cardinality");
+        node("A",Shape::Decision,"A");node("B",Shape::Rectangle,"B");node("C",Shape::Rectangle,"C");
+        edge(0u,"A","B","");edge(1u,"A","C","");
+    } else if(ordinal==41u) {
+        flow400_require(model.direction=="LR"&&model.nodes.size()==3u&&model.edges.size()==2u&&model.groups.size()==1u,
+            "Flow400 Classic diamond subgraph Model cardinality");
+        node("A",Shape::Decision,"A");node("B",Shape::Rectangle,"B");node("C",Shape::Rectangle,"C");
+        edge(0u,"A","B","");edge(1u,"A","C","");
+        const auto& group=model.groups.front();
+        flow400_require(group.id=="subbe"&&group.label=="subbe"&&group.direction.empty()&&group.parent==-1&&
+            group.nodes.size()==1u&&group.nodes.front()==index("A"),"Flow400 Classic diamond subgraph membership");
     } else {
         flow400_require(ordinal==376u&&model.direction=="TB"&&model.nodes.size()==3u&&model.edges.size()==2u&&model.groups.empty(),
             "Flow400 Classic stadium Model cardinality");
@@ -108,7 +132,8 @@ inline void flow400_classic_case_shape(JsonVal row,OracleWork& work) {
     work.spend(8192u);
     flow400_classic_keys(row,{"case_id","base_authority","source","source_sha256","classic_model_json","classic_model_sha256","envelope","native_requirement","formal_status"},"case");
     const auto id=flow400_text(row.get("case_id"));
-    flow400_require(id=="original_244_dagre_subgraphs"||id=="original_295_classic_trapezoids"||id=="original_376_stadium","Flow400 Classic case identity");
+    flow400_require(id=="original_13_dagre_title_top_margin_zero"||id=="original_40_diamond_fanout"||id=="original_41_diamond_fanout_in_subgraph"||
+        id=="original_244_dagre_subgraphs"||id=="original_295_classic_trapezoids"||id=="original_376_stadium","Flow400 Classic case identity");
     const auto authority=row.get("base_authority");
     flow400_keys(authority,{"adaptation","fixture","manifest_global_ordinal","model_json","model_sha256","oracle_record_sha256","ordinal","source_bytes","source_git_blob","source_sha256"});
     flow400_require(authority.get("model_json").is_null()&&authority.get("model_sha256").is_null()&&authority.get("adaptation").is_null(),
@@ -126,13 +151,19 @@ inline void flow400_classic_case_shape(JsonVal row,OracleWork& work) {
     const auto expected=flow400_classic_expected(row);
     const auto mutations=native.get("mutations");
     flow400_require(mutations.is_arr()&&mutations.size()==expected,"Flow400 Classic native mutation plan");
+    constexpr std::array<std::string_view,4> title_top_margin{{"A_rectangle_to_circle","A_label_to_absent","first_edge_endpoint_to_self","extra_ink"}};
+    constexpr std::array<std::string_view,4> diamond_fanout{{"diamond_to_rectangle","A_label_to_absent","fanout_target_to_self","extra_ink"}};
+    constexpr std::array<std::string_view,5> diamond_fanout_group{{"diamond_to_rectangle","A_label_to_absent","fanout_target_to_self","subbe_remove_A","extra_ink"}};
     constexpr std::array<std::string_view,5> dagre{{"cylinder_to_circle","Client_label_to_absent","first_edge_endpoint_to_self","Frontend_remove_first_member","extra_ink"}};
     constexpr std::array<std::string_view,4> trapezoids{{"trapezoid_to_trapezoid_alt","Christmas_label_to_absent","first_edge_endpoint_to_self","extra_ink"}};
     constexpr std::array<std::string_view,4> stadium{{"stadium_to_circle","Start_label_to_absent","first_edge_endpoint_to_self","extra_ink"}};
     for(std::size_t at=0u;at<expected;++at){const auto actual=flow400_text(mutations.at(at));
-        const auto wanted=ordinal==244u?dagre.at(at):ordinal==295u?trapezoids.at(at):stadium.at(at);
+        const auto wanted=ordinal==13u?title_top_margin.at(at):ordinal==40u?diamond_fanout.at(at):ordinal==41u?diamond_fanout_group.at(at):ordinal==244u?dagre.at(at):ordinal==295u?trapezoids.at(at):stadium.at(at);
         flow400_require(actual==wanted,"Flow400 Classic native mutation identity");}
-    const bool exact_tuple=(id=="original_244_dagre_subgraphs"&&ordinal==244u&&expected==5u)||
+    const bool exact_tuple=(id=="original_13_dagre_title_top_margin_zero"&&ordinal==13u&&expected==4u)||
+        (id=="original_40_diamond_fanout"&&ordinal==40u&&expected==4u)||
+        (id=="original_41_diamond_fanout_in_subgraph"&&ordinal==41u&&expected==5u)||
+        (id=="original_244_dagre_subgraphs"&&ordinal==244u&&expected==5u)||
         (id=="original_295_classic_trapezoids"&&ordinal==295u&&expected==4u)||
         (id=="original_376_stadium"&&ordinal==376u&&expected==4u);
     flow400_require(exact_tuple,"Flow400 Classic case-id/ordinal/mutation tuple");
@@ -153,19 +184,21 @@ inline void flow400_classic_root(JsonVal root,OracleWork& work) {
         flow400_number(prior.get("aggregate_complete_before_classic"))==33u&&flow400_number(prior.get("aggregate_pending_before_classic"))==367u,
         "Flow400 Classic prior authority");
     const auto counts=root.get("formal_counts");flow400_classic_keys(counts,{"cases","aggregate_complete_after_all_official_runs","aggregate_pending_after_all_official_runs","ultimate_complete_required","ultimate_pending_required","official_credit_before_execution"},"formal counts");
-    flow400_require(flow400_number(counts.get("cases"))==3u&&flow400_number(counts.get("aggregate_complete_after_all_official_runs"))==36u&&
-        flow400_number(counts.get("aggregate_pending_after_all_official_runs"))==364u&&flow400_number(counts.get("ultimate_complete_required"))==400u&&
+    flow400_require(flow400_number(counts.get("cases"))==6u&&flow400_number(counts.get("aggregate_complete_after_all_official_runs"))==39u&&
+        flow400_number(counts.get("aggregate_pending_after_all_official_runs"))==361u&&flow400_number(counts.get("ultimate_complete_required"))==400u&&
         flow400_number(counts.get("ultimate_pending_required"))==0u&&flow400_number(counts.get("official_credit_before_execution"))==0u,
         "Flow400 Classic formal counts");
-    const auto cases=root.get("cases");flow400_require(cases.is_arr()&&cases.size()==3u,"Flow400 Classic case count");
-    std::array<bool,400> ordinals{};std::array<bool,3> identities{};
+    const auto cases=root.get("cases");flow400_require(cases.is_arr()&&cases.size()==6u,"Flow400 Classic case count");
+    std::array<bool,400> ordinals{};std::array<bool,6> identities{};
     cases.iter([&](JsonVal row) {
         flow400_classic_case_shape(row,work);const auto ordinal=flow400_number(row.get("base_authority").get("ordinal"));
         flow400_require(!ordinals[ordinal],"Flow400 Classic duplicate source ordinal");ordinals[ordinal]=true;
-        const auto id=flow400_text(row.get("case_id"));const auto index=id=="original_244_dagre_subgraphs"?0u:id=="original_295_classic_trapezoids"?1u:2u;
+        const auto id=flow400_text(row.get("case_id"));const auto index=id=="original_13_dagre_title_top_margin_zero"?0u:
+            id=="original_40_diamond_fanout"?1u:id=="original_244_dagre_subgraphs"?2u:id=="original_295_classic_trapezoids"?3u:
+            id=="original_376_stadium"?4u:5u;
         flow400_require(!identities[index],"Flow400 Classic duplicate case identity");identities[index]=true;
     });
-    flow400_require(ordinals[244]&&ordinals[295]&&ordinals[376]&&std::ranges::all_of(identities,[](bool present){return present;}),
+    flow400_require(ordinals[13]&&ordinals[40]&&ordinals[41]&&ordinals[244]&&ordinals[295]&&ordinals[376]&&std::ranges::all_of(identities,[](bool present){return present;}),
         "Flow400 Classic selected ordinal closure");
 }
 
@@ -182,7 +215,7 @@ inline Flow400ClassicDocuments flow400_classic_documents() {
 inline JsonVal flow400_classic_select(const BoundFlow400TypedSource4Authority& prior,JsonVal classic,JsonVal fixture,
                                       std::size_t ordinal,std::size_t global,std::string_view source,OracleWork& work) {
     work.spend(8192u+8u*sizeof(std::size_t)+4u*sizeof(json::JsonVal));
-    const auto cases=classic.get("cases");flow400_require(cases.is_arr()&&cases.size()==3u,"Flow400 Classic selection denominator");
+    const auto cases=classic.get("cases");flow400_require(cases.is_arr()&&cases.size()==6u,"Flow400 Classic selection denominator");
     JsonVal selected;std::size_t matches=0u;
     cases.iter([&](JsonVal candidate) {
         work.spend(512u);if(flow400_number(candidate.get("base_authority").get("ordinal"))==ordinal){selected=candidate;++matches;}

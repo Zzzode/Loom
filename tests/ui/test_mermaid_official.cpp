@@ -13,6 +13,9 @@
 
 import std;
 import loom.ui.visual.markdown;
+import loom.ui.visual.mermaid.testing;
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
 import loom.serdes.json;
 import loom.crypto.crypto;
 
@@ -21,9 +24,15 @@ import loom.crypto.crypto;
 #include "mermaid_flow400_authority.hpp"
 #include "mermaid_flow400_config21_authority.hpp"
 #include "mermaid_flow400_linkprofile3_authority.hpp"
+#include "mermaid_flow_title_authority.hpp"
+#include "mermaid_flow_shape_alias_authority.hpp"
 #include "mermaid_flow_group_endpoint15_oracle.hpp"
+#include "mermaid_flow_extra7_controls.hpp"
 #include "mermaid_chart_cell_oracle.hpp"
 #include "mermaid_gap_roster.hpp"
+#include "mermaid_mindmap10_authority.hpp"
+#include "mermaid_block58_official.hpp"
+#include "mermaid_er107_official.hpp"
 
 namespace {
 namespace fs = std::filesystem;
@@ -1685,6 +1694,408 @@ struct Observation {
     std::size_t role_case_index = 0;
     std::string raw_source_authority,raw_active_schema,raw_source_constraints;
 };
+
+namespace official_er107=loom::test::mermaid_er107::official;
+namespace er107=loom::test::mermaid_er107;
+constexpr auto kOfficialEr107Contract=official_er107::kContract;
+constexpr std::string_view kOfficialEr107MatrixEvidence="mermaid-official-er107-matrix.jsonl";
+bool official_er107_owned(const Observation& row) {
+    require(row.raw_active_schema==kOfficialEr107Contract&&row.track=="original"&&row.type=="er-diagram"&&row.role_case_index<er107::kPins.size(),"ER107 owned Matrix identity");
+    const auto& pin=er107::kPins[row.role_case_index];const auto& projection=er107::authority::kPins[row.role_case_index];
+    const auto authority=json::parse(row.raw_source_authority);
+    require(authority.has_value()&&authority->root().is_obj()&&authority->root().size()==2&&
+        authority->root().get_string("source_facts_sha256")==er107::kFactsSha&&authority->root().get("retained_ER206").is_obj(),"ER107 owned retained source authority");
+    require(row.path==pin.path&&row.source_sha256==pin.raw_sha&&
+        row.role_model_sha==projection.complete_sha&&row.role_body_sha==projection.scene_sha,"ER107 owned Matrix source/Model pins");
+    const auto proof=json::parse(row.raw_source_constraints);require(proof.has_value(),"ER107 owned Matrix proof JSON");
+    const bool ready=official_er107::owned(proof->root());
+    if(ready)require(row.errors.empty()&&row.status[0]=="drawn"&&row.status[2]=="drawn"&&
+        row.status[1]==(proof->root().get("narrow_exact_ordinary").as_bool()?"source_fallback":"drawn"),"ER107 owned Matrix complete states");
+    return ready;
+}
+
+namespace block58=loom::test::mermaid_block58;
+namespace official_block58=block58::official;
+constexpr auto kBlock58Contract=official_block58::kContract;
+Observation run_official_block58(const official_block58::Documents& documents,JsonVal fixture,std::size_t index,std::ostream& diagnostics) {
+    require(index<block58::kPins.size(),"Block58 compiled source index");const auto& pin=block58::kPins[index];
+    Observation row;row.path=fixture.get_string("path");row.track="original";row.type="block";row.source_sha256=fixture.get_string("sha256");
+    row.expected="drawn";row.reason="RFC 0030 independent Block58 complete-original local proof; external join required";
+    row.expected_states={"drawn","unresolved","drawn"};row.decision_reasons.fill(row.reason);
+    row.raw_active_schema=kBlock58Contract;row.raw_source_authority=block58::kSourceFactsSha;row.role_case_index=index;
+    row.role_model_sha=pin.source_model_sha;row.role_body_sha=pin.terminal_model_sha;
+    row.projection_baseline=projection_canonical(fixture.get("raw"));
+    json::JsonMutDoc report,compact;auto record=report.object(),proof=compact.object();
+    official_block58::pin_metadata(record,pin);official_block58::pin_metadata(proof,pin);
+    bool ready=false,captured=false,bound=false,geometry=false,narrow=false;std::size_t semantic=0,physical=0,captures=0;
+    try {
+        require(row.path==pin.path&&row.source_sha256==pin.raw_sha,"source: Official Block58 fixture identity");
+        const auto raw=official_block58::read(kRoot/"cases"/row.path,block58::kMaxRawBytes);
+        block58::OracleWork capture_work;capture_work.left=768'000'000;
+        loom::ui::mermaid::LayoutRowsCache cache(4,4*1024*1024);
+        // Each group owns five public Markdown frames; all fifteen precede the
+        // first typed source case binding. The genuine hit frames are retained.
+        const auto uncached=official_block58::observe(raw,capture_work);captures+=5;official_block58::publish(uncached,record);
+        const auto cached=official_block58::observe(raw,capture_work,&cache);captures+=5;
+        auto cached_record=record.make_obj();official_block58::publish(cached,cached_record);record.add("cached",cached_record);
+        const auto hit=official_block58::observe(raw,capture_work,&cache);captures+=5;
+        auto hit_record=record.make_obj();official_block58::publish(hit,hit_record);record.add("cache_hit",hit_record);
+        captured=captures==15;require(cache.hits()>0,"protocol: Official public Markdown cache hit");
+        block58::OracleWork binding;const auto facts=documents.bind(row.path,raw,binding);bound=true;
+        block58::OracleWork deriving;const auto expected=block58::authority::derive(facts,raw.size(),deriving);
+        const auto colors=official_block58::palette();block58::OracleWork checking;checking.left=768'000'000;
+        const auto normalized=official_block58::validate(uncached,expected,colors,true,checking);
+        static_cast<void>(official_block58::validate(cached,expected,colors,true,checking));
+        static_cast<void>(official_block58::validate(hit,expected,colors,true,checking));
+        require(uncached==cached&&cached==hit,"physical: Official all fifteen cache/uncached glyph and style frames");
+        const auto mutations=block58::authority::exercise(normalized,expected,colors,0,0,facts.terminal_model,checking);
+        semantic=mutations.semantic;physical=mutations.physical;
+        // Test the inherited bit without weakening the full plane checker.
+        auto bad_dim=uncached[0];bad_dim.cells.front().other_attributes^=2;bool rejected=false;
+        try{static_cast<void>(official_block58::normalize_dim(bad_dim,expected,true,checking));}
+        catch(const std::exception& error){if(block58::authority::resource_error(error.what()))throw;rejected=true;}
+        require(rejected,"physical: missing Markdown dim mutant survived");++physical;
+        geometry=true;narrow=expected.geometry.metrics.width>40;ready=true;
+        row.status={"drawn",narrow?"source_fallback":"drawn","drawn"};row.expected_states[1]=narrow?"source":"drawn";
+    }catch(const std::exception& error){row.errors.push_back(error.what());}
+    for(auto value:{record,proof}) {
+        value.set("local_ready",ready);value.set("captures",static_cast<std::int64_t>(captures));value.set("captures_before_binding",captured);
+        value.set("bound_after_captures",bound);value.set("geometry_and_restoration_good",geometry);
+        value.set("narrow_exact_ordinary",ready&&narrow);value.set("narrow_geometry_good",ready&&!narrow);
+        value.set("uncached_cached_five_planes_equal",ready);value.set("cache_hit_observed",ready);value.set("markdown_dim_color",true);value.set("inherited_other_attributes",2);
+        value.set("semantic_mutations_rejected",static_cast<std::int64_t>(semantic));value.set("physical_mutations_rejected",static_cast<std::int64_t>(physical));
+        if(!row.errors.empty())value.set("error",row.errors.front());
+    }
+    report.set_root(record);diagnostics<<report.to_string()<<'\n';require(diagnostics.good(),"protocol: Official Block58 actual frame evidence write");
+    compact.set_root(proof);row.raw_source_constraints=compact.to_string();return row;
+}
+bool official_block58_owned(const Observation& row) {
+    require(row.role_case_index<block58::kPins.size(),"source: Official Block58 ordinal bound");const auto& pin=block58::kPins[row.role_case_index];
+    require(row.raw_active_schema==kBlock58Contract&&row.raw_source_authority==block58::kSourceFactsSha&&row.track=="original"&&row.type=="block"&&
+        row.path==pin.path&&row.source_sha256==pin.raw_sha&&row.role_model_sha==pin.source_model_sha&&row.role_body_sha==pin.terminal_model_sha,
+        "source: Official Block58 owned row identity");
+    const auto parsed=json::parse(row.raw_source_constraints);require(parsed.has_value(),"source: Official Block58 proof JSON");const auto proof=parsed->root();
+    official_block58::check_pins(proof,pin);
+    json::JsonMutDoc expected;auto keys=expected.object();official_block58::pin_metadata(keys,pin);expected.set_root(keys);const auto key_doc=json::parse(expected.to_string());
+    require(key_doc.has_value(),"protocol: Official Block58 proof keys");
+    const std::set<std::string> runtime{"local_ready","captures","captures_before_binding","bound_after_captures","geometry_and_restoration_good",
+        "narrow_exact_ordinary","narrow_geometry_good","uncached_cached_five_planes_equal","cache_hit_observed","markdown_dim_color","inherited_other_attributes",
+        "semantic_mutations_rejected","physical_mutations_rejected","error"};
+    proof.iter_obj([&](JsonVal key,JsonVal){require(key_doc->root().has(key.as_str())||runtime.contains(std::string(key.as_str())),"source: Official Block58 foreign proof key");});
+    const auto yes=[&](std::string_view key){const auto value=proof.get(key);require(value.is_bool(),"source: Official Block58 proof boolean");return value.as_bool();};
+    if(!yes("local_ready")) {require(!row.errors.empty()&&row.status[0]=="error"&&row.status[2]=="error","source: failed Block58 proof disposition");return false;}
+    require(row.errors.empty()&&row.status[0]=="drawn"&&row.status[2]=="drawn"&&!proof.has("error"),"source: Official Block58 good row disposition");
+    require(proof.get("captures").is_int()&&proof.get_int("captures")==15&&yes("captures_before_binding")&&yes("bound_after_captures")&&
+        yes("geometry_and_restoration_good")&&yes("uncached_cached_five_planes_equal")&&yes("cache_hit_observed")&&yes("markdown_dim_color")&&
+        proof.get("inherited_other_attributes").is_int()&&proof.get_int("inherited_other_attributes")==2,"source: Official Block58 complete capture responsibility");
+    require(proof.get("semantic_mutations_rejected").is_int()&&proof.get_int("semantic_mutations_rejected")>=6&&
+        proof.get("physical_mutations_rejected").is_int()&&proof.get_int("physical_mutations_rejected")>=8,"source: Official Block58 good-first mutation responsibility");
+    require(row.status[1]=="source_fallback"?yes("narrow_exact_ordinary")&&!yes("narrow_geometry_good"):
+        row.status[1]=="drawn"&&yes("narrow_geometry_good")&&!yes("narrow_exact_ordinary"),"source: Official Block58 exact narrow disposition");
+    return true;
+}
+std::string official_block58_verdict(const std::vector<Observation>& rows) {
+    json::JsonMutDoc document;auto root=document.object(),cases=root.make_arr();std::array<bool,58> consumed{};int ready=0,selected=0;
+    for(const auto& row:rows)if(row.raw_active_schema==kBlock58Contract) {
+        const bool good=official_block58_owned(row);require(!consumed.at(row.role_case_index),"source: Official Block58 duplicate verdict original");consumed[row.role_case_index]=true;
+        const auto proof=json::parse(row.raw_source_constraints);require(proof.has_value(),"source: Official Block58 compact proof");cases.append(document.copy_val(proof->root()));ready+=good;++selected;
+    }
+    root.set("schema","block58_official_complete_original/v1");root.set("contract",kBlock58Contract);root.set("source_facts_sha256",block58::kSourceFactsSha);
+    root.set("terminal_facts_sha256",block58::kTerminalFactsSha);root.set("source_lock_sha256",block58::kSourceLock);root.set("official_manifest_sha256",block58::kManifestSha);
+    root.set("boundary_sha256",block58::boundary::kAssetSha);root.set("reviewed_design_sha256",block58::authority::kReviewedDesignSha);
+    root.set("authority_adaptation",block58::authority::kAdaptation);root.set("authority_review_status",block58::authority::kAuthorityReviewStatus);root.set("limitations",block58::authority::kLimitations);
+    root.set("selected",selected);root.set("local_ready",ready);root.set("admitted",0);root.set("drawing_credit",0);root.set("formal_admission",false);root.set("join_required",true);
+    root.set("foreign_assertions_certified",0);root.set("native_report_input",false);root.set("actual_color_cells_file",official_block58::kEvidence);
+    root.add("cases",cases);document.set_root(root);return document.to_string();
+}
+
+// Mindmap owns its public observations here; the shared oracle never captures
+// or publishes and this consumer never reads a Native report.
+namespace mindmap10 = loom::test::mermaid_mindmap10;
+constexpr std::string_view kMindmap10Contract = "Mindmap10/complete-original/v1";
+struct OfficialMindmapFrame {
+    mindmap10::Grid grid;
+    std::vector<std::string> foreground, background;
+};
+OfficialMindmapFrame official_mindmap_capture(ftxui::Element node, int width, int height, mindmap10::Work& work) {
+    require(width > 0 && width <= 240 && height > 0 && height <= 1040, "Mindmap10 bounded Official frame");
+    const auto cells = static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
+    work.spend(cells * (3u * sizeof(std::string) + 64u) + 512u);
+    OfficialMindmapFrame frame; frame.grid.width = width; frame.grid.height = height;
+    frame.grid.cells.reserve(cells); frame.foreground.reserve(cells); frame.background.reserve(cells);
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
+    ftxui::Render(screen, node);
+    for (int y = 0; y < height; ++y) for (int x = 0; x < width; ++x) {
+        const auto& cell = screen.PixelAt(x, y);
+        frame.grid.cells.push_back(cell.character);
+        frame.foreground.push_back(cell.foreground_color.Print(false));
+        frame.background.push_back(cell.background_color.Print(true));
+    }
+    return frame;
+}
+bool official_mindmap_surface(const OfficialMindmapFrame& a, const OfficialMindmapFrame& b) {
+    return a.grid.width == b.grid.width && a.grid.height == b.grid.height &&
+        a.grid.cells == b.grid.cells && a.background == b.background && a.foreground == b.foreground;
+}
+void official_mindmap_publish(const OfficialMindmapFrame& frame, json::JsonMutVal item, mindmap10::Work& work) {
+    work.spend(frame.grid.cells.size() * 128u + 512u);
+    item.set("width", frame.grid.width); item.set("height", frame.grid.height);
+    auto glyphs = item.make_arr(); std::string bytes;
+    for (std::size_t n = 0; n < frame.grid.cells.size(); ++n) {
+        glyphs.append(item.make_str(frame.grid.cells[n]));
+        for (const auto* text : {&frame.grid.cells[n], &frame.foreground[n], &frame.background[n]}) {
+            bytes += std::to_string(text->size()); bytes += ':'; bytes += *text;
+        }
+    }
+    item.add("glyph_cells", glyphs); item.set("cell_sha256", digest(bytes));
+    for (const auto& [name, colors] : std::array<std::pair<std::string_view, const std::vector<std::string>*>, 2>{
+             {{"foreground_runs", &frame.foreground}, {"background_runs", &frame.background}}}) {
+        auto runs = item.make_arr();
+        for (std::size_t begin = 0; begin < colors->size();) {
+            std::size_t end = begin + 1; while (end < colors->size() && (*colors)[end] == (*colors)[begin]) ++end;
+            auto run = item.make_arr(); run.append(item.make_num(static_cast<int64_t>(end - begin)));
+            run.append(item.make_str((*colors)[begin])); runs.append(run); begin = end;
+        }
+        item.add(name, runs);
+    }
+}
+std::optional<std::size_t> official_mindmap_selected(JsonVal facts, std::size_t global, std::string_view path) {
+    const auto cases = facts.get("cases"); require(cases.is_arr() && cases.size() == 10u, "Mindmap10 complete selection");
+    for (std::size_t n = 0; n < cases.size(); ++n)
+        if (cases.at(n).get_string("path") == path) {
+            require(cases.at(n).get_int("manifest_global_ordinal") == static_cast<int64_t>(global), "Mindmap10 selection ordinal");
+            return n;
+        }
+    return std::nullopt;
+}
+Observation run_official_mindmap(JsonVal facts, JsonVal manifest, JsonVal fixture, std::size_t index, std::ostream& diagnostics) {
+    Observation row; row.path = fixture.get_string("path"); row.track = "original"; row.type = "mindmap";
+    row.source_sha256 = fixture.get_string("sha256"); row.expected = "drawn";
+    row.reason = "RFC 0030 Mindmap10 independently source-bound complete original";
+    row.expected_states = {"drawn", "unresolved", "drawn"}; row.decision_reasons.fill(row.reason);
+    row.raw_active_schema = kMindmap10Contract; row.raw_source_authority = mindmap10::kFactsSha; row.role_case_index = index;
+    json::JsonMutDoc report; auto record = report.object(); mindmap10::Work work;
+    bool admitted = false, captured = false, bound = false, geometry = false, narrow_ordinary = false, narrow_geometry = false;
+    std::size_t semantic = 0, physical = 0, captures = 0;
+    record.set("path", row.path); record.set("source_sha256", row.source_sha256);
+    try {
+        const auto path = kRoot / "cases" / row.path;
+        require(fs::is_regular_file(path) && fs::file_size(path) <= 65536u, "Mindmap10 bounded complete source");
+        const auto source = read_file(path);
+        auto node = loom::ui::render_markdown(fenced(source, "mermaid", kSentinel));
+        auto ordinary = loom::ui::render_markdown(fenced(source, "text", kSentinel));
+        node->ComputeRequirement(); ordinary->ComputeRequirement();
+        const int height = std::min(1040, std::max(40, std::max(node->requirement().min_y, ordinary->requirement().min_y) + 12));
+        std::array<OfficialMindmapFrame, 5> frames;
+        constexpr std::array<int, 5> widths{240, 40, 240, 240, 40};
+        auto published = record.make_arr();
+        for (std::size_t n = 0; n < frames.size(); ++n) {
+            frames[n] = official_mindmap_capture(n < 3u ? node : ordinary, widths[n], height, work); ++captures;
+            auto entry = record.make_obj(); official_mindmap_publish(frames[n], entry, work); published.append(entry);
+        }
+        captured = captures == 5u;
+        record.add("five_frames", published); record.set("captures_before_binding", captured);
+        const auto fact = facts.get("cases").at(index);
+        const auto model = mindmap10::bind(facts, fact, source, manifest, work); bound = true;
+        row.role_model_sha = fact.get_string("complete_model_sha256"); row.role_body_sha = fact.get_string("terminal_projection_sha256");
+        require(official_mindmap_surface(frames[0], frames[2]) && frames[0].foreground == frames[2].foreground, "Mindmap10 restored color cells");
+        require(!official_mindmap_surface(frames[0], frames[3]), "Mindmap10 complete original still uses source");
+        const bool narrow_source = official_mindmap_surface(frames[1], frames[4]); narrow_ordinary = narrow_source;
+        for (const auto n : {0u, 1u, 2u}) {
+            if (n == 1u && narrow_source) continue;
+            const auto errors = mindmap10::validate(frames[n].grid, model, kSentinel, work);
+            require(errors.empty(), errors.empty() ? "Mindmap10 geometry" : errors.front());
+        }
+        geometry = true; narrow_geometry = !narrow_source;
+        const auto proof = mindmap10::exercise(frames[0].grid, model, fact.get("required_good_first_mutations"), kSentinel, work);
+        require(proof.errors.empty(), proof.errors.empty() ? "Mindmap10 mutations" : proof.errors.front());
+        semantic = proof.semantic; physical = proof.physical;
+        require(semantic + physical == fact.get("required_good_first_mutations").size(), "Mindmap10 complete mutation responsibility");
+        row.status = {"drawn", narrow_source ? "source_fallback" : "drawn", "drawn"};
+        row.expected_states[1] = narrow_source ? "source" : "drawn"; admitted = true;
+    } catch (const std::exception& error) { row.errors.push_back(error.what()); }
+    record.set("admitted", admitted); record.set("semantic_mutations_rejected", static_cast<int64_t>(semantic));
+    record.set("physical_mutations_rejected", static_cast<int64_t>(physical)); record.set("work_remaining", static_cast<int64_t>(work.left));
+    if (!row.errors.empty()) record.set("error", row.errors.front());
+    report.set_root(record); diagnostics << report.to_string() << '\n';
+    json::JsonMutDoc compact; auto proof = compact.object();
+    proof.set("source_facts_sha256", mindmap10::kFactsSha); proof.set("source_sha256", row.source_sha256);
+    proof.set("complete_model_sha256", row.role_model_sha); proof.set("terminal_projection_sha256", row.role_body_sha);
+    proof.set("captures", static_cast<int64_t>(captures)); proof.set("captures_before_binding", captured); proof.set("bound_after_captures", bound);
+    proof.set("geometry_and_restoration_good", geometry); proof.set("local_ready", admitted);
+    proof.set("narrow_exact_ordinary", narrow_ordinary); proof.set("narrow_geometry_good", narrow_geometry);
+    proof.set("semantic_mutations_rejected", static_cast<int64_t>(semantic)); proof.set("physical_mutations_rejected", static_cast<int64_t>(physical));
+    proof.set("foreign_assertions_certified", 0); proof.set("native_report_input", false);
+    compact.set_root(proof); row.raw_source_constraints = compact.to_string(); return row;
+}
+bool official_mindmap_owned(const Observation& row, JsonVal facts) {
+    require(row.track == "original" && row.type == "mindmap" && row.raw_source_authority == mindmap10::kFactsSha,
+            "Mindmap10 owned source identity");
+    const auto info = json::parse(row.raw_source_constraints); require(info.has_value(), "Mindmap10 proof JSON");
+    const auto proof = info->root();
+    constexpr std::array<std::string_view, 15> keys{"source_facts_sha256", "source_sha256", "complete_model_sha256",
+        "terminal_projection_sha256", "captures", "captures_before_binding", "bound_after_captures",
+        "geometry_and_restoration_good", "local_ready", "semantic_mutations_rejected",
+        "physical_mutations_rejected", "foreign_assertions_certified", "native_report_input", "narrow_exact_ordinary", "narrow_geometry_good"};
+    require(proof.is_obj() && proof.size() == keys.size(), "Mindmap10 closed proof fields");
+    for (std::size_t n = 0; n < keys.size(); ++n) require(proof.has(keys[n]), "Mindmap10 missing proof field");
+    const auto yes = [&](std::string_view key) { require(proof.get(key).is_bool(), "Mindmap10 proof boolean"); return proof.get(key).as_bool(); };
+    const auto number = [&](std::string_view key) { const auto value = proof.get(key); require(value.is_int() && value.as_int() >= 0 && value.as_int() <= 64, "Mindmap10 proof count"); return static_cast<std::size_t>(value.as_int()); };
+    require(proof.get_string("source_facts_sha256") == mindmap10::kFactsSha &&
+        proof.get_string("source_sha256") == row.source_sha256 && number("foreign_assertions_certified") == 0u && !yes("native_report_input"), "Mindmap10 source-only proof boundary");
+    const bool admitted = yes("local_ready");
+    if (!admitted) {
+        require(!row.errors.empty() && row.status[0] != "drawn" && row.status[2] != "drawn", "Mindmap10 failed proof earns no drawing");
+        return false;
+    }
+    const auto cases = facts.get("cases"); require(row.role_case_index < cases.size(), "Mindmap10 owned index");
+    const auto fact = cases.at(row.role_case_index);
+    require(fact.get_string("path") == row.path && fact.get_string("source_sha256") == row.source_sha256 &&
+        fact.get_string("complete_model_sha256") == row.role_model_sha && fact.get_string("terminal_projection_sha256") == row.role_body_sha &&
+        proof.get_string("complete_model_sha256") == row.role_model_sha && proof.get_string("terminal_projection_sha256") == row.role_body_sha,
+        "Mindmap10 complete source/Model/projection join");
+    require(row.errors.empty() && row.status[0] == "drawn" && row.status[2] == "drawn" &&
+        (row.status[1] == "drawn" || row.status[1] == "source_fallback") && number("captures") == 5u &&
+        yes("captures_before_binding") && yes("bound_after_captures") && yes("geometry_and_restoration_good") &&
+        number("semantic_mutations_rejected") + number("physical_mutations_rejected") == fact.get("required_good_first_mutations").size(),
+        "Mindmap10 mandatory complete geometry and good-first controls");
+    require(row.status[1] == "drawn" ? yes("narrow_geometry_good") && !yes("narrow_exact_ordinary") :
+        yes("narrow_exact_ordinary") && !yes("narrow_geometry_good"), "Mindmap10 narrow complete geometry or exact ordinary source");
+    return true;
+}
+
+// Shapes4 owns its Work, source binding, mutation evidence and publications.
+// Only the Official-local PixelAt capture/serialization primitives are reused.
+namespace shapes4 = loom::test::mermaid_shapes4;
+constexpr std::string_view kShapes4Contract = "MindmapShapes4/complete-original/v1";
+std::optional<std::size_t> official_shapes4_selected(JsonVal facts, std::size_t global, std::string_view path) {
+    const auto cases = facts.get("cases"); require(cases.is_arr() && cases.size() == 5u, "Shapes4 complete selection");
+    for (std::size_t n = 0; n < cases.size(); ++n)
+        if (cases.at(n).has("terminal_projection_sha256") && cases.at(n).get_string("path") == path) {
+            require(cases.at(n).get_int("manifest_global_ordinal") == static_cast<int64_t>(global), "Shapes4 selection ordinal");
+            return n;
+        }
+    return std::nullopt;
+}
+Observation run_official_shapes4(JsonVal facts, JsonVal manifest, JsonVal fixture, std::size_t index, std::ostream& diagnostics) {
+    Observation row; row.path = fixture.get_string("path"); row.track = "original"; row.type = "mindmap";
+    row.source_sha256 = fixture.get_string("sha256"); row.expected = "drawn";
+    row.reason = "RFC 0030 Shapes4 independently source-bound complete original";
+    row.expected_states = {"drawn", "unresolved", "drawn"}; row.decision_reasons.fill(row.reason);
+    row.raw_active_schema = kShapes4Contract; row.raw_source_authority = shapes4::kFactsSha; row.role_case_index = index;
+    json::JsonMutDoc report; auto record = report.object(); shapes4::Work work;
+    bool admitted = false, captured = false, bound = false, geometry = false, narrow_ordinary = false, narrow_geometry = false;
+    std::size_t semantic = 0, physical = 0, captures = 0;
+    record.set("path", row.path); record.set("source_sha256", row.source_sha256);
+    try {
+        const auto path = kRoot / "cases" / row.path;
+        require(fs::is_regular_file(path) && fs::file_size(path) <= 65536u, "Shapes4 bounded complete source");
+        const auto source = read_file(path);
+        auto node = loom::ui::render_markdown(fenced(source, "mermaid", kSentinel));
+        auto ordinary = loom::ui::render_markdown(fenced(source, "mermaid-source", kSentinel));
+        node->ComputeRequirement(); ordinary->ComputeRequirement();
+        const int height = std::min(1040, std::max(40, std::max(node->requirement().min_y, ordinary->requirement().min_y) + 12));
+        std::array<OfficialMindmapFrame, 5> frames;
+        constexpr std::array<int, 5> widths{240, 40, 240, 240, 40};
+        auto published = record.make_arr();
+        for (std::size_t n = 0; n < frames.size(); ++n) {
+            frames[n] = official_mindmap_capture(n < 3u ? node : ordinary, widths[n], height, work); ++captures;
+            auto entry = record.make_obj(); official_mindmap_publish(frames[n], entry, work); published.append(entry);
+        }
+        captured = captures == 5u;
+        record.add("five_frames", published); record.set("captures_before_binding", captured);
+        const auto fact = facts.get("cases").at(index);
+        require(fact.get_string("path") == row.path && fact.get_string("source_sha256") == row.source_sha256, "Shapes4 consumer source identity");
+        const auto model = shapes4::bind(facts, fact, source, manifest, work); bound = true;
+        require(shapes4::validate_model(model, work).empty(), "Shapes4 valid complete Model");
+        row.role_model_sha = fact.get_string("complete_model_sha256"); row.role_body_sha = fact.get_string("terminal_projection_sha256");
+        require(official_mindmap_surface(frames[0], frames[2]) && frames[0].foreground == frames[2].foreground, "Shapes4 restored color cells");
+        require(!official_mindmap_surface(frames[0], frames[3]), "Shapes4 complete original still uses source");
+        const bool narrow_source = official_mindmap_surface(frames[1], frames[4]); narrow_ordinary = narrow_source;
+        for (const auto n : {0u, 1u, 2u}) {
+            if (n == 1u && narrow_source) continue;
+            const auto errors = shapes4::validate(frames[n].grid, model, kSentinel, work);
+            require(errors.empty(), errors.empty() ? "Shapes4 geometry" : errors.front());
+        }
+        geometry = true; narrow_geometry = !narrow_source;
+        const auto proof = shapes4::exercise(frames[0].grid, model, kSentinel, work);
+        require(proof.errors.empty(), proof.errors.empty() ? "Shapes4 mutations" : proof.errors.front());
+        semantic = proof.semantic; physical = proof.physical;
+        require(semantic == (index == 4u ? 5u : 2u) && physical == (index == 4u ? 7u : 3u), "Shapes4 complete mutation responsibility");
+        row.status = {"drawn", narrow_source ? "source_fallback" : "drawn", "drawn"};
+        row.expected_states[1] = narrow_source ? "source" : "drawn"; admitted = true;
+    } catch (const std::exception& error) {
+        row.errors.push_back(error.what()); semantic = physical = 0;
+    }
+    record.set("admitted", admitted); record.set("semantic_mutations_rejected", static_cast<int64_t>(semantic));
+    record.set("physical_mutations_rejected", static_cast<int64_t>(physical)); record.set("work_remaining", static_cast<int64_t>(work.left));
+    if (!row.errors.empty()) record.set("error", row.errors.front());
+    report.set_root(record); diagnostics << report.to_string() << '\n';
+    json::JsonMutDoc compact; auto proof = compact.object();
+    proof.set("source_facts_sha256", shapes4::kFactsSha); proof.set("source_sha256", row.source_sha256);
+    proof.set("complete_model_sha256", row.role_model_sha); proof.set("terminal_projection_sha256", row.role_body_sha);
+    proof.set("captures", static_cast<int64_t>(captures)); proof.set("captures_before_binding", captured); proof.set("bound_after_captures", bound);
+    proof.set("geometry_and_restoration_good", geometry); proof.set("local_ready", admitted);
+    proof.set("narrow_exact_ordinary", narrow_ordinary); proof.set("narrow_geometry_good", narrow_geometry);
+    proof.set("semantic_mutations_rejected", static_cast<int64_t>(semantic)); proof.set("physical_mutations_rejected", static_cast<int64_t>(physical));
+    proof.set("foreign_assertions_certified", 0); proof.set("native_report_input", false);
+    compact.set_root(proof); row.raw_source_constraints = compact.to_string(); return row;
+}
+bool official_shapes4_owned(const Observation& row, JsonVal facts) {
+    require(row.raw_active_schema == kShapes4Contract && row.track == "original" && row.type == "mindmap" && row.raw_source_authority == shapes4::kFactsSha,
+            "Shapes4 owned source identity");
+    const auto info = json::parse(row.raw_source_constraints); require(info.has_value(), "Shapes4 proof JSON");
+    const auto proof = info->root();
+    constexpr std::array<std::string_view, 15> keys{"source_facts_sha256", "source_sha256", "complete_model_sha256",
+        "terminal_projection_sha256", "captures", "captures_before_binding", "bound_after_captures",
+        "geometry_and_restoration_good", "local_ready", "semantic_mutations_rejected",
+        "physical_mutations_rejected", "foreign_assertions_certified", "native_report_input", "narrow_exact_ordinary", "narrow_geometry_good"};
+    require(proof.is_obj() && proof.size() == keys.size(), "Shapes4 closed proof fields");
+    for (std::size_t n = 0; n < keys.size(); ++n) require(proof.has(keys[n]), "Shapes4 missing proof field");
+    const auto yes = [&](std::string_view key) { require(proof.get(key).is_bool(), "Shapes4 proof boolean"); return proof.get(key).as_bool(); };
+    const auto number = [&](std::string_view key) { const auto value = proof.get(key); require(value.is_int() && value.as_int() >= 0 && value.as_int() <= 64, "Shapes4 proof count"); return static_cast<std::size_t>(value.as_int()); };
+    require(proof.get_string("source_facts_sha256") == shapes4::kFactsSha &&
+        proof.get_string("source_sha256") == row.source_sha256 && number("foreign_assertions_certified") == 0u && !yes("native_report_input"), "Shapes4 source-only proof boundary");
+    const bool admitted = yes("local_ready");
+    if (!admitted) {
+        require(!row.errors.empty() && row.status[0] != "drawn" && row.status[2] != "drawn", "Shapes4 failed proof earns no drawing");
+        return false;
+    }
+    const auto cases = facts.get("cases"); require(cases.is_arr() && cases.size() == 5u && row.role_case_index > 0u && row.role_case_index < cases.size(), "Shapes4 owned index");
+    const auto fact = cases.at(row.role_case_index);
+    const auto selected = official_shapes4_selected(facts, static_cast<std::size_t>(fact.get_int("manifest_global_ordinal")), row.path);
+    require(selected && *selected == row.role_case_index, "Shapes4 closed selected identity");
+    require(fact.has("terminal_projection_sha256") && fact.get_string("path") == row.path && fact.get_string("source_sha256") == row.source_sha256 &&
+        fact.get_string("complete_model_sha256") == row.role_model_sha && fact.get_string("terminal_projection_sha256") == row.role_body_sha &&
+        proof.get_string("complete_model_sha256") == row.role_model_sha && proof.get_string("terminal_projection_sha256") == row.role_body_sha,
+        "Shapes4 complete source/Model/projection join");
+    require(row.errors.empty() && row.status[0] == "drawn" && row.status[2] == "drawn" &&
+        (row.status[1] == "drawn" || row.status[1] == "source_fallback") && number("captures") == 5u &&
+        yes("captures_before_binding") && yes("bound_after_captures") && yes("geometry_and_restoration_good") &&
+        number("semantic_mutations_rejected") == (row.role_case_index == 4u ? 5u : 2u) &&
+        number("physical_mutations_rejected") == (row.role_case_index == 4u ? 7u : 3u),
+        "Shapes4 mandatory complete geometry and good-first controls");
+    require(row.status[1] == "drawn" ? yes("narrow_geometry_good") && !yes("narrow_exact_ordinary") :
+        yes("narrow_exact_ordinary") && !yes("narrow_geometry_good"), "Shapes4 narrow complete geometry or exact ordinary source");
+    return true;
+}
+
+
+std::string official_shapes4_verdict(const std::vector<Observation>& rows, JsonVal facts) {
+    json::JsonMutDoc document; auto root = document.object(), cases = root.make_arr();
+    int ready = 0; std::size_t selected = 0;
+    for (const auto& row : rows) if (row.raw_active_schema == kShapes4Contract) {
+        auto value = root.make_obj(); value.set("path", row.path);
+        const auto proof = json::parse(row.raw_source_constraints); require(proof.has_value(), "Shapes4 compact proof");
+        proof->root().iter_obj([&](JsonVal key, JsonVal field) { value.add(key.as_str(), document.copy_val(field)); });
+        ready += official_shapes4_owned(row, facts); cases.append(value); ++selected;
+    }
+    require(selected == 4u, "Shapes4 compact exactly four complete originals");
+    root.set("schema", "mindmap_shapes4_official_local_verdict/v1"); root.set("source_facts_sha256", shapes4::kFactsSha);
+    root.set("local_ready", ready); root.add("cases", cases); document.set_root(root);
+    return document.to_string();
+}
+
 // Requirement11 formal-matrix support is deliberately file-local.  The
 // existing header owns only private typed decode and Grid geometry; this file
 // owns source selection, Work ledgers, publication, report rows, and counting.
@@ -1999,7 +2410,21 @@ struct OfficialErProgress {
 };
 struct OfficialErCounts {std::size_t visited=0,observed=0,published=0,bound=0,decoded=0,pending=0,admitted=0,mutated=0,unmet=0,errors=0,resources=0;};
 Observation run_official_er206_case(JsonVal,std::size_t,std::size_t,const relations_oracle::Er206Documents&,
-    std::array<bool,206>&,relations_oracle::Work&,std::ostream&,std::size_t,std::size_t);
+    std::array<bool,206>&,relations_oracle::Work&,std::ostream&,std::size_t,std::size_t,JsonVal er107_local_proof=JsonVal{});
+Observation official_er206_legacy_view(const Observation& row) {
+    require(row.raw_active_schema==kOfficialEr107Contract&&row.role_case_index<er107::kPins.size(),"ER107 requires retained ER206 source identity");
+    const auto authority=json::parse(row.raw_source_authority);
+    require(authority.has_value()&&authority->root().get_string("source_facts_sha256")==er107::kFactsSha&&
+        authority->root().get("retained_ER206").is_obj(),"ER107 requires retained ER206 closed proof");
+    Observation legacy;legacy.path=row.path;legacy.track=row.track;legacy.type=row.type;legacy.source_sha256=row.source_sha256;
+    legacy.status=row.status;legacy.errors=row.errors;legacy.projection_baseline=row.projection_baseline;
+    legacy.raw_active_schema=kOfficialEr206Contract;legacy.raw_source_authority=kOfficialEr206Authority;
+    legacy.role_case_index=static_cast<std::size_t>(er107::kPins[row.role_case_index].prior_ordinal);
+    legacy.raw_source_constraints=projection_canonical(authority->root().get("retained_ER206"));
+    require(legacy.role_case_index<relations_oracle::kEr206Pins.size()&&relations_oracle::kEr206Pins[legacy.role_case_index].model_bytes==0,
+        "ER107 supplements only source-bound ER206 null Models");
+    return legacy;
+}
 void official_er_accumulate_owned(JsonVal,const Observation&,OfficialErCounts&,const relations_oracle::Er206Documents&);
 OfficialErCounts official_er_counts(const std::vector<Observation>&,const relations_oracle::Er206Documents*);
 
@@ -2297,6 +2722,104 @@ Observation run_case(std::string path, std::string track, std::string_view sourc
     return row;
 }
 
+constexpr std::string_view kFlowShapeAliasBodyContract = "flow_shape_alias_body_native/v2";
+constexpr std::string_view kFlowShapeAliasBodyAuthority = "immutable_Flow400_FlowShapeAlias_body_batch";
+
+Observation run_official_flow_shape_alias_body(JsonVal fixture, std::size_t global,
+                                               std::string_view raw_source, JsonVal diagnostic,
+                                               std::string_view body) {
+    const auto body_case = std::ranges::find_if(flow_oracle::kFlowShapeAliasBodyCases,
+        [&](const auto& candidate){return candidate.global==global;});
+    require(body_case != flow_oracle::kFlowShapeAliasBodyCases.end(), "Flow shape-alias body global authority");
+    const auto* alias = flow_oracle::flow_shape_alias_case(body_case->ordinal);
+    require(alias != nullptr, "Flow shape-alias body source model authority");
+    std::string effective_expectation="{\"expected\":\"drawn\",\"reason\":\"source-bound-shape-alias-body\",\"checks\":{\"labels\":[";
+    for(std::size_t index=0u;index<alias->node_count;++index){
+        if(index)effective_expectation+=',';
+        effective_expectation+='\"';effective_expectation+=alias->labels[index];effective_expectation+='\"';
+    }
+    effective_expectation+="],\"arrows\":0,\"ordering\":[]},\"snapshot\":\"";
+    effective_expectation+=body_case->snapshot;effective_expectation+="\"}";
+    auto expected_source=json::parse(effective_expectation);
+    require(expected_source.has_value(),"Flow shape-alias body effective expectation JSON");
+    const auto snapshot = read_file(kNativeRoot / body_case->snapshot);
+    require(!snapshot.empty() && snapshot.back() == '\n', "Flow shape-alias body snapshot line ending");
+    const auto snapshot_without_newline = std::string_view(snapshot).substr(0u, snapshot.size() - 1u);
+    require(digest(snapshot_without_newline) == body_case->snapshot_sha,
+            "Flow shape-alias body snapshot source pin");
+
+    // run_case captures wide, narrow, restored, and both ordinary source frames.
+    // Bind the selected manifest row and exact body only after those captures.
+    auto row = run_case(std::string(alias->fixture), "body_diagnostic", body, expected_source->root(), kNativeRoot);
+    flow_oracle::flow_shape_alias_body_bind(fixture, diagnostic, body_case->ordinal, global, raw_source, body);
+    row.raw_active_schema = kFlowShapeAliasBodyContract;
+    row.raw_source_authority = kFlowShapeAliasBodyAuthority;
+    row.role_case_index = body_case->ordinal;
+    row.role_body_sha = std::string(body_case->sha);
+    row.role_model_sha = std::string(alias->model_sha);
+    row.projection_baseline = projection_canonical(diagnostic);
+
+    const bool narrow_valid=row.status[1]=="drawn"||
+        (row.status[1]=="source_fallback"&&row.expected_states[1]=="source");
+    const bool drawn = row.errors.empty() && row.status[0] == "drawn" && narrow_valid && row.status[2] == "drawn";
+    json::JsonMutDoc evidence;
+    auto info = evidence.object();
+    info.set("contract", kFlowShapeAliasBodyContract);
+    info.set("source_authority", kFlowShapeAliasBodyAuthority);
+    info.set("manifest_global_ordinal", static_cast<int64_t>(global));
+    info.set("flow_ordinal", static_cast<int64_t>(body_case->ordinal));
+    info.set("raw_source_sha256", std::string(alias->source_sha));
+    info.set("body_offset", static_cast<int64_t>(body_case->offset));
+    info.set("body_sha256", std::string(body_case->sha));
+    info.set("body_bytes", static_cast<int64_t>(body.size()));
+    info.set("whole_model_sha256", row.role_model_sha);
+    info.set("snapshot_sha256", std::string(body_case->snapshot_sha));
+    info.set("source_bound_after_five_captures", true);
+    info.set("body_admitted", drawn);
+    info.set("semantic_assertions_expected", static_cast<int64_t>(alias->node_count+1u));
+    info.set("semantic_assertions_passed", drawn ? static_cast<int64_t>(alias->node_count+1u) : 0);
+    info.set("source_fallback_credit", 0);
+    evidence.set_root(info);
+    row.raw_source_constraints = evidence.to_string();
+    return row;
+}
+
+bool official_flow_shape_alias_body_owned(const Observation& row) {
+    if (row.raw_active_schema != kFlowShapeAliasBodyContract) return false;
+    const auto parsed = json::parse(row.raw_source_constraints);
+    require(parsed.has_value(), "Flow shape-alias body evidence JSON");
+    const auto info = parsed->root();
+    const auto* body_case=flow_oracle::flow_shape_alias_body_case(row.role_case_index);
+    const auto* alias=flow_oracle::flow_shape_alias_case(row.role_case_index);
+    require(body_case!=nullptr&&alias!=nullptr,"Flow shape-alias body selected authority");
+    const auto semantic_count=static_cast<int64_t>(alias->node_count+1u);
+    require(info.size() == 15u && info.get_string("contract") == kFlowShapeAliasBodyContract &&
+            info.get_string("source_authority") == kFlowShapeAliasBodyAuthority &&
+            info.get_int("manifest_global_ordinal") == static_cast<int64_t>(body_case->global) &&
+            info.get_int("flow_ordinal") == static_cast<int64_t>(body_case->ordinal) &&
+            info.get_string("raw_source_sha256") == alias->source_sha &&
+            info.get_int("body_offset") == static_cast<int64_t>(body_case->offset) &&
+            info.get_string("body_sha256") == body_case->sha &&
+            info.get_int("body_bytes") == static_cast<int64_t>(body_case->body.size()) &&
+            info.get_string("whole_model_sha256") == alias->model_sha &&
+            info.get_string("snapshot_sha256") == body_case->snapshot_sha &&
+            info.get("source_bound_after_five_captures").is_bool() &&
+            info.get("source_bound_after_five_captures").as_bool() &&
+            info.get("body_admitted").is_bool() && info.get("body_admitted").as_bool() &&
+            info.get_int("semantic_assertions_expected") == semantic_count &&
+            info.get_int("semantic_assertions_passed") == semantic_count &&
+            info.get_int("source_fallback_credit") == 0,
+            "Flow shape-alias body exact source/capture/model/semantic evidence");
+    const bool narrow_valid=row.status[1]=="drawn"||
+        (row.status[1]=="source_fallback"&&row.expected_states[1]=="source");
+    require(row.track == "body_diagnostic" && row.type == "flowchart" &&
+            row.path == alias->fixture && row.source_sha256 == body_case->sha &&
+            row.role_body_sha == body_case->sha && row.role_model_sha == alias->model_sha &&
+            row.errors.empty() && row.status[0] == "drawn" && narrow_valid && row.status[2] == "drawn",
+            "Flow shape-alias body native drawing admission");
+    return true;
+}
+
 // RFC 0031 E6c: canonical mandatory-gap rows for the capability matrix.
 // Known per-row error messages map to stable category codes; anything the
 // closed mapper does not recognize is reported into unknown_messages and
@@ -2346,7 +2869,7 @@ void serialize_matrix_gap_rows(json::JsonMutVal root, const std::vector<MatrixGa
 }
 
 void emit_report(const std::vector<Observation>& rows, const std::vector<std::string>& integrity_errors,
-                 bool projection_validated = false, bool role_consumption_validated = false, bool raw_consumption_validated = false, bool body22_consumption_validated = false,const relations_oracle::Er206Documents* er_documents=nullptr,const Requirement11Documents* requirement11_documents=nullptr,const OfficialPie7Documents* pie7_documents=nullptr,const flow_oracle::Flow400TypedSource4Documents* typed_source4_documents=nullptr,const flow_oracle::Flow400ClassicDocuments* classic_documents=nullptr,const flow_oracle::Flow400LinkProfile3Documents* linkprofile3_documents=nullptr,const flow_oracle::GroupEndpoint15Documents* group_endpoint15_documents=nullptr) {
+                 bool projection_validated = false, bool role_consumption_validated = false, bool raw_consumption_validated = false, bool body22_consumption_validated = false,const relations_oracle::Er206Documents* er_documents=nullptr,const Requirement11Documents* requirement11_documents=nullptr,const OfficialPie7Documents* pie7_documents=nullptr,const flow_oracle::Flow400TypedSource4Documents* typed_source4_documents=nullptr,const flow_oracle::Flow400ClassicDocuments* classic_documents=nullptr,const flow_oracle::Flow400LinkProfile3Documents* linkprofile3_documents=nullptr,const flow_oracle::GroupEndpoint15Documents* group_endpoint15_documents=nullptr, const json::JsonDoc* mindmap_facts=nullptr, const json::JsonDoc* shapes4_facts=nullptr, bool er107_aggregate_validated=false) {
     fs::path path = fs::path(LOOM_MERMAID_REPORT_DIR) / "mermaid-official-matrix.json";
     if (const auto* override_path = std::getenv("LOOM_MERMAID_MATRIX_PATH")) path = override_path;
     json::JsonMutDoc document;
@@ -2426,16 +2949,19 @@ void emit_report(const std::vector<Observation>& rows, const std::vector<std::st
         auto errors = root.make_arr();
         for (const auto& error : row.errors) errors.append(root.make_str(error));
         entry.add("errors", errors);
-        if(row.raw_active_schema==kOfficialEr206Contract){
-            const auto metadata=json::parse(row.raw_source_constraints);require(metadata.has_value(),"OfficialER206 provenance JSON");
-            require(er_documents!=nullptr,"OfficialER206 provenance source authority lifetime");OfficialErCounts checked;official_er_accumulate_owned(metadata->root(),row,checked,*er_documents);
-            auto provenance=root.make_obj();provenance.set("contract",kOfficialEr206Contract);provenance.set("source_case_ordinal",static_cast<int64_t>(row.role_case_index));
+        if(row.raw_active_schema==kOfficialEr206Contract||row.raw_active_schema==kOfficialEr107Contract){
+            std::optional<Observation> retained;
+            if(row.raw_active_schema==kOfficialEr107Contract)retained.emplace(official_er206_legacy_view(row));
+            const auto& er_row=retained?*retained:row;
+            const auto metadata=json::parse(er_row.raw_source_constraints);require(metadata.has_value(),"OfficialER206 provenance JSON");
+            require(er_documents!=nullptr,"OfficialER206 provenance source authority lifetime");OfficialErCounts checked;official_er_accumulate_owned(metadata->root(),er_row,checked,*er_documents);
+            auto provenance=root.make_obj();provenance.set("contract",kOfficialEr206Contract);provenance.set("source_case_ordinal",static_cast<int64_t>(er_row.role_case_index));
             provenance.set("source_authority",kOfficialEr206Authority);provenance.set("source_authority_sha256",kOfficialEr206AuthoritySha);
             provenance.set("source_review_sha256","6843f46ee38a55d3d75358f421770df59dc762a373a97753c3bf68b526ecc12a");
             provenance.set("manifest_sha256",kManifestSha256);provenance.set("foreign_assertions_certified",0);provenance.set("glyph_golden_required",false);
             provenance.set("source_metadata_config_and_foreign_debts","All original20-key source fields retained by canonical row SHA and immutable authority ordinal");
             provenance.set("actual_UTF8_row_arrays_file","mermaid-official-er206-whole-source.jsonl");
-            if(row.role_model_sha.empty())provenance.add("whole_Model_sha256",provenance.make_null());else provenance.set("whole_Model_sha256",row.role_model_sha);
+            if(er_row.role_model_sha.empty())provenance.add("whole_Model_sha256",provenance.make_null());else provenance.set("whole_Model_sha256",er_row.role_model_sha);
             if(row.projection_baseline.empty())provenance.add("original_manifest_expectation",provenance.make_null());
             else{const auto baseline=json::parse(row.projection_baseline);require(baseline.has_value(),"OfficialER206 original raw policy JSON");provenance.add("original_manifest_expectation",document.copy_val(baseline->root()));}
             provenance.add("actual",document.copy_val(metadata->root()));entry.add("ER_native_whole_source",provenance);
@@ -2480,6 +3006,23 @@ void emit_report(const std::vector<Observation>& rows, const std::vector<std::st
             provenance.add("historical_diagnostic_expectation",document.copy_val(baseline->root()));provenance.add("actual",document.copy_val(metadata->root()));
             entry.add("Flow_group_endpoint15_body",provenance);
         }
+        if(row.raw_active_schema==kFlowShapeAliasBodyContract){
+            const auto metadata=json::parse(row.raw_source_constraints),baseline=json::parse(row.projection_baseline);
+            require(metadata.has_value()&&baseline.has_value()&&official_flow_shape_alias_body_owned(row),
+                    "Flow shape-alias body source-owned provenance");
+            auto provenance=root.make_obj();provenance.set("contract",kFlowShapeAliasBodyContract);
+            provenance.set("source_authority",kFlowShapeAliasBodyAuthority);provenance.set("track","body_diagnostic");
+            const auto* body_case=flow_oracle::flow_shape_alias_body_case(row.role_case_index);
+            require(body_case!=nullptr,"Flow shape-alias body report authority");
+            provenance.set("source_case_ordinal",static_cast<int64_t>(body_case->ordinal));
+            provenance.set("manifest_global_ordinal",static_cast<int64_t>(body_case->global));
+            provenance.set("source_manifest_sha256",flow_oracle::kFlow400ManifestSha);
+            provenance.set("whole_model_sha256",row.role_model_sha);provenance.set("body_sha256",row.role_body_sha);
+            provenance.set("source_fallback_credit",0);provenance.set("original_files_added",0);
+            provenance.add("historical_diagnostic_expectation",document.copy_val(baseline->root()));
+            provenance.add("actual",document.copy_val(metadata->root()));
+            entry.add("Flow_shape_alias_body",provenance);
+        }
         if(row.raw_active_schema==kStageCContract){
             const auto metadata=json::parse(row.raw_source_constraints);require(metadata.has_value(),"StageC owned provenance JSON");
             auto provenance=root.make_obj();provenance.set("contract",kStageCContract);
@@ -2516,6 +3059,73 @@ void emit_report(const std::vector<Observation>& rows, const std::vector<std::st
             provenance.set("actual_color_cells_file","mermaid-official-pie7-whole-source.jsonl");provenance.set("geometry_authority","actual FTXUI Screen::PixelAt color cells; published rows are reproduction evidence");provenance.set("native_report_input",false);
             const auto baseline=json::parse(row.projection_baseline);require(baseline.has_value(),"OfficialPie7 original manifest provenance JSON");
             provenance.add("original_manifest_expectation",document.copy_val(baseline->root()));provenance.add("actual",document.copy_val(metadata->root()));entry.add("Pie7_native_whole_source",provenance);
+        }
+        if(row.raw_active_schema==kOfficialEr107Contract) {
+            const bool ready=official_er107_owned(row);const auto metadata=json::parse(row.raw_source_constraints);
+            require(metadata.has_value(),"ER107 Matrix source-bound proof JSON");auto proof=root.make_obj();
+            proof.set("contract",kOfficialEr107Contract);proof.set("source_case_ordinal",static_cast<int64_t>(row.role_case_index));
+            proof.set("actual_color_cells_file",kOfficialEr107MatrixEvidence);proof.set("local_ready",ready);
+            proof.set("admitted",false);proof.set("join_required",true);proof.set("foreign_assertions_certified",0);proof.set("native_report_input",false);
+            const auto baseline=json::parse(row.projection_baseline);require(baseline.has_value(),"ER107 original manifest expectation JSON");
+            proof.add("original_manifest_expectation",document.copy_val(baseline->root()));
+            proof.set("original_foreign_obligations","Retained in frozen ER206, B1 complete-source, presentation and terminal Models; no browser RGB/CSS/SVG/font certification.");
+            proof.add("actual",document.copy_val(metadata->root()));entry.add("ER107_native_whole_source",proof);
+        }
+        if (row.raw_active_schema == kBlock58Contract) {
+            const bool ready = official_block58_owned(row);
+            const auto metadata = json::parse(row.raw_source_constraints); require(metadata.has_value(), "Block58 owned provenance JSON");
+            auto proof = root.make_obj(); proof.set("contract", kBlock58Contract);
+            proof.set("source_case_ordinal", static_cast<int64_t>(row.role_case_index));
+            proof.set("actual_color_cells_file", official_block58::kEvidence);
+            proof.set("local_ready", ready); proof.set("admitted", false); proof.set("join_required", true);
+            proof.set("foreign_assertions_certified", 0); proof.set("native_report_input", false);
+            const auto baseline = json::parse(row.projection_baseline);
+            require(baseline.has_value() && baseline->root().is_obj(), "Block58 original manifest expectation JSON");
+            proof.add("original_manifest_expectation", document.copy_val(baseline->root()));
+            const auto& pin = block58::kPins.at(row.role_case_index);
+            auto obligations = root.make_obj();
+            obligations.set("status", "retained_not_certified");
+            obligations.set("foreign_assertions_certified", 0);
+            obligations.set("foreign_rgb_css_svg_assertions_certified", false);
+            obligations.set("scope", "Original upstream semantic/config/style/assertion obligations remain attached to their immutable manifest record and complete source Models; native terminal projection does not certify foreign RGB, CSS or SVG equivalence.");
+            auto manifest_ref = root.make_obj();
+            manifest_ref.set("path", "tests/fixtures/mermaid_official/manifest.json");
+            manifest_ref.set("sha256", block58::kManifestSha);
+            manifest_ref.set("json_pointer", "/fixtures/" + std::to_string(pin.global));
+            manifest_ref.set("record_sha256", pin.manifest_record_sha);
+            obligations.add("source_manifest", manifest_ref);
+            auto source_ref = root.make_obj();
+            source_ref.set("path", "tests/fixtures/mermaid_native/block58_complete_source_proposal.v1.json");
+            source_ref.set("sha256", block58::kSourceFactsSha);
+            source_ref.set("json_pointer", "/cases/" + std::to_string(row.role_case_index) + "/complete_model");
+            source_ref.set("model_sha256", pin.source_model_sha);
+            obligations.add("complete_source_model", source_ref);
+            auto terminal_ref = root.make_obj();
+            terminal_ref.set("path", "tests/fixtures/mermaid_native/block58_terminal_projection_proposal.v1.json");
+            terminal_ref.set("sha256", block58::kTerminalFactsSha);
+            terminal_ref.set("json_pointer", "/cases/" + std::to_string(row.role_case_index) + "/proposed_terminal_model");
+            terminal_ref.set("model_sha256", pin.terminal_model_sha);
+            obligations.add("terminal_projection_model", terminal_ref);
+            proof.add("original_foreign_obligations", obligations);
+            proof.add("actual", document.copy_val(metadata->root())); entry.add("Block58_native_whole_source", proof);
+        }
+        if (row.raw_active_schema == kMindmap10Contract) {
+            require(mindmap_facts != nullptr, "Mindmap10 owned facts lifetime");
+            const bool admitted = official_mindmap_owned(row, mindmap_facts->root());
+            const auto metadata = json::parse(row.raw_source_constraints); require(metadata.has_value(), "Mindmap10 metadata JSON");
+            auto proof = root.make_obj(); proof.set("contract", kMindmap10Contract);
+            proof.set("actual_color_cells_file", "mermaid-official-mindmap10.jsonl");
+            proof.set("local_ready", admitted); proof.set("native_report_input", false);
+            proof.add("actual", document.copy_val(metadata->root())); entry.add("Mindmap10_native_whole_source", proof);
+        }
+        if (row.raw_active_schema == kShapes4Contract) {
+            require(shapes4_facts != nullptr, "MindmapShapes4 owned facts lifetime");
+            const bool admitted = official_shapes4_owned(row, shapes4_facts->root());
+            const auto metadata = json::parse(row.raw_source_constraints); require(metadata.has_value(), "MindmapShapes4 metadata JSON");
+            auto proof = root.make_obj(); proof.set("contract", kShapes4Contract);
+            proof.set("actual_color_cells_file", "mermaid-official-shapes4.jsonl");
+            proof.set("local_ready", admitted); proof.set("native_report_input", false);
+            proof.add("actual", document.copy_val(metadata->root())); entry.add("MindmapShapes4_native_whole_source", proof);
         }
         if (!row.projection_effective.empty()) {
             auto baseline = json::parse(row.projection_baseline);
@@ -2570,7 +3180,7 @@ void emit_report(const std::vector<Observation>& rows, const std::vector<std::st
         ++originals;
         // Class formal coverage requires the complete whole-source contract;
         // per-state aggregates above still preserve an independently good wide.
-        if(row.raw_active_schema==kStageCContract||row.raw_active_schema==kOfficialFlow400Contract||row.raw_active_schema==kOfficialEr206Contract||row.raw_active_schema==kOfficialRequirement11Contract||row.raw_active_schema==kOfficialPie7Contract)continue;
+        if(row.raw_active_schema==kStageCContract||row.raw_active_schema==kOfficialFlow400Contract||row.raw_active_schema==kOfficialEr206Contract||row.raw_active_schema==kOfficialRequirement11Contract||row.raw_active_schema==kOfficialPie7Contract||row.raw_active_schema==kMindmap10Contract||row.raw_active_schema==kShapes4Contract||row.raw_active_schema==kBlock58Contract||row.raw_active_schema==kOfficialEr107Contract)continue;
         if (row.status[0] == "drawn") ++originals_drawn;
     }
     originals_drawn+=static_cast<int>(classes.admitted);
@@ -2578,6 +3188,48 @@ void emit_report(const std::vector<Observation>& rows, const std::vector<std::st
     originals_drawn+=static_cast<int>(ers.admitted);
     originals_drawn+=static_cast<int>(requirements.admitted);
     originals_drawn+=static_cast<int>(pies.admitted);
+    std::size_t mindmap_selected = 0, mindmap_admitted = 0;
+    for (const auto& row : rows) if (row.raw_active_schema == kMindmap10Contract) {
+        ++mindmap_selected; require(mindmap_facts != nullptr, "Mindmap10 summary facts");
+        mindmap_admitted += official_mindmap_owned(row, mindmap_facts->root());
+    }
+    auto mindmap_summary = root.make_obj(); mindmap_summary.set("selected", static_cast<int64_t>(mindmap_selected));
+    mindmap_summary.set("local_ready", static_cast<int64_t>(mindmap_admitted)); mindmap_summary.set("admitted", 0);
+    mindmap_summary.set("join_required", true); mindmap_summary.set("base_admitted_originals", originals_drawn);
+    mindmap_summary.set("source_facts_sha256", mindmap10::kFactsSha); mindmap_summary.set("foreign_assertions_certified", 0);
+    root.add("Mindmap10_native_whole_source", mindmap_summary);
+    std::size_t shapes4_selected = 0, shapes4_ready = 0;
+    for (const auto& row : rows) if (row.raw_active_schema == kShapes4Contract) {
+        ++shapes4_selected; require(shapes4_facts != nullptr, "Shapes4 summary facts");
+        shapes4_ready += official_shapes4_owned(row, shapes4_facts->root());
+    }
+    auto shapes4_summary = root.make_obj();
+    shapes4_summary.set("selected", static_cast<int64_t>(shapes4_selected));
+    shapes4_summary.set("local_ready", static_cast<int64_t>(shapes4_ready)); shapes4_summary.set("admitted", 0);
+    shapes4_summary.set("base_admitted_originals", 626); shapes4_summary.set("join_required", true);
+    shapes4_summary.set("prerequisite_join", "Mindmap10_native_whole_source");
+    shapes4_summary.set("source_facts_sha256", shapes4::kFactsSha); shapes4_summary.set("foreign_assertions_certified", 0);
+    root.add("MindmapShapes4_native_whole_source", shapes4_summary);
+    int block_selected=0,block_ready=0;
+    for(const auto& row:rows)if(row.raw_active_schema==kBlock58Contract){++block_selected;block_ready+=official_block58_owned(row);}
+    auto block_summary=root.make_obj();block_summary.set("selected",block_selected);block_summary.set("local_ready",block_ready);
+    block_summary.set("admitted",0);block_summary.set("join_required",true);block_summary.set("base_admitted_originals",630);
+    block_summary.set("source_facts_sha256",block58::kSourceFactsSha);block_summary.set("terminal_facts_sha256",block58::kTerminalFactsSha);
+    block_summary.set("foreign_assertions_certified",0);block_summary.set("native_report_input",false);
+    block_summary.set("prerequisite_join","MindmapShapes4_native_whole_source");root.add("Block58_native_whole_source",block_summary);
+    int er107_selected=0,er107_ready=0;
+    for(const auto& row:rows)if(row.raw_active_schema==kOfficialEr107Contract){++er107_selected;er107_ready+=official_er107_owned(row);}
+    auto er107_summary=root.make_obj();er107_summary.set("contract",kOfficialEr107Contract);
+    er107_summary.set("selected",er107_selected);er107_summary.set("local_ready",er107_aggregate_validated?er107_ready:0);
+    er107_summary.set("admitted",0);er107_summary.set("base_admitted_originals",688);er107_summary.set("join_required",true);
+    er107_summary.set("aggregate_after_all_captures",er107_aggregate_validated);er107_summary.set("root_components_validated",er107_aggregate_validated);
+    er107_summary.set("source_facts_sha256",er107::kFactsSha);er107_summary.set("projection_facts_sha256",er107::authority::kProjectionSha);
+    er107_summary.set("presentation_facts_sha256",er107::authority::kPresentationSha);er107_summary.set("contract_sha256",er107::authority::kContractSnapshotSha);
+    er107_summary.set("manifest_sha256",er107::kManifestSha);er107_summary.set("source_lock_sha256",er107::kSourceLock);
+    er107_summary.set("foreign_assertions_certified",0);er107_summary.set("native_report_input",false);
+    er107_summary.set("drawing_credit",0);er107_summary.set("formal_admission",false);
+    er107_summary.set("actual_color_cells_file",kOfficialEr107MatrixEvidence);
+    er107_summary.set("prerequisite_join","Block58_native_whole_source");root.add("ER107_native_whole_source",er107_summary);
     auto coverage = root.make_obj();
     coverage.set("drawn_at_240", originals_drawn);
     coverage.set("original_files_executed", originals);
@@ -2598,12 +3250,15 @@ void emit_report(const std::vector<Observation>& rows, const std::vector<std::st
     flow_summary.set("whole_sources",static_cast<int64_t>(flows.visited));flow_summary.set("complete_five_captures",static_cast<int64_t>(flows.observed));
     flow_summary.set("complete_bindings",static_cast<int64_t>(flows.bound));flow_summary.set("Models_decoded",static_cast<int64_t>(flows.decoded));
     flow_summary.set("whole_null_pending",static_cast<int64_t>(flows.pending));flow_summary.set("whole_sources_admitted",static_cast<int64_t>(flows.admitted));
-    flow_summary.set("target_whole_sources_admitted",static_cast<int64_t>(400));flow_summary.set("mandatory_remaining",static_cast<int64_t>(346));
+    flow_summary.set("target_whole_sources_admitted",static_cast<int64_t>(400));flow_summary.set("mandatory_remaining",static_cast<int64_t>(flows.pending));
     flow_summary.set("meaningfully_mutated",static_cast<int64_t>(flows.mutated));flow_summary.set("resource_errors",static_cast<int64_t>(flows.resources));
     if(classic_documents)flow_summary.set("classic_supplement_sha256",flow_oracle::kFlow400ClassicAssetSha);else flow_summary.add("classic_supplement_sha256",flow_summary.make_null());
     if(group_endpoint15_documents)flow_summary.set("group_endpoint15_supplement_sha256",flow_oracle::kFlow400GroupEndpoint15AssetSha);else flow_summary.add("group_endpoint15_supplement_sha256",flow_summary.make_null());
     flow_summary.set("original_foreign_assertions_certified",0);flow_summary.set("glyph_golden_required",false);
-    flow_summary.set("scope","Original400 Flow whole-scene contract; immutable Base8, Config21, TypedSource4, Classic, LinkProfile3, and GroupEndpoint15 source-owned Models are counted only from this consumer's owned original rows; body diagnostics and foreign assertions remain separate");
+    flow_summary.set("diagram_title_sources",static_cast<int64_t>(std::ranges::count_if(rows,[](const Observation& row){return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_DiagramTitle1";})));
+    flow_summary.set("title_top_margin_sources",static_cast<int64_t>(std::ranges::count_if(rows,[](const Observation& row){return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_TitleTopMargin1";})));
+    flow_summary.set("shape_alias_sources",static_cast<int64_t>(std::ranges::count_if(rows,[](const Observation& row){return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_FlowShapeAlias16";})));
+    flow_summary.set("scope","Original400 Flow whole-scene contract; immutable Base8, Config21, TypedSource4, Classic, LinkProfile3, GroupEndpoint15, DiagramTitle1, TitleTopMargin1, and FlowShapeAlias16 source-owned Models are counted only from this consumer's owned original rows; body diagnostics and foreign assertions remain separate");
     root.add("Flow_native_whole_source",flow_summary);
     auto er_summary=root.make_obj();er_summary.set("contract",kOfficialEr206Contract);er_summary.set("whole_sources",static_cast<int64_t>(ers.visited));
     er_summary.set("complete_five_captures",static_cast<int64_t>(ers.observed));er_summary.set("five_actual_UTF8_row_arrays_published",static_cast<int64_t>(ers.published));
@@ -2638,6 +3293,14 @@ void emit_report(const std::vector<Observation>& rows, const std::vector<std::st
         group_body_summary.set("scope","Fifteen independently captured GroupEndpoint15 body diagnostics. They do not add original-file drawing credit and cannot reuse raw-source admission.");
         root.add("Flow_group_endpoint15_body_diagnostic",group_body_summary);
     }
+    const auto shape_alias_body_selected=std::ranges::count_if(rows,[](const Observation& row){return row.raw_active_schema==kFlowShapeAliasBodyContract;});
+    const auto shape_alias_body_admitted=std::ranges::count_if(rows,[](const Observation& row){return official_flow_shape_alias_body_owned(row);});
+    auto shape_alias_body_summary=root.make_obj();shape_alias_body_summary.set("contract",kFlowShapeAliasBodyContract);
+    shape_alias_body_summary.set("selected",static_cast<int64_t>(shape_alias_body_selected));
+    shape_alias_body_summary.set("admitted",static_cast<int64_t>(shape_alias_body_admitted));
+    shape_alias_body_summary.set("source_fallback_credit",0);shape_alias_body_summary.set("original_files_added",0);
+    shape_alias_body_summary.set("source_authority",kFlowShapeAliasBodyAuthority);
+    root.add("Flow_shape_alias_body_diagnostics",shape_alias_body_summary);
     auto aggregates = root.make_arr();
     std::ostringstream markdown;
     markdown << "# Official Mermaid terminal capability matrix\n\n"
@@ -2710,6 +3373,331 @@ TEST(MermaidCapabilityRoster, UnknownMatrixErrorCategoryIsRejected) {
               "mapped_positive_still_source");
 }
 
+TEST(MermaidOfficialMindmap10, OwnedAdmissionRejectsIncompleteOrBorrowedProofs) {
+    const auto raw = read_file(kRoot.parent_path() / std::string(mindmap10::kFactsRelativePath));
+    ASSERT_EQ(digest(raw), mindmap10::kFactsSha);
+    const auto facts = json::parse(raw), manifest = json::parse(read_file(kRoot / "manifest.json"));
+    ASSERT_TRUE(facts && manifest);
+    const auto fact = facts->root().get("cases").at(0);
+    const auto fixture = manifest->root().get("fixtures").at(static_cast<std::size_t>(fact.get_int("manifest_global_ordinal")));
+    std::ostringstream actual_frames;
+    const auto good = run_official_mindmap(facts->root(), manifest->root(), fixture, 0, actual_frames);
+    ASSERT_TRUE(good.errors.empty()); ASSERT_TRUE(official_mindmap_owned(good, facts->root()));
+    const auto reject = [&](auto mutate, std::string_view guard) {
+        auto parsed = json::parse(good.raw_source_constraints); ASSERT_TRUE(parsed);
+        json::JsonMutDoc document; auto root = document.copy_val(parsed->root()); document.set_root(root); mutate(root);
+        auto changed = good; changed.raw_source_constraints = document.to_string(); bool rejected = false;
+        try { static_cast<void>(official_mindmap_owned(changed, facts->root())); }
+        catch (const std::exception& error) { EXPECT_NE(std::string_view(error.what()).find(guard), std::string_view::npos) << error.what(); rejected = true; }
+        EXPECT_TRUE(rejected) << guard;
+    };
+    reject([](auto root) { root.set("source_facts_sha256", std::string(64, '0')); }, "source-only proof boundary");
+    reject([](auto root) { root.set("complete_model_sha256", std::string(64, '0')); }, "source/Model/projection join");
+    reject([](auto root) { root.set("terminal_projection_sha256", std::string(64, '0')); }, "source/Model/projection join");
+    reject([](auto root) { root.set("captures", 4); }, "mandatory complete geometry");
+    reject([](auto root) { root.set("bound_after_captures", false); }, "mandatory complete geometry");
+    reject([](auto root) { root.set("geometry_and_restoration_good", false); }, "mandatory complete geometry");
+    reject([](auto root) { root.set("semantic_mutations_rejected", 0); }, "mandatory complete geometry");
+    reject([](auto root) { root.set("native_report_input", true); }, "source-only proof boundary");
+    reject([](auto root) { root.set("narrow_exact_ordinary", true); }, "narrow complete geometry");
+    reject([](auto root) { root.set("local_ready", false); }, "failed proof earns no drawing");
+    reject([](auto root) { root.set("extra", true); }, "closed proof fields");
+    auto body = good; body.track = "body_diagnostic";
+    EXPECT_THROW(static_cast<void>(official_mindmap_owned(body, facts->root())), std::exception);
+}
+
+TEST(MermaidOfficialShapes4, CompleteOriginalsCaptureBeforeBindingAndLocalVerdict) {
+    const auto raw = read_file(kRoot.parent_path() / std::string(shapes4::kFactsRelativePath));
+    ASSERT_EQ(digest(raw), shapes4::kFactsSha);
+    const auto facts = json::parse(raw), manifest = json::parse(read_file(kRoot / "manifest.json"));
+    ASSERT_TRUE(facts && manifest);
+    std::vector<Observation> rows;
+    std::ostringstream frames;
+    ASSERT_TRUE(frames.good());
+    std::size_t nodes = 0, edges = 0, semantic = 0, physical = 0;
+    const auto cases = facts->root().get("cases"); ASSERT_EQ(cases.size(), 5u);
+    for (std::size_t n = 0; n < cases.size(); ++n) {
+        const auto fact = cases.at(n); const auto path = fact.get_string("path");
+        const auto global = static_cast<std::size_t>(fact.get_int("manifest_global_ordinal"));
+        const auto selected = official_shapes4_selected(facts->root(), global, path);
+        if (n == 0u) { EXPECT_FALSE(selected); continue; }
+        ASSERT_EQ(selected, n);
+        SCOPED_TRACE(path);
+        const auto fixture = manifest->root().get("fixtures").at(global);
+        auto row = run_official_shapes4(facts->root(), manifest->root(), fixture, n, frames);
+        EXPECT_TRUE(row.errors.empty()) << (row.errors.empty() ? "" : row.errors.front());
+        EXPECT_TRUE(official_shapes4_owned(row, facts->root()));
+        const auto proof = json::parse(row.raw_source_constraints); ASSERT_TRUE(proof);
+        semantic += static_cast<std::size_t>(proof->root().get_int("semantic_mutations_rejected"));
+        physical += static_cast<std::size_t>(proof->root().get_int("physical_mutations_rejected"));
+        nodes += fact.get("complete_model").get("nodes").size();
+        edges += fact.get("parent_relations").size();
+        rows.push_back(std::move(row));
+    }
+    ASSERT_TRUE(frames.good());
+    ASSERT_EQ(rows.size(), 4u); EXPECT_EQ(nodes, 5u); EXPECT_EQ(edges, 1u);
+    EXPECT_EQ(semantic, 11u); EXPECT_EQ(physical, 16u); EXPECT_EQ(semantic + physical, 27u);
+    const auto compact = json::parse(official_shapes4_verdict(rows, facts->root()));
+    ASSERT_TRUE(compact); EXPECT_EQ(compact->root().size(), 4u);
+    EXPECT_EQ(compact->root().get_string("schema"), "mindmap_shapes4_official_local_verdict/v1");
+    EXPECT_EQ(compact->root().get_int("local_ready"), 4);
+    compact->root().get("cases").iter([](JsonVal row) { EXPECT_EQ(row.size(), 16u); });
+    // Full reproduction evidence is Official-owned, ordered, and outside compact.
+    std::istringstream published(frames.str());
+    std::string line; std::size_t count = 0;
+    while (std::getline(published, line)) {
+        const auto record = json::parse(line); ASSERT_TRUE(record); ++count;
+        EXPECT_TRUE(record->root().get("captures_before_binding").as_bool());
+        const auto five = record->root().get("five_frames"); ASSERT_EQ(five.size(), 5u);
+        constexpr std::array<int, 5> widths{240, 40, 240, 240, 40};
+        for (std::size_t n = 0; n < five.size(); ++n) {
+            const auto frame = five.at(n); EXPECT_EQ(frame.get_int("width"), widths[n]);
+            EXPECT_EQ(frame.get("glyph_cells").size(), static_cast<std::size_t>(widths[n] * frame.get_int("height")));
+            EXPECT_TRUE(frame.get("foreground_runs").is_arr()); EXPECT_TRUE(frame.get("background_runs").is_arr());
+            EXPECT_EQ(frame.get_string("cell_sha256").size(), 64u);
+        }
+    }
+    EXPECT_EQ(count, 4u);
+}
+
+TEST(MermaidOfficialShapes4, OwnedAdmissionRejectsIncompleteOrBorrowedProofs) {
+    const auto raw = read_file(kRoot.parent_path() / std::string(shapes4::kFactsRelativePath));
+    ASSERT_EQ(digest(raw), shapes4::kFactsSha);
+    const auto facts = json::parse(raw), manifest = json::parse(read_file(kRoot / "manifest.json"));
+    ASSERT_TRUE(facts && manifest);
+    const auto fact = facts->root().get("cases").at(1);
+    const auto fixture = manifest->root().get("fixtures").at(static_cast<std::size_t>(fact.get_int("manifest_global_ordinal")));
+    std::ostringstream actual_frames;
+    const auto good = run_official_shapes4(facts->root(), manifest->root(), fixture, 1, actual_frames);
+    ASSERT_TRUE(good.errors.empty()); ASSERT_TRUE(official_shapes4_owned(good, facts->root()));
+    const auto reject = [&](auto mutate, std::string_view name, std::string_view guard) {
+        SCOPED_TRACE(name);
+        const auto parsed = json::parse(good.raw_source_constraints); ASSERT_TRUE(parsed);
+        json::JsonMutDoc document; auto root = document.copy_val(parsed->root()); document.set_root(root); mutate(root);
+        auto changed = good; changed.raw_source_constraints = document.to_string(); bool rejected = false;
+        try { static_cast<void>(official_shapes4_owned(changed, facts->root())); }
+        catch (const std::exception& error) { EXPECT_NE(std::string_view(error.what()).find(guard), std::string_view::npos) << error.what(); rejected = true; }
+        EXPECT_TRUE(rejected);
+    };
+    reject([](auto r) { r.set("source_facts_sha256", std::string(64, '0')); }, "stale_asset_hash", "source-only proof boundary");
+    reject([](auto r) { r.set("source_sha256", std::string(64, '0')); }, "stale_raw_hash", "source-only proof boundary");
+    reject([](auto r) { r.set("complete_model_sha256", std::string(64, '0')); }, "stale_model_hash", "source/Model/projection join");
+    reject([](auto r) { r.set("terminal_projection_sha256", std::string(64, '0')); }, "stale_projection_hash", "source/Model/projection join");
+    reject([](auto r) { r.set("native_report_input", true); }, "borrowed_native", "source-only proof boundary");
+    reject([](auto r) { r.set("foreign_assertions_certified", 1); }, "foreign_assertsite_credit", "source-only proof boundary");
+    reject([](auto r) { r.set("captures", 4); }, "missing_capture", "mandatory complete geometry");
+    reject([](auto r) { r.set("captures_before_binding", false); }, "capture_order", "mandatory complete geometry");
+    reject([](auto r) { r.set("bound_after_captures", false); }, "bind_order", "mandatory complete geometry");
+    reject([](auto r) { r.set("geometry_and_restoration_good", false); }, "restoration_failure", "mandatory complete geometry");
+    reject([](auto r) { r.set("semantic_mutations_rejected", 1); }, "partial_semantic", "mandatory complete geometry");
+    reject([](auto r) { r.set("physical_mutations_rejected", 2); }, "partial_physical", "mandatory complete geometry");
+    reject([](auto r) { r.set("semantic_mutations_rejected", 3); r.set("physical_mutations_rejected", 2); }, "same_total_wrong_split", "mandatory complete geometry");
+    reject([](auto r) { r.set("narrow_exact_ordinary", true); r.set("narrow_geometry_good", true); }, "narrow_both_claimed", "narrow complete geometry");
+    reject([](auto r) { r.set("narrow_exact_ordinary", false); r.set("narrow_geometry_good", false); }, "narrow_neither_proved", "narrow complete geometry");
+    reject([](auto r) { r.set("local_ready", false); }, "failed_proof_drawn", "failed proof earns no drawing");
+    reject([](auto r) { r.set("extra", true); }, "unknown_proof_field", "closed proof fields");
+    reject([](auto r) { static_cast<void>(r.remove("captures")); }, "missing_proof_field", "closed proof fields");
+    reject([](auto r) { r.set("captures", true); }, "wrong_field_type", "proof count");
+    reject([](auto r) { r.set("native_report_input", 0); }, "wrong_boolean_type", "proof boolean");
+    const auto reject_row = [&](auto mutate, std::string_view name) {
+        SCOPED_TRACE(name); auto changed = good; mutate(changed);
+        EXPECT_THROW(static_cast<void>(official_shapes4_owned(changed, facts->root())), std::exception);
+    };
+    reject_row([](auto& r) { r.track = "body_diagnostic"; }, "body_track");
+    reject_row([](auto& r) { r.raw_active_schema = kMindmap10Contract; }, "borrowed_original10_contract");
+    reject_row([](auto& r) { r.errors.emplace_back("geometry: owned row failure"); }, "owned_errors_fail_admission");
+    reject_row([](auto& r) { r.role_case_index = 0; }, "BangCloud_not_admitted");
+    reject_row([](auto& r) { r.status[2] = "source_fallback"; }, "partial_restored_state");
+    reject_row([](auto& r) { r.source_sha256 = std::string(64, '0'); }, "stale_row_source");
+    // Actual consumer failures retain errors and earn no mutation/drawing credit.
+    json::JsonMutDoc invalid; auto changed = invalid.copy_val(facts->root()); invalid.set_root(changed);
+    changed.set("schema", "invalid");
+    std::ostringstream failed_frames;
+    const auto invalid_facts = json::parse(invalid.to_string()); ASSERT_TRUE(invalid_facts);
+    const auto failed = run_official_shapes4(invalid_facts->root(), manifest->root(), fixture, 1, failed_frames);
+    ASSERT_FALSE(failed.errors.empty()); EXPECT_FALSE(official_shapes4_owned(failed, facts->root()));
+    const auto proof = json::parse(failed.raw_source_constraints); ASSERT_TRUE(proof);
+    EXPECT_EQ(proof->root().get_int("semantic_mutations_rejected"), 0);
+    EXPECT_EQ(proof->root().get_int("physical_mutations_rejected"), 0);
+    json::JsonMutDoc stale; auto stale_fixture = stale.copy_val(fixture); stale.set_root(stale_fixture);
+    stale_fixture.set("sha256", std::string(64, '0'));
+    const auto stale_record = json::parse(stale.to_string()); ASSERT_TRUE(stale_record);
+    const auto source_failed = run_official_shapes4(facts->root(), manifest->root(), stale_record->root(), 1, failed_frames);
+    ASSERT_FALSE(source_failed.errors.empty()); EXPECT_FALSE(official_shapes4_owned(source_failed, facts->root()));
+    const auto source_proof = json::parse(source_failed.raw_source_constraints); ASSERT_TRUE(source_proof);
+    EXPECT_EQ(source_proof->root().get_int("semantic_mutations_rejected"), 0);
+    EXPECT_EQ(source_proof->root().get_int("physical_mutations_rejected"), 0);
+    // Same source-highlighter profile with exact-dispatch diagram bypass. A
+    // foreground-only difference must never be accepted as ordinary fallback.
+    const auto wrapping = facts->root().get("cases").at(4);
+    const auto source = read_file(kRoot / "cases" / wrapping.get_string("path"));
+    auto mermaid = loom::ui::render_markdown(fenced(source, "mermaid", kSentinel));
+    auto ordinary = loom::ui::render_markdown(fenced(source, "mermaid-source", kSentinel));
+    shapes4::Work control_work;
+    const auto narrow = official_mindmap_capture(mermaid, 40, 40, control_work);
+    auto ordinary_narrow = official_mindmap_capture(ordinary, 40, 40, control_work);
+    ASSERT_TRUE(official_mindmap_surface(narrow, ordinary_narrow));
+    ASSERT_FALSE(ordinary_narrow.foreground.empty());
+    ordinary_narrow.foreground[0] += "foreground-only-control";
+    EXPECT_EQ(narrow.grid.cells, ordinary_narrow.grid.cells); EXPECT_EQ(narrow.background, ordinary_narrow.background);
+    EXPECT_FALSE(official_mindmap_surface(narrow, ordinary_narrow)) << "foreground_only_mismatch_is_not_exact_ordinary";
+}
+
+// Standalone source/proof controls keep all evidence in memory. Only the full
+// OfficialMatrix run publishes formal matrix and Block58 local verdict files.
+TEST(MermaidOfficialBlock58, CompiledSelectionOwnsEveryCompleteOriginalAndRejectsStaleIdentity) {
+    official_block58::Documents documents;const auto fixtures=documents.manifest.root().get("fixtures");
+    std::set<std::size_t> selected;
+    for(std::size_t n=0;n<fixtures.size();++n) {
+        const auto fixture=fixtures.at(n);const auto pick=official_block58::select(n,fixture.get_string("path"),fixture.get_string("sha256"));
+        if(pick)EXPECT_TRUE(selected.insert(*pick).second);
+    }
+    ASSERT_EQ(selected.size(),58u);const auto& pin=block58::kPins.front();
+    EXPECT_THROW(static_cast<void>(official_block58::select(static_cast<std::size_t>(pin.global+1),pin.path,pin.raw_sha)),std::exception);
+    EXPECT_THROW(static_cast<void>(official_block58::select(static_cast<std::size_t>(pin.global),pin.path,"wrong")),std::exception);
+    EXPECT_FALSE(official_block58::select(0,"mindmap/not-a-block.mmd",pin.raw_sha));
+}
+
+TEST(MermaidOfficialBlock58, OwnedPublicMarkdownProofRejectsMissingPinsFramesAndBorrowedMetadata) {
+    official_block58::Documents documents;const auto& pin=block58::kPins.front();std::ostringstream frames;
+    const auto fixture=documents.manifest.root().get("fixtures").at(static_cast<std::size_t>(pin.global));
+    const auto good=run_official_block58(documents,fixture,0,frames);
+    ASSERT_TRUE(good.errors.empty())<<(good.errors.empty()?"":good.errors.front());ASSERT_TRUE(official_block58_owned(good));
+    EXPECT_EQ(good.projection_baseline,projection_canonical(fixture.get("raw")));
+    const auto actual=json::parse(frames.str());ASSERT_TRUE(actual);const auto evidence=actual->root();
+    for(const auto group:{evidence,evidence.get("cached"),evidence.get("cache_hit")}) {
+        const auto captured=group.get("five_frames");ASSERT_TRUE(captured.is_arr());ASSERT_EQ(captured.size(),5u);
+        for(std::size_t i=0;i<5;++i) {
+            const auto frame=captured.at(i);EXPECT_TRUE(hex_string(frame.get_string("cell_sha256"),64));
+            std::int64_t cells=0;frame.get("complete_cell_runs").iter([&](JsonVal run){ASSERT_EQ(run.size(),7u);cells+=run.at(0).as_int();});
+            EXPECT_EQ(cells,frame.get_int("width")*frame.get_int("height"));
+        }
+    }
+    const auto rejects=[&](auto mutate) {
+        auto changed=good;const auto parsed=json::parse(changed.raw_source_constraints);ASSERT_TRUE(parsed);
+        json::JsonMutDoc doc;auto root=doc.copy_val(parsed->root());doc.set_root(root);mutate(root);changed.raw_source_constraints=doc.to_string();
+        EXPECT_THROW(static_cast<void>(official_block58_owned(changed)),std::exception);
+    };
+    for(const auto key:{"source_sha256","complete_model_sha256","terminal_model_sha256","source_witnesses_sha256","manifest_record_sha256",
+        "terminal_source_binding_sha256","source_facts_sha256","terminal_facts_sha256","official_manifest_sha256","source_lock_sha256","boundary_sha256","reviewed_design_sha256"})
+        rejects([&](auto root){root.set(key,"wrong");});
+    for(const auto key:{"captures_before_binding","bound_after_captures","geometry_and_restoration_good","uncached_cached_five_planes_equal","cache_hit_observed","markdown_dim_color"})
+        rejects([&](auto root){root.set(key,false);});
+    rejects([](auto root){root.set("captures",10);});rejects([](auto root){root.set("inherited_other_attributes",0);});
+    rejects([](auto root){root.set("manifest_global_ordinal",-1);});rejects([](auto root){root.set("semantic_mutations_rejected",0);});
+    rejects([](auto root){root.set("physical_mutations_rejected",0);});rejects([](auto root){root.set("native_report_input",true);});
+    rejects([](auto root){root.set("foreign_assertions_certified",1);});rejects([](auto root){root.set("drawing_credit",1);});
+    rejects([](auto root){root.set("foreign_plane",true);});rejects([](auto root){root.set("local_ready",false);});
+    auto wrong_row=good;wrong_row.track="body_diagnostic";EXPECT_THROW(static_cast<void>(official_block58_owned(wrong_row)),std::exception);
+    wrong_row=good;wrong_row.raw_active_schema=kShapes4Contract;EXPECT_THROW(static_cast<void>(official_block58_owned(wrong_row)),std::exception);
+    wrong_row=good;++wrong_row.role_case_index;EXPECT_THROW(static_cast<void>(official_block58_owned(wrong_row)),std::exception);
+    block58::OracleWork work;const auto raw=official_block58::read(kRoot/"cases"/std::string(pin.path),block58::kMaxRawBytes);
+    EXPECT_THROW(static_cast<void>(documents.bind(pin.path,raw+" ",work)),std::exception);
+}
+
+TEST(MermaidOfficialBlock58, DimFalseAndTrueRemainExactPublicMarkdownAttributes) {
+    official_block58::Documents documents;const auto& pin=block58::kPins.front();
+    const auto raw=official_block58::read(kRoot/"cases"/std::string(pin.path),block58::kMaxRawBytes);
+    block58::OracleWork captures;captures.left=768'000'000;
+    const auto plain=official_block58::observe(raw,captures,nullptr,false),dim=official_block58::observe(raw,captures,nullptr,true);
+    block58::OracleWork binding;const auto facts=documents.bind(pin.path,raw,binding);block58::OracleWork deriving;
+    const auto expected=block58::authority::derive(facts,raw.size(),deriving);const auto colors=official_block58::palette();
+    block58::OracleWork checking;checking.left=768'000'000;
+    const auto a=official_block58::validate(plain,expected,colors,false,checking),b=official_block58::validate(dim,expected,colors,true,checking);
+    EXPECT_EQ(a,b);EXPECT_NE(plain[0],dim[0]);
+}
+
+// ER107's independent sidecar does not replace ER206's frozen closed proof,
+// change manifest expectations, or publish a formal matrix/join marker.
+TEST(MermaidOfficialEr107, CompleteOriginalsOwnFifteenFramesBeforeCaseAndFinalAggregateBinding) {
+    official_er107::ThemeGuard theme_guard;loom::ui::design::theme::set_theme(loom::ui::design::theme::ThemeVariant::Dark);
+    const auto verdict_path=fs::path(LOOM_MERMAID_REPORT_DIR)/std::string(official_er107::kVerdict);
+    fs::remove(verdict_path); // An interrupted attempt cannot leave an old ready verdict.
+    official_er107::Documents documents;
+    std::ofstream full(fs::path(LOOM_MERMAID_REPORT_DIR)/std::string(official_er107::kEvidence),std::ios::binary);
+    ASSERT_TRUE(full.good());json::JsonMutDoc compact;auto root=compact.object(),cases=root.make_arr();
+    std::array<bool,107> captures{};std::size_t ready=0,errors=0,resources=0,semantic=0,physical=0;
+    for(std::size_t i=0;i<er107::kPins.size();++i) {
+        SCOPED_TRACE(er107::kPins[i].path);const auto result=official_er107::run(documents,i,full);captures[i]=result.captured;
+        const auto parsed=json::parse(result.proof);ASSERT_TRUE(parsed);const auto proof=parsed->root();
+        EXPECT_EQ(official_er107::owned(proof),result.ready);
+        if(result.ready)++ready;
+        else {++errors;ADD_FAILURE()<<proof.get_string("phase")<<": "<<proof.get_string("error");}
+        resources+=result.resource;semantic+=result.semantic;physical+=result.physical;cases.append(compact.copy_val(proof));
+    }
+    full.flush();ASSERT_TRUE(full.good());bool aggregate=false;
+    try {documents.finish(captures);aggregate=true;}
+    catch(const std::exception& failure){++errors;resources+=er107::authority::resource(failure.what());root.set("aggregate_error",failure.what());ADD_FAILURE()<<failure.what();}
+    root.set("schema","er107_official_complete_original/v1");root.set("contract",official_er107::kContract);
+    root.set("source_facts_sha256",er107::kFactsSha);root.set("projection_facts_sha256",er107::authority::kProjectionSha);
+    root.set("presentation_facts_sha256",er107::authority::kPresentationSha);root.set("contract_sha256",er107::authority::kContractSnapshotSha);
+    root.set("source_helper_sha256",official_er107::kSourceHelperSha);root.set("prior_authority_sha256",er107::kPriorSha);
+    root.set("manifest_sha256",er107::kManifestSha);root.set("source_lock_sha256",er107::kSourceLock);
+    root.set("authority_adaptation",er107::authority::kAdaptation);root.set("authority_review_status",er107::authority::kB3ReviewStatus);root.set("limitations",er107::authority::kB3Limitations);
+    root.set("selected",107);root.set("local_ready",static_cast<std::int64_t>(aggregate?ready:0));root.set("errors",static_cast<std::int64_t>(errors));root.set("resource_errors",static_cast<std::int64_t>(resources));
+    root.set("captured_originals",static_cast<std::int64_t>(std::ranges::count(captures,true)));root.set("captures_per_original",15);
+    root.set("aggregate_after_all_captures",aggregate);root.set("root_components_validated",aggregate);
+    root.set("semantic_mutations_rejected",static_cast<std::int64_t>(semantic));root.set("physical_mutations_rejected",static_cast<std::int64_t>(physical));
+    root.set("foreign_assertions_certified",0);root.set("native_report_input",false);root.set("drawing_credit",0);root.set("admitted",0);root.set("formal_admission",false);root.set("join_required",true);
+    root.set("base_admitted_originals",688);root.set("actual_color_cells_file",official_er107::kEvidence);
+    root.add("cases",cases);compact.set_root(root);write_file(verdict_path,compact.to_string());
+    EXPECT_TRUE(aggregate);EXPECT_EQ(ready,107u);EXPECT_EQ(errors,0u);EXPECT_EQ(resources,0u);
+}
+
+TEST(MermaidOfficialEr107, ExactOriginalSelectorAndCaptureOrderingCannotBecomePreflightAdmission) {
+    official_er107::Documents documents;std::set<std::size_t> seen;
+    for(std::size_t i=0;i<er107::kPins.size();++i) {
+        const auto& pin=er107::kPins[i];const auto record=documents.manifest.root().get("fixtures").at(static_cast<std::size_t>(pin.global));
+        const auto selected=official_er107::select(static_cast<std::size_t>(pin.global),record.get_string("path"),record.get_string("sha256"));
+        ASSERT_TRUE(selected);EXPECT_EQ(*selected,i);EXPECT_TRUE(seen.insert(*selected).second);
+    }
+    const auto& pin=er107::kPins.front();
+    EXPECT_THROW(static_cast<void>(official_er107::select(static_cast<std::size_t>(pin.global+1),pin.path,pin.raw_sha)),std::exception);
+    EXPECT_THROW(static_cast<void>(official_er107::select(static_cast<std::size_t>(pin.global),pin.path,"wrong")),std::exception);
+    EXPECT_FALSE(official_er107::select(0,"er-diagram/not-selected.mmd",pin.raw_sha));
+    official_er107::Captures none;er107::OracleWork work;
+    EXPECT_THROW(static_cast<void>(documents.bind(0,"",none,work)),std::exception);
+    std::array<bool,107> incomplete{};EXPECT_THROW(documents.finish(incomplete),std::exception);
+}
+
+TEST(MermaidOfficialEr107, OwnedGoodFirstProofRejectsBorrowedMissingAndRecomputedSourceMetadata) {
+    official_er107::ThemeGuard theme_guard;loom::ui::design::theme::set_theme(loom::ui::design::theme::ThemeVariant::Dark);
+    official_er107::Documents documents;std::ostringstream frames;
+    const auto result=official_er107::run(documents,0,frames);const auto parsed=json::parse(result.proof);ASSERT_TRUE(parsed);
+    ASSERT_TRUE(result.ready)<<parsed->root().get_string("error");ASSERT_TRUE(official_er107::owned(parsed->root()));
+    const auto actual=json::parse(frames.str());ASSERT_TRUE(actual);
+    for(const auto group:{"uncached","cache_miss","cache_hit"}) {
+        const auto five=actual->root().get("capture_groups").get(group).get("five_frames");ASSERT_EQ(five.size(),5u);
+        for(std::size_t n=0;n<5;++n) {
+            const auto frame=five.at(n);EXPECT_TRUE(hex_string(frame.get_string("cell_sha256"),64));std::int64_t area=0;
+            frame.get("complete_cell_runs").iter([&](JsonVal run){ASSERT_EQ(run.size(),8u);area+=run.at(0).as_int();});
+            EXPECT_EQ(area,frame.get_int("width")*frame.get_int("height"));
+        }
+    }
+    const auto reject=[&](auto mutate) {
+        json::JsonMutDoc bad;auto root=bad.copy_val(parsed->root());bad.set_root(root);mutate(root);const auto changed=json::parse(bad.to_string());ASSERT_TRUE(changed);
+        EXPECT_THROW(static_cast<void>(official_er107::owned(changed->root())),std::exception);
+    };
+    for(const auto key:{"source_sha256","source_git_blob","source_case_sha256","source_model_sha256","source_witnesses_sha256","manifest_record_sha256",
+        "prior_ER206_case_sha256","terminal_model_sha256","whole_scene_model_sha256","source_binding_sha256","complete_model_sha256","projection_facts_sha256","contract_sha256"})
+        reject([&](auto root){root.set(key,"wrong");});
+    for(const auto key:{"captures_before_binding","bound_after_captures","full_frames_published","geometry_and_restoration_good","cache_hit_observed","uncached_cached_five_planes_equal","markdown_dim_color"})
+        reject([&](auto root){root.set(key,false);});
+    reject([](auto root){root.set("captures",10);});reject([](auto root){root.set("semantic_mutations_rejected",0);});
+    reject([](auto root){root.set("physical_mutations_rejected",0);});reject([](auto root){root.set("verification_resource_exhausted",true);});
+    reject([](auto root){root.set("verification_phase_count",3);});reject([](auto root){root.set("verification_phase_cap",1024000000);});
+    reject([](auto root){root.set("verification_aggregate_cap",static_cast<std::int64_t>(4096000000));});
+    reject([](auto root){root.set("native_report_input",true);});reject([](auto root){root.set("foreign_assertions_certified",1);});
+    reject([](auto root){root.set("drawing_credit",1);});reject([](auto root){root.set("body_diagnostic",true);});reject([](auto root){root.set("local_ready",false);});
+    // Resource failures are distinguished from useful semantic mutant failures.
+    const auto& pin=er107::kPins.front();const auto raw=official_er107::read(kRoot/"cases"/std::string(pin.path),er107::kMaxRawBytes);
+    official_er107::Captures captured;er107::OracleWork capturing;official_er107::observe(captured,raw,capturing);
+    er107::OracleWork zero;zero.left=0;bool resource=false;
+    try{static_cast<void>(documents.bind(0,raw,captured,zero));}catch(const std::exception& failure){resource=er107::authority::resource(failure.what());}
+    EXPECT_TRUE(resource);er107::OracleWork changed_raw;
+    EXPECT_THROW(static_cast<void>(documents.bind(0,raw+" ",captured,changed_raw)),std::exception);
+}
+
 TEST(MermaidOfficial, PinnedInventoryIntegrity) {
     EXPECT_NO_THROW(validate_manifest(kRoot, read_file(kRoot / "manifest.json"), update_snapshots()));
 }
@@ -2717,6 +3705,7 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
     std::vector<Observation> observations;
     std::vector<std::string> integrity_errors;
     bool projection_validated = false,role_consumption_validated=false,raw_consumption_validated=false,body22_consumption_validated=false;
+    bool er107_aggregate_validated=false;
     std::optional<flow_oracle::Flow400TypedSource4Documents> official_flow_typed_source4_documents;
     std::optional<flow_oracle::Flow400ClassicDocuments> official_flow_classic_documents;
     std::optional<flow_oracle::Flow400LinkProfile3Documents> official_flow_linkprofile3_documents;
@@ -2730,6 +3719,7 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
     pie7::Work official_pie7_setup{kOfficialPie7SetupLimit};
     official_pie7_setup.spend(4u*sizeof(std::optional<OfficialPie7Documents>)+8u*sizeof(std::size_t)+1024u);
     std::optional<OfficialPie7Documents> official_pie7_documents;
+    std::optional<json::JsonDoc> official_mindmap_facts, official_shapes4_facts;
     try {
         const auto manifest_bytes = read_file(kRoot / "manifest.json");
         validate_manifest(kRoot, manifest_bytes, update_snapshots());
@@ -2819,11 +3809,56 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             return row;
         };
+        const auto mindmap_path = kRoot.parent_path() / std::string(mindmap10::kFactsRelativePath);
+        require(fs::is_regular_file(mindmap_path) && fs::file_size(mindmap_path) <= 65536u, "Mindmap10 bounded approved asset");
+        mindmap10::Work mindmap_setup; mindmap_setup.spend(static_cast<std::size_t>(fs::file_size(mindmap_path)) * 32u + 4096u);
+        const auto mindmap_raw = read_file(mindmap_path); require(digest(mindmap_raw) == mindmap10::kFactsSha, "Mindmap10 approved asset SHA");
+        auto mindmap_parsed = json::parse(mindmap_raw); require(mindmap_parsed.has_value(), "Mindmap10 asset JSON");
+        official_mindmap_facts.emplace(std::move(*mindmap_parsed));
+        std::array<bool, 10> mindmap_consumed{};
+        std::ofstream mindmap_diagnostics(fs::path(LOOM_MERMAID_REPORT_DIR) / "mermaid-official-mindmap10.jsonl", std::ios::binary);
+        require(mindmap_diagnostics.good(), "Mindmap10 Official diagnostic output");
+        const auto shapes4_path = kRoot.parent_path() / std::string(shapes4::kFactsRelativePath);
+        require(fs::is_regular_file(shapes4_path) && fs::file_size(shapes4_path) <= 131072u, "Shapes4 bounded approved asset");
+        shapes4::Work shapes4_setup; shapes4_setup.spend(static_cast<std::size_t>(fs::file_size(shapes4_path)) * 32u + 4096u);
+        const auto shapes4_raw = read_file(shapes4_path); require(digest(shapes4_raw) == shapes4::kFactsSha, "Shapes4 approved asset SHA");
+        auto shapes4_parsed = json::parse(shapes4_raw); require(shapes4_parsed.has_value(), "Shapes4 asset JSON");
+        official_shapes4_facts.emplace(std::move(*shapes4_parsed));
+        std::array<bool, 5> shapes4_consumed{};
+        std::ofstream shapes4_diagnostics(fs::path(LOOM_MERMAID_REPORT_DIR) / "mermaid-official-shapes4.jsonl", std::ios::binary);
+        require(shapes4_diagnostics.good(), "Shapes4 Official diagnostic output");
+        official_er107::Documents er107_documents;
+        std::array<bool,107> er107_selected{},er107_captured{};
+        std::ofstream er107_diagnostics(fs::path(LOOM_MERMAID_REPORT_DIR)/std::string(kOfficialEr107MatrixEvidence),std::ios::binary);
+        require(er107_diagnostics.good(),"ER107 Matrix independent diagnostic output");
+        official_block58::Documents block_documents;
+        std::array<bool,58> block_consumed{};
+        std::ofstream block_diagnostics(fs::path(LOOM_MERMAID_REPORT_DIR)/std::string(official_block58::kEvidence),std::ios::binary);
+        require(block_diagnostics.good(),"Block58 Official diagnostic output");
         for (std::size_t i = 0; i < fixtures.size(); ++i) {
             const auto fixture = fixtures.at(i);
             // Borrowed selection before path/source ownership. Every selected
             // original starts its own single paid verification ledger.
             const auto class_path=fixture.get("path");
+            if(class_path.is_str()&&class_path.as_str().starts_with("block/"))
+                if(const auto selected=official_block58::select(i,class_path.as_str(),fixture.get_string("sha256"))) {
+                    require(!block_consumed[*selected],"Block58 original consumed twice");block_consumed[*selected]=true;
+                    observations.push_back(run_official_block58(block_documents,fixture,*selected,block_diagnostics));continue;
+                }
+            if (class_path.is_str() && class_path.as_str().starts_with("mindmap/"))
+                if (const auto selected = official_mindmap_selected(official_mindmap_facts->root(), i, class_path.as_str())) {
+                    require(!mindmap_consumed[*selected], "Mindmap10 original consumed twice"); mindmap_consumed[*selected] = true;
+                    observations.push_back(run_official_mindmap(official_mindmap_facts->root(), document->root(), fixture, *selected, mindmap_diagnostics));
+                    continue;
+                }
+
+            if (class_path.is_str() && class_path.as_str().starts_with("mindmap/"))
+                if (const auto selected = official_shapes4_selected(official_shapes4_facts->root(), i, class_path.as_str())) {
+                    require(!shapes4_consumed[*selected], "Shapes4 original consumed twice"); shapes4_consumed[*selected] = true;
+                    observations.push_back(run_official_shapes4(official_shapes4_facts->root(), document->root(), fixture, *selected, shapes4_diagnostics));
+                    continue;
+                }
+
             // RFC 0031 E2a: config-free gitGraph/state originals are governed
             // by the independently reviewed cohort ledger, not the manifest's
             // source expectation. The per-row pixel gate is test_mermaid_e2a_cohort;
@@ -2848,6 +3883,32 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
             if(class_path.is_str()&&class_path.as_str().starts_with("er-diagram/")){
+                if(const auto selected=official_er107::select(i,class_path.as_str(),fixture.get_string("sha256"))) {
+                    require(!er107_selected[*selected],"ER107 Matrix source selected twice");er107_selected[*selected]=true;
+                    official_er107::ThemeGuard er107_theme;loom::ui::design::theme::set_theme(loom::ui::design::theme::ThemeVariant::Dark);
+                    const auto observed=official_er107::run(er107_documents,*selected,er107_diagnostics);
+                    er107_captured[*selected]=observed.captured;
+                    const auto proof=json::parse(observed.proof);require(proof.has_value(),"ER107 Matrix actual owned proof JSON");
+                    require(official_er107::owned(proof->root())==observed.ready,"ER107 Matrix actual local verdict disagreement");
+                    relations_oracle::Work retained_work{relations_oracle::kEr206SceneLimit};
+                    auto row=run_official_er206_case(fixture,i,official_er_ordinal++,*official_er_documents,
+                        official_er_consumed,retained_work,official_er_diagnostics,observations.size(),observations.capacity(),observed.ready?proof->root():JsonVal{});
+                    // Keep the frozen ER206 closed proof, original null Model
+                    // and source counters in source authority, not extra rows.
+                    const auto legacy=json::parse(row.raw_source_constraints);require(legacy.has_value(),"ER107 retained ER206 proof JSON");
+                    json::JsonMutDoc authority;auto retained=authority.object();retained.set("source_facts_sha256",er107::kFactsSha);
+                    retained.add("retained_ER206",authority.copy_val(legacy->root()));authority.set_root(retained);
+                    row.raw_source_authority=authority.to_string();row.raw_source_constraints=observed.proof;
+                    row.raw_active_schema=kOfficialEr107Contract;row.role_case_index=*selected;
+                    row.role_model_sha=er107::authority::kPins[*selected].complete_sha;row.role_body_sha=er107::authority::kPins[*selected].scene_sha;
+                    row.expected="pending";row.reason="ER107 complete original locally verified; independent strict formal join pending";
+                    row.decision_reasons.fill(row.reason);
+                    if(observed.ready) {
+                        row.status={"drawn",proof->root().get("narrow_exact_ordinary").as_bool()?"source_fallback":"drawn","drawn"};
+                        row.expected_states={"drawn",proof->root().get("narrow_exact_ordinary").as_bool()?"source":"drawn","drawn"};
+                    } else row.errors.push_back(proof->root().get_string("error"));
+                    observations.push_back(std::move(row));continue;
+                }
                 relations_oracle::Work er_work{relations_oracle::kEr206SceneLimit};
                 observations.push_back(run_official_er206_case(fixture,i,official_er_ordinal++,*official_er_documents,
                     official_er_consumed,er_work,official_er_diagnostics,observations.size(),observations.capacity()));
@@ -2917,6 +3978,11 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     // original reference or JsonVal escapes its owning lifetime.
                     auto body_row=reuse_flow_body2(fixture,i,index,source,body,observations.back(),official_flow_documents,paid);
                     observations.push_back(std::move(body_row));
+                }else if(std::ranges::any_of(flow_oracle::kFlowShapeAliasBodyCases,[&](const auto& candidate){
+                    const auto* alias=flow_oracle::flow_shape_alias_case(candidate.ordinal);
+                    return !candidate.snapshot_sha.empty()&&alias!=nullptr&&path==alias->fixture;
+                })){
+                    observations.push_back(run_official_flow_shape_alias_body(fixture,i,source,diagnostic,body));
                 }else{
                 const auto selected=body22_select(policies,role_batch.policy.root(),raw_batch.policy.root(),body22_batch.policy.root(),path,"body_diagnostic");
                 if(selected)observations.push_back(projected(path,"body_diagnostic",body,diagnostic,*selected));
@@ -2924,6 +3990,10 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
         }
+        require(std::ranges::all_of(er107_selected,[](bool selected){return selected;}),"ER107 Matrix exactly107 selected originals consumed");
+        er107_diagnostics.flush();require(er107_diagnostics.good(),"ER107 Matrix all actual frame evidence flushed");
+        er107_documents.finish(er107_captured);er107_aggregate_validated=true;
+        EXPECT_EQ(std::ranges::count_if(observations,[](const Observation& row){return row.raw_active_schema==kOfficialEr107Contract&&official_er107_owned(row);}),107);
         require(official_er_ordinal==206u&&static_cast<bool>(official_er_diagnostics),"OfficialER206 complete original/evidence enumeration");
         relations_oracle::er206_all_consumed(official_er_consumed,official_er_setup);
         const auto ers=official_er_counts(observations,&*official_er_documents);
@@ -2948,6 +4018,9 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         const auto flows=official_flow_counts(observations,official_flow_typed_source4_documents->supplement.root(),official_flow_classic_documents->supplement.root(),official_flow_linkprofile3_documents->supplement.root(),official_flow_group_endpoint15_documents->asset.root());
         const auto group_bodies=group_endpoint15_body_counts(observations,*official_flow_group_endpoint15_documents);
         EXPECT_EQ(group_bodies.visited,15u);EXPECT_EQ(group_bodies.observed,15u);EXPECT_EQ(group_bodies.bound,15u);EXPECT_EQ(group_bodies.decoded,15u);EXPECT_EQ(group_bodies.admitted,15u);EXPECT_EQ(group_bodies.mutated,15u);EXPECT_EQ(group_bodies.errors,0u);EXPECT_EQ(group_bodies.resources,0u);
+        const auto shape_alias_body_selected=std::ranges::count_if(observations,[](const Observation& row){return row.raw_active_schema==kFlowShapeAliasBodyContract;});
+        const auto shape_alias_body_admitted=std::ranges::count_if(observations,[](const Observation& row){return official_flow_shape_alias_body_owned(row);});
+        EXPECT_EQ(shape_alias_body_selected,14u);EXPECT_EQ(shape_alias_body_admitted,14u);
         EXPECT_EQ(flows.visited,400u);EXPECT_EQ(flows.observed,400u);EXPECT_EQ(flows.bound,400u);
         official_flow_config21_documents.asset_work.product(observations.size(),128u);
         const auto config21_selected=std::ranges::count_if(observations,[](const Observation& row){
@@ -2961,41 +4034,74 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         const auto classic_selected=std::ranges::count_if(observations,[](const Observation& row){
             return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_Classic";
         });
-        EXPECT_EQ(classic_selected,3);
+        EXPECT_EQ(classic_selected,6);
         const auto linkprofile3_selected=std::ranges::count_if(observations,[](const Observation& row){
             return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_LinkProfile3";
         });
-        EXPECT_EQ(linkprofile3_selected,3);
+        EXPECT_EQ(linkprofile3_selected,4);
         const auto group_endpoint15_selected=std::ranges::count_if(observations,[](const Observation& row){
             return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_GroupEndpoint15";
         });
         EXPECT_EQ(group_endpoint15_selected,15);
-        // RFC 0031 T1-B: errors rose 9 -> 10 because the strict-first router
-        // retry now draws one pending-config original
-        // (flowchart/nightly-check/dagre/7213-...mmd) that has no bound Model;
-        // its native art is booked as flow_whole_null_unmet until an
-        // independent Model review certifies it. Decoded/pending are
-        // Model-driven and unchanged.
-        EXPECT_EQ(flows.decoded,54u);EXPECT_EQ(flows.pending,346u);EXPECT_EQ(flows.errors,10u);EXPECT_EQ(flows.resources,0u);
-        EXPECT_EQ(flows.admitted,54u);EXPECT_EQ(flows.mutated,54u);
+        const auto title_selected=std::ranges::count_if(observations,[](const Observation& row){
+            return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_DiagramTitle1";
+        });
+        EXPECT_EQ(title_selected,1);
+        const auto title_margin_selected=std::ranges::count_if(observations,[](const Observation& row){
+            return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_TitleTopMargin1";
+        });
+        EXPECT_EQ(title_margin_selected,1);
+        const auto issue4648_selected=std::ranges::count_if(observations,[](const Observation& row){
+            return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_Issue4648";
+        });
+        EXPECT_EQ(issue4648_selected,1);
+        const auto shape_alias_selected=std::ranges::count_if(observations,[](const Observation& row){
+            return row.raw_active_schema==kOfficialFlow400Contract&&row.raw_source_authority=="immutable_Flow400_8Models_plus_FlowShapeAlias16";
+        });
+        EXPECT_EQ(shape_alias_selected,16);
+        // Shape aliases include the independently checked filled Fork/Join
+        // contour. Body diagnostics add no original-file drawing credit.
+        EXPECT_EQ(flows.decoded,77u);EXPECT_EQ(flows.pending,323u);EXPECT_EQ(flows.errors,10u);EXPECT_EQ(flows.resources,0u);
+        EXPECT_EQ(flows.admitted,77u);EXPECT_EQ(flows.mutated,77u);
         for(const auto count:applications) projection_consumed(count);
         role_batch_consumed(role_counts,role_batch.facts.root());role_consumption_validated=true;
         raw193_consumed(raw_counts);raw_consumption_validated=true;
         body22_consumed(body22_counts);body22_consumption_validated=true;
+        json::JsonMutDoc mindmap_verdict; auto mv = mindmap_verdict.object(), mr = mv.make_arr();
+        int mindmap_ready = 0;
+        for (const auto& row : observations) if (row.raw_active_schema == kMindmap10Contract) {
+            auto value = mv.make_obj(); value.set("path", row.path);
+            const auto proof = json::parse(row.raw_source_constraints); require(proof.has_value(), "Mindmap10 compact proof");
+            proof->root().iter_obj([&](JsonVal key, JsonVal field) { value.add(key.as_str(), mindmap_verdict.copy_val(field)); });
+            if (!row.errors.empty()) value.set("error", row.errors.front());
+            mindmap_ready += official_mindmap_owned(row, official_mindmap_facts->root()); mr.append(value);
+        }
+        mv.set("schema", "mindmap10_official_local_verdict/v1"); mv.set("local_ready", mindmap_ready);
+        mv.set("source_facts_sha256", mindmap10::kFactsSha); mv.add("cases", mr); mindmap_verdict.set_root(mv);
+        write_file(fs::path(LOOM_MERMAID_REPORT_DIR) / "mermaid-mindmap10-official-verdict.json", mindmap_verdict.to_string());
+        require(std::ranges::all_of(mindmap_consumed, [](bool value) { return value; }), "Mindmap10 all complete originals consumed");
+        EXPECT_EQ(std::ranges::count_if(observations, [&](const auto& row) { return row.raw_active_schema == kMindmap10Contract && official_mindmap_owned(row, official_mindmap_facts->root()); }), 10);
+        write_file(fs::path(LOOM_MERMAID_REPORT_DIR) / "mermaid-shapes4-official-verdict.json",
+            official_shapes4_verdict(observations, official_shapes4_facts->root()));
+        require(!shapes4_consumed[0] && std::ranges::all_of(shapes4_consumed | std::views::drop(1), [](bool value) { return value; }), "Shapes4 exactly four originals consumed; Bang/Cloud excluded");
+        require(std::ranges::all_of(block_consumed,[](bool value){return value;}),"Block58 exactly 58 complete originals consumed");
+        EXPECT_EQ(std::ranges::count_if(observations,[](const auto& row){return row.raw_active_schema==kBlock58Contract&&official_block58_owned(row);}),58);
+        write_file(fs::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-block58-official-verdict.json",official_block58_verdict(observations));
         const auto classes=stage_c_counts(observations);
         EXPECT_EQ(classes.visited,285u);EXPECT_EQ(classes.observed,285u);EXPECT_EQ(classes.bound,285u);
         EXPECT_EQ(classes.decoded,237u);EXPECT_EQ(classes.dagre,38u);EXPECT_EQ(classes.classifier,26u);EXPECT_EQ(classes.unused_definitions,3u);EXPECT_EQ(classes.notes,18u);
-        EXPECT_EQ(classes.pending,48u);EXPECT_EQ(classes.errors,30u);EXPECT_EQ(classes.resources,0u);
-        // Frozen observed values: 237 Models decoded, but only 211 admit
-        // (the 26 mapped positives still render ordinary source) — see the
-        // class285 gate's matched==211 pin.
-        EXPECT_EQ(classes.admitted,211u);
+        EXPECT_EQ(classes.pending,48u);EXPECT_EQ(classes.errors,10u);EXPECT_EQ(classes.resources,0u);
+        // Twenty complete cardinality originals now close through one bounded
+        // caption-first retry. Six decoded Note profiles remain whole source;
+        // the other 48 source Models stay pending and earn no drawing credit.
+        EXPECT_EQ(classes.admitted,231u);
     } catch (const std::exception& error) { integrity_errors.push_back(error.what()); }
     EXPECT_NO_THROW(emit_report(observations, integrity_errors, projection_validated,role_consumption_validated,raw_consumption_validated,body22_consumption_validated,official_er_documents?&*official_er_documents:nullptr,official_requirement11_documents?&*official_requirement11_documents:nullptr,official_pie7_documents?&*official_pie7_documents:nullptr,
         official_flow_typed_source4_documents?&*official_flow_typed_source4_documents:nullptr,
         official_flow_classic_documents?&*official_flow_classic_documents:nullptr,
         official_flow_linkprofile3_documents?&*official_flow_linkprofile3_documents:nullptr,
-        official_flow_group_endpoint15_documents?&*official_flow_group_endpoint15_documents:nullptr));
+        official_flow_group_endpoint15_documents?&*official_flow_group_endpoint15_documents:nullptr,
+        official_mindmap_facts?&*official_mindmap_facts:nullptr, official_shapes4_facts?&*official_shapes4_facts:nullptr, er107_aggregate_validated));
     for (const auto& error : integrity_errors) ADD_FAILURE() << error;
     EXPECT_EQ(observations.size(), 2145u + 593u);
     // RFC 0031 E6c: declared capability gaps are report-only and must match
@@ -3012,7 +4118,7 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         const auto gap_diff = gap_roster::diff_gate(*roster, "official_matrix",
                                                      published->root().get("mandatory_gaps"));
         EXPECT_TRUE(gap_diff.ok()) << gap_diff.render("official_matrix");
-        EXPECT_EQ(observed_gap_rows.size(), std::size_t(96));
+        EXPECT_EQ(observed_gap_rows.size(), std::size_t(78));
     }
 }
 TEST(MermaidOfficial, OracleRejectsChangedLabelsMissingArrowsAndWrongFallback) {
@@ -4559,7 +5665,9 @@ namespace {
 void official_flow_error(Observation& row,std::string_view message){
     if(row.errors.size()<6u)row.errors.emplace_back(message.substr(0,128u));
 }
-std::string official_flow_info(const OfficialFlowProgress& p,std::size_t remaining,bool config21=false){
+std::string official_flow_info(const OfficialFlowProgress& p,std::size_t remaining,bool config21=false,
+                               bool diagram_title=false,std::size_t title_mutations=0u,
+                               bool shape_alias=false,std::size_t shape_alias_mutations=0u){
     // Each scene prepays this bounded metadata and later matrix copies/parses.
     json::JsonMutDoc doc;auto info=doc.object();
     info.set("five_captures_complete",p.captured);info.set("source_bound",p.bound);
@@ -4570,6 +5678,13 @@ std::string official_flow_info(const OfficialFlowProgress& p,std::size_t remaini
     if(config21)info.set("source_supplement_sha256",flow_oracle::kFlow400Config21AssetSha);
     else info.add("source_supplement_sha256",info.make_null());
     info.set("phase",p.phase);info.set("remaining",static_cast<int64_t>(remaining));
+    if(diagram_title)info.set("diagram_title_mutations_rejected",static_cast<int64_t>(title_mutations));
+    if(shape_alias){
+        auto mutations=info.make_obj();
+        mutations.set("expected",2);
+        mutations.set("rejected",static_cast<int64_t>(shape_alias_mutations));
+        info.add("shape_alias_mutations",mutations);
+    }
     info.set("height",p.height);auto costs=info.make_arr();
     for(const auto n:p.remaining)costs.append(info.make_num(static_cast<int64_t>(n)));
     info.add("phase_remaining",costs);doc.set_root(info);const auto text=doc.to_string();
@@ -4794,7 +5909,7 @@ void official_flow_linkprofile3_keys(JsonVal value){
 }
 std::size_t official_flow_linkprofile3_identity(JsonVal linkprofile3,const Observation& row){
     require(linkprofile3.is_obj()&&row.role_case_index<400u,"OfficialFlow400 LinkProfile3 authority unavailable");const auto cases=linkprofile3.get("cases");
-    require(cases.is_arr()&&cases.size()==3u,"OfficialFlow400 LinkProfile3 authority denominator");JsonVal selected;std::size_t matches=0u;
+    require(cases.is_arr()&&cases.size()==4u,"OfficialFlow400 LinkProfile3 authority denominator");JsonVal selected;std::size_t matches=0u;
     cases.iter([&](JsonVal candidate){const auto authority=candidate.get("base_authority");
         if(authority.is_obj()&&flow_oracle::flow400_number(authority.get("ordinal"))==row.role_case_index){selected=candidate;++matches;}});
     require(matches==1u,"OfficialFlow400 LinkProfile3 authority selection");const auto authority=selected.get("base_authority");
@@ -4805,7 +5920,7 @@ std::size_t official_flow_linkprofile3_identity(JsonVal linkprofile3,const Obser
 
 std::size_t official_flow_classic_identity(JsonVal classic,const Observation& row){
     require(classic.is_obj()&&row.role_case_index<400u,"OfficialFlow400 Classic authority unavailable");const auto cases=classic.get("cases");
-    require(cases.is_arr()&&cases.size()==3u,"OfficialFlow400 Classic authority denominator");JsonVal selected;std::size_t matches=0u;
+    require(cases.is_arr()&&cases.size()==6u,"OfficialFlow400 Classic authority denominator");JsonVal selected;std::size_t matches=0u;
     cases.iter([&](JsonVal candidate){const auto authority=candidate.get("base_authority");
         if(authority.is_obj()&&flow_oracle::flow400_number(authority.get("ordinal"))==row.role_case_index){selected=candidate;++matches;}});
     require(matches==1u,"OfficialFlow400 Classic authority selection");const auto authority=selected.get("base_authority");
@@ -4826,7 +5941,23 @@ std::size_t official_flow_classic_mutations(const flow_oracle::Grid& good,const 
     const auto extra_ink=[&](std::string_view name){work.spend(4096u);std::optional<Point> blank;
         for(int y=0;y<good.height&&!blank;++y)for(int x=0;x<good.width;++x){work.spend(8u);if(good.at({x,y})==" "){blank=Point{x,y};break;}}
         flow400_require(blank.has_value(),"OfficialFlow400 Classic extra-ink blank witness");physical([&](auto& bad){bad.put(*blank,"§");},name);};
-    if(id=="original_244_dagre_subgraphs"){const auto database=index("D"),client=index("A");
+    if(id=="original_13_dagre_title_top_margin_zero"){const auto start=index("A");
+        semantic([&](auto& bad){bad.nodes[start].shape=Shape::Circle;},"Official Classic13 titleTopMargin node shape");
+        semantic([&](auto& bad){bad.nodes[start].label="A absent";},"Official Classic13 titleTopMargin node label");
+        semantic([](auto& bad){bad.edges.front().to=bad.edges.front().from;},"Official Classic13 titleTopMargin edge endpoint");
+        extra_ink("Official Classic13 titleTopMargin extra ink");
+    }else if(id=="original_40_diamond_fanout"){const auto decision=index("A");
+        semantic([&](auto& bad){bad.nodes[decision].shape=Shape::Rectangle;},"Official Classic40 diamond identity");
+        semantic([&](auto& bad){bad.nodes[decision].label="A absent";},"Official Classic40 decision label");
+        semantic([](auto& bad){bad.edges[1].to=bad.edges[1].from;},"Official Classic40 fanout target");
+        extra_ink("Official Classic40 extra ink");
+    }else if(id=="original_41_diamond_fanout_in_subgraph"){const auto decision=index("A");
+        semantic([&](auto& bad){bad.nodes[decision].shape=Shape::Rectangle;},"Official Classic41 diamond identity");
+        semantic([&](auto& bad){bad.nodes[decision].label="A absent";},"Official Classic41 decision label");
+        semantic([](auto& bad){bad.edges[1].to=bad.edges[1].from;},"Official Classic41 fanout target");
+        semantic([](auto& bad){flow400_require(!bad.groups.empty()&&bad.groups.front().nodes.size()==1u,"Official Classic41 subbe membership witness");bad.groups.front().nodes.clear();},"Official Classic41 subbe membership");
+        extra_ink("Official Classic41 extra ink");
+    }else if(id=="original_244_dagre_subgraphs"){const auto database=index("D"),client=index("A");
         semantic([&](auto& bad){bad.nodes[database].shape=Shape::Circle;},"Official Classic244 cylinder-to-circle");
         semantic([&](auto& bad){bad.nodes[client].label="Client absent";},"Official Classic244 Client label");
         semantic([](auto& bad){bad.edges.front().to=bad.edges.front().from;},"Official Classic244 first edge endpoint");
@@ -4840,7 +5971,7 @@ std::size_t official_flow_classic_mutations(const flow_oracle::Grid& good,const 
         semantic([&](auto& bad){bad.nodes[start].label="Start absent";},"Official Classic376 Start label");
         semantic([](auto& bad){bad.edges.front().to=bad.edges.front().from;},"Official Classic376 first edge endpoint");extra_ink("Official Classic376 extra ink");
     }
-    flow400_require(rejected==expected&&expected==(id=="original_244_dagre_subgraphs"?5u:4u),"OfficialFlow400 Classic mutation source catalogue");return rejected;
+    flow400_require(rejected==expected&&expected==((id=="original_244_dagre_subgraphs"||id=="original_41_diamond_fanout_in_subgraph")?5u:4u),"OfficialFlow400 Classic mutation source catalogue");return rejected;
 }
 std::size_t official_flow_linkprofile3_mutations(const flow_oracle::Grid& good,const flow_oracle::Model& model,
                                                 const flow_oracle::LinkProfile& profile,JsonVal link_case,flow_oracle::OracleWork& work){
@@ -4863,7 +5994,7 @@ std::size_t official_flow_linkprofile3_mutations(const flow_oracle::Grid& good,c
     const auto extra_ink=[&](std::string_view name){const auto footer=flow_oracle::flow400_following(good,work,kSentinel);std::optional<Point> blank;
         for(int y=0;y<footer&&!blank;++y)for(int x=0;x<good.width;++x){work.spend();const Point point{x,y};if(good.at(point)==" "){blank=point;break;}}
         flow400_require(blank.has_value(),"OfficialFlow400 LinkProfile3 extra-ink witness");physical([&](flow_oracle::Grid& bad){bad.put(*blank,"§");},name);};
-    if(id=="link_profile_291"||id=="link_profile_294"){
+    if(id=="link_profile_019"||id=="link_profile_291"||id=="link_profile_294"){
         constexpr std::size_t marker_edge=4u,minimum_edge=7u,label_edge=5u;flow400_require(profile.edges.size()>minimum_edge&&model.edges.size()>label_edge,"OfficialFlow400 LinkProfile3 source edge catalogue");
         const int minimum_target=model.edges[minimum_edge].to;flow400_require(minimum_target>=0&&static_cast<std::size_t>(minimum_target)<model.nodes.size()&&
             std::ranges::none_of(model.edges,[&](const flow_oracle::Edge& edge){return edge.from==minimum_target;}),"OfficialFlow400 LinkProfile3 minimum target leaf witness");
@@ -4916,14 +6047,14 @@ void official_flow_publish_grid(json::JsonMutVal parent,std::string_view key,
     object.add("cells",rows);parent.add(key,object);
 }
 std::size_t official_flow_geometry(const OfficialFlowFrames& frames,const flow_oracle::Model& model,
-                                  flow_oracle::OracleWork& work,Observation& row,OfficialFlowProgress& p,JsonVal typed_source4_case=JsonVal{},JsonVal classic_case=JsonVal{},JsonVal linkprofile3_case=JsonVal{},const flow_oracle::LinkProfile* linkprofile3_profile=nullptr,JsonVal group_endpoint15_case=JsonVal{},const flow_oracle::GroupEndpoint15Model* group_endpoint15_model=nullptr){
+                                  flow_oracle::OracleWork& work,Observation& row,OfficialFlowProgress& p,JsonVal typed_source4_case=JsonVal{},JsonVal classic_case=JsonVal{},JsonVal linkprofile3_case=JsonVal{},const flow_oracle::LinkProfile* linkprofile3_profile=nullptr,JsonVal group_endpoint15_case=JsonVal{},const flow_oracle::GroupEndpoint15Model* group_endpoint15_model=nullptr,std::string_view diagram_title={}){
     using flow_oracle::flow400_require;
     p.phase="compare";
     p.restored=flow_oracle::flow400_same(*frames[0],*frames[2],work);
     const bool wide_source=flow_oracle::flow400_same(*frames[0],*frames[3],work);
     const bool narrow_source=flow_oracle::flow400_same(*frames[1],*frames[4],work);p.remaining[3]=work.remaining;
     auto drawn=[&](std::size_t index,const char* phase){
-        p.phase=phase;const auto errors=group_endpoint15_model?flow_oracle::group_endpoint15_geometry(*frames[index],*group_endpoint15_model,work,kSentinel):linkprofile3_profile?flow_oracle::flow_linkprofile3_geometry(*frames[index],model,*linkprofile3_profile,work,kSentinel):flow_oracle::flow400_geometry(*frames[index],model,work,kSentinel);
+        p.phase=phase;const auto errors=!diagram_title.empty()?flow_oracle::flow_title_geometry(*frames[index],model,work,diagram_title,kSentinel):group_endpoint15_model?flow_oracle::group_endpoint15_geometry(*frames[index],*group_endpoint15_model,work,kSentinel):linkprofile3_profile?flow_oracle::flow_linkprofile3_geometry(*frames[index],model,*linkprofile3_profile,work,kSentinel):flow_oracle::flow400_geometry(*frames[index],model,work,kSentinel);
         for(const auto& error:errors){work.product(error.size(),8u);work.spend(16u);
             if(flow_oracle::flow400_resource(error))p.resource=true;
         }
@@ -4947,7 +6078,8 @@ std::size_t official_flow_geometry(const OfficialFlowFrames& frames,const flow_o
         else if(linkprofile3_case.is_obj()){flow400_require(linkprofile3_profile!=nullptr,"OfficialFlow400 LinkProfile3 decoded profile missing");typed_rejections=official_flow_linkprofile3_mutations(*frames[0],model,*linkprofile3_profile,linkprofile3_case,work);}
         else if(typed_source4_case.is_obj())typed_rejections=official_flow_typed_source4_mutations(*frames[0],model,typed_source4_case,work);
         else if(classic_case.is_obj())typed_rejections=official_flow_classic_mutations(*frames[0],model,classic_case,work);
-        else {const auto rejected=flow_oracle::flow400_mutations(*frames[0],model,work,kSentinel);flow400_require(rejected>0u,"OfficialFlow400 missing meaningful semantic/physical mutants");}
+        else if(!diagram_title.empty())typed_rejections=flow_oracle::flow_title_mutations(*frames[0],model,work,kSentinel);
+        else {typed_rejections=flow_oracle::flow400_mutations(*frames[0],model,work,kSentinel);flow400_require(typed_rejections>0u,"OfficialFlow400 missing meaningful semantic/physical mutants");}
         p.mutated=true;
     }
     p.remaining[6]=work.remaining;
@@ -4968,6 +6100,10 @@ Observation run_official_flow400_case(JsonVal fixture,std::size_t global,std::si
     row.decision_reasons.fill("Complete Flow geometry, strict independent following and restoration");
     row.decision_reasons[1]="Predeclared40-column complete geometry OR exact ordinary full source";
     row.role_case_index=ordinal;row.raw_source_authority="immutable_Flow400_whole_8Models_392null";
+    const bool diagram_title_selected=ordinal==flow_oracle::kFlowTitleOrdinal;
+    const bool title_margin_selected=ordinal==flow_oracle::kFlowTitleMarginOrdinal;
+    const bool shape_alias_selected=flow_oracle::flow_shape_alias_case(ordinal)!=nullptr;
+    const bool issue4648_selected=ordinal==flow_oracle::kFlow400Issue4648Ordinal;
     JsonVal typed_source4_case,classic_case,linkprofile3_case,group_endpoint15_case;std::size_t typed_expected=0u,typed_rejected=0u;bool typed_source4_selected=false,classic_selected=false,linkprofile3_selected=false,group_endpoint15_selected=false;
     // Foreign manifest provenance is not Model binding. The caller's fixed
     // reserve pays it before captures can exhaust this source's scene ledger.
@@ -4983,20 +6119,28 @@ Observation run_official_flow400_case(JsonVal fixture,std::size_t global,std::si
         const auto path=flow_oracle::flow400_text(fixture.get("path"));row.path=path;
         require(path.starts_with("flowchart/")&&safe_relative(path)&&path.ends_with(".mmd"),"OfficialFlow400 original path");
         require(ordinal<400u&&source.size()<=65536u,"OfficialFlow400 complete original bounds");
+        if(diagram_title_selected)work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(flow_oracle::Model)+
+            32u*sizeof(flow_oracle::ShapeFrame)+1024u);
+        if(title_margin_selected)work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(flow_oracle::Model)+
+            32u*sizeof(flow_oracle::ShapeFrame)+1024u);
+        if(shape_alias_selected)work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(flow_oracle::Model)+
+            32u*sizeof(flow_oracle::ShapeFrame)+1024u);
+        if(issue4648_selected)work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(flow_oracle::Model)+
+            32u*sizeof(flow_oracle::ShapeFrame)+1024u);
         const bool typed_source4_candidate=typed_source4.is_obj()&&(ordinal==0u||ordinal==282u||ordinal==374u||ordinal==375u);
         // Source4's selector scan, typed Model, two metadata scalars, clone ledger,
         // and report nodes are paid before any of this source's five captures.
         if(typed_source4_candidate)work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(flow_oracle::Model)+
             32u*sizeof(flow_oracle::ShapeFrame)+1024u);
-        // The closed three-row Classic selector always reserves its bounded scan;
+        // The closed five-row Classic selector always reserves its bounded scan;
         // the selected source additionally prepays Model, clone, and metadata work.
-        work.spend(8192u+8u*sizeof(std::size_t)+4u*sizeof(json::JsonVal)+3u*512u);
-        if(classic.is_obj()&&(ordinal==244u||ordinal==295u||ordinal==376u))work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(flow_oracle::Model)+
+        work.spend(8192u+8u*sizeof(std::size_t)+4u*sizeof(json::JsonVal)+5u*512u);
+        if(classic.is_obj()&&(ordinal==13u||ordinal==40u||ordinal==244u||ordinal==295u||ordinal==376u))work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(flow_oracle::Model)+
             32u*sizeof(flow_oracle::ShapeFrame)+1024u);
-        // LinkProfile3 always reserves its closed three-row scan. The selected
+        // LinkProfile3 always reserves its closed four-row scan. The selected
         // full-source rows prepay their Model/Profile and report lifecycle.
-        work.spend(8192u+8u*sizeof(std::size_t)+4u*sizeof(json::JsonVal)+3u*512u);
-        if(linkprofile3.is_obj()&&(ordinal==291u||ordinal==294u||ordinal==298u))work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(flow_oracle::Model)+
+        work.spend(8192u+8u*sizeof(std::size_t)+4u*sizeof(json::JsonVal)+4u*512u);
+        if(linkprofile3.is_obj()&&(ordinal==19u||ordinal==291u||ordinal==294u||ordinal==298u))work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(flow_oracle::Model)+
             16u*sizeof(flow_oracle::LinkProfile)+32u*sizeof(flow_oracle::ShapeFrame)+1024u);
         if(group_endpoint15.is_obj()&&flow_oracle::group_endpoint15_candidate_ordinal(ordinal))work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(flow_oracle::GroupEndpoint15Model)+
             32u*sizeof(flow_oracle::ShapeFrame)+1024u);
@@ -5019,7 +6163,7 @@ Observation run_official_flow400_case(JsonVal fixture,std::size_t global,std::si
             typed_selection.emplace(flow_oracle::flow400_typed_source4_bound_authority(base,config21,typed_source4,fixture,ordinal,global,source,work));
             authority=typed_selection->authority;
             if(classic.is_obj())classic_case=flow_oracle::flow400_classic_select(*typed_selection,classic,fixture,ordinal,global,source,work);
-            if(linkprofile3.is_obj())linkprofile3_case=flow_oracle::flow400_linkprofile3_select(*typed_selection,classic_case,linkprofile3,fixture,ordinal,global,source,work);
+            if(linkprofile3.is_obj()&&!classic_case.is_obj())linkprofile3_case=flow_oracle::flow400_linkprofile3_select(*typed_selection,classic_case,linkprofile3,fixture,ordinal,global,source,work);
             if(linkprofile3_case.is_obj()){
                 linkprofile3_selected=true;typed_expected=flow_oracle::flow400_linkprofile3_expected(linkprofile3_case);authority=linkprofile3_case.get("base_authority");
                 row.raw_source_authority="immutable_Flow400_8Models_plus_LinkProfile3";row.role_model_sha=flow_oracle::flow400_text(linkprofile3_case.get("link_model_sha256"));
@@ -5050,6 +6194,26 @@ Observation run_official_flow400_case(JsonVal fixture,std::size_t global,std::si
             work.spend(4096u+4u*sizeof(json::JsonVal)+8u*sizeof(std::size_t));
             flow_oracle::flow400_bind(base,fixture,ordinal,global,source,work);
         }
+        if(diagram_title_selected){
+            flow_oracle::flow_title_bind(fixture,ordinal,global,source,work);
+            row.raw_source_authority="immutable_Flow400_8Models_plus_DiagramTitle1";
+            row.role_model_sha=std::string(flow_oracle::kFlowTitleModelSha);
+        }
+        if(title_margin_selected){
+            flow_oracle::flow_title_margin_bind(fixture,ordinal,global,source,work);
+            row.raw_source_authority="immutable_Flow400_8Models_plus_TitleTopMargin1";
+            row.role_model_sha=std::string(flow_oracle::kFlowTitleMarginModelSha);
+        }
+        if(shape_alias_selected){
+            flow_oracle::flow_shape_alias_bind(docs,fixture,ordinal,global,source,work);
+            row.raw_source_authority="immutable_Flow400_8Models_plus_FlowShapeAlias16";
+            row.role_model_sha=std::string(flow_oracle::flow_shape_alias_case(ordinal)->model_sha);
+        }
+        if(issue4648_selected){
+            flow_oracle::flow400_issue4648_bind(docs,source,work);
+            row.raw_source_authority="immutable_Flow400_8Models_plus_Issue4648";
+            row.role_model_sha=std::string(flow_oracle::kFlow400Issue4648ModelSha);
+        }
         std::optional<flow_oracle::BoundGroupEndpoint15> group_selection;
         if(group_endpoint15.is_obj()&&flow_oracle::group_endpoint15_candidate_ordinal(ordinal)){
             group_selection=flow_oracle::group_endpoint15_select(base,fixture,group_endpoint15.get("records"),ordinal,global,source,work);
@@ -5063,7 +6227,11 @@ Observation run_official_flow400_case(JsonVal fixture,std::size_t global,std::si
         data.set("source_sha256",row.source_sha256);data.set("source_git_blob",flow_oracle::flow400_text(authority.get("source_git_blob")));
         data.set("oracle_record_sha256",flow_oracle::flow400_text(authority.get("oracle_record_sha256")));
         p.phase="decode";std::optional<flow_oracle::Model> model;std::optional<flow_oracle::LinkProfile> linkprofile3_profile;std::optional<flow_oracle::GroupEndpoint15Model> group_endpoint15_model;
-        if(group_endpoint15_selected){group_endpoint15_model.emplace(flow_oracle::group_endpoint15_model(group_endpoint15_case.get("model"),work));model.emplace(group_endpoint15_model->base);}
+        if(diagram_title_selected)model.emplace(flow_oracle::flow_title_model(work));
+        else if(title_margin_selected)model.emplace(flow_oracle::flow_title_margin_model(work));
+        else if(shape_alias_selected)model.emplace(flow_oracle::flow_shape_alias_model(ordinal,work));
+        else if(issue4648_selected)model.emplace(flow_oracle::flow400_issue4648_model(work));
+        else if(group_endpoint15_selected){group_endpoint15_model.emplace(flow_oracle::group_endpoint15_model(group_endpoint15_case.get("model"),work));model.emplace(group_endpoint15_model->base);}
         else if(linkprofile3_selected){auto decoded=flow_oracle::flow400_linkprofile3_model(linkprofile3_case,work);model.emplace(std::move(decoded.model));linkprofile3_profile.emplace(std::move(decoded.profile));}
         else if(classic_selected)model.emplace(flow_oracle::flow400_classic_model(classic_case,work));
         else if(typed_source4_selected)model=flow_oracle::flow400_typed_source4_model(*typed_selection,work);else model=flow_oracle::flow400_model(authority,work);p.remaining[2]=work.remaining;
@@ -5081,9 +6249,13 @@ Observation run_official_flow400_case(JsonVal fixture,std::size_t global,std::si
             if(!wide_source||!p.narrow_ordinary||!p.restored)official_flow_error(row,"Whole-null Flow has unreviewed art or failed ordinary/restore protocol");
         }else{
             p.decoded=true;work.spend(1024u);
-            if(!typed_source4_selected&&!classic_selected&&!linkprofile3_selected&&!group_endpoint15_selected)row.role_model_sha=flow_oracle::flow400_text(authority.get("model_sha256"));
+            if(!typed_source4_selected&&!classic_selected&&!linkprofile3_selected&&!group_endpoint15_selected&&!diagram_title_selected&&!title_margin_selected&&!shape_alias_selected&&!issue4648_selected)row.role_model_sha=flow_oracle::flow400_text(authority.get("model_sha256"));
             data.set("whole_Model_sha256",row.role_model_sha);
-            typed_rejected=official_flow_geometry(frames,*model,work,row,p,typed_source4_case,classic_case,linkprofile3_case,linkprofile3_profile?&*linkprofile3_profile:nullptr,group_endpoint15_case,group_endpoint15_model?&*group_endpoint15_model:nullptr);
+            typed_rejected=official_flow_geometry(frames,*model,work,row,p,typed_source4_case,classic_case,linkprofile3_case,linkprofile3_profile?&*linkprofile3_profile:nullptr,group_endpoint15_case,group_endpoint15_model?&*group_endpoint15_model:nullptr,diagram_title_selected?flow_oracle::kFlowTitleText:std::string_view{});
+            if(shape_alias_selected&&typed_rejected!=2u){
+                official_flow_error(row,"OfficialFlow400 shape alias requires exactly two rejected mutations");
+                p.mutated=false;p.admitted=false;
+            }
             if(typed_source4_selected){data.set("typed_mutations_expected",static_cast<int64_t>(typed_expected));data.set("typed_mutations_rejected",static_cast<int64_t>(typed_rejected));}
             if(classic_selected){data.set("classic_mutations_expected",static_cast<int64_t>(typed_expected));data.set("classic_mutations_rejected",static_cast<int64_t>(typed_rejected));}
             if(linkprofile3_selected){data.set("linkprofile3_mutations_expected",static_cast<int64_t>(typed_expected));data.set("linkprofile3_mutations_rejected",static_cast<int64_t>(typed_rejected));}
@@ -5096,7 +6268,7 @@ Observation run_official_flow400_case(JsonVal fixture,std::size_t global,std::si
         official_flow_error(row,bounded);p.admitted=false;
     }
     row.raw_source_constraints=group_endpoint15_selected?official_flow_group_endpoint15_info(p,work.remaining,typed_expected,typed_rejected,global):linkprofile3_selected?official_flow_linkprofile3_info(p,work.remaining,typed_expected,typed_rejected):classic_selected?official_flow_classic_info(p,work.remaining,typed_expected,typed_rejected):typed_source4_selected?official_flow_typed_source4_info(p,work.remaining,typed_expected,typed_rejected):
-        official_flow_info(p,work.remaining,row.raw_source_authority=="immutable_Flow400_8Models_plus_Config21");
+        official_flow_info(p,work.remaining,row.raw_source_authority=="immutable_Flow400_8Models_plus_Config21",diagram_title_selected,typed_rejected,shape_alias_selected,typed_rejected);
     data.set("contract",kOfficialFlow400Contract);data.set("actual",row.raw_source_constraints);data.set("foreign_assertions_certified",0);
     diagnostic.set_root(data);diagnostics<<diagnostic.to_string()<<'\n';
     require(static_cast<bool>(diagnostics),"OfficialFlow400 actual evidence write failed");return row;
@@ -5106,7 +6278,13 @@ void official_flow_accumulate_owned(JsonVal info,const Observation& row,Official
     const bool classic_selected=row.raw_source_authority=="immutable_Flow400_8Models_plus_Classic";
     const bool link_selected=row.raw_source_authority=="immutable_Flow400_8Models_plus_LinkProfile3";
     const bool group_selected=row.raw_source_authority=="immutable_Flow400_8Models_plus_GroupEndpoint15";
+    const bool title_selected=row.raw_source_authority=="immutable_Flow400_8Models_plus_DiagramTitle1";
+    const bool title_margin_selected=row.raw_source_authority=="immutable_Flow400_8Models_plus_TitleTopMargin1";
+    const bool shape_alias_selected=row.raw_source_authority=="immutable_Flow400_8Models_plus_FlowShapeAlias16";
+    const bool issue4648_selected=row.raw_source_authority=="immutable_Flow400_8Models_plus_Issue4648";
     if(group_selected)official_flow_group_endpoint15_keys(info);else if(link_selected)official_flow_linkprofile3_keys(info);else if(typed)official_flow_typed_source4_keys(info);else if(classic_selected)official_flow_classic_keys(info);
+    else if(shape_alias_selected)flow_oracle::flow400_keys(info,{"five_captures_complete","source_bound","whole_Model_decoded","whole_null_pending","whole_source_admitted","restored_cells_equal","narrow_ordinary","semantic_mutations_complete","verification_resource_exhausted","captured_frames","phase","remaining","height","phase_remaining","source_supplement_sha256","shape_alias_mutations"});
+    else if(title_selected)flow_oracle::flow400_keys(info,{"five_captures_complete","source_bound","whole_Model_decoded","whole_null_pending","whole_source_admitted","restored_cells_equal","narrow_ordinary","semantic_mutations_complete","verification_resource_exhausted","captured_frames","phase","remaining","height","phase_remaining","source_supplement_sha256","diagram_title_mutations_rejected"});
     else flow_oracle::flow400_keys(info,{"five_captures_complete","source_bound","whole_Model_decoded","whole_null_pending","whole_source_admitted","restored_cells_equal","narrow_ordinary","semantic_mutations_complete","verification_resource_exhausted","captured_frames","phase","remaining","height","phase_remaining","source_supplement_sha256"});
     auto yes=[&](std::string_view key){const auto value=info.get(key);require(value.is_bool(),"OfficialFlow400 owned bool type");return value.as_bool();};
     const bool captured=yes("five_captures_complete"),bound=yes("source_bound"),decoded=yes("whole_Model_decoded"),pending=yes("whole_null_pending");
@@ -5143,8 +6321,42 @@ void official_flow_accumulate_owned(JsonVal info,const Observation& row,Official
         same_run_body=row.path==pin.path&&row.source_sha256==pin.source_sha&&
             row.role_model_sha==pin.model_sha&&row.role_body_sha==pin.source_sha;
     }
-    require(selected||typed||classic_selected||link_selected||group_selected||row.raw_source_authority=="immutable_Flow400_whole_8Models_392null"||same_run_body,
+    require(selected||typed||classic_selected||link_selected||group_selected||title_selected||title_margin_selected||shape_alias_selected||issue4648_selected||row.raw_source_authority=="immutable_Flow400_whole_8Models_392null"||same_run_body,
         "OfficialFlow400 unknown source authority");
+    if(shape_alias_selected){
+        const auto* candidate=flow_oracle::flow_shape_alias_case(row.role_case_index);
+        require(candidate&&row.path==candidate->fixture&&row.source_sha256==candidate->source_sha&&
+                row.role_model_sha==candidate->model_sha,
+                "OfficialFlow400 shape-alias source/model authority");
+        const auto mutations=info.get("shape_alias_mutations");
+        flow_oracle::flow400_keys(mutations,{"expected","rejected"});
+        const auto expected=flow_oracle::flow400_number(mutations.get("expected"));
+        const auto rejected=flow_oracle::flow400_number(mutations.get("rejected"));
+        require(expected==2u&&rejected<=expected,"OfficialFlow400 shape-alias mutation count bounds");
+        if(admitted||mutated)require(admitted&&mutated&&rejected==expected&&row.errors.empty()&&!resource,
+                                    "OfficialFlow400 exact shape-alias mutation proof");
+        else require(!admitted&&!mutated&&(!row.errors.empty()||resource),
+                     "OfficialFlow400 failed shape-alias row requires diagnostics");
+    }
+    if(issue4648_selected)require(row.path==flow_oracle::kFlow400Issue4648Fixture&&
+        row.source_sha256==flow_oracle::kFlow400Issue4648SourceSha&&
+        row.role_model_sha==flow_oracle::kFlow400Issue4648ModelSha,
+        "OfficialFlow400 Issue4648 source/model authority");
+    if(title_selected){
+        require(row.path==flow_oracle::kFlowTitleFixture&&row.source_sha256==flow_oracle::kFlowTitleSourceSha&&
+                row.role_model_sha==flow_oracle::kFlowTitleModelSha,
+                "OfficialFlow400 diagram title source/model authority");
+        const auto rejected=flow_oracle::flow400_number(info.get("diagram_title_mutations_rejected"));
+        require(rejected<=4u,"OfficialFlow400 diagram title mutation bound");
+        if(admitted||mutated)require(admitted&&mutated&&rejected==4u&&row.errors.empty()&&!resource,
+                                     "OfficialFlow400 exact diagram title mutation proof");
+        else require(!admitted&&!mutated&&(!row.errors.empty()||resource),
+                     "OfficialFlow400 failed diagram title row requires diagnostics");
+    }
+    if(title_margin_selected)require(row.path==flow_oracle::kFlowTitleMarginFixture&&
+        row.source_sha256==flow_oracle::kFlowTitleMarginSourceSha&&
+        row.role_model_sha==flow_oracle::kFlowTitleMarginModelSha,
+        "OfficialFlow400 titleTopMargin source/model authority");
     const auto supplement=info.get("source_supplement_sha256");
     if(typed||classic_selected||link_selected||group_selected){
         const auto expected=group_selected?official_flow_group_endpoint15_identity(group_endpoint15,row,info):link_selected?official_flow_linkprofile3_identity(linkprofile3,row):typed?official_flow_typed_source4_identity(typed_source4,row):official_flow_classic_identity(classic,row);
@@ -5324,6 +6536,115 @@ TEST(MermaidOfficialFlow400, OwnedWholeSceneAndForgedAdmissionDoNotUseWideOnly){
     try{static_cast<void>(flow_oracle::capture(node,240,height,&zero));}
     catch(const std::exception& error){EXPECT_EQ(std::string_view(error.what()),"Bounded cell-oracle work exhausted");EXPECT_EQ(zero.remaining,0u);zero_rejected=true;}
     EXPECT_TRUE(zero_rejected);
+}
+} // namespace
+
+namespace {
+TEST(MermaidOfficialFlow400, Issue4648ArrowlessNestedSubgraphRequiresOwnedGeometryAndControls) {
+    flow_oracle::OracleWork work{flow_oracle::kFlow400SceneLimit};
+    work.spend(kOfficialFlowReportReserve+32768u+8u*sizeof(OfficialFlowFrames));
+    const auto docs=flow_oracle::flow400_documents();
+    const auto source=read_file(kRoot/"cases"/std::string(flow_oracle::kFlow400Issue4648Fixture));
+    ASSERT_EQ(source.size(),529u);
+    auto drawing=loom::ui::render_markdown(fenced(source,"mermaid",kSentinel));
+    auto ordinary=loom::ui::render_markdown(fenced(source,"text",kSentinel));
+    drawing->ComputeRequirement();ordinary->ComputeRequirement();
+    const int height=std::max({32,drawing->requirement().min_y+8,ordinary->requirement().min_y+8,
+        static_cast<int>(std::count(source.begin(),source.end(),'\n'))+12});
+    ASSERT_LE(height,1040);
+    constexpr std::array<int,5> widths{{240,40,240,240,40}};
+    OfficialFlowFrames frames;
+    for(std::size_t index=0u;index<frames.size();++index)
+        frames[index]=flow_oracle::capture(index<3u?drawing:ordinary,widths[index],height,&work);
+    flow_oracle::flow400_issue4648_bind(docs,source,work);
+    const auto model=flow_oracle::flow400_issue4648_model(work);
+    Observation row;row.errors.reserve(6u);row.path=std::string(flow_oracle::kFlow400Issue4648Fixture);
+    row.source_sha256=std::string(flow_oracle::kFlow400Issue4648SourceSha);
+    row.raw_active_schema=kOfficialFlow400Contract;row.raw_source_authority="immutable_Flow400_issue4648_Arrowless1";
+    row.track="original";row.type="flowchart";row.role_case_index=flow_oracle::kFlow400Issue4648Ordinal;
+    row.role_model_sha=std::string(flow_oracle::kFlow400Issue4648ModelSha);
+    OfficialFlowProgress progress;progress.captured=progress.bound=progress.decoded=true;
+    progress.captures=5u;progress.height=height;
+    const auto generic_mutations=official_flow_geometry(frames,model,work,row,progress);
+    EXPECT_TRUE(row.errors.empty())<<flow_oracle::errors_text(row.errors);
+    EXPECT_TRUE(progress.admitted);
+    EXPECT_TRUE(progress.mutated);
+    for(std::size_t index=0u;index<frames.size();++index)ASSERT_TRUE(frames[index].has_value());
+
+    auto wrong_endpoint=model;wrong_endpoint.edges[2].to=1;
+    const auto wrong_endpoint_errors=flow_oracle::flow400_geometry(*frames[0],wrong_endpoint,work,kSentinel);
+    EXPECT_FALSE(wrong_endpoint_errors.empty());
+    auto wrong_marker=model;wrong_marker.edges[2].end=true;
+    const auto wrong_marker_errors=flow_oracle::flow400_geometry(*frames[0],wrong_marker,work,kSentinel);
+    EXPECT_FALSE(wrong_marker_errors.empty());
+    auto wrong_group=model;wrong_group.groups[0].direction="TD";
+    const auto wrong_group_errors=flow_oracle::flow400_geometry(*frames[0],wrong_group,work,kSentinel);
+    EXPECT_FALSE(wrong_group_errors.empty());
+    auto missing_edge=model;missing_edge.edges.pop_back();
+    const auto missing_edge_errors=flow_oracle::flow400_geometry(*frames[0],missing_edge,work,kSentinel);
+    EXPECT_FALSE(missing_edge_errors.empty());
+    ASSERT_EQ(frames[0]->at({35,28}),"│");
+    flow_oracle::flow400_copy_grid(*frames[0],work);auto broken_route=*frames[0];broken_route.put({35,28}," ");
+    const auto broken_route_errors=flow_oracle::flow400_geometry(broken_route,model,work,kSentinel);
+    EXPECT_FALSE(broken_route_errors.empty());
+    flow_oracle::flow400_copy_grid(*frames[0],work);auto branched_route=*frames[0];branched_route.put({35,28},"┼");
+    const auto branched_route_errors=flow_oracle::flow400_geometry(branched_route,model,work,kSentinel);
+    EXPECT_FALSE(branched_route_errors.empty());
+    flow_oracle::flow400_copy_grid(*frames[0],work);auto unexpected_arrow=*frames[0];unexpected_arrow.put({35,28},"▼");
+    const auto unexpected_arrow_errors=flow_oracle::flow400_geometry(unexpected_arrow,model,work,kSentinel);
+    EXPECT_FALSE(unexpected_arrow_errors.empty());
+    flow_oracle::flow400_copy_grid(*frames[0],work);auto orphan_route=*frames[0];orphan_route.put({100,10},"│");
+    const auto orphan_route_errors=flow_oracle::flow400_geometry(orphan_route,model,work,kSentinel);
+    EXPECT_FALSE(orphan_route_errors.empty());
+    flow_oracle::flow400_copy_grid(*frames[0],work);auto multiple_orphans=*frames[0];
+    multiple_orphans.put({100,10},"│");multiple_orphans.put({102,10},"│");
+    const auto orphan_errors=flow_oracle::flow400_geometry(multiple_orphans,model,work,kSentinel);
+    ASSERT_FALSE(orphan_errors.empty());EXPECT_LE(orphan_errors.size(),1u);
+    for(const auto* errors:{&wrong_endpoint_errors,&wrong_marker_errors,&wrong_group_errors,&missing_edge_errors,
+                            &broken_route_errors,&branched_route_errors,&unexpected_arrow_errors,&orphan_route_errors,&orphan_errors})
+        for(const auto& error:*errors)EXPECT_FALSE(flow_oracle::flow400_resource(error));
+
+    std::size_t profile_rejections=0u;
+    auto reject_profile=[&](std::string changed) {
+        work.product(changed.size(),4u);work.spend(1024u);
+        auto invalid=json::parse(changed);ASSERT_TRUE(invalid.has_value());
+        std::size_t groups=0u,members=0u;bool rejected=false;
+        try{flow_oracle::flow400_shape(invalid->root(),groups,members);}catch(const std::runtime_error&){rejected=true;}
+        EXPECT_TRUE(rejected);profile_rejections+=rejected;
+    };
+    const auto edge_at=flow_oracle::kFlow400Issue4648ModelJson.find("\"source\":\"D3\"");ASSERT_NE(edge_at,std::string_view::npos);
+    auto labeled=std::string(flow_oracle::kFlow400Issue4648ModelJson);const auto label_at=labeled.find("\"label\":\"\"",edge_at);ASSERT_NE(label_at,std::string::npos);
+    labeled.replace(label_at,std::string_view("\"label\":\"\"").size(),"\"label\":\"label\"");reject_profile(std::move(labeled));
+    for(const auto style:{std::string_view{"dotted"},std::string_view{"thick"}}){
+        auto styled=std::string(flow_oracle::kFlow400Issue4648ModelJson);const auto style_at=styled.find("\"style\":\"solid\"",edge_at);ASSERT_NE(style_at,std::string::npos);
+        styled.replace(style_at,std::string_view("\"style\":\"solid\"").size(),"\"style\":\""+std::string(style)+"\"");reject_profile(std::move(styled));
+    }
+    auto reverse=std::string(flow_oracle::kFlow400Issue4648ModelJson);const auto start_at=reverse.find("\"hasArrowStart\":false",edge_at);ASSERT_NE(start_at,std::string::npos);
+    reverse.replace(start_at,std::string_view("\"hasArrowStart\":false").size(),"\"hasArrowStart\":true");reject_profile(std::move(reverse));
+    const auto semantic_count=static_cast<std::size_t>(!wrong_endpoint_errors.empty())+
+        static_cast<std::size_t>(!wrong_marker_errors.empty())+static_cast<std::size_t>(!wrong_group_errors.empty())+
+        static_cast<std::size_t>(!missing_edge_errors.empty())+profile_rejections;
+    const auto physical_count=static_cast<std::size_t>(!broken_route_errors.empty())+
+        static_cast<std::size_t>(!branched_route_errors.empty())+static_cast<std::size_t>(!unexpected_arrow_errors.empty())+
+        static_cast<std::size_t>(!orphan_route_errors.empty())+static_cast<std::size_t>(!orphan_errors.empty());
+    EXPECT_EQ(semantic_count,8u);EXPECT_EQ(profile_rejections,4u);EXPECT_EQ(physical_count,5u);
+    EXPECT_GT(generic_mutations,0u);
+#ifdef LOOM_MERMAID_REPORT_DIR
+    json::JsonMutDoc verdict;auto root=verdict.object();
+    root.set("schema","flow400_issue4648_official_verdict/v1");
+    root.set("source_facts_sha256",flow_oracle::kFlow400Issue4648FactsSha);
+    root.set("case_id","flow400_nested_external1_357");root.set("ordinal",static_cast<int64_t>(flow_oracle::kFlow400Issue4648Ordinal));
+    root.set("manifest_global_ordinal",static_cast<int64_t>(flow_oracle::kFlow400Issue4648GlobalOrdinal));root.set("fixture",flow_oracle::kFlow400Issue4648Fixture);
+    root.set("source_sha256",flow_oracle::kFlow400Issue4648SourceSha);root.set("model_sha256",flow_oracle::kFlow400Issue4648ModelSha);
+    root.set("captures",static_cast<int64_t>(progress.captures));root.set("captures_before_binding",progress.captured&&progress.captures==5u);
+    root.set("source_bound_after_captures",progress.bound);root.set("wide_geometry_good",progress.admitted);
+    root.set("restored_geometry_good",progress.restored);root.set("narrow_exact_ordinary",progress.narrow_ordinary);
+    root.set("narrow_geometry_good",progress.narrow_ordinary?false:row.status[1]=="drawn");
+    root.set("semantic_mutations_rejected",static_cast<int64_t>(semantic_count));root.set("physical_mutations_rejected",static_cast<int64_t>(physical_count));
+    root.set("profile_controls_rejected",static_cast<int64_t>(profile_rejections));root.set("generic_mutations_rejected",static_cast<int64_t>(generic_mutations));
+    root.set("resource_errors",progress.resource?1:0);root.set("source_fallback_credit",0);root.set("admitted",progress.admitted&&row.errors.empty());
+    verdict.set_root(root);write_file(fs::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-flow400-issue4648-official-verdict.json",verdict.to_string()+"\n");
+#endif
 }
 } // namespace
 
@@ -5638,7 +6959,7 @@ void official_er_geometry(const OfficialErFrames& frames,const relations_oracle:
         p.wide_good&&(p.narrow_good||p.narrow_ordinary)&&p.restored_good&&p.restored&&p.mutated&&row.errors.empty();
 }
 Observation run_official_er206_case(JsonVal fixture,std::size_t global,std::size_t ordinal,const relations_oracle::Er206Documents& docs,
-    std::array<bool,206>& consumed,relations_oracle::Work& work,std::ostream& diagnostics,std::size_t size,std::size_t capacity){
+    std::array<bool,206>& consumed,relations_oracle::Work& work,std::ostream& diagnostics,std::size_t size,std::size_t capacity,JsonVal er107_local_proof){
     using namespace relations_oracle;
     work.spend(kOfficialEr206ReportReserve+8u*sizeof(Observation)+8u*sizeof(OfficialErProgress)+8u*sizeof(OfficialErFrames)+16384u+6u*4096u);
     if(ordinal<kEr206Pins.size()&&kEr206Pins[ordinal].model_bytes>0u)work.spend(4u*kOfficialErMutationPlanCharge);
@@ -5675,8 +6996,21 @@ Observation run_official_er206_case(JsonVal fixture,std::size_t global,std::size
             const bool wide=official_er_same(*frames[0],*frames[3],work),narrow_source=official_er_same(*frames[1],*frames[4],work);
             const bool a=following_row(*frames[0],work,kSentinel).has_value(),b=following_row(*frames[1],work,kSentinel).has_value(),c=following_row(*frames[2],work,kSentinel).has_value();
             p.narrow_ordinary=narrow_source&&b;
-            if(wide&&a)row.status[0]="source_fallback";if(p.narrow_ordinary)row.status[1]="source_fallback";
-            if(wide&&c&&p.restored)row.status[2]="source_fallback";
+            if(er107_local_proof.is_obj()) {
+                // A second independently captured source profile can explain
+                // new art. The frozen ER206 Model stays null/pending and its
+                // decoded/admitted/mutation flags remain false.
+                require(official_er107::owned(er107_local_proof)&&er107_local_proof.get_string("path")==row.path&&
+                    er107_local_proof.get_string("source_sha256")==row.source_sha256&&er107_local_proof.get_int("prior_ER206_ordinal")==static_cast<int64_t>(ordinal)&&
+                    er107_local_proof.get_int("manifest_global_ordinal")==static_cast<int64_t>(global),"OfficialER206 supplemental ER107 exact owned source proof");
+                require(!wide&&p.restored&&a&&b&&c&&p.narrow_ordinary==er107_local_proof.get("narrow_exact_ordinary").as_bool(),
+                    "OfficialER206 supplemental ER107 actual wide/narrow/restored agreement");
+                row.status={"drawn",p.narrow_ordinary?"source_fallback":"drawn","drawn"};
+                data.set("supplemental_local_contract",kOfficialEr107Contract);data.set("supplemental_formal_admission",false);
+            } else {
+                if(wide&&a)row.status[0]="source_fallback";if(p.narrow_ordinary)row.status[1]="source_fallback";
+                if(wide&&c&&p.restored)row.status[2]="source_fallback";
+            }
             if(row.status[0]=="error"||row.status[1]=="error"||row.status[2]=="error")official_er_error(row,"OfficialER206 whole-null art/ordinary/restore unmet; never admission");p.remaining[5]=work.left;
         }else{
             p.phase=OfficialErPhase::Decode;const auto model=er206_decode(meaning,pin,work);p.decoded=true;p.remaining[4]=work.left;
@@ -5728,9 +7062,11 @@ void official_er_accumulate_owned(JsonVal info,const Observation& row,OfficialEr
 OfficialErCounts official_er_counts(const std::vector<Observation>& rows,const relations_oracle::Er206Documents* docs){
     // Every ER source prepaid these bounded parses/counters/report copies.
     OfficialErCounts out;std::array<bool,206> seen{};
-    for(const auto& row:rows){if(row.raw_active_schema!=kOfficialEr206Contract)continue;
-        require(row.role_case_index<seen.size()&&!seen[row.role_case_index],"OfficialER206 duplicate or unknown original consumption");seen[row.role_case_index]=true;++out.visited;require(docs!=nullptr,"OfficialER206 summary source authority lifetime");
-        require(row.raw_source_constraints.size()<=4096u,"OfficialER206 owned metadata bounds");const auto parsed=json::parse(row.raw_source_constraints);require(parsed.has_value(),"OfficialER206 owned metadata JSON");official_er_accumulate_owned(parsed->root(),row,out,*docs);
+    for(const auto& row:rows){if(row.raw_active_schema!=kOfficialEr206Contract&&row.raw_active_schema!=kOfficialEr107Contract)continue;
+        std::optional<Observation> retained;if(row.raw_active_schema==kOfficialEr107Contract)retained.emplace(official_er206_legacy_view(row));
+        const auto& er_row=retained?*retained:row;
+        require(er_row.role_case_index<seen.size()&&!seen[er_row.role_case_index],"OfficialER206 duplicate or unknown original consumption");seen[er_row.role_case_index]=true;++out.visited;require(docs!=nullptr,"OfficialER206 summary source authority lifetime");
+        require(er_row.raw_source_constraints.size()<=4096u,"OfficialER206 owned metadata bounds");const auto parsed=json::parse(er_row.raw_source_constraints);require(parsed.has_value(),"OfficialER206 owned metadata JSON");official_er_accumulate_owned(parsed->root(),er_row,out,*docs);
     }return out;
 }
 } // namespace
@@ -5979,7 +7315,7 @@ TEST(MermaidOfficialFlow400, ClassicOwnedMetadataRequiresExactProvenanceAndMutat
     // the only Official consumer that publishes five actual grids before bind.
     auto classic=flow_oracle::flow400_classic_documents();flow_oracle::OracleWork work{flow_oracle::kFlow400SceneLimit};
     work.spend(65536u+16u*sizeof(Observation)+8u*sizeof(OfficialFlowProgress)+8u*sizeof(OfficialFlowCounts));
-    const auto cases=classic.supplement.root().get("cases");ASSERT_TRUE(cases.is_arr());ASSERT_EQ(cases.size(),3u);
+    const auto cases=classic.supplement.root().get("cases");ASSERT_TRUE(cases.is_arr());ASSERT_EQ(cases.size(),6u);
     for(std::size_t index=0u;index<cases.size();++index){
         const auto selected=cases.at(index);
         const auto authority=selected.get("base_authority");
@@ -6009,7 +7345,7 @@ TEST(MermaidOfficialFlow400, LinkProfile3OwnedMetadataRequiresExactProvenanceAnd
     // remains the only Official path that can admit a LinkProfile3 source.
     auto linkprofile3=flow_oracle::flow400_linkprofile3_documents();flow_oracle::OracleWork work{flow_oracle::kFlow400SceneLimit};
     work.spend(65536u+24u*sizeof(Observation)+16u*sizeof(OfficialFlowProgress)+16u*sizeof(OfficialFlowCounts));
-    const auto cases=linkprofile3.supplement.root().get("cases");ASSERT_TRUE(cases.is_arr());ASSERT_EQ(cases.size(),3u);
+    const auto cases=linkprofile3.supplement.root().get("cases");ASSERT_TRUE(cases.is_arr());ASSERT_EQ(cases.size(),4u);
     for(std::size_t index=0u;index<cases.size();++index){
         const auto selected=cases.at(index),authority=selected.get("base_authority");const auto expected=flow_oracle::flow400_linkprofile3_expected(selected);
         Observation row;row.errors.reserve(6u);row.raw_active_schema=kOfficialFlow400Contract;row.raw_source_authority="immutable_Flow400_8Models_plus_LinkProfile3";
@@ -6161,5 +7497,172 @@ TEST(MermaidOfficialPie7, SourceBoundOwnedAdmissionRejectsForgedMetadata) {
     reject_metadata([](json::JsonMutVal value){value.set("phase","wide_geometry");});
     reject_metadata([](json::JsonMutVal value){auto original=value.get("phase_remaining");auto replacement=value.make_arr();for(std::size_t n=0;n<original.size();++n){const auto entry=original.at(n);if(n==7u)replacement.append(value.make_num(128000000));else if(entry.is_null())replacement.append(value.make_null());else replacement.append(value.make_num(entry.as_int()));}value.add("phase_remaining",replacement);});
     const auto exact=parse(good).root().to_string();const auto extra=json::parse(projection_mutate(exact,[](json::JsonMutVal value){value.set("forged_extra",true);}));ASSERT_TRUE(extra.has_value());OfficialPie7Counts counts;EXPECT_THROW(official_pie7_accumulate_owned(extra->root(),row,counts,docs),std::runtime_error);
+}
+} // namespace
+
+namespace {
+TEST(MermaidOfficialFlow400, Extra7RawSourceAdmission) {
+    auto documents=flow_oracle::group_endpoint_extra7_documents();
+    auto control_documents=flow_oracle::group_endpoint_extra7_control_documents();
+    const auto records=documents.asset.root().get("records"),source_controls=control_documents.controls.root();
+    const auto manifest=json::parse(read_file(kRoot/"manifest.json"));ASSERT_TRUE(manifest.has_value());
+    const auto fixtures=manifest->root().get("fixtures");ASSERT_EQ(fixtures.size(),2145u);
+    json::JsonMutDoc local_verdict;auto local_cases=local_verdict.array();
+    std::size_t visited=0u,wide_drawn=0u,restored_drawn=0u,narrow_drawn=0u,narrow_source_fallback=0u;
+    std::size_t semantic_rejections=0u,physical_rejections=0u,decoder_successes=0u,resources=0u;
+    records.iter([&](JsonVal record) {
+        flow_oracle::OracleWork work{flow_oracle::kFlow400SceneLimit};
+        const auto tuple=flow_oracle::group_endpoint_extra7_tuple(record);
+        JsonVal fixture;std::size_t fixture_matches=0u;
+        fixtures.iter([&](JsonVal candidate) {
+            if(candidate.get_string("path")==tuple.fixture) {fixture=candidate;++fixture_matches;}
+        });
+        ASSERT_EQ(fixture_matches,1u)<<tuple.fixture;
+        const auto source=read_file(kRoot/"cases"/std::string(tuple.fixture));
+        ASSERT_EQ(source.size(),flow_oracle::flow400_number(record.get("source_bytes")));
+        ASSERT_EQ(source.size(),fixture.get_int("bytes"));
+        ASSERT_EQ(digest(source),tuple.source_sha256);
+        ASSERT_EQ(digest(source),fixture.get_string("sha256"));
+        ASSERT_EQ(fixture.get_string("git_blob"),flow_oracle::flow400_text(record.get("source_git_blob")));
+
+        const auto drawing=loom::ui::render_markdown(fenced(source,"mermaid",kSentinel));
+        const auto plain=loom::ui::render_markdown(fenced(source,"text",kSentinel));
+        auto element=ftxui::vbox({drawing});
+        auto ordinary=ftxui::vbox({plain});
+        element->ComputeRequirement();ordinary->ComputeRequirement();
+        const int height=std::max({32,element->requirement().min_y+8,ordinary->requirement().min_y+8});ASSERT_LE(height,1040);
+        std::array<std::optional<flow_oracle::Grid>,5> frames;std::array<std::string,5> frame_hashes{};
+        constexpr std::array<int,5> widths{{240,40,240,240,40}};
+        for(std::size_t index=0u;index<frames.size();++index) {
+            frames[index]=flow_oracle::capture(index<3u?element:ordinary,widths[index],height,&work);
+            frame_hashes[index]=flow_oracle::group_endpoint_extra7_frame_sha256(*frames[index],&work);
+        }
+        for(const auto& frame:frames) static_cast<void>(flow_oracle::flow400_following(*frame,work,kSentinel));
+        ASSERT_TRUE(flow_oracle::flow400_same(*frames[0],*frames[2],work))<<tuple.fixture;
+        const bool wide_source=flow_oracle::flow400_same(*frames[0],*frames[3],work);
+        const bool narrow_source=flow_oracle::flow400_same(*frames[1],*frames[4],work);
+        ASSERT_FALSE(wide_source)<<"Official source fallback is not drawing credit: "<<tuple.fixture;
+
+        flow_oracle::group_endpoint_extra7_record(record,work);
+        const auto model=flow_oracle::group_endpoint_extra7_model(record.get("model"),work);
+        const auto profile=flow_oracle::group_endpoint_extra7_profile(model,work);
+        flow_oracle::GroupEndpointGeometryWitness witness;
+        const auto wide=flow_oracle::flow_group_endpoint_geometry_with_witness(*frames[0],model.base,profile,work,kSentinel,witness);
+        ASSERT_TRUE(wide.empty())<<tuple.fixture<<": "<<(wide.empty()?"":wide.front());++wide_drawn;
+        const auto restored=flow_oracle::flow_group_endpoint_geometry(*frames[2],model.base,profile,work,kSentinel);
+        ASSERT_TRUE(restored.empty())<<tuple.fixture<<": "<<(restored.empty()?"":restored.front());++restored_drawn;
+        if(narrow_source)++narrow_source_fallback;
+        else {
+            const auto narrow=flow_oracle::flow_group_endpoint_geometry(*frames[1],model.base,profile,work,kSentinel);
+            ASSERT_TRUE(narrow.empty())<<tuple.fixture<<": "<<(narrow.empty()?"":narrow.front());++narrow_drawn;
+        }
+        const auto controls_row=flow_oracle::group_endpoint_extra7_control_row(source_controls,tuple);
+        const auto controls=flow_oracle::group_endpoint_extra7_run_controls(record,controls_row,*frames[0],model,profile,witness,work,"official_raw",kSentinel);
+        semantic_rejections+=controls.semantic_rejections;physical_rejections+=controls.physical_rejections;decoder_successes+=controls.decoder_successes;
+        ASSERT_NE(work.remaining,0u)<<tuple.fixture;
+        flow_oracle::group_endpoint_extra7_append_case(local_verdict,local_cases,record,frame_hashes,
+            narrow_source?"source_fallback":"drawn",controls);
+        ++visited;
+    });
+    EXPECT_EQ(visited,7u);EXPECT_EQ(wide_drawn,7u);EXPECT_EQ(restored_drawn,7u);
+    EXPECT_EQ(narrow_drawn,3u);EXPECT_EQ(narrow_source_fallback,4u);
+    EXPECT_EQ(semantic_rejections,35u);EXPECT_EQ(physical_rejections,28u);EXPECT_EQ(decoder_successes,35u);EXPECT_EQ(resources,0u);
+    flow_oracle::group_endpoint_extra7_finish_verdict(local_verdict,local_cases,"flow400_extra7_official_local_verdict/v1","official_raw",
+        "test_mermaid_official","test_mermaid_official",visited,visited*5u,visited*5u,
+        semantic_rejections,physical_rejections,resources,0u);
+    flow_oracle::group_endpoint_extra7_write_atomic(fs::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-flow400-extra7-official-verdict.json",local_verdict.to_string()+"\n");
+}
+
+TEST(MermaidOfficialFlowchartShapes, CompleteOfficialShapeConfigSourcesOwnFiveFrames) {
+    using flow_oracle::Model;
+    using flow_oracle::Shape;
+    struct Case { std::string_view path,sha;Model model; };
+    const std::array cases{
+        Case{"flowchart/visual-check/should-render-a-diamond-shaped-node-using-shape-config.mmd",
+            "10a38ba8df398ccaf36e51e7f84dccc2a71af21c005e177d30d2c304ea209890",
+            {"BT",{{"n2","Untitled Node",Shape::Rectangle},{"n1","Diamond",Shape::Decision}},
+                {{0,1,"","solid",false,true}}, {}}},
+        Case{"flowchart/visual-check/should-render-a-rounded-rectangle-and-a-normal-rectangle.mmd",
+            "1384844adca4511a7a6f7917ebd6a9563d7dc877e5a4208f7acfc5e32abafacb",
+            {"BT",{{"n2","Untitled Node",Shape::Rectangle},{"n1","Rounded Rectangle",Shape::Rounded},
+                    {"n3","Untitled Node",Shape::Rectangle}},
+                {{0,1,"","solid",false,true},{2,1,"","solid",false,true}}, {}}},
+        Case{"flowchart/visual-check/should-render-a-stadium-shaped-node.mmd",
+            "3497ab671f384701e964e3b71127e46ad889c6b67eb4fd18576bbc5a58309b8e",
+            {"TB",{{"A","Start",Shape::Stadium},{"n1","Untitled Node",Shape::Rectangle},
+                    {"n2","Untitled Node",Shape::Rectangle}},
+                {{0,1,"","solid",false,true},{0,2,"","solid",false,true}}, {}}},
+    };
+    for(const auto& item:cases){
+        SCOPED_TRACE(item.path);
+        const auto source=read_file(kRoot/"cases"/std::string(item.path));
+        ASSERT_EQ(digest(source),item.sha)<<"Pinned complete official source changed";
+        auto drawing=loom::ui::render_markdown(fenced(source,"mermaid",flow_oracle::kSentinel));
+        auto ordinary=loom::ui::render_markdown(fenced(source,"text",flow_oracle::kSentinel));
+        drawing->ComputeRequirement();ordinary->ComputeRequirement();
+        const int height=std::max({32,drawing->requirement().min_y+8,ordinary->requirement().min_y+8});
+        ASSERT_LE(height,1040);
+        constexpr std::array<int,5> widths{{240,40,240,240,40}};
+        std::array<std::optional<flow_oracle::Grid>,5> frames;
+        flow_oracle::OracleWork work{flow_oracle::kFlow400SceneLimit};
+        for(std::size_t n=0;n<frames.size();++n)
+            frames[n]=flow_oracle::capture(n<3u?drawing:ordinary,widths[n],height,&work);
+        for(const auto& frame:frames)static_cast<void>(flow_oracle::flow400_following(*frame,work,flow_oracle::kSentinel));
+        ASSERT_TRUE(flow_oracle::flow400_same(*frames[0],*frames[2],work));
+        ASSERT_FALSE(flow_oracle::flow400_same(*frames[0],*frames[3],work))<<"Official full-width source fell back";
+
+        const auto wide=flow_oracle::flow400_geometry(*frames[0],item.model,work,flow_oracle::kSentinel);
+        ASSERT_TRUE(wide.empty())<<(wide.empty()?"":wide.front());
+        const bool narrow_source=flow_oracle::flow400_same(*frames[1],*frames[4],work);
+        int content_width=0;
+        const auto following=flow_oracle::flow400_following(*frames[0],work,flow_oracle::kSentinel);
+        for(int y=0;y<following;++y)for(int x=0;x<frames[0]->width;++x)
+            if(frames[0]->at({x,y})!=" ")content_width=std::max(content_width,x+1);
+        if(content_width>40)ASSERT_TRUE(narrow_source)<<"Overwide shape case must use exact narrow source fallback";
+        else {
+            ASSERT_FALSE(narrow_source)<<"Narrow shape case unexpectedly fell back";
+            const auto narrow=flow_oracle::flow400_geometry(*frames[1],item.model,work,flow_oracle::kSentinel);
+            EXPECT_TRUE(narrow.empty())<<(narrow.empty()?"":narrow.front());
+        }
+        EXPECT_NE(work.remaining,0u)<<"Official owned frame/geometry work exhausted";
+    }
+}
+
+TEST(MermaidOfficialFlowchartConfig, BothMaxWidthSettingsPreserveFullCellSemantics) {
+    using flow_oracle::Model;
+    using flow_oracle::Shape;
+    constexpr std::array sources{
+        std::string_view{"---\nconfig:\n  flowchart:\n    useMaxWidth: true\n---\nflowchart TD\nA[Start] --> B[Done]\n"},
+        std::string_view{"---\nconfig:\n  flowchart:\n    useMaxWidth: false\n---\nflowchart TD\nA[Start] --> B[Done]\n"},
+    };
+    const Model expected{"TB",{{"A","Start",Shape::Rectangle},{"B","Done",Shape::Rectangle}},
+        {{0,1,"","solid",false,true}}, {}};
+    for(const auto source:sources){
+        auto drawing=loom::ui::render_markdown(fenced(source,"mermaid",flow_oracle::kSentinel));
+        auto ordinary=loom::ui::render_markdown(fenced(source,"text",flow_oracle::kSentinel));
+        drawing->ComputeRequirement();ordinary->ComputeRequirement();
+        const int height=std::max({32,drawing->requirement().min_y+8,ordinary->requirement().min_y+8});
+        constexpr std::array<int,5> widths{{240,40,240,240,40}};
+        flow_oracle::OracleWork work{flow_oracle::kFlow400SceneLimit};
+        std::array<std::optional<flow_oracle::Grid>,5> frames;
+        for(std::size_t n=0;n<frames.size();++n)
+            frames[n]=flow_oracle::capture(n<3u?drawing:ordinary,widths[n],height,&work);
+        for(std::size_t n=0;n<frames.size();++n){
+            SCOPED_TRACE(n);
+            std::string token_row;
+            for(int y=0;y<frames[n]->height;++y){
+                const auto row=frames[n]->row(y);
+                if(row.find(flow_oracle::kSentinel)!=std::string::npos)token_row=row;
+            }
+            ASSERT_FALSE(token_row.empty())<<"Official config source lost following content";
+            static_cast<void>(flow_oracle::flow400_following(*frames[n],work,flow_oracle::kSentinel));
+        }
+        ASSERT_TRUE(flow_oracle::flow400_same(*frames[0],*frames[2],work));
+        EXPECT_FALSE(flow_oracle::flow400_same(*frames[0],*frames[3],work));
+        EXPECT_FALSE(flow_oracle::flow400_same(*frames[1],*frames[4],work));
+        EXPECT_TRUE(flow_oracle::flow400_geometry(*frames[0],expected,work,flow_oracle::kSentinel).empty());
+        EXPECT_TRUE(flow_oracle::flow400_geometry(*frames[1],expected,work,flow_oracle::kSentinel).empty());
+        EXPECT_NE(work.remaining,0u);
+    }
 }
 } // namespace

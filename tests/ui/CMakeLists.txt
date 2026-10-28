@@ -123,7 +123,7 @@ target_compile_definitions(test_mermaid_official PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_official
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 180 LABELS "mermaid")
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
 add_executable(test_mermaid_terminal test_mermaid_terminal.cpp)
 target_link_libraries(test_mermaid_terminal
@@ -179,6 +179,103 @@ target_link_libraries(test_mermaid_relations_semantics
 target_compile_definitions(test_mermaid_relations_semantics PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_relations_semantics
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+# The post-CTest join is separate from both consumers and reads metadata only.
+add_test(NAME MermaidMindmapAdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/verify_mindmap10_admission.py" --self-test)
+set_tests_properties(MermaidMindmapAdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
+    PROPERTIES LABELS "mermaid" TIMEOUT 30)
+
+add_test(NAME MermaidShapesAdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/verify_shapes4_admission.py" --self-test)
+set_tests_properties(MermaidShapesAdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
+    PROPERTIES LABELS "mermaid" TIMEOUT 30)
+
+# RFC 0030 Block58: approved test-only B2 preflight, never drawing admission.
+add_executable(test_mermaid_block_semantics test_mermaid_block_semantics.cpp)
+target_link_libraries(test_mermaid_block_semantics
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_block_semantics PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_block_semantics
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+add_test(NAME MermaidBlock58AdmissionJoin.RejectsUnreviewedIncompleteOrBorrowedVerdicts
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/verify_block58_admission.py" --self-test)
+set_tests_properties(MermaidBlock58AdmissionJoin.RejectsUnreviewedIncompleteOrBorrowedVerdicts
+    PROPERTIES LABELS "mermaid" TIMEOUT 60)
+
+# RFC 0030 ER107: current source/projection pins plus fail-closed join controls.
+add_test(NAME MermaidEr107AdmissionJoin.RejectsUnreviewedIncompleteOrBorrowedVerdicts
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/verify_er107_admission.py" --self-test)
+set_tests_properties(MermaidEr107AdmissionJoin.RejectsUnreviewedIncompleteOrBorrowedVerdicts
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+# RFC 0030 Flow400 Extra7: metadata-only post-CTest admission join.
+add_test(NAME MermaidFlow400Extra7AdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/verify_flow400_group_endpoint_extra7_admission.py" --self-test)
+set_tests_properties(MermaidFlow400Extra7AdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
+    PROPERTIES LABELS "mermaid" TIMEOUT 60)
+
+# RFC 0030 Block58: independent complete-original public captures; no join.
+add_executable(test_mermaid_block_source58 test_mermaid_block_source58.cpp)
+target_link_libraries(test_mermaid_block_source58
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_block_source58 PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_block_source58
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# RFC 0030 ER107: independently owned complete-source Native captures.
+add_executable(test_mermaid_er107_source107 test_mermaid_er107_source107.cpp)
+target_link_libraries(test_mermaid_er107_source107
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_er107_source107 PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_er107_source107
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# RFC 0030 ER107: exact public-factory Work feasibility, no drawing credit.
+add_executable(test_mermaid_er107_runtime test_mermaid_er107_runtime.cpp)
+target_link_libraries(test_mermaid_er107_runtime
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_er107_runtime
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+# RFC 0030 ER107: source-only B1 binding; no rendering or drawing admission.
+add_executable(test_mermaid_er107_semantics test_mermaid_er107_semantics.cpp)
+target_link_libraries(test_mermaid_er107_semantics
+    PRIVATE loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_er107_semantics
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+# RFC 0030 ER107: independent source-derived projection primitives, no admission.
+add_executable(test_mermaid_er107_projection test_mermaid_er107_projection.cpp)
+target_link_libraries(test_mermaid_er107_projection
+    PRIVATE loom_utils GTest::gtest loom_test_main ftxui::screen)
+gtest_discover_tests(test_mermaid_er107_projection
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+# RFC 0030 Mindmap10: complete originals plus independent typed geometry.
+add_executable(test_mermaid_mindmap_semantics test_mermaid_mindmap_semantics.cpp)
+target_link_libraries(test_mermaid_mindmap_semantics
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_mindmap_semantics PRIVATE
+    LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+gtest_discover_tests(test_mermaid_mindmap_semantics
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 

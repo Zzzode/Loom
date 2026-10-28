@@ -1,0 +1,6240 @@
+{
+  "authoring_status": "COMPLETE_POSITIVE_PROPOSAL",
+  "counts": {
+    "arrow_head_sets": 7,
+    "body_cells": 3190,
+    "fixtures": 36,
+    "glyph_rows": 272,
+    "head_set_fixture_counts": {
+      "1": 2,
+      "10": 2,
+      "15": 2,
+      "2": 2,
+      "4": 2,
+      "5": 2,
+      "8": 2
+    },
+    "negative_controls": 0,
+    "nonarrow_source_types": 11,
+    "source_type_fixture_counts": {
+      "block_arrow": 14,
+      "circle": 2,
+      "diamond": 2,
+      "hexagon": 2,
+      "lean_right": 2,
+      "na": 2,
+      "rect_left_inv_arrow": 2,
+      "round": 2,
+      "square": 2,
+      "stadium": 2,
+      "subroutine": 2,
+      "trapezoid": 2
+    },
+    "source_types": 12,
+    "synthetic_caption_fixtures": 2,
+    "width_variants_per_source_type_or_head_set": 2
+  },
+  "drawing_credit": 0,
+  "fixtures": [
+    {
+      "boundary_metadata": {
+        "corner_model": "closed rectangle corners",
+        "corners": [
+          [
+            0,
+            0
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            8,
+            4
+          ],
+          [
+            0,
+            4
+          ]
+        ],
+        "port_anchor": [
+          4,
+          2
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "┌───────┐",
+          "│       │",
+          "│       │",
+          "│       │",
+          "└───────┘"
+        ],
+        "inside_rows": [
+          "000000000",
+          "011111110",
+          "011111110",
+          "011111110",
+          "000000000"
+        ],
+        "mask_rows": [
+          "111111111",
+          "111111111",
+          "111111111",
+          "111111111",
+          "111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 8,
+            "y": 2
+          },
+          {
+            "direction": 1,
+            "x": 4,
+            "y": 4
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 2
+          },
+          {
+            "direction": 3,
+            "x": 4,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "na_rect_9x5",
+      "geometry": {
+        "body": {
+          "h": 5,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 4,
+          "y": 2
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 5,
+          "allocated_w": 9,
+          "minimum_h": 5,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "rectangle"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "cb1383dfe0d206aeab90a93f0f7c8da38208db205b2a393712e5c950e8ca2d70",
+          "declaration_ordinals": [
+            1
+          ],
+          "directions": [],
+          "handle": "id:A",
+          "path": "block/nightly-check/block-arrow-should-span-multiple-columns-when-widthincolumns-is-set.mmd",
+          "source_sha256": "904cf163f79c7d29232b220794a93232a774f3883022858e9744a9522ecd557f",
+          "source_shape_type": "na"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "closed rectangle corners",
+        "corners": [
+          [
+            0,
+            0
+          ],
+          [
+            12,
+            0
+          ],
+          [
+            12,
+            4
+          ],
+          [
+            0,
+            4
+          ]
+        ],
+        "port_anchor": [
+          6,
+          2
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "┌───────────┐",
+          "│           │",
+          "│           │",
+          "│           │",
+          "└───────────┘"
+        ],
+        "inside_rows": [
+          "0000000000000",
+          "0111111111110",
+          "0111111111110",
+          "0111111111110",
+          "0000000000000"
+        ],
+        "mask_rows": [
+          "1111111111111",
+          "1111111111111",
+          "1111111111111",
+          "1111111111111",
+          "1111111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 12,
+            "y": 2
+          },
+          {
+            "direction": 1,
+            "x": 6,
+            "y": 4
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 2
+          },
+          {
+            "direction": 3,
+            "x": 6,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "na_rect_13x5",
+      "geometry": {
+        "body": {
+          "h": 5,
+          "w": 13,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 6,
+          "y": 2
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 13,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 5,
+          "allocated_w": 13,
+          "minimum_h": 5,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "rectangle"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "cb1383dfe0d206aeab90a93f0f7c8da38208db205b2a393712e5c950e8ca2d70",
+          "declaration_ordinals": [
+            1
+          ],
+          "directions": [],
+          "handle": "id:A",
+          "path": "block/nightly-check/block-arrow-should-span-multiple-columns-when-widthincolumns-is-set.mmd",
+          "source_sha256": "904cf163f79c7d29232b220794a93232a774f3883022858e9744a9522ecd557f",
+          "source_shape_type": "na"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "closed rectangle corners",
+        "corners": [
+          [
+            0,
+            0
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            8,
+            4
+          ],
+          [
+            0,
+            4
+          ]
+        ],
+        "port_anchor": [
+          4,
+          2
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "┌───────┐",
+          "│       │",
+          "│       │",
+          "│       │",
+          "└───────┘"
+        ],
+        "inside_rows": [
+          "000000000",
+          "011111110",
+          "011111110",
+          "011111110",
+          "000000000"
+        ],
+        "mask_rows": [
+          "111111111",
+          "111111111",
+          "111111111",
+          "111111111",
+          "111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 8,
+            "y": 2
+          },
+          {
+            "direction": 1,
+            "x": 4,
+            "y": 4
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 2
+          },
+          {
+            "direction": 3,
+            "x": 4,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "square_rect_9x5",
+      "geometry": {
+        "body": {
+          "h": 5,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 4,
+          "y": 2
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 5,
+          "allocated_w": 9,
+          "minimum_h": 5,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "rectangle"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "89350b78c86439e346a2de5bc0d82da70baa17614a01783ee7cd2d7f4f148e6a",
+          "declaration_ordinals": [
+            0
+          ],
+          "directions": [],
+          "handle": "id:middle",
+          "path": "block/nightly-check/block-in-the-middle-with-space-on-each-side.mmd",
+          "source_sha256": "b238acd094cee7f0fa9ee4077a71f98fca7ed2e30c9a2dd0d26a073d79c79495",
+          "source_shape_type": "square"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "closed rectangle corners",
+        "corners": [
+          [
+            0,
+            0
+          ],
+          [
+            12,
+            0
+          ],
+          [
+            12,
+            4
+          ],
+          [
+            0,
+            4
+          ]
+        ],
+        "port_anchor": [
+          6,
+          2
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "┌───────────┐",
+          "│           │",
+          "│           │",
+          "│           │",
+          "└───────────┘"
+        ],
+        "inside_rows": [
+          "0000000000000",
+          "0111111111110",
+          "0111111111110",
+          "0111111111110",
+          "0000000000000"
+        ],
+        "mask_rows": [
+          "1111111111111",
+          "1111111111111",
+          "1111111111111",
+          "1111111111111",
+          "1111111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 12,
+            "y": 2
+          },
+          {
+            "direction": 1,
+            "x": 6,
+            "y": 4
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 2
+          },
+          {
+            "direction": 3,
+            "x": 6,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "square_rect_13x5",
+      "geometry": {
+        "body": {
+          "h": 5,
+          "w": 13,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 6,
+          "y": 2
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 13,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 5,
+          "allocated_w": 13,
+          "minimum_h": 5,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "rectangle"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "89350b78c86439e346a2de5bc0d82da70baa17614a01783ee7cd2d7f4f148e6a",
+          "declaration_ordinals": [
+            0
+          ],
+          "directions": [],
+          "handle": "id:middle",
+          "path": "block/nightly-check/block-in-the-middle-with-space-on-each-side.mmd",
+          "source_sha256": "b238acd094cee7f0fa9ee4077a71f98fca7ed2e30c9a2dd0d26a073d79c79495",
+          "source_shape_type": "square"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "closed rectangle corners",
+        "corners": [
+          [
+            0,
+            0
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            8,
+            4
+          ],
+          [
+            0,
+            4
+          ]
+        ],
+        "port_anchor": [
+          4,
+          2
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "╭───────╮",
+          "│       │",
+          "│       │",
+          "│       │",
+          "╰───────╯"
+        ],
+        "inside_rows": [
+          "000000000",
+          "011111110",
+          "011111110",
+          "011111110",
+          "000000000"
+        ],
+        "mask_rows": [
+          "111111111",
+          "111111111",
+          "111111111",
+          "111111111",
+          "111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 8,
+            "y": 2
+          },
+          {
+            "direction": 1,
+            "x": 4,
+            "y": 4
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 2
+          },
+          {
+            "direction": 3,
+            "x": 4,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "round_9x5",
+      "geometry": {
+        "body": {
+          "h": 5,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 4,
+          "y": 2
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 5,
+          "allocated_w": 9,
+          "minimum_h": 5,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "rounded_rectangle"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "25bb72b21dc82805e324f93e9b4bdb5a740c37565e55a0386da0c8f1da5ee23e",
+          "declaration_ordinals": [
+            1
+          ],
+          "directions": [],
+          "handle": "id:B",
+          "path": "block/nightly-check/block-types-1-square-rounded-and-circle.mmd",
+          "source_sha256": "798801fa4313725d6d3c87e0e2d9f2bb2ea59ff927f0234f2531530e70d3a02d",
+          "source_shape_type": "round"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "closed rectangle corners",
+        "corners": [
+          [
+            0,
+            0
+          ],
+          [
+            12,
+            0
+          ],
+          [
+            12,
+            4
+          ],
+          [
+            0,
+            4
+          ]
+        ],
+        "port_anchor": [
+          6,
+          2
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "╭───────────╮",
+          "│           │",
+          "│           │",
+          "│           │",
+          "╰───────────╯"
+        ],
+        "inside_rows": [
+          "0000000000000",
+          "0111111111110",
+          "0111111111110",
+          "0111111111110",
+          "0000000000000"
+        ],
+        "mask_rows": [
+          "1111111111111",
+          "1111111111111",
+          "1111111111111",
+          "1111111111111",
+          "1111111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 12,
+            "y": 2
+          },
+          {
+            "direction": 1,
+            "x": 6,
+            "y": 4
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 2
+          },
+          {
+            "direction": 3,
+            "x": 6,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "round_13x5",
+      "geometry": {
+        "body": {
+          "h": 5,
+          "w": 13,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 6,
+          "y": 2
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 13,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 5,
+          "allocated_w": 13,
+          "minimum_h": 5,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "rounded_rectangle"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "25bb72b21dc82805e324f93e9b4bdb5a740c37565e55a0386da0c8f1da5ee23e",
+          "declaration_ordinals": [
+            1
+          ],
+          "directions": [],
+          "handle": "id:B",
+          "path": "block/nightly-check/block-types-1-square-rounded-and-circle.mmd",
+          "source_sha256": "798801fa4313725d6d3c87e0e2d9f2bb2ea59ff927f0234f2531530e70d3a02d",
+          "source_shape_type": "round"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "closed rectangle corners",
+        "corners": [
+          [
+            0,
+            0
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            8,
+            4
+          ],
+          [
+            0,
+            4
+          ]
+        ],
+        "port_anchor": [
+          4,
+          2
+        ],
+        "rail_columns": [
+          2,
+          6
+        ],
+        "rail_joins": [
+          {
+            "arms": [
+              "left",
+              "right",
+              "down"
+            ],
+            "at": [
+              2,
+              0
+            ]
+          },
+          {
+            "arms": [
+              "left",
+              "right",
+              "up"
+            ],
+            "at": [
+              2,
+              4
+            ]
+          },
+          {
+            "arms": [
+              "left",
+              "right",
+              "down"
+            ],
+            "at": [
+              6,
+              0
+            ]
+          },
+          {
+            "arms": [
+              "left",
+              "right",
+              "up"
+            ],
+            "at": [
+              6,
+              4
+            ]
+          }
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "┌─┬───┬─┐",
+          "│ │   │ │",
+          "│ │   │ │",
+          "│ │   │ │",
+          "└─┴───┴─┘"
+        ],
+        "inside_rows": [
+          "000000000",
+          "010111010",
+          "010111010",
+          "010111010",
+          "000000000"
+        ],
+        "mask_rows": [
+          "111111111",
+          "111111111",
+          "111111111",
+          "111111111",
+          "111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 8,
+            "y": 2
+          },
+          {
+            "direction": 1,
+            "x": 4,
+            "y": 4
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 2
+          },
+          {
+            "direction": 3,
+            "x": 4,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "subroutine_9x5",
+      "geometry": {
+        "body": {
+          "h": 5,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 4,
+          "y": 2
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 5,
+          "allocated_w": 9,
+          "minimum_h": 5,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "subroutine"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "0d64accb5011b09bdd6be31743ffe10cd73f3120eedd43808a55a8ec046191bc",
+          "declaration_ordinals": [
+            6
+          ],
+          "directions": [],
+          "handle": "id:sr",
+          "path": "block/visual-check/shapes-inside-a-container-redux-color-theme.mmd",
+          "source_sha256": "6b7fd4e74add06384db3a4ece160e28870a062bb81af4cd32e795a24b131e0bf",
+          "source_shape_type": "subroutine"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "closed rectangle corners",
+        "corners": [
+          [
+            0,
+            0
+          ],
+          [
+            12,
+            0
+          ],
+          [
+            12,
+            4
+          ],
+          [
+            0,
+            4
+          ]
+        ],
+        "port_anchor": [
+          6,
+          2
+        ],
+        "rail_columns": [
+          2,
+          10
+        ],
+        "rail_joins": [
+          {
+            "arms": [
+              "left",
+              "right",
+              "down"
+            ],
+            "at": [
+              2,
+              0
+            ]
+          },
+          {
+            "arms": [
+              "left",
+              "right",
+              "up"
+            ],
+            "at": [
+              2,
+              4
+            ]
+          },
+          {
+            "arms": [
+              "left",
+              "right",
+              "down"
+            ],
+            "at": [
+              10,
+              0
+            ]
+          },
+          {
+            "arms": [
+              "left",
+              "right",
+              "up"
+            ],
+            "at": [
+              10,
+              4
+            ]
+          }
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "┌─┬───────┬─┐",
+          "│ │       │ │",
+          "│ │       │ │",
+          "│ │       │ │",
+          "└─┴───────┴─┘"
+        ],
+        "inside_rows": [
+          "0000000000000",
+          "0101111111010",
+          "0101111111010",
+          "0101111111010",
+          "0000000000000"
+        ],
+        "mask_rows": [
+          "1111111111111",
+          "1111111111111",
+          "1111111111111",
+          "1111111111111",
+          "1111111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 12,
+            "y": 2
+          },
+          {
+            "direction": 1,
+            "x": 6,
+            "y": 4
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 2
+          },
+          {
+            "direction": 3,
+            "x": 6,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "subroutine_13x5",
+      "geometry": {
+        "body": {
+          "h": 5,
+          "w": 13,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 6,
+          "y": 2
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 13,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 5,
+          "allocated_w": 13,
+          "minimum_h": 5,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "subroutine"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "0d64accb5011b09bdd6be31743ffe10cd73f3120eedd43808a55a8ec046191bc",
+          "declaration_ordinals": [
+            6
+          ],
+          "directions": [],
+          "handle": "id:sr",
+          "path": "block/visual-check/shapes-inside-a-container-redux-color-theme.mmd",
+          "source_sha256": "6b7fd4e74add06384db3a4ece160e28870a062bb81af4cd32e795a24b131e0bf",
+          "source_shape_type": "subroutine"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "mask_formula": "(2*x-(w-1))^2+(2*y-(h-1))^2<=w^2, clipped to body; no odd-size substitution.",
+        "port_anchor": [
+          4,
+          4
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "   ████   ",
+          " ██    ██ ",
+          " █      █ ",
+          "█        █",
+          "█        █",
+          "█        █",
+          "█        █",
+          " █      █ ",
+          " ██    ██ ",
+          "   ████   "
+        ],
+        "inside_rows": [
+          "0000000000",
+          "0001111000",
+          "0011111100",
+          "0111111110",
+          "0111111110",
+          "0111111110",
+          "0111111110",
+          "0011111100",
+          "0001111000",
+          "0000000000"
+        ],
+        "mask_rows": [
+          "0001111000",
+          "0111111110",
+          "0111111110",
+          "1111111111",
+          "1111111111",
+          "1111111111",
+          "1111111111",
+          "0111111110",
+          "0111111110",
+          "0001111000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 9,
+            "y": 4
+          },
+          {
+            "direction": 1,
+            "x": 4,
+            "y": 9
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 4
+          },
+          {
+            "direction": 3,
+            "x": 4,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "circle_10x10",
+      "geometry": {
+        "body": {
+          "h": 10,
+          "w": 10,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 5,
+          "y": 5
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 10,
+          "w": 10,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 10,
+          "allocated_w": 10,
+          "minimum_h": 10,
+          "minimum_w": 10,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "circle"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "25bb72b21dc82805e324f93e9b4bdb5a740c37565e55a0386da0c8f1da5ee23e",
+          "declaration_ordinals": [
+            2
+          ],
+          "directions": [],
+          "handle": "id:C",
+          "path": "block/nightly-check/block-types-1-square-rounded-and-circle.mmd",
+          "source_sha256": "798801fa4313725d6d3c87e0e2d9f2bb2ea59ff927f0234f2531530e70d3a02d",
+          "source_shape_type": "circle"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "mask_formula": "(2*x-(w-1))^2+(2*y-(h-1))^2<=w^2, clipped to body; no odd-size substitution.",
+        "port_anchor": [
+          5,
+          5
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "    ████    ",
+          "  ██    ██  ",
+          " █        █ ",
+          " █        █ ",
+          "█          █",
+          "█   xxx    █",
+          "█          █",
+          "█          █",
+          " █        █ ",
+          " █        █ ",
+          "  ██    ██  ",
+          "    ████    "
+        ],
+        "inside_rows": [
+          "000000000000",
+          "000011110000",
+          "001111111100",
+          "001111111100",
+          "011111111110",
+          "011111111110",
+          "011111111110",
+          "011111111110",
+          "001111111100",
+          "001111111100",
+          "000011110000",
+          "000000000000"
+        ],
+        "mask_rows": [
+          "000011110000",
+          "001111111100",
+          "011111111110",
+          "011111111110",
+          "111111111111",
+          "111111111111",
+          "111111111111",
+          "111111111111",
+          "011111111110",
+          "011111111110",
+          "001111111100",
+          "000011110000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 11,
+            "y": 5
+          },
+          {
+            "direction": 1,
+            "x": 5,
+            "y": 11
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 5
+          },
+          {
+            "direction": 3,
+            "x": 5,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "circle_12x12_caption_xxx",
+      "geometry": {
+        "body": {
+          "h": 12,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 1,
+          "w": 3,
+          "x": 4,
+          "y": 5
+        },
+        "caption_rows": [
+          "xxx"
+        ],
+        "core": {
+          "h": 12,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 12,
+          "allocated_w": 12,
+          "minimum_h": 12,
+          "minimum_w": 12,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "circle"
+      },
+      "notes": [
+        "Normalized synthetic caption xxx establishes the even12x12 natural-size case; this is not the source file caption.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "25bb72b21dc82805e324f93e9b4bdb5a740c37565e55a0386da0c8f1da5ee23e",
+          "declaration_ordinals": [
+            2
+          ],
+          "directions": [],
+          "handle": "id:C",
+          "path": "block/nightly-check/block-types-1-square-rounded-and-circle.mmd",
+          "source_sha256": "798801fa4313725d6d3c87e0e2d9f2bb2ea59ff927f0234f2531530e70d3a02d",
+          "source_shape_type": "circle"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "mask_formula": "abs(2*x-(w-1))+abs(2*y-(h-1))<=w, clipped to body.",
+        "port_anchor": [
+          4,
+          4
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "    ██    ",
+          "   █  █   ",
+          "  █    █  ",
+          " █      █ ",
+          "█        █",
+          "█        █",
+          " █      █ ",
+          "  █    █  ",
+          "   █  █   ",
+          "    ██    "
+        ],
+        "inside_rows": [
+          "0000000000",
+          "0000110000",
+          "0001111000",
+          "0011111100",
+          "0111111110",
+          "0111111110",
+          "0011111100",
+          "0001111000",
+          "0000110000",
+          "0000000000"
+        ],
+        "mask_rows": [
+          "0000110000",
+          "0001111000",
+          "0011111100",
+          "0111111110",
+          "1111111111",
+          "1111111111",
+          "0111111110",
+          "0011111100",
+          "0001111000",
+          "0000110000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 9,
+            "y": 4
+          },
+          {
+            "direction": 1,
+            "x": 4,
+            "y": 9
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 4
+          },
+          {
+            "direction": 3,
+            "x": 4,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "diamond_10x10",
+      "geometry": {
+        "body": {
+          "h": 10,
+          "w": 10,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 5,
+          "y": 5
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 10,
+          "w": 10,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 10,
+          "allocated_w": 10,
+          "minimum_h": 10,
+          "minimum_w": 10,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "diamond"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "648481fd0ce1194543eeab0b06b7d65fe4c2611a6a5aea278820c5f0d100cfc2",
+          "declaration_ordinals": [
+            1
+          ],
+          "directions": [],
+          "handle": "id:B",
+          "path": "block/nightly-check/block-types-2-odd-diamond-and-hexagon.mmd",
+          "source_sha256": "888b02c7045456cc32494fe4743edb3708db0b5926dbfc13388e28a2e369f6b2",
+          "source_shape_type": "diamond"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "mask_formula": "abs(2*x-(w-1))+abs(2*y-(h-1))<=w, clipped to body.",
+        "port_anchor": [
+          5,
+          5
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "     ██     ",
+          "    █  █    ",
+          "   █    █   ",
+          "  █      █  ",
+          " █        █ ",
+          "█   xxx    █",
+          "█          █",
+          " █        █ ",
+          "  █      █  ",
+          "   █    █   ",
+          "    █  █    ",
+          "     ██     "
+        ],
+        "inside_rows": [
+          "000000000000",
+          "000001100000",
+          "000011110000",
+          "000111111000",
+          "001111111100",
+          "011111111110",
+          "011111111110",
+          "001111111100",
+          "000111111000",
+          "000011110000",
+          "000001100000",
+          "000000000000"
+        ],
+        "mask_rows": [
+          "000001100000",
+          "000011110000",
+          "000111111000",
+          "001111111100",
+          "011111111110",
+          "111111111111",
+          "111111111111",
+          "011111111110",
+          "001111111100",
+          "000111111000",
+          "000011110000",
+          "000001100000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 11,
+            "y": 5
+          },
+          {
+            "direction": 1,
+            "x": 5,
+            "y": 11
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 5
+          },
+          {
+            "direction": 3,
+            "x": 5,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "diamond_12x12_caption_xxx",
+      "geometry": {
+        "body": {
+          "h": 12,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 1,
+          "w": 3,
+          "x": 4,
+          "y": 5
+        },
+        "caption_rows": [
+          "xxx"
+        ],
+        "core": {
+          "h": 12,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 12,
+          "allocated_w": 12,
+          "minimum_h": 12,
+          "minimum_w": 12,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "diamond"
+      },
+      "notes": [
+        "Normalized synthetic caption xxx establishes the even12x12 natural-size case; this is not the source file caption.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "648481fd0ce1194543eeab0b06b7d65fe4c2611a6a5aea278820c5f0d100cfc2",
+          "declaration_ordinals": [
+            1
+          ],
+          "directions": [],
+          "handle": "id:B",
+          "path": "block/nightly-check/block-types-2-odd-diamond-and-hexagon.mmd",
+          "source_sha256": "888b02c7045456cc32494fe4743edb3708db0b5926dbfc13388e28a2e369f6b2",
+          "source_shape_type": "diamond"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "analytic_vertices": [
+          [
+            2,
+            0
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            10,
+            3
+          ],
+          [
+            8,
+            6
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            0,
+            3
+          ]
+        ],
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "port_anchor": [
+          5,
+          3
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "  ███████  ",
+          "  █     █  ",
+          " █       █ ",
+          "█         █",
+          " █       █ ",
+          "  █     █  ",
+          "  ███████  "
+        ],
+        "inside_rows": [
+          "00000000000",
+          "00011111000",
+          "00111111100",
+          "01111111110",
+          "00111111100",
+          "00011111000",
+          "00000000000"
+        ],
+        "mask_rows": [
+          "00111111100",
+          "00111111100",
+          "01111111110",
+          "11111111111",
+          "01111111110",
+          "00111111100",
+          "00111111100"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 10,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 5,
+            "y": 6
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 5,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "hexagon_11x7",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 5,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 7,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 11,
+          "minimum_h": 7,
+          "minimum_w": 11,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "hexagon"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "648481fd0ce1194543eeab0b06b7d65fe4c2611a6a5aea278820c5f0d100cfc2",
+          "declaration_ordinals": [
+            2
+          ],
+          "directions": [],
+          "handle": "id:C",
+          "path": "block/nightly-check/block-types-2-odd-diamond-and-hexagon.mmd",
+          "source_sha256": "888b02c7045456cc32494fe4743edb3708db0b5926dbfc13388e28a2e369f6b2",
+          "source_shape_type": "hexagon"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "analytic_vertices": [
+          [
+            2,
+            0
+          ],
+          [
+            12,
+            0
+          ],
+          [
+            14,
+            3
+          ],
+          [
+            12,
+            6
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            0,
+            3
+          ]
+        ],
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "port_anchor": [
+          7,
+          3
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "  ███████████  ",
+          "  █         █  ",
+          " █           █ ",
+          "█             █",
+          " █           █ ",
+          "  █         █  ",
+          "  ███████████  "
+        ],
+        "inside_rows": [
+          "000000000000000",
+          "000111111111000",
+          "001111111111100",
+          "011111111111110",
+          "001111111111100",
+          "000111111111000",
+          "000000000000000"
+        ],
+        "mask_rows": [
+          "001111111111100",
+          "001111111111100",
+          "011111111111110",
+          "111111111111111",
+          "011111111111110",
+          "001111111111100",
+          "001111111111100"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 14,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 7,
+            "y": 6
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 7,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "hexagon_15x7",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 7,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 15,
+          "minimum_h": 7,
+          "minimum_w": 11,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "hexagon"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "648481fd0ce1194543eeab0b06b7d65fe4c2611a6a5aea278820c5f0d100cfc2",
+          "declaration_ordinals": [
+            2
+          ],
+          "directions": [],
+          "handle": "id:C",
+          "path": "block/nightly-check/block-types-2-odd-diamond-and-hexagon.mmd",
+          "source_sha256": "888b02c7045456cc32494fe4743edb3708db0b5926dbfc13388e28a2e369f6b2",
+          "source_shape_type": "hexagon"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "analytic_vertices": [
+          [
+            2,
+            0
+          ],
+          [
+            10,
+            0
+          ],
+          [
+            8,
+            6
+          ],
+          [
+            0,
+            6
+          ]
+        ],
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "port_anchor": [
+          5,
+          3
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "  █████████",
+          "  █      █ ",
+          "  █      █ ",
+          " █       █ ",
+          " █      █  ",
+          " █      █  ",
+          "█████████  "
+        ],
+        "inside_rows": [
+          "00000000000",
+          "00011111100",
+          "00011111100",
+          "00111111100",
+          "00111111000",
+          "00111111000",
+          "00000000000"
+        ],
+        "mask_rows": [
+          "00111111111",
+          "00111111110",
+          "00111111110",
+          "01111111110",
+          "01111111100",
+          "01111111100",
+          "11111111100"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 9,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 5,
+            "y": 6
+          },
+          {
+            "direction": 2,
+            "x": 1,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 5,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "lean_right_11x7",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 5,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 7,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 11,
+          "minimum_h": 7,
+          "minimum_w": 11,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "lean_right"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "3b9ca68881129170137bc2993ecf42735a941b972e5e405f96d928b78b34db2e",
+          "declaration_ordinals": [
+            0
+          ],
+          "directions": [],
+          "handle": "id:A",
+          "path": "block/nightly-check/block-types-4-lean-right-lean-left-trapezoid-and-inv-trapezoid.mmd",
+          "source_sha256": "d14041d7e755861b9c2d8cfb63557be05e46749b3515f1a6f8f285c9051258b9",
+          "source_shape_type": "lean_right"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "analytic_vertices": [
+          [
+            2,
+            0
+          ],
+          [
+            14,
+            0
+          ],
+          [
+            12,
+            6
+          ],
+          [
+            0,
+            6
+          ]
+        ],
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "port_anchor": [
+          7,
+          3
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "  █████████████",
+          "  █          █ ",
+          "  █          █ ",
+          " █           █ ",
+          " █          █  ",
+          " █          █  ",
+          "█████████████  "
+        ],
+        "inside_rows": [
+          "000000000000000",
+          "000111111111100",
+          "000111111111100",
+          "001111111111100",
+          "001111111111000",
+          "001111111111000",
+          "000000000000000"
+        ],
+        "mask_rows": [
+          "001111111111111",
+          "001111111111110",
+          "001111111111110",
+          "011111111111110",
+          "011111111111100",
+          "011111111111100",
+          "111111111111100"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 13,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 7,
+            "y": 6
+          },
+          {
+            "direction": 2,
+            "x": 1,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 7,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "lean_right_15x7",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 7,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 15,
+          "minimum_h": 7,
+          "minimum_w": 11,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "lean_right"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "3b9ca68881129170137bc2993ecf42735a941b972e5e405f96d928b78b34db2e",
+          "declaration_ordinals": [
+            0
+          ],
+          "directions": [],
+          "handle": "id:A",
+          "path": "block/nightly-check/block-types-4-lean-right-lean-left-trapezoid-and-inv-trapezoid.mmd",
+          "source_sha256": "d14041d7e755861b9c2d8cfb63557be05e46749b3515f1a6f8f285c9051258b9",
+          "source_shape_type": "lean_right"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "analytic_vertices": [
+          [
+            2,
+            0
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            10,
+            6
+          ],
+          [
+            0,
+            6
+          ]
+        ],
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "port_anchor": [
+          5,
+          3
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "  ███████  ",
+          "  █     █  ",
+          "  █     █  ",
+          " █       █ ",
+          " █       █ ",
+          " █       █ ",
+          "███████████"
+        ],
+        "inside_rows": [
+          "00000000000",
+          "00011111000",
+          "00011111000",
+          "00111111100",
+          "00111111100",
+          "00111111100",
+          "00000000000"
+        ],
+        "mask_rows": [
+          "00111111100",
+          "00111111100",
+          "00111111100",
+          "01111111110",
+          "01111111110",
+          "01111111110",
+          "11111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 9,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 5,
+            "y": 6
+          },
+          {
+            "direction": 2,
+            "x": 1,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 5,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "trapezoid_11x7",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 5,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 7,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 11,
+          "minimum_h": 7,
+          "minimum_w": 11,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "trapezoid"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "0d64accb5011b09bdd6be31743ffe10cd73f3120eedd43808a55a8ec046191bc",
+          "declaration_ordinals": [
+            8
+          ],
+          "directions": [],
+          "handle": "id:tr",
+          "path": "block/visual-check/shapes-inside-a-container-redux-color-theme.mmd",
+          "source_sha256": "6b7fd4e74add06384db3a4ece160e28870a062bb81af4cd32e795a24b131e0bf",
+          "source_shape_type": "trapezoid"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "analytic_vertices": [
+          [
+            2,
+            0
+          ],
+          [
+            12,
+            0
+          ],
+          [
+            14,
+            6
+          ],
+          [
+            0,
+            6
+          ]
+        ],
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "port_anchor": [
+          7,
+          3
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "  ███████████  ",
+          "  █         █  ",
+          "  █         █  ",
+          " █           █ ",
+          " █           █ ",
+          " █           █ ",
+          "███████████████"
+        ],
+        "inside_rows": [
+          "000000000000000",
+          "000111111111000",
+          "000111111111000",
+          "001111111111100",
+          "001111111111100",
+          "001111111111100",
+          "000000000000000"
+        ],
+        "mask_rows": [
+          "001111111111100",
+          "001111111111100",
+          "001111111111100",
+          "011111111111110",
+          "011111111111110",
+          "011111111111110",
+          "111111111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 13,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 7,
+            "y": 6
+          },
+          {
+            "direction": 2,
+            "x": 1,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 7,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "trapezoid_15x7",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 7,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 15,
+          "minimum_h": 7,
+          "minimum_w": 11,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "trapezoid"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "0d64accb5011b09bdd6be31743ffe10cd73f3120eedd43808a55a8ec046191bc",
+          "declaration_ordinals": [
+            8
+          ],
+          "directions": [],
+          "handle": "id:tr",
+          "path": "block/visual-check/shapes-inside-a-container-redux-color-theme.mmd",
+          "source_sha256": "6b7fd4e74add06384db3a4ece160e28870a062bb81af4cd32e795a24b131e0bf",
+          "source_shape_type": "trapezoid"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "analytic_vertices": [
+          [
+            0,
+            0
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            10,
+            6
+          ],
+          [
+            10,
+            0
+          ]
+        ],
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "port_anchor": [
+          5,
+          3
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "███████████",
+          " █        █",
+          "  █       █",
+          "  █       █",
+          "  █       █",
+          " █        █",
+          "███████████"
+        ],
+        "inside_rows": [
+          "00000000000",
+          "00111111110",
+          "00011111110",
+          "00011111110",
+          "00011111110",
+          "00111111110",
+          "00000000000"
+        ],
+        "mask_rows": [
+          "11111111111",
+          "01111111111",
+          "00111111111",
+          "00111111111",
+          "00111111111",
+          "01111111111",
+          "11111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 10,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 5,
+            "y": 6
+          },
+          {
+            "direction": 2,
+            "x": 2,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 5,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "notch_11x7",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 5,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 7,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 11,
+          "minimum_h": 7,
+          "minimum_w": 11,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "rect_left_inv_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "648481fd0ce1194543eeab0b06b7d65fe4c2611a6a5aea278820c5f0d100cfc2",
+          "declaration_ordinals": [
+            0
+          ],
+          "directions": [],
+          "handle": "id:A",
+          "path": "block/nightly-check/block-types-2-odd-diamond-and-hexagon.mmd",
+          "source_sha256": "888b02c7045456cc32494fe4743edb3708db0b5926dbfc13388e28a2e369f6b2",
+          "source_shape_type": "rect_left_inv_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "analytic_vertices": [
+          [
+            0,
+            0
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            14,
+            6
+          ],
+          [
+            14,
+            0
+          ]
+        ],
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "port_anchor": [
+          7,
+          3
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "███████████████",
+          " █            █",
+          "  █           █",
+          "  █           █",
+          "  █           █",
+          " █            █",
+          "███████████████"
+        ],
+        "inside_rows": [
+          "000000000000000",
+          "001111111111110",
+          "000111111111110",
+          "000111111111110",
+          "000111111111110",
+          "001111111111110",
+          "000000000000000"
+        ],
+        "mask_rows": [
+          "111111111111111",
+          "011111111111111",
+          "001111111111111",
+          "001111111111111",
+          "001111111111111",
+          "011111111111111",
+          "111111111111111"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 14,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 7,
+            "y": 6
+          },
+          {
+            "direction": 2,
+            "x": 2,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 7,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "notch_15x7",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 7,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 15,
+          "minimum_h": 7,
+          "minimum_w": 11,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "rect_left_inv_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "648481fd0ce1194543eeab0b06b7d65fe4c2611a6a5aea278820c5f0d100cfc2",
+          "declaration_ordinals": [
+            0
+          ],
+          "directions": [],
+          "handle": "id:A",
+          "path": "block/nightly-check/block-types-2-odd-diamond-and-hexagon.mmd",
+          "source_sha256": "888b02c7045456cc32494fe4743edb3708db0b5926dbfc13388e28a2e369f6b2",
+          "source_shape_type": "rect_left_inv_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "mask_formula": "r=floor((h-1)/2); central r<=x<=w-1-r is included; caps use squared Euclidean distance<=r^2 about (r,r)/(w-1-r,r).",
+        "port_anchor": [
+          5,
+          3
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "   █████   ",
+          " ██     ██ ",
+          " █       █ ",
+          "█         █",
+          " █       █ ",
+          " ██     ██ ",
+          "   █████   "
+        ],
+        "inside_rows": [
+          "00000000000",
+          "00011111000",
+          "00111111100",
+          "01111111110",
+          "00111111100",
+          "00011111000",
+          "00000000000"
+        ],
+        "mask_rows": [
+          "00011111000",
+          "01111111110",
+          "01111111110",
+          "11111111111",
+          "01111111110",
+          "01111111110",
+          "00011111000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 10,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 5,
+            "y": 6
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 5,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "stadium_11x7",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 5,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 7,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 11,
+          "minimum_h": 7,
+          "minimum_w": 11,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "stadium"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "8d14b9a370c3d4beae3b4f1df929b1564567bbe515a6a6e65aa32acb11a840db",
+          "declaration_ordinals": [
+            0
+          ],
+          "directions": [],
+          "handle": "id:A",
+          "path": "block/nightly-check/block-types-3-stadium.mmd",
+          "source_sha256": "b15533ae5dbaf01bb402e539d2b29a608c7d3fe09af9f006751031268959521e",
+          "source_shape_type": "stadium"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "lattice_rule": "Boundary cell iff included and at least one cardinal neighbor is excluded. Full block occupies the entire boundary cell, preserving diagonal contacts without guessing a missing arm.",
+        "mask_formula": "r=floor((h-1)/2); central r<=x<=w-1-r is included; caps use squared Euclidean distance<=r^2 about (r,r)/(w-1-r,r).",
+        "port_anchor": [
+          7,
+          3
+        ],
+        "source_joins": []
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "   █████████   ",
+          " ██         ██ ",
+          " █           █ ",
+          "█             █",
+          " █           █ ",
+          " ██         ██ ",
+          "   █████████   "
+        ],
+        "inside_rows": [
+          "000000000000000",
+          "000111111111000",
+          "001111111111100",
+          "011111111111110",
+          "001111111111100",
+          "000111111111000",
+          "000000000000000"
+        ],
+        "mask_rows": [
+          "000111111111000",
+          "011111111111110",
+          "011111111111110",
+          "111111111111111",
+          "011111111111110",
+          "011111111111110",
+          "000111111111000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 14,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 7,
+            "y": 6
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 7,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "stadium_15x7",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 7,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "heads": 0,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 15,
+          "minimum_h": 7,
+          "minimum_w": 11,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "stadium"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "8d14b9a370c3d4beae3b4f1df929b1564567bbe515a6a6e65aa32acb11a840db",
+          "declaration_ordinals": [
+            0
+          ],
+          "directions": [],
+          "handle": "id:A",
+          "path": "block/nightly-check/block-types-3-stadium.mmd",
+          "source_sha256": "b15533ae5dbaf01bb402e539d2b29a608c7d3fe09af9f006751031268959521e",
+          "source_shape_type": "stadium"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 1,
+          "left": 0,
+          "right": 3,
+          "top": 1
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          3,
+          3
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  5,
+                  0
+                ],
+                [
+                  9,
+                  3
+                ]
+              ],
+              [
+                [
+                  9,
+                  3
+                ],
+                [
+                  5,
+                  6
+                ]
+              ]
+            ],
+            "direction": "right",
+            "head_bit": 1,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                5,
+                0
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "tip": [
+              9,
+              3
+            ],
+            "triangle_vertices": [
+              [
+                5,
+                0
+              ],
+              [
+                9,
+                3
+              ],
+              [
+                5,
+                6
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "     █    ",
+          "█████ █   ",
+          "█      █  ",
+          "█       ██",
+          "█      █  ",
+          "█████ █   ",
+          "     █    "
+        ],
+        "inside_rows": [
+          "0000000000",
+          "0000010000",
+          "0111111000",
+          "0111111100",
+          "0111111000",
+          "0000010000",
+          "0000000000"
+        ],
+        "mask_rows": [
+          "0000010000",
+          "1111111000",
+          "1111111100",
+          "1111111111",
+          "1111111100",
+          "1111111000",
+          "0000010000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 9,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 3,
+            "y": 5
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 3,
+            "y": 1
+          }
+        ]
+      },
+      "fixture_id": "arrow_right_core7x5",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 10,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 3,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 7,
+          "x": 0,
+          "y": 1
+        },
+        "heads": 1,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 10,
+          "minimum_h": 7,
+          "minimum_w": 10,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "382c62ae62f0d514d66b4f61bdb97e8f604842c0709861418a22c416fdfddfa2",
+          "declaration_ordinals": [
+            5
+          ],
+          "directions": [
+            "right"
+          ],
+          "handle": "id:blockArrowId",
+          "path": "block/nightly-check/should-handle-block-arrows-and-spece-statements.mmd",
+          "source_sha256": "1e7df7bb0f2375c21a1e15ae9313e8ed625be3d15d7dc3f0765ffb7fd12a2cfe",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 1,
+          "left": 3,
+          "right": 0,
+          "top": 1
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          6,
+          3
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  3
+                ]
+              ],
+              [
+                [
+                  0,
+                  3
+                ],
+                [
+                  4,
+                  6
+                ]
+              ]
+            ],
+            "direction": "left",
+            "head_bit": 4,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                4,
+                0
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tip": [
+              0,
+              3
+            ],
+            "triangle_vertices": [
+              [
+                4,
+                0
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "    █     ",
+          "   █ █████",
+          "  █      █",
+          "██       █",
+          "  █      █",
+          "   █ █████",
+          "    █     "
+        ],
+        "inside_rows": [
+          "0000000000",
+          "0000100000",
+          "0001111110",
+          "0011111110",
+          "0001111110",
+          "0000100000",
+          "0000000000"
+        ],
+        "mask_rows": [
+          "0000100000",
+          "0001111111",
+          "0011111111",
+          "1111111111",
+          "0011111111",
+          "0001111111",
+          "0000100000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 9,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 6,
+            "y": 5
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 6,
+            "y": 1
+          }
+        ]
+      },
+      "fixture_id": "arrow_left_core7x5",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 10,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 6,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 7,
+          "x": 3,
+          "y": 1
+        },
+        "heads": 4,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 10,
+          "minimum_h": 7,
+          "minimum_w": 10,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "382c62ae62f0d514d66b4f61bdb97e8f604842c0709861418a22c416fdfddfa2",
+          "declaration_ordinals": [
+            6
+          ],
+          "directions": [
+            "left"
+          ],
+          "handle": "id:blockArrowId2",
+          "path": "block/nightly-check/should-handle-block-arrows-and-spece-statements.mmd",
+          "source_sha256": "1e7df7bb0f2375c21a1e15ae9313e8ed625be3d15d7dc3f0765ffb7fd12a2cfe",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 0,
+          "left": 1,
+          "right": 1,
+          "top": 3
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          4,
+          5
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  0,
+                  4
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              [
+                [
+                  4,
+                  0
+                ],
+                [
+                  8,
+                  4
+                ]
+              ]
+            ],
+            "direction": "up",
+            "head_bit": 8,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                0,
+                4
+              ],
+              [
+                8,
+                4
+              ]
+            ],
+            "tip": [
+              4,
+              0
+            ],
+            "triangle_vertices": [
+              [
+                0,
+                4
+              ],
+              [
+                4,
+                0
+              ],
+              [
+                8,
+                4
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "    █    ",
+          "   █ █   ",
+          "  █   █  ",
+          " █     █ ",
+          "█       █",
+          " █     █ ",
+          " █     █ ",
+          " ███████ "
+        ],
+        "inside_rows": [
+          "000000000",
+          "000010000",
+          "000111000",
+          "001111100",
+          "011111110",
+          "001111100",
+          "001111100",
+          "000000000"
+        ],
+        "mask_rows": [
+          "000010000",
+          "000111000",
+          "001111100",
+          "011111110",
+          "111111111",
+          "011111110",
+          "011111110",
+          "011111110"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 7,
+            "y": 5
+          },
+          {
+            "direction": 1,
+            "x": 4,
+            "y": 7
+          },
+          {
+            "direction": 2,
+            "x": 1,
+            "y": 5
+          },
+          {
+            "direction": 3,
+            "x": 4,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "arrow_up_core7x5",
+      "geometry": {
+        "body": {
+          "h": 8,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 4,
+          "y": 5
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 7,
+          "x": 1,
+          "y": 3
+        },
+        "heads": 8,
+        "natural_bounds": {
+          "allocated_h": 8,
+          "allocated_w": 9,
+          "minimum_h": 8,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "382c62ae62f0d514d66b4f61bdb97e8f604842c0709861418a22c416fdfddfa2",
+          "declaration_ordinals": [
+            7
+          ],
+          "directions": [
+            "up"
+          ],
+          "handle": "id:blockArrowId3",
+          "path": "block/nightly-check/should-handle-block-arrows-and-spece-statements.mmd",
+          "source_sha256": "1e7df7bb0f2375c21a1e15ae9313e8ed625be3d15d7dc3f0765ffb7fd12a2cfe",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 3,
+          "left": 1,
+          "right": 1,
+          "top": 0
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          4,
+          2
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  0,
+                  3
+                ],
+                [
+                  4,
+                  7
+                ]
+              ],
+              [
+                [
+                  4,
+                  7
+                ],
+                [
+                  8,
+                  3
+                ]
+              ]
+            ],
+            "direction": "down",
+            "head_bit": 2,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                0,
+                3
+              ],
+              [
+                8,
+                3
+              ]
+            ],
+            "tip": [
+              4,
+              7
+            ],
+            "triangle_vertices": [
+              [
+                0,
+                3
+              ],
+              [
+                4,
+                7
+              ],
+              [
+                8,
+                3
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          " ███████ ",
+          " █     █ ",
+          " █     █ ",
+          "█       █",
+          " █     █ ",
+          "  █   █  ",
+          "   █ █   ",
+          "    █    "
+        ],
+        "inside_rows": [
+          "000000000",
+          "001111100",
+          "001111100",
+          "011111110",
+          "001111100",
+          "000111000",
+          "000010000",
+          "000000000"
+        ],
+        "mask_rows": [
+          "011111110",
+          "011111110",
+          "011111110",
+          "111111111",
+          "011111110",
+          "001111100",
+          "000111000",
+          "000010000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 7,
+            "y": 2
+          },
+          {
+            "direction": 1,
+            "x": 4,
+            "y": 7
+          },
+          {
+            "direction": 2,
+            "x": 1,
+            "y": 2
+          },
+          {
+            "direction": 3,
+            "x": 4,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "arrow_down_core7x5",
+      "geometry": {
+        "body": {
+          "h": 8,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 4,
+          "y": 2
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 7,
+          "x": 1,
+          "y": 0
+        },
+        "heads": 2,
+        "natural_bounds": {
+          "allocated_h": 8,
+          "allocated_w": 9,
+          "minimum_h": 8,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "382c62ae62f0d514d66b4f61bdb97e8f604842c0709861418a22c416fdfddfa2",
+          "declaration_ordinals": [
+            8
+          ],
+          "directions": [
+            "down"
+          ],
+          "handle": "id:blockArrowId4",
+          "path": "block/nightly-check/should-handle-block-arrows-and-spece-statements.mmd",
+          "source_sha256": "1e7df7bb0f2375c21a1e15ae9313e8ed625be3d15d7dc3f0765ffb7fd12a2cfe",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 1,
+          "left": 3,
+          "right": 3,
+          "top": 1
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          6,
+          3
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  8,
+                  0
+                ],
+                [
+                  12,
+                  3
+                ]
+              ],
+              [
+                [
+                  12,
+                  3
+                ],
+                [
+                  8,
+                  6
+                ]
+              ]
+            ],
+            "direction": "right",
+            "head_bit": 1,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                8,
+                0
+              ],
+              [
+                8,
+                6
+              ]
+            ],
+            "tip": [
+              12,
+              3
+            ],
+            "triangle_vertices": [
+              [
+                8,
+                0
+              ],
+              [
+                12,
+                3
+              ],
+              [
+                8,
+                6
+              ]
+            ]
+          },
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  3
+                ]
+              ],
+              [
+                [
+                  0,
+                  3
+                ],
+                [
+                  4,
+                  6
+                ]
+              ]
+            ],
+            "direction": "left",
+            "head_bit": 4,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                4,
+                0
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tip": [
+              0,
+              3
+            ],
+            "triangle_vertices": [
+              [
+                4,
+                0
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "    █   █    ",
+          "   █ ███ █   ",
+          "  █       █  ",
+          "██         ██",
+          "  █       █  ",
+          "   █ ███ █   ",
+          "    █   █    "
+        ],
+        "inside_rows": [
+          "0000000000000",
+          "0000100010000",
+          "0001111111000",
+          "0011111111100",
+          "0001111111000",
+          "0000100010000",
+          "0000000000000"
+        ],
+        "mask_rows": [
+          "0000100010000",
+          "0001111111000",
+          "0011111111100",
+          "1111111111111",
+          "0011111111100",
+          "0001111111000",
+          "0000100010000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 12,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 6,
+            "y": 5
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 6,
+            "y": 1
+          }
+        ]
+      },
+      "fixture_id": "arrow_x_core7x5",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 13,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 6,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 7,
+          "x": 3,
+          "y": 1
+        },
+        "heads": 5,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 13,
+          "minimum_h": 7,
+          "minimum_w": 13,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "cb1383dfe0d206aeab90a93f0f7c8da38208db205b2a393712e5c950e8ca2d70",
+          "declaration_ordinals": [
+            0
+          ],
+          "directions": [
+            "x"
+          ],
+          "handle": "id:arrow",
+          "path": "block/nightly-check/block-arrow-should-span-multiple-columns-when-widthincolumns-is-set.mmd",
+          "source_sha256": "904cf163f79c7d29232b220794a93232a774f3883022858e9744a9522ecd557f",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 3,
+          "left": 1,
+          "right": 1,
+          "top": 3
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          4,
+          5
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  0,
+                  4
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              [
+                [
+                  4,
+                  0
+                ],
+                [
+                  8,
+                  4
+                ]
+              ]
+            ],
+            "direction": "up",
+            "head_bit": 8,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                0,
+                4
+              ],
+              [
+                8,
+                4
+              ]
+            ],
+            "tip": [
+              4,
+              0
+            ],
+            "triangle_vertices": [
+              [
+                0,
+                4
+              ],
+              [
+                4,
+                0
+              ],
+              [
+                8,
+                4
+              ]
+            ]
+          },
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  0,
+                  6
+                ],
+                [
+                  4,
+                  10
+                ]
+              ],
+              [
+                [
+                  4,
+                  10
+                ],
+                [
+                  8,
+                  6
+                ]
+              ]
+            ],
+            "direction": "down",
+            "head_bit": 2,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                0,
+                6
+              ],
+              [
+                8,
+                6
+              ]
+            ],
+            "tip": [
+              4,
+              10
+            ],
+            "triangle_vertices": [
+              [
+                0,
+                6
+              ],
+              [
+                4,
+                10
+              ],
+              [
+                8,
+                6
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "    █    ",
+          "   █ █   ",
+          "  █   █  ",
+          " █     █ ",
+          "█       █",
+          " █     █ ",
+          "█       █",
+          " █     █ ",
+          "  █   █  ",
+          "   █ █   ",
+          "    █    "
+        ],
+        "inside_rows": [
+          "000000000",
+          "000010000",
+          "000111000",
+          "001111100",
+          "011111110",
+          "001111100",
+          "011111110",
+          "001111100",
+          "000111000",
+          "000010000",
+          "000000000"
+        ],
+        "mask_rows": [
+          "000010000",
+          "000111000",
+          "001111100",
+          "011111110",
+          "111111111",
+          "011111110",
+          "111111111",
+          "011111110",
+          "001111100",
+          "000111000",
+          "000010000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 7,
+            "y": 5
+          },
+          {
+            "direction": 1,
+            "x": 4,
+            "y": 10
+          },
+          {
+            "direction": 2,
+            "x": 1,
+            "y": 5
+          },
+          {
+            "direction": 3,
+            "x": 4,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "arrow_y_core7x5",
+      "geometry": {
+        "body": {
+          "h": 11,
+          "w": 9,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 4,
+          "y": 5
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 7,
+          "x": 1,
+          "y": 3
+        },
+        "heads": 10,
+        "natural_bounds": {
+          "allocated_h": 11,
+          "allocated_w": 9,
+          "minimum_h": 11,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "382c62ae62f0d514d66b4f61bdb97e8f604842c0709861418a22c416fdfddfa2",
+          "declaration_ordinals": [
+            10,
+            11
+          ],
+          "directions": [
+            "y"
+          ],
+          "handle": "id:blockArrowId6",
+          "path": "block/nightly-check/should-handle-block-arrows-and-spece-statements.mmd",
+          "source_sha256": "1e7df7bb0f2375c21a1e15ae9313e8ed625be3d15d7dc3f0765ffb7fd12a2cfe",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 3,
+          "left": 3,
+          "right": 3,
+          "top": 3
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          6,
+          5
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  8,
+                  2
+                ],
+                [
+                  12,
+                  5
+                ]
+              ],
+              [
+                [
+                  12,
+                  5
+                ],
+                [
+                  8,
+                  8
+                ]
+              ]
+            ],
+            "direction": "right",
+            "head_bit": 1,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                8,
+                2
+              ],
+              [
+                8,
+                8
+              ]
+            ],
+            "tip": [
+              12,
+              5
+            ],
+            "triangle_vertices": [
+              [
+                8,
+                2
+              ],
+              [
+                12,
+                5
+              ],
+              [
+                8,
+                8
+              ]
+            ]
+          },
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  4,
+                  2
+                ],
+                [
+                  0,
+                  5
+                ]
+              ],
+              [
+                [
+                  0,
+                  5
+                ],
+                [
+                  4,
+                  8
+                ]
+              ]
+            ],
+            "direction": "left",
+            "head_bit": 4,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                4,
+                2
+              ],
+              [
+                4,
+                8
+              ]
+            ],
+            "tip": [
+              0,
+              5
+            ],
+            "triangle_vertices": [
+              [
+                4,
+                2
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                4,
+                8
+              ]
+            ]
+          },
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  2,
+                  4
+                ],
+                [
+                  6,
+                  0
+                ]
+              ],
+              [
+                [
+                  6,
+                  0
+                ],
+                [
+                  10,
+                  4
+                ]
+              ]
+            ],
+            "direction": "up",
+            "head_bit": 8,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                2,
+                4
+              ],
+              [
+                10,
+                4
+              ]
+            ],
+            "tip": [
+              6,
+              0
+            ],
+            "triangle_vertices": [
+              [
+                2,
+                4
+              ],
+              [
+                6,
+                0
+              ],
+              [
+                10,
+                4
+              ]
+            ]
+          },
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  2,
+                  6
+                ],
+                [
+                  6,
+                  10
+                ]
+              ],
+              [
+                [
+                  6,
+                  10
+                ],
+                [
+                  10,
+                  6
+                ]
+              ]
+            ],
+            "direction": "down",
+            "head_bit": 2,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                2,
+                6
+              ],
+              [
+                10,
+                6
+              ]
+            ],
+            "tip": [
+              6,
+              10
+            ],
+            "triangle_vertices": [
+              [
+                2,
+                6
+              ],
+              [
+                6,
+                10
+              ],
+              [
+                10,
+                6
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "      █      ",
+          "     █ █     ",
+          "    █   █    ",
+          "   █     █   ",
+          "  █       █  ",
+          "██         ██",
+          "  █       █  ",
+          "   █     █   ",
+          "    █   █    ",
+          "     █ █     ",
+          "      █      "
+        ],
+        "inside_rows": [
+          "0000000000000",
+          "0000001000000",
+          "0000011100000",
+          "0000111110000",
+          "0001111111000",
+          "0011111111100",
+          "0001111111000",
+          "0000111110000",
+          "0000011100000",
+          "0000001000000",
+          "0000000000000"
+        ],
+        "mask_rows": [
+          "0000001000000",
+          "0000011100000",
+          "0000111110000",
+          "0001111111000",
+          "0011111111100",
+          "1111111111111",
+          "0011111111100",
+          "0001111111000",
+          "0000111110000",
+          "0000011100000",
+          "0000001000000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 12,
+            "y": 5
+          },
+          {
+            "direction": 1,
+            "x": 6,
+            "y": 10
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 5
+          },
+          {
+            "direction": 3,
+            "x": 6,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "arrow_x_y_core7x5",
+      "geometry": {
+        "body": {
+          "h": 11,
+          "w": 13,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 6,
+          "y": 5
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 7,
+          "x": 3,
+          "y": 3
+        },
+        "heads": 15,
+        "natural_bounds": {
+          "allocated_h": 11,
+          "allocated_w": 13,
+          "minimum_h": 11,
+          "minimum_w": 13,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "7776080316ebd0d80c208d2e3ce3b0d5c0d90ac1f5a6d93bd41dd6ecae79c2db",
+          "declaration_ordinals": [
+            2
+          ],
+          "directions": [
+            "x",
+            "y"
+          ],
+          "handle": "id:blockArrowId3",
+          "path": "block/nightly-check/should-handle-block-arrows-in-different-directions.mmd",
+          "source_sha256": "1f412a4f9962424b49a24466f62046d76662209221cceef0898f422e22e5976f",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 1,
+          "left": 0,
+          "right": 3,
+          "top": 1
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          4,
+          3
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  7,
+                  0
+                ],
+                [
+                  11,
+                  3
+                ]
+              ],
+              [
+                [
+                  11,
+                  3
+                ],
+                [
+                  7,
+                  6
+                ]
+              ]
+            ],
+            "direction": "right",
+            "head_bit": 1,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                7,
+                0
+              ],
+              [
+                7,
+                6
+              ]
+            ],
+            "tip": [
+              11,
+              3
+            ],
+            "triangle_vertices": [
+              [
+                7,
+                0
+              ],
+              [
+                11,
+                3
+              ],
+              [
+                7,
+                6
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "       █    ",
+          "███████ █   ",
+          "█        █  ",
+          "█         ██",
+          "█        █  ",
+          "███████ █   ",
+          "       █    "
+        ],
+        "inside_rows": [
+          "000000000000",
+          "000000010000",
+          "011111111000",
+          "011111111100",
+          "011111111000",
+          "000000010000",
+          "000000000000"
+        ],
+        "mask_rows": [
+          "000000010000",
+          "111111111000",
+          "111111111100",
+          "111111111111",
+          "111111111100",
+          "111111111000",
+          "000000010000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 11,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 4,
+            "y": 5
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 4,
+            "y": 1
+          }
+        ]
+      },
+      "fixture_id": "arrow_right_core9x5",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 4,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 0,
+          "y": 1
+        },
+        "heads": 1,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 12,
+          "minimum_h": 7,
+          "minimum_w": 10,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "382c62ae62f0d514d66b4f61bdb97e8f604842c0709861418a22c416fdfddfa2",
+          "declaration_ordinals": [
+            5
+          ],
+          "directions": [
+            "right"
+          ],
+          "handle": "id:blockArrowId",
+          "path": "block/nightly-check/should-handle-block-arrows-and-spece-statements.mmd",
+          "source_sha256": "1e7df7bb0f2375c21a1e15ae9313e8ed625be3d15d7dc3f0765ffb7fd12a2cfe",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 1,
+          "left": 3,
+          "right": 0,
+          "top": 1
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          7,
+          3
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  3
+                ]
+              ],
+              [
+                [
+                  0,
+                  3
+                ],
+                [
+                  4,
+                  6
+                ]
+              ]
+            ],
+            "direction": "left",
+            "head_bit": 4,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                4,
+                0
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tip": [
+              0,
+              3
+            ],
+            "triangle_vertices": [
+              [
+                4,
+                0
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "    █       ",
+          "   █ ███████",
+          "  █        █",
+          "██         █",
+          "  █        █",
+          "   █ ███████",
+          "    █       "
+        ],
+        "inside_rows": [
+          "000000000000",
+          "000010000000",
+          "000111111110",
+          "001111111110",
+          "000111111110",
+          "000010000000",
+          "000000000000"
+        ],
+        "mask_rows": [
+          "000010000000",
+          "000111111111",
+          "001111111111",
+          "111111111111",
+          "001111111111",
+          "000111111111",
+          "000010000000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 11,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 7,
+            "y": 5
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 7,
+            "y": 1
+          }
+        ]
+      },
+      "fixture_id": "arrow_left_core9x5",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 7,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 3,
+          "y": 1
+        },
+        "heads": 4,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 12,
+          "minimum_h": 7,
+          "minimum_w": 10,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "382c62ae62f0d514d66b4f61bdb97e8f604842c0709861418a22c416fdfddfa2",
+          "declaration_ordinals": [
+            6
+          ],
+          "directions": [
+            "left"
+          ],
+          "handle": "id:blockArrowId2",
+          "path": "block/nightly-check/should-handle-block-arrows-and-spece-statements.mmd",
+          "source_sha256": "1e7df7bb0f2375c21a1e15ae9313e8ed625be3d15d7dc3f0765ffb7fd12a2cfe",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 0,
+          "left": 1,
+          "right": 1,
+          "top": 3
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          5,
+          5
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  0,
+                  4
+                ],
+                [
+                  5,
+                  0
+                ]
+              ],
+              [
+                [
+                  5,
+                  0
+                ],
+                [
+                  10,
+                  4
+                ]
+              ]
+            ],
+            "direction": "up",
+            "head_bit": 8,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                0,
+                4
+              ],
+              [
+                10,
+                4
+              ]
+            ],
+            "tip": [
+              5,
+              0
+            ],
+            "triangle_vertices": [
+              [
+                0,
+                4
+              ],
+              [
+                5,
+                0
+              ],
+              [
+                10,
+                4
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "     █     ",
+          "    █ █    ",
+          "   █   █   ",
+          " ██     ██ ",
+          "█         █",
+          " █       █ ",
+          " █       █ ",
+          " █████████ "
+        ],
+        "inside_rows": [
+          "00000000000",
+          "00000100000",
+          "00001110000",
+          "00011111000",
+          "01111111110",
+          "00111111100",
+          "00111111100",
+          "00000000000"
+        ],
+        "mask_rows": [
+          "00000100000",
+          "00001110000",
+          "00011111000",
+          "01111111110",
+          "11111111111",
+          "01111111110",
+          "01111111110",
+          "01111111110"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 9,
+            "y": 5
+          },
+          {
+            "direction": 1,
+            "x": 5,
+            "y": 7
+          },
+          {
+            "direction": 2,
+            "x": 1,
+            "y": 5
+          },
+          {
+            "direction": 3,
+            "x": 5,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "arrow_up_core9x5",
+      "geometry": {
+        "body": {
+          "h": 8,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 5,
+          "y": 5
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 1,
+          "y": 3
+        },
+        "heads": 8,
+        "natural_bounds": {
+          "allocated_h": 8,
+          "allocated_w": 11,
+          "minimum_h": 8,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "382c62ae62f0d514d66b4f61bdb97e8f604842c0709861418a22c416fdfddfa2",
+          "declaration_ordinals": [
+            7
+          ],
+          "directions": [
+            "up"
+          ],
+          "handle": "id:blockArrowId3",
+          "path": "block/nightly-check/should-handle-block-arrows-and-spece-statements.mmd",
+          "source_sha256": "1e7df7bb0f2375c21a1e15ae9313e8ed625be3d15d7dc3f0765ffb7fd12a2cfe",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 3,
+          "left": 1,
+          "right": 1,
+          "top": 0
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          5,
+          2
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  0,
+                  3
+                ],
+                [
+                  5,
+                  7
+                ]
+              ],
+              [
+                [
+                  5,
+                  7
+                ],
+                [
+                  10,
+                  3
+                ]
+              ]
+            ],
+            "direction": "down",
+            "head_bit": 2,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                0,
+                3
+              ],
+              [
+                10,
+                3
+              ]
+            ],
+            "tip": [
+              5,
+              7
+            ],
+            "triangle_vertices": [
+              [
+                0,
+                3
+              ],
+              [
+                5,
+                7
+              ],
+              [
+                10,
+                3
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          " █████████ ",
+          " █       █ ",
+          " █       █ ",
+          "█         █",
+          " ██     ██ ",
+          "   █   █   ",
+          "    █ █    ",
+          "     █     "
+        ],
+        "inside_rows": [
+          "00000000000",
+          "00111111100",
+          "00111111100",
+          "01111111110",
+          "00011111000",
+          "00001110000",
+          "00000100000",
+          "00000000000"
+        ],
+        "mask_rows": [
+          "01111111110",
+          "01111111110",
+          "01111111110",
+          "11111111111",
+          "01111111110",
+          "00011111000",
+          "00001110000",
+          "00000100000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 9,
+            "y": 2
+          },
+          {
+            "direction": 1,
+            "x": 5,
+            "y": 7
+          },
+          {
+            "direction": 2,
+            "x": 1,
+            "y": 2
+          },
+          {
+            "direction": 3,
+            "x": 5,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "arrow_down_core9x5",
+      "geometry": {
+        "body": {
+          "h": 8,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 5,
+          "y": 2
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 1,
+          "y": 0
+        },
+        "heads": 2,
+        "natural_bounds": {
+          "allocated_h": 8,
+          "allocated_w": 11,
+          "minimum_h": 8,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "382c62ae62f0d514d66b4f61bdb97e8f604842c0709861418a22c416fdfddfa2",
+          "declaration_ordinals": [
+            8
+          ],
+          "directions": [
+            "down"
+          ],
+          "handle": "id:blockArrowId4",
+          "path": "block/nightly-check/should-handle-block-arrows-and-spece-statements.mmd",
+          "source_sha256": "1e7df7bb0f2375c21a1e15ae9313e8ed625be3d15d7dc3f0765ffb7fd12a2cfe",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 1,
+          "left": 3,
+          "right": 3,
+          "top": 1
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          7,
+          3
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  10,
+                  0
+                ],
+                [
+                  14,
+                  3
+                ]
+              ],
+              [
+                [
+                  14,
+                  3
+                ],
+                [
+                  10,
+                  6
+                ]
+              ]
+            ],
+            "direction": "right",
+            "head_bit": 1,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                10,
+                0
+              ],
+              [
+                10,
+                6
+              ]
+            ],
+            "tip": [
+              14,
+              3
+            ],
+            "triangle_vertices": [
+              [
+                10,
+                0
+              ],
+              [
+                14,
+                3
+              ],
+              [
+                10,
+                6
+              ]
+            ]
+          },
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  3
+                ]
+              ],
+              [
+                [
+                  0,
+                  3
+                ],
+                [
+                  4,
+                  6
+                ]
+              ]
+            ],
+            "direction": "left",
+            "head_bit": 4,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                4,
+                0
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tip": [
+              0,
+              3
+            ],
+            "triangle_vertices": [
+              [
+                4,
+                0
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "    █     █    ",
+          "   █ █████ █   ",
+          "  █         █  ",
+          "██           ██",
+          "  █         █  ",
+          "   █ █████ █   ",
+          "    █     █    "
+        ],
+        "inside_rows": [
+          "000000000000000",
+          "000010000010000",
+          "000111111111000",
+          "001111111111100",
+          "000111111111000",
+          "000010000010000",
+          "000000000000000"
+        ],
+        "mask_rows": [
+          "000010000010000",
+          "000111111111000",
+          "001111111111100",
+          "111111111111111",
+          "001111111111100",
+          "000111111111000",
+          "000010000010000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 14,
+            "y": 3
+          },
+          {
+            "direction": 1,
+            "x": 7,
+            "y": 5
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 3
+          },
+          {
+            "direction": 3,
+            "x": 7,
+            "y": 1
+          }
+        ]
+      },
+      "fixture_id": "arrow_x_core9x5",
+      "geometry": {
+        "body": {
+          "h": 7,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 7,
+          "y": 3
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 3,
+          "y": 1
+        },
+        "heads": 5,
+        "natural_bounds": {
+          "allocated_h": 7,
+          "allocated_w": 15,
+          "minimum_h": 7,
+          "minimum_w": 13,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "cb1383dfe0d206aeab90a93f0f7c8da38208db205b2a393712e5c950e8ca2d70",
+          "declaration_ordinals": [
+            0
+          ],
+          "directions": [
+            "x"
+          ],
+          "handle": "id:arrow",
+          "path": "block/nightly-check/block-arrow-should-span-multiple-columns-when-widthincolumns-is-set.mmd",
+          "source_sha256": "904cf163f79c7d29232b220794a93232a774f3883022858e9744a9522ecd557f",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 3,
+          "left": 1,
+          "right": 1,
+          "top": 3
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          5,
+          5
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  0,
+                  4
+                ],
+                [
+                  5,
+                  0
+                ]
+              ],
+              [
+                [
+                  5,
+                  0
+                ],
+                [
+                  10,
+                  4
+                ]
+              ]
+            ],
+            "direction": "up",
+            "head_bit": 8,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                0,
+                4
+              ],
+              [
+                10,
+                4
+              ]
+            ],
+            "tip": [
+              5,
+              0
+            ],
+            "triangle_vertices": [
+              [
+                0,
+                4
+              ],
+              [
+                5,
+                0
+              ],
+              [
+                10,
+                4
+              ]
+            ]
+          },
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  0,
+                  6
+                ],
+                [
+                  5,
+                  10
+                ]
+              ],
+              [
+                [
+                  5,
+                  10
+                ],
+                [
+                  10,
+                  6
+                ]
+              ]
+            ],
+            "direction": "down",
+            "head_bit": 2,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                0,
+                6
+              ],
+              [
+                10,
+                6
+              ]
+            ],
+            "tip": [
+              5,
+              10
+            ],
+            "triangle_vertices": [
+              [
+                0,
+                6
+              ],
+              [
+                5,
+                10
+              ],
+              [
+                10,
+                6
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "     █     ",
+          "    █ █    ",
+          "   █   █   ",
+          " ██     ██ ",
+          "█         █",
+          " █       █ ",
+          "█         █",
+          " ██     ██ ",
+          "   █   █   ",
+          "    █ █    ",
+          "     █     "
+        ],
+        "inside_rows": [
+          "00000000000",
+          "00000100000",
+          "00001110000",
+          "00011111000",
+          "01111111110",
+          "00111111100",
+          "01111111110",
+          "00011111000",
+          "00001110000",
+          "00000100000",
+          "00000000000"
+        ],
+        "mask_rows": [
+          "00000100000",
+          "00001110000",
+          "00011111000",
+          "01111111110",
+          "11111111111",
+          "01111111110",
+          "11111111111",
+          "01111111110",
+          "00011111000",
+          "00001110000",
+          "00000100000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 9,
+            "y": 5
+          },
+          {
+            "direction": 1,
+            "x": 5,
+            "y": 10
+          },
+          {
+            "direction": 2,
+            "x": 1,
+            "y": 5
+          },
+          {
+            "direction": 3,
+            "x": 5,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "arrow_y_core9x5",
+      "geometry": {
+        "body": {
+          "h": 11,
+          "w": 11,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 5,
+          "y": 5
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 1,
+          "y": 3
+        },
+        "heads": 10,
+        "natural_bounds": {
+          "allocated_h": 11,
+          "allocated_w": 11,
+          "minimum_h": 11,
+          "minimum_w": 9,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "382c62ae62f0d514d66b4f61bdb97e8f604842c0709861418a22c416fdfddfa2",
+          "declaration_ordinals": [
+            10,
+            11
+          ],
+          "directions": [
+            "y"
+          ],
+          "handle": "id:blockArrowId6",
+          "path": "block/nightly-check/should-handle-block-arrows-and-spece-statements.mmd",
+          "source_sha256": "1e7df7bb0f2375c21a1e15ae9313e8ed625be3d15d7dc3f0765ffb7fd12a2cfe",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    },
+    {
+      "boundary_metadata": {
+        "body_extensions": {
+          "bottom": 3,
+          "left": 3,
+          "right": 3,
+          "top": 3
+        },
+        "corner_model": "included integer-lattice polygon/curve boundary cells",
+        "head_depth": 3,
+        "mask_formula": "Clip inclusive union of core rectangle and each selected inclusive signed-cross-product triangle to body. No other head or marker exists.",
+        "port_anchor": [
+          7,
+          5
+        ],
+        "shoulder": 1,
+        "source_joins": [
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  10,
+                  2
+                ],
+                [
+                  14,
+                  5
+                ]
+              ],
+              [
+                [
+                  14,
+                  5
+                ],
+                [
+                  10,
+                  8
+                ]
+              ]
+            ],
+            "direction": "right",
+            "head_bit": 1,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                10,
+                2
+              ],
+              [
+                10,
+                8
+              ]
+            ],
+            "tip": [
+              14,
+              5
+            ],
+            "triangle_vertices": [
+              [
+                10,
+                2
+              ],
+              [
+                14,
+                5
+              ],
+              [
+                10,
+                8
+              ]
+            ]
+          },
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  4,
+                  2
+                ],
+                [
+                  0,
+                  5
+                ]
+              ],
+              [
+                [
+                  0,
+                  5
+                ],
+                [
+                  4,
+                  8
+                ]
+              ]
+            ],
+            "direction": "left",
+            "head_bit": 4,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                4,
+                2
+              ],
+              [
+                4,
+                8
+              ]
+            ],
+            "tip": [
+              0,
+              5
+            ],
+            "triangle_vertices": [
+              [
+                4,
+                2
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                4,
+                8
+              ]
+            ]
+          },
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  2,
+                  4
+                ],
+                [
+                  7,
+                  0
+                ]
+              ],
+              [
+                [
+                  7,
+                  0
+                ],
+                [
+                  12,
+                  4
+                ]
+              ]
+            ],
+            "direction": "up",
+            "head_bit": 8,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                2,
+                4
+              ],
+              [
+                12,
+                4
+              ]
+            ],
+            "tip": [
+              7,
+              0
+            ],
+            "triangle_vertices": [
+              [
+                2,
+                4
+              ],
+              [
+                7,
+                0
+              ],
+              [
+                12,
+                4
+              ]
+            ]
+          },
+          {
+            "both_incident_tip_arms": [
+              [
+                [
+                  2,
+                  6
+                ],
+                [
+                  7,
+                  10
+                ]
+              ],
+              [
+                [
+                  7,
+                  10
+                ],
+                [
+                  12,
+                  6
+                ]
+              ]
+            ],
+            "direction": "down",
+            "head_bit": 2,
+            "join_rule": "Union with full core before taking the outer mask boundary. Hidden interior triangle base segments are not painted as extra strokes; both sloping arms and source shoulders remain in the boundary.",
+            "shoulder_vertices": [
+              [
+                2,
+                6
+              ],
+              [
+                12,
+                6
+              ]
+            ],
+            "tip": [
+              7,
+              10
+            ],
+            "triangle_vertices": [
+              [
+                2,
+                6
+              ],
+              [
+                7,
+                10
+              ],
+              [
+                12,
+                6
+              ]
+            ]
+          }
+        ]
+      },
+      "drawing_credit": 0,
+      "expected": {
+        "glyph_rows": [
+          "       █       ",
+          "      █ █      ",
+          "    ██   ██    ",
+          "   █       █   ",
+          "  █         █  ",
+          "██           ██",
+          "  █         █  ",
+          "   █       █   ",
+          "    ██   ██    ",
+          "      █ █      ",
+          "       █       "
+        ],
+        "inside_rows": [
+          "000000000000000",
+          "000000010000000",
+          "000000111000000",
+          "000011111110000",
+          "000111111111000",
+          "001111111111100",
+          "000111111111000",
+          "000011111110000",
+          "000000111000000",
+          "000000010000000",
+          "000000000000000"
+        ],
+        "mask_rows": [
+          "000000010000000",
+          "000000111000000",
+          "000011111110000",
+          "000111111111000",
+          "001111111111100",
+          "111111111111111",
+          "001111111111100",
+          "000111111111000",
+          "000011111110000",
+          "000000111000000",
+          "000000010000000"
+        ],
+        "ports": [
+          {
+            "direction": 0,
+            "x": 14,
+            "y": 5
+          },
+          {
+            "direction": 1,
+            "x": 7,
+            "y": 10
+          },
+          {
+            "direction": 2,
+            "x": 0,
+            "y": 5
+          },
+          {
+            "direction": 3,
+            "x": 7,
+            "y": 0
+          }
+        ]
+      },
+      "fixture_id": "arrow_x_y_core9x5",
+      "geometry": {
+        "body": {
+          "h": 11,
+          "w": 15,
+          "x": 0,
+          "y": 0
+        },
+        "caption": {
+          "h": 0,
+          "w": 0,
+          "x": 7,
+          "y": 5
+        },
+        "caption_rows": [],
+        "core": {
+          "h": 5,
+          "w": 9,
+          "x": 3,
+          "y": 3
+        },
+        "heads": 15,
+        "natural_bounds": {
+          "allocated_h": 11,
+          "allocated_w": 15,
+          "minimum_h": 11,
+          "minimum_w": 13,
+          "qualification": "Candidate natural/place arithmetic only; no candidate glyph/contour implementation was read or run."
+        },
+        "shape": "block_arrow"
+      },
+      "notes": [
+        "Normalized empty-caption primitive; source_ref binds only source type/retained direction semantics.",
+        "Glyph choices are independently proposed TTY equivalents, not upstream pixels, candidate output, design approval or drawing credit."
+      ],
+      "review_status": "PENDING",
+      "source_refs": [
+        {
+          "authority_scope": "Shape/direction source witness only; normalized primitive captions and dimensions below are a separate proposed boundary experiment.",
+          "complete_model_sha256": "7776080316ebd0d80c208d2e3ce3b0d5c0d90ac1f5a6d93bd41dd6ecae79c2db",
+          "declaration_ordinals": [
+            2
+          ],
+          "directions": [
+            "x",
+            "y"
+          ],
+          "handle": "id:blockArrowId3",
+          "path": "block/nightly-check/should-handle-block-arrows-in-different-directions.mmd",
+          "source_sha256": "1f412a4f9962424b49a24466f62046d76662209221cceef0898f422e22e5976f",
+          "source_shape_type": "block_arrow"
+        }
+      ]
+    }
+  ],
+  "geometry_basis": {
+    "forbidden_inputs_not_read": [
+      "tests/support/mermaid_block58_contours.hpp",
+      "generated build glyph reports"
+    ],
+    "inspection_scope": [
+      "Entity/Box/kStep",
+      "natural",
+      "leaf place only",
+      "triangle/polygon/mask",
+      "leaf port ray anchor and directions"
+    ],
+    "path": "tests/support/mermaid_block58_projection.hpp",
+    "qualification": "Candidate analytic geometry/masks/natural bounds are the only code inputs. Whole expected glyph rows are independently authored literals; no candidate paint or glyph algorithm was executed.",
+    "read_observation": {
+      "allowed_line_ranges_before_authoring": [
+        [
+          10,
+          29
+        ],
+        [
+          120,
+          139
+        ],
+        [
+          159,
+          174
+        ],
+        [
+          189,
+          234
+        ],
+        [
+          276,
+          285
+        ]
+      ],
+      "no_candidate_reread_during_finalization": true
+    }
+  },
+  "glyph_join_dictionary": {
+    "─": [
+      "left",
+      "right"
+    ],
+    "│": [
+      "up",
+      "down"
+    ],
+    "┌": [
+      "right",
+      "down"
+    ],
+    "┐": [
+      "left",
+      "down"
+    ],
+    "└": [
+      "right",
+      "up"
+    ],
+    "┘": [
+      "left",
+      "up"
+    ],
+    "┬": [
+      "left",
+      "right",
+      "down"
+    ],
+    "┴": [
+      "left",
+      "right",
+      "up"
+    ],
+    "╭": [
+      "right",
+      "down"
+    ],
+    "╮": [
+      "left",
+      "down"
+    ],
+    "╯": [
+      "left",
+      "up"
+    ],
+    "╰": [
+      "right",
+      "up"
+    ],
+    "█": "Full-cell boundary-region coverage, not a cardinal route-bit value; retain recorded analytic incident edges."
+  },
+  "notes": [
+    "Only positive primitive expectations are authored here; Main owns driver and glyph implementation.",
+    "Unknown generic-document contour/rail conventions are not silently adopted. The frozen terminal asset leaves exact contours/interiors/ports unresolved; this fixture makes new pending choices.",
+    "The exact proposal must be reviewed, including pixel-outline vs thin-line tradeoff, subroutine rail offsets and glyph font-width assumptions."
+  ],
+  "qualification": "Independent normalized primitive boundary proposals only. Source witnesses establish shapes and retained directions, not these TTY glyphs or altered captions. No production implementation, candidate contour output, generated glyph report, complete-original drawing or B2 approval is asserted.",
+  "review_status": "PENDING",
+  "schema": "loom_block58_boundary_contract/v1",
+  "self_check": {
+    "checks": [
+      "36 unique IDs, all12 source types,7 head bitsets at two widths",
+      "Source raw/model hashes, handles and retained directions bound to frozen1d asset",
+      "Literal glyph rows independently authored and checked for exact widths and complete boundary/rail/caption occupancy",
+      "Masks checked by independent rational row-span/barycentric arithmetic, not candidate glyph output",
+      "Inside rows, port rays, full core/triangular unions and both tip arms checked",
+      "Mask region cardinal-connected; complement flood reaches all excluded cells, with no hidden holes",
+      "Subroutine top/bottom rail junctions retain three incident arms",
+      "Natural dimensions and allocation widths match already-recorded candidate formula",
+      "All36 positives complete before any negative controls; source and terminal assets unchanged",
+      "Only this new JSON was written in the repository; no contour header or generated glyph reports read"
+    ],
+    "design_approval": false,
+    "drawing_credit": 0,
+    "runtime_admission": false,
+    "status": "PASS_STATIC_POSITIVE_CONSISTENCY_ONLY"
+  },
+  "semantics_and_pending_differences": [
+    {
+      "detail": "Rails x=2 and x=w-3 span the full body height and meet the top with W/E/S tees and bottom with W/E/N tees. This intentionally differs from a plain generic top bar with inset rails starting below it. The 9x5 literal top is ┌─┬───┬─┐; bottom is └─┴───┴─┘. Candidate mask is still the full rectangle; the glyph join rule is newly proposed.",
+      "id": "subroutine_tee_choice",
+      "status": "PENDING_DESIGN"
+    },
+    {
+      "detail": "For circle/diamond/stadium/polygons/arrows, U+2588 occupies every outer cardinal-exposed included cell. This is a complete digital silhouette boundary, not a thin-line glyph table. A thin-line candidate can disagree with these literals while matching the mask; that is an explicit adaptation review issue, not permission to regenerate expected rows from candidate output.",
+      "id": "pixel_vs_thin_boundary",
+      "status": "PENDING_DESIGN"
+    },
+    {
+      "detail": "Every arrow triangle records both sloping edges incident at its tip and both shoulders. The core and triangles are unioned before taking the outer boundary. Raster cusps can share/merge neighboring boundary cells; full-cell outline retains both pixel arms without replacing the complete arrow by a port marker. No claim of a simple degree-two cardinal glyph graph is made.",
+      "id": "incident_arms",
+      "status": "PENDING_DESIGN"
+    },
+    {
+      "detail": "10x10 circle/diamond port ray anchor is (4,4), although an empty-caption box is centred at (5,5). Ports are asymmetric integer tie choices by the exact floor((core-1)/2) rule; no odd-size or alternate centre rule is substituted.",
+      "id": "even_size_ports",
+      "status": "CANDIDATE_GEOMETRY_BOUND"
+    },
+    {
+      "detail": "Polygon vertices, inclusive integer edges and Euclidean stadium caps are recorded as sampled masks. Lean/trapezoid/notch are not interchangeable rectangles; na and square are intentionally separate source witnesses sharing the rectangle display contour. Round retains a full rectangle mask with rounded glyph corners.",
+      "id": "polygon_stadium_not_generic_aliases",
+      "status": "CANDIDATE_GEOMETRY_BOUND"
+    },
+    {
+      "detail": "These36 positives cover12 source types and7 retained head sets at two practical widths. They do not reproduce any complete original caption or full58 layout and do not grant original drawing, upstream RGB/CSS/SVG, runtime, B2 or design approval.",
+      "id": "primitive_scope",
+      "status": "NO_ADMISSION"
+    },
+    {
+      "detail": "Only two synthetic xxx captions are used to obtain even12x12 circle/diamond natural sizes. Other captions are empty. Used box/block glyphs are proposed as one terminal cell each; no candidate rendering, font, wide/combining glyph or runtime width test was executed here.",
+      "id": "caption_and_Unicode",
+      "status": "PENDING_DESIGN"
+    }
+  ],
+  "source_authority": {
+    "source_lock_sha256": "eb887a461f7194023f7622fb823af3d02d5cb17bb2decf19c4b2b22bf204a877",
+    "source_sha256": "1d0006ab73cf61951a15599606cde2e46a59865416ac9f43ad244d45b0e4c27f",
+    "terminal_sha256": "b7d0bf628af004718df6ab3550dd09bb0a71481bc2f70b0cf3e47b2584870caf"
+  },
+  "tty_proposal": {
+    "glyph_rows": "Exact full-width rows including leading/trailing spaces, one terminal cell per Unicode scalar used here. Caption glyphs occupy only declared interior cells.",
+    "inside_rows": "1 iff mask included and not an outer cardinal-neighbor boundary or subroutine rail; caption occupancy does not remove interior membership.",
+    "mask_rows": "1 iff candidate analytic mask includes that lattice cell.",
+    "negative_controls": [],
+    "nonrectilinear": "Single-cell full block U+2588 pixel-outline on every included mask cell with a cardinal outside neighbor. It is a filled-cell boundary adaptation, not a light-line route-bit encoding. Diagonal touching pixels retain the complete digital boundary and both analytic incident arms at tips/shoulders; no standalone arrow marker replaces a triangle.",
+    "port_anchor": "core.x+floor((core.w-1)/2), core.y+floor((core.h-1)/2); ray to final included mask cell. This differs from empty-caption centre floor(core.w/2) on even dimensions.",
+    "port_order": [
+      "right",
+      "down",
+      "left",
+      "up"
+    ],
+    "positives_before_negatives": true,
+    "rectangles": "Closed one-cell light box border; rounded rectangle uses rounded corner glyphs on the same full rectangle mask.",
+    "review_status": "PENDING",
+    "style": "No literal RGB, font dependency, active palette value or route marker is asserted. Pixel-outline is a deliberate pending TTY choice and may disagree with a thin-line candidate.",
+    "subroutine": "Outer closed box with two full-height rails at x=2 and x=w-3; top/bottom rail joins retain three arms. This rail offset is a proposal, not asserted source-owned browser geometry."
+  }
+}

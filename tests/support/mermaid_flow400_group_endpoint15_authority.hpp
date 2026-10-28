@@ -87,14 +87,21 @@ inline std::size_t group_endpoint15_group(const Model& model,std::string_view id
     const auto at=std::ranges::find_if(model.groups,[&](const Group& value){return value.id==id;});
     if(at==model.groups.end()) throw std::runtime_error("GroupEndpoint15 absent group endpoint");return static_cast<std::size_t>(at-model.groups.begin());
 }
-inline GroupEndpoint15Model group_endpoint15_model(JsonVal value,OracleWork& work) {
+inline GroupEndpoint15Model group_endpoint15_model(JsonVal value,OracleWork& work,
+                                                   std::size_t max_tagged_edges=2u,
+                                                   std::size_t max_target_incoming=1u) {
     // Prepay each bounded owned Model before parse/copy output, not the 64 KiB
     // source asset for every row.
     work.product(kFlow400GroupEndpoint15ModelWireBytes,24u);
-    group_endpoint15_keys(value,{"base_model","tagged_group_endpoint_edges","source_edge_order","source_semantic_counts"},"Model");
+    flow400_require(max_tagged_edges>=1u&&max_tagged_edges<=3u&&max_target_incoming>=1u&&max_target_incoming<=2u,
+                    "GroupEndpoint15 decoder profile bound");
+    if(max_tagged_edges==3u)
+        group_endpoint15_keys(value,{"base_model","tagged_group_endpoint_edges","source_edge_order","source_semantic_counts","source_positions"},"Model");
+    else
+        group_endpoint15_keys(value,{"base_model","tagged_group_endpoint_edges","source_edge_order","source_semantic_counts"},"Model");
     std::size_t groups=0u,members=0u;flow400_shape(value.get("base_model"),groups,members);
     GroupEndpoint15Model result{parse_model(value.get("base_model")),{}, {}};
-    const auto tagged=value.get("tagged_group_endpoint_edges");flow400_require(tagged.is_arr()&&tagged.size()>=1u&&tagged.size()<=2u,"GroupEndpoint15 tagged edge bound");
+    const auto tagged=value.get("tagged_group_endpoint_edges");flow400_require(tagged.is_arr()&&tagged.size()>=1u&&tagged.size()<=max_tagged_edges,"GroupEndpoint15 tagged edge bound");
     work.product(tagged.size(),2u*sizeof(GroupEndpoint15WireEdge)+32u);result.tagged.reserve(tagged.size());
     tagged.iter([&](JsonVal edge) {
         group_endpoint15_keys(edge,{"source","target","label","style","hasArrowStart","hasArrowEnd","source_order"},"tagged edge");
@@ -115,16 +122,56 @@ inline GroupEndpoint15Model group_endpoint15_model(JsonVal value,OracleWork& wor
         else throw std::runtime_error("GroupEndpoint15 source order kind");
     }
     flow400_require(std::ranges::all_of(ordinary,[](bool value){return value;})&&std::ranges::all_of(tagged_seen,[](bool value){return value;}),"GroupEndpoint15 source order partition");
-    std::set<std::pair<GroupEndpointKind,std::string>> targets;
-    for(const auto& edge:result.base.edges) flow400_require(targets.insert({GroupEndpointKind::Vertex,result.base.nodes.at(static_cast<std::size_t>(edge.to)).id}).second,"GroupEndpoint15 duplicate ordinary target");
-    for(const auto& edge:result.tagged) flow400_require(targets.insert({edge.target.kind,edge.target.id}).second,"GroupEndpoint15 duplicate tagged target");
+    struct TypedTargetCount { GroupEndpointKind kind; std::string id; std::size_t count=0u; };
+    std::vector<TypedTargetCount> targets;targets.reserve(total);
+    const auto add_target=[&](GroupEndpointKind kind,std::string_view id,std::string_view error) {
+        auto found=std::ranges::find_if(targets,[&](const auto& value){return value.kind==kind&&value.id==id;});
+        if(found==targets.end()) {targets.push_back({kind,std::string(id),1u});return;}
+        flow400_require(++found->count<=max_target_incoming,error.data());
+    };
+    for(const auto& edge:result.base.edges) {
+        const auto id=result.base.nodes.at(static_cast<std::size_t>(edge.to)).id;
+        add_target(GroupEndpointKind::Vertex,id,"GroupEndpoint15 duplicate ordinary target");
+    }
+    for(const auto& edge:result.tagged) {
+        add_target(edge.target.kind,edge.target.id,"GroupEndpoint15 duplicate tagged target");
+    }
     const auto counts=value.get("source_semantic_counts");group_endpoint15_keys(counts,{"nodes","groups","ordinary_vertex_edges","group_endpoint_edges","source_edges"},"semantic counts");
     flow400_require(flow400_number(counts.get("nodes"))==result.base.nodes.size()&&flow400_number(counts.get("groups"))==result.base.groups.size()&&flow400_number(counts.get("ordinary_vertex_edges"))==result.base.edges.size()&&flow400_number(counts.get("group_endpoint_edges"))==result.tagged.size()&&flow400_number(counts.get("source_edges"))==total,"GroupEndpoint15 semantic counts");
+    if(max_tagged_edges==3u) {
+        const auto positions=value.get("source_positions");
+        group_endpoint15_keys(positions,{"position_unit","group_declarations","ordered_wire_facts","tagged_group_references","source_order_edge_count","all_group_declarations_precede_tagged_group_references","ordinary_edge_order_is_not_constrained_by_later_vertex_declarations","explicit_vertex_declarations"},"source positions");
+        flow400_require(flow400_number(positions.get("source_order_edge_count"))==total,"GroupEndpoint15 source position cardinality");
+        const auto facts=positions.get("ordered_wire_facts");flow400_require(facts.is_arr()&&facts.size()==total,"GroupEndpoint15 ordered source position facts");
+        std::size_t fact_index=0u;
+        facts.iter([&](JsonVal fact) {
+            const auto at=fact_index++;
+            flow400_require(flow400_number(fact.get("source_order"))==at,"GroupEndpoint15 source position order");
+            const auto entry=result.source_order.at(at);const auto wire_kind=flow400_text(fact.get("wire_kind"));
+            flow400_require((entry.kind==GroupEndpointOrderKind::Ordinary&&wire_kind=="vertex")||
+                            (entry.kind==GroupEndpointOrderKind::Tagged&&wire_kind=="group_endpoint"),
+                            "GroupEndpoint15 source position edge kind");
+            const auto check_group=[&](JsonVal endpoint,std::string_view endpoint_name) {
+                if(flow400_text(endpoint.get("kind"))!="group") return;
+                const auto id=flow400_text(endpoint.get("id"));JsonVal declaration;std::size_t declarations=0u;
+                positions.get("group_declarations").iter([&](JsonVal candidate) {if(flow400_text(candidate.get("id"))==id){declaration=candidate;++declarations;}});
+                flow400_require(declarations==1u,"GroupEndpoint15 group declaration position identity");
+                const auto reference=fact.get(endpoint_name).get("position").get("byte_offset");
+                const auto declared=declaration.get("position").get("byte_offset");
+                flow400_require(flow400_number(declared)<flow400_number(reference),"GroupEndpoint15 forward group endpoint reference");
+            };
+            if(entry.kind==GroupEndpointOrderKind::Tagged) {check_group(fact.get("source"),"source");check_group(fact.get("target"),"target");}
+        });
+    }
     return result;
 }
-inline GroupEndpointProfile group_endpoint15_profile(const GroupEndpoint15Model& model,OracleWork& work) {
+inline GroupEndpoint15Model group_endpoint_extra7_model(JsonVal value,OracleWork& work) {
+    return group_endpoint15_model(value,work,3u,2u);
+}
+inline GroupEndpointProfile group_endpoint15_profile(const GroupEndpoint15Model& model,OracleWork& work,std::size_t max_target_incoming=1u) {
     work.spend(4u*sizeof(GroupEndpointProfile)+256u);work.product(model.tagged.size(),2u*sizeof(GroupEndpointEdge)+32u);work.product(model.source_order.size(),2u*sizeof(GroupEndpointOrder)+16u);
     GroupEndpointProfile result;result.tagged.reserve(model.tagged.size());result.source_order=model.source_order;
+    result.max_target_incoming=max_target_incoming;
     for(const auto& edge:model.tagged) {
         const auto ref=[&](const GroupEndpoint15WireRef& value) {
             return GroupEndpointRef{value.kind,value.kind==GroupEndpointKind::Vertex?group_endpoint15_node(model.base,value.id):group_endpoint15_group(model.base,value.id)};

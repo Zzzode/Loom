@@ -14,7 +14,7 @@
       "state-diagram-v2",
       "state-diagram"
     ],
-    "blocker_detection": "six fixed source-content detectors plus one execution-attested reviewed set (native parent-route debt); no expectation is derived from rendered output",
+    "blocker_detection": "five fixed source-content detectors plus two execution-attested reviewed sets (native parent-route debt and path/SHA-bound State composite debt); no generator-time rendering; new execution-debt entries require independent review",
     "width_policy": "E2a pre-registers the 240-column admission; narrow_40 is uniformly 'source'."
   },
   "review": {
@@ -1899,11 +1899,11 @@
       },
       "blocker": {
         "kind": "state-composite-brace-on-next-line",
-        "site": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
-        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
-        "detail": "A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected."
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (State composite parse and relations_layout)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (State composite parse and relations_layout)",
+        "detail": "The historical next-line-brace cohort remains whole-scene execution debt: the State parser now accepts a standalone next-line opener, but the three complete pinned originals still fall back at 240 columns. This source-profile tag does not assert a lexical rejection or establish a layout root cause."
       },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "ledger_note": "Pending complete-original execution; no grammar/layout root cause claimed"
     },
     {
       "path": "state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd",
@@ -1931,11 +1931,11 @@
       },
       "blocker": {
         "kind": "state-composite-brace-on-next-line",
-        "site": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
-        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
-        "detail": "A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected."
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (State composite parse and relations_layout)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (State composite parse and relations_layout)",
+        "detail": "The historical next-line-brace cohort remains whole-scene execution debt: the State parser now accepts a standalone next-line opener, but the three complete pinned originals still fall back at 240 columns. This source-profile tag does not assert a lexical rejection or establish a layout root cause."
       },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "ledger_note": "Pending complete-original execution; no grammar/layout root cause claimed"
     },
     {
       "path": "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd",
@@ -1963,11 +1963,11 @@
       },
       "blocker": {
         "kind": "state-composite-brace-on-next-line",
-        "site": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
-        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
-        "detail": "A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected."
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (State composite parse and relations_layout)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (State composite parse and relations_layout)",
+        "detail": "The historical next-line-brace cohort remains whole-scene execution debt: the State parser now accepts a standalone next-line opener, but the three complete pinned originals still fall back at 240 columns. This source-profile tag does not assert a lexical rejection or establish a layout root cause."
       },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "ledger_note": "Pending complete-original execution; no grammar/layout root cause claimed"
     }
   ]
 }

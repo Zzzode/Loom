@@ -1,0 +1,1683 @@
+{
+  "schema": "loom_mindmap10_source_proposal/v1",
+  "review_status": "source_design_reviewed_no_runtime_admission",
+  "qualification": "Independent complete source Models manually declared from unchanged official originals before production Mindmap implementation. Source/design review does not grant drawing or upstream render-model/option credit. Runtime implementation, Native/Official integration and dual-preset geometry admission require separate execution evidence.",
+  "source_lock_sha256": "cecb9535be0ad801effe77c4c76c653a0c1db3c6a6cb21f378a80f957c3320af",
+  "complete_originals": 10,
+  "nodes": 45,
+  "parent_relations": 35,
+  "cases": [
+    {
+      "path": "mindmap/nightly-check/a-root-with-a-shape.mmd",
+      "source_sha256": "9b32149ab995a307564025da74c6121087ad32d2766593dc0f0df714a47d1971",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "caption": "root",
+            "shape": "square",
+            "parent": -1,
+            "authored_id": "root"
+          }
+        ]
+      },
+      "complete_model_sha256": "60fd214a937aab9114bd7d8fbb9dacb33c73e014da6543f907a2f5edc7475edb",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "caption": "root",
+          "shape": "square",
+          "parent": -1,
+          "source_line": 5,
+          "source_byte_start": 88,
+          "source_byte_end": 98,
+          "source_lexeme": "root[root]",
+          "authored_id": "root"
+        }
+      ],
+      "manifest_global_ordinal": 1296,
+      "source_git_blob": "ccd113554baa7582f6a9df0e624eb57094ceff56",
+      "source_bytes": 99,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 0
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 0
+        },
+        {
+          "id": "physical_orphan_stroke_added"
+        },
+        {
+          "id": "semantic_valid_shape_changed",
+          "node_ordinal": 0,
+          "replacement_shape": "default",
+          "replacement_authored_id": null,
+          "replacement_projection": {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "root"
+            ],
+            "row_joiners": []
+          }
+        },
+        {
+          "id": "physical_outline_cell_erased",
+          "node_ordinal": 0
+        }
+      ],
+      "terminal_projection": {
+        "adaptation": "loom_mindmap_terminal_projection_proposed/v1",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "root"
+            ],
+            "row_joiners": []
+          }
+        ]
+      },
+      "terminal_projection_sha256": "4123a8ef6afde47e7b9d1cb30bb1202c7497c2f1e6d32e281b496957b51b4500"
+    },
+    {
+      "path": "mindmap/nightly-check/a-root-with-wrapping-text-and-a-shape.mmd",
+      "source_sha256": "e99d0046f12700e772a3e810482696a66fe0626de6ce34166eaa536f7fc34ba3",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "caption": "A root with a long text that wraps to keep the node size in check",
+            "shape": "square",
+            "parent": -1,
+            "authored_id": "root"
+          }
+        ]
+      },
+      "complete_model_sha256": "03df01913210505e0838412de461597102e8fe2483ea2e782039d36f87402544",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "caption": "A root with a long text that wraps to keep the node size in check",
+          "shape": "square",
+          "parent": -1,
+          "source_line": 7,
+          "source_byte_start": 155,
+          "source_byte_end": 226,
+          "source_lexeme": "root[A root with a long text that wraps to keep the node size in check]",
+          "authored_id": "root"
+        }
+      ],
+      "manifest_global_ordinal": 1298,
+      "source_git_blob": "2f2399d66c67f2879ceab625d157fc238a67cf29",
+      "source_bytes": 227,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 0
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 0
+        },
+        {
+          "id": "physical_orphan_stroke_added"
+        },
+        {
+          "id": "semantic_valid_shape_changed",
+          "node_ordinal": 0,
+          "replacement_shape": "default",
+          "replacement_authored_id": null,
+          "replacement_projection": {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "A root with a long text that wraps to keep the node size in check"
+            ],
+            "row_joiners": []
+          }
+        },
+        {
+          "id": "physical_outline_cell_erased",
+          "node_ordinal": 0
+        }
+      ],
+      "terminal_projection": {
+        "adaptation": "loom_mindmap_terminal_projection_proposed/v1",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "A root with a long text that",
+              "wraps to keep the node size in",
+              "check"
+            ],
+            "row_joiners": [
+              " ",
+              " "
+            ]
+          }
+        ]
+      },
+      "terminal_projection_sha256": "d0dd157faad943828a4e0a4e1c67841a48caa56df78bfa07952cdb40787687e4"
+    },
+    {
+      "path": "mindmap/nightly-check/a-root-with-wrapping-text-and-long-words-that-exceed-width.mmd",
+      "source_sha256": "3579e9f2a114fa57a9ecce818b85e8a0d92f0eead520999e05d3afbff77d3801",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "caption": "A few smaller words but then averylongsetofcharacterswithoutwhitespacetoseparate that we expect to wrapontonextlinesandnotexceedwidthparameters",
+            "shape": "square",
+            "parent": -1,
+            "authored_id": "root"
+          }
+        ]
+      },
+      "complete_model_sha256": "5ffd94ff54fafaf6f8ff8c8311570dec7d3749940ab0b2e821e6810e9013465f",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "caption": "A few smaller words but then averylongsetofcharacterswithoutwhitespacetoseparate that we expect to wrapontonextlinesandnotexceedwidthparameters",
+          "shape": "square",
+          "parent": -1,
+          "source_line": 8,
+          "source_byte_start": 234,
+          "source_byte_end": 383,
+          "source_lexeme": "root[A few smaller words but then averylongsetofcharacterswithoutwhitespacetoseparate that we expect to wrapontonextlinesandnotexceedwidthparameters]",
+          "authored_id": "root"
+        }
+      ],
+      "manifest_global_ordinal": 1299,
+      "source_git_blob": "7409f7467bcca1f33f7d253fd1cc18365862b935",
+      "source_bytes": 384,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 0
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 0
+        },
+        {
+          "id": "physical_orphan_stroke_added"
+        },
+        {
+          "id": "semantic_valid_shape_changed",
+          "node_ordinal": 0,
+          "replacement_shape": "default",
+          "replacement_authored_id": null,
+          "replacement_projection": {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "A few smaller words but then averylongsetofcharacterswithoutwhitespacetoseparate that we expect to wrapontonextlinesandnotexceedwidthparameters"
+            ],
+            "row_joiners": []
+          }
+        },
+        {
+          "id": "physical_outline_cell_erased",
+          "node_ordinal": 0
+        }
+      ],
+      "terminal_projection": {
+        "adaptation": "loom_mindmap_terminal_projection_proposed/v1",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "A few smaller words but then",
+              "averylongsetofcharacterswithoutw",
+              "hitespacetoseparate that we",
+              "expect to",
+              "wrapontonextlinesandnotexceedwid",
+              "thparameters"
+            ],
+            "row_joiners": [
+              " ",
+              "",
+              " ",
+              " ",
+              ""
+            ]
+          }
+        ]
+      },
+      "terminal_projection_sha256": "ea0f40e4638855dc434194c4f5f77f2b72b05b7b6ed3b65514da7b8bb41456d7"
+    },
+    {
+      "path": "mindmap/nightly-check/adding-children.mmd",
+      "source_sha256": "ada641a3fbfb454b08fd812acc220c464f8fc8b407a2cf38f20b649ed3278138",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "caption": "The root",
+            "shape": "default",
+            "parent": -1,
+            "authored_id": null
+          },
+          {
+            "ordinal": 1,
+            "caption": "child1",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 2,
+            "caption": "child2",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          }
+        ]
+      },
+      "complete_model_sha256": "0222e61a62c0669179c0fa3de44ae9ad1f7ccaef6a0ba52ea2b28318a0a5788f",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "caption": "The root",
+          "shape": "default",
+          "parent": -1,
+          "source_line": 5,
+          "source_byte_start": 99,
+          "source_byte_end": 107,
+          "source_lexeme": "The root",
+          "authored_id": null
+        },
+        {
+          "ordinal": 1,
+          "caption": "child1",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 6,
+          "source_byte_start": 112,
+          "source_byte_end": 118,
+          "source_lexeme": "child1",
+          "authored_id": null
+        },
+        {
+          "ordinal": 2,
+          "caption": "child2",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 7,
+          "source_byte_start": 123,
+          "source_byte_end": 129,
+          "source_lexeme": "child2",
+          "authored_id": null
+        }
+      ],
+      "manifest_global_ordinal": 1300,
+      "source_git_blob": "121ef64afb9e627fbfd3bf271d7b1716ce25eeea",
+      "source_bytes": 130,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 2
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 2
+        },
+        {
+          "id": "physical_orphan_stroke_added"
+        },
+        {
+          "id": "semantic_last_leaf_removed",
+          "node_ordinal": 2
+        },
+        {
+          "id": "semantic_valid_parent_changed",
+          "node_ordinal": 2,
+          "new_parent_ordinal": 1
+        },
+        {
+          "id": "semantic_sibling_subtrees_swapped",
+          "parent_ordinal": 0,
+          "child_ordinals": [
+            1,
+            2
+          ]
+        },
+        {
+          "id": "physical_branch_cell_erased",
+          "node_ordinal": 2
+        }
+      ],
+      "terminal_projection": {
+        "adaptation": "loom_mindmap_terminal_projection_proposed/v1",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "The root"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 1,
+            "caption_rows": [
+              "child1"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 2,
+            "caption_rows": [
+              "child2"
+            ],
+            "row_joiners": []
+          }
+        ]
+      },
+      "terminal_projection_sha256": "a60386e36deaac8dca61e4d98c818e991e3fa0a68bebc44e45410894004eacee"
+    },
+    {
+      "path": "mindmap/nightly-check/adding-grand-children.mmd",
+      "source_sha256": "d83a24a07df1c28f5825a18108d24ddea44d79b22c104b93f3b27ff6eeeabbf6",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "caption": "The root",
+            "shape": "default",
+            "parent": -1,
+            "authored_id": null
+          },
+          {
+            "ordinal": 1,
+            "caption": "child1",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 2,
+            "caption": "child2",
+            "shape": "default",
+            "parent": 1,
+            "authored_id": null
+          },
+          {
+            "ordinal": 3,
+            "caption": "child3",
+            "shape": "default",
+            "parent": 1,
+            "authored_id": null
+          }
+        ]
+      },
+      "complete_model_sha256": "aab8e05d4c342b37761cb340a067bcad1a0930e4b51bc933ed66f0546cf26fc1",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "caption": "The root",
+          "shape": "default",
+          "parent": -1,
+          "source_line": 5,
+          "source_byte_start": 102,
+          "source_byte_end": 110,
+          "source_lexeme": "The root",
+          "authored_id": null
+        },
+        {
+          "ordinal": 1,
+          "caption": "child1",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 6,
+          "source_byte_start": 115,
+          "source_byte_end": 121,
+          "source_lexeme": "child1",
+          "authored_id": null
+        },
+        {
+          "ordinal": 2,
+          "caption": "child2",
+          "shape": "default",
+          "parent": 1,
+          "source_line": 7,
+          "source_byte_start": 128,
+          "source_byte_end": 134,
+          "source_lexeme": "child2",
+          "authored_id": null
+        },
+        {
+          "ordinal": 3,
+          "caption": "child3",
+          "shape": "default",
+          "parent": 1,
+          "source_line": 8,
+          "source_byte_start": 141,
+          "source_byte_end": 147,
+          "source_lexeme": "child3",
+          "authored_id": null
+        }
+      ],
+      "manifest_global_ordinal": 1301,
+      "source_git_blob": "8c686e3ce833de6e550799fb6ec1bc32325939c0",
+      "source_bytes": 148,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 3
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 3
+        },
+        {
+          "id": "physical_orphan_stroke_added"
+        },
+        {
+          "id": "semantic_last_leaf_removed",
+          "node_ordinal": 3
+        },
+        {
+          "id": "semantic_valid_parent_changed",
+          "node_ordinal": 3,
+          "new_parent_ordinal": 0
+        },
+        {
+          "id": "semantic_sibling_subtrees_swapped",
+          "parent_ordinal": 1,
+          "child_ordinals": [
+            2,
+            3
+          ]
+        },
+        {
+          "id": "physical_branch_cell_erased",
+          "node_ordinal": 3
+        }
+      ],
+      "terminal_projection": {
+        "adaptation": "loom_mindmap_terminal_projection_proposed/v1",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "The root"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 1,
+            "caption_rows": [
+              "child1"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 2,
+            "caption_rows": [
+              "child2"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 3,
+            "caption_rows": [
+              "child3"
+            ],
+            "row_joiners": []
+          }
+        ]
+      },
+      "terminal_projection_sha256": "c488ad75a2561201d6aeefa68fa347e8f6ad0a2069830b662b2226a58471150f"
+    },
+    {
+      "path": "mindmap/nightly-check/branches.mmd",
+      "source_sha256": "9b65c8f3b85fe1c06f86f5f2b5f7dcbab5933628a1467a9d0994c241423b550f",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "caption": "root",
+            "shape": "default",
+            "parent": -1,
+            "authored_id": null
+          },
+          {
+            "ordinal": 1,
+            "caption": "child1",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 2,
+            "caption": "grandchild 1",
+            "shape": "default",
+            "parent": 1,
+            "authored_id": null
+          },
+          {
+            "ordinal": 3,
+            "caption": "grandchild 2",
+            "shape": "default",
+            "parent": 1,
+            "authored_id": null
+          },
+          {
+            "ordinal": 4,
+            "caption": "child2",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 5,
+            "caption": "grandchild 3",
+            "shape": "default",
+            "parent": 4,
+            "authored_id": null
+          },
+          {
+            "ordinal": 6,
+            "caption": "grandchild 4",
+            "shape": "default",
+            "parent": 4,
+            "authored_id": null
+          },
+          {
+            "ordinal": 7,
+            "caption": "child3",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 8,
+            "caption": "grandchild 5",
+            "shape": "default",
+            "parent": 7,
+            "authored_id": null
+          },
+          {
+            "ordinal": 9,
+            "caption": "grandchild 6",
+            "shape": "default",
+            "parent": 7,
+            "authored_id": null
+          }
+        ]
+      },
+      "complete_model_sha256": "96e408b7b917f9f380614f1fa3d52b7133e999cd8d0ebcd6940f080a1c9cc433",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "caption": "root",
+          "shape": "default",
+          "parent": -1,
+          "source_line": 7,
+          "source_byte_start": 153,
+          "source_byte_end": 157,
+          "source_lexeme": "root",
+          "authored_id": null
+        },
+        {
+          "ordinal": 1,
+          "caption": "child1",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 8,
+          "source_byte_start": 160,
+          "source_byte_end": 166,
+          "source_lexeme": "child1",
+          "authored_id": null
+        },
+        {
+          "ordinal": 2,
+          "caption": "grandchild 1",
+          "shape": "default",
+          "parent": 1,
+          "source_line": 9,
+          "source_byte_start": 173,
+          "source_byte_end": 185,
+          "source_lexeme": "grandchild 1",
+          "authored_id": null
+        },
+        {
+          "ordinal": 3,
+          "caption": "grandchild 2",
+          "shape": "default",
+          "parent": 1,
+          "source_line": 10,
+          "source_byte_start": 192,
+          "source_byte_end": 204,
+          "source_lexeme": "grandchild 2",
+          "authored_id": null
+        },
+        {
+          "ordinal": 4,
+          "caption": "child2",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 11,
+          "source_byte_start": 207,
+          "source_byte_end": 213,
+          "source_lexeme": "child2",
+          "authored_id": null
+        },
+        {
+          "ordinal": 5,
+          "caption": "grandchild 3",
+          "shape": "default",
+          "parent": 4,
+          "source_line": 12,
+          "source_byte_start": 220,
+          "source_byte_end": 232,
+          "source_lexeme": "grandchild 3",
+          "authored_id": null
+        },
+        {
+          "ordinal": 6,
+          "caption": "grandchild 4",
+          "shape": "default",
+          "parent": 4,
+          "source_line": 13,
+          "source_byte_start": 239,
+          "source_byte_end": 251,
+          "source_lexeme": "grandchild 4",
+          "authored_id": null
+        },
+        {
+          "ordinal": 7,
+          "caption": "child3",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 14,
+          "source_byte_start": 254,
+          "source_byte_end": 260,
+          "source_lexeme": "child3",
+          "authored_id": null
+        },
+        {
+          "ordinal": 8,
+          "caption": "grandchild 5",
+          "shape": "default",
+          "parent": 7,
+          "source_line": 15,
+          "source_byte_start": 267,
+          "source_byte_end": 279,
+          "source_lexeme": "grandchild 5",
+          "authored_id": null
+        },
+        {
+          "ordinal": 9,
+          "caption": "grandchild 6",
+          "shape": "default",
+          "parent": 7,
+          "source_line": 16,
+          "source_byte_start": 286,
+          "source_byte_end": 298,
+          "source_lexeme": "grandchild 6",
+          "authored_id": null
+        }
+      ],
+      "manifest_global_ordinal": 1312,
+      "source_git_blob": "419606135899402a12123dd4ae14f3d35258f06f",
+      "source_bytes": 299,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 9
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 9
+        },
+        {
+          "id": "physical_orphan_stroke_added"
+        },
+        {
+          "id": "semantic_last_leaf_removed",
+          "node_ordinal": 9
+        },
+        {
+          "id": "semantic_valid_parent_changed",
+          "node_ordinal": 9,
+          "new_parent_ordinal": 0
+        },
+        {
+          "id": "semantic_sibling_subtrees_swapped",
+          "parent_ordinal": 0,
+          "child_ordinals": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "physical_branch_cell_erased",
+          "node_ordinal": 9
+        }
+      ],
+      "terminal_projection": {
+        "adaptation": "loom_mindmap_terminal_projection_proposed/v1",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "root"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 1,
+            "caption_rows": [
+              "child1"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 2,
+            "caption_rows": [
+              "grandchild 1"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 3,
+            "caption_rows": [
+              "grandchild 2"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 4,
+            "caption_rows": [
+              "child2"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 5,
+            "caption_rows": [
+              "grandchild 3"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 6,
+            "caption_rows": [
+              "grandchild 4"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 7,
+            "caption_rows": [
+              "child3"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 8,
+            "caption_rows": [
+              "grandchild 5"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 9,
+            "caption_rows": [
+              "grandchild 6"
+            ],
+            "row_joiners": []
+          }
+        ]
+      },
+      "terminal_projection_sha256": "355485b3e79e0b7cc97074d83d25e0b8a2f23fa21b9852581c466aa7f3f45337"
+    },
+    {
+      "path": "mindmap/nightly-check/default-shape.mmd",
+      "source_sha256": "8180af0e158056e7728a25da391beb182d0ed43ba9aafaaf85f48dd15dcd1bb1",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "caption": "The root",
+            "shape": "default",
+            "parent": -1,
+            "authored_id": null
+          }
+        ]
+      },
+      "complete_model_sha256": "522f9bbc4fc9e73f9b98635d272e95fe67e3ee9f077e6d319509a4b8bc953124",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "caption": "The root",
+          "shape": "default",
+          "parent": -1,
+          "source_line": 7,
+          "source_byte_start": 133,
+          "source_byte_end": 141,
+          "source_lexeme": "The root",
+          "authored_id": null
+        }
+      ],
+      "manifest_global_ordinal": 1314,
+      "source_git_blob": "5191955559f02c43f5e211b455f6aacfb5ad63ed",
+      "source_bytes": 142,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 0
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 0
+        },
+        {
+          "id": "physical_orphan_stroke_added"
+        },
+        {
+          "id": "semantic_valid_shape_changed",
+          "node_ordinal": 0,
+          "replacement_shape": "square",
+          "replacement_authored_id": "root",
+          "replacement_projection": {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "The root"
+            ],
+            "row_joiners": []
+          }
+        },
+        {
+          "id": "physical_marker_erased",
+          "node_ordinal": 0
+        }
+      ],
+      "terminal_projection": {
+        "adaptation": "loom_mindmap_terminal_projection_proposed/v1",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "The root"
+            ],
+            "row_joiners": []
+          }
+        ]
+      },
+      "terminal_projection_sha256": "a22fd0ce7ac06ae5457e963a20b9dd4e5a7bb318957443ad100b8bc6b4a25246"
+    },
+    {
+      "path": "mindmap/nightly-check/level-2-nodes-exceeding-11.mmd",
+      "source_sha256": "0a927d017b093b97cd1d1c59e8609165b110adfb1b49064a50112bf894ebc106",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "caption": "root",
+            "shape": "default",
+            "parent": -1,
+            "authored_id": null
+          },
+          {
+            "ordinal": 1,
+            "caption": "Node1",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 2,
+            "caption": "Node2",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 3,
+            "caption": "Node3",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 4,
+            "caption": "Node4",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 5,
+            "caption": "Node5",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 6,
+            "caption": "Node6",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 7,
+            "caption": "Node7",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 8,
+            "caption": "Node8",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 9,
+            "caption": "Node9",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 10,
+            "caption": "Node10",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 11,
+            "caption": "Node11",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 12,
+            "caption": "Node12",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 13,
+            "caption": "Node13",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 14,
+            "caption": "Node14",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 15,
+            "caption": "Node15",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          }
+        ]
+      },
+      "complete_model_sha256": "d4aac2710896614bfe919c1dd6a3fbaf851f4a281ed61686324da8e1dc2a541b",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "caption": "root",
+          "shape": "default",
+          "parent": -1,
+          "source_line": 8,
+          "source_byte_start": 201,
+          "source_byte_end": 205,
+          "source_lexeme": "root",
+          "authored_id": null
+        },
+        {
+          "ordinal": 1,
+          "caption": "Node1",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 9,
+          "source_byte_start": 208,
+          "source_byte_end": 213,
+          "source_lexeme": "Node1",
+          "authored_id": null
+        },
+        {
+          "ordinal": 2,
+          "caption": "Node2",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 10,
+          "source_byte_start": 216,
+          "source_byte_end": 221,
+          "source_lexeme": "Node2",
+          "authored_id": null
+        },
+        {
+          "ordinal": 3,
+          "caption": "Node3",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 11,
+          "source_byte_start": 224,
+          "source_byte_end": 229,
+          "source_lexeme": "Node3",
+          "authored_id": null
+        },
+        {
+          "ordinal": 4,
+          "caption": "Node4",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 12,
+          "source_byte_start": 232,
+          "source_byte_end": 237,
+          "source_lexeme": "Node4",
+          "authored_id": null
+        },
+        {
+          "ordinal": 5,
+          "caption": "Node5",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 13,
+          "source_byte_start": 240,
+          "source_byte_end": 245,
+          "source_lexeme": "Node5",
+          "authored_id": null
+        },
+        {
+          "ordinal": 6,
+          "caption": "Node6",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 14,
+          "source_byte_start": 248,
+          "source_byte_end": 253,
+          "source_lexeme": "Node6",
+          "authored_id": null
+        },
+        {
+          "ordinal": 7,
+          "caption": "Node7",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 15,
+          "source_byte_start": 256,
+          "source_byte_end": 261,
+          "source_lexeme": "Node7",
+          "authored_id": null
+        },
+        {
+          "ordinal": 8,
+          "caption": "Node8",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 16,
+          "source_byte_start": 264,
+          "source_byte_end": 269,
+          "source_lexeme": "Node8",
+          "authored_id": null
+        },
+        {
+          "ordinal": 9,
+          "caption": "Node9",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 17,
+          "source_byte_start": 272,
+          "source_byte_end": 277,
+          "source_lexeme": "Node9",
+          "authored_id": null
+        },
+        {
+          "ordinal": 10,
+          "caption": "Node10",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 18,
+          "source_byte_start": 280,
+          "source_byte_end": 286,
+          "source_lexeme": "Node10",
+          "authored_id": null
+        },
+        {
+          "ordinal": 11,
+          "caption": "Node11",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 19,
+          "source_byte_start": 289,
+          "source_byte_end": 295,
+          "source_lexeme": "Node11",
+          "authored_id": null
+        },
+        {
+          "ordinal": 12,
+          "caption": "Node12",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 20,
+          "source_byte_start": 298,
+          "source_byte_end": 304,
+          "source_lexeme": "Node12",
+          "authored_id": null
+        },
+        {
+          "ordinal": 13,
+          "caption": "Node13",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 21,
+          "source_byte_start": 307,
+          "source_byte_end": 313,
+          "source_lexeme": "Node13",
+          "authored_id": null
+        },
+        {
+          "ordinal": 14,
+          "caption": "Node14",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 22,
+          "source_byte_start": 316,
+          "source_byte_end": 322,
+          "source_lexeme": "Node14",
+          "authored_id": null
+        },
+        {
+          "ordinal": 15,
+          "caption": "Node15",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 23,
+          "source_byte_start": 325,
+          "source_byte_end": 331,
+          "source_lexeme": "Node15",
+          "authored_id": null
+        }
+      ],
+      "manifest_global_ordinal": 1315,
+      "source_git_blob": "36f5fe21e9440145145f2b68801cdc477cb1097f",
+      "source_bytes": 332,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 15
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 15
+        },
+        {
+          "id": "physical_orphan_stroke_added"
+        },
+        {
+          "id": "semantic_last_leaf_removed",
+          "node_ordinal": 15
+        },
+        {
+          "id": "semantic_valid_parent_changed",
+          "node_ordinal": 15,
+          "new_parent_ordinal": 14
+        },
+        {
+          "id": "semantic_sibling_subtrees_swapped",
+          "parent_ordinal": 0,
+          "child_ordinals": [
+            1,
+            2
+          ]
+        },
+        {
+          "id": "physical_branch_cell_erased",
+          "node_ordinal": 15
+        }
+      ],
+      "terminal_projection": {
+        "adaptation": "loom_mindmap_terminal_projection_proposed/v1",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "root"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 1,
+            "caption_rows": [
+              "Node1"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 2,
+            "caption_rows": [
+              "Node2"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 3,
+            "caption_rows": [
+              "Node3"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 4,
+            "caption_rows": [
+              "Node4"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 5,
+            "caption_rows": [
+              "Node5"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 6,
+            "caption_rows": [
+              "Node6"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 7,
+            "caption_rows": [
+              "Node7"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 8,
+            "caption_rows": [
+              "Node8"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 9,
+            "caption_rows": [
+              "Node9"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 10,
+            "caption_rows": [
+              "Node10"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 11,
+            "caption_rows": [
+              "Node11"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 12,
+            "caption_rows": [
+              "Node12"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 13,
+            "caption_rows": [
+              "Node13"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 14,
+            "caption_rows": [
+              "Node14"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 15,
+            "caption_rows": [
+              "Node15"
+            ],
+            "row_joiners": []
+          }
+        ]
+      },
+      "terminal_projection_sha256": "aa5018ef8af11eebb46396e077a7b3e9a47b2748c6901e42b684fc468e688e4e"
+    },
+    {
+      "path": "mindmap/nightly-check/only-a-root.mmd",
+      "source_sha256": "a7fc787d51b6790e2c82e2d19b63a02cd376c49c37016ab246b64f7afe23b2a4",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "caption": "root",
+            "shape": "default",
+            "parent": -1,
+            "authored_id": null
+          }
+        ]
+      },
+      "complete_model_sha256": "80647f6261ab0895f23b53ac4018316315602def41e5a070547c3ab4a4a20001",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "caption": "root",
+          "shape": "default",
+          "parent": -1,
+          "source_line": 5,
+          "source_byte_start": 103,
+          "source_byte_end": 107,
+          "source_lexeme": "root",
+          "authored_id": null
+        }
+      ],
+      "manifest_global_ordinal": 1316,
+      "source_git_blob": "02e8ca61bc4c654d5fb55d4aeaabfb309b2e967c",
+      "source_bytes": 108,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 0
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 0
+        },
+        {
+          "id": "physical_orphan_stroke_added"
+        },
+        {
+          "id": "semantic_valid_shape_changed",
+          "node_ordinal": 0,
+          "replacement_shape": "square",
+          "replacement_authored_id": "root",
+          "replacement_projection": {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "root"
+            ],
+            "row_joiners": []
+          }
+        },
+        {
+          "id": "physical_marker_erased",
+          "node_ordinal": 0
+        }
+      ],
+      "terminal_projection": {
+        "adaptation": "loom_mindmap_terminal_projection_proposed/v1",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "root"
+            ],
+            "row_joiners": []
+          }
+        ]
+      },
+      "terminal_projection_sha256": "4123a8ef6afde47e7b9d1cb30bb1202c7497c2f1e6d32e281b496957b51b4500"
+    },
+    {
+      "path": "mindmap/pr-check/simple-mindmap.mmd",
+      "source_sha256": "7e29a4621891e3f99f0153af718466bc5d14a3d86bf2b238db1c7d3cc3c32725",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "caption": "root",
+            "shape": "default",
+            "parent": -1,
+            "authored_id": null
+          },
+          {
+            "ordinal": 1,
+            "caption": "Photograph",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 2,
+            "caption": "Waterfall",
+            "shape": "default",
+            "parent": 1,
+            "authored_id": null
+          },
+          {
+            "ordinal": 3,
+            "caption": "Landscape",
+            "shape": "default",
+            "parent": 1,
+            "authored_id": null
+          },
+          {
+            "ordinal": 4,
+            "caption": "Geography",
+            "shape": "default",
+            "parent": 0,
+            "authored_id": null
+          },
+          {
+            "ordinal": 5,
+            "caption": "Mountains",
+            "shape": "default",
+            "parent": 4,
+            "authored_id": null
+          },
+          {
+            "ordinal": 6,
+            "caption": "Rocks",
+            "shape": "default",
+            "parent": 4,
+            "authored_id": null
+          }
+        ]
+      },
+      "complete_model_sha256": "81d7e8d7e8380bfb74b807b0460b003a251430dd6d502db35171a548bc8528ca",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "caption": "root",
+          "shape": "default",
+          "parent": -1,
+          "source_line": 8,
+          "source_byte_start": 199,
+          "source_byte_end": 203,
+          "source_lexeme": "root",
+          "authored_id": null
+        },
+        {
+          "ordinal": 1,
+          "caption": "Photograph",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 9,
+          "source_byte_start": 208,
+          "source_byte_end": 218,
+          "source_lexeme": "Photograph",
+          "authored_id": null
+        },
+        {
+          "ordinal": 2,
+          "caption": "Waterfall",
+          "shape": "default",
+          "parent": 1,
+          "source_line": 10,
+          "source_byte_start": 225,
+          "source_byte_end": 234,
+          "source_lexeme": "Waterfall",
+          "authored_id": null
+        },
+        {
+          "ordinal": 3,
+          "caption": "Landscape",
+          "shape": "default",
+          "parent": 1,
+          "source_line": 11,
+          "source_byte_start": 241,
+          "source_byte_end": 250,
+          "source_lexeme": "Landscape",
+          "authored_id": null
+        },
+        {
+          "ordinal": 4,
+          "caption": "Geography",
+          "shape": "default",
+          "parent": 0,
+          "source_line": 12,
+          "source_byte_start": 255,
+          "source_byte_end": 264,
+          "source_lexeme": "Geography",
+          "authored_id": null
+        },
+        {
+          "ordinal": 5,
+          "caption": "Mountains",
+          "shape": "default",
+          "parent": 4,
+          "source_line": 13,
+          "source_byte_start": 271,
+          "source_byte_end": 280,
+          "source_lexeme": "Mountains",
+          "authored_id": null
+        },
+        {
+          "ordinal": 6,
+          "caption": "Rocks",
+          "shape": "default",
+          "parent": 4,
+          "source_line": 14,
+          "source_byte_start": 287,
+          "source_byte_end": 292,
+          "source_lexeme": "Rocks",
+          "authored_id": null
+        }
+      ],
+      "manifest_global_ordinal": 1328,
+      "source_git_blob": "0951a1f92c9de0ac2e4c224a8bc4d570fb508e82",
+      "source_bytes": 293,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 6
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 6
+        },
+        {
+          "id": "physical_orphan_stroke_added"
+        },
+        {
+          "id": "semantic_last_leaf_removed",
+          "node_ordinal": 6
+        },
+        {
+          "id": "semantic_valid_parent_changed",
+          "node_ordinal": 6,
+          "new_parent_ordinal": 0
+        },
+        {
+          "id": "semantic_sibling_subtrees_swapped",
+          "parent_ordinal": 0,
+          "child_ordinals": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "physical_branch_cell_erased",
+          "node_ordinal": 6
+        }
+      ],
+      "terminal_projection": {
+        "adaptation": "loom_mindmap_terminal_projection_proposed/v1",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "caption_rows": [
+              "root"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 1,
+            "caption_rows": [
+              "Photograph"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 2,
+            "caption_rows": [
+              "Waterfall"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 3,
+            "caption_rows": [
+              "Landscape"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 4,
+            "caption_rows": [
+              "Geography"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 5,
+            "caption_rows": [
+              "Mountains"
+            ],
+            "row_joiners": []
+          },
+          {
+            "node_ordinal": 6,
+            "caption_rows": [
+              "Rocks"
+            ],
+            "row_joiners": []
+          }
+        ]
+      },
+      "terminal_projection_sha256": "a0979585e0c80cd403a7087184e80d764febe7a6cf78d622e0ef96c3f348c92f"
+    }
+  ],
+  "canonical_model_encoding": "UTF-8 JSON; object keys sorted; compact comma/colon separators; Unicode unescaped; no terminal newline. SHA-256 covers complete_model only.",
+  "admission_status": "Source-only proposal; neither Native nor Official may admit drawings from this asset before reviewed authority/checker/consumer gates pass.",
+  "terminal_adaptation_status": "Reviewed Loom 32-cell square-caption wrapping and connected default-tree geometry; not a claimed upstream width constant. Explicit row joiners reconstruct each original caption exactly.",
+  "source_lock_encoding": "Sort by UTF-8 path relative to cases/mindmap/ (strip mindmap/ from each case.path); concatenate path UTF-8 bytes, NUL byte, lowercase hexadecimal SHA-256 text encoded as ASCII (64 bytes, not binary digest), LF byte; SHA-256 the concatenation.",
+  "review": {
+    "date": "2026-10-25",
+    "reviewer": "agent:Parfit",
+    "verdict": "approved_bounded_source_design_and_prr",
+    "reviewed_proposal_sha256": "8307a8358dfe0574797532f174c2c94605277d6bcbb8b0c0e64b7a969aaa75eb",
+    "scope": "Ten complete original source Models, 32-cell Loom terminal projection facts, consumer ownership, 60 mutation responsibilities and bounded Work contract. No executed drawing admission."
+  }
+}

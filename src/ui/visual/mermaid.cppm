@@ -180,7 +180,7 @@ std::optional<FlowAsciiRows> flow_ascii_rows(std::string_view source, Work& work
 // which rejects shapes the textual classifier historically tolerated); the
 // execution switch spends the same charges the legacy flag cluster did.
 enum class MermaidProbeFamily : unsigned char {
-    Flow, Sequence, GitGraph, Class, Er, State, Requirement, Charts
+    Flow, Sequence, GitGraph, Class, Er, State, Requirement, Charts, Mindmap, Block
 };
 struct MermaidProbeDecision {
     MermaidProbeFamily family = MermaidProbeFamily::Charts;
@@ -191,5 +191,9 @@ struct MermaidProbeDecision {
     std::size_t prepay = 0;
 };
 std::optional<MermaidProbeDecision> classify_mermaid(std::string_view source, Work& work);
+// Test-only live-budget probe; it accepts source, never a fabricated payload.
+bool block_layout_succeeds(std::string_view source, Work& work);
+// Exact public-factory path, including dispatch and payload validation.
+bool layout_succeeds(std::string_view source, bool use_ascii, Work& work);
 
 } // namespace loom::ui::mermaid::testing

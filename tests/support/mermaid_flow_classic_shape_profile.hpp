@@ -1,4 +1,4 @@
-// Closed test-private profiles for the eleven bracket-shape Flow forms.
+// Closed test-private profiles for the classic Flow shapes.
 // Included after mermaid_flow_oracle.hpp declares the shared typed oracle.
 #pragma once
 namespace loom::test::mermaid_flow {
@@ -11,7 +11,8 @@ inline bool classic_shape(Shape shape) {
     switch (shape) {
     case Shape::Stadium: case Shape::Circle: case Shape::Subroutine: case Shape::DoubleCircle:
     case Shape::Hexagon: case Shape::Cylinder: case Shape::Asymmetric: case Shape::Trapezoid:
-    case Shape::TrapezoidAlt: case Shape::Parallelogram: case Shape::ParallelogramAlt: return true;
+    case Shape::TrapezoidAlt: case Shape::Parallelogram: case Shape::ParallelogramAlt:
+    case Shape::Triangle: case Shape::Delay: case Shape::SmallCircle: case Shape::ForkJoin: return true;
     case Shape::Rectangle: case Shape::Rounded: case Shape::Decision: return false;
     }
     return false;
@@ -20,29 +21,38 @@ inline bool classic_shape(Shape shape) {
 inline int classic_min_width(Shape shape) {
     switch (shape) {
     case Shape::DoubleCircle: return 13;
+    case Shape::ForkJoin: return 17;
     case Shape::Cylinder: case Shape::Parallelogram: case Shape::ParallelogramAlt: return 11;
     case Shape::Stadium: case Shape::Circle: case Shape::Subroutine: case Shape::Hexagon:
-    case Shape::Asymmetric: case Shape::Trapezoid: case Shape::TrapezoidAlt: return 9;
+    case Shape::Asymmetric: case Shape::Trapezoid: case Shape::TrapezoidAlt:
+    case Shape::Triangle: case Shape::Delay: case Shape::SmallCircle: return 9;
     case Shape::Rectangle: case Shape::Rounded: case Shape::Decision: return 0;
     }
     return 0;
 }
 inline int classic_height(Shape shape) {
     switch (shape) {
-    case Shape::Circle: return 9;
+    case Shape::Circle: case Shape::SmallCircle: return 9;
     case Shape::DoubleCircle: return 13;
     case Shape::Cylinder: return 7;
     case Shape::Stadium: case Shape::Subroutine: case Shape::Hexagon: case Shape::Asymmetric:
-    case Shape::Trapezoid: case Shape::TrapezoidAlt: case Shape::Parallelogram: case Shape::ParallelogramAlt: return 5;
+    case Shape::Trapezoid: case Shape::TrapezoidAlt: case Shape::Parallelogram: case Shape::ParallelogramAlt:
+    case Shape::Triangle: case Shape::Delay: case Shape::ForkJoin: return 5;
     case Shape::Rectangle: case Shape::Rounded: case Shape::Decision: return 0;
     }
     return 0;
 }
+inline int classic_small_circle_diameter(std::string_view label) {
+    int diameter=std::max(9,ftxui::string_width(std::string(label))+4);
+    if ((diameter%2)==0) ++diameter;
+    return diameter;
+}
 inline bool classic_requires_odd_width(Shape shape) {
     switch (shape) {
-    case Shape::Circle: case Shape::DoubleCircle: case Shape::Hexagon: case Shape::Cylinder:
-    case Shape::Trapezoid: case Shape::TrapezoidAlt: case Shape::Parallelogram: case Shape::ParallelogramAlt: return true;
-    case Shape::Stadium: case Shape::Subroutine: case Shape::Asymmetric:
+    case Shape::Circle: case Shape::SmallCircle: case Shape::DoubleCircle: case Shape::Hexagon: case Shape::Cylinder:
+    case Shape::Trapezoid: case Shape::TrapezoidAlt: case Shape::Parallelogram: case Shape::ParallelogramAlt:
+    case Shape::Triangle: return true;
+    case Shape::Stadium: case Shape::Subroutine: case Shape::Asymmetric: case Shape::Delay: case Shape::ForkJoin:
     case Shape::Rectangle: case Shape::Rounded: case Shape::Decision: return false;
     }
     return false;
@@ -50,7 +60,13 @@ inline bool classic_requires_odd_width(Shape shape) {
 inline bool classic_dimensions(const ShapeFrame& frame) {
     if (!classic_shape(frame.shape) || frame.left < 0 || frame.top < 0 || frame.right < frame.left || frame.bottom < frame.top) return false;
     const int width=frame.right-frame.left+1;
-    return width>=classic_min_width(frame.shape) && frame.bottom-frame.top+1==classic_height(frame.shape) &&
+    const int height=frame.bottom-frame.top+1;
+    if (frame.shape==Shape::ForkJoin) return width>=classic_min_width(frame.shape) && height==classic_height(frame.shape);
+    if (frame.shape==Shape::Triangle)
+        return height>=5 && height<=13 && (height%2)==1 && width==2*height-1;
+    if (frame.shape==Shape::SmallCircle)
+        return width>=9 && width==height && (width%2)==1;
+    return width>=classic_min_width(frame.shape) && height==classic_height(frame.shape) &&
         (!classic_requires_odd_width(frame.shape) || (width%2)==1);
 }
 
@@ -99,13 +115,39 @@ inline std::optional<std::string_view> classic_outer_cell(const ShapeFrame& fram
     const int l=frame.left,r=frame.right,t=frame.top,b=frame.bottom,y=p.y,x=p.x;
     if (!classic_dimensions(frame)) return {};
     switch (frame.shape) {
+    case Shape::ForkJoin:
+        if (y==t) { if (x==l) return "▛"; if (x==r) return "▜"; return "█"; }
+        if (y==b) { if (x==l) return "▙"; if (x==r) return "▟"; return "█"; }
+        if (x==l || x==r) return "█";
+        return {};
+    case Shape::Triangle: {
+        const int center=(l+r)/2;
+        if (y==t) return x==center ? std::optional<std::string_view>{"△"} : std::nullopt;
+        if (y==b) {
+            if (x==l) return "╱";
+            if (x==r) return "╲";
+            if (x>l && x<r) return "─";
+            return {};
+        }
+        const int edge=center-(y-t);
+        if (x==edge) return "╱";
+        if (x==center+(y-t)) return "╲";
+        return {};
+    }
+    case Shape::Delay:
+        if (y==t) { if (x==l) return "┌"; if (x>=l+1 && x<=r-2) return "─"; }
+        if (y==t+1) { if (x==l) return "│"; if (x==r-1) return "╮"; }
+        if (y==t+2) { if (x==l) return "│"; if (x==r) return ")"; }
+        if (y==b-1) { if (x==l) return "│"; if (x==r-1) return "╯"; }
+        if (y==b) { if (x==l) return "└"; if (x>=l+1 && x<=r-2) return "─"; }
+        return {};
     case Shape::Stadium:
         if (y==t) { if (x==l+1) return "╭"; if (x==r-1) return "╮"; if (x>l+1 && x<r-1) return "─"; }
         if (y==b) { if (x==l+1) return "╰"; if (x==r-1) return "╯"; if (x>l+1 && x<r-1) return "─"; }
         if (y>t && y<b && x==l) return "(";
         if (y>t && y<b && x==r) return ")";
         return {};
-    case Shape::Circle: return classic_ring_cell(frame,p);
+    case Shape::Circle: case Shape::SmallCircle: return classic_ring_cell(frame,p);
     case Shape::DoubleCircle: return classic_ring_cell(frame,p);
     case Shape::Subroutine: return classic_box_cell(frame,p);
     case Shape::Hexagon:
@@ -182,6 +224,9 @@ inline ClassicPortSet classic_declared_ports(const ShapeFrame& frame) {
     // the right-middle cell, exactly as production ports() computes it.
     const int x=frame.left+(frame.right-frame.left+1)/2;
     const int y=frame.top+(frame.bottom-frame.top+1)/2;
+    if (frame.shape==Shape::Triangle) {
+        result.values[0]={{x,frame.top},U}; result.values[1]={{x,frame.bottom},D}; result.size=2; return result;
+    }
     if (frame.shape==Shape::Asymmetric) {
         result.values[0]={{frame.left,y},L}; result.values[1]={{frame.right,y},R}; result.size=2; return result;
     }
@@ -207,6 +252,8 @@ inline Shape classic_next_shape(Shape shape) {
     case Shape::TrapezoidAlt: return Shape::Parallelogram;
     case Shape::Parallelogram: return Shape::ParallelogramAlt;
     case Shape::ParallelogramAlt: return Shape::Asymmetric;
+    case Shape::Triangle: case Shape::Delay: case Shape::SmallCircle: return Shape::Stadium;
+    case Shape::ForkJoin: return Shape::Stadium;
     case Shape::Rectangle: case Shape::Rounded: case Shape::Decision: return Shape::Stadium;
     }
     return Shape::Stadium;
@@ -236,16 +283,20 @@ inline bool classic_legal_port(const ShapeFrame& frame,Point p,int outward) {
 }
 inline int classic_perimeter_bits(const ShapeFrame& frame,Point p) {
     const int middle=(frame.top+frame.bottom)/2;
+    if (frame.shape==Shape::Triangle && p==Point{frame.left+(frame.right-frame.left)/2,frame.top}) return U;
+    if (frame.shape==Shape::Triangle && p==Point{frame.left+(frame.right-frame.left)/2,frame.bottom}) return L|R;
     // source_port replaces only these declared horizontal terminals with a
     // light T junction. Their U/D arms are the physical tangent, while the
     // selected trace must still claim the one outward horizontal arm.
     if ((frame.shape==Shape::Stadium && p.y==middle && (p.x==frame.left || p.x==frame.right)) ||
+        (frame.shape==Shape::Delay && p==Point{frame.right,middle}) ||
         (frame.shape==Shape::Asymmetric && p==Point{frame.left,middle})) return U|D;
     if (const auto outer=classic_outer_cell(frame,p)) return glyph(*outer).bits;
     if (const auto decoration=classic_decoration_cell(frame,p)) return glyph(*decoration).bits;
     return 0;
 }
 inline bool classic_accepts_port(const Grid& grid,const ShapeFrame& frame,Point p,int outward) {
+    if (frame.shape==Shape::ForkJoin) return classic_legal_port(frame,p,outward) && grid.at(p)=="█";
     return classic_legal_port(frame,p,outward) && (glyph(grid.at(p)).bits&outward)!=0;
 }
 inline bool classic_ring_interior(const Rect& frame,Point p) {
@@ -260,8 +311,13 @@ inline bool classic_interior(const ShapeFrame& frame,Point p) {
     const int l=frame.left,r=frame.right,t=frame.top,b=frame.bottom,x=p.x,y=p.y;
     if (x<=l || x>=r || y<=t || y>=b) return false;
     switch (frame.shape) {
-    case Shape::Stadium: case Shape::Subroutine: return true;
-    case Shape::Circle: return classic_ring_interior(frame,p);
+    case Shape::Triangle: {
+        const int center=(l+r)/2;
+        const int half_width=y-t;
+        return x>center-half_width && x<center+half_width;
+    }
+    case Shape::Stadium: case Shape::Subroutine: case Shape::ForkJoin: return true;
+    case Shape::Circle: case Shape::SmallCircle: return classic_ring_interior(frame,p);
     case Shape::DoubleCircle: return classic_ring_interior({l+2,t+2,r-2,b-2},p);
     case Shape::Hexagon: return (y==t+1 || y==b-1) ? x>l+1 && x<r-1 : true;
     case Shape::Trapezoid:
@@ -272,6 +328,7 @@ inline bool classic_interior(const ShapeFrame& frame,Point p) {
     case Shape::Asymmetric: return (y==t+1 || y==b-1) ? x>l+1 && x<r : true;
     case Shape::Parallelogram: return (y==t+1 || y==t+2) ? x>l+1 && x<r-1 : x>l && x<r-2;
     case Shape::ParallelogramAlt: return (y==t+1) ? x>l && x<r-2 : x>l+1 && x<r-1;
+    case Shape::Delay: return y==t+1 || y==b-1 ? x>l && x<r-1 : x>l && x<r;
     case Shape::Rectangle: case Shape::Rounded: case Shape::Decision: return false;
     }
     return false;
@@ -292,19 +349,46 @@ inline bool classic_exact_frame(const Grid& grid,const ShapeFrame& frame) {
     return true;
 }
 
-inline std::vector<ShapeFrame> classic_closed_frames(const Grid& grid,OracleWork& work) {
-    constexpr std::array<ClassicAnchor,11> anchors{{
+inline std::vector<ShapeFrame> classic_closed_frames(const Grid& grid,OracleWork& work,const Model* model) {
+    constexpr std::array<ClassicAnchor,15> anchors{{
         {Shape::Stadium,1,0,"╭"}, {Shape::Circle,2,0,"╭"}, {Shape::Subroutine,0,0,"┌"},
         {Shape::DoubleCircle,2,0,"╭"}, {Shape::Hexagon,2,0,"╱"}, {Shape::Cylinder,2,0,"╭"},
         {Shape::Asymmetric,2,0,"╱"}, {Shape::Trapezoid,2,0,"┌"}, {Shape::TrapezoidAlt,0,0,"┌"},
         {Shape::Parallelogram,2,0,"┌"}, {Shape::ParallelogramAlt,0,0,"┌"},
+        {Shape::Triangle,0,0,"△"}, {Shape::Delay,0,0,"┌"}, {Shape::SmallCircle,2,0,"╭"},
+        {Shape::ForkJoin,0,0,"▛"},
     }};
     constexpr std::size_t kAnchorLimit=32u,kMaxWidth=240u,kMaxHeight=13u;
     // Prepay the fixed anchor scan, all bounded width attempts, exact profile
     // checks, and the maximum candidate payload before discovering a frame.
     work.spend(128u*sizeof(ShapeFrame)+8u*sizeof(std::vector<ShapeFrame>)+1024u);
-    work.product(grid.cells.size(),anchors.size());
-    work.spend(anchors.size()*kAnchorLimit*(kMaxWidth*(kMaxHeight+1u)+kMaxWidth+32u));
+    const bool include_delay=model && std::ranges::any_of(model->nodes,[](const Node& node) { return node.shape==Shape::Delay; });
+    const bool include_small_circle=model && std::ranges::any_of(model->nodes,[](const Node& node) { return node.shape==Shape::SmallCircle; });
+    const bool include_fork_join=model && std::ranges::any_of(model->nodes,[](const Node& node) { return node.shape==Shape::ForkJoin; });
+    std::vector<int> small_circle_diameters;
+    if (include_small_circle) {
+        work.product(model->nodes.size(),sizeof(int)+8u);
+        for (const auto& node:model->nodes) {
+            if (node.shape!=Shape::SmallCircle || node.label.find('\n')!=std::string::npos) continue;
+            work.product(node.label.size(),2u);
+            const int diameter=classic_small_circle_diameter(node.label);
+            if (diameter<=std::min(grid.width,grid.height)) small_circle_diameters.push_back(diameter);
+        }
+        std::ranges::sort(small_circle_diameters);
+        small_circle_diameters.erase(std::unique(small_circle_diameters.begin(),small_circle_diameters.end()),
+                                     small_circle_diameters.end());
+        for (const int diameter:small_circle_diameters)
+            work.product(kAnchorLimit,static_cast<std::size_t>(diameter*diameter+32));
+    }
+    const std::size_t active_anchors=anchors.size()-(include_delay?0u:1u)-(include_small_circle?0u:1u)-
+        (include_fork_join?0u:1u);
+    work.product(grid.cells.size(),active_anchors);
+    for (const auto& anchor:anchors) {
+        if ((anchor.shape==Shape::Delay&&!include_delay) || (anchor.shape==Shape::SmallCircle&&!include_small_circle) ||
+            (anchor.shape==Shape::ForkJoin&&!include_fork_join)) continue;
+        if (anchor.shape!=Shape::SmallCircle)
+            work.spend(kAnchorLimit*(kMaxWidth*(kMaxHeight+1u)+kMaxWidth+32u));
+    }
     std::array<std::size_t,anchors.size()> found{};
     std::vector<ShapeFrame> result; result.reserve(128u);
     auto append=[&](ShapeFrame frame) {
@@ -313,9 +397,30 @@ inline std::vector<ShapeFrame> classic_closed_frames(const Grid& grid,OracleWork
     };
     for (int y=0;y<grid.height;++y) for (int x=0;x<grid.width;++x) {
         for (std::size_t a=0;a<anchors.size();++a) {
+            if ((anchors[a].shape==Shape::Delay && !include_delay) ||
+                (anchors[a].shape==Shape::SmallCircle && !include_small_circle) ||
+                (anchors[a].shape==Shape::ForkJoin && !include_fork_join)) continue;
             const auto& anchor=anchors[a];
             if (grid.at({x,y})!=anchor.glyph) continue;
             if (++found[a]>kAnchorLimit) throw std::runtime_error("Too many candidate classic anchors");
+            if (anchor.shape==Shape::Triangle) {
+                for (int height=5;height<=13;height+=2) {
+                    const int left=x-(height-1),top=y,width=2*height-1;
+                    if (left<0 || top+height>grid.height || left+width>grid.width) continue;
+                    ShapeFrame frame{{left,top,left+width-1,top+height-1},Shape::Triangle};
+                    if (classic_dimensions(frame) && classic_exact_frame(grid,frame)) append(frame);
+                }
+                continue;
+            }
+            if (anchor.shape==Shape::SmallCircle) {
+                for (const int size:small_circle_diameters) {
+                    const int left=x-anchor.dx,top=y-anchor.dy;
+                    if (left<0 || top<0 || left+size>grid.width || top+size>grid.height) continue;
+                    ShapeFrame frame{{left,top,left+size-1,top+size-1},Shape::SmallCircle};
+                    if (classic_dimensions(frame) && classic_exact_frame(grid,frame)) append(frame);
+                }
+                continue;
+            }
             const int left=x-anchor.dx,top=y-anchor.dy,height=classic_height(anchor.shape);
             if (left<0 || top<0 || top+height>grid.height) continue;
             const int min_width=classic_min_width(anchor.shape);
@@ -335,21 +440,31 @@ inline int classic_profile_grid_width(Shape shape) {
     return width;
 }
 inline Grid classic_profile_good_grid(Shape shape) {
-    const int width=classic_profile_grid_width(shape),height=classic_height(shape)+4;
+    const int width=classic_profile_grid_width(shape);
+    const int shape_width=shape==Shape::Triangle?classic_min_width(shape):
+        shape==Shape::SmallCircle?classic_small_circle_diameter("X"):width-4;
+    const int shape_height=shape==Shape::SmallCircle?shape_width:classic_height(shape);
+    const int height=shape_height+4;
     Grid result{width,height,std::vector<std::string>(static_cast<std::size_t>(width*height)," ")};
-    ShapeFrame frame{{2,1,width-3,1+classic_height(shape)-1},shape};
+    ShapeFrame frame{{2,1,2+shape_width-1,1+shape_height-1},shape};
     for (int y=frame.top;y<=frame.bottom;++y) for (int x=frame.left;x<=frame.right;++x)
         if (const auto expected=classic_expected_cell(frame,{x,y})) result.put({x,y},std::string(*expected));
     const int label_x=(frame.left+frame.right)/2;
     const int label_y=(frame.top+frame.bottom)/2;
     if (!classic_interior(frame,{label_x,label_y})) throw std::runtime_error("Classic profile lacks a central interior cell");
+    if (shape==Shape::ForkJoin)
+        for (int y=frame.top+1;y<frame.bottom;++y) for (int x=frame.left+1;x<frame.right;++x)
+            result.put({x,y},"█");
     result.put({label_x,label_y},"X");
     for (std::size_t n=0;n<kSentinel.size();++n) result.put({static_cast<int>(n),height-1},std::string(1,kSentinel[n]));
     return result;
 }
 inline ShapeFrame classic_profile_frame(Shape shape) {
     const int width=classic_profile_grid_width(shape);
-    return {{2,1,width-3,1+classic_height(shape)-1},shape};
+    const int shape_width=shape==Shape::Triangle?classic_min_width(shape):
+        shape==Shape::SmallCircle?classic_small_circle_diameter("X"):width-4;
+    const int shape_height=shape==Shape::SmallCircle?shape_width:classic_height(shape);
+    return {{2,1,2+shape_width-1,1+shape_height-1},shape};
 }
 
 } // namespace loom::test::mermaid_flow

@@ -1,0 +1,2409 @@
+{
+  "schema": "class_theme4_source_bound_graph_model_proposal/v1",
+  "qualification": "Source-bound graph Model proposal only. The exact original source, frontmatter, init theme, and accessibility facts remain attached per case. The graph Model is derived from source syntax; Class285 mapping review and native/official consumers have not admitted these four rows. No drawing credit is claimed.",
+  "lineage": {
+    "official_class285_source_facts": {
+      "path": "tests/fixtures/mermaid_native/official_class285_source_facts.candidate.v1.json",
+      "bytes": 1622120,
+      "sha256": "9916a1cbc21a9d7e6808c471511cb803f205b9b208019ed3fb7f52add6521da2"
+    },
+    "official_class285_mapping_approval": {
+      "path": "tests/fixtures/mermaid_native/official_class285_source_mapping_approval.v1.json",
+      "bytes": 74234,
+      "sha256": "5d4cef76b3bf2dd56f9a3f3d9c955654d4c970dc40b2030aefbcb8f9005d6715"
+    },
+    "official_manifest": {
+      "path": "tests/fixtures/mermaid_official/manifest.json",
+      "bytes": 1272942,
+      "sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+    },
+    "source_graph_body_sha256": "7667dc74e5ce8d3eec7e41a2917c9f4fdbfbbafb121d5550e684e88a283adc14",
+    "source_graph_body_utf8_bytes": 789,
+    "source_graph_body_shared_by_all_cases": true,
+    "mapping_review": {
+      "verdict": "pending",
+      "reviewer": null
+    }
+  },
+  "independent_model_basis": {
+    "derivation": "Class source lines and operator tokens, not terminal output or a producer snapshot.",
+    "entity_identity": "class:<lowercase UTF-8 hex of source class identity>",
+    "entity_creation_order": "first source reference in relation statements, then source class declarations; fixed complete order retained in Model.",
+    "member_order": "source order within Animal, Duck, Fish, and Zebra; each literal display spelling retained.",
+    "relation_order": "all 19 relation occurrences in complete source order; repeated endpoint pairs are not deduplicated.",
+    "relation_operator_mapping": {
+      "source_side": "<| triangle; < arrow; * filled diamond; o open diamond",
+      "target_side": "|> triangle; > arrow; * filled diamond; o open diamond",
+      "line": "-- solid; .. dotted",
+      "quoted_endpoint_text": "source and target multiplicity text retained separately, without quote delimiters"
+    },
+    "scope_boundary": "YAML description and init theme remain source-owned metadata; accTitle/accDescr are retained but not represented by the Class graph Model."
+  },
+  "source_semantics_blocking_safe_whole_model": [
+    {
+      "kind": "accessibility_terminal_contract",
+      "detail": "The source has nonempty accTitle and accDescr. The existing Class285 authority records both as unresolved; the graph schema has no approved accessibility projection."
+    },
+    {
+      "kind": "theme_rendering_contract",
+      "detail": "The four init themes are distinct source facts. The reusable Class285 geometry oracle validates glyph cells and source lifecycle but not terminal color/style output; theme-specific visual fidelity is therefore unproved."
+    }
+  ],
+  "reusable_control_plan": {
+    "source_binding": {
+      "existing_authority": "OfficialClass285 source facts and original manifest bindings",
+      "required_checks": [
+        "global ordinal and application ordinal map to exact row",
+        "path, bytes, source SHA256, Git blob, complete source string match pinned source row",
+        "frontmatter and init directive are included in the whole source pin",
+        "shared 789-byte graph body hash matches all four cases"
+      ],
+      "current_result": "not executed by Native/Official consumers for this proposal"
+    },
+    "model_codec": "class481_model(model, work, endpoint_text_profile=true); then validate complete Model key/domain and canonical digest.",
+    "geometry_and_lifecycle": {
+      "oracle": "Existing Official Class285 stage_c_geometry + shared validate_impl using captured FTXUI Screen::PixelAt character Grid.",
+      "frames": [
+        "240-column wide public capture",
+        "40-column narrow public capture",
+        "240-column restored capture after narrow resize",
+        "ordinary fallback comparison capture",
+        "small-width ordinary capture"
+      ],
+      "required_positive": [
+        "wide and restored complete graph geometry and following sentinel pass",
+        "narrow complete graph geometry passes or its exact permitted source fallback is explicitly recorded",
+        "restored cells equal original wide cells",
+        "no source fallback earns drawing credit"
+      ],
+      "unclaimed": "This plan has not run; it does not prove geometry or colors."
+    },
+    "semantic_mutations": {
+      "reusable_oracle": "class481_mutations on the complete source-bound Model and actual wide Grid; resource outcomes stay distinct from semantic acceptance.",
+      "expected_executed_counts": {
+        "complete_header": 20,
+        "header_literal": 20,
+        "member_value": 11,
+        "member_erasure": 11,
+        "relation_label": 19,
+        "endpoint_marker": 38,
+        "stroke": 19,
+        "third_endpoint": 19,
+        "relation_erasure": 19,
+        "orphan_ink": 1
+      },
+      "expected_skipped_counts": {
+        "namespace_ownership": 0,
+        "namespace_caption": 0,
+        "no_third_entity": 0,
+        "identical_duplicate_edge_not_independent_ink": 0
+      },
+      "source_specific_controls": [
+        "Animal multiplicity source/target remain * and 1",
+        "Animal/Fish multiplicity source/target remain 1 and 10",
+        "all eight relationship forms retain source/target marker side and solid/dotted stroke",
+        "same-pair relationships remain separate occurrences with their own markers/labels",
+        "all 11 member rows retain owner, compartment, visibility, spelling, and order"
+      ],
+      "mutation_credit_requires_complete_geometry_first": true
+    },
+    "theme_control_gap": {
+      "required_before_claiming_theme_fidelity": "Add an independently authorized style/color capture and theme-specific assertions for all four theme tokens; character-only PixelAt Grid comparison is insufficient.",
+      "current_geometry_checker_measures_theme": "false"
+    }
+  },
+  "cases": [
+    {
+      "application_ordinal": 263,
+      "manifest_global_ordinal": 411,
+      "fixture": "class-diagram/visual-check/dark-theme.mmd",
+      "source": "---\ndescription: >-\n  Class diagram covering\n  inheritance/composition/aggregation/association/link/dependency/realization\n  relationship types plus member annotations, with an accTitle/accDescr pair,\n  rendered under the \"dark\" theme via an in-body %%{init}%% directive.\n---\n%%{init: { 'logLevel': 0, 'theme': 'dark'} }%%\nclassDiagram\n  accTitle: This is a title\n  accDescr: This is a description\n\n  Animal \"*\" <|-- \"1\" Duck\n  Animal \"1\" <|-- \"10\" Fish\n  Animal <|-- Zebra\n  Animal : +int age\n  Animal : +String gender\n  Animal: +isMammal()\n  Animal: +mate()\n  class Duck{\n    +String beakColor\n    +swim()\n    +quack()\n  }\n  class Fish{\n    -int sizeInFeet\n    -canEat()\n  }\n  class Zebra{\n    +bool is_wild\n    +run()\n  }\nclassA <|-- classB\nclassC *-- classD\nclassE o-- classF\nclassG <-- classH\nclassI -- classJ\nclassK <.. classL\nclassM <|.. classN\nclassO .. classP\nclassA --|> classB : Inheritance\nclassC --* classD : Composition\nclassE --o classF : Aggregation\nclassG --> classH : Association\nclassI -- classJ : Link(Solid)\nclassK ..> classL : Dependency\nclassM ..|> classN : Realization\nclassO .. classP : Link(Dashed)\n",
+      "source_utf8_bytes": 1125,
+      "source_sha256": "df1262f42e99476d5e45c0ec6ecb934f14bc117908df948a4af48cc8a5372e51",
+      "source_git_blob": "afe9c24e614dafabb31a469276c740d45eb73224",
+      "official_candidate_row_canonical_bytes": 8139,
+      "official_candidate_row_canonical_sha256": "b6ae14f00536121ae7685db9b90ff647c113035467cf1fa41d72aa92e4599ba1",
+      "source_mapping_disposition": "whole_Model_sha256_null; source mapping review pending",
+      "class_graph_model_candidate": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:416e696d616c",
+            "label": "Animal",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Animal"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+int age"
+                ]
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String gender"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+isMammal()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+mate()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:4475636b",
+            "label": "Duck",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Duck"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String beakColor"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+swim()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+quack()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:46697368",
+            "label": "Fish",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Fish"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "-int sizeInFeet"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "-canEat()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:5a65627261",
+            "label": "Zebra",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Zebra"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+bool is_wild"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+run()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:636c61737341",
+            "label": "classA",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classA"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737342",
+            "label": "classB",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classB"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737343",
+            "label": "classC",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classC"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737344",
+            "label": "classD",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classD"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737345",
+            "label": "classE",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classE"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737346",
+            "label": "classF",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classF"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737347",
+            "label": "classG",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classG"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737348",
+            "label": "classH",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classH"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737349",
+            "label": "classI",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classI"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734a",
+            "label": "classJ",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classJ"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734b",
+            "label": "classK",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classK"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734c",
+            "label": "classL",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classL"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734d",
+            "label": "classM",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classM"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734e",
+            "label": "classN",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classN"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734f",
+            "label": "classO",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classO"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737350",
+            "label": "classP",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classP"
+              ]
+            ],
+            "rows": []
+          }
+        ],
+        "relations": [
+          {
+            "source": "class:416e696d616c",
+            "target": "class:4475636b",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 0,
+            "source_text": "*",
+            "target_text": "1"
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:46697368",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 1,
+            "source_text": "1",
+            "target_text": "10"
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:5a65627261",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 2,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 3,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "label": "",
+            "start": "filled_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "order": 4,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "label": "",
+            "start": "open_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "order": 5,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "label": "",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "solid",
+            "order": 6,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "label": "",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "order": 7,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "label": "",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 8,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 9,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "label": "",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 10,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "label": "Inheritance",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "solid",
+            "order": 11,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "label": "Composition",
+            "start": "none",
+            "end": "filled_diamond",
+            "stroke": "solid",
+            "order": 12,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "label": "Aggregation",
+            "start": "none",
+            "end": "open_diamond",
+            "stroke": "solid",
+            "order": 13,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "label": "Association",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "order": 14,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "label": "Link(Solid)",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "order": 15,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "label": "Dependency",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "dotted",
+            "order": 16,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "label": "Realization",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "dotted",
+            "order": 17,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "label": "Link(Dashed)",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 18,
+            "source_text": null,
+            "target_text": null
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "class_graph_model_candidate_canonical_sha256": "6e09a7e5fd950b894a383d166a00461e34722f2886e4d4d2638ef7d50e9288c4",
+      "source_owned_semantics": {
+        "frontmatter_description_raw": "description: >-\n  Class diagram covering\n  inheritance/composition/aggregation/association/link/dependency/realization\n  relationship types plus member annotations, with an accTitle/accDescr pair,\n  rendered under the \"dark\" theme via an in-body %%{init}%% directive.",
+        "init_directive_raw": "%%{init: { 'logLevel': 0, 'theme': 'dark'} }%%",
+        "processed_config": {
+          "logLevel": 0,
+          "theme": "dark"
+        },
+        "theme_token": "dark",
+        "acc_title": "This is a title",
+        "acc_description": "This is a description",
+        "acc_title_and_description_are_in_class_graph_model": false,
+        "terminal_accessibility_contract": "unresolved; copied from original Class285 debts",
+        "theme_color_contract": "unverified; Class285 geometry compares glyph cells, not color/style cells"
+      },
+      "original_unresolved_terminal_obligations": [
+        {
+          "detail": "Nonempty getAccTitle is preserved; no equivalent terminal/API/ARIA contract is newly approved.",
+          "kind": "accessibility_terminal_contract",
+          "primary_pointers": [
+            "/success_point_snapshot/graph/nodes/189"
+          ]
+        },
+        {
+          "detail": "Nonempty getAccDescription is preserved; no equivalent terminal/API/ARIA contract is newly approved.",
+          "kind": "accessibility_terminal_contract",
+          "primary_pointers": [
+            "/success_point_snapshot/graph/nodes/189"
+          ]
+        }
+      ],
+      "native_disposition": "proposal_only_not_admitted"
+    },
+    {
+      "application_ordinal": 264,
+      "manifest_global_ordinal": 412,
+      "fixture": "class-diagram/visual-check/default-theme.mmd",
+      "source": "---\ndescription: >-\n  Class diagram covering\n  inheritance/composition/aggregation/association/link/dependency/realization\n  relationship types plus member annotations, with an accTitle/accDescr pair,\n  rendered under the \"default\" theme via an in-body %%{init}%% directive.\n---\n%%{init: { 'logLevel': 0, 'theme': 'default'} }%%\nclassDiagram\n  accTitle: This is a title\n  accDescr: This is a description\n\n  Animal \"*\" <|-- \"1\" Duck\n  Animal \"1\" <|-- \"10\" Fish\n  Animal <|-- Zebra\n  Animal : +int age\n  Animal : +String gender\n  Animal: +isMammal()\n  Animal: +mate()\n  class Duck{\n    +String beakColor\n    +swim()\n    +quack()\n  }\n  class Fish{\n    -int sizeInFeet\n    -canEat()\n  }\n  class Zebra{\n    +bool is_wild\n    +run()\n  }\nclassA <|-- classB\nclassC *-- classD\nclassE o-- classF\nclassG <-- classH\nclassI -- classJ\nclassK <.. classL\nclassM <|.. classN\nclassO .. classP\nclassA --|> classB : Inheritance\nclassC --* classD : Composition\nclassE --o classF : Aggregation\nclassG --> classH : Association\nclassI -- classJ : Link(Solid)\nclassK ..> classL : Dependency\nclassM ..|> classN : Realization\nclassO .. classP : Link(Dashed)\n",
+      "source_utf8_bytes": 1131,
+      "source_sha256": "760b8a5bd13cd3f57ed310ac4a0f291522b61a02e4738c620b0bb0e98310d241",
+      "source_git_blob": "38f472c3b45613c3babeee454e5caf521193d2ad",
+      "official_candidate_row_canonical_bytes": 8160,
+      "official_candidate_row_canonical_sha256": "5fdcdd49451fde186245bf0d8d3c7423876907044f914847e5b3a304a500ee35",
+      "source_mapping_disposition": "whole_Model_sha256_null; source mapping review pending",
+      "class_graph_model_candidate": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:416e696d616c",
+            "label": "Animal",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Animal"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+int age"
+                ]
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String gender"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+isMammal()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+mate()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:4475636b",
+            "label": "Duck",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Duck"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String beakColor"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+swim()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+quack()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:46697368",
+            "label": "Fish",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Fish"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "-int sizeInFeet"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "-canEat()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:5a65627261",
+            "label": "Zebra",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Zebra"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+bool is_wild"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+run()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:636c61737341",
+            "label": "classA",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classA"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737342",
+            "label": "classB",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classB"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737343",
+            "label": "classC",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classC"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737344",
+            "label": "classD",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classD"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737345",
+            "label": "classE",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classE"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737346",
+            "label": "classF",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classF"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737347",
+            "label": "classG",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classG"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737348",
+            "label": "classH",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classH"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737349",
+            "label": "classI",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classI"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734a",
+            "label": "classJ",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classJ"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734b",
+            "label": "classK",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classK"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734c",
+            "label": "classL",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classL"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734d",
+            "label": "classM",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classM"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734e",
+            "label": "classN",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classN"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734f",
+            "label": "classO",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classO"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737350",
+            "label": "classP",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classP"
+              ]
+            ],
+            "rows": []
+          }
+        ],
+        "relations": [
+          {
+            "source": "class:416e696d616c",
+            "target": "class:4475636b",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 0,
+            "source_text": "*",
+            "target_text": "1"
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:46697368",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 1,
+            "source_text": "1",
+            "target_text": "10"
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:5a65627261",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 2,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 3,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "label": "",
+            "start": "filled_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "order": 4,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "label": "",
+            "start": "open_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "order": 5,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "label": "",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "solid",
+            "order": 6,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "label": "",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "order": 7,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "label": "",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 8,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 9,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "label": "",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 10,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "label": "Inheritance",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "solid",
+            "order": 11,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "label": "Composition",
+            "start": "none",
+            "end": "filled_diamond",
+            "stroke": "solid",
+            "order": 12,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "label": "Aggregation",
+            "start": "none",
+            "end": "open_diamond",
+            "stroke": "solid",
+            "order": 13,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "label": "Association",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "order": 14,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "label": "Link(Solid)",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "order": 15,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "label": "Dependency",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "dotted",
+            "order": 16,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "label": "Realization",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "dotted",
+            "order": 17,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "label": "Link(Dashed)",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 18,
+            "source_text": null,
+            "target_text": null
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "class_graph_model_candidate_canonical_sha256": "6e09a7e5fd950b894a383d166a00461e34722f2886e4d4d2638ef7d50e9288c4",
+      "source_owned_semantics": {
+        "frontmatter_description_raw": "description: >-\n  Class diagram covering\n  inheritance/composition/aggregation/association/link/dependency/realization\n  relationship types plus member annotations, with an accTitle/accDescr pair,\n  rendered under the \"default\" theme via an in-body %%{init}%% directive.",
+        "init_directive_raw": "%%{init: { 'logLevel': 0, 'theme': 'default'} }%%",
+        "processed_config": {
+          "logLevel": 0,
+          "theme": "default"
+        },
+        "theme_token": "default",
+        "acc_title": "This is a title",
+        "acc_description": "This is a description",
+        "acc_title_and_description_are_in_class_graph_model": false,
+        "terminal_accessibility_contract": "unresolved; copied from original Class285 debts",
+        "theme_color_contract": "unverified; Class285 geometry compares glyph cells, not color/style cells"
+      },
+      "original_unresolved_terminal_obligations": [
+        {
+          "detail": "Nonempty getAccTitle is preserved; no equivalent terminal/API/ARIA contract is newly approved.",
+          "kind": "accessibility_terminal_contract",
+          "primary_pointers": [
+            "/success_point_snapshot/graph/nodes/189"
+          ]
+        },
+        {
+          "detail": "Nonempty getAccDescription is preserved; no equivalent terminal/API/ARIA contract is newly approved.",
+          "kind": "accessibility_terminal_contract",
+          "primary_pointers": [
+            "/success_point_snapshot/graph/nodes/189"
+          ]
+        }
+      ],
+      "native_disposition": "proposal_only_not_admitted"
+    },
+    {
+      "application_ordinal": 271,
+      "manifest_global_ordinal": 419,
+      "fixture": "class-diagram/visual-check/forest-theme.mmd",
+      "source": "---\ndescription: >-\n  Class diagram covering\n  inheritance/composition/aggregation/association/link/dependency/realization\n  relationship types plus member annotations, with an accTitle/accDescr pair,\n  rendered under the \"forest\" theme via an in-body %%{init}%% directive.\n---\n%%{init: { 'logLevel': 0, 'theme': 'forest'} }%%\nclassDiagram\n  accTitle: This is a title\n  accDescr: This is a description\n\n  Animal \"*\" <|-- \"1\" Duck\n  Animal \"1\" <|-- \"10\" Fish\n  Animal <|-- Zebra\n  Animal : +int age\n  Animal : +String gender\n  Animal: +isMammal()\n  Animal: +mate()\n  class Duck{\n    +String beakColor\n    +swim()\n    +quack()\n  }\n  class Fish{\n    -int sizeInFeet\n    -canEat()\n  }\n  class Zebra{\n    +bool is_wild\n    +run()\n  }\nclassA <|-- classB\nclassC *-- classD\nclassE o-- classF\nclassG <-- classH\nclassI -- classJ\nclassK <.. classL\nclassM <|.. classN\nclassO .. classP\nclassA --|> classB : Inheritance\nclassC --* classD : Composition\nclassE --o classF : Aggregation\nclassG --> classH : Association\nclassI -- classJ : Link(Solid)\nclassK ..> classL : Dependency\nclassM ..|> classN : Realization\nclassO .. classP : Link(Dashed)\n",
+      "source_utf8_bytes": 1129,
+      "source_sha256": "abac4c611f8dc5170a164b7662ff37e167297552f13bc5b14d83c151cd5e45d5",
+      "source_git_blob": "beefb46adc22d58d0b383dd90a89a32faa89526a",
+      "official_candidate_row_canonical_bytes": 8153,
+      "official_candidate_row_canonical_sha256": "c812f16ee72cf334e34c04eb0e77f77a88042d894ebce9559e3b1b618c3c76dc",
+      "source_mapping_disposition": "whole_Model_sha256_null; source mapping review pending",
+      "class_graph_model_candidate": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:416e696d616c",
+            "label": "Animal",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Animal"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+int age"
+                ]
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String gender"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+isMammal()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+mate()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:4475636b",
+            "label": "Duck",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Duck"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String beakColor"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+swim()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+quack()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:46697368",
+            "label": "Fish",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Fish"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "-int sizeInFeet"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "-canEat()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:5a65627261",
+            "label": "Zebra",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Zebra"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+bool is_wild"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+run()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:636c61737341",
+            "label": "classA",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classA"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737342",
+            "label": "classB",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classB"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737343",
+            "label": "classC",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classC"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737344",
+            "label": "classD",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classD"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737345",
+            "label": "classE",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classE"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737346",
+            "label": "classF",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classF"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737347",
+            "label": "classG",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classG"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737348",
+            "label": "classH",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classH"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737349",
+            "label": "classI",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classI"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734a",
+            "label": "classJ",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classJ"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734b",
+            "label": "classK",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classK"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734c",
+            "label": "classL",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classL"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734d",
+            "label": "classM",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classM"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734e",
+            "label": "classN",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classN"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734f",
+            "label": "classO",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classO"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737350",
+            "label": "classP",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classP"
+              ]
+            ],
+            "rows": []
+          }
+        ],
+        "relations": [
+          {
+            "source": "class:416e696d616c",
+            "target": "class:4475636b",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 0,
+            "source_text": "*",
+            "target_text": "1"
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:46697368",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 1,
+            "source_text": "1",
+            "target_text": "10"
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:5a65627261",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 2,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 3,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "label": "",
+            "start": "filled_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "order": 4,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "label": "",
+            "start": "open_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "order": 5,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "label": "",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "solid",
+            "order": 6,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "label": "",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "order": 7,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "label": "",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 8,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 9,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "label": "",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 10,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "label": "Inheritance",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "solid",
+            "order": 11,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "label": "Composition",
+            "start": "none",
+            "end": "filled_diamond",
+            "stroke": "solid",
+            "order": 12,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "label": "Aggregation",
+            "start": "none",
+            "end": "open_diamond",
+            "stroke": "solid",
+            "order": 13,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "label": "Association",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "order": 14,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "label": "Link(Solid)",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "order": 15,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "label": "Dependency",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "dotted",
+            "order": 16,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "label": "Realization",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "dotted",
+            "order": 17,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "label": "Link(Dashed)",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 18,
+            "source_text": null,
+            "target_text": null
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "class_graph_model_candidate_canonical_sha256": "6e09a7e5fd950b894a383d166a00461e34722f2886e4d4d2638ef7d50e9288c4",
+      "source_owned_semantics": {
+        "frontmatter_description_raw": "description: >-\n  Class diagram covering\n  inheritance/composition/aggregation/association/link/dependency/realization\n  relationship types plus member annotations, with an accTitle/accDescr pair,\n  rendered under the \"forest\" theme via an in-body %%{init}%% directive.",
+        "init_directive_raw": "%%{init: { 'logLevel': 0, 'theme': 'forest'} }%%",
+        "processed_config": {
+          "logLevel": 0,
+          "theme": "forest"
+        },
+        "theme_token": "forest",
+        "acc_title": "This is a title",
+        "acc_description": "This is a description",
+        "acc_title_and_description_are_in_class_graph_model": false,
+        "terminal_accessibility_contract": "unresolved; copied from original Class285 debts",
+        "theme_color_contract": "unverified; Class285 geometry compares glyph cells, not color/style cells"
+      },
+      "original_unresolved_terminal_obligations": [
+        {
+          "detail": "Nonempty getAccTitle is preserved; no equivalent terminal/API/ARIA contract is newly approved.",
+          "kind": "accessibility_terminal_contract",
+          "primary_pointers": [
+            "/success_point_snapshot/graph/nodes/189"
+          ]
+        },
+        {
+          "detail": "Nonempty getAccDescription is preserved; no equivalent terminal/API/ARIA contract is newly approved.",
+          "kind": "accessibility_terminal_contract",
+          "primary_pointers": [
+            "/success_point_snapshot/graph/nodes/189"
+          ]
+        }
+      ],
+      "native_disposition": "proposal_only_not_admitted"
+    },
+    {
+      "application_ordinal": 284,
+      "manifest_global_ordinal": 432,
+      "fixture": "class-diagram/visual-check/neutral-theme.mmd",
+      "source": "---\ndescription: >-\n  Class diagram covering\n  inheritance/composition/aggregation/association/link/dependency/realization\n  relationship types plus member annotations, with an accTitle/accDescr pair,\n  rendered under the \"neutral\" theme via an in-body %%{init}%% directive.\n---\n%%{init: { 'logLevel': 0, 'theme': 'neutral'} }%%\nclassDiagram\n  accTitle: This is a title\n  accDescr: This is a description\n\n  Animal \"*\" <|-- \"1\" Duck\n  Animal \"1\" <|-- \"10\" Fish\n  Animal <|-- Zebra\n  Animal : +int age\n  Animal : +String gender\n  Animal: +isMammal()\n  Animal: +mate()\n  class Duck{\n    +String beakColor\n    +swim()\n    +quack()\n  }\n  class Fish{\n    -int sizeInFeet\n    -canEat()\n  }\n  class Zebra{\n    +bool is_wild\n    +run()\n  }\nclassA <|-- classB\nclassC *-- classD\nclassE o-- classF\nclassG <-- classH\nclassI -- classJ\nclassK <.. classL\nclassM <|.. classN\nclassO .. classP\nclassA --|> classB : Inheritance\nclassC --* classD : Composition\nclassE --o classF : Aggregation\nclassG --> classH : Association\nclassI -- classJ : Link(Solid)\nclassK ..> classL : Dependency\nclassM ..|> classN : Realization\nclassO .. classP : Link(Dashed)\n",
+      "source_utf8_bytes": 1131,
+      "source_sha256": "daa2d2b04208bde399fdc53975c887a328311e98095dbdf169e51d51ee8cb60f",
+      "source_git_blob": "f81102895b4cc6b13a9621809d272d9d7fc3c5c7",
+      "official_candidate_row_canonical_bytes": 8160,
+      "official_candidate_row_canonical_sha256": "4fc6182044ceba07a36d05419f4d8ac863beb85ddd6572d0b0908177f9315ec7",
+      "source_mapping_disposition": "whole_Model_sha256_null; source mapping review pending",
+      "class_graph_model_candidate": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:416e696d616c",
+            "label": "Animal",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Animal"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+int age"
+                ]
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String gender"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+isMammal()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+mate()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:4475636b",
+            "label": "Duck",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Duck"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String beakColor"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+swim()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+quack()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:46697368",
+            "label": "Fish",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Fish"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "-int sizeInFeet"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "-canEat()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:5a65627261",
+            "label": "Zebra",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Zebra"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+bool is_wild"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+run()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:636c61737341",
+            "label": "classA",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classA"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737342",
+            "label": "classB",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classB"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737343",
+            "label": "classC",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classC"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737344",
+            "label": "classD",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classD"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737345",
+            "label": "classE",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classE"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737346",
+            "label": "classF",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classF"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737347",
+            "label": "classG",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classG"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737348",
+            "label": "classH",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classH"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737349",
+            "label": "classI",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classI"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734a",
+            "label": "classJ",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classJ"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734b",
+            "label": "classK",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classK"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734c",
+            "label": "classL",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classL"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734d",
+            "label": "classM",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classM"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734e",
+            "label": "classN",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classN"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734f",
+            "label": "classO",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classO"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737350",
+            "label": "classP",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classP"
+              ]
+            ],
+            "rows": []
+          }
+        ],
+        "relations": [
+          {
+            "source": "class:416e696d616c",
+            "target": "class:4475636b",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 0,
+            "source_text": "*",
+            "target_text": "1"
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:46697368",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 1,
+            "source_text": "1",
+            "target_text": "10"
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:5a65627261",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 2,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "order": 3,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "label": "",
+            "start": "filled_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "order": 4,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "label": "",
+            "start": "open_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "order": 5,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "label": "",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "solid",
+            "order": 6,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "label": "",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "order": 7,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "label": "",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 8,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "label": "",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 9,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "label": "",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 10,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "label": "Inheritance",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "solid",
+            "order": 11,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "label": "Composition",
+            "start": "none",
+            "end": "filled_diamond",
+            "stroke": "solid",
+            "order": 12,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "label": "Aggregation",
+            "start": "none",
+            "end": "open_diamond",
+            "stroke": "solid",
+            "order": 13,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "label": "Association",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "order": 14,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "label": "Link(Solid)",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "order": 15,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "label": "Dependency",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "dotted",
+            "order": 16,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "label": "Realization",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "dotted",
+            "order": 17,
+            "source_text": null,
+            "target_text": null
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "label": "Link(Dashed)",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "order": 18,
+            "source_text": null,
+            "target_text": null
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "class_graph_model_candidate_canonical_sha256": "6e09a7e5fd950b894a383d166a00461e34722f2886e4d4d2638ef7d50e9288c4",
+      "source_owned_semantics": {
+        "frontmatter_description_raw": "description: >-\n  Class diagram covering\n  inheritance/composition/aggregation/association/link/dependency/realization\n  relationship types plus member annotations, with an accTitle/accDescr pair,\n  rendered under the \"neutral\" theme via an in-body %%{init}%% directive.",
+        "init_directive_raw": "%%{init: { 'logLevel': 0, 'theme': 'neutral'} }%%",
+        "processed_config": {
+          "logLevel": 0,
+          "theme": "neutral"
+        },
+        "theme_token": "neutral",
+        "acc_title": "This is a title",
+        "acc_description": "This is a description",
+        "acc_title_and_description_are_in_class_graph_model": false,
+        "terminal_accessibility_contract": "unresolved; copied from original Class285 debts",
+        "theme_color_contract": "unverified; Class285 geometry compares glyph cells, not color/style cells"
+      },
+      "original_unresolved_terminal_obligations": [
+        {
+          "detail": "Nonempty getAccTitle is preserved; no equivalent terminal/API/ARIA contract is newly approved.",
+          "kind": "accessibility_terminal_contract",
+          "primary_pointers": [
+            "/success_point_snapshot/graph/nodes/189"
+          ]
+        },
+        {
+          "detail": "Nonempty getAccDescription is preserved; no equivalent terminal/API/ARIA contract is newly approved.",
+          "kind": "accessibility_terminal_contract",
+          "primary_pointers": [
+            "/success_point_snapshot/graph/nodes/189"
+          ]
+        }
+      ],
+      "native_disposition": "proposal_only_not_admitted"
+    }
+  ]
+}

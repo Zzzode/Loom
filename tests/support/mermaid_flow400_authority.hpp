@@ -109,10 +109,14 @@ inline void flow400_shape(JsonVal value,std::size_t& groups,std::size_t& members
         flow400_require(pair.is_arr() && pair.size()==2u,"Flow400 protocol node tuple"); const auto node=pair.at(1);
         flow400_keys(node,{"id","label","shape"});
         const auto shape=flow400_text(node.get("shape"));
-        const bool typed_closed=shape=="rectangle" || shape=="rounded" || shape=="diamond";
+        const bool typed_closed=shape=="rectangle" || shape=="rounded" || shape=="diamond" ||
+            shape=="stadium" || shape=="cylinder" || shape=="subroutine" || shape=="hexagon" ||
+            shape=="parallelogram" || shape=="parallelogram_alt" || shape=="trapezoid" ||
+            shape=="trapezoid_alt" || shape=="double_circle" || shape=="triangle" || shape=="delay" ||
+            shape=="small_circle" || shape=="fork_join";
         const bool classic_closed=shape=="stadium" || shape=="circle" || shape=="subroutine" ||
             shape=="double_circle" || shape=="hexagon" || shape=="cylinder" || shape=="asymmetric" ||
-            shape=="trapezoid" || shape=="trapezoid_alt" || shape=="parallelogram" || shape=="parallelogram_alt";
+            shape=="trapezoid" || shape=="trapezoid_alt" || shape=="parallelogram" || shape=="parallelogram_alt" || shape=="triangle";
         const bool allowed=classic_shapes ? (typed_closed || classic_closed) : (typed_shapes ? typed_closed : shape=="rectangle");
         flow400_require(flow400_text(pair.at(0))==flow400_text(node.get("id")) && !flow400_text(node.get("id")).empty() &&
             !flow400_text(node.get("label")).empty() && allowed,
@@ -124,7 +128,9 @@ inline void flow400_shape(JsonVal value,std::size_t& groups,std::size_t& members
         static_cast<void>(flow400_text(edge.get("label"))); const auto style=flow400_text(edge.get("style"));
         flow400_require(style=="solid" || style=="dotted" || style=="thick","Flow400 protocol edge style");
         flow400_require(edge.get("hasArrowStart").is_bool() && !edge.get("hasArrowStart").as_bool() &&
-            edge.get("hasArrowEnd").is_bool() && edge.get("hasArrowEnd").as_bool(),"Flow400 protocol unsupported marker profile");
+            edge.get("hasArrowEnd").is_bool() &&
+            (edge.get("hasArrowEnd").as_bool() || (flow400_text(edge.get("label")).empty() && style=="solid")),
+            "Flow400 protocol unsupported marker profile");
     });
     auto walk=[&](auto&& self,JsonVal array,std::size_t depth)->void {
         flow400_require(array.is_arr() && depth<=64u,"Flow400 protocol group depth");
@@ -157,6 +163,57 @@ inline std::optional<Model> flow400_model(JsonVal row,OracleWork& work) {
     work.product(8u*n+8u,sizeof(Node)+8u);work.product(8u*e+8u,sizeof(Edge)+8u);work.product(8u*groups+8u,sizeof(Group)+8u);
     work.product((2u*e+members)*n,2u*M+8u);
     return parse_model(value);
+}
+
+// Source-bound complete Model for official Flowchart ordinal 357. This case
+// deliberately exercises one unlabeled, solid, arrowless edge between nested
+// and root-level nodes; no other arrowless edge profile is implied.
+inline constexpr std::size_t kFlow400Issue4648Ordinal = 357u;
+inline constexpr std::size_t kFlow400Issue4648GlobalOrdinal = 1018u;
+inline constexpr std::string_view kFlow400Issue4648Fixture =
+    "flowchart/visual-check/issue-4648-nested-subgraph-with-external-connection.mmd";
+inline constexpr std::string_view kFlow400Issue4648SourceSha =
+    "403c54cf5f29cc7de0886f4ac363fd8c3229bc3d0d4539023f1a9a15a9a560a8";
+inline constexpr std::string_view kFlow400Issue4648GitBlob = "2bfa9e0e828f284b9dea4e7eac7019e139b2fae6";
+inline constexpr std::string_view kFlow400Issue4648ModelJson =
+    R"MODEL({"direction":"TD","nodes":[["D1",{"id":"D1","label":"D1","shape":"rectangle"}],["D2",{"id":"D2","label":"D2","shape":"rectangle"}],["D3",{"id":"D3","label":"D3","shape":"rectangle"}],["E1",{"id":"E1","label":"E1","shape":"rectangle"}]],"edges":[{"source":"D1","target":"D2","label":"","style":"solid","hasArrowStart":false,"hasArrowEnd":true},{"source":"D2","target":"D3","label":"","style":"solid","hasArrowStart":false,"hasArrowEnd":true},{"source":"D3","target":"E1","label":"","style":"solid","hasArrowStart":false,"hasArrowEnd":false}],"subgraphs":[{"id":"Wrapper","label":"Wrapper","direction":"LR","nodeIds":[],"children":[{"id":"Inner","label":"Inner","direction":"","nodeIds":["D1","D2","D3"],"children":[]}]}]})MODEL";
+inline constexpr std::string_view kFlow400Issue4648ModelSha =
+    "bccc470587698a572a1880cef51d654deeececcabfe8dc26f9e0bd91d238574a";
+inline constexpr std::size_t kFlow400Issue4648FactsBytes = 4067u;
+inline constexpr std::string_view kFlow400Issue4648FactsSha =
+    "24cde42857356bf826a4147e1e96772d44cec62b4e5a54b52329363cc3aee710";
+
+inline void flow400_issue4648_bind(const Flow400Documents& docs,std::string_view source,OracleWork& work) {
+    const auto fixtures=docs.manifest.root().get("fixtures");
+    const auto row=docs.compact.root().get("cases").at(kFlow400Issue4648Ordinal);
+    std::size_t global=0u;bool found=false;
+    fixtures.iter([&](JsonVal fixture) {
+        work.spend(128u);const auto at=global++;
+        if(at!=kFlow400Issue4648GlobalOrdinal)return;
+        flow400_require(flow400_text(fixture.get("path"))==kFlow400Issue4648Fixture &&
+            flow400_text(row.get("fixture"))==kFlow400Issue4648Fixture &&
+            flow400_text(fixture.get("sha256"))==kFlow400Issue4648SourceSha &&
+            flow400_text(fixture.get("git_blob"))==kFlow400Issue4648GitBlob &&
+            flow400_number(fixture.get("bytes"))==529u && row.get("model_json").is_null(),
+            "Flow400 Issue4648 source authority tuple");
+        flow400_bind(row,fixture,kFlow400Issue4648Ordinal,kFlow400Issue4648GlobalOrdinal,source,work);
+        found=true;
+    });
+    flow400_require(global==2145u && found,"Flow400 Issue4648 source authority missing");
+}
+
+inline Model flow400_issue4648_model(OracleWork& work) {
+    const auto bytes=kFlow400Issue4648ModelJson;
+    work.product(bytes.size(),32u);work.spend(4u*sizeof(json::JsonDoc)+8192u);
+    flow400_require(digest(bytes)==kFlow400Issue4648ModelSha,"Flow400 Issue4648 Model identity");
+    auto document=json::parse(bytes);flow400_require(document.has_value(),"Flow400 Issue4648 Model JSON");
+    std::size_t groups=0u,members=0u;flow400_shape(document->root(),groups,members);
+    flow400_require(groups==2u && members==3u && document->root().get("nodes").size()==4u &&
+        document->root().get("edges").size()==3u,"Flow400 Issue4648 Model cardinality");
+    work.product(bytes.size(),32u);work.spend(4u*sizeof(Model));
+    work.product(4u,sizeof(Node)+16u);work.product(3u,sizeof(Edge)+16u);
+    work.product(2u,sizeof(Group)+16u);work.product(3u,4u*sizeof(int));
+    return parse_model(document->root());
 }
 
 // The typed-shape control asset binds complete Models directly.  It deliberately

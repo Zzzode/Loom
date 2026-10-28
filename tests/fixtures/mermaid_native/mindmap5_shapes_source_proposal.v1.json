@@ -1,0 +1,1387 @@
+{
+  "schema": "loom_mindmap5_shapes_source_proposal/v1",
+  "review_status": "source_design_reviewed_no_runtime_admission",
+  "qualification": "Independent complete raw-source Models for five frozen originals, derived without Loom production output. agent:Galileo approved the five-source facts and bounded Shapes4 source/design/PRR; Bang/Cloud terminal projection remains unreviewed. No runtime, Native/Official drawing or upstream option credit.",
+  "complete_originals": 5,
+  "nodes": 8,
+  "parent_relations": 3,
+  "coverage_credit": 0,
+  "model_contract": {
+    "identity": "Zero-based source-order ordinal; parent=-1 denotes root. Preserve distinct nodes even when authored_id repeats. Never key topology by authored_id.",
+    "authored_id": "Explicit ID before a delimiter; null for a bare caption by existing10 convention. Upstream nodeId still equals bare text for such nodes; source_witnesses records that separately.",
+    "caption": "Exact raw grammar description before sanitizeText, including newline and indentation. Not an asserted sanitized DB label or visible caption.",
+    "shape": "Source grammar family: default/square/rounded/circle/cloud/bang. The glossary records numeric type and upstream render-model spelling separately; none approves terminal glyphs.",
+    "completeness": "Every node declaration and every indentation-derived parent relation in each complete original is listed; blank lines and description-only frontmatter are not nodes."
+  },
+  "manifest_provenance": {
+    "path": "tests/fixtures/mermaid_official/manifest.json",
+    "sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+    "upstream": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "tag": "mermaid@12.2.0",
+      "tag_object": "ee1fdbcebe057cae346232efb6df066215565bec",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "tree": "58f6617da68d7f2b8a58161175db5db5a971cd82",
+      "root": "e2e/diagrams",
+      "license_sha256": "ec9fb67dcb25eccc416ed56e1aab819222c805a2a4bfe4cb19e7556bf2ffde80"
+    },
+    "ordinal_base": 0,
+    "record_hash_encoding": "Canonical JSON encoding below; hash the entire unchanged fixture record including raw fallback witness."
+  },
+  "schema_convention": {
+    "path": "tests/fixtures/mermaid_native/mindmap10_complete_source_proposal.v1.json",
+    "use": "Field names, source-order ordinal, root parent=-1, explicit authored_id/null convention and canonical model hash encoding only. Existing10 facts and projection are neither modified nor inherited."
+  },
+  "source_lock_sha256": "0d2c09d4c4091f26ac0d18f5ef86e54ae26bc5367efc05bf19d49bcb04d97091",
+  "source_lock_encoding": "Sort by UTF-8 path relative to cases/mindmap/ (strip mindmap/); concatenate path, NUL, lowercase SHA-256 hex ASCII, LF; hash all bytes.",
+  "canonical_json_encoding": "UTF-8 JSON; object keys sorted; compact comma/colon separators; Unicode unescaped; no terminal newline. Applies to model, witness, obligation, manifest-record and basis hashes.",
+  "source_semantics_basis": {
+    "review_status": "source_reviewed_no_sanitizer_or_visible_text_claim",
+    "mermaid_upstream": {
+      "repository": "https://github.com/mermaid-js/mermaid",
+      "tag": "mermaid@12.2.0",
+      "tag_object": "ee1fdbcebe057cae346232efb6df066215565bec",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "tree": "58f6617da68d7f2b8a58161175db5db5a971cd82",
+      "root": "e2e/diagrams",
+      "license_sha256": "ec9fb67dcb25eccc416ed56e1aab819222c805a2a4bfe4cb19e7556bf2ffde80"
+    },
+    "merman_upstream": {
+      "repository": "https://github.com/Latias94/merman",
+      "tag": "v0.9.1",
+      "commit": "f6202f702dbde0a75049b1a62b3124feae709b3d",
+      "manifest_path": "tests/fixtures/mermaid_terminal/merman/manifest.json",
+      "manifest_sha256": "3a02949b22f7b61e292c878cd1b57b00ffe3dcb879a64b7f0d26c3cf49cc5d59"
+    },
+    "evidence": [
+      {
+        "id": "mermaid_grammar",
+        "repository": "https://github.com/mermaid-js/mermaid",
+        "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+        "path": "packages/mermaid/src/diagrams/mindmap/parser/mindmap.jison",
+        "url": "https://github.com/mermaid-js/mermaid/blob/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/diagrams/mindmap/parser/mindmap.jison",
+        "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/diagrams/mindmap/parser/mindmap.jison",
+        "sha256": "1114fbccc641f2ad59a56eec452e21dfb947d78283adf571a6ce24b09dce6993",
+        "git_blob": "afd5e2300d5f9dbaf6bc809165e42a59f5d69a2c",
+        "bytes": 4739,
+        "line_witnesses": [
+          {
+            "line_start": 45,
+            "line_end": 60,
+            "text": "<NODE>[\"][`]          { this.begin(\"NSTR2\");}\n<NSTR2>[^`\"]+        { return \"NODE_DESCR\";}\n<NSTR2>[`][\"]          { this.popState();}\n<NODE>[\"]          { yy.getLogger().trace('Starting NSTR');this.begin(\"NSTR\");}\n<NSTR>[^\"]+        { yy.getLogger().trace('description:', yytext); return \"NODE_DESCR\";}\n<NSTR>[\"]          {this.popState();}\n<NODE>[\\)]\\)         {this.popState();yy.getLogger().trace('node end ))');return \"NODE_DEND\";}\n<NODE>[\\)]         {this.popState();yy.getLogger().trace('node end )');return \"NODE_DEND\";}\n<NODE>[\\]]         {this.popState();yy.getLogger().trace('node end ...',yytext);return \"NODE_DEND\";}\n<NODE>\"}}\"         {this.popState();yy.getLogger().trace('node end ((');return \"NODE_DEND\";}\n<NODE>\"(-\"         {this.popState();yy.getLogger().trace('node end (-');return \"NODE_DEND\";}\n<NODE>\"-)\"         {this.popState();yy.getLogger().trace('node end (-');return \"NODE_DEND\";}\n<NODE>\"((\"         {this.popState();yy.getLogger().trace('node end ((');return \"NODE_DEND\";}\n<NODE>\"(\"          {this.popState();yy.getLogger().trace('node end ((');return \"NODE_DEND\";}\n<NODE>[^\\)\\]\\(\\}]+     { yy.getLogger().trace('Long description:', yytext);   return 'NODE_DESCR';}\n<NODE>.+(?!\\(\\()     { yy.getLogger().trace('Long description:', yytext);   return 'NODE_DESCR';}\n",
+            "sha256": "310c10fd0d46e2ed6d265c89af697c36cb9b292b42fdb98229a6797f275cd9e1"
+          },
+          {
+            "line_start": 103,
+            "line_end": 126,
+            "text": "  | SPACELINE { yy.getLogger().trace('SPACELIST');}\n\t| node\t\t\t\t\t       { yy.getLogger().trace('Node: ',$1.id);yy.addNode(0, $1.id, $1.descr, $1.type);  }\n\t| ICON                 { yy.decorateNode({icon: $1}); }\n\t| CLASS                { yy.decorateNode({class: $1}); }\n  | SPACELIST\n\t;\n\n\n\nnode\n  :nodeWithId\n  |nodeWithoutId\n  ;\n\nnodeWithoutId\n  :   NODE_DSTART NODE_DESCR NODE_DEND\n\t      { yy.getLogger().trace(\"node found ..\", $1); $$ = { id: $2, descr: $2, type: yy.getType($1, $3) }; }\n  ;\n\nnodeWithId\n\t:  NODE_ID             { $$ = { id: $1, descr: $1, type: yy.nodeType.DEFAULT }; }\n\t|  NODE_ID NODE_DSTART NODE_DESCR NODE_DEND\n\t                       { yy.getLogger().trace(\"node found ..\", $1); $$ = { id: $1, descr: $3, type: yy.getType($2, $4) }; }\n\t;\n",
+            "sha256": "4193f041f0c763e56a668b769910c7739a63c637810ddcdacf61d1fff226cebb"
+          }
+        ]
+      },
+      {
+        "id": "mermaid_db",
+        "repository": "https://github.com/mermaid-js/mermaid",
+        "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+        "path": "packages/mermaid/src/diagrams/mindmap/mindmapDb.ts",
+        "url": "https://github.com/mermaid-js/mermaid/blob/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/diagrams/mindmap/mindmapDb.ts",
+        "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/diagrams/mindmap/mindmapDb.ts",
+        "sha256": "ced0dcad082a2cd50d8a74908687dd85de0fda074189d7c45024df01f24b48fb",
+        "git_blob": "dfc80f98019f5d4497e18eedd9b866ed8ff25315",
+        "bytes": 12385,
+        "line_witnesses": [
+          {
+            "line_start": 26,
+            "line_end": 35,
+            "text": "const nodeType = {\n  DEFAULT: 0,\n  NO_BORDER: 0,\n  ROUNDED_RECT: 1,\n  RECT: 2,\n  CIRCLE: 3,\n  CLOUD: 4,\n  BANG: 5,\n  HEXAGON: 6,\n} as const;\n",
+            "sha256": "ffbf32e4acaccab1a3615e756dc17365d8ae5cf573b62371a671a8de1f4b2be5"
+          },
+          {
+            "line_start": 75,
+            "line_end": 88,
+            "text": "  public addNode(level: number, id: string, descr: string, type: number): void {\n    log.info('addNode', level, id, descr, type);\n\n    let isRoot = false;\n\n    if (this.nodes.length === 0) {\n      this.baseLevel = level;\n      level = 0;\n      isRoot = true;\n    } else if (this.baseLevel !== undefined) {\n      level = level - this.baseLevel;\n      isRoot = false;\n    }\n\n",
+            "sha256": "fc00602750d38e0db365df75199d63b2058ba9f250279b0d1dbc7d6f861fb850"
+          },
+          {
+            "line_start": 100,
+            "line_end": 145,
+            "text": "    const node: MindmapNode = {\n      id: this.count++,\n      nodeId: sanitizeText(id, conf),\n      level,\n      descr: sanitizeText(descr, conf),\n      type,\n      children: [],\n      width: conf.mindmap?.maxNodeWidth ?? defaultConfig.mindmap.maxNodeWidth,\n      padding,\n      isRoot,\n    };\n\n    const parent = this.getParent(level);\n    if (parent) {\n      parent.children.push(node);\n      this.nodes.push(node);\n    } else {\n      if (isRoot) {\n        this.nodes.push(node);\n      } else {\n        throw new Error(\n          `There can be only one root. No parent could be found for (\"${node.descr}\")`\n        );\n      }\n    }\n  }\n\n  public getType(startStr: string, endStr: string) {\n    log.debug('In get type', startStr, endStr);\n    switch (startStr) {\n      case '[':\n        return this.nodeType.RECT;\n      case '(':\n        return endStr === ')' ? this.nodeType.ROUNDED_RECT : this.nodeType.CLOUD;\n      case '((':\n        return this.nodeType.CIRCLE;\n      case ')':\n        return this.nodeType.CLOUD;\n      case '))':\n        return this.nodeType.BANG;\n      case '{{':\n        return this.nodeType.HEXAGON;\n      default:\n        return this.nodeType.DEFAULT;\n    }\n  }\n",
+            "sha256": "e08d59c26718a44d26ea9d7491eaa515e29b99f1d7082c18949939b8eded1a2c"
+          },
+          {
+            "line_start": 245,
+            "line_end": 276,
+            "text": "    // Map mindmap node type to valid shape name\n    const getShapeFromType = (type: number) => {\n      const theme = conf.theme?.toLowerCase() ?? '';\n      const isReduxTheme = theme.includes('redux');\n      switch (type) {\n        case nodeType.CIRCLE:\n          return 'mindmapCircle';\n        case nodeType.RECT:\n          return 'rect';\n        case nodeType.ROUNDED_RECT:\n          return 'rounded';\n        case nodeType.CLOUD:\n          return 'cloud';\n        case nodeType.BANG:\n          return 'bang';\n        case nodeType.HEXAGON:\n          return 'hexagon';\n        case nodeType.DEFAULT:\n          return isReduxTheme ? 'rounded' : 'defaultMindmapNode';\n        case nodeType.NO_BORDER:\n        default:\n          return 'rect';\n      }\n    };\n\n    const processedNode: MindmapLayoutNode = {\n      id: node.id.toString(),\n      domId: 'node_' + node.id.toString(),\n      label: node.descr,\n      labelType: 'markdown',\n      isGroup: false,\n      shape: getShapeFromType(node.type),\n",
+            "sha256": "48b8b00389f571406642b722ed34bf31ee0792c124a2cad5eff3b8447d3d1f77"
+          },
+          {
+            "line_start": 285,
+            "line_end": 293,
+            "text": "      look: conf.look,\n      icon: node.icon,\n      x: node.x,\n      y: node.y,\n      // Mindmap-specific properties\n      level: node.level,\n      nodeId: node.nodeId,\n      type: node.type,\n      section: node.section,\n",
+            "sha256": "02add1d559d7988456ac19e0df53635ad94e073aca217a2aa16b350e41c07d47"
+          }
+        ]
+      },
+      {
+        "id": "merman_mod",
+        "repository": "https://github.com/Latias94/merman",
+        "commit": "f6202f702dbde0a75049b1a62b3124feae709b3d",
+        "path": "crates/merman-core/src/diagrams/mindmap/mod.rs",
+        "url": "https://github.com/Latias94/merman/blob/f6202f702dbde0a75049b1a62b3124feae709b3d/crates/merman-core/src/diagrams/mindmap/mod.rs",
+        "raw_url": "https://raw.githubusercontent.com/Latias94/merman/f6202f702dbde0a75049b1a62b3124feae709b3d/crates/merman-core/src/diagrams/mindmap/mod.rs",
+        "sha256": "522463c6f85087ff8a319470f0730191acf28bc6d3fcc2a4ec9863add150570b",
+        "git_blob": "15e33cffe03dde7cbffa6e16c48b91ed27f3585c",
+        "bytes": 854,
+        "line_witnesses": [
+          {
+            "line_start": 24,
+            "line_end": 30,
+            "text": "const NODE_TYPE_DEFAULT: i32 = 0;\nconst NODE_TYPE_ROUNDED_RECT: i32 = 1;\nconst NODE_TYPE_RECT: i32 = 2;\nconst NODE_TYPE_CIRCLE: i32 = 3;\nconst NODE_TYPE_CLOUD: i32 = 4;\nconst NODE_TYPE_BANG: i32 = 5;\nconst NODE_TYPE_HEXAGON: i32 = 6;\n",
+            "sha256": "1f6e71c5aef91c143e7d45b97b42a279608e0b7fa4816cebe0fea8c64e95b511"
+          }
+        ],
+        "local_reference": "build/mermaid-renderer-research-20261019/merman-observer-execution/crates/merman-core/src/diagrams/mindmap/mod.rs"
+      },
+      {
+        "id": "merman_utils",
+        "repository": "https://github.com/Latias94/merman",
+        "commit": "f6202f702dbde0a75049b1a62b3124feae709b3d",
+        "path": "crates/merman-core/src/diagrams/mindmap/utils.rs",
+        "url": "https://github.com/Latias94/merman/blob/f6202f702dbde0a75049b1a62b3124feae709b3d/crates/merman-core/src/diagrams/mindmap/utils.rs",
+        "raw_url": "https://raw.githubusercontent.com/Latias94/merman/f6202f702dbde0a75049b1a62b3124feae709b3d/crates/merman-core/src/diagrams/mindmap/utils.rs",
+        "sha256": "600812cab23722d9b3589f7e5cd36b9de3711fd68c88a9dcdb26ca12eb5db4f5",
+        "git_blob": "3ffd5695ec59f63ae4b865234fc0f6332a9c148b",
+        "bytes": 11155,
+        "line_witnesses": [
+          {
+            "line_start": 94,
+            "line_end": 159,
+            "text": "\npub(super) fn parse_node_spec(input: &str) -> std::result::Result<NodeSpec, Box<NodeSpecError>> {\n    let input = input.trim_end();\n    if input.is_empty() {\n        return Err(node_spec_error(\"expected node\", None));\n    }\n\n    if let Some((start, end)) = node_delimiter_pair_at_start(input) {\n        let (inner, tail, _) = extract_delimited(input, start, end)\n            .map_err(|failure| node_spec_error(failure.message(), failure.continuation()))?;\n        let parsed_text = parse_node_text(inner, start.len());\n        let trace = NodeSpecTrace {\n            id_span: Some(parsed_text.content),\n            description_span: None,\n        };\n        if !tail.trim().is_empty() {\n            return Err(node_spec_error(\"unexpected trailing input\", None));\n        }\n        let ty = node_type_for(start, end);\n        return Ok(NodeSpec {\n            id_raw: parsed_text.value.clone(),\n            descr_raw: parsed_text.value,\n            ty,\n            descr_is_markdown: parsed_text.is_markdown,\n            trace,\n        });\n    }\n\n    let (id_raw, rest) = split_node_id(input);\n    let id_raw = id_raw.to_string();\n    let rest = rest.trim_end();\n    if rest.is_empty() {\n        let id_end = id_raw.trim_end().len();\n        return Ok(NodeSpec {\n            id_raw: id_raw.clone(),\n            descr_raw: id_raw,\n            ty: NODE_TYPE_DEFAULT,\n            descr_is_markdown: false,\n            trace: NodeSpecTrace {\n                id_span: Some(SourceSpan::new(0, id_end)),\n                ..NodeSpecTrace::default()\n            },\n        });\n    }\n\n    let Some((start, end)) = node_delimiter_pair_at_start(rest) else {\n        return Err(node_spec_error(\"expected node delimiter\", None));\n    };\n\n    let rest_start = input.len() - rest.len();\n    let (inner, tail, _) = extract_delimited(rest, start, end)\n        .map_err(|failure| node_spec_error(failure.message(), failure.continuation()))?;\n    let parsed_text = parse_node_text(inner, rest_start + start.len());\n    let trace = NodeSpecTrace {\n        id_span: Some(SourceSpan::new(0, input[..rest_start].trim_end().len())),\n        description_span: Some(parsed_text.content),\n    };\n    if !tail.trim().is_empty() {\n        return Err(node_spec_error(\"unexpected trailing input\", None));\n    }\n\n    let ty = node_type_for(start, end);\n    Ok(NodeSpec {\n        id_raw,\n        descr_raw: parsed_text.value,\n        ty,\n",
+            "sha256": "c61671259d3b9e20bcd2d38c4ecb18eeb2c97ef1a740d8e05a9922744b619e45"
+          },
+          {
+            "line_start": 197,
+            "line_end": 215,
+            "text": "        (\"(-\", \"-)\"),\n        (\"-)\", \"(-\"),\n        (\"((\", \"))\"),\n        (\"))\", \"((\"),\n        (\"{{\", \"}}\"),\n        (\"[\", \"]\"),\n        (\")\", \"(\"),\n        (\"(\", \")\"),\n    ];\n\n    for (start, end) in pairs {\n        if input.starts_with(start) {\n            return Some((*start, *end));\n        }\n    }\n    None\n}\n\nenum DelimitedScanFailure {\n",
+            "sha256": "779a198c76c9a5d15aa6be101fea09e44eaebb5f3964ecc0e177cef7e3a428e9"
+          },
+          {
+            "line_start": 335,
+            "line_end": 382,
+            "text": "    value: String,\n    content: SourceSpan,\n    is_markdown: bool,\n}\n\nfn parse_node_text(raw: &str, raw_start: usize) -> ParsedNodeText {\n    if let Some(inner) = raw.strip_prefix(\"\\\"`\").and_then(|s| s.strip_suffix(\"`\\\"\")) {\n        return ParsedNodeText {\n            value: inner.to_string(),\n            content: SourceSpan::new(raw_start + 2, raw_start + raw.len() - 2),\n            is_markdown: true,\n        };\n    }\n    if let Some(inner) = raw.strip_prefix('\\\"').and_then(|s| s.strip_suffix('\\\"')) {\n        return ParsedNodeText {\n            value: inner.to_string(),\n            content: SourceSpan::new(raw_start + 1, raw_start + raw.len() - 1),\n            is_markdown: false,\n        };\n    }\n    ParsedNodeText {\n        value: raw.to_string(),\n        content: SourceSpan::new(raw_start, raw_start + raw.len()),\n        is_markdown: false,\n    }\n}\n\nfn node_type_for(start: &str, end: &str) -> i32 {\n    match start {\n        \"[\" => NODE_TYPE_RECT,\n        \"(\" => {\n            if end == \")\" {\n                NODE_TYPE_ROUNDED_RECT\n            } else {\n                NODE_TYPE_CLOUD\n            }\n        }\n        \"((\" => NODE_TYPE_CIRCLE,\n        \")\" => NODE_TYPE_CLOUD,\n        \"))\" => NODE_TYPE_BANG,\n        \"{{\" => NODE_TYPE_HEXAGON,\n        _ => NODE_TYPE_DEFAULT,\n    }\n}\n\npub(super) fn get_i64(cfg: &MermaidConfig, dotted_path: &str) -> Option<i64> {\n    let mut cur = cfg.as_value();\n    for segment in dotted_path.split('.') {\n",
+            "sha256": "5880e6e4bfdf11eff7da63a57d4dd57c36895671e6511b48087f3b7997d5625d"
+          }
+        ],
+        "local_reference": "build/mermaid-renderer-research-20261019/merman-observer-execution/crates/merman-core/src/diagrams/mindmap/utils.rs"
+      },
+      {
+        "id": "merman_parse",
+        "repository": "https://github.com/Latias94/merman",
+        "commit": "f6202f702dbde0a75049b1a62b3124feae709b3d",
+        "path": "crates/merman-core/src/diagrams/mindmap/parse.rs",
+        "url": "https://github.com/Latias94/merman/blob/f6202f702dbde0a75049b1a62b3124feae709b3d/crates/merman-core/src/diagrams/mindmap/parse.rs",
+        "raw_url": "https://raw.githubusercontent.com/Latias94/merman/f6202f702dbde0a75049b1a62b3124feae709b3d/crates/merman-core/src/diagrams/mindmap/parse.rs",
+        "sha256": "a1efbe497e64ca6cedfb6b128304d2e591f4009c4fc2b94849ab641988f25a41",
+        "git_blob": "14ae91025ebb6cbf8c22efdceef8d293817c246b",
+        "bytes": 23169,
+        "line_witnesses": [
+          {
+            "line_start": 597,
+            "line_end": 622,
+            "text": "\n    if let Some(mut current) = pending.take() {\n        current.text.push('\\n');\n        current.text.push_str(physical_line);\n        match handle_mindmap_line(&current.text, current.start, parsed, first_error, meta) {\n            MindmapLineOutcome::Done => {}\n            MindmapLineOutcome::NeedMoreInput(syntax) => {\n                current.syntax = syntax;\n                *pending = Some(current);\n            }\n        }\n        return;\n    }\n\n    if let MindmapLineOutcome::NeedMoreInput(syntax) =\n        handle_mindmap_line(physical_line, line_start, parsed, first_error, meta)\n    {\n        *pending = Some(PendingMindmapLine {\n            text: physical_line.to_string(),\n            start: line_start,\n            syntax,\n        });\n    }\n}\n\nfn parse_mindmap_lines(\n",
+            "sha256": "959818654684a3db29417fba409b061f855b611d0f72d7a3c7eb08b450b7f671"
+          }
+        ],
+        "local_reference": "build/mermaid-renderer-research-20261019/merman-observer-execution/crates/merman-core/src/diagrams/mindmap/parse.rs"
+      },
+      {
+        "id": "merman_db",
+        "repository": "https://github.com/Latias94/merman",
+        "commit": "f6202f702dbde0a75049b1a62b3124feae709b3d",
+        "path": "crates/merman-core/src/diagrams/mindmap/db.rs",
+        "url": "https://github.com/Latias94/merman/blob/f6202f702dbde0a75049b1a62b3124feae709b3d/crates/merman-core/src/diagrams/mindmap/db.rs",
+        "raw_url": "https://raw.githubusercontent.com/Latias94/merman/f6202f702dbde0a75049b1a62b3124feae709b3d/crates/merman-core/src/diagrams/mindmap/db.rs",
+        "sha256": "0bcfdc1d7baf75945d33dc1c9141419d11cb3a5bc3d5742d8cfc0836227989e6",
+        "git_blob": "d6f2c98f6ce2a95ace0400797f60ad4a12eb57f5",
+        "bytes": 14959,
+        "line_witnesses": [
+          {
+            "line_start": 31,
+            "line_end": 53,
+            "text": "fn mindmap_default_shape(config: &MermaidConfig) -> &'static str {\n    let theme = config\n        .get_str(\"theme\")\n        .unwrap_or_default()\n        .to_ascii_lowercase();\n    if theme.contains(\"redux\") {\n        \"rounded\"\n    } else {\n        \"defaultMindmapNode\"\n    }\n}\n\nfn shape_from_type(ty: i32, default_shape: &'static str) -> &'static str {\n    match ty {\n        NODE_TYPE_CIRCLE => \"mindmapCircle\",\n        NODE_TYPE_RECT => \"rect\",\n        NODE_TYPE_ROUNDED_RECT => \"rounded\",\n        NODE_TYPE_CLOUD => \"cloud\",\n        NODE_TYPE_BANG => \"bang\",\n        NODE_TYPE_HEXAGON => \"hexagon\",\n        NODE_TYPE_DEFAULT => default_shape,\n        _ => \"rect\",\n    }\n",
+            "sha256": "b6a445d2dcf3b3bf5d10a7130f9626946f6c3324421d3b96273d8787ebd19ccd"
+          },
+          {
+            "line_start": 217,
+            "line_end": 238,
+            "text": "\n        let id = self.nodes.len() as i32;\n        control.checkpoint()?;\n        let node = MindmapNode {\n            id,\n            node_id: sanitize_text(input.id_raw, config),\n            level,\n            descr: if input.descr_is_markdown {\n                input.descr_raw.to_string()\n            } else {\n                sanitize_text(input.descr_raw, config)\n            },\n            ty: input.ty,\n            children: Vec::new(),\n            width,\n            padding,\n            section: None,\n            height: None,\n            class: None,\n            icon: None,\n            x: None,\n            y: None,\n",
+            "sha256": "55316a880fd47e507777ad1aad5eb974623b188d6bc851fe0eff8e82ce461c40"
+          },
+          {
+            "line_start": 240,
+            "line_end": 270,
+            "text": "        };\n\n        let mut popped = 0usize;\n        while self\n            .ancestry\n            .last()\n            .is_some_and(|(ancestor_level, _)| *ancestor_level >= level)\n        {\n            if popped.is_multiple_of(128) {\n                control.checkpoint()?;\n            }\n            self.ancestry.pop();\n            popped = popped.saturating_add(1);\n        }\n\n        if let Some((_, parent_idx)) = self.ancestry.last().copied() {\n            self.nodes[parent_idx].children.push(id);\n            self.nodes.push(node);\n            self.ancestry.push((level, id as usize));\n            control.checkpoint()?;\n            return Ok(Ok(()));\n        }\n\n        if is_root {\n            self.nodes.push(node);\n            self.ancestry.push((level, id as usize));\n            control.checkpoint()?;\n            return Ok(Ok(()));\n        }\n\n        Ok(Err(Error::diagram_parse_fallback(\n",
+            "sha256": "b0aac41ffe942d108c48ca5154d95cbfeca3fbc5938575fd746a23c1f3314cc7"
+          }
+        ],
+        "local_reference": "build/mermaid-renderer-research-20261019/merman-observer-execution/crates/merman-core/src/diagrams/mindmap/db.rs"
+      },
+      {
+        "id": "merman_render_model",
+        "repository": "https://github.com/Latias94/merman",
+        "commit": "f6202f702dbde0a75049b1a62b3124feae709b3d",
+        "path": "crates/merman-core/src/diagrams/mindmap/render_model.rs",
+        "url": "https://github.com/Latias94/merman/blob/f6202f702dbde0a75049b1a62b3124feae709b3d/crates/merman-core/src/diagrams/mindmap/render_model.rs",
+        "raw_url": "https://raw.githubusercontent.com/Latias94/merman/f6202f702dbde0a75049b1a62b3124feae709b3d/crates/merman-core/src/diagrams/mindmap/render_model.rs",
+        "sha256": "d6722b42c97dc6a28cf169a7da52da7b8f9c5cdf68dee0aa3773419f1de1ccf8",
+        "git_blob": "456d068fbcfd05d9f4a56e17d2340d7ef8308ca1",
+        "bytes": 15030,
+        "line_witnesses": [
+          {
+            "line_start": 10,
+            "line_end": 31,
+            "text": "#[derive(Debug, Clone, Serialize, Deserialize, Default)]\n#[serde(rename_all = \"camelCase\")]\npub struct MindmapDiagramRenderModel {\n    #[serde(default)]\n    pub nodes: Vec<MindmapDiagramRenderNode>,\n    #[serde(default)]\n    pub edges: Vec<MindmapDiagramRenderEdge>,\n}\n\n#[derive(Debug, Clone, Serialize, Deserialize)]\n#[serde(rename_all = \"camelCase\")]\npub struct MindmapDiagramRenderNode {\n    pub id: String,\n    #[serde(rename = \"domId\")]\n    pub dom_id: String,\n    pub label: String,\n    #[serde(default, rename = \"labelType\")]\n    pub label_type: String,\n    #[serde(default, rename = \"isGroup\")]\n    pub is_group: bool,\n    pub shape: String,\n    #[serde(default)]\n",
+            "sha256": "d895365857aabcfe2cd573f707f66df6566126b18edde89d0e1d7683011e8a3b"
+          },
+          {
+            "line_start": 47,
+            "line_end": 56,
+            "text": "    #[serde(default)]\n    pub y: Option<f64>,\n    #[serde(default)]\n    pub level: i64,\n    #[serde(default, rename = \"nodeId\")]\n    pub node_id: String,\n    #[serde(default, rename = \"type\")]\n    pub node_type: i32,\n    #[serde(default)]\n    pub section: Option<i32>,\n",
+            "sha256": "0d267290bbf6bfffc780036cb1ae91986a45efdd3f28e19b79f9a57fa123eb27"
+          }
+        ],
+        "local_reference": "build/mermaid-renderer-research-20261019/merman-observer-execution/crates/merman-core/src/diagrams/mindmap/render_model.rs"
+      }
+    ],
+    "findings": [
+      {
+        "id": "shape_type_truth",
+        "basis": [
+          "mermaid_db",
+          "merman_mod",
+          "merman_utils",
+          "merman_db"
+        ],
+        "conclusion": "Single (...) is ROUNDED_RECT=1, double ((...)) CIRCLE=3, [...] RECT=2, )...( CLOUD=4, ))...(( BANG=5. Use grammar, never fixture filename or description."
+      },
+      {
+        "id": "identity_and_duplicate_authored_ids",
+        "basis": [
+          "mermaid_db",
+          "mermaid_grammar",
+          "merman_db",
+          "merman_render_model"
+        ],
+        "conclusion": "Mermaid addNode allocates id=this.count++ and separately stores nodeId=sanitizeText(id,conf); children are appended per declaration, without authored-id uniqueness or deduplication. Merman DB likewise allocates self.nodes.len() internal ids. BangCloud ordinals 1 and 2 share authored_id a but retain independent shapes/captions and edges to ordinal 0."
+      },
+      {
+        "id": "multiline_raw_description",
+        "basis": [
+          "mermaid_grammar",
+          "mermaid_db",
+          "merman_utils",
+          "merman_parse"
+        ],
+        "conclusion": "NODE_DESCR includes newlines and indentation, nodeWithId passes it unchanged as descr, MindmapDB passes descr to sanitizeText without trim. Merman parse_node_text plain case returns raw.to_string(), and continuation joins physical lines with LF. None of these facts licenses replacing raw caption with The root."
+      },
+      {
+        "id": "sanitization_and_visible_whitespace",
+        "basis": [
+          "mermaid_db"
+        ],
+        "conclusion": "DB label is sanitizeText(raw,conf), then flattening marks labelType markdown. Pinned grammar/DB alone do not establish sanitizer output or visible Markdown whitespace normalization. Those later stages need separate evidence and explicit reviewed projection."
+      },
+      {
+        "id": "merman_typed_model_boundary",
+        "basis": [
+          "merman_db",
+          "merman_render_model"
+        ],
+        "conclusion": "Direct-model duplicate internal/authored-id validation in the Merman ASCII consumer is not the source grammar. This proposal uses only upstream parser/DB/model semantics and never that consumer or its rendered output to infer identities/counts."
+      }
+    ],
+    "temporary_reference_policy": "The /tmp Mermaid files supplied by main were read-only evidence references. Inline line witnesses, fixed-commit URLs and hashes are self-contained; /tmp files are not runtime dependencies."
+  },
+  "shape_grammar_truth": {
+    "default": {
+      "open": "",
+      "close": "",
+      "node_type": 0,
+      "upstream_enum": "DEFAULT",
+      "upstream_render_shape": "defaultMindmapNode"
+    },
+    "square": {
+      "open": "[",
+      "close": "]",
+      "node_type": 2,
+      "upstream_enum": "RECT",
+      "upstream_render_shape": "rect"
+    },
+    "rounded": {
+      "open": "(",
+      "close": ")",
+      "node_type": 1,
+      "upstream_enum": "ROUNDED_RECT",
+      "upstream_render_shape": "rounded"
+    },
+    "circle": {
+      "open": "((",
+      "close": "))",
+      "node_type": 3,
+      "upstream_enum": "CIRCLE",
+      "upstream_render_shape": "mindmapCircle"
+    },
+    "cloud": {
+      "open": ")",
+      "close": "(",
+      "node_type": 4,
+      "upstream_enum": "CLOUD",
+      "upstream_render_shape": "cloud"
+    },
+    "bang": {
+      "open": "))",
+      "close": "((",
+      "node_type": 5,
+      "upstream_enum": "BANG",
+      "upstream_render_shape": "bang"
+    }
+  },
+  "cases": [
+    {
+      "path": "mindmap/nightly-check/bang-and-cloud-shape-with-icons.mmd",
+      "source_sha256": "22d9aaa541c1fff34115ab4663285787593d26fd6bc9dc00108194ad45278bdb",
+      "source_git_blob": "27d5927745a13aad4b312e88bbff486f85ef4d4e",
+      "source_bytes": 248,
+      "manifest_global_ordinal": 1309,
+      "manifest_record": {
+        "path": "mindmap/nightly-check/bang-and-cloud-shape-with-icons.mmd",
+        "sha256": "22d9aaa541c1fff34115ab4663285787593d26fd6bc9dc00108194ad45278bdb",
+        "git_blob": "27d5927745a13aad4b312e88bbff486f85ef4d4e",
+        "bytes": 248,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        }
+      },
+      "manifest_record_sha256": "71fb7024da1fa518e2897d53a5ef81f6bb93725f5b38fa59d013c2fb667e2b0f",
+      "complete_source_witness": "---\ndescription: >-\n  The same bang/cloud shape root and children as bang-and-cloud-shape.mmd, but\n  without any icon directives — isolates the shape rendering from the icon\n  rendering.\n---\nmindmap\nroot))bang((\n\n  a))Another bang((\n  a)A cloud(\n",
+      "complete_source_witness_sha256": "22d9aaa541c1fff34115ab4663285787593d26fd6bc9dc00108194ad45278bdb",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "parent": -1,
+            "caption": "bang",
+            "shape": "bang",
+            "authored_id": "root"
+          },
+          {
+            "ordinal": 1,
+            "parent": 0,
+            "caption": "Another bang",
+            "shape": "bang",
+            "authored_id": "a"
+          },
+          {
+            "ordinal": 2,
+            "parent": 0,
+            "caption": "A cloud",
+            "shape": "cloud",
+            "authored_id": "a"
+          }
+        ]
+      },
+      "complete_model_sha256": "6b0b48a2d24df8744e9b1a928665b9bf89435d53bc674ff43ba79af8dbff5f35",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "parent": -1,
+          "caption": "bang",
+          "shape": "bang",
+          "authored_id": "root",
+          "source_line": 8,
+          "source_line_end": 8,
+          "source_byte_start": 201,
+          "source_byte_end": 213,
+          "source_lexeme": "root))bang((",
+          "source_lexeme_sha256": "c0a9e5e4d27a164a4cc5b6214e7e140a1bf82b4bca74ebaa3daeeb60cf9dd788",
+          "indent_bytes": 0,
+          "delimiter_open": "))",
+          "delimiter_close": "((",
+          "upstream_node_type": 5,
+          "upstream_node_id": "root",
+          "caption_byte_start": 207,
+          "caption_byte_end": 211
+        },
+        {
+          "ordinal": 1,
+          "parent": 0,
+          "caption": "Another bang",
+          "shape": "bang",
+          "authored_id": "a",
+          "source_line": 10,
+          "source_line_end": 10,
+          "source_byte_start": 217,
+          "source_byte_end": 234,
+          "source_lexeme": "a))Another bang((",
+          "source_lexeme_sha256": "f17d370ea4bf60d2226d2f10280883534cf83796d7f0a12578d9702922cc1e82",
+          "indent_bytes": 2,
+          "delimiter_open": "))",
+          "delimiter_close": "((",
+          "upstream_node_type": 5,
+          "upstream_node_id": "a",
+          "caption_byte_start": 220,
+          "caption_byte_end": 232
+        },
+        {
+          "ordinal": 2,
+          "parent": 0,
+          "caption": "A cloud",
+          "shape": "cloud",
+          "authored_id": "a",
+          "source_line": 11,
+          "source_line_end": 11,
+          "source_byte_start": 237,
+          "source_byte_end": 247,
+          "source_lexeme": "a)A cloud(",
+          "source_lexeme_sha256": "ddca1308a95a7bb38aa3b40dd50b9d1a470d9a3f4224c32f6e4b4b3aee61a422",
+          "indent_bytes": 2,
+          "delimiter_open": ")",
+          "delimiter_close": "(",
+          "upstream_node_type": 4,
+          "upstream_node_id": "a",
+          "caption_byte_start": 239,
+          "caption_byte_end": 246
+        }
+      ],
+      "source_witnesses_sha256": "d9a2554d1bc37e2560c3c91b17d03b72419a311b7f0b037adc45617b2f0e1d64",
+      "caption_obligations": [
+        {
+          "node_ordinal": 0,
+          "raw_description": "bang",
+          "raw_description_sha256": "1ae3d35454b6ddf204329a7ba8bcbbaf1b1efd8ab1b3df346fc83b0146caaf17",
+          "raw_to_model_caption": "Identity: preserve every UTF-8 byte between delimiters (or the bare node text). This is the grammar description before sanitizeText.",
+          "source_lines": [
+            "bang"
+          ],
+          "source_line_joiner": "\n",
+          "multiline": false,
+          "visible_caption": null,
+          "visible_caption_status": "UNREVIEWED",
+          "obligations": [
+            "Verify the complete raw source span before comparing any caption.",
+            "Keep raw description separate from the sanitized DB label and visible Markdown caption.",
+            "Do not trim, collapse whitespace, discard blank lines, or choose wrap rows without an explicit reviewed projection.",
+            "Visible text must preserve every non-whitespace caption token, token order and multiplicity under the eventually reviewed whitespace policy."
+          ]
+        },
+        {
+          "node_ordinal": 1,
+          "raw_description": "Another bang",
+          "raw_description_sha256": "8919cdb9574db055ffb01e879db717ef7428ba24eb6d4aabe93bf3d1a4153652",
+          "raw_to_model_caption": "Identity: preserve every UTF-8 byte between delimiters (or the bare node text). This is the grammar description before sanitizeText.",
+          "source_lines": [
+            "Another bang"
+          ],
+          "source_line_joiner": "\n",
+          "multiline": false,
+          "visible_caption": null,
+          "visible_caption_status": "UNREVIEWED",
+          "obligations": [
+            "Verify the complete raw source span before comparing any caption.",
+            "Keep raw description separate from the sanitized DB label and visible Markdown caption.",
+            "Do not trim, collapse whitespace, discard blank lines, or choose wrap rows without an explicit reviewed projection.",
+            "Visible text must preserve every non-whitespace caption token, token order and multiplicity under the eventually reviewed whitespace policy."
+          ]
+        },
+        {
+          "node_ordinal": 2,
+          "raw_description": "A cloud",
+          "raw_description_sha256": "bd3e95a0f58b90e32b31652994ac13533337427e2b9ae7748360b14fb2f1957d",
+          "raw_to_model_caption": "Identity: preserve every UTF-8 byte between delimiters (or the bare node text). This is the grammar description before sanitizeText.",
+          "source_lines": [
+            "A cloud"
+          ],
+          "source_line_joiner": "\n",
+          "multiline": false,
+          "visible_caption": null,
+          "visible_caption_status": "UNREVIEWED",
+          "obligations": [
+            "Verify the complete raw source span before comparing any caption.",
+            "Keep raw description separate from the sanitized DB label and visible Markdown caption.",
+            "Do not trim, collapse whitespace, discard blank lines, or choose wrap rows without an explicit reviewed projection.",
+            "Visible text must preserve every non-whitespace caption token, token order and multiplicity under the eventually reviewed whitespace policy."
+          ]
+        }
+      ],
+      "caption_obligations_sha256": "aa267c5d25ff662c85786594535d6d83d7956477c55c34eef29a62a7c1b677c8",
+      "parent_relations": [
+        {
+          "parent_ordinal": 0,
+          "child_ordinal": 1
+        },
+        {
+          "parent_ordinal": 0,
+          "child_ordinal": 2
+        }
+      ],
+      "icon_directive_count": 0,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 2,
+          "field": "caption",
+          "before": "A cloud",
+          "after": "A cloud!",
+          "expected": "Reject complete Model mismatch while retaining all other fields.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "semantic_valid_shape_changed",
+          "node_ordinal": 2,
+          "field": "shape",
+          "before": "cloud",
+          "after": "circle",
+          "expected": "Reject the changed valid grammar shape even though caption, ordinal, parent and authored_id are unchanged.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 2,
+          "target": "The visible non-whitespace caption cell containing the first A or T in this node caption.",
+          "expected": "Reject missing caption ink; semantic metadata alone cannot pass."
+        },
+        {
+          "id": "physical_shape_ink_erased",
+          "node_ordinal": 2,
+          "target": "One structurally necessary non-caption cell in the reviewed outline or distinct shape treatment for this node.",
+          "expected": "Reject damaged shape ink against the independently reviewed shape obligation; a shape-name string is insufficient.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_TERMINAL_SHAPE"
+        },
+        {
+          "id": "physical_orphan_stroke_added",
+          "target": "One detached non-caption stroke outside all reviewed node/edge ownership.",
+          "expected": "Reject unexplained ink even if every expected caption and Model field remains."
+        },
+        {
+          "id": "semantic_valid_parent_changed",
+          "node_ordinal": 2,
+          "field": "parent",
+          "before": 0,
+          "after": 1,
+          "expected": "If a later reviewed scope permits this parent mutation, require the mutant Model and consistent projected rows to pass local validity before the good-frame geometry check rejects the changed relation. No current execution or source credit is claimed.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_SCOPE_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0,
+          "applicability": "Future upstream graph obligation only; excluded from the first-four source subset, which forbids fabricated reparenting. Graph-validity alone does not establish admitted local Model or projection validity."
+        },
+        {
+          "id": "physical_edge_ink_erased",
+          "parent_ordinal": 0,
+          "child_ordinal": 2,
+          "target": "One necessary non-caption stroke on the reviewed root-to-target connector.",
+          "expected": "Reject physically disconnected edge even if semantic parent metadata is unchanged.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_TERMINAL_GEOMETRY"
+        },
+        {
+          "id": "semantic_duplicate_authored_id_node_merged",
+          "removed_node_ordinal": 2,
+          "shared_authored_id": "a",
+          "expected": "Reject removal/merging of the cloud with the distinct bang sibling; compare internal ordinal identities and both parent relations.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "physical_child_ink_missing",
+          "parent_ordinal": 0,
+          "child_ordinal": 2,
+          "target": "Remove the target child caption ink, its shape ink and its incident connector ink from an otherwise accepted good frame. Keep the complete source Model, source identities and projected-row obligations unchanged.",
+          "expected": "Reject the missing physical child and parent-child connection against the unchanged complete tree obligations. Do not fabricate a semantic parent mutation or alter source facts.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_TERMINAL_GEOMETRY",
+          "credit": 0
+        }
+      ],
+      "terminal_projection": {
+        "review_status": "UNREVIEWED",
+        "shape_mapping": null,
+        "caption_normalization": null,
+        "geometry": null
+      },
+      "coverage_credit": 0
+    },
+    {
+      "path": "mindmap/nightly-check/circle-shape.mmd",
+      "source_sha256": "691eee4a1c6791da16974a086ac7d34ee729ea9295330dbaa5dd79223fb8a37d",
+      "source_git_blob": "a7d4881158130365f6d647460e1d08eb1e5b4e2c",
+      "source_bytes": 158,
+      "manifest_global_ordinal": 1313,
+      "manifest_record": {
+        "path": "mindmap/nightly-check/circle-shape.mmd",
+        "sha256": "691eee4a1c6791da16974a086ac7d34ee729ea9295330dbaa5dd79223fb8a37d",
+        "git_blob": "a7d4881158130365f6d647460e1d08eb1e5b4e2c",
+        "bytes": 158,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        }
+      },
+      "manifest_record_sha256": "d5d62ece27a5d14a71684a9d224c069b9e5968997bf2887f80ed715aaa513b37",
+      "complete_source_witness": "---\ndescription: >-\n  A root using the circle shape (`(...)`) with its label split across multiple\n  source lines.\n---\nmindmap\n    root(\n      The root\n    )\n",
+      "complete_source_witness_sha256": "691eee4a1c6791da16974a086ac7d34ee729ea9295330dbaa5dd79223fb8a37d",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "parent": -1,
+            "caption": "\n      The root\n    ",
+            "shape": "rounded",
+            "authored_id": "root"
+          }
+        ]
+      },
+      "complete_model_sha256": "266ad653cf1c6f58881b8d6516711c728e13a416a6267635001f4edee2d0d3a6",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "parent": -1,
+          "caption": "\n      The root\n    ",
+          "shape": "rounded",
+          "authored_id": "root",
+          "source_line": 7,
+          "source_line_end": 9,
+          "source_byte_start": 131,
+          "source_byte_end": 157,
+          "source_lexeme": "root(\n      The root\n    )",
+          "source_lexeme_sha256": "caac53389165e5a7b8341caefd117b584cd2ceb61520279684b76b06bc7f4b18",
+          "indent_bytes": 4,
+          "delimiter_open": "(",
+          "delimiter_close": ")",
+          "upstream_node_type": 1,
+          "upstream_node_id": "root",
+          "caption_byte_start": 136,
+          "caption_byte_end": 156
+        }
+      ],
+      "source_witnesses_sha256": "3fb1b5dc96e95ab1c87cb40af5359eeb4bd3cecda1ab4c2f9405e4d7eacc00ee",
+      "caption_obligations": [
+        {
+          "node_ordinal": 0,
+          "raw_description": "\n      The root\n    ",
+          "raw_description_sha256": "87c81f67dc44e089670bd09a49108a3b41d1e40a4e960f5ad054bbe6b43d0cc5",
+          "raw_to_model_caption": "Identity: preserve every UTF-8 byte between delimiters (or the bare node text). This is the grammar description before sanitizeText.",
+          "source_lines": [
+            "",
+            "      The root",
+            "    "
+          ],
+          "source_line_joiner": "\n",
+          "multiline": true,
+          "visible_caption": null,
+          "visible_caption_status": "UNREVIEWED",
+          "obligations": [
+            "Verify the complete raw source span before comparing any caption.",
+            "Keep raw description separate from the sanitized DB label and visible Markdown caption.",
+            "Do not trim, collapse whitespace, discard blank lines, or choose wrap rows without an explicit reviewed projection.",
+            "Visible text must preserve every non-whitespace caption token, token order and multiplicity under the eventually reviewed whitespace policy."
+          ]
+        }
+      ],
+      "caption_obligations_sha256": "b9607e4592bb1fdc6c491512dd4afad537a008565cd460b6c5ffb4c52b199e90",
+      "parent_relations": [],
+      "icon_directive_count": 0,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 0,
+          "field": "caption",
+          "before": "\n      The root\n    ",
+          "after": "\n      The Root\n    ",
+          "expected": "Reject complete Model mismatch while retaining all other fields.",
+          "payload_mutation": "Replace payload The root with The Root; preserve both LF bytes and all leading/trailing indentation exactly.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "semantic_valid_shape_changed",
+          "node_ordinal": 0,
+          "field": "shape",
+          "before": "rounded",
+          "after": "circle",
+          "expected": "Reject the changed valid grammar shape even though caption, ordinal, parent and authored_id are unchanged.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 0,
+          "target": "The visible non-whitespace caption cell containing the first A or T in this node caption.",
+          "expected": "Reject missing caption ink; semantic metadata alone cannot pass."
+        },
+        {
+          "id": "physical_shape_ink_erased",
+          "node_ordinal": 0,
+          "target": "One structurally necessary non-caption cell in the reviewed outline or distinct shape treatment for this node.",
+          "expected": "Reject damaged shape ink against the independently reviewed shape obligation; a shape-name string is insufficient.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_TERMINAL_SHAPE"
+        },
+        {
+          "id": "physical_orphan_stroke_added",
+          "target": "One detached non-caption stroke outside all reviewed node/edge ownership.",
+          "expected": "Reject unexplained ink even if every expected caption and Model field remains."
+        }
+      ],
+      "terminal_projection": {
+        "review_status": "source_design_reviewed_no_runtime_admission",
+        "adaptation": "loom_mindmap_shapes4_projection_proposed/v1",
+        "geometry_contract": "RFC0030 First executable subset: four non-Bang/Cloud originals",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "display_caption": "The root",
+            "caption_rows": [
+              "The root"
+            ],
+            "row_joiners": [],
+            "raw_caption_prefix": "\n      ",
+            "raw_caption_suffix": "\n    "
+          }
+        ]
+      },
+      "coverage_credit": 0,
+      "terminal_projection_sha256": "3a708439facdade76c067311347c592bf664efd90cabe1f09586cf58e3fdc14a"
+    },
+    {
+      "path": "mindmap/nightly-check/rounded-rect-shape.mmd",
+      "source_sha256": "332482160af16e6fbeaf15b7cf0bd39a2e53e85e3523c0a6d4a4820df1d23d72",
+      "source_git_blob": "21374bcd8974f77934777abf0b9467cf9dff3cd0",
+      "source_bytes": 173,
+      "manifest_global_ordinal": 1317,
+      "manifest_record": {
+        "path": "mindmap/nightly-check/rounded-rect-shape.mmd",
+        "sha256": "332482160af16e6fbeaf15b7cf0bd39a2e53e85e3523c0a6d4a4820df1d23d72",
+        "git_blob": "21374bcd8974f77934777abf0b9467cf9dff3cd0",
+        "bytes": 173,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        }
+      },
+      "manifest_record_sha256": "3869b837769abe8209d8cba798a22f3fa7dc484550d64992c0778fa5861769b2",
+      "complete_source_witness": "---\ndescription: >-\n  A root using the rounded-rectangle shape (`((...))`) with its label split\n  across multiple source lines.\n---\nmindmap\n    root((\n      The root\n    ))\n",
+      "complete_source_witness_sha256": "332482160af16e6fbeaf15b7cf0bd39a2e53e85e3523c0a6d4a4820df1d23d72",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "parent": -1,
+            "caption": "\n      The root\n    ",
+            "shape": "circle",
+            "authored_id": "root"
+          }
+        ]
+      },
+      "complete_model_sha256": "84390d3ebae54375ecb99ed75aa991a892e69d6eea805e29808515684d788d65",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "parent": -1,
+          "caption": "\n      The root\n    ",
+          "shape": "circle",
+          "authored_id": "root",
+          "source_line": 7,
+          "source_line_end": 9,
+          "source_byte_start": 144,
+          "source_byte_end": 172,
+          "source_lexeme": "root((\n      The root\n    ))",
+          "source_lexeme_sha256": "e98fddeca6f1c7acc8a95b8bc66f06ea18339287d98c5c7ae5058ad09390756f",
+          "indent_bytes": 4,
+          "delimiter_open": "((",
+          "delimiter_close": "))",
+          "upstream_node_type": 3,
+          "upstream_node_id": "root",
+          "caption_byte_start": 150,
+          "caption_byte_end": 170
+        }
+      ],
+      "source_witnesses_sha256": "5c92b2472cc9ea9184ccb6fa28811a60948eb3f665dacc91058cb3abeb6bd057",
+      "caption_obligations": [
+        {
+          "node_ordinal": 0,
+          "raw_description": "\n      The root\n    ",
+          "raw_description_sha256": "87c81f67dc44e089670bd09a49108a3b41d1e40a4e960f5ad054bbe6b43d0cc5",
+          "raw_to_model_caption": "Identity: preserve every UTF-8 byte between delimiters (or the bare node text). This is the grammar description before sanitizeText.",
+          "source_lines": [
+            "",
+            "      The root",
+            "    "
+          ],
+          "source_line_joiner": "\n",
+          "multiline": true,
+          "visible_caption": null,
+          "visible_caption_status": "UNREVIEWED",
+          "obligations": [
+            "Verify the complete raw source span before comparing any caption.",
+            "Keep raw description separate from the sanitized DB label and visible Markdown caption.",
+            "Do not trim, collapse whitespace, discard blank lines, or choose wrap rows without an explicit reviewed projection.",
+            "Visible text must preserve every non-whitespace caption token, token order and multiplicity under the eventually reviewed whitespace policy."
+          ]
+        }
+      ],
+      "caption_obligations_sha256": "b9607e4592bb1fdc6c491512dd4afad537a008565cd460b6c5ffb4c52b199e90",
+      "parent_relations": [],
+      "icon_directive_count": 0,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 0,
+          "field": "caption",
+          "before": "\n      The root\n    ",
+          "after": "\n      The Root\n    ",
+          "expected": "Reject complete Model mismatch while retaining all other fields.",
+          "payload_mutation": "Replace payload The root with The Root; preserve both LF bytes and all leading/trailing indentation exactly.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "semantic_valid_shape_changed",
+          "node_ordinal": 0,
+          "field": "shape",
+          "before": "circle",
+          "after": "rounded",
+          "expected": "Reject the changed valid grammar shape even though caption, ordinal, parent and authored_id are unchanged.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 0,
+          "target": "The visible non-whitespace caption cell containing the first A or T in this node caption.",
+          "expected": "Reject missing caption ink; semantic metadata alone cannot pass."
+        },
+        {
+          "id": "physical_shape_ink_erased",
+          "node_ordinal": 0,
+          "target": "One structurally necessary non-caption cell in the reviewed outline or distinct shape treatment for this node.",
+          "expected": "Reject damaged shape ink against the independently reviewed shape obligation; a shape-name string is insufficient.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_TERMINAL_SHAPE"
+        },
+        {
+          "id": "physical_orphan_stroke_added",
+          "target": "One detached non-caption stroke outside all reviewed node/edge ownership.",
+          "expected": "Reject unexplained ink even if every expected caption and Model field remains."
+        }
+      ],
+      "terminal_projection": {
+        "review_status": "source_design_reviewed_no_runtime_admission",
+        "adaptation": "loom_mindmap_shapes4_projection_proposed/v1",
+        "geometry_contract": "RFC0030 First executable subset: four non-Bang/Cloud originals",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "display_caption": "The root",
+            "caption_rows": [
+              "The root"
+            ],
+            "row_joiners": [],
+            "raw_caption_prefix": "\n      ",
+            "raw_caption_suffix": "\n    "
+          }
+        ]
+      },
+      "coverage_credit": 0,
+      "terminal_projection_sha256": "3a708439facdade76c067311347c592bf664efd90cabe1f09586cf58e3fdc14a"
+    },
+    {
+      "path": "mindmap/nightly-check/square-shape.mmd",
+      "source_sha256": "907ac4e2fcf61b1322a5fe9fa0f7119f141ed8cf788e7942a2127be2051ddeb3",
+      "source_git_blob": "f4db7d3e74d2c6f4a62a1b0eb1709863092bb7ce",
+      "source_bytes": 168,
+      "manifest_global_ordinal": 1318,
+      "manifest_record": {
+        "path": "mindmap/nightly-check/square-shape.mmd",
+        "sha256": "907ac4e2fcf61b1322a5fe9fa0f7119f141ed8cf788e7942a2127be2051ddeb3",
+        "git_blob": "f4db7d3e74d2c6f4a62a1b0eb1709863092bb7ce",
+        "bytes": 168,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        }
+      },
+      "manifest_record_sha256": "34e6ec9a3ec639a52496192fbb4f942ccd07233bf11f8a3e081ac68890f9187b",
+      "complete_source_witness": "---\ndescription: >-\n  A root using the square shape with its label split across multiple source\n  lines inside the brackets.\n---\nmindmap\n    root[\n      The root\n    ]\n",
+      "complete_source_witness_sha256": "907ac4e2fcf61b1322a5fe9fa0f7119f141ed8cf788e7942a2127be2051ddeb3",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "parent": -1,
+            "caption": "\n      The root\n    ",
+            "shape": "square",
+            "authored_id": "root"
+          }
+        ]
+      },
+      "complete_model_sha256": "5dbb3df0453bf830d1d31c0a06a94e1772641031c69a670d6cef8e6ef2a62fb0",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "parent": -1,
+          "caption": "\n      The root\n    ",
+          "shape": "square",
+          "authored_id": "root",
+          "source_line": 7,
+          "source_line_end": 9,
+          "source_byte_start": 141,
+          "source_byte_end": 167,
+          "source_lexeme": "root[\n      The root\n    ]",
+          "source_lexeme_sha256": "15c8bbc1bcc5181ffaf76045cb4340635662413f293b635e271efc1e4d0b4cf3",
+          "indent_bytes": 4,
+          "delimiter_open": "[",
+          "delimiter_close": "]",
+          "upstream_node_type": 2,
+          "upstream_node_id": "root",
+          "caption_byte_start": 146,
+          "caption_byte_end": 166
+        }
+      ],
+      "source_witnesses_sha256": "c9162d8099d04e8c0a12926d559ea617ca66642da0ddfb405988b50cfd931366",
+      "caption_obligations": [
+        {
+          "node_ordinal": 0,
+          "raw_description": "\n      The root\n    ",
+          "raw_description_sha256": "87c81f67dc44e089670bd09a49108a3b41d1e40a4e960f5ad054bbe6b43d0cc5",
+          "raw_to_model_caption": "Identity: preserve every UTF-8 byte between delimiters (or the bare node text). This is the grammar description before sanitizeText.",
+          "source_lines": [
+            "",
+            "      The root",
+            "    "
+          ],
+          "source_line_joiner": "\n",
+          "multiline": true,
+          "visible_caption": null,
+          "visible_caption_status": "UNREVIEWED",
+          "obligations": [
+            "Verify the complete raw source span before comparing any caption.",
+            "Keep raw description separate from the sanitized DB label and visible Markdown caption.",
+            "Do not trim, collapse whitespace, discard blank lines, or choose wrap rows without an explicit reviewed projection.",
+            "Visible text must preserve every non-whitespace caption token, token order and multiplicity under the eventually reviewed whitespace policy."
+          ]
+        }
+      ],
+      "caption_obligations_sha256": "b9607e4592bb1fdc6c491512dd4afad537a008565cd460b6c5ffb4c52b199e90",
+      "parent_relations": [],
+      "icon_directive_count": 0,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 0,
+          "field": "caption",
+          "before": "\n      The root\n    ",
+          "after": "\n      The Root\n    ",
+          "expected": "Reject complete Model mismatch while retaining all other fields.",
+          "payload_mutation": "Replace payload The root with The Root; preserve both LF bytes and all leading/trailing indentation exactly.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "semantic_valid_shape_changed",
+          "node_ordinal": 0,
+          "field": "shape",
+          "before": "square",
+          "after": "circle",
+          "expected": "Reject the changed valid grammar shape even though caption, ordinal, parent and authored_id are unchanged.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 0,
+          "target": "The visible non-whitespace caption cell containing the first A or T in this node caption.",
+          "expected": "Reject missing caption ink; semantic metadata alone cannot pass."
+        },
+        {
+          "id": "physical_shape_ink_erased",
+          "node_ordinal": 0,
+          "target": "One structurally necessary non-caption cell in the reviewed outline or distinct shape treatment for this node.",
+          "expected": "Reject damaged shape ink against the independently reviewed shape obligation; a shape-name string is insufficient.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_TERMINAL_SHAPE"
+        },
+        {
+          "id": "physical_orphan_stroke_added",
+          "target": "One detached non-caption stroke outside all reviewed node/edge ownership.",
+          "expected": "Reject unexplained ink even if every expected caption and Model field remains."
+        }
+      ],
+      "terminal_projection": {
+        "review_status": "source_design_reviewed_no_runtime_admission",
+        "adaptation": "loom_mindmap_shapes4_projection_proposed/v1",
+        "geometry_contract": "RFC0030 First executable subset: four non-Bang/Cloud originals",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "display_caption": "The root",
+            "caption_rows": [
+              "The root"
+            ],
+            "row_joiners": [],
+            "raw_caption_prefix": "\n      ",
+            "raw_caption_suffix": "\n    "
+          }
+        ]
+      },
+      "coverage_credit": 0,
+      "terminal_projection_sha256": "3a708439facdade76c067311347c592bf664efd90cabe1f09586cf58e3fdc14a"
+    },
+    {
+      "path": "mindmap/nightly-check/text-should-wrap-with-icon.mmd",
+      "source_sha256": "3170766345ca188eeedc82ea4bcacbd4eb12d12f112fe38ed30b9b54c838cdb3",
+      "source_git_blob": "17e2bd1beeab268585ab7da6dde61d9c48bc755b",
+      "source_bytes": 272,
+      "manifest_global_ordinal": 1319,
+      "manifest_record": {
+        "path": "mindmap/nightly-check/text-should-wrap-with-icon.mmd",
+        "sha256": "3170766345ca188eeedc82ea4bcacbd4eb12d12f112fe38ed30b9b54c838cdb3",
+        "git_blob": "17e2bd1beeab268585ab7da6dde61d9c48bc755b",
+        "bytes": 272,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        }
+      },
+      "manifest_record_sha256": "47161f9c82666537838bf2a1f4744efd9d392682ee465a0c724610a36fc5652d",
+      "complete_source_witness": "---\ndescription: >-\n  A single child node (rounded-rectangle shape) carrying both an icon and a long\n  label that must wrap while keeping the node size in check.\n---\nmindmap\nroot\n  Child3(A node with an icon and with a long text that wraps to keep the node size in check)\n",
+      "complete_source_witness_sha256": "3170766345ca188eeedc82ea4bcacbd4eb12d12f112fe38ed30b9b54c838cdb3",
+      "complete_model": {
+        "nodes": [
+          {
+            "ordinal": 0,
+            "parent": -1,
+            "caption": "root",
+            "shape": "default",
+            "authored_id": null
+          },
+          {
+            "ordinal": 1,
+            "parent": 0,
+            "caption": "A node with an icon and with a long text that wraps to keep the node size in check",
+            "shape": "rounded",
+            "authored_id": "Child3"
+          }
+        ]
+      },
+      "complete_model_sha256": "ab5ff831cbd6205e989bdafd4559f10d3593ff39dc196a8d9f387630837cbe8f",
+      "source_witnesses": [
+        {
+          "ordinal": 0,
+          "parent": -1,
+          "caption": "root",
+          "shape": "default",
+          "authored_id": null,
+          "source_line": 7,
+          "source_line_end": 7,
+          "source_byte_start": 174,
+          "source_byte_end": 178,
+          "source_lexeme": "root",
+          "source_lexeme_sha256": "4813494d137e1631bba301d5acab6e7bb7aa74ce1185d456565ef51d737677b2",
+          "indent_bytes": 0,
+          "delimiter_open": "",
+          "delimiter_close": "",
+          "upstream_node_type": 0,
+          "upstream_node_id": "root",
+          "caption_byte_start": 174,
+          "caption_byte_end": 178
+        },
+        {
+          "ordinal": 1,
+          "parent": 0,
+          "caption": "A node with an icon and with a long text that wraps to keep the node size in check",
+          "shape": "rounded",
+          "authored_id": "Child3",
+          "source_line": 8,
+          "source_line_end": 8,
+          "source_byte_start": 181,
+          "source_byte_end": 271,
+          "source_lexeme": "Child3(A node with an icon and with a long text that wraps to keep the node size in check)",
+          "source_lexeme_sha256": "0846defc08fb9a176e004e4822c361ec31450b350ccefee72c22f2bebc01a33e",
+          "indent_bytes": 2,
+          "delimiter_open": "(",
+          "delimiter_close": ")",
+          "upstream_node_type": 1,
+          "upstream_node_id": "Child3",
+          "caption_byte_start": 188,
+          "caption_byte_end": 270
+        }
+      ],
+      "source_witnesses_sha256": "3190873e1259ad3dab85df9f466bd72f773198b21f43b6842f0852f9473ca9c5",
+      "caption_obligations": [
+        {
+          "node_ordinal": 0,
+          "raw_description": "root",
+          "raw_description_sha256": "4813494d137e1631bba301d5acab6e7bb7aa74ce1185d456565ef51d737677b2",
+          "raw_to_model_caption": "Identity: preserve every UTF-8 byte between delimiters (or the bare node text). This is the grammar description before sanitizeText.",
+          "source_lines": [
+            "root"
+          ],
+          "source_line_joiner": "\n",
+          "multiline": false,
+          "visible_caption": null,
+          "visible_caption_status": "UNREVIEWED",
+          "obligations": [
+            "Verify the complete raw source span before comparing any caption.",
+            "Keep raw description separate from the sanitized DB label and visible Markdown caption.",
+            "Do not trim, collapse whitespace, discard blank lines, or choose wrap rows without an explicit reviewed projection.",
+            "Visible text must preserve every non-whitespace caption token, token order and multiplicity under the eventually reviewed whitespace policy."
+          ]
+        },
+        {
+          "node_ordinal": 1,
+          "raw_description": "A node with an icon and with a long text that wraps to keep the node size in check",
+          "raw_description_sha256": "9d60936bd95f182221e85dd5765be9bc0395f81a6b0795479bf3f84023a48671",
+          "raw_to_model_caption": "Identity: preserve every UTF-8 byte between delimiters (or the bare node text). This is the grammar description before sanitizeText.",
+          "source_lines": [
+            "A node with an icon and with a long text that wraps to keep the node size in check"
+          ],
+          "source_line_joiner": "\n",
+          "multiline": false,
+          "visible_caption": null,
+          "visible_caption_status": "UNREVIEWED",
+          "obligations": [
+            "Verify the complete raw source span before comparing any caption.",
+            "Keep raw description separate from the sanitized DB label and visible Markdown caption.",
+            "Do not trim, collapse whitespace, discard blank lines, or choose wrap rows without an explicit reviewed projection.",
+            "Visible text must preserve every non-whitespace caption token, token order and multiplicity under the eventually reviewed whitespace policy."
+          ]
+        }
+      ],
+      "caption_obligations_sha256": "c8bc262cf2c4034e54733c1c5ce1334bc9404f04bce413691457d82d7e75bbb0",
+      "parent_relations": [
+        {
+          "parent_ordinal": 0,
+          "child_ordinal": 1
+        }
+      ],
+      "icon_directive_count": 0,
+      "required_good_first_mutations": [
+        {
+          "id": "semantic_caption_changed",
+          "node_ordinal": 1,
+          "field": "caption",
+          "before": "A node with an icon and with a long text that wraps to keep the node size in check",
+          "after": "A node with an icon and with a long text that wraps to keep the node size in check!",
+          "expected": "Reject complete Model mismatch while retaining all other fields.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "semantic_valid_shape_changed",
+          "node_ordinal": 1,
+          "field": "shape",
+          "before": "rounded",
+          "after": "circle",
+          "expected": "Reject the changed valid grammar shape even though caption, ordinal, parent and authored_id are unchanged.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_PROJECTION_AND_LOCAL_MODEL_VALIDITY",
+          "credit": 0
+        },
+        {
+          "id": "physical_caption_cell_erased",
+          "node_ordinal": 1,
+          "target": "The visible non-whitespace caption cell containing the first A or T in this node caption.",
+          "expected": "Reject missing caption ink; semantic metadata alone cannot pass."
+        },
+        {
+          "id": "physical_shape_ink_erased",
+          "node_ordinal": 1,
+          "target": "One structurally necessary non-caption cell in the reviewed outline or distinct shape treatment for this node.",
+          "expected": "Reject damaged shape ink against the independently reviewed shape obligation; a shape-name string is insufficient.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_TERMINAL_SHAPE"
+        },
+        {
+          "id": "physical_orphan_stroke_added",
+          "target": "One detached non-caption stroke outside all reviewed node/edge ownership.",
+          "expected": "Reject unexplained ink even if every expected caption and Model field remains."
+        },
+        {
+          "id": "semantic_parent_relation_reversed",
+          "edits": [
+            {
+              "node_ordinal": 0,
+              "field": "parent",
+              "before": -1,
+              "after": 1
+            },
+            {
+              "node_ordinal": 1,
+              "field": "parent",
+              "before": 0,
+              "after": -1
+            }
+          ],
+          "expected": "No executable geometry negative is claimed. The edge reversal is graph-valid, but retaining source ordinals gives node 0 parent 1 and root ordinal 1, violating the current root-0/parent-before-child Model domain. Keep this plan unexecuted until main explicitly reviews a compatible Model/checker domain; do not renumber source identities or fabricate reparented source facts.",
+          "runtime_precondition": "The unchanged baseline Model, reviewed projected rows and good physical frame must pass first. The mutant must pass local Model/schema/resource validation with projected rows consistent with every mutated caption/shape/topology field before the geometry checker is exercised. Early source-binding/schema/resource rejection earns zero runtime negative credit.",
+          "execution_status": "BLOCKED_PENDING_LOCAL_MODEL_VALIDITY",
+          "credit": 0,
+          "applicability": "Future upstream graph obligation only; not executable in the current source-order/preorder Model domain or the first-four source subset."
+        },
+        {
+          "id": "physical_edge_ink_erased",
+          "parent_ordinal": 0,
+          "child_ordinal": 1,
+          "target": "One necessary non-caption stroke on the reviewed root-to-target connector.",
+          "expected": "Reject physically disconnected edge even if semantic parent metadata is unchanged.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_TERMINAL_GEOMETRY"
+        },
+        {
+          "id": "physical_child_ink_missing",
+          "parent_ordinal": 0,
+          "child_ordinal": 1,
+          "target": "Remove the target child caption ink, its shape ink and its incident connector ink from an otherwise accepted good frame. Keep the complete source Model, source identities and projected-row obligations unchanged.",
+          "expected": "Reject the missing physical child and parent-child connection against the unchanged complete tree obligations. Do not fabricate a semantic parent mutation or alter source facts.",
+          "execution_status": "BLOCKED_PENDING_REVIEWED_TERMINAL_GEOMETRY",
+          "credit": 0
+        }
+      ],
+      "terminal_projection": {
+        "review_status": "source_design_reviewed_no_runtime_admission",
+        "adaptation": "loom_mindmap_shapes4_projection_proposed/v1",
+        "geometry_contract": "RFC0030 First executable subset: four non-Bang/Cloud originals",
+        "nodes": [
+          {
+            "node_ordinal": 0,
+            "display_caption": "root",
+            "caption_rows": [
+              "root"
+            ],
+            "row_joiners": [],
+            "raw_caption_prefix": "",
+            "raw_caption_suffix": ""
+          },
+          {
+            "node_ordinal": 1,
+            "display_caption": "A node with an icon and with a long text that wraps to keep the node size in check",
+            "caption_rows": [
+              "A node with an icon and with a",
+              "long text that wraps to keep the",
+              "node size in check"
+            ],
+            "row_joiners": [
+              " ",
+              " "
+            ],
+            "raw_caption_prefix": "",
+            "raw_caption_suffix": ""
+          }
+        ]
+      },
+      "coverage_credit": 0,
+      "terminal_projection_sha256": "6153f0307b800bf2e914520e930a0f8d786a202c7b4f2a5c0a0629dbbbcbcd9e"
+    }
+  ],
+  "good_first_mutation_contract": {
+    "status": "DECLARED_NOT_EXECUTED",
+    "positive": "Validate the unchanged complete source Model against independent frozen-source facts. Before any runtime geometry negative, require the unchanged locally valid Model, explicit reviewed projected rows and independently reviewed good physical frame to pass the same checker.",
+    "negative": "Apply each fixed mutation separately. Every semantic runtime negative must retain a locally valid Model and internally consistent projected rows, then reach geometry comparison with the accepted baseline good frame. Source-authority mismatch alone is a separate source check, not a geometry negative.",
+    "physical_boundary": "Physical targets name semantic ink ownership, not coordinates or captured-frame choices. Physical shape/edge mutations remain blocked until main RFC review fixes terminal projection. They provide no present drawing credit.",
+    "runtime_validity_gate": [
+      "Require an accepted unchanged Model + reviewed projected rows + good frame before each mutation.",
+      "For semantic mutants, validate local Model invariants, schema and resource bounds and update projected rows consistently with the mutated fields before geometry comparison.",
+      "Only a targeted geometry rejection after these validity gates may demonstrate the proposed runtime negative; source-binding, schema, parser or resource rejection earns zero.",
+      "Mutations whose local Model validity, projection or scope is unresolved remain BLOCKED and unexecuted."
+    ],
+    "blocked_parent_controls": "Both parent-change plans remain future upstream graph obligations, outside the first-four source subset. The two-node reversal violates current preorder/root-domain invariants. For present tree physical obligations, use unchanged-Model missing-child and edge-ink controls after projection review.",
+    "credit": 0
+  },
+  "disagreements": [
+    {
+      "paths": [
+        "mindmap/nightly-check/circle-shape.mmd"
+      ],
+      "finding": "Filename and description say circle, but single parentheses are ROUNDED_RECT=1."
+    },
+    {
+      "paths": [
+        "mindmap/nightly-check/rounded-rect-shape.mmd"
+      ],
+      "finding": "Filename and description say rounded rectangle, but double parentheses are CIRCLE=3."
+    },
+    {
+      "paths": [
+        "mindmap/nightly-check/bang-and-cloud-shape-with-icons.mmd"
+      ],
+      "finding": "Filename says with-icons; complete body has zero icon directives, consistent with its without-any-icon description."
+    },
+    {
+      "paths": [
+        "mindmap/nightly-check/text-should-wrap-with-icon.mmd"
+      ],
+      "finding": "Filename and description mention an icon; complete body has zero icon directives. Root plus one rounded child, no inferred icon."
+    },
+    {
+      "paths": [
+        "mindmap/nightly-check/bang-and-cloud-shape-with-icons.mmd"
+      ],
+      "finding": "Two declarations use authored_id a. They are two ordinal identities, not one overwritten or merged node."
+    }
+  ],
+  "unresolved_review_items": [
+    "Bang/Cloud contours and terminal projections require a separate design/PRR; their one complete original remains excluded.",
+    "Shapes4 production implementation, independent geometry authority, Native/Official captures/bindings/good-first controls and Debug/Release dual admission remain pending.",
+    "All 32 mutation obligations are declared only; blocked future graph obligations remain outside Shapes4 runtime credit."
+  ],
+  "admission_status": "Source facts and bounded Shapes4 source/design/PRR reviewed; zero runtime validation, Native/Official drawing admission or upstream option credit.",
+  "source_semantics_basis_sha256": "3db997a5605178140330886f103f4eb848945eae8e100d06c1c60706b54dd6f5",
+  "first_executable_subset_proposal": {
+    "review_status": "source_design_reviewed_no_runtime_admission",
+    "complete_originals": 4,
+    "nodes": 5,
+    "parent_relations": 1,
+    "cases": [
+      "mindmap/nightly-check/circle-shape.mmd",
+      "mindmap/nightly-check/rounded-rect-shape.mmd",
+      "mindmap/nightly-check/square-shape.mmd",
+      "mindmap/nightly-check/text-should-wrap-with-icon.mmd"
+    ],
+    "coverage_credit": 0,
+    "qualification": "Reviewed hand-declared Shapes4 display rows and exact raw framing; not a runtime verdict. Bang/Cloud remains excluded and raw source Models remain unchanged."
+  },
+  "review": {
+    "date": "2026-10-26",
+    "reviewer": "agent:Galileo",
+    "verdict": "approved_source_and_bounded_shapes4_design_and_prr",
+    "reviewed_proposal_sha256": "b8f434d6dc927b05cdfb9cd4b0c28cb36a55c9fc13371d95615635e3d7996ca4",
+    "scope": "Five complete original raw-source Models; four non-Bang/Cloud source-to-terminal projections and bounded RFC0030 Shapes4 contract. No implementation or runtime drawing admission.",
+    "corrections": "Pinned candidate asset SHA, explicit rounded glyphs and parent/child ports, mandatory non-scoring per-shape routing controls and atomic local rollback. Child port is UDL/bits13, not URD/bits7."
+  }
+}

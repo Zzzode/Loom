@@ -171,6 +171,9 @@ void observe(Observation& row) {
     auto diagram = loom::ui::render_markdown(fenced(row.source, "mermaid"));
     auto source = loom::ui::render_markdown(fenced(row.source, "text"));
     diagram->ComputeRequirement();
+    // Blank spacer columns are part of the public intrinsic layout extent.
+    // Trimming captured ink cannot establish whether that full extent fits.
+    const int layout_width = diagram->requirement().min_x;
     const int input_lines = static_cast<int>(std::count(row.source.begin(), row.source.end(), '\n'));
     const int height = std::min(4096, std::max({32, input_lines + 12, diagram->requirement().min_y + 8}));
     const auto wide = capture(diagram, 240, height);
@@ -183,7 +186,7 @@ void observe(Observation& row) {
     std::istringstream lines(wide);
     for (std::string line; std::getline(lines, line);)
         visible_width = std::max(visible_width, ftxui::string_width(line));
-    row.narrow_source_expected = row.status == "source_fallback" || visible_width > 40;
+    row.narrow_source_expected = row.status == "source_fallback" || std::max(visible_width, layout_width) > 40;
     row.narrow_status = narrow == plain_narrow ? "source_fallback" : "unverified_drawing";
     if ((narrow == plain_narrow) != row.narrow_source_expected)
         row.errors.emplace_back("Narrow output disagrees with the independently measured wide extent/source control");
@@ -237,6 +240,33 @@ void report(const std::vector<Observation>& rows) {
     std::ofstream output(path, std::ios::binary);
     if (!output || !(output << doc.to_pretty_string() << '\n'))
         throw std::runtime_error("Cannot write " + path.string());
+}
+
+TEST(MermaidTerminal, BlankBlockSpacerColumnsRemainPartOfTheIntrinsicWidth) {
+    constexpr std::string_view source =
+        "block-beta\n  columns 5\n  space space Renamed[\"Tag\"] space space";
+    auto fallback = ftxui::text("WHOLE_SOURCE_FALLBACK");
+    auto node = loom::ui::mermaid::render_mermaid(source, fallback);
+    ASSERT_TRUE(node);
+    (*node)->ComputeRequirement();
+    // Five nine-cell columns, four three-cell gaps and the two-cell root apron.
+    EXPECT_EQ((*node)->requirement().min_x, 5 * 9 + 4 * 3 + 2);
+    const auto wide = capture(*node, 240, 12);
+    EXPECT_NE(wide.find("Tag"), std::string::npos);
+    int ink_width = 0;
+    std::istringstream lines(wide);
+    for (std::string line; std::getline(lines, line);)
+        ink_width = std::max(ink_width, ftxui::string_width(line));
+    EXPECT_LT(ink_width, 40);
+    EXPECT_EQ(capture(*node, 40, 12), "WHOLE_SOURCE_FALLBACK");
+    EXPECT_EQ(capture(*node, 240, 12), wide);
+    Observation row;
+    row.source = source;
+    observe(row);
+    EXPECT_TRUE(row.errors.empty());
+    EXPECT_TRUE(row.narrow_source_expected);
+    EXPECT_EQ(row.status, "unverified_drawing");
+    EXPECT_EQ(row.narrow_status, "source_fallback");
 }
 
 TEST(MermaidTerminal, CompleteImportedInputBaseline) {
@@ -475,6 +505,29 @@ TEST(MermaidRowsCache, ClearDropsEntriesAndCounters) {
     // Fresh miss after reset.
     ASSERT_FALSE(cache.get_or_layout(e6b::kNodeTD, false)->empty());
     EXPECT_EQ(cache.misses(), 1u);
+}
+
+TEST(MermaidRowsCache, CopiesAndAssignmentOwnIndependentRowsAndLruState) {
+    LayoutRowsCache original(2,1u<<20);
+    const auto good=original.get_or_layout(e6b::kNodeTD,false);
+    const auto rejected=original.get_or_layout(e6b::kRejected,false);
+    ASSERT_TRUE(good&& !good->empty());ASSERT_TRUE(rejected&&rejected->empty());
+    auto copied=original;
+    LayoutRowsCache assigned(1,1);assigned=original;
+    for(auto* cache:{&copied,&assigned}) {
+        EXPECT_EQ(cache->get_or_layout(e6b::kNodeTD,false),good);
+        EXPECT_EQ(cache->get_or_layout(e6b::kRejected,false),rejected);
+        EXPECT_EQ(cache->entry_capacity(),2u);EXPECT_EQ(cache->byte_size(),original.byte_size());
+    }
+    const auto retained=original.byte_size();original.clear();
+    EXPECT_EQ(original.size(),0u);EXPECT_GT(copied.byte_size(),0u);EXPECT_EQ(assigned.byte_size(),retained);
+    EXPECT_EQ(copied.get_or_layout(e6b::kNodeTD,false),good);
+    EXPECT_FALSE(copied.get_or_layout(e6b::variant(77),false)->empty());
+    EXPECT_EQ(assigned.get_or_layout(e6b::kRejected,false),rejected);
+    const auto& same=assigned;assigned=same;EXPECT_EQ(assigned.size(),2u);
+    auto art=copied.render(e6b::kNodeTD,false,ftxui::text("fallback"));ASSERT_TRUE(art);
+    auto baseline=loom::ui::mermaid::render_mermaid(e6b::kNodeTD,ftxui::text("fallback"));ASSERT_TRUE(baseline);
+    EXPECT_EQ(capture(*art,240,40),capture(*baseline,240,40));
 }
 
 TEST(MermaidRowsCache, Width240And40ShareRowsWithFreshNodeGeometry) {

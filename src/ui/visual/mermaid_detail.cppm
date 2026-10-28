@@ -11,6 +11,10 @@
 // function signature cannot name a partition-only type, so the dependency
 // points this way and not in reverse. Production code refers to the seam
 // entities through the non-exported aliases below.
+module;
+
+#include <ftxui/dom/node.hpp>
+
 module loom.ui.visual.mermaid:detail;
 
 import std;
@@ -58,18 +62,25 @@ constexpr std::size_t kGroupDepthLimit = 16;
 bool unicode_text(std::string_view text);
 std::optional<std::string> validated_plain_label(std::string_view text);
 
+std::optional<std::vector<std::string>> mindmap_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> sequence_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> charts_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source, Work& work, bool use_ascii = false);
-std::optional<std::vector<std::string>> relations_layout(std::string_view source, Work& work, bool class_envelope = false, bool requirement_input = false);
+struct LayoutPayload;
+std::optional<LayoutPayload> relations_layout(std::string_view source, Work& work, bool class_envelope = false, bool requirement_input = false);
 
-// RFC 0031 E6b: the layout-only seam behind both public render_mermaid
-// entry points. It runs the current family dispatch with a fresh Work budget
-// and returns immutable string ROWS — never an ftxui::Element. Nullopt (or
-// an empty vector) is the whole-source rejection outcome; width/theme flips
-// happen later inside a freshly constructed node. The per-instance
-// LayoutRowsCache calls this seam on a miss.
-std::optional<std::vector<std::string>> layout_mermaid_rows(std::string_view source, bool use_ascii);
+// RFC 0030 Block: one immutable private payload serves both public paths.
+// Legacy families keep an empty plane and their exact inherited-style finish.
+struct LayoutPayload {
+    std::vector<std::string> rows;
+    std::vector<std::uint16_t> styles;
+};
+std::optional<LayoutPayload> block_layout(std::string_view source, Work& work);
+std::optional<LayoutPayload> layout_mermaid_payload(std::string_view source, bool use_ascii);
+std::optional<LayoutPayload> layout_mermaid_payload(std::string_view source, bool use_ascii, Work& work);
+bool valid_layout_payload(const LayoutPayload& payload);
+std::optional<ftxui::Element> finish_mermaid_payload(
+    std::optional<LayoutPayload> payload, ftxui::Element fallback);
 
 struct Point {
     int x = 0;
@@ -132,9 +143,28 @@ struct RelationNote { int target = -1; bool right = true; std::string text; };
 // immutable before any effective-direction view is retained by layout/search.
 struct StateScopeDirection { int owner=-1;std::array<char,2> value{}; };
 struct StateTextRecord { int entity=-1;bool first_equals_default=false;std::vector<std::string> body; };
+struct RouteCandidate { int estimate=0,cost=0,index=0; bool operator>(const RouteCandidate& other) const { return std::tie(estimate,cost,index)>std::tie(other.estimate,other.cost,other.index); } };
+struct RouteFrontier : std::priority_queue<RouteCandidate,std::vector<RouteCandidate>,std::greater<>> {
+    using Base=std::priority_queue<RouteCandidate,std::vector<RouteCandidate>,std::greater<>>;
+    using Base::Base;
+    std::vector<RouteCandidate>& backing(){return this->c;}
+};
+struct ErPresentation {
+    std::string theme="redux-color",look="neo";
+    std::vector<std::string> config_notices;
+    std::vector<std::pair<std::size_t,std::string>> blank_roles;
+    // Render-only route order for a successfully committed relaxed rank plan.
+    bool ranked_topology=false;
+    // Render-only A* capacity; never serialized or included in source/model
+    // projections or hashes. RelationLayout exposes this through a const
+    // diagram reference, so the scratch backing is explicitly mutable.
+    mutable std::vector<RouteCandidate> frontier_backing;
+};
+struct ErPresentation;
 struct RelationDiagram {
     RelationFamily family = RelationFamily::Class; std::string direction = "TB";
     std::vector<RelationEntity> entities; std::vector<Relationship> edges; std::vector<RelationNote> notes;
+    std::unique_ptr<ErPresentation> er_presentation;
     std::optional<std::string> diagram_title;
     std::optional<bool> class_hide_empty_members_box;
     bool class_namespaces=false;
@@ -162,7 +192,10 @@ struct ErMetaValue {
     enum class Kind { Text,Number,Boolean,Other } kind=Kind::Other;
     std::string_view text;double number=0;bool boolean=false;
 };
-struct ErEnvelope {std::string_view body;std::optional<std::string> title;};
+struct ErEnvelope {
+    std::string_view body;std::optional<std::string> title;
+    std::unique_ptr<ErPresentation> presentation;
+};
 struct ClassEnvelope {
     std::string_view body;
     std::optional<std::string> title;
@@ -300,6 +333,8 @@ std::optional<LabelPlacement> label_place(Canvas& canvas,const RouteSearch& sear
 
 // Family-provided entry functions.
 std::optional<ErEnvelope> er_source_envelope(std::string_view source,Work& work);
+std::optional<std::string> er_projection_wrap(std::string_view text,Work& work);
+std::optional<std::vector<std::string>> er_projection_notices(const RelationDiagram& diagram,Work& work);
 bool draw_er_table(Canvas& canvas,const RelationEntity& entity,const RelationBox& box);
 std::optional<std::string> class_identifier(std::string_view& rest,Work& work,bool* backtick=nullptr);
 std::optional<ClassOperand> class_operand(std::string_view& rest,Work& work,std::string_view source,bool& source_checked);

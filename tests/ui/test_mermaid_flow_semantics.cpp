@@ -15,6 +15,8 @@ import loom.serdes.json;
 import loom.crypto.crypto;
 
 #include "mermaid_flow400_linkprofile3_authority.hpp"
+#include "mermaid_flow_title_authority.hpp"
+#include "mermaid_flow_shape_alias_authority.hpp"
 #include "mermaid_flow_group_endpoint15_oracle.hpp"
 
 namespace {
@@ -527,6 +529,58 @@ TEST(MermaidFlowSemantics, FrozenOfficialRectangleExpansion) {
     });
     EXPECT_EQ(visited.size(),16u); EXPECT_EQ(rectangular,14u); EXPECT_EQ(decision,2u);
 }
+TEST(MermaidFlowSemantics, OfficialInlineShapeConfigSourcesOwnCompleteGeometry) {
+    struct Case { std::string_view path,sha; Model model; };
+    const std::array cases{
+        Case{"flowchart/visual-check/should-render-a-diamond-shaped-node-using-shape-config.mmd",
+            "10a38ba8df398ccaf36e51e7f84dccc2a71af21c005e177d30d2c304ea209890",
+            {"BT",{{"n2","Untitled Node",Shape::Rectangle},{"n1","Diamond",Shape::Decision}},
+                {{0,1,"","solid",false,true}}, {}}},
+        Case{"flowchart/visual-check/should-render-a-rounded-rectangle-and-a-normal-rectangle.mmd",
+            "1384844adca4511a7a6f7917ebd6a9563d7dc877e5a4208f7acfc5e32abafacb",
+            {"BT",{{"n2","Untitled Node",Shape::Rectangle},{"n1","Rounded Rectangle",Shape::Rounded},
+                    {"n3","Untitled Node",Shape::Rectangle}},
+                {{0,1,"","solid",false,true},{2,1,"","solid",false,true}}, {}}},
+        Case{"flowchart/visual-check/should-render-a-stadium-shaped-node.mmd",
+            "3497ab671f384701e964e3b71127e46ad889c6b67eb4fd18576bbc5a58309b8e",
+            {"TB",{{"A","Start",Shape::Stadium},{"n1","Untitled Node",Shape::Rectangle},
+                    {"n2","Untitled Node",Shape::Rectangle}},
+                {{0,1,"","solid",false,true},{0,2,"","solid",false,true}}, {}}},
+    };
+    for (const auto& item : cases) {
+        SCOPED_TRACE(item.path);
+        const auto source=flow400_read(std::filesystem::path(LOOM_TESTS_DIR)/"fixtures/mermaid_official/cases"/std::string(item.path));
+        ASSERT_EQ(digest(source),item.sha) << "Pinned complete official source changed";
+        auto element=loom::ui::render_markdown(fenced(source,"mermaid"));
+        auto ordinary=loom::ui::render_markdown(fenced(source,"text"));
+        element->ComputeRequirement();
+        const int height=std::min(1040,std::max(32,element->requirement().min_y+8));
+        const auto wide=capture(element,240,height);
+        const auto narrow=capture(element,40,height);
+        const auto restored=capture(element,240,height);
+        const auto plain_wide=capture(ordinary,240,height);
+        const auto plain_narrow=capture(ordinary,40,height);
+        EXPECT_FALSE(wide==plain_wide) << "Official shape source fell back to source";
+        EXPECT_TRUE(restored==wide) << "Restored render changed after narrow view";
+        auto geometry_errors=[&](const Grid& grid) {
+            OracleWork work{kFlow400SceneLimit};
+            return flow400_geometry(grid,item.model,work);
+        };
+        EXPECT_TRUE(geometry_errors(wide).empty());
+        int content_width=0;
+        for(int y=0;y<wide.height;++y){
+            if(wide.row(y).find(kSentinel)!=std::string::npos)break;
+            for(int x=0;x<wide.width;++x)if(!wide.at({x,y}).empty()&&wide.at({x,y})!=" ")content_width=std::max(content_width,x+1);
+        }
+        if(content_width>40)EXPECT_TRUE(narrow==plain_narrow) << "Overwide shape source did not fall back narrowly";
+        else EXPECT_TRUE(geometry_errors(narrow).empty()) << "Shape geometry changed at narrow width";
+        for(const auto* frame:{&wide,&narrow,&restored,&plain_wide,&plain_narrow}) {
+            bool sentinel=false;
+            for(int y=0;y<frame->height;++y)sentinel=sentinel||frame->row(y).find(kSentinel)!=std::string::npos;
+            EXPECT_TRUE(sentinel) << "Following content disappeared";
+        }
+    }
+}
 // These expectations are declared from the retained public resource policy,
 // independently of renderer observations. An at-limit input can still exceed
 // the separate canvas/routing budget; only compact positive boundaries below
@@ -553,6 +607,135 @@ void check_source_policy(std::string_view source,bool expect_drawing = false,con
     EXPECT_TRUE(has_sentinel(narrow));
     const auto restored = capture(element,240,height);
     EXPECT_TRUE(restored == wide); EXPECT_TRUE(has_sentinel(restored));
+}
+TEST(MermaidFlowSemantics, TerminalUseMaxWidthConfigRetainsCompleteDiagramGeometry) {
+    constexpr std::array sources{
+        std::string_view{"---\nconfig:\n  flowchart:\n    useMaxWidth: true\n---\nflowchart TD\nA[Start] --> B[Done]\n"},
+        std::string_view{"---\nconfig:\n  flowchart:\n    useMaxWidth: false\n---\nflowchart TD\nA[Start] --> B[Done]\n"},
+    };
+    const Model expected{"TB",{{"A","Start",Shape::Rectangle},{"B","Done",Shape::Rectangle}},
+        {{0,1,"","solid",false,true}}, {}};
+    for (const auto source : sources) {
+        auto drawing=loom::ui::render_markdown(fenced(source,"mermaid"));
+        auto ordinary=loom::ui::render_markdown(fenced(source,"text"));
+        drawing->ComputeRequirement();
+        const int height=std::max(32,drawing->requirement().min_y+8);
+        const auto wide=capture(drawing,240,height);
+        const auto narrow=capture(drawing,40,height);
+        const auto restored=capture(drawing,240,height);
+        const auto plain_wide=capture(ordinary,240,height);
+        const auto plain_narrow=capture(ordinary,40,height);
+        EXPECT_FALSE(wide==plain_wide);
+        EXPECT_FALSE(narrow==plain_narrow);
+        EXPECT_TRUE(restored==wide);
+        OracleWork work{kFlow400SceneLimit};
+        EXPECT_TRUE(flow400_geometry(wide,expected,work).empty());
+        EXPECT_TRUE(flow400_geometry(narrow,expected,work).empty());
+        for(const auto* frame:{&wide,&narrow,&restored}) {
+            bool sentinel=false;
+            for(int y=0;y<frame->height;++y)sentinel=sentinel||frame->row(y).find(kSentinel)!=std::string::npos;
+            EXPECT_TRUE(sentinel);
+        }
+    }
+    check_source_policy("---\nconfig:\n  flowchart:\n    useMaxWidth: yes\n---\nflowchart TD\nA[Start] --> B[Done]\n");
+}
+TEST(MermaidFlowSemantics, ZeroDiagramPaddingConfigRetainsCompleteDiagramGeometry) {
+    constexpr std::string_view source =
+        "---\ndescription: >-\n  Zero SVG viewport padding is inert in terminal output.\n"
+        "config:\n  flowchart:\n    diagramPadding: 0\n---\n"
+        "flowchart TD\nA[Start] --> B[Done]\n";
+    const Model expected{"TB",{{"A","Start",Shape::Rectangle},{"B","Done",Shape::Rectangle}},
+        {{0,1,"","solid",false,true}}, {}};
+    auto drawing=loom::ui::render_markdown(fenced(source,"mermaid"));
+    auto ordinary=loom::ui::render_markdown(fenced(source,"text"));
+    drawing->ComputeRequirement();
+    const int height=std::max(32,drawing->requirement().min_y+8);
+    const auto wide=capture(drawing,240,height);
+    const auto narrow=capture(drawing,40,height);
+    const auto restored=capture(drawing,240,height);
+    EXPECT_FALSE(wide==capture(ordinary,240,height));
+    EXPECT_FALSE(narrow==capture(ordinary,40,height));
+    EXPECT_TRUE(restored==wide);
+    OracleWork work{kFlow400SceneLimit};
+    EXPECT_TRUE(flow400_geometry(wide,expected,work).empty());
+    EXPECT_TRUE(flow400_geometry(narrow,expected,work).empty());
+    for(const auto* frame:{&wide,&narrow,&restored}) {
+        bool sentinel=false;
+        for(int y=0;y<frame->height;++y)sentinel=sentinel||frame->row(y).find(kSentinel)!=std::string::npos;
+        EXPECT_TRUE(sentinel);
+    }
+    check_source_policy("---\nconfig:\n  flowchart:\n    diagramPadding: 1\n---\nflowchart TD\nA[Start] --> B[Done]\n");
+    check_source_policy("---\nconfig:\n  flowchart:\n    diagramPadding: 0\n    diagramPadding: 0\n---\nflowchart TD\nA[Start] --> B[Done]\n");
+}
+TEST(MermaidFlowSemantics, TitleTopMarginConfigRequiresExactTerminalInertProfile) {
+    constexpr std::array invalid{
+        std::string_view{"---\nconfig:\n  layout: dagre\n  flowchart:\n    titleTopMargin: 1\n---\nflowchart TD\nA --> B\n"},
+        std::string_view{"---\nconfig:\n  layout: dagre\n  flowchart:\n    titleTopMargin: 0\n    titleTopMargin: 0\n---\nflowchart TD\nA --> B\n"},
+        std::string_view{"---\nconfig:\n  layout: dagre\n  flowchart:\n    titleTopMargin: 0\n    titleBottomMargin: 0\n---\nflowchart TD\nA --> B\n"},
+        std::string_view{"---\ntitle: \"A title\"\nconfig:\n  flowchart:\n    titleTopMargin: 0\n---\nflowchart TD\nA --> B\n"},
+        std::string_view{"---\ntitle: \"A title\"\nconfig:\n  layout: dagre\n  flowchart:\n    titleTopMargin: 0\n---\nflowchart TD\nA --> B\n"},
+        std::string_view{"---\nconfig:\n  flowchart:\n    titleTopMargin: 1\n---\nflowchart TD\nA --> B\n"},
+    };
+    for(const auto source:invalid)check_source_policy(source);
+}
+TEST(MermaidFlowSemantics, ShapeAliasMetadataRequiresClosedQuotedShapeAndLabel) {
+    constexpr std::array invalid{
+        std::string_view{"flowchart\nn0@{ shape: star, label: \"star\" }\n"},
+        std::string_view{"flowchart\nn0@{ shape: event, label: event }\n"},
+        std::string_view{"flowchart\nn0@{ shape: event, class: \"event\" }\n"},
+        std::string_view{"flowchart\nn0@{ shape: event, label: \"event\", label: \"again\" }\n"},
+        std::string_view{"flowchart\nn0[event]@{ shape: event, label: \"different\" }\n"},
+        std::string_view{"flowchart\nn0@{ shape: diamond, label: \"diamond\" extra }\n"},
+    };
+    for(const auto source:invalid)check_source_policy(source);
+}
+TEST(MermaidFlowSemantics, DiamondShapeAliasDrawsAsDecision) {
+    constexpr std::string_view source =
+        "flowchart BT\n  n2[\"Untitled Node\"] --> n1@{ shape: diamond}\n";
+    const Model expected{"BT",{{"n2","Untitled Node",Shape::Rectangle},
+                                {"n1","n1",Shape::Decision}},
+                         {{0,1,"","solid",false,true}}, {}};
+    auto element=loom::ui::render_markdown(fenced(source,"mermaid"));
+    auto ordinary=loom::ui::render_markdown(fenced(source,"text"));
+    element->ComputeRequirement();ordinary->ComputeRequirement();
+    const int height=std::max({32,element->requirement().min_y+8,ordinary->requirement().min_y+8});
+    constexpr std::array<int,5> widths{{240,40,240,240,40}};
+    std::array<std::optional<Grid>,5> frames;
+    OracleWork work{kFlow400SceneLimit};
+    for(std::size_t n=0;n<frames.size();++n)
+        frames[n]=capture(n<3u?element:ordinary,widths[n],height,&work);
+    for(const auto& frame:frames)static_cast<void>(flow400_following(*frame,work,kSentinel));
+    EXPECT_FALSE(flow400_same(*frames[0],*frames[3],work));
+    EXPECT_TRUE(flow400_same(*frames[0],*frames[2],work));
+    EXPECT_TRUE(flow400_geometry(*frames[0],expected,work,kSentinel).empty());
+    if(flow400_same(*frames[1],*frames[4],work))
+        SUCCEED() << "Narrow rendering uses exact ordinary fallback";
+    else EXPECT_TRUE(flow400_geometry(*frames[1],expected,work,kSentinel).empty());
+}
+TEST(MermaidFlowSemantics, BareFlowchartDefaultsToTBOnlyForGroupFreeProfile) {
+    constexpr std::string_view directed =
+        "flowchart\nA[North source state] --> B[South target state]\n";
+    const Model expected{"TB",{{"A","North source state",Shape::Rectangle},
+                                {"B","South target state",Shape::Rectangle}},
+                         {{0,1,"","solid",false,true}}, {}};
+    auto element=loom::ui::render_markdown(fenced(directed,"mermaid"));
+    auto ordinary=loom::ui::render_markdown(fenced(directed,"text"));
+    element->ComputeRequirement();ordinary->ComputeRequirement();
+    const int height=std::max({32,element->requirement().min_y+8,ordinary->requirement().min_y+8});
+    constexpr std::array<int,5> widths{{240,40,240,240,40}};
+    std::array<std::optional<Grid>,5> frames;
+    OracleWork work{kFlow400SceneLimit};
+    for(std::size_t n=0;n<frames.size();++n)
+        frames[n]=capture(n<3u?element:ordinary,widths[n],height,&work);
+    for(const auto& frame:frames)static_cast<void>(flow400_following(*frame,work,kSentinel));
+    EXPECT_FALSE(flow400_same(*frames[0],*frames[3],work));
+    EXPECT_TRUE(flow400_same(*frames[0],*frames[2],work));
+    EXPECT_TRUE(flow400_geometry(*frames[0],expected,work,kSentinel).empty());
+    if(flow400_same(*frames[1],*frames[4],work))
+        SUCCEED() << "Narrow rendering uses exact ordinary fallback";
+    else EXPECT_TRUE(flow400_geometry(*frames[1],expected,work,kSentinel).empty());
+    for(const auto& frame:frames)EXPECT_NE(flow400_following(*frame,work,kSentinel),frame->height);
+    check_source_policy("flowchart\nsubgraph G\nA --> B\nend\n");
 }
 TEST(MermaidFlowResources, RetainsGroupCountAndDepthBounds) {
     auto nested = [](int depth) {
@@ -725,7 +908,26 @@ std::size_t flow400_classic_mutations(const Grid& good,const Model& model,JsonVa
         flow400_require(blank.has_value(),"Flow400 Classic extra-ink blank witness");
         physical([&](Grid& bad){bad.put(*blank,"§");},name);
     };
-    if(id=="original_244_dagre_subgraphs"){
+    if(id=="original_13_dagre_title_top_margin_zero"){
+        const auto start=node_index("A");
+        semantic([&](Model& bad){bad.nodes[start].shape=Shape::Circle;},"Classic13 titleTopMargin node shape");
+        semantic([&](Model& bad){bad.nodes[start].label="A absent";},"Classic13 titleTopMargin node label");
+        semantic([](Model& bad){bad.edges.front().to=bad.edges.front().from;},"Classic13 titleTopMargin edge endpoint");
+        extra_ink("Classic13 titleTopMargin extra ink");
+    }else if(id=="original_40_diamond_fanout"){
+        const auto decision=node_index("A");
+        semantic([&](Model& bad){bad.nodes[decision].shape=Shape::Rectangle;},"Classic40 diamond identity");
+        semantic([&](Model& bad){bad.nodes[decision].label="A absent";},"Classic40 decision label");
+        semantic([](Model& bad){bad.edges[1].to=bad.edges[1].from;},"Classic40 fanout target");
+        extra_ink("Classic40 extra ink");
+    }else if(id=="original_41_diamond_fanout_in_subgraph"){
+        const auto decision=node_index("A");
+        semantic([&](Model& bad){bad.nodes[decision].shape=Shape::Rectangle;},"Classic41 diamond identity");
+        semantic([&](Model& bad){bad.nodes[decision].label="A absent";},"Classic41 decision label");
+        semantic([](Model& bad){bad.edges[1].to=bad.edges[1].from;},"Classic41 fanout target");
+        semantic([](Model& bad){flow400_require(!bad.groups.empty()&&bad.groups.front().nodes.size()==1u,"Classic41 subbe membership witness");bad.groups.front().nodes.clear();},"Classic41 subbe membership");
+        extra_ink("Classic41 extra ink");
+    }else if(id=="original_244_dagre_subgraphs"){
         const auto database=node_index("D"),client=node_index("A");
         semantic([&](Model& bad){bad.nodes[database].shape=Shape::Circle;},"Classic244 cylinder-to-circle");
         semantic([&](Model& bad){bad.nodes[client].label="Client absent";},"Classic244 Client label");
@@ -745,7 +947,7 @@ std::size_t flow400_classic_mutations(const Grid& good,const Model& model,JsonVa
         semantic([](Model& bad){bad.edges.front().to=bad.edges.front().from;},"Classic376 first edge endpoint");
         extra_ink("Classic376 extra ink");
     }
-    flow400_require(rejected==expected&&expected==(id=="original_244_dagre_subgraphs"?5u:4u),"Flow400 Classic mutation source catalogue");
+    flow400_require(rejected==expected&&expected==((id=="original_244_dagre_subgraphs"||id=="original_41_diamond_fanout_in_subgraph")?5u:4u),"Flow400 Classic mutation source catalogue");
     return rejected;
 }
 
@@ -766,7 +968,7 @@ std::size_t flow400_linkprofile3_mutations(const Grid& good,const Model& model,c
     const auto arrow=[&](){std::optional<Point> found;for(int y=0;y<good.height&&!found;++y)for(int x=0;x<good.width;++x)if(glyph(good.at({x,y})).arrow>=0){found=Point{x,y};break;}flow400_require(found.has_value(),"Flow400 LinkProfile3 point-marker witness");return *found;};
     const auto contours=closed_frames(good,work);
     const auto extra_ink=[&](std::string_view name){const auto footer=flow400_following(good,work);std::optional<Point> blank;for(int y=0;y<footer&&!blank;++y)for(int x=0;x<good.width;++x){work.spend();const Point point{x,y};if(good.at(point)==" "){blank=point;break;}}flow400_require(blank.has_value(),"Flow400 LinkProfile3 extra-ink witness");physical([&](Grid& bad){bad.put(*blank,"§");},name);};
-    if(id=="link_profile_291"||id=="link_profile_294") {
+    if(id=="link_profile_019"||id=="link_profile_291"||id=="link_profile_294") {
         const std::size_t marker_edge=4u,minimum_edge=7u,label_edge=5u;flow400_require(profile.edges.size()>minimum_edge&&model.edges.size()>label_edge,"Flow400 LinkProfile3 source edge catalogue");
         const int minimum_target=model.edges[minimum_edge].to;flow400_require(minimum_target>=0&&static_cast<std::size_t>(minimum_target)<model.nodes.size()&&
             std::ranges::none_of(model.edges,[&](const Edge& edge){return edge.from==minimum_target;}),"Flow400 LinkProfile3 minimum target leaf witness");
@@ -924,10 +1126,119 @@ TEST(MermaidFlowSemantics, Official400SourceAuthorityAndStrictFollowingProtocol)
     OracleWork zero{0u};expect_failure([&]{capture(preexisting,1,1,&zero);},"Bounded cell-oracle work exhausted",true);
     OracleWork zero_geometry{0u};expect_failure([&]{flow400_geometry(good,model,zero_geometry);},"Bounded cell-oracle work exhausted",true);
 }
-TEST(MermaidFlowClassicAuthority, BindsOnlyThreeFrozenBaseNullTuples) {
+
+TEST(MermaidFlowSemantics, OfficialIssue4648ArrowlessNestedSubgraphIsSourceBoundGeometry) {
+    auto docs=flow400_documents();OracleWork work{kFlow400SceneLimit};work.spend(32768u);
+    const auto source=flow400_read(std::filesystem::path(LOOM_TESTS_DIR)/"fixtures/mermaid_official/cases"/std::string(kFlow400Issue4648Fixture));
+    ASSERT_EQ(source.size(),529u);
+    auto element=loom::ui::render_markdown(fenced(source,"mermaid"));
+    auto ordinary=loom::ui::render_markdown(fenced(source,"text"));
+    element->ComputeRequirement();ordinary->ComputeRequirement();
+    const auto line_floor=static_cast<int>(std::count(source.begin(),source.end(),'\n'))+12;
+    const int height=std::max({32,element->requirement().min_y+8,ordinary->requirement().min_y+8,line_floor});
+    constexpr std::array<int,5> widths{{240,40,240,240,40}};
+    std::array<Grid,5> frames;
+    for(std::size_t index=0u;index<frames.size();++index)
+        frames[index]=capture(index<3u?element:ordinary,widths[index],height,&work);
+    // All five observations exist before the exact source tuple or semantic
+    // Model is bound, so source fallback cannot stand in for a drawing.
+    flow400_issue4648_bind(docs,source,work);
+    const auto model=flow400_issue4648_model(work);
+    EXPECT_FALSE(flow400_same(frames[0],frames[3],work));
+    const bool restored=flow400_same(frames[0],frames[2],work);
+    ASSERT_TRUE(restored);
+    const auto wide=flow400_geometry(frames[0],model,work);
+    ASSERT_TRUE(wide.empty())<<errors_text(wide);
+    const bool narrow_source=flow400_same(frames[1],frames[4],work);
+    bool narrow_geometry=false;
+    if(narrow_source)EXPECT_NO_THROW(static_cast<void>(flow400_following(frames[1],work)));
+    else {const auto narrow=flow400_geometry(frames[1],model,work);narrow_geometry=narrow.empty();EXPECT_TRUE(narrow_geometry)<<errors_text(narrow);}
+
+    auto wrong_endpoint=model;wrong_endpoint.edges[2].to=1;
+    const auto wrong_endpoint_errors=flow400_geometry(frames[0],wrong_endpoint,work);
+    EXPECT_FALSE(wrong_endpoint_errors.empty());
+    auto wrong_marker=model;wrong_marker.edges[2].end=true;
+    const auto wrong_marker_errors=flow400_geometry(frames[0],wrong_marker,work);
+    EXPECT_FALSE(wrong_marker_errors.empty());
+    auto wrong_group=model;wrong_group.groups[0].direction="TD";
+    const auto wrong_group_errors=flow400_geometry(frames[0],wrong_group,work);
+    EXPECT_FALSE(wrong_group_errors.empty());
+    auto missing_edge=model;missing_edge.edges.pop_back();
+    const auto missing_edge_errors=flow400_geometry(frames[0],missing_edge,work);
+    EXPECT_FALSE(missing_edge_errors.empty());
+    ASSERT_EQ(frames[0].at({35,28}),"│");
+    flow400_copy_grid(frames[0],work);auto broken_route=frames[0];broken_route.put({35,28}," ");
+    const auto broken_route_errors=flow400_geometry(broken_route,model,work);
+    EXPECT_FALSE(broken_route_errors.empty());
+    flow400_copy_grid(frames[0],work);auto branched_route=frames[0];branched_route.put({35,28},"┼");
+    const auto branched_route_errors=flow400_geometry(branched_route,model,work);
+    EXPECT_FALSE(branched_route_errors.empty());
+    flow400_copy_grid(frames[0],work);auto unexpected_arrow=frames[0];unexpected_arrow.put({35,28},"▼");
+    const auto unexpected_arrow_errors=flow400_geometry(unexpected_arrow,model,work);
+    EXPECT_FALSE(unexpected_arrow_errors.empty());
+    flow400_copy_grid(frames[0],work);auto orphan_route=frames[0];orphan_route.put({100,10},"│");
+    const auto orphan_route_errors=flow400_geometry(orphan_route,model,work);
+    EXPECT_FALSE(orphan_route_errors.empty());
+    flow400_copy_grid(frames[0],work);auto multiple_orphans=frames[0];multiple_orphans.put({100,10},"│");multiple_orphans.put({102,10},"│");
+    const auto orphan_errors=flow400_geometry(multiple_orphans,model,work);
+    ASSERT_FALSE(orphan_errors.empty());EXPECT_LE(orphan_errors.size(),1u);
+    for(const auto& error:orphan_errors)EXPECT_FALSE(flow400_resource(error));
+
+    std::size_t profile_rejections=0u;
+    auto reject_profile=[&](std::string changed) {
+        work.product(changed.size(),4u);work.spend(1024u);
+        auto invalid=json::parse(changed);ASSERT_TRUE(invalid.has_value());
+        std::size_t groups=0u,members=0u;
+        bool rejected=false;try{flow400_shape(invalid->root(),groups,members);}catch(const std::runtime_error&){rejected=true;}
+        EXPECT_TRUE(rejected);profile_rejections+=rejected;
+    };
+    const auto edge_at=kFlow400Issue4648ModelJson.find("\"source\":\"D3\"");ASSERT_NE(edge_at,std::string_view::npos);
+    auto labeled=std::string(kFlow400Issue4648ModelJson);const auto label_at=labeled.find("\"label\":\"\"",edge_at);ASSERT_NE(label_at,std::string::npos);
+    labeled.replace(label_at,std::string_view("\"label\":\"\"").size(),"\"label\":\"label\"");reject_profile(std::move(labeled));
+    for(const auto style:{std::string_view{"dotted"},std::string_view{"thick"}}){
+        auto styled=std::string(kFlow400Issue4648ModelJson);const auto style_at=styled.find("\"style\":\"solid\"",edge_at);ASSERT_NE(style_at,std::string::npos);
+        styled.replace(style_at,std::string_view("\"style\":\"solid\"").size(),"\"style\":\""+std::string(style)+"\"");reject_profile(std::move(styled));
+    }
+    auto reverse=std::string(kFlow400Issue4648ModelJson);const auto start_at=reverse.find("\"hasArrowStart\":false",edge_at);ASSERT_NE(start_at,std::string::npos);
+    reverse.replace(start_at,std::string_view("\"hasArrowStart\":false").size(),"\"hasArrowStart\":true");reject_profile(std::move(reverse));
+    const auto physical_rejections=std::array{!broken_route_errors.empty(),!branched_route_errors.empty(),
+        !unexpected_arrow_errors.empty(),!orphan_route_errors.empty(),!orphan_errors.empty()};
+    const auto generic_mutations=flow400_mutations(frames[0],model,work);
+    EXPECT_GT(generic_mutations,0u);
+    for(const auto* errors:{&wrong_endpoint_errors,&wrong_marker_errors,&wrong_group_errors,&missing_edge_errors,
+                            &broken_route_errors,&branched_route_errors,&unexpected_arrow_errors,&orphan_route_errors,&orphan_errors})
+        for(const auto& error:*errors)EXPECT_FALSE(flow400_resource(error));
+    const auto semantic_count=static_cast<std::size_t>(!wrong_endpoint_errors.empty())+
+        static_cast<std::size_t>(!wrong_marker_errors.empty())+static_cast<std::size_t>(!wrong_group_errors.empty())+
+        static_cast<std::size_t>(!missing_edge_errors.empty())+profile_rejections;
+    const auto physical_count=static_cast<std::size_t>(std::ranges::count(physical_rejections,true));
+    EXPECT_EQ(semantic_count,8u);
+    EXPECT_EQ(physical_count,5u);
+#ifdef LOOM_MERMAID_REPORT_DIR
+    json::JsonMutDoc verdict;auto root=verdict.object();
+    root.set("schema","flow400_issue4648_native_verdict/v1");
+    root.set("source_facts_sha256",kFlow400Issue4648FactsSha);
+    root.set("case_id","flow400_nested_external1_357");root.set("ordinal",static_cast<int64_t>(kFlow400Issue4648Ordinal));
+    root.set("manifest_global_ordinal",static_cast<int64_t>(kFlow400Issue4648GlobalOrdinal));root.set("fixture",kFlow400Issue4648Fixture);
+    root.set("source_sha256",kFlow400Issue4648SourceSha);root.set("model_sha256",kFlow400Issue4648ModelSha);
+    root.set("captures",static_cast<int64_t>(frames.size()));root.set("captures_before_binding",true);root.set("source_bound_after_captures",true);
+    root.set("wide_geometry_good",wide.empty());root.set("restored_geometry_good",restored);
+    root.set("narrow_exact_ordinary",narrow_source);root.set("narrow_geometry_good",narrow_geometry);
+    root.set("semantic_mutations_rejected",static_cast<int64_t>(semantic_count));root.set("physical_mutations_rejected",static_cast<int64_t>(physical_count));
+    root.set("profile_controls_rejected",static_cast<int64_t>(profile_rejections));root.set("generic_mutations_rejected",static_cast<int64_t>(generic_mutations));
+    root.set("resource_errors",0);root.set("source_fallback_credit",0);
+    root.set("admitted",wide.empty()&&restored&&(narrow_source||narrow_geometry)&&semantic_count==8u&&physical_count==5u&&profile_rejections==4u&&generic_mutations>0u);
+    verdict.set_root(root);
+    const auto target=std::filesystem::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-flow400-issue4648-native-verdict.json";
+    std::ofstream output(target,std::ios::binary);ASSERT_TRUE(output&&(output<<verdict.to_string()<<'\n'))<<"Cannot publish "<<target;
+#endif
+}
+
+TEST(MermaidFlowClassicAuthority, BindsOnlySixFrozenBaseNullTuples) {
     auto docs=flow400_documents();auto config21=flow400_config21_documents();auto typed=flow400_typed_source4_documents();auto classic=flow400_classic_documents();
-    for(const auto ordinal:std::array<std::size_t,3>{{244u,295u,376u}}){
-        const auto row=classic.supplement.root().get("cases").at(ordinal==244u?0u:ordinal==295u?1u:2u);
+    const auto cases=classic.supplement.root().get("cases");ASSERT_EQ(cases.size(),6u);
+    for(std::size_t index=0u;index<cases.size();++index){
+        const auto row=cases.at(index);const auto ordinal=flow400_number(row.get("base_authority").get("ordinal"));
         const auto global=flow400_number(row.get("base_authority").get("manifest_global_ordinal"));
         const auto fixture=docs.manifest.root().get("fixtures").at(global);const auto source=flow400_read(std::filesystem::path(LOOM_TESTS_DIR)/"fixtures/mermaid_official/cases"/std::string(flow400_text(fixture.get("path"))));
         OracleWork work{kFlow400SceneLimit};const auto prior=flow400_typed_source4_bound_authority(docs.compact.root().get("cases").at(ordinal),config21.supplement.root(),typed.supplement.root(),fixture,ordinal,global,source,work);
@@ -942,9 +1253,9 @@ TEST(MermaidFlowClassicAuthority, BindsOnlyThreeFrozenBaseNullTuples) {
     altered.replace(at,std::string_view("\"case_id\":\"original_295_classic_trapezoids\"").size(),"\"case_id\":\"original_244_dagre_subgraphs\"");auto parsed=json::parse(altered);ASSERT_TRUE(parsed.has_value());
     OracleWork forged{kFlow400SceneLimit};bool exact=false;try{flow400_classic_root(parsed->root(),forged);}catch(const std::exception& error){exact=error.what()==std::string_view("Flow400 Classic case-id/ordinal/mutation tuple");}EXPECT_TRUE(exact);
 }
-TEST(MermaidFlowLinkProfile3Authority, BindsOnlyThreeFrozenBaseNullTuples) {
+TEST(MermaidFlowLinkProfile3Authority, BindsOnlyFourFrozenBaseNullTuples) {
     auto docs=flow400_documents();auto config21=flow400_config21_documents();auto typed=flow400_typed_source4_documents();auto classic=flow400_classic_documents();auto link=flow400_linkprofile3_documents();
-    constexpr std::array<std::size_t,3> ordinals{{291u,294u,298u}};
+    constexpr std::array<std::size_t,4> ordinals{{19u,291u,294u,298u}};
     for(std::size_t index=0u;index<ordinals.size();++index){
         const auto ordinal=ordinals[index];const auto row=link.supplement.root().get("cases").at(index);const auto global=flow400_number(row.get("base_authority").get("manifest_global_ordinal"));
         const auto fixture=docs.manifest.root().get("fixtures").at(global);const auto source=flow400_read(std::filesystem::path(LOOM_TESTS_DIR)/"fixtures/mermaid_official/cases"/std::string(flow400_text(fixture.get("path"))));
@@ -1097,7 +1408,7 @@ TEST(MermaidFlowLinkProfile3Oracle, HandGoodsExerciseMarkersCaptionsAndRankBands
 
 TEST(MermaidCapabilityReport, Flow400CompleteSources) {
     auto docs=flow400_documents();auto supplemental=flow400_config21_documents();auto typed_source4=flow400_typed_source4_documents();auto classic=flow400_classic_documents();auto linkprofile3=flow400_linkprofile3_documents();auto group_endpoint15=group_endpoint15_documents();
-    std::size_t selected_sources=0u,selected_typed_source4=0u,selected_classic=0u,selected_linkprofile3=0u,selected_group_endpoint15=0u;
+    std::size_t selected_sources=0u,selected_typed_source4=0u,selected_classic=0u,selected_linkprofile3=0u,selected_group_endpoint15=0u,selected_title=0u,selected_title_margin=0u,selected_issue4648=0u,selected_shape_alias=0u;
     OracleWork report_work;report_work.spend(65536u+4u*sizeof(json::JsonMutDoc));
     RecordProperty("flow400_sizeof_Pixel",std::to_string(sizeof(ftxui::Pixel)));
     RecordProperty("flow400_sizeof_PixelRow",std::to_string(sizeof(std::vector<ftxui::Pixel>)));
@@ -1119,7 +1430,13 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
         if(!path.starts_with("flowchart/"))return;
         const auto ordinal=visited++;OracleWork work{kFlow400SceneLimit};
         work.spend(65536u+4u*sizeof(Flow400Observation)+64u*sizeof(json::JsonMutVal)+16u*sizeof(std::string)+
-            8192u+8u*sizeof(std::size_t)+4u*sizeof(json::JsonVal)+3u*512u);
+            8192u+8u*sizeof(std::size_t)+4u*sizeof(json::JsonVal)+4u*512u);
+        const bool issue4648_selected=ordinal==kFlow400Issue4648Ordinal;
+        if(issue4648_selected)work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(Model)+32u*sizeof(ShapeFrame)+1024u);
+        const bool title_margin_selected=ordinal==kFlowTitleMarginOrdinal;
+        if(title_margin_selected)work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(Model)+32u*sizeof(ShapeFrame)+1024u);
+        const bool shape_alias_selected=flow_shape_alias_case(ordinal)!=nullptr;
+        if(shape_alias_selected)work.spend(65536u+16u*sizeof(json::JsonVal)+16u*sizeof(Model)+32u*sizeof(ShapeFrame)+1024u);
         Flow400Observation observation;auto row=root.make_obj();row.set("ordinal",static_cast<int64_t>(ordinal));row.set("fixture",path);
         row.set("source_sha256",flow400_text(fixture.get("sha256")));row.set("manifest_global_ordinal",static_cast<int64_t>(global));
         row.set("source_git_blob",flow400_text(fixture.get("git_blob")));row.set("source_bytes",static_cast<int64_t>(flow400_number(fixture.get("bytes"))));
@@ -1147,16 +1464,26 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
             restored_same=flow400_same(*observation.frames[0],*observation.frames[2],work);
             observation.remaining[1]=work.remaining;phase="bind";
             const auto selected=flow400_typed_source4_bound_authority(cases.at(ordinal),supplemental.supplement.root(),typed_source4.supplement.root(),fixture,ordinal,global,source,work);
+            const bool title_selected=ordinal==kFlowTitleOrdinal;
+            std::optional<Model> title_model;
+            if(title_selected){flow_title_bind(fixture,ordinal,global,source,work);title_model.emplace(flow_title_model(work));++selected_title;}
+            if(title_margin_selected){flow_title_margin_bind(fixture,ordinal,global,source,work);++selected_title_margin;}
+            if(shape_alias_selected){flow_shape_alias_bind(docs,fixture,ordinal,global,source,work);++selected_shape_alias;}
+            if(issue4648_selected){flow400_issue4648_bind(docs,source,work);++selected_issue4648;}
             const auto classic_case=flow400_classic_select(selected,classic.supplement.root(),fixture,ordinal,global,source,work);
             const bool classic_selected=classic_case.is_obj();
-            const auto link_case=flow400_linkprofile3_select(selected,classic_case,linkprofile3.supplement.root(),fixture,ordinal,global,source,work);
+            const auto link_case=classic_selected?JsonVal{}:flow400_linkprofile3_select(selected,classic_case,linkprofile3.supplement.root(),fixture,ordinal,global,source,work);
             const bool link_selected=link_case.is_obj();
             std::optional<BoundGroupEndpoint15> group_selection;
             if(group_endpoint15_candidate_ordinal(ordinal)) {group_selection=group_endpoint15_select(cases.at(ordinal),fixture,group_endpoint15.asset.root().get("records"),ordinal,global,source,work);flow400_require(group_selection.has_value(),"Flow400 GroupEndpoint15 selected tuple missing");}
             const bool group_selected=group_selection.has_value();const auto authority=group_selected?group_selection->authority:link_selected?link_case.get("base_authority"):classic_selected?classic_case.get("base_authority"):selected.authority;
             if(selected.kind==Flow400TypedSource4Kind::Config21)++selected_sources;
             if(selected.kind==Flow400TypedSource4Kind::TypedSource4)++selected_typed_source4;
-            if(group_selected){++selected_group_endpoint15;row.set("source_authority","immutable_base8_plus_GroupEndpoint15");row.set("source_supplement_sha256",kFlow400GroupEndpoint15AssetSha);
+            if(title_selected){row.set("source_authority","immutable_base8_plus_DiagramTitle1");row.set("title_model_sha256",std::string(kFlowTitleModelSha));}
+            else if(title_margin_selected){row.set("source_authority","immutable_base8_plus_TitleTopMargin1");row.set("title_top_margin_model_sha256",std::string(kFlowTitleMarginModelSha));}
+            else if(shape_alias_selected){row.set("source_authority","immutable_base8_plus_FlowShapeAlias16");row.set("flow_shape_alias_model_sha256",std::string(flow_shape_alias_case(ordinal)->model_sha));}
+            else if(issue4648_selected){row.set("source_authority","immutable_base8_plus_Issue4648");row.set("source_facts_sha256",std::string(kFlow400Issue4648FactsSha));}
+            else if(group_selected){++selected_group_endpoint15;row.set("source_authority","immutable_base8_plus_GroupEndpoint15");row.set("source_supplement_sha256",kFlow400GroupEndpoint15AssetSha);
                 row.set("group_endpoint15_case",flow400_text(group_selection->record.get("case_id")));row.set("group_endpoint15_expected_rejections",static_cast<int64_t>(group_endpoint15_expected_mutations(group_selection->record)));
             }else if(link_selected){++selected_linkprofile3;row.set("source_authority","immutable_base8_plus_linkprofile3");row.set("source_supplement_sha256",kFlow400LinkProfile3AssetSha);
                 row.set("linkprofile3_case",flow400_text(link_case.get("case_id")));row.set("linkprofile3_expected_rejections",static_cast<int64_t>(flow400_linkprofile3_expected(link_case)));
@@ -1169,24 +1496,30 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
                 row.set("source_authority","immutable_base8_plus_config21");row.set("source_supplement_sha256",kFlow400Config21AssetSha);
             } else {row.set("source_authority","immutable_base8");row.add("source_supplement_sha256",row.make_null());}
             std::optional<Model> model;std::optional<LinkProfile> profile;std::optional<GroupEndpoint15Model> group_model;
-            if(group_selected){group_model.emplace(group_endpoint15_model(group_selection->record.get("model"),work));model.emplace(group_model->base);}
+            if(title_selected)model=std::move(title_model);
+            else if(title_margin_selected)model.emplace(flow_title_margin_model(work));
+            else if(shape_alias_selected)model.emplace(flow_shape_alias_model(ordinal,work));
+            else if(issue4648_selected)model.emplace(flow400_issue4648_model(work));
+            else if(group_selected){group_model.emplace(group_endpoint15_model(group_selection->record.get("model"),work));model.emplace(group_model->base);}
             else if(link_selected){auto link_decoded=flow400_linkprofile3_model(link_case,work);model.emplace(std::move(link_decoded.model));profile.emplace(std::move(link_decoded.profile));}
             else if(classic_selected)model.emplace(flow400_classic_model(classic_case,work));else model=flow400_typed_source4_model(selected,work);
             observation.model_decoded=true;observation.remaining[2]=work.remaining;
             row.set("source_git_blob",flow400_text(authority.get("source_git_blob")));row.set("oracle_record_sha256",flow400_text(authority.get("oracle_record_sha256")));
             if(!model){++pending;}else{
-                ++decoded;row.set("model_sha256",group_selected?flow400_text(group_selection->record.get("canonical_model_sha256")):link_selected?flow400_text(link_case.get("link_model_sha256")):classic_selected?flow400_text(classic_case.get("classic_model_sha256")):selected.kind==Flow400TypedSource4Kind::TypedSource4
+                ++decoded;row.set("model_sha256",title_selected?std::string(kFlowTitleModelSha):title_margin_selected?std::string(kFlowTitleMarginModelSha):shape_alias_selected?std::string(flow_shape_alias_case(ordinal)->model_sha):issue4648_selected?std::string(kFlow400Issue4648ModelSha):group_selected?flow400_text(group_selection->record.get("canonical_model_sha256")):link_selected?flow400_text(link_case.get("link_model_sha256")):classic_selected?flow400_text(classic_case.get("classic_model_sha256")):selected.kind==Flow400TypedSource4Kind::TypedSource4
                     ? flow400_text(selected.typed_case.get("typed_model_sha256")) : flow400_text(authority.get("model_sha256")));phase="geometry";
                 if(source_wide){observation.positive_unmet=true;throw std::runtime_error("Flow400 mandatory positive returned whole source");}
-                const auto wide_errors=group_selected?group_endpoint15_geometry(*observation.frames[0],*group_model,work,kSentinel):link_selected?flow_linkprofile3_geometry(*observation.frames[0],*model,*profile,work):flow400_geometry(*observation.frames[0],*model,work);
+                const auto wide_errors=title_selected?flow_title_geometry(*observation.frames[0],*model,work):group_selected?group_endpoint15_geometry(*observation.frames[0],*group_model,work,kSentinel):link_selected?flow_linkprofile3_geometry(*observation.frames[0],*model,*profile,work):flow400_geometry(*observation.frames[0],*model,work);
                 if(!wide_errors.empty())throw std::runtime_error(std::string(std::string_view(wide_errors.front()).substr(0,256u)));
-                if(!source_narrow){const auto narrow_errors=group_selected?group_endpoint15_geometry(*observation.frames[1],*group_model,work,kSentinel):link_selected?flow_linkprofile3_geometry(*observation.frames[1],*model,*profile,work):flow400_geometry(*observation.frames[1],*model,work);if(!narrow_errors.empty())throw std::runtime_error(std::string(std::string_view(narrow_errors.front()).substr(0,256u)));}
+                if(!source_narrow){const auto narrow_errors=title_selected?flow_title_geometry(*observation.frames[1],*model,work):group_selected?group_endpoint15_geometry(*observation.frames[1],*group_model,work,kSentinel):link_selected?flow_linkprofile3_geometry(*observation.frames[1],*model,*profile,work):flow400_geometry(*observation.frames[1],*model,work);if(!narrow_errors.empty())throw std::runtime_error(std::string(std::string_view(narrow_errors.front()).substr(0,256u)));}
                 flow400_require(restored_same,"Flow400 protocol full restored cells differ");++positive;
                 observation.remaining[3]=work.remaining;phase="mutations";
-                rejects=group_selected?group_endpoint15_mutations(*observation.frames[0],*group_model,work,kSentinel):link_selected?flow400_linkprofile3_mutations(*observation.frames[0],*model,*profile,link_case,work):classic_selected?flow400_classic_mutations(*observation.frames[0],*model,classic_case,work):selected.kind==Flow400TypedSource4Kind::TypedSource4
+                rejects=title_selected?flow_title_mutations(*observation.frames[0],*model,work):group_selected?group_endpoint15_mutations(*observation.frames[0],*group_model,work,kSentinel):link_selected?flow400_linkprofile3_mutations(*observation.frames[0],*model,*profile,link_case,work):classic_selected?flow400_classic_mutations(*observation.frames[0],*model,classic_case,work):selected.kind==Flow400TypedSource4Kind::TypedSource4
                     ? flow400_typed_source4_mutations(*observation.frames[0],*model,selected.typed_case,work)
                     : flow400_mutations(*observation.frames[0],*model,work);
                 if(group_selected)flow400_require(rejects==group_endpoint15_expected_mutations(group_selection->record),"Flow400 GroupEndpoint15 exact mutation execution");
+                else if(title_selected)flow400_require(rejects==4u,"Flow400 diagram title exact mutation execution");
+                else if(shape_alias_selected)flow400_require(rejects==2u,"Flow400 shape-alias exact mutation execution");
                 else if(link_selected)flow400_require(rejects==flow400_linkprofile3_expected(link_case),"Flow400 LinkProfile3 exact mutation execution");
                 else if(classic_selected)flow400_require(rejects==flow400_classic_expected(classic_case),"Flow400 Classic exact mutation execution");
                 else if(selected.kind==Flow400TypedSource4Kind::TypedSource4)
@@ -1214,20 +1547,20 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
     root.set("visited",static_cast<int64_t>(visited));root.set("complete_models_decoded",static_cast<int64_t>(decoded));root.set("whole_pending",static_cast<int64_t>(pending));
     root.set("complete_positive_geometry",static_cast<int64_t>(positive));root.set("mutated_positive",static_cast<int64_t>(mutated));root.set("errors",static_cast<int64_t>(errors));
     root.set("positive_source_unmet",static_cast<int64_t>(unmet));root.set("geometry_failures",static_cast<int64_t>(geometry_failures));root.set("mutation_failures",static_cast<int64_t>(mutation_failures));
-    root.set("selected_config21_sources",static_cast<int64_t>(selected_sources));root.set("selected_typed_source4_sources",static_cast<int64_t>(selected_typed_source4));root.set("selected_classic_sources",static_cast<int64_t>(selected_classic));root.set("selected_linkprofile3_sources",static_cast<int64_t>(selected_linkprofile3));root.set("selected_group_endpoint15_sources",static_cast<int64_t>(selected_group_endpoint15));
+    root.set("selected_config21_sources",static_cast<int64_t>(selected_sources));root.set("selected_typed_source4_sources",static_cast<int64_t>(selected_typed_source4));root.set("selected_classic_sources",static_cast<int64_t>(selected_classic));root.set("selected_linkprofile3_sources",static_cast<int64_t>(selected_linkprofile3));root.set("selected_group_endpoint15_sources",static_cast<int64_t>(selected_group_endpoint15));root.set("selected_diagram_title_sources",static_cast<int64_t>(selected_title));root.set("selected_title_top_margin_sources",static_cast<int64_t>(selected_title_margin));root.set("selected_issue4648_sources",static_cast<int64_t>(selected_issue4648));root.set("selected_shape_alias_sources",static_cast<int64_t>(selected_shape_alias));
     root.set("config21_supplement_sha256",kFlow400Config21AssetSha);root.set("typed_source4_supplement_sha256",kFlow400TypedSource4AssetSha);root.set("classic_supplement_sha256",kFlow400ClassicAssetSha);root.set("linkprofile3_supplement_sha256",kFlow400LinkProfile3AssetSha);root.set("group_endpoint15_supplement_sha256",kFlow400GroupEndpoint15AssetSha);
     root.set("foreign_certified",0);
     // RFC 0031 E6c: capability report, not an aspiration gate. The 400
-    // complete-source target and the 346 authority-determined pending rows
+    // complete-source target and the authority-determined pending rows
     // are explicit frozen fields; no roster is needed because pending/decoded
     // membership is set by immutable Model authority assets.
-    root.set("complete_source_target",400);root.set("mandatory_pending_remains",346);
+    root.set("complete_source_target",400);root.set("mandatory_pending_remains",static_cast<int64_t>(pending));
     root.add("cases",rows);report.set_root(root);
 #ifdef LOOM_MERMAID_REPORT_DIR
     const auto target=std::filesystem::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-flow-official400-whole-source.json";
     std::ofstream output(target,std::ios::binary);ASSERT_TRUE(output && (output<<report.to_string()<<'\n'))<<"Cannot publish "<<target;
 #endif
-    EXPECT_EQ(selected_sources,21u);EXPECT_EQ(selected_typed_source4,4u);EXPECT_EQ(selected_classic,3u);EXPECT_EQ(selected_linkprofile3,3u);EXPECT_EQ(selected_group_endpoint15,15u);EXPECT_EQ(visited,400u);EXPECT_EQ(decoded,54u);EXPECT_EQ(pending,346u);EXPECT_EQ(positive,54u);EXPECT_EQ(mutated,54u);EXPECT_EQ(errors,0u);EXPECT_EQ(unmet,0u);EXPECT_EQ(geometry_failures,0u);EXPECT_EQ(mutation_failures,0u);
+        EXPECT_EQ(selected_sources,21u);EXPECT_EQ(selected_typed_source4,4u);EXPECT_EQ(selected_classic,6u);EXPECT_EQ(selected_linkprofile3,4u);EXPECT_EQ(selected_group_endpoint15,15u);EXPECT_EQ(selected_title,1u);EXPECT_EQ(selected_title_margin,1u);EXPECT_EQ(selected_issue4648,1u);EXPECT_EQ(selected_shape_alias,16u);EXPECT_EQ(visited,400u);EXPECT_EQ(decoded,77u);EXPECT_EQ(pending,323u);EXPECT_EQ(positive,77u);EXPECT_EQ(mutated,77u);EXPECT_EQ(errors,0u);EXPECT_EQ(unmet,0u);EXPECT_EQ(geometry_failures,0u);EXPECT_EQ(mutation_failures,0u);
 }
 } // namespace
 
@@ -1289,7 +1622,7 @@ flowchart LR
 A --> B
 )FLOW6", "c588dab034f21ef0eb0ad7ab95d0ecf70b0666c871bee2af21d214541d2061e1"},
 }};
-constexpr std::array<Flow6EnvelopeControl, 43> kFlow6EnvelopeClosed{{
+constexpr std::array<Flow6EnvelopeControl, 44> kFlow6EnvelopeClosed{{
     {"initial_byte_44", R"FLOW6(---
 description:
   , forbidden opener
@@ -1439,6 +1772,12 @@ title: Visible
 flowchart LR
 A --> B
 )FLOW6", "42147ba8ac50958932970e2ed49481391df815c05ba7fdf105268c81bbddd54e"},
+    {"title_only_frontmatter", R"FLOW6(---
+title: Visible
+---
+flowchart LR
+A --> B
+)FLOW6", "3fbfbd6e807f4d4b4eb27729d3fce62ed08c8ad9e6231a3fb779ec5aebc94afe"},
     {"duplicate_description", R"FLOW6(---
 description:
   Flow.
@@ -2598,7 +2937,7 @@ TEST(MermaidFlowTypedShapes, ClosedShapeWireAndPhysicalContours) {
     constexpr std::string_view model_json=R"JSON({"direction":"TB","nodes":[["D",{"id":"D","label":"D","shape":"diamond"}]],"edges":[],"subgraphs":[]})JSON";
     auto model_document=json::parse(model_json); ASSERT_TRUE(model_document.has_value());
     ASSERT_EQ(flow_typed_shape_model(model_document->root(),work).nodes.front().shape,Shape::Decision);
-    for(const std::string_view rejected:{"decision","hexagon"}) {
+    for(const std::string_view rejected:{"decision","octagon"}) {
         work.product(model_json.size(),4u); auto altered=std::string(model_json); const auto at=altered.find("diamond"); ASSERT_NE(at,std::string::npos); altered.replace(at,7u,rejected);
         auto rejected_document=json::parse(altered); ASSERT_TRUE(rejected_document.has_value());
         EXPECT_THROW(static_cast<void>(flow_typed_shape_model(rejected_document->root(),work)),std::runtime_error);
@@ -2613,6 +2952,7 @@ TEST(MermaidFlowTypedShapes, ClosedShapeWireAndPhysicalContours) {
     EXPECT_EQ(parse_shape("rectangle"),Shape::Rectangle); EXPECT_EQ(parse_shape("rounded"),Shape::Rounded); EXPECT_EQ(parse_shape("diamond"),Shape::Decision);
     EXPECT_THROW(static_cast<void>(parse_shape("decision")),std::runtime_error);
     EXPECT_EQ(parse_shape("hexagon"),Shape::Hexagon);
+    EXPECT_EQ(parse_shape("triangle"),Shape::Triangle);
 }
 } // namespace
 
@@ -3209,7 +3549,7 @@ TEST(MermaidFlowFoldedShapeData, CompleteModelsCoverIndependentAndCombinedEnvelo
 }
 
 struct FlowFoldedShapeDataClosed {std::string_view id,source,sha;};
-constexpr std::array<FlowFoldedShapeDataClosed,9> kFlowFoldedShapeDataClosed{{
+constexpr std::array<FlowFoldedShapeDataClosed,8> kFlowFoldedShapeDataClosed{{
     {"folded_empty_scalar",R"FLOW(---
 description: >-
 ---
@@ -3249,9 +3589,6 @@ config:
 flowchart LR
 A --> B
 )FLOW","6d57157fc6f73cdfc0573be6eb042d7fcef0f324a8e6378e8c01c5701c675fee"},
-    {"shape_alias_diamond",R"FLOW(flowchart BT
-  n2["Untitled Node"] --> n1@{ shape: diamond}
-)FLOW","b460b6304531b097c1680acd78ab8bd446258173a9ea8a51892fc1844e871496"},
     {"shape_extra_key",R"FLOW(flowchart BT
   n2["Untitled Node"] --> n1@{ shape: diam, label: Nope}
 )FLOW","fc8aea7feb1cb020ed7b1e6ef2067e00daacd9d42f50b801cfcf8f4062056e25"},
@@ -3276,7 +3613,7 @@ TEST(MermaidFlowFoldedShapeData, MalformedEnvelopeAndUnlistedShapeDataStayFallba
         }catch(const std::exception& failure){const char* message=failure.what();resource=work.remaining==0u||(message&&flow400_resource(message));for(std::size_t n=0u;message&&message[n]&&n<256u;++n)error[n]=message[n];}
         row.set("id",control.id);row.set("published_frames",static_cast<int64_t>(published));row.set("source_wide",source_wide);row.set("source_narrow",source_narrow);row.set("resource_error",resource);row.set("complete",success);row.set("phase",phase);row.set("error",std::string_view(error.data()));row.set("remaining",static_cast<int64_t>(work.remaining));rows.append(row);complete+=success;resources+=resource;EXPECT_TRUE(success)<<control.id<<": "<<std::string_view(error.data());EXPECT_FALSE(resource)<<control.id;EXPECT_EQ(published,5u)<<control.id;
     }
-    root.set("kind","flow_folded_shape_data_closed_native/v1");root.set("qualification","Malformed folded metadata and every unlisted local shape-data form remain fallback. Fallback is closed-control evidence, never drawing admission.");root.set("controls",static_cast<int64_t>(kFlowFoldedShapeDataClosed.size()));root.set("complete",static_cast<int64_t>(complete));root.set("resource_errors",static_cast<int64_t>(resources));root.set("drawing_credit",0);root.add("cases",rows);report.set_root(root);
+    root.set("kind","flow_folded_shape_data_closed_native/v1");root.set("qualification","Malformed folded metadata and every unlisted local shape-data form remain fallback. The supported diamond alias has a separate positive geometry test; fallback controls earn no drawing admission.");root.set("controls",static_cast<int64_t>(kFlowFoldedShapeDataClosed.size()));root.set("complete",static_cast<int64_t>(complete));root.set("resource_errors",static_cast<int64_t>(resources));root.set("drawing_credit",0);root.add("cases",rows);report.set_root(root);
 #ifdef LOOM_MERMAID_REPORT_DIR
     std::filesystem::create_directories(LOOM_MERMAID_REPORT_DIR);std::ofstream output(std::filesystem::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-flow-folded-shape-data-closed.json",std::ios::binary);ASSERT_TRUE(output&&(output<<report.to_string()<<'\n'));
 #endif

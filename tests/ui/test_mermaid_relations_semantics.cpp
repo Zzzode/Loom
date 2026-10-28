@@ -11,6 +11,7 @@
 
 import std;
 import loom.ui.visual.markdown;
+import loom.ui.visual.mermaid.testing;
 import loom.serdes.json;
 import loom.crypto.crypto;
 
@@ -21,6 +22,7 @@ import loom.crypto.crypto;
 namespace {
 namespace json = loom::utils::json;
 namespace gap_roster = loom::test::mermaid_gap_roster;
+namespace mermaid_testing = loom::ui::mermaid::testing;
 using json::JsonVal;
 // Exact original oracle names; captures, catalogs and TESTs remain local.
 using loom::test::mermaid_relations::ClassCardWitness;
@@ -3454,7 +3456,7 @@ TEST(MermaidCapabilityReport, Class481) {
 #ifdef LOOM_MERMAID_REPORT_DIR
     std::filesystem::create_directories(LOOM_MERMAID_REPORT_DIR);std::ofstream output(std::filesystem::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-class481-native.json",std::ios::binary);ASSERT_TRUE(output&&(output<<report.to_string()<<'\n'));
 #endif
-    EXPECT_EQ(visited,481);EXPECT_EQ(observed,481);EXPECT_EQ(historical_nulls,192);EXPECT_EQ(supplemented,13);EXPECT_EQ(endpoint_supplemented,29u);EXPECT_EQ(note_supplemented,13u);EXPECT_EQ(decoded,344);EXPECT_EQ(oracle_errors,0);EXPECT_EQ(geometry_errors,0);EXPECT_EQ(observation_errors,0);EXPECT_EQ(pending,137)<<"Current partition must retain every remaining original null obligation";EXPECT_EQ(matched,341);EXPECT_EQ(mutated,341);EXPECT_EQ(static_cast<int>(mandatory_gaps.size()),140);
+    EXPECT_EQ(visited,481);EXPECT_EQ(observed,481);EXPECT_EQ(historical_nulls,192);EXPECT_EQ(supplemented,13);EXPECT_EQ(endpoint_supplemented,29u);EXPECT_EQ(note_supplemented,13u);EXPECT_EQ(decoded,344);EXPECT_EQ(oracle_errors,0);EXPECT_EQ(geometry_errors,0);EXPECT_EQ(observation_errors,0);EXPECT_EQ(pending,137)<<"Current partition must retain every remaining original null obligation";EXPECT_EQ(matched,343);EXPECT_EQ(mutated,343);EXPECT_EQ(static_cast<int>(mandatory_gaps.size()),138);
     if(auto roster=gap_roster::load_verified_roster()){auto published=json::parse(report.to_string());ASSERT_TRUE(published.has_value());const auto gap_diff=gap_roster::diff_gate(*roster,"class481",published->root().get("mandatory_gaps"));EXPECT_TRUE(gap_diff.ok())<<gap_diff.render("class481");}
 }
 } // namespace
@@ -4138,7 +4140,7 @@ TEST(MermaidCapabilityReport, ClassEndpoint29) {
     std::filesystem::create_directories(LOOM_MERMAID_REPORT_DIR);std::ofstream output(std::filesystem::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-class-endpoint29-source-scenes.json",std::ios::binary);ASSERT_TRUE(output&&(output<<report.to_string()<<'\n'));
 #endif
     EXPECT_EQ(visited,29);EXPECT_EQ(observed,29);EXPECT_EQ(decoded,29);EXPECT_EQ(oracle_errors,0);EXPECT_EQ(geometry_errors,0);EXPECT_EQ(observation_errors,0);
-    EXPECT_EQ(matched,26);EXPECT_EQ(mutated,26);EXPECT_EQ(static_cast<int>(mandatory_gaps.size()),3);
+    EXPECT_EQ(matched,28);EXPECT_EQ(mutated,28);EXPECT_EQ(static_cast<int>(mandatory_gaps.size()),1);
     if(auto roster=gap_roster::load_verified_roster()){auto published=json::parse(report.to_string());ASSERT_TRUE(published.has_value());const auto gap_diff=gap_roster::diff_gate(*roster,"class_endpoint29",published->root().get("mandatory_gaps"));EXPECT_TRUE(gap_diff.ok())<<gap_diff.render("class_endpoint29");}
 }
 } // namespace
@@ -5556,8 +5558,8 @@ TEST(MermaidStateBareAlias, EveryWholeSourceRequiresItsCompleteSceneOrClosedProf
 
 namespace {
 constexpr std::string_view kClassEnvelopePartnersFile="mermaid_native/class_envelope22_public_source_partners.json";
-constexpr std::string_view kClassEnvelopePartnersSha="0d762c84ff9129763f3c1b41454d06eb76670c7af0934866550d821c74d76511";
-constexpr std::size_t kClassEnvelopePartnersBytes=48807u;
+constexpr std::string_view kClassEnvelopePartnersSha="672fa0f5ba816c97b0e77da2f96d58e84002683f16f79731b68cceb36d28d62f";
+constexpr std::size_t kClassEnvelopePartnersBytes=50693u;
 json::JsonDoc class_envelope_partners_document(Work& setup){
     setup.spend(kClassEnvelopePartnersBytes*3u+4096u);
     const auto path=std::filesystem::path(LOOM_TESTS_DIR)/"fixtures"/kClassEnvelopePartnersFile;
@@ -5567,21 +5569,22 @@ json::JsonDoc class_envelope_partners_document(Work& setup){
     class481_require(raw.size()==kClassEnvelopePartnersBytes&&digest(raw)==kClassEnvelopePartnersSha,"ClassEnvelope partners immutable fixture digest");
     auto document=json::parse(raw);class481_require(document.has_value(),"ClassEnvelope partners JSON parse");
     const auto root=document->root();class481_keys(root,{"schema","source_contract_sha256","stage1_facts_sha256","qualification","counts","cases"},setup);
-    class481_require(root.get_string("schema")=="class_envelope22_public_source_partners/v1"&&root.get_string("source_contract_sha256")=="c33db3168e57851723a100ccb847137eac13dc813110ccd7e96303f479bc0356"&&root.get_string("stage1_facts_sha256")=="566f49b94956b9685a12d3e021cd21b53f1996d2f7b3ed0cca7c8e15e33bb8fd","ClassEnvelope partners source protocol");
+    class481_require(root.get_string("schema")=="class_envelope22_public_source_partners/v2"&&root.get_string("source_contract_sha256")=="c33db3168e57851723a100ccb847137eac13dc813110ccd7e96303f479bc0356"&&root.get_string("stage1_facts_sha256")=="566f49b94956b9685a12d3e021cd21b53f1996d2f7b3ed0cca7c8e15e33bb8fd","ClassEnvelope partners source protocol");
     class481_require(root.get("cases").is_arr()&&root.get("cases").size()==77u,"ClassEnvelope partners complete77 sources");
-    class481_keys(root.get("counts"),{"cases","whole_scene","whole_source"},setup);
-    class481_require(root.get("counts").get_int("cases")==77&&root.get("counts").get_int("whole_scene")==30&&root.get("counts").get_int("whole_source")==47,"ClassEnvelope partners fixed source dispositions");
+    class481_keys(root.get("counts"),{"cases","whole_scene","whole_source","foreign_family"},setup);
+    class481_require(root.get("counts").get_int("cases")==77&&root.get("counts").get_int("whole_scene")==30&&root.get("counts").get_int("whole_source")==46&&root.get("counts").get_int("foreign_family")==1,"ClassEnvelope partners fixed source dispositions");
     return std::move(*document);
 }
 struct ClassEnvelopePartner {std::optional<Model> model;ClassPresentation presentation;};
 ClassEnvelopePartner class_envelope_partner_bind(JsonVal row,std::size_t index,Work& work){
-    class481_keys(row,{"name","source","source_sha256","source_utf8_bytes","expected","whole_model","whole_model_sha256","presentation","source_basis","ordinal"},work);
+    class481_keys(row,{"name","source","source_sha256","source_utf8_bytes","expected","foreign_family","whole_model","whole_model_sha256","presentation","source_basis","ordinal"},work);
     class481_require(row.get("ordinal").is_int()&&row.get_int("ordinal")==static_cast<std::int64_t>(index),"ClassEnvelope partner fixed ordinal");
     class481_require(!class481_text(row.get("name"),work,128).empty()&&!class481_text(row.get("source_basis"),work).empty(),"ClassEnvelope partner exact source witness");
     const auto source=class481_text(row.get("source"),work,65536);work.spend(source.size()*4u+128u);
     class481_require(row.get("source_utf8_bytes").is_int()&&row.get_int("source_utf8_bytes")==static_cast<std::int64_t>(source.size())&&digest(source)==row.get_string("source_sha256"),"ClassEnvelope partner complete source digest");
     const auto expected=class481_text(row.get("expected"),work,16);
-    class481_require(expected=="whole_scene"||expected=="whole_source","ClassEnvelope partner exact disposition");
+    class481_require(expected=="whole_scene"||expected=="whole_source"||expected=="foreign_family","ClassEnvelope partner exact disposition");
+    class481_require(expected=="foreign_family"||row.get("foreign_family").is_null(),"ClassEnvelope nonforeign disposition has no foreign owner");
     work.spend(4u*sizeof(ClassEnvelopePartner)+512u);ClassEnvelopePartner out;
     const auto p=row.get("presentation");class481_keys(p,{"title","hide_empty_members_box"},work);
     class481_require(p.get("title").is_null()||p.get("title").is_str(),"ClassEnvelope partner nullable title type");
@@ -5594,6 +5597,8 @@ ClassEnvelopePartner class_envelope_partner_bind(JsonVal row,std::size_t index,W
     if(p.get("hide_empty_members_box").is_bool())out.presentation.hide_empty_members_box=p.get("hide_empty_members_box").as_bool();
     if(expected=="whole_source"){
         class481_require(row.get("whole_model").is_null()&&row.get("whole_model_sha256").is_null()&&!out.presentation.title&&!out.presentation.hide_empty_members_box.has_value(),"ClassEnvelope closed source has no invented Model");
+    }else if(expected=="foreign_family"){
+        class481_require(class481_text(row.get("foreign_family"),work,16)=="er"&&row.get("whole_model").is_null()&&row.get("whole_model_sha256").is_null()&&!out.presentation.title&&!out.presentation.hide_empty_members_box.has_value(),"ClassEnvelope foreign family has no invented Class Model");
     }else{
         const auto meaning=row.get("whole_model");const auto encoded=class481_canonical(meaning,work);work.spend(encoded.size()*4u+64u);
         class481_require(digest(encoded)==row.get_string("whole_model_sha256"),"ClassEnvelope partner complete Model digest");
@@ -5603,12 +5608,12 @@ ClassEnvelopePartner class_envelope_partner_bind(JsonVal row,std::size_t index,W
 }
 }
 TEST(MermaidClassEnvelopeSourcePartners, CompleteSourceModelsAndTypedPresentationRemainBound){
-    Work setup;const auto facts=class_envelope_partners_document(setup);std::size_t whole=0,closed=0;std::set<std::string> names;
+    Work setup;const auto facts=class_envelope_partners_document(setup);std::size_t whole=0,closed=0,foreign=0;std::set<std::string> names;
     const auto rows=facts.root().get("cases");
     for(std::size_t n=0;n<rows.size();++n){Work work;const auto row=rows.at(n);SCOPED_TRACE(row.get_string("name"));try{
-        const auto selected=class_envelope_partner_bind(row,n,work);work.spend(row.get_string("name").size()*4u+128u);EXPECT_TRUE(names.insert(row.get_string("name")).second);if(selected.model)++whole;else ++closed;
+        const auto selected=class_envelope_partner_bind(row,n,work);work.spend(row.get_string("name").size()*4u+128u);EXPECT_TRUE(names.insert(row.get_string("name")).second);if(selected.model)++whole;else if(row.get_string("expected")=="foreign_family")++foreign;else ++closed;
     }catch(const std::exception& error){ADD_FAILURE()<<error.what();}}
-    EXPECT_EQ(whole,30u);EXPECT_EQ(closed,47u);EXPECT_EQ(names.size(),77u);
+    EXPECT_EQ(whole,30u);EXPECT_EQ(closed,46u);EXPECT_EQ(foreign,1u);EXPECT_EQ(names.size(),77u);
     Work construction;const auto encoded=class481_canonical(rows.at(0),construction);
     auto reject=[&](const std::function<void(json::JsonMutVal)>& mutate,std::string_view expected){
         Work work;work.spend(encoded.size()*8u+4096u);json::JsonMutDoc changed;auto root=changed.copy_val(rows.at(0));changed.set_root(root);mutate(root);const auto raw=changed.to_string();work.spend(raw.size()*8u+4096u);const auto parsed=json::parse(raw);ASSERT_TRUE(parsed);bool rejected=false;
@@ -5621,27 +5626,34 @@ TEST(MermaidClassEnvelopeSourcePartners, CompleteSourceModelsAndTypedPresentatio
     try{static_cast<void>(class_envelope_partners_document(zero));}catch(const std::runtime_error& error){resource=class481_resource(error.what());}
     EXPECT_TRUE(resource)<<"Fixture resource failure is not source/type rejection evidence";
 }
-TEST(MermaidClassEnvelopeSourcePartners, All77WholeSourcesAreCapturedBeforeDecodeAndRetainCompleteDispositions){
+TEST(MermaidClassEnvelopeSourcePartners, All77DispositionsAreCapturedBeforeBindingAndRetainFamilyOwnership){
     // This immutable setup ledger is independent of scene assertions. Each
     // source has one original Work for capture/decode/wide geometry. Independent
     // narrow and mutation assertions inherit the postdecode allowance, never a
     // failed/consumed ledger; these are the existing complete-oracle boundaries.
     Work setup;const auto facts=class_envelope_partners_document(setup);json::JsonMutDoc report;auto root=report.object(),records=root.make_arr();
-    std::size_t visited=0,observed=0,decoded=0,strong=0,closed=0,mutated=0,source_unmet=0,oracle_errors=0,observation_errors=0;
+    std::size_t visited=0,observed=0,bound=0,decoded=0,strong=0,closed=0,foreign=0,mutated=0,source_unmet=0,oracle_errors=0,observation_errors=0;
     const auto rows=facts.root().get("cases");
     for(std::size_t n=0;n<rows.size();++n){++visited;Work work;const auto row=rows.at(n);SCOPED_TRACE(row.get_string("name"));auto item=root.make_obj();item.set("name",row.get_string("name"));item.set("source_sha256",row.get_string("source_sha256"));
-        std::string phase="whole_public_capture_before_Model_decode",outcome="not_observed";std::vector<std::string> errors,observations;bool captured=false,bound=false,matched=false;
+        std::string phase="whole_public_capture_before_Model_decode",outcome="not_observed";std::vector<std::string> errors,observations;bool captured=false,disposition_bound=false,model_decoded=false,matched=false;
         try{
             const auto source=class481_text(row.get("source"),work,65536);auto frames=class35_observe(source,work);captured=true;++observed;
             observations=class35_observations(frames,root,item,work);envelope22_stage3_ordinary_frames(frames,root,item,work);
-            phase="immutable_source_and_complete_Model_presentation";const auto selected=class_envelope_partner_bind(row,n,work);bound=true;++decoded;
-            const bool fallback=frames.wide==frames.ordinary;const auto allowance=work.left;item.set("postdecode_geometry_allowance",static_cast<std::int64_t>(allowance));
-            if(!selected.model){
+            phase="immutable_source_and_disposition_binding";const auto selected=class_envelope_partner_bind(row,n,work);disposition_bound=true;++bound;model_decoded=selected.model.has_value();
+            const bool fallback=frames.wide==frames.ordinary;const auto allowance=work.left;item.set("postbinding_geometry_allowance",static_cast<std::int64_t>(allowance));
+            if(row.get_string("expected")=="foreign_family"){
+                phase="foreign_family_owner_and_restore";mermaid_testing::Work family_work;const auto decision=mermaid_testing::classify_mermaid(source,family_work);
+                const bool routed=decision&&decision->family==mermaid_testing::MermaidProbeFamily::Er&&!decision->class_envelope;
+                item.set("foreign_family_owner_er",routed);item.set("foreign_family_probe_work_remaining",static_cast<std::int64_t>(family_work.remaining));item.set("foreign_family_draw_credit",0);
+                matched=routed&&frames.restored==frames.wide&&observations.empty();
+                if(matched){++foreign;outcome="foreign_family_routed_without_Class_credit";}else outcome="foreign_family_owner_or_restore_mismatch";
+            }else if(!selected.model){
                 phase="complete_whole_source_closed_disposition";
                 matched=fallback&&frames.narrow==frames.small&&frames.restored==frames.ordinary&&observations.empty();
                 if(matched){++closed;outcome="whole_source_exactly_retained";}else outcome="closed_source_was_drawn_or_changed";
             }else if(fallback){++source_unmet;outcome="mandatory_complete_source_positive_unmet";}
             else{
+                ++decoded;
                 phase="same_chosen_ClassRect_complete_geometry";errors=validate_impl(frames.wide,*selected.model,work,false,&selected.presentation);class481_no_resource(errors);envelope22_papers_no_schema_errors(errors);
                 if(frames.narrow!=frames.small){Work narrow{allowance};const auto small=validate_impl(frames.narrow,*selected.model,narrow,false,&selected.presentation);class481_no_resource(small);envelope22_papers_no_schema_errors(small);errors.insert(errors.end(),small.begin(),small.end());}
                 if(errors.empty()&&observations.empty()){
@@ -5653,11 +5665,11 @@ TEST(MermaidClassEnvelopeSourcePartners, All77WholeSourcesAreCapturedBeforeDecod
                 }else outcome="complete_geometry_error";
             }
         }catch(const std::exception& error){++oracle_errors;errors.emplace_back(phase+": "+error.what());outcome="source_schema_or_resource_or_execution_error";}
-        observation_errors+=!observations.empty();EXPECT_TRUE(captured);EXPECT_TRUE(bound);EXPECT_TRUE(matched)<<outcome;EXPECT_TRUE(observations.empty())<<explain(observations);EXPECT_TRUE(errors.empty())<<explain(errors);
-        work.spend(outcome.size()*4u+phase.size()*4u+2048u);item.set("phase",phase);item.set("outcome",outcome);item.set("complete_public_observed",captured);item.set("source_Model_bound",bound);item.set("mandatory_disposition_matched",matched);item.set("remaining_native_work",static_cast<std::int64_t>(work.left));auto es=root.make_arr();for(const auto& error:errors){work.spend(error.size()*4u+128u);es.append(root.make_str(error));}item.add("errors",es);records.append(item);
+        observation_errors+=!observations.empty();EXPECT_TRUE(captured);EXPECT_TRUE(disposition_bound);EXPECT_TRUE(matched)<<outcome;EXPECT_TRUE(observations.empty())<<explain(observations);EXPECT_TRUE(errors.empty())<<explain(errors);
+        work.spend(outcome.size()*4u+phase.size()*4u+2048u);item.set("phase",phase);item.set("outcome",outcome);item.set("complete_public_observed",captured);item.set("source_disposition_bound",disposition_bound);item.set("complete_Class_Model_decoded",model_decoded);item.set("mandatory_disposition_matched",matched);item.set("remaining_native_work",static_cast<std::int64_t>(work.left));auto es=root.make_arr();for(const auto& error:errors){work.spend(error.size()*4u+128u);es.append(root.make_str(error));}item.add("errors",es);records.append(item);
     }
-    EXPECT_EQ(visited,77u);EXPECT_EQ(observed,77u);EXPECT_EQ(decoded,77u);EXPECT_EQ(strong,30u);EXPECT_EQ(closed,47u);EXPECT_EQ(mutated,30u);EXPECT_EQ(source_unmet,0u);EXPECT_EQ(oracle_errors,0u);EXPECT_EQ(observation_errors,0u);
-    root.set("qualification","Synthetic source-derived Class envelope controls. No body clipping, renderer-derived Model, Class481 admission or foreign predicate completion. All immutable22 and old suites remain separate mandatory gates.");root.set("source_facts_sha256",std::string(kClassEnvelopePartnersSha));root.set("sources",77);root.set("whole_scene_matches",static_cast<int>(strong));root.set("whole_source_matches",static_cast<int>(closed));root.set("mandatory_positive_unmet",static_cast<int>(source_unmet));root.set("oracle_or_protocol_or_resource_errors",static_cast<int>(oracle_errors));root.set("observation_errors",static_cast<int>(observation_errors));root.add("cases",records);report.set_root(root);
+    EXPECT_EQ(visited,77u);EXPECT_EQ(observed,77u);EXPECT_EQ(bound,77u);EXPECT_EQ(decoded,30u);EXPECT_EQ(strong,30u);EXPECT_EQ(closed,46u);EXPECT_EQ(foreign,1u);EXPECT_EQ(mutated,30u);EXPECT_EQ(source_unmet,0u);EXPECT_EQ(oracle_errors,0u);EXPECT_EQ(observation_errors,0u);
+    root.set("qualification","Synthetic source-derived Class whole-scene/whole-source controls plus one quarantined ER-family owner boundary. No body clipping, renderer-derived Model, Class481 admission, foreign draw credit or foreign predicate completion. All immutable22 and old suites remain separate mandatory gates.");root.set("source_facts_sha256",std::string(kClassEnvelopePartnersSha));root.set("sources",77);root.set("whole_scene_matches",static_cast<int>(strong));root.set("whole_source_matches",static_cast<int>(closed));root.set("foreign_family_owner_matches",static_cast<int>(foreign));root.set("source_dispositions_bound",static_cast<int>(bound));root.set("complete_Class_Models_decoded",static_cast<int>(decoded));root.set("mandatory_positive_unmet",static_cast<int>(source_unmet));root.set("oracle_or_protocol_or_resource_errors",static_cast<int>(oracle_errors));root.set("observation_errors",static_cast<int>(observation_errors));root.add("cases",records);report.set_root(root);
 #ifdef LOOM_MERMAID_REPORT_DIR
     std::ofstream output(std::filesystem::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-class-envelope22-public-source-partners.json",std::ios::binary);ASSERT_TRUE(output&&(output<<report.to_pretty_string()<<'\n'));
 #endif
@@ -7029,7 +7041,7 @@ TEST(MermaidCapabilityReport, ClassCaptionStarvation8) {
         }
         root.set("qualification","All eight complete independently source-authored controls: five public captures before binding/Model decode, whole chosen scene and meaningful existing endpoint adversaries. Source fallback is unmet. Original4/29/default/namespace/reciprocal/self/parallel/oldClass obligations stay in their existing mandatory gates; no private context or virtual-strip checker, production change or foreign API/SVG/ASCII admission.");
         root.set("fixture_sha256",std::string(kCaptionStarvationSha));root.set("whole_sources",visited);root.set("public_observations",observed);root.set("complete_Models_decoded",decoded);root.set("complete_geometry_and_mutations_match",matched);root.set("sources_with_mutations",mutated);root.set("whole_source_fallbacks",fallbacks);root.set("geometry_errors",geometry_errors);root.set("oracle_or_protocol_or_resource_errors",oracle_errors);root.set("observation_errors",observation_errors);auto caption_gaps=root.make_arr();for(const auto& gap:mandatory_gaps){auto gap_row=root.make_obj();gap_row.set("name",gap.name);gap_row.set("outcome",gap.outcome);caption_gaps.append(gap_row);}root.add("mandatory_gaps",caption_gaps);root.add("cases",records);report.set_root(root);caption_starvation_write(report,"mermaid-class-caption-starvation-source-scenes.json");
-        EXPECT_EQ(visited,8);EXPECT_EQ(observed,8);EXPECT_EQ(decoded,8);EXPECT_EQ(matched,6);EXPECT_EQ(mutated,6);EXPECT_EQ(fallbacks,2);EXPECT_EQ(geometry_errors,0);EXPECT_EQ(oracle_errors,0);EXPECT_EQ(observation_errors,0);EXPECT_EQ(static_cast<int>(mandatory_gaps.size()),2);
+        EXPECT_EQ(visited,8);EXPECT_EQ(observed,8);EXPECT_EQ(decoded,8);EXPECT_EQ(matched,7);EXPECT_EQ(mutated,7);EXPECT_EQ(fallbacks,1);EXPECT_EQ(geometry_errors,0);EXPECT_EQ(oracle_errors,0);EXPECT_EQ(observation_errors,0);EXPECT_EQ(static_cast<int>(mandatory_gaps.size()),1);
         if(auto roster=gap_roster::load_verified_roster()){auto published=json::parse(report.to_string());ASSERT_TRUE(published.has_value());const auto gap_diff=gap_roster::diff_gate(*roster,"class_caption_starvation8",published->root().get("mandatory_gaps"));EXPECT_TRUE(gap_diff.ok())<<gap_diff.render("class_caption_starvation8");}
     }catch(const std::exception& error){ADD_FAILURE()<<error.what();}
 }
@@ -7367,7 +7379,7 @@ TEST(MermaidCapabilityReport, Class285) {
     }
     root.set("qualification","All285 original manifest-order whole sources are captured before their own binding/Model decode. Immutable original152 complete/133 null history remains exact. Exactly38 independently source-approved dagre-only nulls and26 disjoint classifier whole-source nulls activate complete Models; exactly3 independently source-approved unused-classDef nulls add unchanged business Models with complete inactive declarations retained:237 current complete/48 mandatory whole-null after all18 independently source-approved complete Notes Models; none selected by drawing outcome. The26 include7 separately source-approved dagre intersections. No source-fallback credit; pending0/285 completion stays mandatory red. All foreign predicates remain unproved. No producer, policy, cap or checker change.");
     root.set("source_facts_sha256",kOfficialClass285Sha);root.set("mapping_approval_sha256",kOfficialClass285ApprovalSha);root.set("dagre_supplement_sha256",kOfficialClass285DagreSha);root.set("dagre_source_mapping_review_sha256","adf2e33dbec8688d3e0ae25f9feba29f73902ec3ed494aba25673f0e3dfbe586");root.set("historical_complete_Models",base_models);root.set("historical_whole_null_Models",base_pending);root.set("active_dagre_whole_Model_bindings",dagre_models);root.set("active_classifier_whole_Model_bindings",classifier_models);root.set("active_unused_classDef_whole_Model_bindings",unused_models);root.set("active_Notes_whole_Model_bindings",notes_models);root.set("Notes_fixture_sha256",kClassNotes18Sha);root.set("Notes_source_review_sha256","5203db85e0b1c421079e5dd41b1fd8f430df2f3908faf9da877a1ff1ba0ba040");root.set("unused_classDef_supplement_sha256",kOfficialClass285UnusedSha);root.set("unused_classDef_source_review_sha256","2594af2b030f752297aec643e32b3ff6a9863d40c96d9b6aad4f7dc5cac6032f");root.set("classifier_supplement_sha256",kOfficialClass285ClassifierSha);root.set("classifier_source_mapping_review_sha256","40c5b4189a908580e9525a34f2b1e43b5d79bf0f1f4676685ae87f307b1db9e9");root.set("document_setup_work_remaining",static_cast<std::int64_t>(docs.setup_left));root.set("original_manifest_bindings_work_remaining",static_cast<std::int64_t>(originals.bindings_left));root.set("whole_sources",visited);root.set("public_observations",observed);root.set("complete_Models_decoded",decoded);root.set("remaining_whole_source_profiles_pending",pending);root.set("native_geometry_matches",matched);root.set("sources_with_mutations",mutated);root.set("wide_source_fallbacks",fallbacks);root.set("oracle_or_resource_errors",oracle_errors);root.set("geometry_errors",geometry_errors);root.set("observation_errors",observation_errors);root.set("whole_source_admitted",0);root.set("original_foreign_assertions_certified",0);auto class285_gaps=root.make_arr();for(const auto& gap:mandatory_gaps){auto gap_row=root.make_obj();gap_row.set("fixture",gap.fixture);gap_row.set("outcome",gap.outcome);class285_gaps.append(gap_row);}root.add("mandatory_gaps",class285_gaps);root.add("cases",records);report.set_root(root);state85_write("mermaid-official-class285-source-scenes.json",report);
-    EXPECT_EQ(visited,285);EXPECT_EQ(observed,285);EXPECT_EQ(base_models,152);EXPECT_EQ(base_pending,133);EXPECT_EQ(dagre_models,38);EXPECT_EQ(classifier_models,26);EXPECT_EQ(unused_models,3);EXPECT_EQ(notes_models,18);EXPECT_EQ(decoded,237);EXPECT_EQ(pending,48);EXPECT_EQ(oracle_errors,0);EXPECT_EQ(geometry_errors,0);EXPECT_EQ(observation_errors,0);EXPECT_EQ(matched,211);EXPECT_EQ(mutated,211);EXPECT_EQ(static_cast<int>(mandatory_gaps.size()),74);
+    EXPECT_EQ(visited,285);EXPECT_EQ(observed,285);EXPECT_EQ(base_models,152);EXPECT_EQ(base_pending,133);EXPECT_EQ(dagre_models,38);EXPECT_EQ(classifier_models,26);EXPECT_EQ(unused_models,3);EXPECT_EQ(notes_models,18);EXPECT_EQ(decoded,237);EXPECT_EQ(pending,48);EXPECT_EQ(oracle_errors,0);EXPECT_EQ(geometry_errors,0);EXPECT_EQ(observation_errors,0);EXPECT_EQ(matched,231);EXPECT_EQ(mutated,231);EXPECT_EQ(static_cast<int>(mandatory_gaps.size()),54);
     if(auto roster=gap_roster::load_verified_roster()){auto published=json::parse(report.to_string());ASSERT_TRUE(published.has_value());const auto gap_diff=gap_roster::diff_gate(*roster,"class285",published->root().get("mandatory_gaps"));EXPECT_TRUE(gap_diff.ok())<<gap_diff.render("class285");}
 }
 } // namespace
@@ -9108,9 +9120,59 @@ TEST(MermaidErDescriptionControls, ExactThirtySourceBindingsRejectTamperingAndZe
     Work zero;zero.left=0u;bool resource=false;try{static_cast<void>(er_description_controls_bind(root,first,0u,zero));}catch(const std::exception& error){const char* text=error.what();std::size_t length=0;while(text&&length<256u&&text[length])++length;resource=text&&class481_resource(std::string_view(text,length));}EXPECT_TRUE(resource);
     EXPECT_EQ(bound,30);EXPECT_EQ(rejected,6);
 }
+// One historical "unknown config" control is now covered by the approved
+// ER107 htmlLabels=false projection. Keep the frozen30-source authority and
+// its old classification intact; require its whole graph and exact source-
+// derived notice catalog rather than silently dropping the old negative.
+void er_description_projected_control(const Grid& grid,const Model& model,Work& work){
+    constexpr std::array<std::string_view,15> notices{{
+        "ER native projection v1","config.htmlLabels=false",
+        "effective theme=redux-color;","look=neo",
+        "look=neo -> native orthogonal;","roughness/relief not reproduced",
+        "htmlLabels=false -> native","Markdown subset",
+        "theme RGB/font/CSS -> terminal","roles; foreign assertions","pending",
+        "entity A slot=0 border=Purple","fill=Purple",
+        "entity B slot=1 border=Cyan","fill=Cyan"}};
+    work.spend(grid.cells.size()*16u+notices.size()*128u+4096u);
+    std::optional<int> first;
+    for(int y=0;y<grid.height;++y){
+        const auto text=grid.row(y);
+        if(text.starts_with(notices[0])&&trim(text)==notices[0]){
+            er_present_require(!first,"ER projected control ambiguous notice prefix");first=y;
+        }
+    }
+    er_present_require(first&&*first>2,"ER projected control complete body and notices");
+    const auto footer=loom::test::mermaid_relations::following_row(grid,work);
+    er_present_require(footer&&*footer==*first+static_cast<int>(notices.size())+1,
+        "ER projected control exact complete notice/footer allocation");
+    for(std::size_t n=0;n<notices.size();++n){
+        const auto row=grid.row(*first+static_cast<int>(n));
+        er_present_require(row.starts_with(notices[n])&&row.substr(notices[n].size()).find_first_not_of(' ')==std::string::npos,
+            "ER projected control exact source-defined notice");
+    }
+    for(const int y:{*first-1,*footer-1})er_present_require(grid.row(y).find_first_not_of(' ')==std::string::npos,
+        "ER projected control blank separators");
+    const auto area=static_cast<std::size_t>(grid.width)*static_cast<std::size_t>(*first-1);
+    work.spend(area*(3u*sizeof(std::string)+16u)+4u*sizeof(Grid)+256u);
+    Grid body{grid.width,*first-1,{}};body.cells.reserve(area);
+    body.cells.insert(body.cells.end(),grid.cells.begin(),grid.cells.begin()+static_cast<std::ptrdiff_t>(area));
+    std::optional<int> unclaimed_following;
+    const auto errors=validate_impl(body,model,work,false,nullptr,false,nullptr,
+        loom::test::mermaid_relations::kRelationsFollowingToken,&unclaimed_following);
+    er_present_require(errors.empty(),errors.empty()?std::string_view{}:std::string_view(errors.front()));
+    er_present_require(!unclaimed_following,"ER projected control body cannot contain following role");
+    // The normal verifier owns the actual footer and every following blank.
+    const auto following=std::string_view(loom::test::mermaid_relations::kRelationsFollowingToken);
+    const auto row=grid.row(*footer);
+    er_present_require(row.starts_with(following)&&row.substr(following.size()).find_first_not_of(' ')==std::string::npos,
+        "ER projected control exact physical footer");
+    for(int y=*footer+1;y<grid.height;++y)er_present_require(grid.row(y).find_first_not_of(' ')==std::string::npos,
+        "ER projected control no unclaimed trailing ink");
+}
+
 TEST(MermaidErDescriptionControls, EveryWholeSourceIsCapturedBeforeCompleteModelAndTypedAdversaries){
     Work setup;const auto document=er_description_controls_document(setup);setup.spend(8192u);json::JsonMutDoc report;auto root=report.object(),records=root.make_arr();
-    int visited=0,captured=0,decoded=0,strong=0,closed=0,unmet=0,errors_count=0,resources=0,semantic_rejections=0,physical_rejections=0,protocol_rejections=0;
+    int visited=0,captured=0,decoded=0,strong=0,closed=0,projected=0,unmet=0,errors_count=0,resources=0,semantic_rejections=0,physical_rejections=0,protocol_rejections=0;
     document.root().get("cases").iter([&](JsonVal row){
         Work work{kErDescriptionControlsSceneLimit};work.spend(65536u);const auto ordinal=static_cast<std::size_t>(visited++);auto item=root.make_obj();std::string_view phase="five_complete_captures",status="verification_error";bool observed=false,ready=false,good=false;
         try{
@@ -9165,15 +9227,46 @@ TEST(MermaidErDescriptionControls, EveryWholeSourceIsCapturedBeforeCompleteModel
                     }
                     ++strong;status="complete_geometry_and_mutations";
                 }
+            }else if(ordinal==13u){
+                phase="approved_ER107_description_control";
+                er_present_require(name=="unknown_config_after_documentation"&&digest(source)=="36415e62c2e2f84c5e349b9e23900681c6f5841460e8b142c7c2e5fda1d89a2a",
+                    "ER projected control exact historical source");
+                const auto complete=er296_typed_model(document.root().get("whole_Model"),work);
+                er_present_require(!class481_same_grid(frames.wide,frames.ordinary,work),"ER projected control cannot use source fallback");
+                er_description_projected_control(frames.wide,complete,work);
+                er_description_projected_control(frames.narrow,complete,work);
+                // Good first: an otherwise unchanged body must not launder a
+                // duplicate legacy following token as an exempt footer row.
+                er_description_controls_copy_charge(frames.wide,work);auto duplicate=frames.wide;
+                const auto token=loom::test::mermaid_relations::kRelationsFollowingToken;
+                work.spend(duplicate.cells.size()*8u+token.size()*8u+512u);
+                std::optional<int> notice_row;
+                for(int y=0;y<duplicate.height;++y)if(trim(duplicate.row(y))=="ER native projection v1")notice_row=y;
+                er_present_require(notice_row&&*notice_row>=2,"ER projected control mutant body extent");
+                const int duplicate_y=*notice_row-2;
+                er_present_require(duplicate.row(duplicate_y).find_first_not_of(' ')==std::string::npos,"ER projected control blank mutant row");
+                for(std::size_t x=0;x<token.size();++x)duplicate.put({static_cast<int>(x),duplicate_y},std::string(1,token[x]));
+                bool denied=false;
+                try{er_description_projected_control(duplicate,complete,work);}
+                catch(const std::exception& error){
+                    const std::string_view reason=error.what();
+                    er_present_require(!class481_resource(reason),"ER projected control resource is not negative credit");
+                    denied=reason=="ER projected control body cannot contain following role";
+                }
+                er_present_require(denied,"ER projected control duplicate body sentinel accepted");
+                item.set("body_following_duplicate_rejected",true);
+                ++projected;status="approved_ER107_complete_source_projection";
+                item.set("projection_contract_sha256","8056c56dce627a488af883d20124cd8bbc9b6d8cd7fa5e11bde583a1fbb8cfd9");
+                item.set("formal_admission",false);
             }else{
                 phase="finite_unsupported_complete_source";er_present_require(class481_same_grid(frames.wide,frames.ordinary,work)&&class481_same_grid(frames.narrow,frames.small,work),"ER description controls closed entire source changed");++closed;status="whole_source_profile_closed";
             }
         }catch(const std::exception& error){++errors_count;const char* text=error.what();std::size_t length=0;while(text&&length<256u&&text[length])++length;const auto message=text?std::string_view(text,length):std::string_view("ER description controls unknown error");const bool resource=work.left==0u||class481_resource(message);resources+=resource;status=resource?"resource_error":"verification_error";item.set("bounded_error",message);ADD_FAILURE()<<message;}
         item.set("phase",phase);item.set("status",status);item.set("five_captures_before_decode",observed);item.set("complete_Model_decoded",ready);item.set("good_before_adversaries",good);item.set("work_remaining",static_cast<std::int64_t>(work.left));records.append(item);
     });
-    root.set("qualification","Thirty exact source-authored ER description controls only: nine mandatory complete positives/twenty-one finite whole-source unsupported boundaries, never upstream-invalid claims. No original206/native or foreign certification. One128M ledger per public source; old8M helpers/defaults and production1M unchanged.");
-    root.set("whole_sources",visited);root.set("five_capture_sources",captured);root.set("complete_Models_decoded",decoded);root.set("complete_geometry_and_mutants",strong);root.set("finite_closed_sources",closed);root.set("mandatory_positive_unmet",unmet);root.set("verification_errors",errors_count);root.set("resource_errors",resources);root.set("coherent_ER_semantic_rejections",semantic_rejections);root.set("actual_extra_ink_rejections",physical_rejections);root.set("actual_following_protocol_rejections",protocol_rejections);root.set("public_scene_limit",static_cast<std::int64_t>(kErDescriptionControlsSceneLimit));root.set("sizeof_Pixel",static_cast<std::int64_t>(sizeof(ftxui::Pixel)));root.set("sizeof_Pixel_row",static_cast<std::int64_t>(sizeof(std::vector<ftxui::Pixel>)));root.set("sizeof_string",static_cast<std::int64_t>(sizeof(std::string)));root.set("foreign_assertions_certified",0);root.add("cases",records);report.set_root(root);state85_write("mermaid-er-description30-whole-source-controls.json",report);
-    EXPECT_EQ(visited,30);EXPECT_EQ(captured,30);EXPECT_EQ(decoded,9);EXPECT_EQ(strong,9);EXPECT_EQ(closed,21);EXPECT_EQ(unmet,0);EXPECT_EQ(errors_count,0);EXPECT_EQ(resources,0);EXPECT_EQ(semantic_rejections,82);EXPECT_EQ(physical_rejections,9);EXPECT_EQ(protocol_rejections,4);
+    root.set("qualification","Thirty exact source-authored ER description controls only: nine historical complete positives/twenty remaining finite whole-source boundaries/one source-bound control superseded by the approved ER107 htmlLabels=false profile, never upstream-invalid claims. No original206/native or foreign certification. One128M ledger per public source; old8M helpers/defaults and production1M unchanged.");
+    root.set("whole_sources",visited);root.set("five_capture_sources",captured);root.set("complete_Models_decoded",decoded);root.set("complete_geometry_and_mutants",strong);root.set("finite_closed_sources",closed);root.set("approved_ER107_source_controls",projected);root.set("mandatory_positive_unmet",unmet);root.set("verification_errors",errors_count);root.set("resource_errors",resources);root.set("coherent_ER_semantic_rejections",semantic_rejections);root.set("actual_extra_ink_rejections",physical_rejections);root.set("actual_following_protocol_rejections",protocol_rejections);root.set("public_scene_limit",static_cast<std::int64_t>(kErDescriptionControlsSceneLimit));root.set("sizeof_Pixel",static_cast<std::int64_t>(sizeof(ftxui::Pixel)));root.set("sizeof_Pixel_row",static_cast<std::int64_t>(sizeof(std::vector<ftxui::Pixel>)));root.set("sizeof_string",static_cast<std::int64_t>(sizeof(std::string)));root.set("foreign_assertions_certified",0);root.add("cases",records);report.set_root(root);state85_write("mermaid-er-description30-whole-source-controls.json",report);
+    EXPECT_EQ(visited,30);EXPECT_EQ(captured,30);EXPECT_EQ(decoded,9);EXPECT_EQ(strong,9);EXPECT_EQ(closed,20);EXPECT_EQ(projected,1);EXPECT_EQ(unmet,0);EXPECT_EQ(errors_count,0);EXPECT_EQ(resources,0);EXPECT_EQ(semantic_rejections,82);EXPECT_EQ(physical_rejections,9);EXPECT_EQ(protocol_rejections,4);
 }
 } // namespace
 
@@ -11690,7 +11783,7 @@ TEST(MermaidStateEnvelope, InitThemeFrontmatterStaysSource) {
     EXPECT_FALSE(e2a_state::draws(source));
 }
 
-TEST(MermaidStateEnvelope, CompositeBraceOnNextLineStaysSource) {
+TEST(MermaidStateEnvelope, CompositeBraceOnNextLineKeepsWholeScene) {
     const std::string source =
         "---\n"
         "description: >-\n"
@@ -11702,7 +11795,69 @@ TEST(MermaidStateEnvelope, CompositeBraceOnNextLineStaysSource) {
         "    a\n"
         "  }\n"
         "  [*] --> X\n";
-    EXPECT_FALSE(e2a_state::draws(source));
+    auto native = loom::ui::render_markdown(fenced(source, "mermaid"));
+    auto ordinary = loom::ui::render_markdown(fenced(source, "text"));
+    const auto wide = capture(native, 240, 60);
+    const auto narrow = capture(native, 40, 60);
+    const auto restored = capture(native, 240, 60);
+    const auto plain = capture(ordinary, 240, 60);
+    const auto plain_narrow = capture(ordinary, 40, 60);
+    ASSERT_FALSE(wide == plain) << "A complete composite is a mandatory positive";
+    const Model model{"state", "TB",
+        {{"root_start", "", "start", "", {}, {}}, {"a", "a", "rounded", "X", {{"a"}}, {}}},
+        {{"root_start", "X", ""}}, {{"X", "X", "", "", {"a"}}}, {}};
+    const auto wide_errors = validate(wide, model);
+    EXPECT_TRUE(wide_errors.empty()) << explain(wide_errors);
+    if (!(narrow == plain_narrow)) { const auto narrow_errors = validate(narrow, model); EXPECT_TRUE(narrow_errors.empty()) << explain(narrow_errors); }
+    EXPECT_TRUE(wide == restored);
+    auto missing_edge = model; missing_edge.relations.clear();
+    EXPECT_FALSE(validate(wide, missing_edge).empty());
+    auto wrong_owner = model; wrong_owner.entities[1].owner.clear();
+    EXPECT_FALSE(validate(wide, wrong_owner).empty());
+    auto missing_child = wide;
+    std::size_t erased = 0;
+    for (auto& cell : missing_child.cells) if (cell == "a") { cell = " "; ++erased; }
+    ASSERT_EQ(erased, 1u);
+    EXPECT_FALSE(validate(missing_child, model).empty());
+}
+
+TEST(MermaidStateEnvelope, CompositeNextLineOpenerKeepsAliasesAndRejectsIncompleteScopes) {
+    for (const auto header : {"stateDiagram", "stateDiagram-v2"}) {
+    SCOPED_TRACE(header);
+    const std::string prefix = std::string("---\ndescription: >-\n  hidden brace grammar witness\n---\n") + header + "\n";
+    for (const bool alias : {false, true}) {
+        const auto label = alias ? "Group label" : "X";
+        const std::string declaration = alias ? "state \"Group label\" as X" : "state X";
+        for (const bool crlf : {false, true}) {
+            auto source = prefix + declaration + "\n%% between declaration and opener\n{\n  a\n}\n[*] --> X\n";
+            if (crlf) {
+                std::string encoded;
+                for (const char ch : source) { if (ch == '\n') encoded += '\r'; encoded += ch; }
+                source = std::move(encoded);
+            }
+            auto element = loom::ui::render_markdown(fenced(source, "mermaid"));
+            auto text = loom::ui::render_markdown(fenced(source, "text"));
+            const auto wide = capture(element, 240, 60);
+            const auto narrow = capture(element, 40, 60);
+            const auto restored = capture(element, 240, 60);
+            const auto plain = capture(text, 240, 60);
+            const auto plain_narrow = capture(text, 40, 60);
+            ASSERT_FALSE(wide == plain);
+            const Model model{"state", "TB",
+                {{"root_start", "", "start", "", {}, {}}, {"a", "a", "rounded", "X", {{"a"}}, {}}},
+                {{"root_start", "X", ""}}, {{"X", label, "", "", {"a"}}}, {}};
+            const auto errors = validate(wide, model);
+            EXPECT_TRUE(errors.empty()) << explain(errors);
+            if (!(narrow == plain_narrow)) { const auto narrow_errors = validate(narrow, model); EXPECT_TRUE(narrow_errors.empty()) << explain(narrow_errors); }
+            EXPECT_TRUE(wide == restored);
+        }
+    }
+    for (const auto body : {"{\n a\n}\n", "state X\n{ trailing\n a\n}\n", "state X\n{\n{\n a\n}\n}\n",
+                            "state X\n{\n a\n", "state X\n{\n a\n} residue\n", "state X : description\n{\n a\n}\n"}) {
+        const auto source = prefix + body;
+        EXPECT_EQ(e2a_state::surface(source, "mermaid"), e2a_state::surface(source, "text")) << body;
+    }
+}
 }
 
 TEST(MermaidStateEnvelope, CompositeDividerStaysSource) {

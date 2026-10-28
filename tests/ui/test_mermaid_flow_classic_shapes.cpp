@@ -42,8 +42,8 @@ void append_frame(json::JsonMutVal row,std::string_view name,const Grid& grid) {
     for (int y=0;y<grid.height;++y) lines.append(row.make_str(grid.row(y)));
     row.add(name,lines);
 }
-std::vector<ShapeFrame> classic_contours(const Grid& grid,OracleWork& work) {
-    auto frames=closed_frames(grid,work); auto extra=classic_closed_frames(grid,work);
+std::vector<ShapeFrame> classic_contours(const Grid& grid,OracleWork& work,const Model* model=nullptr) {
+    auto frames=closed_frames(grid,work); auto extra=classic_closed_frames(grid,work,model);
     if (frames.size()+extra.size()>128u) throw std::runtime_error("Too many classic control contours");
     frames.insert(frames.end(),extra.begin(),extra.end());
     std::ranges::sort(frames,[](const ShapeFrame& a,const ShapeFrame& b) { return a.area()<b.area(); });
@@ -197,25 +197,68 @@ TEST(MermaidFlowClassicShapeProfiles, StadiumAndAsymmetricTangentPortsRequireOne
     }
 }
 
+TEST(MermaidFlowClassicShapeProfiles, SmallCircleDiameterIsBoundToItsLabel) {
+    EXPECT_EQ(classic_small_circle_diameter("X"),9);
+    EXPECT_EQ(classic_small_circle_diameter("sm-circ"),11);
+    EXPECT_EQ(classic_small_circle_diameter("small-circle"),17);
+    EXPECT_EQ(classic_small_circle_diameter("start"),9);
+
+    const Model model{"TB",{{"short","start",Shape::SmallCircle},
+        {"medium","sm-circ",Shape::SmallCircle},
+        {"long","small-circle",Shape::SmallCircle}},{},{}};
+    const auto scene=[&](int first_diameter) {
+        constexpr int width=64,height=22;
+        Grid grid{width,height,std::vector<std::string>(static_cast<std::size_t>(width*height)," ")};
+        int left=2;
+        for(std::size_t n=0;n<model.nodes.size();++n) {
+            const auto& node=model.nodes[n];
+            const int diameter=n==0?first_diameter:classic_small_circle_diameter(node.label);
+            const ShapeFrame frame{{left,1,left+diameter-1,1+diameter-1},Shape::SmallCircle};
+            for(int y=frame.top;y<=frame.bottom;++y)for(int x=frame.left;x<=frame.right;++x)
+                if(const auto cell=classic_expected_cell(frame,{x,y}))grid.put({x,y},std::string(*cell));
+            const int label_width=ftxui::string_width(node.label);
+            const int label_x=frame.left+(diameter-label_width)/2;
+            const int label_y=frame.top+diameter/2;
+            for(int x=0;x<label_width;++x)grid.put({label_x+x,label_y},node.label.substr(static_cast<std::size_t>(x),1));
+            left+=diameter+2;
+        }
+        for(std::size_t x=0;x<kSentinel.size();++x)grid.put({static_cast<int>(x),height-1},std::string(1,kSentinel[x]));
+        return grid;
+    };
+    auto good=scene(9);OracleWork good_work{kFlow400SceneLimit};
+    EXPECT_TRUE(flow400_geometry(good,model,good_work).empty());
+    auto oversized=scene(11);OracleWork oversized_work{kFlow400SceneLimit};
+    const auto errors=flow400_geometry(oversized,model,oversized_work);
+    EXPECT_FALSE(errors.empty())<<errors_text(errors);
+    EXPECT_NE(oversized_work.remaining,0u);
+}
+
 TEST(MermaidFlowClassicShapeProfiles, HandFramesUseOnlyTheirDeclaredPortsAndDecorations) {
-    constexpr std::array<Shape,11> shapes{{Shape::Stadium,Shape::Circle,Shape::Subroutine,Shape::DoubleCircle,Shape::Hexagon,
-        Shape::Cylinder,Shape::Asymmetric,Shape::Trapezoid,Shape::TrapezoidAlt,Shape::Parallelogram,Shape::ParallelogramAlt}};
+    constexpr std::array<Shape,15> shapes{{Shape::Stadium,Shape::Circle,Shape::Subroutine,Shape::DoubleCircle,Shape::Hexagon,
+        Shape::Cylinder,Shape::Asymmetric,Shape::Trapezoid,Shape::TrapezoidAlt,Shape::Parallelogram,Shape::ParallelogramAlt,
+        Shape::Triangle,Shape::Delay,Shape::SmallCircle,Shape::ForkJoin}};
     for (const auto shape:shapes) {
         OracleWork work{kFlow400SceneLimit};
         work.spend(65536u+32u*sizeof(Grid)+32u*sizeof(ShapeFrame)+256u*sizeof(json::JsonMutVal));
         const auto grid=classic_profile_good_grid(shape);
         const auto frame=classic_profile_frame(shape);
         ASSERT_TRUE(classic_exact_frame(grid,frame));
-        const auto contours=classic_contours(grid,work);
-        ASSERT_TRUE(std::ranges::find(contours,frame)!=contours.end());
         const Model model{"TB",{{"n","X",shape}},{},{}};
+        const auto contours=classic_contours(grid,work,&model);
+        ASSERT_TRUE(std::ranges::find(contours,frame)!=contours.end());
         const auto geometry=flow400_geometry(grid,model,work);
         EXPECT_TRUE(geometry.empty()) << "shape=" << static_cast<int>(shape) << " " << errors_text(geometry);
         const auto ports=classic_declared_ports(frame);
-        EXPECT_EQ(ports.size,shape==Shape::Asymmetric?2u:4u);
+        EXPECT_EQ(ports.size,shape==Shape::Asymmetric||shape==Shape::Triangle?2u:4u);
         for (std::size_t n=0;n<ports.size;++n) {
             EXPECT_TRUE(frame.legal_port(ports.values[n].point,ports.values[n].outward));
             const auto& port=ports.values[n];
+            if (shape==Shape::ForkJoin) {
+                EXPECT_TRUE(frame.accepts_port(grid,port.point,port.outward));
+                const int opposite=port.outward==U?D:port.outward==R?L:port.outward==D?U:R;
+                EXPECT_FALSE(frame.accepts_port(grid,port.point,opposite));
+                continue;
+            }
             flow400_copy_grid(grid,work); auto armed=grid;
             armed.put(port.point,std::string(port_glyph(port.outward)));
             EXPECT_TRUE(frame.accepts_port(armed,port.point,port.outward));
@@ -284,6 +327,23 @@ TEST(MermaidFlowClassicShapeProfiles, HandFramesUseOnlyTheirDeclaredPortsAndDeco
             EXPECT_FALSE(flow400_resource(forged_errors.front()));
         }
     }
+}
+
+TEST(MermaidFlowClassicShapeProfiles, ForkJoinRequiresItsFilledLongRectangleInterior) {
+    const auto grid=classic_profile_good_grid(Shape::ForkJoin);
+    const auto frame=classic_profile_frame(Shape::ForkJoin);
+    const Model model{"TB",{{"fork","X",Shape::ForkJoin}},{},{}};
+    OracleWork good_work{kFlow400SceneLimit};
+    EXPECT_TRUE(flow400_geometry(grid,model,good_work).empty());
+
+    flow400_copy_grid(grid,good_work);
+    auto underfilled=grid;
+    underfilled.put({frame.left+1,frame.top+1}," ");
+    OracleWork bad_work{kFlow400SceneLimit};
+    const auto errors=flow400_geometry(underfilled,model,bad_work);
+    EXPECT_FALSE(errors.empty())<<errors_text(errors);
+    ASSERT_EQ(errors.size(),1u);
+    EXPECT_FALSE(flow400_resource(errors.front()));
 }
 
 TEST(MermaidFlowClassicShapes, CompleteTerminalSourcesRequireFullGeometryAndExactGoodFirstMutants) {
@@ -355,7 +415,7 @@ TEST(MermaidFlowClassicShapes, CompleteTerminalSourcesRequireFullGeometryAndExac
             phase="geometry"; const auto wide_errors=flow400_geometry(*frames[0],model,work); flow400_require(wide_errors.empty(),wide_errors.empty()?"":wide_errors.front().c_str());
             if (!source_narrow) { const auto narrow_errors=flow400_geometry(*frames[1],model,work); flow400_require(narrow_errors.empty(),narrow_errors.empty()?"":narrow_errors.front().c_str()); }
             const auto restored_errors=flow400_geometry(*frames[2],model,work); flow400_require(restored_errors.empty(),restored_errors.empty()?"":restored_errors.front().c_str());
-            phase="good_first_mutations"; const auto contours=classic_contours(*frames[0],work);
+            phase="good_first_mutations"; const auto contours=classic_contours(*frames[0],work,&model);
             std::optional<ShapeFrame> first_classic;
             for (std::size_t n=0;n<model.nodes.size();++n) if (classic_shape(model.nodes[n].shape)) {
                 const auto frame=flow_typed_frame_for_node(*frames[0],contours,model.nodes[n],work);

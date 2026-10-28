@@ -9,10 +9,11 @@ Selection (mechanical, byte-level, never derived from renderer output):
     - carries no ``%%{init...}%%`` directive in the body.
 
 Each selected row is pre-registered as predicted-draw or predicted-blocked.
-Six blocker classes come from fixed source-content detectors; a seventh
-class (native parent-route debt) cannot be decided textually and is an
-execution-attested, independently reviewed set: parse_gitgraph accepts the
-body but plan_parent_routes cannot close an edge. That set is sha-bound to
+Five blocker classes come from fixed source-content detectors; two classes
+(native parent-route debt and State composite execution debt) are independently
+reviewed execution sets. State entries are bound to explicit path/SHA pairs;
+new or changed next-line-brace sources require review. For GitGraph,
+parse_gitgraph accepts the body but plan_parent_routes cannot close an edge. That set is sha-bound to
 this pinned corpus and additions require a new review row. The original
 16-row attested set was retired by the bounded strict-first parent-router
 retry (14 rows now draw; the two LR 9-branch rows are capacity debt and
@@ -49,7 +50,7 @@ BLOCKER_VOCABULARY = [
     "state-composite-divider",
 ]
 
-# Production-source witnesses for each detector (parser, not renderer).
+# Source-profile witnesses; remaining execution gaps are distinguished from grammar rejection.
 WITNESS = {
     "gitgraph-title-not-projected": (
         "src/ui/visual/mermaid_gitgraph_impl.cpp:348-403",
@@ -81,9 +82,11 @@ WITNESS = {
         "reviewed set is empty until a future corpus expansion attests new rows.",
     ),
     "state-composite-brace-on-next-line": (
-        "src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)",
-        "A composite opens only when '{' is on the same state-declaration line; "
-        "a standalone next-line '{' falls through to the edge parser and is rejected.",
+        "src/ui/visual/mermaid_relations_core_impl.cpp (State composite parse and relations_layout)",
+        "The historical next-line-brace cohort remains whole-scene execution debt: "
+        "the State parser now accepts a standalone next-line opener, but the three "
+        "complete pinned originals still fall back at 240 columns. This source-profile "
+        "tag does not assert a lexical rejection or establish a layout root cause.",
     ),
     "state-composite-divider": (
         "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
@@ -111,6 +114,18 @@ GIT_BRANCH_LIMIT = 8
 # through the > GIT_BRANCH_LIMIT detector below. The set is empty until a
 # future corpus expansion attests genuinely new router debt.
 NATIVE_ROUTE_DEBT: set[str] = set()
+
+# Only these independently observed complete originals retain the historical
+# next-line-brace tag. The grammar now accepts that opener; neither its presence
+# nor a future source revision predicts a geometry failure without new review.
+STATE_COMPOSITE_EXECUTION_DEBT = {
+    "state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd":
+        "1e359f909af210d7338db0674c6f86daaf25b5a3959bd70b0649e92ee0c8f3f3",
+    "state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd":
+        "8f5f84b56734e20aa522613ae397585b37aaa248cae2880bd85bcfa39134733c",
+    "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd":
+        "b6ef22abdcd251e866c6ab5a9ee7d68d98e1092a8d65f294de849d4aa3b68c4a",
+}
 
 
 def split_source(text):
@@ -162,10 +177,13 @@ def git_blocker(rel, keys, body_lines):
     return None
 
 
-def state_blocker(body_lines):
-    for line in body_lines:
-        if line.strip() == "{":
-            return "state-composite-brace-on-next-line"
+def state_blocker(rel, source_sha256, body_lines):
+    if rel in STATE_COMPOSITE_EXECUTION_DEBT:
+        if source_sha256 != STATE_COMPOSITE_EXECUTION_DEBT[rel]:
+            raise ValueError(f"State execution-debt source changed; independent review required: {rel}")
+        return "state-composite-brace-on-next-line"
+    if any(line.strip() == "{" for line in body_lines):
+        raise ValueError(f"Unreviewed next-line-brace source; independent review required: {rel}")
     for line in body_lines:
         if line.strip() == "--":
             return "state-composite-divider"
@@ -190,7 +208,7 @@ def collect_root(cases, root_rel, family):
         if "config" in keys or body_has_init(body):
             continue
         blocker_kind = (git_blocker(rel, keys, body) if family == "gitGraph"
-                        else state_blocker(body))
+                        else state_blocker(rel, sha256_file(path), body))
         rows.append({"path": rel, "keys": keys, "blocker": blocker_kind})
     return rows
 
@@ -235,8 +253,11 @@ def build(repo_root):
                 "blocker": (
                     {"kind": kind, "site": site, "evidence": site, "detail": detail}
                     if blocked else None),
-                "ledger_note": "E2a description-only admission" if not blocked
-                else "Blocked by a non-envelope body-grammar or capacity witness",
+                "ledger_note": (
+                    "E2a description-only admission" if not blocked else
+                    "Pending complete-original execution; no grammar/layout root cause claimed"
+                    if kind == "state-composite-brace-on-next-line" else
+                    "Blocked by a non-envelope body-grammar or capacity witness"),
             })
     total = counts["git"] + counts["state_v2"] + counts["state_v1_qualified"]
     return {
@@ -252,7 +273,7 @@ def build(repo_root):
         "selection": {
             "rule": "frontmatter original containing neither a top-level config key nor a body %%{init}%% directive",
             "roots": ["git", "state-diagram-v2", "state-diagram"],
-            "blocker_detection": "six fixed source-content detectors plus one execution-attested reviewed set (native parent-route debt); no expectation is derived from rendered output",
+            "blocker_detection": "five fixed source-content detectors plus two execution-attested reviewed sets (native parent-route debt and path/SHA-bound State composite debt); no generator-time rendering; new execution-debt entries require independent review",
             "width_policy": "E2a pre-registers the 240-column admission; narrow_40 is uniformly 'source'.",
         },
         "review": {

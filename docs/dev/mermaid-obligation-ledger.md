@@ -1,5 +1,23 @@
 # Complete Mermaid obligation ledger
 
+## Verified local regression checkpoint (2026-10-28)
+
+Fresh Debug and Release full builds and CTest pass: each registers 4,107 tests,
+with 4,080 passed, 25 skipped, two disabled and zero failures. ER107 is 107/107
+locally ready in independently owned Native/Official public captures; the
+separate default 1M factory test also proves exact-used/one-short boundaries.
+Its maximum measured Work is 992,611. Frozen source/model/manifest/contract
+assets remain byte-identical; rejected spacing trials are absent from production.
+
+Flow400 is 77/400 complete source models; the exact Fork/Join body binding brings
+the body-only cohort to 14/14 without adding original credit. The E6c roster
+remains 78 OfficialMatrix rows with zero integrity errors. The generated unjoined
+matrix field is 639/2145; ER107 still has zero formal admission credit and the
+1931-original milestone remains open. Both preset reports agree byte-for-byte.
+Independent design, code and evidence reviews approve this bounded repair.
+See the [full validation checkpoint](mermaid-conformance.md#verified-delivery-checkpoint-2026-10-28)
+for initial failures, environment isolation, retries and reproduction commands.
+
 An earlier separate ER subgraph resource-only checkpoint builds Native203 and
 runs one focused TEST per preset, both passing. Ten complete sources/five lower
 Models bind after five actual view captures; upper5 are whole ordinary and
@@ -13,8 +31,9 @@ open; formal coverage stays469/2145.
 This is an acceptance contract and a source audit, not a compatibility score.
 The owning production module is `loom.ui.visual.mermaid`; this audit adds no
 runtime dependency, exported API, configuration or renderer implementation.
-The pinned inputs and original expectations remain immutable. The user requires
-complete applicable test coverage, and forbids commits and pushes for this work.
+The pinned inputs and original expectations remain immutable. The acceptance
+target remains complete applicable coverage; local regression success does not
+imply whole-suite compatibility or formal-admission completion.
 
 The detailed audit is retained under
 `build/mermaid-renderer-research-20261020/full-obligation-audit/`. Its JSON files
@@ -25,15 +44,282 @@ The durable test entrypoints remain those in
 [the terminal test guide](mermaid-terminal-tests.md) and
 [the official matrix guide](mermaid-conformance.md).
 
+## Flow aliases and dual-preset full regression checkpoint (2026-10-27)
+
+The Debug and Release builds completed. Their full Mermaid CTest runs each
+covered **922 tests: 918 passed and four failed** (Debug686.88s,
+Release100.16s). The same ER107 four gates remain red because 15/107 original ER
+sources return ordinary source fallback. This fallback has zero drawing credit.
+
+Flow400 Native now owns 61/400 complete source models, five captures and
+complete bindings for all400, with 339 pending and no resource/geometry/
+mutation errors. Official wide rows report 61 drawn, 327 source fallbacks and
+12 error outcomes. The two supported shape-alias originals and bare direction
+boundary tests pass in both presets. Latest Official matrices match the
+80-row E6c roster; integrity is clean and the verifier passes both presets.
+These local matrices remain unjoined: the last strict dual-preset formal
+admission snapshot is still 696/2145 (32.45%), as detailed in the
+[current regression and per-type report](mermaid-conformance.md#prior-full-regression-and-coverage-2026-10-27).
+
+The five terminal suites have 93/15,390 verified direct assertion source
+sites (Beautiful 0/1,469; Mermaid-ascii 0/482; Merman 12/4,083; Mmdflux
+0/7,945; Termaid 81/1,411). Helpers, macros and runtime expansions keep the
+whole-suite semantic target open. The reviewed Flow alias/direction tests are
+approved; no commit or push was made.
+
+## Current Block58 admission (2026-10-26)
+
+Formal coverage is **688/2,145 (32.07%)**, including all 58 complete Block
+originals: **1,429 source fallbacks,28 verification-error outcomes**, and
+**1,243** further admissions needed to reach 1,931. Final Debug/Release full
+builds and **881/881 Mermaid CTests** pass (198.35s/39.58s), including PTY.
+Debug first passed 879/880 because a test ignored blank spacer columns; the
+reviewed width fix, focused 2/2 and full rerun pass. This was not first-pass green.
+
+Each independent consumer owns 870 captures before binding. Native rejects
+384 semantic+437 physical mutants; Official 384+495. Reviewed dual admission
+changes only 58 Block rows; all other 2680 rows, including 593 body diagnostics,
+remain exact. The four new frame/verdict files and final matrices match between
+presets. Foreign RGB/CSS/SVG obligations remain uncertified. No shared Canvas,
+global palette policy or established public contract changed; no commit or push.
+See the [current report and ordered workflow](mermaid-conformance.md#block58-admitted-checkpoint-and-current-workflow-2026-10-26)
+for exact pins, retained failures and validation limits. The snapshots below are
+historical; ER107 is a source-only candidate, not new drawing credit.
+
+## Shapes4 complete-original admission and workflow (2026-10-26)
+
+Four further complete original Mindmap inputs now pass independent Native and
+Official five-frame captures, full raw/manifest/Model/projection binding and
+complete shape/caption/parent geometry. The cohort has five nodes and one parent;
+each consumer rejects **11 semantic + 16 physical good-first mutations**.
+Multiline raw framing is preserved separately from the reviewed terminal rows.
+The source authority is `mindmap5_shapes_source_proposal.v1.json` (SHA-256
+`26f803ffb4f900f81a5742f97671a7c6fd4a3c53a0d55a36a6bbbd2af5d1bd25`).
+Its five-source/32-plan proposal remains distinct from this four-source/27-control
+runtime admission; Bang/Cloud and future plans earn no new credit.
+
+Both full builds and **842/842 Mermaid CTests** pass: Debug **155.98 s**, Release
+**31.40 s**, including `E2E_Pty_Mermaid`. This is 830 regressions plus 12 capability
+reports. Twelve new metadata-only join self-tests also pass through CTest.
+After rebuilding both presets, reproduce the complete admission in this order:
+
+```bash
+ctest --preset debug -L mermaid -j8 --output-on-failure
+ctest --preset release -L mermaid -j8 --output-on-failure
+python3 -I tools/mermaid/verify_mindmap10_admission.py --write
+python3 -I tools/mermaid/verify_shapes4_admission.py --write
+```
+
+The second join revalidates the fresh **616 + 10 = 626** prerequisite and only
+then admits **626 + 4 = 630/2,145 (29.37%)** in both preset reports. It reads only
+closed compact verdicts, rejects foreign/borrowed/stale proofs and publishes
+both matrices before formal markers with rollback on failure. Official standalone
+controls keep their reports in memory; only the full matrix publishes admission
+artifacts. The four new frame/verdict files and final matrices match byte for byte
+across presets. Only four original rows change; every body row and all other
+original rows remain exact, as do 24 prior Class/Flow/Mindmap10 reports.
+
+agent:Galileo independently approved source/design/production-readiness, private
+implementation, report isolation and the final dual admission. First focused runs
+were 5/6 (mismatched ordinary-source foreground control), then 11/12 (a large
+16-level tree correctly exceeded Work); those failures are retained. The control
+now uses foreground-equivalent ordinary source without weakening comparisons.
+Non-scoring tests prove all three shapes' parent/child ports, mixed siblings,
+six-level mixed trees, a budget-fitting 16-level tree, LF/CRLF and combined wide
+glyphs; a larger 16-level circle tree remains exact source under the unchanged
+one-million Work limit. No public factory/API, shared production owner or runtime
+dependency changes. No commit or push.
+
+Mindmap is **14/33 (42.42%)**. The complete corpus now has **630 admitted drawings,
+1,487 source fallbacks and 28 verification-error outcomes**. The above-90-percent
+target still requires **1,301** further admissions; no full conformance is claimed.
+
 ## Latest executed checkpoint and remaining scope
 
-### RFC 0031 E6c checkpoint (2026-10-24): mandatory gates become reviewed capability reports
+### Current user milestone: above 90% official drawing coverage
+
+The frozen denominator remains 2,145 complete original files. The temporary
+milestone requires at least **1,931 admitted originals** (90.02%); the verified
+initial baseline was **596**. The verified count is now **688**, leaving a
+minimum gain of **1,243**. Native CTest
+pass rate and upstream assertion-site counts remain separate measures. Source
+fallback, stripped-body observations and unreviewed drawings earn zero credit.
+
+At the initial milestone, existing families contained 1,608 files (74.97%).
+With Mindmap and Block now owned, twelve matrix types across eleven renderer
+families contain1,699 files (79.21% type-based ceiling). Even completing all
+those originals still requires at least232 of the other446 originals; cross-type
+Flow inputs need their own source-specific accounting.
+Mindmap's remaining 19 sources are still within its incomplete owned-family scope. See the
+[RFC 0030 milestone](../rfcs/0030-terminal-mermaid-diagrams.md#provisional-ninety-percent-milestone-2026-10-25)
+for the fixed acceptance contract and per-cohort review gates. This target is
+active, not achieved; full upstream semantic conformance remains unclaimed.
+
+### Historical private-payload checkpoint (2026-10-26)
+
+Full Debug/Release builds pass after the private payload foundation. Release
+passes **866/866 Mermaid-labelled CTests** in47.92s; the unchanged Debug full
+rerun passes **866/866** in208.67s. The first Debug run passed
+**865/866**: `RoleBodyBatchParsedMutationsReachTheirSpecificTupleAndSchemaGuards`
+times out at180.04s. Its unchanged isolated retry passes1/1 in132.93s; the full rerun completes that test in143.54s. The first run overlapped Release build/tests;
+contention is a hypothesis, not a proved root cause, and no limit was weakened.
+The earlier pre-payload full864/864 pair passed158.44s/42.91s.
+
+Block58's23 native preflight tests include36 independently authored full primitive
+boundaries for12 source types/seven headsets/two widths plus connected-port
+controls. All58 candidate plans/row sets pass but add **zero drawings**. Candidate
+cold/glyph-inclusive estimates are656426/962940; actual production prepayment,
+long-combining-tail capacity and styled public runtime remain unverified.
+Agent:Harvey approved full B2 design/PRR and the dormant private payload static
+review; Ramanujan authored the boundary fixtures without reading candidate glyphs.
+No Block parser/dispatch or Native/Official Block admission is enabled yet.
+
+Fresh old10/4 joins preserve **630/2145 (29.37%)** and body593. Of423 prior
+source/report files,419 remain byte-exact; the only four expected changes are
+Mermaid's private partition/factory/cache and the legacy cache test file. All
+public signatures, shared Canvas, global theme policy and runtime dependencies
+are unchanged; there is no commit/push. See the
+[preflight details](mermaid-conformance.md#block58-native-test-only-preflight-2026-10-26).
+
+Passing reports
+retain reviewed capability gaps and do not establish complete compatibility.
+
+The generated `build/{debug,release}/tests/ui/mermaid-official-matrix.{json,md}`
+reports agree: all **2,145 pinned original inputs execute**, with **630 drawings
+(29.37%), 1,487 source fallbacks and 28 verification-error outcomes** at 240
+columns. The error category includes unmet geometry or unreviewed drawings;
+it is not a crash count. Source fallback earns no drawing credit. The current
+reviewed roster contains **313 gap rows**. These units are separate from
+CTest counts and upstream semantic assertion coverage.
+
+Before the PTY fix, each preset passed 820/821; `E2E_Pty_Mermaid` failed with
+`state fixture clear did not complete`, including an isolated Release retry.
+The status line suppresses the interrupt hint while the query can still run,
+so the test sent `/clear` too early and the running-query guard ignored it.
+The test now requires the existing complete-frame idle check in addition to
+state geometry and hidden-source/description assertions. Five consecutive
+focused PTY runs pass per preset, followed by the complete 821/821 runs.
+That PTY fix changed no renderer behavior or drawing admission. The historical checkpoints
+below retain their original counts and failures.
+
+### Mindmap10 complete-original admission (2026-10-26)
+
+Ten complete immutable official Mindmap inputs now pass independently owned
+Native and Official five-frame captures, raw/manifest/Model/projection bindings,
+full node/parent/order/outline/label geometry and 30 semantic plus 30 physical
+good-first mutations per consumer. The frozen cohort has 45 nodes and 35 parent
+relationships: seven default trees and three single square roots. Its 32-cell
+square-caption wrapping is a reviewed Loom terminal adaptation, not an upstream
+pixel-width constant. Unicode, duplicate-caption, combined wide-glyph, 64-node,
+256-cell/1,024-byte label and resource controls are separate, non-scoring tests.
+Unsupported shapes, config, icons, markup and other source forms stay whole
+source. Explicit ASCII remains unsupported for this new family.
+
+Both final builds and full Mermaid CTest pass **834/834**: Debug **158.59 s**,
+Release **46.68 s**, with `-j8`. Integration first exposed incorrect color API,
+JSON result/mutable-value calls and a local manifest name; these were corrected
+before this final execution. agent:Beauvoir's implementation review required
+exact glyph/foreground/background fallback and an external cross-consumer join.
+Further review closed schema, input freshness, frozen-base and publication-order
+findings. The final join validates all four local verdicts before publishing
+into either matrix; only the fixed **616 + 10 = 626** is permitted for this cohort.
+Its four Python self-tests also run through the Mermaid CTest label.
+
+At that Mindmap10 checkpoint, the formal count was **626/2,145 (29.18%)**: Mindmap **10/33 (30.30%)**,
+1,491 source fallbacks and 28 verification-error outcomes. Exactly ten original
+matrix rows change; no diagnostic/body row or previous drawing changes. Native
+and Official full-frame reports, compact verdicts and final joined matrices are
+byte-identical across presets. The source-only authority remains
+`fa675abb49ce3de96e082b17cad12467296f06db80af28c9edafa8d4b6815627`.
+The gap roster stays 313 rows / 53,898 bytes / `b812af2cc7b3db13dcd3bf51d3921f476b0b8446b7bc0fff1c6ff750b696bad5`.
+No new upstream assertion-site credit is claimed; the joined lower bound stays
+93 and the full upstream semantic obligations remain open. The 1,931-original
+milestone still needed **1,305** further admissions at that checkpoint. No commit or push.
+
+### Class complete-original caption retry (2026-10-25)
+
+The existing shortest-edge plan is retained byte-for-byte whenever it succeeds.
+Only a failed endpoint-caption edge in a flat Class scene without namespaces,
+notes or reciprocal routing gets one alternate, longer-business-label-first
+plan. The retry reuses the Canvas and A* arrays, restores occupied cells and
+redraws the same measured entities; Work and generation are never reset.
+New storage/sort/scan/write work is prepaid. A full-canvas reset initially left
+the complete metadata-bearing originals over budget; skipping writes to already
+blank cells closes those scenes without changing the one-million Work cap.
+
+Both independently source-bound Native Class285 and Official consumers admit
+exactly **20 additional complete original files**. Official coverage is now
+**616/2,145 (28.72%)**; Class is **231/285 (81.05%)**, with 237 Models decoded,
+48 pending Models and six decoded Note originals still whole source. Native
+Class481 improves 341 to 343, Endpoint29 improves 26 to 28, and the caption
+starvation controls improve six to seven; these are not extra official credits.
+One further Model-null Merman drawing remains in the 137 pending obligations
+and earns zero credit. All previous drawing frames and all diagnostic/body rows
+are unchanged. Source bytes, Model assets, config whitelists and upstream
+assertion-site credit are unchanged.
+
+agent:Aristotle approved the code after restricting retry to the failed caption
+edge; agent:Newton independently approved the exact original-source/frame join
+and **45 resolved roster removals, zero additions** (358 to **313**). The first
+Release full run passed 814/826; its 12 failures exposed stale per-gate roster
+count constants. After synchronizing those constants and rebuilding, the final
+full Mermaid gates pass **826/826** in Debug (162.59 s) and Release (36.54 s),
+both with `-j8`. The Official JSON/MD and all four changed Native report files
+are byte-identical across presets; the current reviewed roster is 53,898 bytes,
+SHA-256 `b812af2cc7b3db13dcd3bf51d3921f476b0b8446b7bc0fff1c6ff750b696bad5`.
+The provisional target stays at least 1,931 originals; **1,315** more are needed.
+At this Class20 checkpoint, Mindmap10 source/design was approved but runtime
+admission was still pending. The later Mindmap10 checkpoint above supersedes
+that pending status and adds ten verified originals, reaching 626/2,145.
+
+### State next-line composite regression (2026-10-25)
+
+State declarations now accept an exact standalone opening brace on the next
+nonempty, noncomment line, through the existing composite owner/depth parser.
+Nine positive source applications cover both State headers, aliases, comments
+and LF/CRLF, with five actual public frames before independent semantic/geometry
+checks. Twelve malformed-scope controls and the existing concurrent-divider
+rejection stay whole source. One former negative became a mandatory positive;
+one new native TEST raises the full gate to 826 (814 regressions plus 12 reports).
+Both full builds pass; full Mermaid CTest is 826/826 in Debug (1062.73 s, serial)
+and Release (34.38 s, `-j8`), including `E2E_Pty_Mermaid`.
+
+The three complete official next-line-brace originals still fall back; no
+lexical or layout root cause is inferred from that result. E2a now pins only
+those three path/SHA pairs as reviewed execution debt and requires fresh review
+for a changed/new source, instead of treating every standalone brace as a
+parser failure. agent:Turing approved the State correction; agent:Carver's two
+metadata findings were corrected and the amendment approved. E2a remains
+69 originals / 56 predicted drawings / 13 source outcomes. The full Official
+matrix JSON/MD and Native Flow400 reports remain byte-identical in both presets;
+at this earlier checkpoint formal coverage stayed **596/2,145**, with **358**
+reviewed gap rows.
+Class height-padding and longest-first-order experiments were rejected and
+removed after failing to preserve or improve the complete cohort.
+
+### ASCII skip-edge original-function batch (2026-10-25)
+
+Three complete Merman Grid18 functions now preserve their original ASCII
+options across seven unique inputs / eight applications. Eight distinct direct
+assertion byte intervals join passing native GTest XML in both presets, raising
+the conservative joined lower bound from 85 to **93 sites**; new helper-call
+credit and a whole-five-suite percentage remain unclaimed. The tests execute
+18 original predicate applications plus 48 semantic/projection, 18 predicate
+and eight rectangular-row negatives. The reviewed extension admits only
+ungrouped three-rectangle TD/BT chains with one skip edge, retaining default
+Unicode output and the official **596/2,145 (27.79%)** drawing count.
+`agent:Ptolemy` approved the source port, bounded profile and bordered-label-row
+space-padding adaptation. See [the terminal test guide](mermaid-terminal-tests.md#ascii-skip-edge-original-function-batch-2026-10-25)
+for frame artifacts, controls and the exact adaptation. Phase C remains open.
+
+### Current E6c report pins (2026-10-25; conversion checkpoint 2026-10-24)
 
 The 12 deliberately-red mandatory-completion gates were renamed into
 permanently non-failing `MermaidCapabilityReport.*` tests (12 renames, zero
-tests added or removed; two new `MermaidCapabilityRoster.*` integrity tests
-bring the Mermaid label to 810 registered ctests, of which 798 are the strict
-green regression subset selected by `-L mermaid -E '^MermaidCapabilityReport\.'`).
+tests added or removed). Two `MermaidCapabilityRoster.*` integrity tests were
+added at that checkpoint. The current Mermaid label has 842 registered CTests,
+of which 822 are the regression subset selected by
+`-L mermaid -E '^MermaidCapabilityReport\.'`.
 Enumeration, JSON/MD report emission, resource/integrity/provenance checks and
 zero-non-gap-error assertions are unchanged and stay hard failures; only the
 aspiration-tier "100% admission" assertions were removed. The frozen observed
@@ -42,25 +328,25 @@ canonical `mandatory_gaps` array diffed both directions against the reviewed
 ledger.
 
 Roster: `tools/mermaid/e6c-mandatory-gap-roster.json`, schema
-`e6c_mandatory_gap_roster/v1`, **61620 bytes**, SHA-256
-`29611b1dae04a3c5b30d14fa904ece3be6ab37d924ae6621079e7633afcd6f1d`, pins in
+`e6c_mandatory_gap_roster/v1`, **53898 bytes**, SHA-256
+`b812af2cc7b3db13dcd3bf51d3921f476b0b8446b7bc0fff1c6ff750b696bad5`, pins in
 `tests/support/mermaid_gap_roster.hpp`; verified across debug and release by
 `python3 -I tools/mermaid/verify_e6c_gap_roster.py
 --build-dirs build/debug/tests/ui,build/release/tests/ui` (serialized gap sets
-are byte-stable across presets; 356 roster rows total).
+are byte-stable across presets; 313 roster rows total).
 
 Per-gate frozen counts and roster rows:
 
 | Gate (new ctest name) | Roster key | Frozen counts | Rows |
 |---|---|---|---:|
-| `MermaidCapabilityReport.OfficialMatrix` | `official_matrix` | ER errors 6/pending 144/admitted 62; Flow errors 10/decoded 54/pending 346 (T1-B: one pending-config original now draws unreviewed art); Class errors 30/decoded 237/pending 48/admitted 211; drawn_at_240 596/2145 | 96 |
-| `MermaidCapabilityReport.Flow400CompleteSources` | — (counts-only) | errors 9 at matrix; visited 400, decoded/positive/mutated 54, pending 346, zero non-gap errors | 0 |
+| `MermaidCapabilityReport.OfficialMatrix` | `official_matrix` | ER errors 6/pending 144/admitted 62; Flow errors 10/decoded 54/pending 346 (T1-B: one pending-config original now draws unreviewed art); Class errors 10/decoded 237/pending 48/admitted 231; drawn_at_240 688/2145 after Mindmap10, Shapes4 and Block58 dual joins | 76 |
+| `MermaidCapabilityReport.Flow400CompleteSources` | — (counts-only) | errors 10 at matrix; visited 400, decoded/positive/mutated 54, pending 346, zero non-gap errors | 0 |
 | `MermaidCapabilityReport.MermanXY102` | `merman_xy102` | 102 inputs, 85 candidate/17 fallback, partition 3/17/82/0, geometry 77, empty 5, profile pending 20, zero errors | 20 |
-| `MermaidCapabilityReport.Class481` | `class481` | matched/mutated 341, pending 137, 3 positive fallbacks (`merman/5974d9abfc8f91652b9b`, `merman/a254b69141639fa8b045`, `merman/c50650cbac88ef419784`) | 140 |
-| `MermaidCapabilityReport.Class285` | `class285` | decoded 237, matched/mutated 211, pending 48 | 74 |
-| `MermaidCapabilityReport.ClassEndpoint29` | `class_endpoint29` | matched/mutated 26, the same three fallback ids | 3 |
+| `MermaidCapabilityReport.Class481` | `class481` | matched/mutated 343, pending 137, 1 positive fallback (`merman/c50650cbac88ef419784`) | 138 |
+| `MermaidCapabilityReport.Class285` | `class285` | decoded 237, matched/mutated 231, pending 48 | 54 |
+| `MermaidCapabilityReport.ClassEndpoint29` | `class_endpoint29` | matched/mutated 28, the same one fallback id | 1 |
 | `MermaidCapabilityReport.State85` | `state85` | matched/mutated 71, geometry_errors 1, positive_pending 7, original_policy 1 (`termaid/17f03f94ca1a30b6bf67`), choice_policy 1 (`merman/2419c8d227ab4bcb368d`) | 14 |
-| `MermaidCapabilityReport.ClassCaptionStarvation8` | `class_caption_starvation8` | matched/mutated 6, fallbacks 2 (`unequal_multiline_and_marker`, `foreign_owner_keeps_caption`) | 2 |
+| `MermaidCapabilityReport.ClassCaptionStarvation8` | `class_caption_starvation8` | matched/mutated 7, fallback 1 (`unequal_multiline_and_marker`) | 1 |
 | `MermaidCapabilityReport.StateReverseEscape` | `state_reverse_escape` | matched/mutated 8, fallback 1 (`original_b91_whole_immutable`) | 1 |
 | `MermaidCapabilityReport.ClassNotes18` | `class_notes18` | original 18/decoded 22, strong 16; fallbacks at application ordinals 272-277 | 6 |
 | `MermaidCapabilityReport.Requirement11P1P6` | `requirement11_p1p6` | complete 8, geometry 1 (P1), fallbacks 1 (P3 expected control), P5 negatives 10 | 1 |
@@ -69,12 +355,14 @@ Per-gate frozen counts and roster rows:
 `drawn_at_240` rose from the E1-era 540 to 582 when E2a admitted the reviewed
 config-free gitGraph/state cohort (+42), then to 596 when T1-A retired 14
 gitGraph native-route rows through the strict-first parent-router retry (+14;
-the E2a cohort ledger now partitions 56 draw / 13 source); every other frozen
-count matches the pre-E2a red baseline. Under `ctest -L mermaid -j8` debug is
-819/819 and release 818/819 on this host; the sole failure is the pre-existing
-real-PTY timing flake `E2E_Pty_Mermaid` (it also fails isolated on pristine
-master here — 5/5 isolated pristine runs failed — while passing under parallel
-scheduling, and it is not a renderer report). Rule for later phases: any
+the E2a cohort ledger now partitions 56 draw / 13 source), then to 616 after
+20 complete Class originals passed independent Native/Official validation.
+The per-gate table above reflects this current reviewed checkpoint. The preserved pre-fix run recorded
+Debug 819/819 and Release 818/819. The PTY failure was then described as
+timing-sensitive: it also failed in all five isolated pristine-master runs,
+while passing under parallel scheduling. Those historical failures remain;
+the current failure path is now diagnosed and fixed in the test, as recorded
+above, and both current 826-test suites pass. Rule for later phases: any
 renderer-driven outcome change (gain or loss) must update the roster (via
 `--write`, followed by independent review) and the frozen constants **in the
 same change**; expectation changes still go only through this ledger, never
@@ -89,7 +377,7 @@ relations units, an ordered probe table, coarse Work charges, a private
 detail partition, non-failing reports, a fuzz harness and a per-instance row
 cache); it did **not** add body grammar or layout geometry. The remaining
 gap is therefore almost entirely *native layout/protocol capacity*, tracked
-row-by-row in `tools/mermaid/e6c-mandatory-gap-roster.json` (356 rows) and
+row-by-row in `tools/mermaid/e6c-mandatory-gap-roster.json` (358 rows) and
 the per-family semantic ledgers. Every task below keeps the standing rule:
 a row earns drawing credit only when the bounded native parser AND layout
 complete it; a source the router cannot close stays whole-source and stays
@@ -97,7 +385,7 @@ registered, never silently degrading to partial art.
 
 Current native admission (full original files, 240 columns) after E2a plus
 T1-A is **596 / 2,145**: Flow 54/400, Sequence 193/193, Class 211/285, ER
-62/206, stateDiagram-v2 11/103, stateDiagram v1 0/42, Requirement 11/172,
+62/206, stateDiagram-v2 1/103, stateDiagram v1 0/42, Requirement 11/172,
 Pie 7/24, xychart 2/48, gitGraph 55/135 originals (41 after E2a + 14 from
 T1-A; all 71 non-cohort git originals carry config/init and keep source).
 Sequence is the only fully covered family.

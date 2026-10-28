@@ -27,4 +27,12 @@ std::optional<MermaidProbeDecision> classify_mermaid(std::string_view source, Wo
     return detail::classify_mermaid(source, work);
 }
 
+bool block_layout_succeeds(std::string_view source, Work& work) {
+    return detail::block_layout(source, work).has_value();
+}
+
+bool layout_succeeds(std::string_view source, bool use_ascii, Work& work) {
+    return detail::layout_mermaid_payload(source,use_ascii,work).has_value();
+}
+
 } // namespace loom::ui::mermaid::testing

@@ -1,0 +1,596 @@
+{
+  "canonical_encoding": "UTF-8 JSON sorted keys, compact separators, no NaN/Infinity, no trailing newline; SHA over complete ordered evidence array.",
+  "drawing_credit": 0,
+  "evidence": [
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "d45a206670d25400569c249081b7159f90badef2",
+      "path": "packages/mermaid/src/config.ts",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/config.ts",
+      "segments": [
+        {
+          "byte_end": 5941,
+          "byte_start": 3143,
+          "exact_excerpt": "let diagramConfigKey: string | undefined;\n\n/**\n * Resolves `theme`, `look` and `layout` onto the top level of `cfg`, where renderers read\n * them. Highest first: frontmatter/directive, `initialize()`, diagram default, global default.\n */\nconst resolveAppearance = (cfg: MermaidConfig, sumOfDirectives: MermaidConfig) => {\n  if (!diagramConfigKey) {\n    return;\n  }\n  const layers: MermaidConfig[] = [\n    sumOfDirectives,\n    // `setConfig` passes only its own object as the directive list, so consult the real\n    // directives too, or a diagram default wins back over frontmatter. Later ones win.\n    ...[...directives].reverse(),\n    siteConfigDelta,\n    defaultConfig,\n  ];\n  const section = (cfg as Record<string, DiagramAppearance | undefined>)[diagramConfigKey];\n  for (const key of APPEARANCE_KEYS) {\n    for (const layer of layers) {\n      const value = readAppearance(layer, diagramConfigKey, key);\n      if (value === undefined) {\n        continue;\n      }\n      // Optional strings on both sides, but TS cannot see that through the key union.\n      (cfg as Record<AppearanceKey, string>)[key] = value;\n      // Keep the section in step, so `getConfig().flowchart.look` cannot contradict `.look`.\n      if (section?.[key] !== undefined) {\n        (section as Record<AppearanceKey, string>)[key] = value;\n      }\n      break;\n    }\n  }\n};\n\nconst updateCurrentConfig = (siteCfg: MermaidConfig, _directives: MermaidConfig[]) => {\n  // start with config being the siteConfig\n  let cfg: MermaidConfig = assignWithDepth({}, siteCfg);\n  // let sCfg = assignWithDepth(defaultConfig, siteConfigDelta);\n\n  // Join directives\n  let sumOfDirectives: MermaidConfig = {};\n  for (const d of _directives) {\n    sanitize(d);\n    // Apply the data from the directive where the overrides the themeVariables\n    sumOfDirectives = assignWithDepth(sumOfDirectives, d);\n  }\n\n  cfg = assignWithDepth(cfg, sumOfDirectives);\n\n  resolveAppearance(cfg, sumOfDirectives);\n\n  // `cfg.themeVariables` were built from `siteCfg.theme`, and stylesheets gate their rules\n  // on the theme *name*, so a resolved theme of another name needs them rebuilt.\n  const themeWasOverridden = Boolean(sumOfDirectives.theme) || cfg.theme !== siteCfg.theme;\n  if (themeWasOverridden && cfg.theme && Object.hasOwn(theme, cfg.theme)) {\n    // Only `configFromInitialize` holds the variables as the user wrote them; the site\n    // config's are already derived, and feeding those back would override the new theme.\n    const tmpConfigFromInitialize = assignWithDepth({}, configFromInitialize);\n    const themeVariables = assignWithDepth(\n      tmpConfigFromInitialize.themeVariables || {},\n      sumOfDirectives.themeVariables\n    );\n    cfg.themeVariables = theme[cfg.theme as keyof typeof theme].getThemeVariables(themeVariables);\n  }\n\n",
+          "line_end": 139,
+          "line_start": 73,
+          "slice_sha256": "537f8d9723a0dcbbc30f76aacd22ed96cd4ecd57cc531a81efc03f70ba4b0561"
+        }
+      ],
+      "source_bytes": 13064,
+      "source_sha256": "a2dcc81b3764fec09626dc5a13f97c2bdd860378d6c06e9894357b4af2e87d9e"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "3d9c62d449d44a6eb03256d75a4b5c2030714e68",
+      "path": "packages/mermaid/src/diagrams/common/common.ts",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/diagrams/common/common.ts",
+      "segments": [
+        {
+          "byte_end": 7011,
+          "byte_start": 4038,
+          "exact_excerpt": " * Opposite of `placeholderToBreak`, converts breaks to placeholders\n *\n * @param s - HTML string\n * @returns String with placeholders\n */\nconst breakToPlaceholder = (s: string): string => {\n  return s.replace(lineBreakRegex, '#br#');\n};\n\n/**\n * Gets the current URL\n *\n * @param useAbsolute - Whether to return the absolute URL or not\n * @returns The current URL\n */\nexport const getUrl = (useAbsolute: boolean): string => {\n  let url = '';\n  if (useAbsolute) {\n    url =\n      window.location.protocol +\n      '//' +\n      window.location.host +\n      window.location.pathname +\n      window.location.search;\n\n    url = CSS.escape(url);\n  }\n\n  return url;\n};\n\nexport { evaluate };\n\n/**\n * Wrapper around Math.max which removes non-numeric values\n * Returns the larger of a set of supplied numeric expressions.\n * @param values - Numeric expressions to be evaluated\n * @returns The smaller value\n */\nexport const getMax = function (...values: number[]): number {\n  const newValues: number[] = values.filter((value) => {\n    return !isNaN(value);\n  });\n  return Math.max(...newValues);\n};\n\n/**\n * Wrapper around Math.min which removes non-numeric values\n * Returns the smaller of a set of supplied numeric expressions.\n * @param values - Numeric expressions to be evaluated\n * @returns The smaller value\n */\nexport const getMin = function (...values: number[]): number {\n  const newValues: number[] = values.filter((value) => {\n    return !isNaN(value);\n  });\n  return Math.min(...newValues);\n};\n\n/**\n * Makes generics in typescript syntax\n *\n * @example\n * Array of array of strings in typescript syntax\n *\n * ```js\n * // returns \"Array<Array<string>>\"\n * parseGenericTypes('Array~Array~string~~');\n * ```\n * @param text - The text to convert\n * @returns The converted string\n */\nexport const parseGenericTypes = function (input: string): string {\n  const inputSets = input.split(/(,)/);\n  const output = [];\n\n  for (let i = 0; i < inputSets.length; i++) {\n    let thisSet = inputSets[i];\n\n    // if the original input included a value such as \"~K, V~\"\", these will be split into\n    // an array of [\"~K\",\",\",\" V~\"].\n    // This means that on each call of processSet, there will only be 1 ~ present\n    // To account for this, if we encounter a \",\", we are checking the previous and next sets in the array\n    // to see if they contain matching ~'s\n    // in which case we are assuming that they should be rejoined and sent to be processed\n    if (thisSet === ',' && i > 0 && i + 1 < inputSets.length) {\n      const previousSet = inputSets[i - 1];\n      const nextSet = inputSets[i + 1];\n\n      if (shouldCombineSets(previousSet, nextSet)) {\n        thisSet = previousSet + ',' + nextSet;\n        i++; // Move the index forward to skip the next iteration since we're combining sets\n        output.pop();\n      }\n    }\n\n    output.push(processSet(thisSet));\n  }\n\n  return output.join('');\n};\n\nexport const countOccurrence = (string: string, substring: string): number => {\n",
+          "line_end": 245,
+          "line_start": 143,
+          "slice_sha256": "ec539d838668a610183c99f9fda8bf1c7be1378cc29686d597fd64b008b1044b"
+        }
+      ],
+      "source_bytes": 11428,
+      "source_sha256": "bf6a0cc85de418bb8171735a7317fd7e84f8ad79f4e975e378130f11728efb67"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "1cd056afea134b86c719d77d1e11710844415bc0",
+      "path": "packages/mermaid/src/diagrams/er/styles.ts",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/diagrams/er/styles.ts",
+      "segments": [
+        {
+          "byte_end": 2442,
+          "byte_start": 513,
+          "exact_excerpt": "  return khroma.rgba(r, g, b, opacity);\n};\nconst genColor: DiagramStylesProvider = (options) => {\n  const { theme, bkgColorArray, borderColorArray } = options;\n  // `isColorTheme` covers both halves of this gate: the theme has to be a colour theme\n  // *and* the border palette has to be a non-empty array. The palette half matters on its\n  // own -- it is reachable through a `themeVariables` override -- because an empty palette\n  // would otherwise leave every slot emitting `stroke: undefined`.\n  if (!isColorTheme(theme, borderColorArray)) {\n    return '';\n  }\n  // `look` is validated before it reaches the selector -- see `safeLook`.\n  const look = safeLook(options.look);\n  const hasBkgColors = hasPalette(bkgColorArray);\n  let sections = '';\n\n  // One rule per slot `erBox` can actually stamp. It stamps\n  // `colorIndex % borderColorArray.length`, so the ids it can produce are exactly\n  // `0 .. borderColorArray.length - 1` -- deriving the bound from the same length is what\n  // keeps the two from disagreeing. Looping to `THEME_COLOR_LIMIT` instead left a palette\n  // longer than the limit with stamped entities that had no rule to match, and a shorter\n  // one with dead rules.\n  for (let i = 0; i < paletteSlotCount(borderColorArray); i++) {\n    // `borderColorArray[i]` needs no wrap now the bound is its own length. The background\n    // palette is a separate array that may be shorter, so that one still wraps -- guarded\n    // by `hasBkgColors`, since `i % 0` is NaN and `[][NaN]` is `undefined`.\n    const borderColor = borderColorArray[i];\n    const fill = hasBkgColors ? `fill: ${bkgColorArray[i % bkgColorArray.length]};` : '';\n    sections += `\n\n    [data-look=\"${look}\"][data-color-id=\"color-${i}\"].node path {\n    stroke: ${borderColor};\n    ${fill}\n    }\n\n    [data-look=\"${look}\"][data-color-id=\"color-${i}\"].node  rect {\n    stroke: ${borderColor};\n    ${fill}\n     }\n    `;\n  }\n  return sections;\n",
+          "line_end": 61,
+          "line_start": 20,
+          "slice_sha256": "d272a62c64bea4dca4eb9eb587ec8490a79f5a68c95abf5e6c2c8ab1e704c55d"
+        },
+        {
+          "byte_end": 3383,
+          "byte_start": 2694,
+          "exact_excerpt": "  .relationshipLabelBox {\n    fill: ${options.tertiaryColor};\n    opacity: 0.7;\n    background-color: ${options.tertiaryColor};\n      rect {\n        opacity: 0.5;\n      }\n  }\n\n  .labelBkg {\n    background-color: ${COLOR_THEMES.has(theme) && erEdgeLabelBackground ? erEdgeLabelBackground : fade(options.tertiaryColor, 0.5)};\n  }\n\n  .edgeLabel {\n    background-color: ${COLOR_THEMES.has(theme) && erEdgeLabelBackground ? erEdgeLabelBackground : options.edgeLabelBackground};\n  }\n  .edgeLabel .label rect {\n    fill: ${COLOR_THEMES.has(theme) && erEdgeLabelBackground ? erEdgeLabelBackground : options.edgeLabelBackground};\n  }\n  .edgeLabel .label text {\n    fill: ${options.textColor};\n  }\n\n",
+          "line_end": 95,
+          "line_start": 73,
+          "slice_sha256": "67827be89893a29fd1d922977ddc1e5871b38e201be180616b972e1f29dc7b2b"
+        }
+      ],
+      "source_bytes": 4519,
+      "source_sha256": "8a090f8401285cf5256d6c113fa5c2cc9d206e6940f33bb7601da044a8c932c4"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "7cc058cb3a84321ed9e07398028527a85ec49199",
+      "path": "packages/mermaid/src/internals.ts",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/internals.ts",
+      "segments": [
+        {
+          "byte_end": 960,
+          "byte_start": 0,
+          "exact_excerpt": "import { getConfig } from './config.js';\nimport common from './diagrams/common/common.js';\nimport { log } from './logger.js';\nimport { insertCluster } from './rendering-util/rendering-elements/clusters.js';\nimport {\n  insertEdge,\n  insertEdgeLabel,\n  positionEdgeLabel,\n} from './rendering-util/rendering-elements/edges.js';\nimport insertMarkers from './rendering-util/rendering-elements/markers.js';\nimport { insertNode } from './rendering-util/rendering-elements/nodes.js';\nimport { labelHelper } from './rendering-util/rendering-elements/shapes/util.js';\nimport { interpolateToCurve } from './utils.js';\n\n/**\n * Internal helpers for mermaid\n * @deprecated - This should not be used by external packages, as the definitions will change without notice.\n */\nexport const internalHelpers = {\n  common,\n  getConfig,\n  insertCluster,\n  insertEdge,\n  insertEdgeLabel,\n  insertMarkers,\n  insertNode,\n  interpolateToCurve,\n  labelHelper,\n  log,\n  positionEdgeLabel,\n",
+          "line_end": 30,
+          "line_start": 1,
+          "slice_sha256": "1ebe67c71825604bf62d4afddc73400c2df39d60f5535ba81c3250940c1c6bed"
+        }
+      ],
+      "source_bytes": 1018,
+      "source_sha256": "464523060391e6ac8630f8d8c354226821e78c2dc9a2a5395786376876624320"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "660b582ea36d27aa36f967ed81da0b62c4ee4af3",
+      "path": "packages/mermaid/src/rendering-util/createText.ts",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/rendering-util/createText.ts",
+      "segments": [
+        {
+          "byte_end": 13037,
+          "byte_start": 11089,
+          "exact_excerpt": "  {\n    style = '',\n    isTitle = false,\n    classes = '',\n    useHtmlLabels = true,\n    markdown = true,\n    isNode = true,\n    /**\n     * The width to wrap the text within. Set to `Number.POSITIVE_INFINITY` for no wrapping.\n     */\n    width = 200,\n    /**\n     * The minimum width of the label; narrower text is widened to it. `0` disables it.\n     * Only applies to HTML labels — SVG text has no box to size.\n     */\n    minWidth = 0,\n    addSvgBackground = false,\n  } = {},\n  config?: MermaidConfig\n) => {\n  log.debug(\n    'XYZ createText',\n    text,\n    style,\n    isTitle,\n    classes,\n    useHtmlLabels,\n    isNode,\n    'addSvgBackground: ',\n    addSvgBackground\n  );\n  if (useHtmlLabels) {\n    // TODO: addHtmlLabel accepts a labelStyle. Do we possibly have that?\n\n    const htmlText = markdown ? markdownToHTML(text, config) : nonMarkdownToHTML(text);\n    const decodedReplacedText = await replaceIconSubstring(decodeEntities(htmlText), config);\n\n    //for Katex the text could contain escaped characters, \\\\relax that should be transformed to \\relax\n    const inputForKatex = text.replace(/\\\\\\\\/g, '\\\\');\n\n    const node = {\n      isNode,\n      label: hasKatex(text) ? inputForKatex : decodedReplacedText,\n      labelStyle: style.replace('fill:', 'color:'),\n    };\n    const vertexNode = await addHtmlSpan(\n      el,\n      node,\n      width,\n      classes,\n      addSvgBackground,\n      config,\n      minWidth\n    );\n    return vertexNode;\n  } else {\n    //sometimes the user might add br tags with 1 or more spaces in between, so we need to replace them with <br/>\n    const sanitizeBR = decodeEntities(text.replace(/<br\\s*\\/?>/g, '<br/>'));\n    const structuredText = markdown\n      ? markdownToLines(sanitizeBR.replace('<br>', '<br/>'), config)\n      : nonMarkdownToLines(sanitizeBR);\n    const svgLabel = createFormattedText(\n      width,\n      el,\n      structuredText,\n      text ? addSvgBackground : false,\n      !isNode\n    );\n",
+          "line_end": 376,
+          "line_start": 309,
+          "slice_sha256": "3df3095639a174ac8e008a766ec34597f07c1b814e8b3d5abfe42e692667cada"
+        }
+      ],
+      "source_bytes": 14654,
+      "source_sha256": "711f26bbda94ae9b8020e5aa59e8b41692c8ae569de6fe080000dac4719f5536"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "2caec30b4c73bf347aea8fc9e0a773338d05a0c0",
+      "path": "packages/mermaid/src/rendering-util/handle-markdown-text.ts",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/rendering-util/handle-markdown-text.ts",
+      "segments": [
+        {
+          "byte_end": 3585,
+          "byte_start": 323,
+          "exact_excerpt": " * @returns processed markdown\n */\nfunction preprocessMarkdown(markdown: string, { markdownAutoWrap }: MermaidConfig): string {\n  //Replace <br/>with \\n\n  const withoutBR = markdown.replace(/<br\\/>/g, '\\n');\n  // Replace multiple newlines with a single newline\n  const withoutMultipleNewlines = withoutBR.replace(/\\n{2,}/g, '\\n');\n  // Remove extra spaces at the beginning of each line\n  const withoutExtraSpaces = dedent(withoutMultipleNewlines);\n  if (markdownAutoWrap === false) {\n    // TODO: Disabling `markdownAutoWrap` is currently broken for `htmlLabels: false`,\n    // since the code calls `splitWordToFitWidth` to split words even we can't\n    // break on spaces.\n    // return withoutExtraSpaces.replace(/ /g, '\\u00A0');\n  }\n  return withoutExtraSpaces;\n}\n\n/**\n * @param nonMarkdownText - Non-markdown text to split into plain-text formatted lines.\n * This treats new lines, `\\n`, and `<br/>` as line breaks, and splits on spaces for words.\n * SVG tags are preserved as separate words to maintain proper formatting.\n */\nexport function nonMarkdownToLines(nonMarkdownText: string): MarkdownLine[] {\n  return nonMarkdownText.split(/\\\\n|\\n|<br\\s*\\/?>/gi).map(\n    (line) =>\n      line\n        .trim()\n        .match(/<[^>]+>|[^\\s<>]+/g) // keeps SVG tags intact and preserves space between tags and text\n        ?.map((word) => ({ content: word, type: 'normal' })) ?? []\n  );\n}\n\n/**\n * @param markdown - markdown to split into lines\n */\nexport function markdownToLines(markdown: string, config: MermaidConfig = {}): MarkdownLine[] {\n  const preprocessedMarkdown = preprocessMarkdown(markdown, config);\n  const nodes = marked.lexer(preprocessedMarkdown);\n  const lines: MarkdownLine[] = [[]];\n  let currentLine = 0;\n\n  function processNode(node: MarkedToken, parentType: MarkdownWordType = 'normal') {\n    if (node.type === 'text') {\n      const textLines = node.text.split('\\n');\n      textLines.forEach((textLine, index) => {\n        if (index !== 0) {\n          currentLine++;\n          lines.push([]);\n        }\n        textLine.split(' ').forEach((word) => {\n          word = word.replace(/&#39;/g, `'`);\n          if (word) {\n            lines[currentLine].push({ content: word, type: parentType });\n          }\n        });\n      });\n    } else if (node.type === 'strong' || node.type === 'em') {\n      node.tokens.forEach((contentNode) => {\n        processNode(contentNode as MarkedToken, node.type);\n      });\n    } else if (node.type === 'html') {\n      lines[currentLine].push({ content: node.text, type: 'normal' });\n    }\n  }\n\n  nodes.forEach((treeNode) => {\n    if (treeNode.type === 'paragraph') {\n      treeNode.tokens?.forEach((contentNode) => {\n        processNode(contentNode as MarkedToken);\n      });\n    } else if (treeNode.type === 'html') {\n      lines[currentLine].push({ content: treeNode.text, type: 'normal' });\n    } else {\n      lines[currentLine].push({ content: treeNode.raw, type: 'normal' });\n    }\n  });\n\n  return lines;\n}\n\n/**\n * Counterpart to {@link markdownToHTML} for non-markdown text.\n *\n * Non-markdown text is not wrapped normally, and users can use an explicit `\\n`\n * sequence to add a line break.\n *\n * @param text - Non-markdown text to convert to HTML.\n */\nexport function nonMarkdownToHTML(text: string) {\n",
+          "line_end": 99,
+          "line_start": 10,
+          "slice_sha256": "a37b01ec32ede433c0c2789fd967a964acad43c4f1c374f72d3b4e82d09d4995"
+        }
+      ],
+      "source_bytes": 5143,
+      "source_sha256": "6d8fc409c5401de7aa1f7c8ca2e2f1384af8d9f96690102cfe88646ee7971b28"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "e52a849b1b764a7f1fe615235b699d835553776b",
+      "path": "packages/mermaid/src/rendering-util/rendering-elements/edgeMarker.ts",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/rendering-util/rendering-elements/edgeMarker.ts",
+      "segments": [
+        {
+          "byte_end": 3786,
+          "byte_start": 0,
+          "exact_excerpt": "import type { SVG } from '../../diagram-api/types.js';\nimport { log } from '../../logger.js';\nimport type { EdgeData } from '../../types.js';\n/**\n * Adds SVG markers to a path element based on the arrow types specified in the edge.\n *\n * @param svgPath - The SVG path element to add markers to.\n * @param edge - The edge data object containing the arrow types.\n * @param url - The URL of the SVG marker definitions.\n * @param id - The ID prefix for the SVG marker definitions.\n * @param diagramType - The type of diagram being rendered.\n */\nexport const addEdgeMarkers = (\n  svgPath: SVG,\n  edge: Pick<EdgeData, 'arrowTypeStart' | 'arrowTypeEnd'>,\n  url: string,\n  id: string,\n  diagramType: string,\n  useMargin = false,\n  strokeColor?: string\n) => {\n  if (edge.arrowTypeStart) {\n    addEdgeMarker(\n      svgPath,\n      'start',\n      edge.arrowTypeStart,\n      url,\n      id,\n      diagramType,\n      useMargin,\n      strokeColor\n    );\n  }\n  if (edge.arrowTypeEnd) {\n    addEdgeMarker(svgPath, 'end', edge.arrowTypeEnd, url, id, diagramType, useMargin, strokeColor);\n  }\n};\n\nconst arrowTypesMap = {\n  arrow_cross: { type: 'cross', fill: false },\n  arrow_point: { type: 'point', fill: true },\n  arrow_barb: { type: 'barb', fill: true },\n  arrow_barb_neo: { type: 'barb', fill: true },\n  arrow_circle: { type: 'circle', fill: false },\n  arrow_hierarchy: { type: 'hierarchy', fill: false },\n  aggregation: { type: 'aggregation', fill: false },\n  extension: { type: 'extension', fill: false },\n  composition: { type: 'composition', fill: true },\n  dependency: { type: 'dependency', fill: true },\n  lollipop: { type: 'lollipop', fill: false },\n  only_one: { type: 'onlyOne', fill: false },\n  zero_or_one: { type: 'zeroOrOne', fill: false },\n  one_or_more: { type: 'oneOrMore', fill: false },\n  zero_or_more: { type: 'zeroOrMore', fill: false },\n  requirement_arrow: { type: 'requirement_arrow', fill: false },\n  requirement_contains: { type: 'requirement_contains', fill: false },\n} as const;\n\nconst arrowTypesWithMarginSupport = [\n  'cross',\n  'point',\n  'circle',\n  'lollipop',\n  'aggregation',\n  'extension',\n  'composition',\n  'dependency',\n  'barb',\n];\n\nconst addEdgeMarker = (\n  svgPath: SVG,\n  position: 'start' | 'end',\n  arrowType: string,\n  url: string,\n  id: string,\n  diagramType: string,\n  useMargin = false,\n  strokeColor?: string\n) => {\n  // 'none' (and empty) are valid \"no arrowhead\" values, not unknown types. Flowchart\n  // edges without an arrow pass 'none', so warning here fires once per such edge —\n  // thousands of times on large diagrams. Skip silently; only genuinely unknown types warn.\n  if (!arrowType || arrowType === 'none') {\n    return;\n  }\n\n  const arrowTypeInfo = arrowTypesMap[arrowType as keyof typeof arrowTypesMap];\n  const marginSupport = arrowTypeInfo && arrowTypesWithMarginSupport.includes(arrowTypeInfo.type);\n\n  if (!arrowTypeInfo) {\n    log.warn(`Unknown arrow type: ${arrowType}`);\n    return; // unknown arrow type, ignore\n  }\n\n  const endMarkerType = arrowTypeInfo.type;\n  const suffix = position === 'start' ? 'Start' : 'End';\n\n  const offset = useMargin && marginSupport ? '-margin' : '';\n  const originalMarkerId = `${id}_${diagramType}-${endMarkerType}${suffix}${offset}`;\n\n  // If stroke color is specified and non-empty, create or use a colored variant of the marker\n  if (strokeColor && strokeColor.trim() !== '') {\n    // Create a sanitized color value for use in IDs\n    const colorId = strokeColor.replace(/[^\\dA-Za-z]/g, '_');\n    const coloredMarkerId = `${originalMarkerId}_${colorId}`;\n\n    // Check if the colored marker already exists\n    if (!document.getElementById(coloredMarkerId)) {\n      // Get the original marker\n      const originalMarker = document.getElementById(originalMarkerId);\n      if (originalMarker) {\n",
+          "line_end": 112,
+          "line_start": 1,
+          "slice_sha256": "9ec56e196c504eab7e05f8ce94dc16ccdef484ceb1e93029fc76a06561cff6cf"
+        }
+      ],
+      "source_bytes": 4742,
+      "source_sha256": "81add4f7c82e9617f2f493186188fc89176605210f01cb11c971c30839828a7c"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "d8f36de4fee29dcf52b530a61f9b9601165f326f",
+      "path": "packages/mermaid/src/rendering-util/rendering-elements/shapes/erBox.ts",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/rendering-util/rendering-elements/shapes/erBox.ts",
+      "segments": [
+        {
+          "byte_end": 2979,
+          "byte_start": 751,
+          "exact_excerpt": "const COLOR_THEMES = new Set(['redux-color', 'redux-dark-color']);\nconst REDUX_THEMES = new Set(['redux', 'redux-dark', 'redux-color', 'redux-dark-color']);\n\nexport async function erBox<T extends SVGGraphicsElement>(parent: D3Selection<T>, node: Node) {\n  // Treat node as entityNode for certain entityNode checks\n  const entityNode = node as unknown as EntityNode;\n  if (entityNode.alias) {\n    node.label = entityNode.alias;\n  }\n  const { theme, themeVariables } = getConfig();\n  const { rowEven, rowOdd, nodeBorder, borderColorArray } = themeVariables;\n\n  // Background shapes are drawn to fill in the background color and cover up the ER diagram edge markers.\n  // Draw background shape once.\n  if (node.look === 'handDrawn') {\n    const { themeVariables } = getConfig();\n    const { background } = themeVariables;\n    const backgroundNode = {\n      ...node,\n      id: node.id + '-background',\n      domId: (node.domId || node.id) + '-background',\n      look: 'default',\n      cssStyles: ['stroke: none', `fill: ${background}`],\n    };\n    await erBox(parent, backgroundNode);\n  }\n\n  const config = getConfig();\n  node.useHtmlLabels = config.htmlLabels;\n  let PADDING = config.er?.diagramPadding ?? 10;\n  let TEXT_PADDING = config.er?.entityPadding ?? 6;\n\n  const { cssStyles } = node;\n  const { labelStyles, nodeStyles } = styles2String(node);\n\n  // Draw rect if no attributes are found\n  if (entityNode.attributes.length === 0 && node.label) {\n    const options = {\n      rx: 0,\n      ry: 0,\n      labelPaddingX: PADDING,\n      labelPaddingY: PADDING * 1.5,\n      classes: '',\n    };\n    // Set minimum width\n    if (\n      calculateTextWidth(node.label, config) + options.labelPaddingX * 2 <\n      config.er!.minEntityWidth!\n    ) {\n      node.width = config.er!.minEntityWidth;\n    }\n    const shapeSvg = await drawRect(parent, node, options);\n    if (theme != null && COLOR_THEMES.has(theme)) {\n      const colorIndex = entityNode.colorIndex ?? 0;\n      shapeSvg.attr('data-color-id', `color-${colorIndex % borderColorArray.length}`);\n    }\n\n    // drawRect doesn't center non-htmlLabels correctly as of now, so translate label\n    if (!evaluate(config.htmlLabels)) {\n      const textElement = shapeSvg.select('text');\n",
+          "line_end": 75,
+          "line_start": 16,
+          "slice_sha256": "a7a319c3000ae227422c13a9fe049e593bf949df46e946ce732b664fbcdd4b74"
+        },
+        {
+          "byte_end": 9022,
+          "byte_start": 7845,
+          "exact_excerpt": "\n  if (theme != null && COLOR_THEMES.has(theme)) {\n    const colorIndex = entityNode.colorIndex ?? 0;\n    shapeSvg.attr('data-color-id', `color-${colorIndex % borderColorArray.length}`);\n  }\n  // Draw shape\n  const roughRect = rc.rectangle(x, y, w, h, options);\n  const rect = shapeSvg\n    .insert(() => roughRect, ':first-child')\n    .attr('class', 'outer-path')\n    .attr('style', cssStyles!.join(''));\n\n  yOffsets.push(0);\n  // Draw row rects\n  for (const [i, row] of rows.entries()) {\n    const contentRowIndex = i + 1; // Adjusted index to skip the header (name) row\n    const isEven = contentRowIndex % 2 === 0 && row.yOffset !== 0;\n    const roughRect = rc.rectangle(x, nameBBox.height + y + row?.yOffset, w, row?.rowHeight, {\n      ...options,\n      fill: isEven ? rowEven : rowOdd,\n      stroke: nodeBorder,\n    });\n    shapeSvg\n      .insert(() => roughRect, 'g.label')\n      .attr('style', cssStyles!.join(''))\n      .attr('class', `row-rect-${isEven ? 'even' : 'odd'}`);\n  }\n\n  // Draw divider lines\n  // Name line\n  const thickness = 0.0001;\n\n  // 1. Top horizontal line\n  let points = lineToPolygon(x, nameBBox.height + y, w + x, nameBBox.height + y, thickness);\n",
+          "line_end": 273,
+          "line_start": 240,
+          "slice_sha256": "d4ee3adf8e5053e2b7673fb7b308b594640bd4b66556390670e89458588a43cd"
+        },
+        {
+          "byte_end": 12049,
+          "byte_start": 10458,
+          "exact_excerpt": "  if (nodeStyles && node.look !== 'handDrawn') {\n    if (theme != null && REDUX_THEMES.has(theme)) {\n      shapeSvg.selectAll('path').attr('style', nodeStyles);\n    } else {\n      const allStyle = nodeStyles.split(';');\n      const strokeStyles = allStyle\n        ?.filter((e) => {\n          return e.includes('stroke');\n        })\n        ?.map((s) => `${s}`)\n        .join('; ');\n      shapeSvg.selectAll('path').attr('style', strokeStyles ?? '');\n      shapeSvg.selectAll('.row-rect-even path').attr('style', nodeStyles);\n    }\n  }\n\n  node.intersect = function (point) {\n    return intersect.rect(node, point);\n  };\n  return shapeSvg;\n}\n\n// Helper function to add label text g with translate position and style\nasync function addText<T extends SVGGraphicsElement>(\n  shapeSvg: D3Selection<T>,\n  labelText: string,\n  config: MermaidConfig,\n  translateX = 0,\n  translateY = 0,\n  classes: string[] = [],\n  style = ''\n) {\n  const label = shapeSvg\n    .insert('g')\n    .attr('class', `label ${classes.join(' ')}`)\n    .attr('transform', `translate(${translateX}, ${translateY})`)\n    .attr('style', style);\n\n  // Return types need to be parsed\n  if (labelText !== parseGenericTypes(labelText)) {\n    labelText = parseGenericTypes(labelText);\n    // Work around\n    labelText = labelText.replaceAll('<', '&lt;').replaceAll('>', '&gt;');\n  }\n\n  const text = label.node()!.appendChild(\n    await createText(\n      label,\n      labelText,\n      {\n        width: calculateTextWidth(labelText, config) + 100,\n        style,\n        useHtmlLabels: config.htmlLabels,\n      },\n      config\n    )\n  );\n",
+          "line_end": 376,
+          "line_start": 320,
+          "slice_sha256": "ba225a9e3934548ff879d300e140511c036b79a6daa07704020683440ce9e952"
+        }
+      ],
+      "source_bytes": 13431,
+      "source_sha256": "661b2d73c63686bd3c2f1407c1319f11d47481bb8f9a5b96874db7eaf29b0520"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "d3df5ddb7a7716104759239b9c1d829c88efddf5",
+      "path": "packages/mermaid/src/rendering-util/setupViewPortForSVG.ts",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/rendering-util/setupViewPortForSVG.ts",
+      "segments": [
+        {
+          "byte_end": 1342,
+          "byte_start": 0,
+          "exact_excerpt": "import { configureSvgSize } from '../setupGraphViewbox.js';\nimport type { SVG } from '../diagram-api/types.js';\nimport { log } from '../logger.js';\n\nexport const setupViewPortForSVG = (\n  svg: SVG,\n  padding: number,\n  cssDiagram: string,\n  useMaxWidth: boolean\n) => {\n  // Initialize the SVG element and set the diagram class\n  svg.attr('class', cssDiagram);\n\n  // Calculate the dimensions and position with padding\n  const { width, height, x, y } = calculateDimensionsWithPadding(svg, padding);\n\n  // Configure the size and aspect ratio of the SVG\n  configureSvgSize(svg, height, width, useMaxWidth);\n\n  // Update the viewBox to ensure all content is visible with padding\n  const viewBox = createViewBox(x, y, width, height, padding);\n  svg.attr('viewBox', viewBox);\n\n  // Log the viewBox configuration for debugging\n  log.debug(`viewBox configured: ${viewBox} with padding: ${padding}`);\n};\n\nconst calculateDimensionsWithPadding = (svg: SVG, padding: number) => {\n  const bounds = svg.node()?.getBBox() || { width: 0, height: 0, x: 0, y: 0 };\n  return {\n    width: bounds.width + padding * 2,\n    height: bounds.height + padding * 2,\n    x: bounds.x,\n    y: bounds.y,\n  };\n};\n\nconst createViewBox = (x: number, y: number, width: number, height: number, padding: number) => {\n  return `${x - padding} ${y - padding} ${width} ${height}`;\n};\n",
+          "line_end": 40,
+          "line_start": 1,
+          "slice_sha256": "bae77e75582df927d5bd7d0ed34e3db47e52165b660446a5b849aa8282f6e0d1"
+        }
+      ],
+      "source_bytes": 1342,
+      "source_sha256": "bae77e75582df927d5bd7d0ed34e3db47e52165b660446a5b849aa8282f6e0d1"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "1803412f474c512311f40d9b594fe0d1653f2879",
+      "path": "packages/mermaid/src/setupGraphViewbox.js",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/setupGraphViewbox.js",
+      "segments": [
+        {
+          "byte_end": 2342,
+          "byte_start": 0,
+          "exact_excerpt": "import { log } from './logger.js';\n\n/**\n * Applies d3 attributes\n *\n * @param {any} d3Elem D3 Element to apply the attributes onto\n * @param {[string, string][]} attrs Object.keys equivalent format of key to value mapping of attributes\n */\nconst d3Attrs = function (d3Elem, attrs) {\n  for (let attr of attrs) {\n    d3Elem.attr(attr[0], attr[1]);\n  }\n};\n\n/**\n * Gives attributes for an SVG's size given arguments\n *\n * @param {number} height The height of the SVG\n * @param {number} width The width of the SVG\n * @param {boolean} useMaxWidth Whether or not to use max-width and set width to 100%\n * @returns {Map<'height' | 'width' | 'style', string>} Attributes for the SVG\n */\nexport const calculateSvgSizeAttrs = function (height, width, useMaxWidth) {\n  let attrs = new Map();\n  if (useMaxWidth) {\n    attrs.set('width', '100%');\n    attrs.set('style', `max-width: ${width}px;`);\n  } else {\n    attrs.set('height', height);\n    attrs.set('width', width);\n  }\n  return attrs;\n};\n\n/**\n * Applies attributes from `calculateSvgSizeAttrs`\n *\n * @param {import('./diagram-api/types.js').SVG} svgElem The SVG Element to configure\n * @param {number} height The height of the SVG\n * @param {number} width The width of the SVG\n * @param {boolean} useMaxWidth Whether or not to use max-width and set width to 100%\n */\nexport const configureSvgSize = function (svgElem, height, width, useMaxWidth) {\n  const attrs = calculateSvgSizeAttrs(height, width, useMaxWidth);\n  d3Attrs(svgElem, attrs);\n};\n\n// TODO v11: Remove the graph parameter. It is not used.\nexport const setupGraphViewbox = function (graph, svgElem, padding, useMaxWidth) {\n  const svgBounds = svgElem.node().getBBox();\n  const sWidth = svgBounds.width;\n  const sHeight = svgBounds.height;\n\n  log.info(`SVG bounds: ${sWidth}x${sHeight}`, svgBounds);\n\n  let width = 0;\n  let height = 0;\n  log.info(`Graph bounds: ${width}x${height}`, graph);\n\n  width = sWidth + padding * 2;\n  height = sHeight + padding * 2;\n\n  log.info(`Calculated bounds: ${width}x${height}`);\n  configureSvgSize(svgElem, height, width, useMaxWidth);\n\n  // Ensure the viewBox includes the whole svgBounds area with extra space for padding\n  const vBox = `${svgBounds.x - padding} ${svgBounds.y - padding} ${\n    svgBounds.width + 2 * padding\n  } ${svgBounds.height + 2 * padding}`;\n\n  svgElem.attr('viewBox', vBox);\n};\n",
+          "line_end": 72,
+          "line_start": 1,
+          "slice_sha256": "ad03574ae263ef22138f0c663e8e338d19458c34da5c995f8aa62ba28411b08e"
+        }
+      ],
+      "source_bytes": 2342,
+      "source_sha256": "ad03574ae263ef22138f0c663e8e338d19458c34da5c995f8aa62ba28411b08e"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "cfe6b71763e0ba8e4687c87179ccca36ab91a9c8",
+      "path": "packages/mermaid/src/themes/index.js",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/themes/index.js",
+      "segments": [
+        {
+          "byte_end": 1630,
+          "byte_start": 0,
+          "exact_excerpt": "import { getThemeVariables as baseThemeVariables } from './theme-base.js';\nimport { getThemeVariables as darkThemeVariables } from './theme-dark.js';\nimport { getThemeVariables as defaultThemeVariables } from './theme-default.js';\nimport { getThemeVariables as forestThemeVariables } from './theme-forest.js';\nimport { getThemeVariables as neutralThemeVariables } from './theme-neutral.js';\nimport { getThemeVariables as neoThemeVariables } from './theme-neo.js';\nimport { getThemeVariables as neoDarkThemeVariables } from './theme-neo-dark.js';\nimport { getThemeVariables as reduxThemeVariables } from './theme-redux.js';\nimport { getThemeVariables as reduxDarkThemeVariables } from './theme-redux-dark.js';\nimport { getThemeVariables as reduxColorThemeVariables } from './theme-redux-color.js';\nimport { getThemeVariables as reduxDarkColorThemeVariables } from './theme-redux-dark-color.js';\n\nexport default {\n  base: {\n    getThemeVariables: baseThemeVariables,\n  },\n  dark: {\n    getThemeVariables: darkThemeVariables,\n  },\n  default: {\n    getThemeVariables: defaultThemeVariables,\n  },\n  forest: {\n    getThemeVariables: forestThemeVariables,\n  },\n  neutral: {\n    getThemeVariables: neutralThemeVariables,\n  },\n  neo: {\n    getThemeVariables: neoThemeVariables,\n  },\n  'neo-dark': {\n    getThemeVariables: neoDarkThemeVariables,\n  },\n  redux: {\n    getThemeVariables: reduxThemeVariables,\n  },\n  'redux-dark': {\n    getThemeVariables: reduxDarkThemeVariables,\n  },\n  'redux-color': {\n    getThemeVariables: reduxColorThemeVariables,\n  },\n  'redux-dark-color': {\n    getThemeVariables: reduxDarkColorThemeVariables,\n  },\n};\n",
+          "line_end": 47,
+          "line_start": 1,
+          "slice_sha256": "a4f303a2a18a1fcdef028827cc2aa8c2a0b5b27ea438295ed3c4dec3ce71fc09"
+        }
+      ],
+      "source_bytes": 1630,
+      "source_sha256": "a4f303a2a18a1fcdef028827cc2aa8c2a0b5b27ea438295ed3c4dec3ce71fc09"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "2ed39a5f8c9f7aff100c88fffe88d13469fa406e",
+      "path": "packages/mermaid/src/themes/theme-neo-dark.js",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/themes/theme-neo-dark.js",
+      "segments": [
+        {
+          "byte_end": 1680,
+          "byte_start": 1531,
+          "exact_excerpt": "    this.THEME_COLOR_LIMIT = 12;\n    this.radius = 3;\n    this.strokeWidth = 1;\n\n    this.noteBkgColor = '#fff5ad';\n    this.noteTextColor = '#333';\n",
+          "line_end": 42,
+          "line_start": 37,
+          "slice_sha256": "fdd405256f6aae1c304b42d9542db02b51f55fbd56150880b811de810f4cdd18"
+        },
+        {
+          "byte_end": 1915,
+          "byte_start": 1797,
+          "exact_excerpt": "\n    // Neo-specific\n    // this.nodeBorder = 'none';\n    // this.stateBorder = 'none';\n\n    this.useGradient = true;\n",
+          "line_end": 53,
+          "line_start": 48,
+          "slice_sha256": "216fed66953c672d2ce5bbf1f851845d7129e7ff6325c1a85599c48ff395110b"
+        },
+        {
+          "byte_end": 4617,
+          "byte_start": 4168,
+          "exact_excerpt": "     * string, and every consumer (railroad's terminal fill) emitted `fill: calculated`. */\n    this.secondBkg = this.secondBkg === 'calculated' ? lighten(this.mainBkg, 16) : this.secondBkg;\n    this.nodeBorder = this.nodeBorder || this.border1;\n    this.clusterBkg = this.clusterBkg || this.tertiaryColor;\n    this.clusterBorder = this.clusterBorder || this.tertiaryBorderColor;\n    this.defaultLinkColor = this.defaultLinkColor || this.lineColor;\n",
+          "line_end": 104,
+          "line_start": 99,
+          "slice_sha256": "b1f2d0c133bc4cc47b02d0188968955e25cb79245cd6e7b498e0c3b2df98496c"
+        },
+        {
+          "byte_end": 9276,
+          "byte_start": 8813,
+          "exact_excerpt": "    this.altBackground = this.altBackground || '#f0f0f0';\n    this.compositeTitleBackground = this.compositeTitleBackground || this.mainBkg;\n    this.compositeBorder = this.compositeBorder || this.nodeBorder;\n    this.innerEndBackground = this.nodeBorder;\n    this.errorBkgColor = this.errorBkgColor || this.tertiaryColor;\n    this.errorTextColor = this.errorTextColor || this.tertiaryTextColor;\n    this.transitionColor = this.transitionColor || this.lineColor;\n",
+          "line_end": 184,
+          "line_start": 178,
+          "slice_sha256": "65c280d5d0a07b4ca36230767a6033d1c4f16a031aa55120564e27926cde6b57"
+        },
+        {
+          "byte_end": 20534,
+          "byte_start": 20153,
+          "exact_excerpt": "    /* EntityRelationship diagrams                        */\n\n    this.attributeBackgroundColorOdd =\n      this.attributeBackgroundColorOdd || oldAttributeBackgroundColorOdd;\n    this.attributeBackgroundColorEven =\n      this.attributeBackgroundColorEven || oldAttributeBackgroundColorEven;\n    /* -------------------------------------------------- */\n  }\n  calculate(overrides) {\n",
+          "line_end": 402,
+          "line_start": 394,
+          "slice_sha256": "78f5c6530c9582f05d36dddc6aa26b3f698d356e4491880687f59940c42ed2fb"
+        }
+      ],
+      "source_bytes": 21216,
+      "source_sha256": "a1944074ec1f1b74bdf4078061a610cd12921fb158a2d66a96511c593d4fa2f4"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "d4c711ecde0bea6b5f10688598efaeb7aa9d421a",
+      "path": "packages/mermaid/src/themes/theme-neo.js",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/themes/theme-neo.js",
+      "segments": [
+        {
+          "byte_end": 836,
+          "byte_start": 669,
+          "exact_excerpt": "    this.THEME_COLOR_LIMIT = 12;\n    this.radius = 3;\n    this.strokeWidth = 2;\n    this.primaryBorderColor = mkBorder(this.primaryColor, this.darkMode);\n    // dark\n\n",
+          "line_end": 28,
+          "line_start": 23,
+          "slice_sha256": "d3a5d19d391a08c0eb8ba2756385865990f8d9c980c712c0d9deef13d51ac7f9"
+        },
+        {
+          "byte_end": 1060,
+          "byte_start": 907,
+          "exact_excerpt": "\n    // Neo-specific\n    this.nodeBorder = '#000000';\n    this.stateBorder = '#000000';\n    this.useGradient = true;\n    this.gradientStart = '#0042eb';\n",
+          "line_end": 36,
+          "line_start": 31,
+          "slice_sha256": "135456892e0c8f06fbb79b69b33b4ad9de1ec96778cf3a8362a7357ab217f78c"
+        },
+        {
+          "byte_end": 3557,
+          "byte_start": 3180,
+          "exact_excerpt": "    this.nodeBkg = this.nodeBkg || this.primaryColor;\n    this.mainBkg = this.mainBkg || this.primaryColor;\n    this.nodeBorder = this.nodeBorder || this.primaryBorderColor;\n    this.clusterBkg = this.clusterBkg || this.tertiaryColor;\n    this.clusterBorder = this.clusterBorder || this.tertiaryBorderColor;\n    this.defaultLinkColor = this.defaultLinkColor || this.lineColor;\n",
+          "line_end": 84,
+          "line_start": 79,
+          "slice_sha256": "564dba9c485a79be0feb16c72b8a780acc29fc8c109a6943278ea223a55bcc7f"
+        },
+        {
+          "byte_end": 8606,
+          "byte_start": 8143,
+          "exact_excerpt": "    this.altBackground = this.altBackground || '#f0f0f0';\n    this.compositeTitleBackground = this.compositeTitleBackground || this.mainBkg;\n    this.compositeBorder = this.compositeBorder || this.nodeBorder;\n    this.innerEndBackground = this.nodeBorder;\n    this.errorBkgColor = this.errorBkgColor || this.tertiaryColor;\n    this.errorTextColor = this.errorTextColor || this.tertiaryTextColor;\n    this.transitionColor = this.transitionColor || this.lineColor;\n",
+          "line_end": 170,
+          "line_start": 164,
+          "slice_sha256": "65c280d5d0a07b4ca36230767a6033d1c4f16a031aa55120564e27926cde6b57"
+        },
+        {
+          "byte_end": 19776,
+          "byte_start": 19395,
+          "exact_excerpt": "    /* EntityRelationship diagrams                        */\n\n    this.attributeBackgroundColorOdd =\n      this.attributeBackgroundColorOdd || oldAttributeBackgroundColorOdd;\n    this.attributeBackgroundColorEven =\n      this.attributeBackgroundColorEven || oldAttributeBackgroundColorEven;\n    /* -------------------------------------------------- */\n  }\n  calculate(overrides) {\n",
+          "line_end": 388,
+          "line_start": 380,
+          "slice_sha256": "78f5c6530c9582f05d36dddc6aa26b3f698d356e4491880687f59940c42ed2fb"
+        }
+      ],
+      "source_bytes": 20458,
+      "source_sha256": "217eb2eee43f7bfe8eeaca07f8b766d145d58c87dbe683fadf102f26f4abae81"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "14949e74fda5fdf4ca1ac323ece94dc75c2ee600",
+      "path": "packages/mermaid/src/themes/theme-redux-color.js",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/themes/theme-redux-color.js",
+      "segments": [
+        {
+          "byte_end": 832,
+          "byte_start": 672,
+          "exact_excerpt": "    this.THEME_COLOR_LIMIT = 12;\n    this.radius = 12;\n    this.strokeWidth = 2;\n\n    this.primaryBorderColor = mkBorder('#28253D', this.darkMode);\n    // dark\n",
+          "line_end": 28,
+          "line_start": 23,
+          "slice_sha256": "0ef5d4389073cc61d52694f3df3faef320267829e8f2d5efb34b8b3717e39b53"
+        },
+        {
+          "byte_end": 1080,
+          "byte_start": 926,
+          "exact_excerpt": "\n    // Neo-specific\n    this.nodeBorder = '#28253D';\n    this.stateBorder = '#28253D';\n    this.useGradient = false;\n    this.gradientStart = '#0042eb';\n",
+          "line_end": 37,
+          "line_start": 32,
+          "slice_sha256": "100e3d7bfb26028b7a99bf6c21a994e8f404d07c722d2badf1e9244e84f54b57"
+        },
+        {
+          "byte_end": 2870,
+          "byte_start": 1687,
+          "exact_excerpt": "    this.noteFontWeight = 600;\n\n    this.borderColorArray = [\n      '#E879F9', //Fuchsia-400\n      '#2DD4BF', //Teal-400\n      '#FB923C', //Orange-400\n      '#22D3EE', // Cyan-400\n      '#4ADE80', // Green-400\n      '#A78BFA', //Violet-400\n      '#F87171', //red-400\n      '#FACC15', //yellow-400\n      '#818CF8', //indigo-400\n      '#A3E635 ', //Lime-400\n      '#38BDF8', //Sky-400\n      '#FB7185', //Rose-400\n    ];\n\n    this.bkgColorArray = [\n      '#FDF4FF', //Fuchsia-50\n      '#F0FDFA', //Teal-50\n      '#FFF7ED', //Orange-50\n      '#ECFEFF', // Cyan-50\n      '#F0FDF4', // Green-50\n      '#F5F3FF', //Violet-50\n      '#FEF2F2', //red-50\n      '#FEFCE8', //yellow-50\n      '#EEF2FF', //indigo-50\n      '#F7FEE7', //Lime-50\n      '#F0F9FF', //Sky-50\n      '#FFF1F2', //Rose-50\n    ];\n\n    /* Usecase Diagram variables.\n\n       One colour per kind of element -- see `usecase.colorScheme`. Chosen from this theme's\n       own palette so the diagram stays on-brand, and kept to three well-separated hues that\n       can be checked for contrast once rather than per instance. The boundary frame is a\n       large area, so it takes the lightest treatment and leans on its border. */\n",
+          "line_end": 94,
+          "line_start": 57,
+          "slice_sha256": "8b9b9d8de0985cab3d28c9bfa4dc430e5d168e785baaa51675898b0af9e481e8"
+        },
+        {
+          "byte_end": 5187,
+          "byte_start": 4810,
+          "exact_excerpt": "    this.nodeBkg = this.nodeBkg || this.primaryColor;\n    this.mainBkg = this.mainBkg || this.primaryColor;\n    this.nodeBorder = this.nodeBorder || this.primaryBorderColor;\n    this.clusterBkg = this.clusterBkg || this.tertiaryColor;\n    this.clusterBorder = this.clusterBorder || this.tertiaryBorderColor;\n    this.defaultLinkColor = this.defaultLinkColor || this.lineColor;\n",
+          "line_end": 138,
+          "line_start": 133,
+          "slice_sha256": "564dba9c485a79be0feb16c72b8a780acc29fc8c109a6943278ea223a55bcc7f"
+        },
+        {
+          "byte_end": 10046,
+          "byte_start": 9586,
+          "exact_excerpt": "    this.altBackground = this.altBackground || '#F9F9FB';\n    this.compositeTitleBackground = this.compositeTitleBackground || '#F9F9FB';\n    this.compositeBorder = this.compositeBorder || this.nodeBorder;\n    this.innerEndBackground = this.nodeBorder;\n    this.errorBkgColor = this.errorBkgColor || this.tertiaryColor;\n    this.errorTextColor = this.errorTextColor || this.tertiaryTextColor;\n    this.transitionColor = this.transitionColor || this.lineColor;\n",
+          "line_end": 220,
+          "line_start": 214,
+          "slice_sha256": "bbca15eb0b82051824b489c77bb448bed4a6629477040faf2969f55b50c4dca4"
+        },
+        {
+          "byte_end": 16802,
+          "byte_start": 14109,
+          "exact_excerpt": "    // same lavender.\n    for (let i = 0; i < 8; i++) {\n      this['fillType' + i] = this['fillType' + i] || this.bkgColorArray[i];\n    }\n\n    /* pie */\n    // Slices reuse the theme's categorical scale so a pie reads like a mindmap or\n    // treemap in the same theme. The old tints of `primaryColor` were all near-white\n    // (pie3 resolved to pure white), leaving adjacent slices indistinguishable.\n    for (let i = 0; i < this.THEME_COLOR_LIMIT; i++) {\n      this['pie' + (i + 1)] = this['pie' + (i + 1)] || this['cScale' + i];\n    }\n    this.pieTitleTextSize = this.pieTitleTextSize || '25px';\n    this.pieTitleTextColor = this.pieTitleTextColor || this.taskTextDarkColor;\n    this.pieSectionTextSize = this.pieSectionTextSize || '17px';\n    this.pieSectionTextColor = this.pieSectionTextColor || this.textColor;\n    this.pieLegendTextSize = this.pieLegendTextSize || '17px';\n    this.pieLegendTextColor = this.pieLegendTextColor || this.taskTextDarkColor;\n    this.pieStrokeColor = this.pieStrokeColor || 'black';\n    this.pieStrokeWidth = this.pieStrokeWidth || '2px';\n    this.pieOuterStrokeWidth = this.pieOuterStrokeWidth || '2px';\n    this.pieOuterStrokeColor = this.pieOuterStrokeColor || 'black';\n    this.pieOpacity = this.pieOpacity || '0.7';\n\n    /* venn */\n    /* `borderColorArray` and not the lighter `cScale`: the fill is painted at 0.1\n       opacity, so the stroke and the label carry the circle. */\n    for (let i = 0; i < 8; i++) {\n      this['venn' + (i + 1)] =\n        this['venn' + (i + 1)] ?? this.borderColorArray[i % this.borderColorArray.length];\n    }\n    this.vennTitleTextColor = this.vennTitleTextColor ?? this.titleColor;\n    this.vennSetTextColor = this.vennSetTextColor ?? this.textColor;\n\n    /* quadrant-graph */\n    this.quadrant1Fill = this.quadrant1Fill || primaryColor;\n    this.quadrant2Fill = this.quadrant2Fill || adjust(primaryColor, { r: 5, g: 5, b: 5 });\n    this.quadrant3Fill = this.quadrant3Fill || adjust(primaryColor, { r: 10, g: 10, b: 10 });\n    this.quadrant4Fill = this.quadrant4Fill || adjust(primaryColor, { r: 15, g: 15, b: 15 });\n    this.quadrant1TextFill = this.quadrant1TextFill || this.primaryTextColor;\n    this.quadrant2TextFill =\n      this.quadrant2TextFill || adjust(this.primaryTextColor, { r: -5, g: -5, b: -5 });\n    this.quadrant3TextFill =\n      this.quadrant3TextFill || adjust(this.primaryTextColor, { r: -10, g: -10, b: -10 });\n    this.quadrant4TextFill =\n      this.quadrant4TextFill || adjust(this.primaryTextColor, { r: -15, g: -15, b: -15 });\n    this.quadrantPointFill =\n      this.quadrantPointFill || isDark(this.quadrant1Fill)\n        ? lighten(this.quadrant1Fill)\n        : darken(this.quadrant1Fill);\n",
+          "line_end": 357,
+          "line_start": 308,
+          "slice_sha256": "634b8d50f02949a3403473eafa408afe167a4f661ee1bddbbb3b49ddc7730f5d"
+        },
+        {
+          "byte_end": 22499,
+          "byte_start": 22014,
+          "exact_excerpt": "    /* -------------------------------------------------- */\n    /* EntityRelationship diagrams                        */\n    this.erEdgeLabelBackground = '#FFFFFF';\n    this.attributeBackgroundColorOdd =\n      this.attributeBackgroundColorOdd || oldAttributeBackgroundColorOdd;\n    this.attributeBackgroundColorEven =\n      this.attributeBackgroundColorEven || oldAttributeBackgroundColorEven;\n    /* -------------------------------------------------- */\n  }\n  calculate(overrides) {\n",
+          "line_end": 463,
+          "line_start": 454,
+          "slice_sha256": "38bec7bc0990485ab4e101fd2604506e459e3cb8bbd9d47f2d2d804be11a1be6"
+        }
+      ],
+      "source_bytes": 23181,
+      "source_sha256": "8979bb59dfbdf14b3290dfe1bfe96a755b2d637427939ff2396c9b76f3b86574"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "9997d8b028d600cb929c5d10f564a3baad4fdacd",
+      "path": "packages/mermaid/src/themes/theme-redux-dark-color.js",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/themes/theme-redux-dark-color.js",
+      "segments": [
+        {
+          "byte_end": 1749,
+          "byte_start": 1553,
+          "exact_excerpt": "    this.THEME_COLOR_LIMIT = 12;\n    this.radius = 12;\n    this.strokeWidth = 2;\n\n    this.noteBkgColor = this.noteBkgColor ?? '#FEF9C3';\n    this.noteTextColor = this.noteTextColor ?? '#28253D';\n",
+          "line_end": 42,
+          "line_start": 37,
+          "slice_sha256": "c483b9a4ac27fb24d995325853d1a1f78b539ddcc38414eaa31c479329dd4c6d"
+        },
+        {
+          "byte_end": 2007,
+          "byte_start": 1888,
+          "exact_excerpt": "\n    // Neo-specific\n    this.nodeBorder = '#FFFFFF';\n    this.stateBorder = '#FFFFFF';\n\n    this.useGradient = false;\n",
+          "line_end": 53,
+          "line_start": 48,
+          "slice_sha256": "1c61b3cf5464a36e4a08967f6ef67e80aa49beeda3f74bb2bb192dd5d7443b62"
+        },
+        {
+          "byte_end": 4142,
+          "byte_start": 2580,
+          "exact_excerpt": "    this.noteFontWeight = 600;\n\n    this.borderColorArray = [\n      '#E879F9', //Fuchsia-400\n      '#2DD4BF', //Teal-400\n      '#FB923C', //Orange-400\n      '#22D3EE', // Cyan-400\n      '#4ADE80', // Green-400\n      '#A78BFA', //Violet-400\n      '#F87171', //red-400\n      '#FACC15', //yellow-400\n      '#818CF8', //indigo-400\n      '#A3E635 ', //Lime-400\n      '#38BDF8', //Sky-400\n      '#FB7185', //Rose-400\n    ];\n\n    this.bkgColorArray = [];\n\n    /* Usecase Diagram variables -- the dark counterpart of the light theme's role tokens.\n\n       Borders only. This theme already ships a border palette and an *empty* background\n       palette, because saturated fills behind light text lose contrast fast in dark mode --\n       so the role tokens follow the same rule and set no fills at all. Leaving them unset\n       lets each one fall back to the value the rest of the theme already uses: `mainBkg`\n       for actors and use cases, `clusterBkg` for boundaries. Pinning them to one colour\n       instead flattened the three kinds into a single tone and made a use case body\n       indistinguishable from the boundary containing it. */\n    this.usecaseActorBorder = '#A78BFA'; // Violet-400\n    this.usecaseBorder = '#2DD4BF'; // Teal-400\n    this.usecaseBoundaryBorder = '#BDBCCC';\n    this.usecaseIncludeLine = '#38BDF8'; // Sky-400\n    this.usecaseExtendLine = '#FB923C'; // Orange-400\n\n    this.filterColor = '#FFFFFF';\n  }\n  updateColors() {\n    // The || is to make sure that if the variable has been defined by a user override that value is to be used\n",
+          "line_end": 109,
+          "line_start": 72,
+          "slice_sha256": "cfdf5604a65012943ece9e274e22e9af30769e46075078d3e38d0033c05352aa"
+        },
+        {
+          "byte_end": 6251,
+          "byte_start": 5802,
+          "exact_excerpt": "     * string, and every consumer (railroad's terminal fill) emitted `fill: calculated`. */\n    this.secondBkg = this.secondBkg === 'calculated' ? lighten(this.mainBkg, 16) : this.secondBkg;\n    this.nodeBorder = this.nodeBorder || this.border1;\n    this.clusterBkg = this.clusterBkg || this.tertiaryColor;\n    this.clusterBorder = this.clusterBorder || this.tertiaryBorderColor;\n    this.defaultLinkColor = this.defaultLinkColor || this.lineColor;\n",
+          "line_end": 144,
+          "line_start": 139,
+          "slice_sha256": "b1f2d0c133bc4cc47b02d0188968955e25cb79245cd6e7b498e0c3b2df98496c"
+        },
+        {
+          "byte_end": 10807,
+          "byte_start": 10347,
+          "exact_excerpt": "    this.altBackground = this.altBackground || '#16141F';\n    this.compositeTitleBackground = this.compositeTitleBackground || '#16141F';\n    this.compositeBorder = this.compositeBorder || this.nodeBorder;\n    this.innerEndBackground = this.nodeBorder;\n    this.errorBkgColor = this.errorBkgColor || this.tertiaryColor;\n    this.errorTextColor = this.errorTextColor || this.tertiaryTextColor;\n    this.transitionColor = this.transitionColor || this.lineColor;\n",
+          "line_end": 225,
+          "line_start": 219,
+          "slice_sha256": "59c48554d3cd938daa052e3f6759168df242b7e5356c262d4611b8448311b3d1"
+        },
+        {
+          "byte_end": 15470,
+          "byte_start": 14425,
+          "exact_excerpt": "    // `fillTypeN`, and task labels use the light `textColor`, so these fills have to\n    // stay dark -- a saturated fill collapses band and task into one block and swamps\n    // the labels. `bkgColorArray` is empty in this theme, so there is no pale array to\n    // draw on, and darkening the categorical scale by a fixed amount does not work\n    // either: the 300-shades differ too much in luminance, so teal lands near black\n    // while fuchsia stays clearly purple. Fixed 900-shades of the same hue order give\n    // even weight across the eight sections.\n    const journeyFills = [\n      '#701a75', // Fuchsia-900\n      '#134e4a', // Teal-900\n      '#7c2d12', // Orange-900\n      '#581c87', // Purple-900\n      '#14532d', // Green-900\n      '#4c1d95', // Violet-900\n      '#7f1d1d', // Red-900\n      '#713f12', // Yellow-900\n    ];\n    journeyFills.forEach((fill, i) => {\n      this['fillType' + i] = this['fillType' + i] || fill;\n    });\n\n    /* pie */\n    // Slices reuse the theme's categorical scale so a pie reads like a mindmap or\n",
+          "line_end": 329,
+          "line_start": 307,
+          "slice_sha256": "79d4dbaecd3e3652568a73a9da685c30b81ef1eb1bd9db54478a0f5ad9614649"
+        },
+        {
+          "byte_end": 18075,
+          "byte_start": 16621,
+          "exact_excerpt": "\n    /* venn */\n    /* `borderColorArray` and not the lighter `cScale`: the fill is painted at 0.1\n       opacity, so the stroke and the label carry the circle. */\n    for (let i = 0; i < 8; i++) {\n      this['venn' + (i + 1)] =\n        this['venn' + (i + 1)] ?? this.borderColorArray[i % this.borderColorArray.length];\n    }\n    this.vennTitleTextColor = this.vennTitleTextColor ?? this.titleColor;\n    this.vennSetTextColor = this.vennSetTextColor ?? this.textColor;\n\n    /* quadrant-graph */\n    this.quadrant1Fill = this.quadrant1Fill || this.primaryColor;\n    this.quadrant2Fill = this.quadrant2Fill || adjust(this.primaryColor, { r: 5, g: 5, b: 5 });\n    this.quadrant3Fill = this.quadrant3Fill || adjust(this.primaryColor, { r: 10, g: 10, b: 10 });\n    this.quadrant4Fill = this.quadrant4Fill || adjust(this.primaryColor, { r: 15, g: 15, b: 15 });\n    this.quadrant1TextFill = this.quadrant1TextFill || this.primaryTextColor;\n    this.quadrant2TextFill =\n      this.quadrant2TextFill || adjust(this.primaryTextColor, { r: -5, g: -5, b: -5 });\n    this.quadrant3TextFill =\n      this.quadrant3TextFill || adjust(this.primaryTextColor, { r: -10, g: -10, b: -10 });\n    this.quadrant4TextFill =\n      this.quadrant4TextFill || adjust(this.primaryTextColor, { r: -15, g: -15, b: -15 });\n    this.quadrantPointFill =\n      this.quadrantPointFill || isDark(this.quadrant1Fill)\n        ? lighten(this.quadrant1Fill)\n        : darken(this.quadrant1Fill);\n",
+          "line_end": 374,
+          "line_start": 348,
+          "slice_sha256": "0450d59113431c00b3662d2b6be4dcf3bc58ab447cadf9fa38680539bfddb7ea"
+        },
+        {
+          "byte_end": 23818,
+          "byte_start": 23332,
+          "exact_excerpt": "    /* -------------------------------------------------- */\n    /* EntityRelationship diagrams                        */\n    this.erEdgeLabelBackground = '#16141F';\n\n    this.attributeBackgroundColorOdd =\n      this.attributeBackgroundColorOdd || oldAttributeBackgroundColorOdd;\n    this.attributeBackgroundColorEven =\n      this.attributeBackgroundColorEven || oldAttributeBackgroundColorEven;\n    /* -------------------------------------------------- */\n  }\n  calculate(overrides) {\n",
+          "line_end": 481,
+          "line_start": 471,
+          "slice_sha256": "92b9f89ee153fddf21d01ff243e83e9031cd63b6d6baf5754e7e7477faaad5ed"
+        }
+      ],
+      "source_bytes": 24500,
+      "source_sha256": "9895ec00395ec584c98aaef3b3aead4258f592a1b8fd777b090a55085c28a5ed"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "51b8cb80af3fedb6d3b3467c519f020349491c07",
+      "path": "packages/mermaid/src/themes/theme-redux-dark.js",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/themes/theme-redux-dark.js",
+      "segments": [
+        {
+          "byte_end": 1749,
+          "byte_start": 1553,
+          "exact_excerpt": "    this.THEME_COLOR_LIMIT = 12;\n    this.radius = 12;\n    this.strokeWidth = 2;\n\n    this.noteBkgColor = this.noteBkgColor ?? '#FEF9C3';\n    this.noteTextColor = this.noteTextColor ?? '#28253D';\n",
+          "line_end": 42,
+          "line_start": 37,
+          "slice_sha256": "c483b9a4ac27fb24d995325853d1a1f78b539ddcc38414eaa31c479329dd4c6d"
+        },
+        {
+          "byte_end": 2007,
+          "byte_start": 1888,
+          "exact_excerpt": "\n    // Neo-specific\n    this.nodeBorder = '#FFFFFF';\n    this.stateBorder = '#FFFFFF';\n\n    this.useGradient = false;\n",
+          "line_end": 53,
+          "line_start": 48,
+          "slice_sha256": "1c61b3cf5464a36e4a08967f6ef67e80aa49beeda3f74bb2bb192dd5d7443b62"
+        },
+        {
+          "byte_end": 4890,
+          "byte_start": 4441,
+          "exact_excerpt": "     * string, and every consumer (railroad's terminal fill) emitted `fill: calculated`. */\n    this.secondBkg = this.secondBkg === 'calculated' ? lighten(this.mainBkg, 16) : this.secondBkg;\n    this.nodeBorder = this.nodeBorder || this.border1;\n    this.clusterBkg = this.clusterBkg || this.tertiaryColor;\n    this.clusterBorder = this.clusterBorder || this.tertiaryBorderColor;\n    this.defaultLinkColor = this.defaultLinkColor || this.lineColor;\n",
+          "line_end": 112,
+          "line_start": 107,
+          "slice_sha256": "b1f2d0c133bc4cc47b02d0188968955e25cb79245cd6e7b498e0c3b2df98496c"
+        },
+        {
+          "byte_end": 9803,
+          "byte_start": 9340,
+          "exact_excerpt": "    this.altBackground = this.altBackground || '#f0f0f0';\n    this.compositeTitleBackground = this.compositeTitleBackground || this.mainBkg;\n    this.compositeBorder = this.compositeBorder || this.nodeBorder;\n    this.innerEndBackground = this.nodeBorder;\n    this.errorBkgColor = this.errorBkgColor || this.tertiaryColor;\n    this.errorTextColor = this.errorTextColor || this.tertiaryTextColor;\n    this.transitionColor = this.transitionColor || this.lineColor;\n",
+          "line_end": 198,
+          "line_start": 192,
+          "slice_sha256": "65c280d5d0a07b4ca36230767a6033d1c4f16a031aa55120564e27926cde6b57"
+        },
+        {
+          "byte_end": 21355,
+          "byte_start": 20870,
+          "exact_excerpt": "    /* -------------------------------------------------- */\n    /* EntityRelationship diagrams                        */\n    this.erEdgeLabelBackground = '#16141F';\n    this.attributeBackgroundColorOdd =\n      this.attributeBackgroundColorOdd || oldAttributeBackgroundColorOdd;\n    this.attributeBackgroundColorEven =\n      this.attributeBackgroundColorEven || oldAttributeBackgroundColorEven;\n    /* -------------------------------------------------- */\n  }\n  calculate(overrides) {\n",
+          "line_end": 417,
+          "line_start": 408,
+          "slice_sha256": "42e0646fed9a0ff4c796483b560c89e3f2e903b8142b6578b6a8af2db6c7f598"
+        }
+      ],
+      "source_bytes": 22037,
+      "source_sha256": "4c8b914442bcc899bc35c9bd31ae15881782cb9734288d6fdd96c15f0736477a"
+    },
+    {
+      "attribution": "Mermaid contributors; MIT; upstream license retained in tests/fixtures/mermaid_official/LICENSE",
+      "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+      "git_blob": "f101caa21961e4dddff52b8df4608232b5a6a3aa",
+      "path": "packages/mermaid/src/themes/theme-redux.js",
+      "raw_url": "https://raw.githubusercontent.com/mermaid-js/mermaid/1fb7869866dd619168d840291c9c54b4f129758b/packages/mermaid/src/themes/theme-redux.js",
+      "segments": [
+        {
+          "byte_end": 832,
+          "byte_start": 672,
+          "exact_excerpt": "    this.THEME_COLOR_LIMIT = 12;\n    this.radius = 12;\n    this.strokeWidth = 2;\n\n    this.primaryBorderColor = mkBorder('#28253D', this.darkMode);\n    // dark\n",
+          "line_end": 28,
+          "line_start": 23,
+          "slice_sha256": "0ef5d4389073cc61d52694f3df3faef320267829e8f2d5efb34b8b3717e39b53"
+        },
+        {
+          "byte_end": 1080,
+          "byte_start": 926,
+          "exact_excerpt": "\n    // Neo-specific\n    this.nodeBorder = '#28253D';\n    this.stateBorder = '#28253D';\n    this.useGradient = false;\n    this.gradientStart = '#0042eb';\n",
+          "line_end": 37,
+          "line_start": 32,
+          "slice_sha256": "100e3d7bfb26028b7a99bf6c21a994e8f404d07c722d2badf1e9244e84f54b57"
+        },
+        {
+          "byte_end": 3580,
+          "byte_start": 3203,
+          "exact_excerpt": "    this.nodeBkg = this.nodeBkg || this.primaryColor;\n    this.mainBkg = this.mainBkg || this.primaryColor;\n    this.nodeBorder = this.nodeBorder || this.primaryBorderColor;\n    this.clusterBkg = this.clusterBkg || this.tertiaryColor;\n    this.clusterBorder = this.clusterBorder || this.tertiaryBorderColor;\n    this.defaultLinkColor = this.defaultLinkColor || this.lineColor;\n",
+          "line_end": 90,
+          "line_start": 85,
+          "slice_sha256": "564dba9c485a79be0feb16c72b8a780acc29fc8c109a6943278ea223a55bcc7f"
+        },
+        {
+          "byte_end": 8816,
+          "byte_start": 8353,
+          "exact_excerpt": "    this.altBackground = this.altBackground || '#f0f0f0';\n    this.compositeTitleBackground = this.compositeTitleBackground || this.mainBkg;\n    this.compositeBorder = this.compositeBorder || this.nodeBorder;\n    this.innerEndBackground = this.nodeBorder;\n    this.errorBkgColor = this.errorBkgColor || this.tertiaryColor;\n    this.errorTextColor = this.errorTextColor || this.tertiaryTextColor;\n    this.transitionColor = this.transitionColor || this.lineColor;\n",
+          "line_end": 180,
+          "line_start": 174,
+          "slice_sha256": "65c280d5d0a07b4ca36230767a6033d1c4f16a031aa55120564e27926cde6b57"
+        },
+        {
+          "byte_end": 19466,
+          "byte_start": 18981,
+          "exact_excerpt": "    /* -------------------------------------------------- */\n    /* EntityRelationship diagrams                        */\n    this.erEdgeLabelBackground = '#FFFFFF';\n    this.attributeBackgroundColorOdd =\n      this.attributeBackgroundColorOdd || oldAttributeBackgroundColorOdd;\n    this.attributeBackgroundColorEven =\n      this.attributeBackgroundColorEven || oldAttributeBackgroundColorEven;\n    /* -------------------------------------------------- */\n  }\n  calculate(overrides) {\n",
+          "line_end": 391,
+          "line_start": 382,
+          "slice_sha256": "38bec7bc0990485ab4e101fd2604506e459e3cb8bbd9d47f2d2d804be11a1be6"
+        }
+      ],
+      "source_bytes": 20148,
+      "source_sha256": "8f22d1e3a0d27c142663eb4a96efbca8010ea8b556b130bc14c8467d94587fbc"
+    }
+  ],
+  "evidence_sha256": "309498dacb45b51bbd4967c51f18b38aa48df33959c906edf4c8a254c98d2134",
+  "license_path": "tests/fixtures/mermaid_official/LICENSE",
+  "qualification": "Fixed source excerpts only. No JS execution, effective host config, producer art, terminal Model, projection approval or drawing admission. Every cached file Git blob and size matches the pinned full tree.",
+  "review_status": "UNREVIEWED_SOURCE_EVIDENCE",
+  "schema": "loom_er107_presentation_source_audit/v1",
+  "source_fact_sha256": "5a1c642cc7a3e2cf08e00355be845711520f762fc999dc13fe7dbb4a417297f3",
+  "terminal_model": null,
+  "tree_listing_response_sha": "1fb7869866dd619168d840291c9c54b4f129758b",
+  "tree_listing_url": "https://api.github.com/repos/mermaid-js/mermaid/git/trees/1fb7869866dd619168d840291c9c54b4f129758b",
+  "upstream_commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+  "upstream_corpus_tree": "58f6617da68d7f2b8a58161175db5db5a971cd82"
+}

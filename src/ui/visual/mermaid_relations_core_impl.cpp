@@ -1,6 +1,7 @@
 module;
 
 #include <ftxui/screen/string.hpp>
+#include <ftxui/dom/node.hpp>
 
 module loom.ui.visual.mermaid;
 
@@ -794,13 +795,70 @@ std::optional<ErGroupHeader> er_group_header(ErCursor& cursor) {
     cursor.at=end+1u;return ErGroupHeader{*id,*label};
 }
 
-std::optional<RelationDiagram> parse_plain_er(std::string_view source,Work& work) {
+// The active ER projection accepts the reviewed literal ASCII display subset.
+// Generated generic brackets are validated on the raw token first and never
+// fed back through a raw HTML/Markdown decoder.
+bool er_project_fields(RelationDiagram& diagram,Work& work) {
+    auto plain=[&](std::string& value,bool name=false,bool type=false)->bool {
+        if(!work.spend(value.size()*12u+4u*sizeof(std::string)+32u))return false;
+        // Closed source-derived literal words, not a partial Markdown parser.
+        // Internal identifier underscores remain literal; delimiter pairs,
+        // links/images, headings and lists require a separate source contract.
+        const auto first=value.find('_'),last=value.rfind('_');
+        if(first!=std::string::npos&&first!=last&&
+           (first==0u||last+1u==value.size()||value[first-1u]==' '||value[last+1u]==' '))return false;
+        if(value.starts_with("- "))return false;
+        bool word=false;
+        for(std::size_t n=0;n<value.size();++n) {
+            const auto c=static_cast<unsigned char>(value[n]);
+            if((c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c=='_'){word=true;continue;}
+            if(c==' '||c=='-'||(name&&n==0u&&c=='*'))continue;
+            if(type&&(c=='.'||c==','))continue;
+            if(type&&c=='['&&n+1u<value.size()&&value[n+1u]==']'){++n;continue;}
+            if(type&&c=='('&&n>0u){
+                const auto end=value.find(')',n+1u);
+                if(end==std::string::npos||end==n+1u||value.find_first_not_of("0123456789",n+1u)<end)return false;
+                n=end;continue;
+            }
+            return false;
+        }
+        if(!value.empty()&&!word)return false;
+        const auto wrapped=er_projection_wrap(value,work);if(!wrapped)return false;
+        value=*wrapped;return true;
+    };
+    auto identifier=[](std::string_view text) {
+        if(text.empty())return false;
+        for(std::size_t n=0;n<text.size();++n){const char c=text[n];
+            if(!((c>='a'&&c<='z')||(c>='A'&&c<='Z')||c=='_'||(n&&c>='0'&&c<='9')))return false;
+        }return true;
+    };
+    for(auto& entity:diagram.entities) {
+        if(!plain(entity.label))return false;
+        for(auto& attribute:entity.er_attributes) {
+            const auto first=attribute.type.find('~');
+            if(first!=std::string::npos) {
+                if(!work.spend(attribute.type.size()*12u+64u))return false;
+                const auto last=attribute.type.find('~',first+1u);
+                if(last!=attribute.type.size()-1u||!identifier(std::string_view(attribute.type).substr(0,first))||
+                   !identifier(std::string_view(attribute.type).substr(first+1u,last-first-1u)))return false;
+                attribute.type[first]='<';attribute.type[last]='>';
+                const auto wrapped=er_projection_wrap(attribute.type,work);if(!wrapped)return false;attribute.type=*wrapped;
+            } else if(!plain(attribute.type,false,true))return false;
+            if(!plain(attribute.name,true)||!plain(attribute.comment))return false;
+            for(auto& key:attribute.keys)if(!plain(key))return false;
+        }
+    }
+    for(auto& edge:diagram.edges)if(!plain(edge.label))return false;
+    return true;
+}
+
+std::optional<RelationDiagram> parse_plain_er(std::string_view source,Work& work,std::unique_ptr<ErPresentation> presentation={}) {
     ErCursor cursor{source,work};if(!cursor.take("erDiagram",true))return {};
-    RelationDiagram diagram;diagram.family=RelationFamily::Er;
+    RelationDiagram diagram;diagram.family=RelationFamily::Er;diagram.er_presentation=std::move(presentation);
     // A complete header-only ER document is a valid empty artifact. Keep this
     // admission before body parsing: unknown or metadata-only bodies cannot be
     // discarded as empty, and malformed directives still fail cursor.skip().
-    if(cursor.skip()&&cursor.at==source.size())return diagram;
+    if(cursor.skip()&&cursor.at==source.size()){if(diagram.er_presentation)return {};return diagram;}
     // Fixed new parse-local state/closures are paid even for nongroup ER.
     if(!cursor.spend(4u*sizeof(std::unique_ptr<ErGroupParse>)+8u*sizeof(bool)+
         40u*sizeof(void*)+64u))return {};
@@ -845,7 +903,7 @@ std::optional<RelationDiagram> parse_plain_er(std::string_view source,Work& work
         const bool present=source.substr(at).starts_with(":::");
         if(present&&groups&&!cursor.spend((source.size()-cursor.at)*(24u*sizeof(std::string)+16u*sizeof(std::string_view)+96u)+128u))return false;
         if(!er_inline_classes(cursor,entity_end))return false;
-        if(present){if(groups)return false;presentation_seen=true;}
+        if(present){if(groups||diagram.er_presentation)return false;presentation_seen=true;}
         return true;
     };
     while(cursor.skip()&&cursor.at<source.size()) {
@@ -888,11 +946,13 @@ std::optional<RelationDiagram> parse_plain_er(std::string_view source,Work& work
             continue;
         }
         if(er_presentation_keyword(cursor,"classDef")||er_presentation_keyword(cursor,"style")) {
+            if(diagram.er_presentation)return {};
             if(groups&&!cursor.spend((source.size()-cursor.at)*(24u*sizeof(std::string)+16u*sizeof(std::string_view)+96u)+128u))return {};
             if(!er_presentation_line(cursor,false)||groups)return {};
             presentation_seen=true;continue;
         }
         if(er_presentation_keyword(cursor,"class")) {
+            if(diagram.er_presentation)return {};
             if(groups&&!cursor.spend((source.size()-cursor.at)*(24u*sizeof(std::string)+16u*sizeof(std::string_view)+96u)+128u))return {};
             if(!er_presentation_line(cursor,true)||groups)return {};
             presentation_seen=true;continue;
@@ -983,7 +1043,13 @@ std::optional<RelationDiagram> parse_plain_er(std::string_view source,Work& work
             const auto text=cursor.quoted('"');if(!text)return {};
             // The plain edge display profile trims outer ASCII whitespace;
             // whitespace-only Markdown role text has no visible label.
-            if(!trim_relation(*text).empty()){const auto label=er_literal_label(trim_relation(*text),work);if(!label)return {};edge.label=*label;}
+            if(diagram.er_presentation) {
+                if(trim_relation(*text).empty()) {
+                    auto& roles=diagram.er_presentation->blank_roles;
+                    if(!work.spend((roles.size()*3u+4u)*sizeof(std::pair<std::size_t,std::string>)+text->size()*4u+64u))return {};
+                    roles.emplace_back(diagram.edges.size(),*text);
+                } else {const auto label=er_literal_label(trim_relation(*text),work);if(!label)return {};edge.label=*label;}
+            } else if(!trim_relation(*text).empty()){const auto label=er_literal_label(trim_relation(*text),work);if(!label)return {};edge.label=*label;}
         }
         else {const auto label=name();if(!label)return {};const auto text=er_literal_label(*label,work);if(!text)return {};edge.label=*text;}
         if(diagram.edges.size()>=128)return {};
@@ -995,6 +1061,7 @@ std::optional<RelationDiagram> parse_plain_er(std::string_view source,Work& work
         if(!append_relationship(diagram.edges,std::move(edge),work))return {};
     }
     if(!cursor.healthy||(groups&&groups->depth)||diagram.entities.empty()||diagram.entities.size()>64)return {};
+    if(diagram.er_presentation&&!er_project_fields(diagram,work))return {};
     return diagram;
 }
 
@@ -1199,7 +1266,7 @@ std::optional<RelationDiagram> parse_relations(std::string_view source,Work& wor
         }
         auto envelope=er_source_envelope(original,work);if(!envelope)return {};
         ErCursor header{envelope->body,work};if(!header.take("erDiagram",true))return {};
-        auto diagram=parse_plain_er(envelope->body,work);if(!diagram)return {};
+        auto diagram=parse_plain_er(envelope->body,work,std::move(envelope->presentation));if(!diagram)return {};
         diagram->diagram_title=std::move(envelope->title);return diagram;
     }
     std::vector<std::string_view> lines;
@@ -1528,6 +1595,13 @@ std::optional<RelationDiagram> parse_relations(std::string_view source,Work& wor
             }else if (id->front() == '"') *id = id->substr(1,id->size()-2);
             const int target = diagram.entity(*id,owner()); if (target < 0) return {};
             auto& entity = diagram.entities[static_cast<std::size_t>(target)];
+            // A composite opener may occupy the next statement line. Consume
+            // only that exact brace and reuse the same owner/depth machinery;
+            // standalone braces and concurrent-region dividers remain closed.
+            if (line.empty() && !suffix && n + 1u < lines.size() && lines[n + 1u] == "{") {
+                if (!work.spend(64u)) return {};
+                line = lines[++n];
+            }
             if (entity.declared) return {};
             const auto previous=diagram.state_text_index(target,work);if(!previous)return {};
             if(*previous<diagram.state_texts.size()&&!line.empty())return {};
@@ -2296,7 +2370,9 @@ bool RelationLayout::measure(int owner,std::size_t depth) {
                 if (a==b&&reach[a][a]) layered=false;
                 if (adjacent[a][b]) ++links_count;
             }
-            if (links_count!=scope_edges[slot].size()) layered=false; // Repeated ordered endpoints are not this profile.
+            // Active ER routes every original edge separately, including
+            // repeated pairs. Legacy ranked profiles retain their exclusion.
+            if (links_count!=scope_edges[slot].size()&&!diagram.er_presentation) layered=false;
             if (layered) {
                 if (!work.spend(3*count)) return false;
                 std::vector<std::size_t> rank(count),position(count),topological(count);
@@ -2315,11 +2391,17 @@ bool RelationLayout::measure(int owner,std::size_t depth) {
                     }
                     levels=std::max(levels,rank[vertex]+1);
                 }
-                bool peers=false;
+                if(diagram.er_presentation&&!work.spend(4u*sizeof(bool)+4u*sizeof(std::size_t)+16u))return false;
+                bool peers=false,relaxed_ranked_topology=diagram.er_presentation&&links_count!=scope_edges[slot].size(),has_rank_skip=false;
                 for (std::size_t a=0;a<count;++a) for (std::size_t b=0;b<count;++b) {
                     if (!work.spend()) return false;
                     if (a!=b&&rank[a]==rank[b]) peers=true;
-                    if (adjacent[a][b]&&rank[b]!=rank[a]+1) layered=false;
+                    if (adjacent[a][b]&&rank[b]!=rank[a]+1) {
+                        if(diagram.er_presentation) {
+                            if(!work.spend(2u*sizeof(bool)+8u))return false;
+                            relaxed_ranked_topology=true;has_rank_skip=true;
+                        }else layered=false;
+                    }
                 }
                 if (layered&&peers) {
                     if (!work.spend(4*count+levels+1+2*links_count)) return false;
@@ -2394,7 +2476,13 @@ bool RelationLayout::measure(int owner,std::size_t depth) {
                     for (const int index:scope_edges[slot]) {
                         const auto& edge=diagram.edges[static_cast<std::size_t>(index)];
                         if (!work.spend(edge.label.size()+1)) return false;
-                        peer_gap=std::max(peer_gap,label_width(edge.label)+2*std::max(marker_size(edge.start),marker_size(edge.end))+4);
+                        if(diagram.er_presentation&&!work.spend(4u*sizeof(int)+sizeof(bool)+8u))return false;
+                        // DAG peers have no relationship within their rank.
+                        // The relaxed plan reserves marker lanes here; labels
+                        // still prove their complete clearance between ranks.
+                        if(relaxed_ranked_topology&&!has_rank_skip&&links_count!=scope_edges[slot].size())
+                            peer_gap=std::max(peer_gap,2*std::max(marker_size(edge.start),marker_size(edge.end))+4);
+                        else peer_gap=std::max(peer_gap,label_width(edge.label)+2*std::max(marker_size(edge.start),marker_size(edge.end))+4);
                         if(edge.endpoint_texts) {
                             if(!work.spend(edge.label.size()*(4u*sizeof(std::string_view)+4u)+12u))return false;
                             const auto* source=class_caption(edge,true);const auto* target=class_caption(edge,false);
@@ -2402,6 +2490,13 @@ bool RelationLayout::measure(int owner,std::size_t depth) {
                             peer_gap=std::max(peer_gap,from+to+(edge.label.empty()?2:label_width(edge.label)+6));
                         }
                     }
+                    if(diagram.er_presentation&&!work.spend(4u*sizeof(int)+4u*sizeof(bool)+16u))return false;
+                    const bool compact_workspace=relaxed_ranked_topology&&has_rank_skip&&links_count==scope_edges[slot].size();
+                    // A forward, flat DAG keeps its measured body spacing.
+                    // Bound only its temporary exterior workspace; the router
+                    // still proves every path inside the resulting canvas.
+                    const int rank_margin=compact_workspace?12:margin;
+                    const int rank_padding=compact_workspace?2*top:18;
                     if (!work.spend(2*levels)) return false;
                     std::vector<int> row_width(levels),row_height(levels);
                     int widest=0,body_height=0;
@@ -2419,13 +2514,18 @@ bool RelationLayout::measure(int owner,std::size_t depth) {
                         if (row_height[r]>kHeightLimit||separation>kHeightLimit-body_height||row_height[r]>kHeightLimit-body_height-separation) {rank_fits=false;break;}
                         body_height+=separation+row_height[r];widest=std::max(widest,row_width[r]);
                     }
-                    if (margin>kWidthLimit/2||widest>kWidthLimit-2*margin||body_height>kHeightLimit-18) rank_fits=false;
-                    // A class rank plan is optional: decide whether it fits before
-                    // moving any box, otherwise keep the existing linear plan.
-                    if (!rank_fits&&diagram.family==RelationFamily::Er) return false;
+                    if (rank_margin>kWidthLimit/2||widest>kWidthLimit-2*rank_margin||body_height>kHeightLimit-rank_padding) rank_fits=false;
+                    // The new ER profile also retains the existing linear plan
+                    // when peer ranks exceed the canvas. No box has moved yet;
+                    // legacy ER's closed admission and routing stay unchanged.
+                    if (!rank_fits&&diagram.family==RelationFamily::Er&&!diagram.er_presentation) return false;
                     if (rank_fits) {
-                        const int width=std::max(widest+2*margin,er_role_envelope),height=body_height+18;
+                        const int width=std::max(widest+2*rank_margin,er_role_envelope),height=body_height+rank_padding;
                         if (width>kWidthLimit) return false;
+                        if(diagram.er_presentation&&relaxed_ranked_topology) {
+                            if(!work.spend(sizeof(bool)+8u))return false;
+                            diagram.er_presentation->ranked_topology=true;
+                        }
                         int y=4;
                         for (std::size_t r=0;r<levels;++r) {
                             int x=(width-row_width[r])/2;
@@ -2444,6 +2544,66 @@ bool RelationLayout::measure(int owner,std::size_t depth) {
             diagram.notes.empty()&&!class_endpoint_active) {
             if(!work.spend(4u*sizeof(std::optional<bool>)+32u))return false;
             const auto compound=compound_class_columns(reach);if(!compound)return false;if(*compound)return true;
+        }
+        if(diagram.er_presentation) {
+            // Disconnected plain pairs need no relationship lane between
+            // components. Adjacent connected boxes retain their measured gap;
+            // unrelated neighbours share one blank row and the router is unchanged.
+            if(!work.spend(12u*sizeof(bool)+16u*sizeof(int)+12u*sizeof(std::size_t)+
+                           12u*sizeof(void*)+128u))return false;
+            bool compact=diagram.family==RelationFamily::Er&&owner<0&&!horizontal&&
+                diagram.direction=="TB"&&!compound_scope&&diagram.notes.empty()&&
+                count>=4u&&count<=64u&&count==diagram.entities.size()&&count%2u==0u&&
+                scope_edges[slot].size()==count/2u;
+            if(compact)for(const int index:list) {
+                if(!work.spend(8u*sizeof(bool)+4u*sizeof(int)+32u))return false;
+                if(index<0||static_cast<std::size_t>(index)>=diagram.entities.size())return false;
+                const auto& entity=diagram.entities[static_cast<std::size_t>(index)];
+                if(entity.owner!=-1||entity.shape!=EntityShape::Box||entity.er_alias||
+                   !entity.er_attributes.empty()||!entity.members.empty()||
+                   !entity.annotation.empty()||degrees[static_cast<std::size_t>(index)]!=1) {
+                    compact=false;break;
+                }
+            }
+            if(compact) {
+                const auto boundary_gap=[&](std::size_t n)->std::optional<int> {
+                    if(!work.spend(4u*sizeof(std::size_t)+8u*sizeof(bool)+32u))return {};
+                    if(n+1u==count)return 0;
+                    // ordered stores entity indices; adjacent uses list indices.
+                    if(!work.spend(count*(2u*sizeof(int)+8u)+
+                                   8u*sizeof(std::size_t)+8u*sizeof(bool)+32u))return {};
+                    const auto a=static_cast<std::size_t>(std::ranges::find(list,ordered[slot][n])-list.begin());
+                    const auto b=static_cast<std::size_t>(std::ranges::find(list,ordered[slot][n+1u])-list.begin());
+                    if(a>=count||b>=count)return {};
+                    return adjacent[a][b]||adjacent[b][a]?gap:1;
+                };
+                const int compact_width=std::max(maximum+2*margin,er_role_envelope);
+                int compact_height=18;
+                bool fits=compact_width>0&&compact_width<=kWidthLimit;
+                for(std::size_t n=0;n<count&&fits;++n) {
+                    const auto separation=boundary_gap(n);if(!separation)return false;
+                    if(!work.spend(8u*sizeof(int)+32u))return false;
+                    const auto& box=boxes[static_cast<std::size_t>(ordered[slot][n])];
+                    if(box.h<1||box.h>kHeightLimit-compact_height||
+                       *separation>kHeightLimit-compact_height-box.h)fits=false;
+                    else compact_height+=box.h+*separation;
+                }
+                if(fits) {
+                    // Validate the complete extent before moving any box.
+                    if(!work.spend(4u*sizeof(int)+16u))return false;
+                    int advance=top;
+                    for(std::size_t n=0;n<count;++n) {
+                        const auto separation=boundary_gap(n);if(!separation)return false;
+                        if(!work.spend(12u*sizeof(int)+32u))return false;
+                        const int index=ordered[slot][n];
+                        const auto& box=boxes[static_cast<std::size_t>(index)];
+                        const int x=(compact_width-box.w)/2,height=box.h;
+                        translate(index,x,advance);advance+=height+*separation;
+                    }
+                    if(!work.spend(2u*sizeof(int)+8u))return false;
+                    canvas_width=compact_width;canvas_height=compact_height;return true;
+                }
+            }
         }
         int width=horizontal?total+8+first_self_extra+last_self_extra:maximum+2*margin;
         const int height=horizontal?maximum+2*margin:total+8+(owner<0?0:top-6);
@@ -2612,6 +2772,19 @@ bool CompoundScopeRoute::step(Point from,Point to) const {
         return true;
     }
 
+namespace {
+// Active ER alone owns explicit typed growth. Legacy containers and fees keep
+// their existing path. Capacity, relocation and append work precede mutation.
+template<class T> bool er_vector_room(std::vector<T>& values,Work& work) {
+    const auto size=values.size(),capacity=values.capacity();
+    if(size>kWorkLimit/sizeof(T)||capacity>kWorkLimit/sizeof(T))return work.spend(kWorkLimit+1u);
+    const auto next=size==capacity?std::max(std::size_t{1},capacity*2u):capacity;
+    const auto growth=size==capacity?next*sizeof(T)+2u*size*sizeof(T):0u;
+    if(!work.spend(growth+sizeof(T)+8u))return false;
+    if(size==capacity)values.reserve(next);
+    return true;
+}
+}
 RouteSearch::RouteSearch(Canvas& c,const RelationLayout& l,int scope):canvas(c),layout(l),owner(scope),work(c.work),distance(c.cells.size()),parent(c.cells.size()),stamp(c.cells.size()) {}
 bool RouteSearch::inside(Point p) const {
         if (!canvas.inside(p)) return false;
@@ -2643,25 +2816,58 @@ bool RouteSearch::step(Point from,Point to) const {return !compound_route||compo
 std::optional<std::vector<Point>> RouteSearch::path(Point start,Point goal) {
         if (!free(start)||!free(goal)||!work.spend()) return {};
         ++generation;
-        struct Candidate { int estimate,cost,index; bool operator>(const Candidate& other) const { return std::tie(estimate,cost,index)>std::tie(other.estimate,other.cost,other.index); } };
-        std::priority_queue<Candidate,std::vector<Candidate>,std::greater<>> open;
+        using Candidate=RouteCandidate;
+        using Frontier=RouteFrontier;
+        const bool prepaid=layout.diagram.er_presentation!=nullptr;
+        if(prepaid&&!work.spend(4u*sizeof(Frontier)+128u))return {};
+        std::vector<Candidate> local_backing;
+        auto& retained=prepaid?layout.diagram.er_presentation->frontier_backing:local_backing;
+        // A completed path must return an empty heap. Fail closed if that
+        // private scratch invariant is ever broken.
+        if(!retained.empty()){retained.clear();return {};}
+        Frontier open(std::greater<>{},std::move(retained));
+        struct RestoreFrontier {
+            std::vector<Candidate>& retained;
+            Frontier& open;
+            ~RestoreFrontier(){open.backing().clear();retained.swap(open.backing());}
+        } restore{retained,open};
+        auto push=[&](int estimate,int cost,int index){
+            const auto levels=prepaid?std::bit_width(open.size()+1u):0u;
+            if(prepaid){
+                if(!work.spend((levels+1u)*8u+sizeof(Candidate))||!er_vector_room(open.backing(),work))return false;
+            }
+            // On the active ER domain, equal-f entries prefer larger g.
+            // This standard A* tie-break avoids exploring an entire Manhattan
+            // plateau. The primary estimate, admissible heuristic, unit costs
+            // and existing index tie-break remain unchanged. Legacy stores g.
+            open.push({estimate,prepaid?-cost:cost,index});
+            return true;
+        };
         const auto heuristic=[&](Point p) { return std::abs(p.x-goal.x)+std::abs(p.y-goal.y); };
-        const int first=canvas.index(start),last=canvas.index(goal);stamp[static_cast<std::size_t>(first)]=generation;distance[static_cast<std::size_t>(first)]=0;parent[static_cast<std::size_t>(first)]=-1;open.push({heuristic(start),0,first});
+        const int first=canvas.index(start),last=canvas.index(goal);stamp[static_cast<std::size_t>(first)]=generation;distance[static_cast<std::size_t>(first)]=0;parent[static_cast<std::size_t>(first)]=-1;if(!push(heuristic(start),0,first))return {};
         while (!open.empty()) {
             if (!work.spend()) return {};
-            const auto current=open.top();open.pop();if (current.cost!=distance[static_cast<std::size_t>(current.index)]) continue;
+            const auto levels=prepaid?std::bit_width(open.size())+1u:0u;
+            if(prepaid&&!work.spend(levels*16u+sizeof(Candidate)))return {};
+            const auto current=open.top();open.pop();
+            const int current_cost=prepaid?-current.cost:current.cost;
+            if (current_cost!=distance[static_cast<std::size_t>(current.index)]) continue;
             if (current.index==last) {
                 std::vector<Point> result;
-                for (int at=last;at>=0;at=parent[static_cast<std::size_t>(at)]) { if (!work.spend()) return {}; result.push_back({at%canvas.width,at/canvas.width}); }
+                for (int at=last;at>=0;at=parent[static_cast<std::size_t>(at)]) {
+                    if (!work.spend()||(prepaid&&!er_vector_room(result,work))) return {};
+                    result.push_back({at%canvas.width,at/canvas.width});
+                }
+                if(prepaid&&!work.spend(result.size()*(2u*sizeof(Point)+4u)))return {};
                 std::ranges::reverse(result);return result;
             }
             const Point p{current.index%canvas.width,current.index/canvas.width};
             for (const auto step:kSteps) {
                 if (!work.spend()) return {};
                 const auto next=p+step;if (!free(next)||(compound_route&&!this->step(p,next))) continue;
-                const int at=canvas.index(next),cost=current.cost+1;
+                const int at=canvas.index(next),cost=current_cost+1;
                 if (stamp[static_cast<std::size_t>(at)]==generation&&distance[static_cast<std::size_t>(at)]<=cost) continue;
-                stamp[static_cast<std::size_t>(at)]=generation;distance[static_cast<std::size_t>(at)]=cost;parent[static_cast<std::size_t>(at)]=current.index;open.push({cost+heuristic(next),cost,at});
+                stamp[static_cast<std::size_t>(at)]=generation;distance[static_cast<std::size_t>(at)]=cost;parent[static_cast<std::size_t>(at)]=current.index;if(!push(cost+heuristic(next),cost,at))return {};
             }
         }
         return {};
@@ -2756,10 +2962,17 @@ bool draw_entity(Canvas& canvas,const RelationEntity& entity,const RelationBox& 
 } // namespace
 std::vector<EndpointPort> ports_for(const RelationEntity& entity,const RelationBox& box,Marker marker,const RouteSearch& search) {
     std::vector<EndpointPort> ports;
+    const bool prepaid=search.layout.diagram.er_presentation!=nullptr;
+    if(prepaid&&!search.work.spend(4u*sizeof(std::vector<EndpointPort>)+64u))return {};
     auto add=[&](Point border,Point normal) {
+        if(prepaid&&!search.work.spend(16u))return;
         if (er_cardinality_marker(marker)&&normal.y) return;
         const int size=marker_size(marker); const Point route{border.x+normal.x*(size+1),border.y+normal.y*(size+1)};
-        for (int n=1;n<=size+1;++n) if (!search.free({border.x+normal.x*n,border.y+normal.y*n})) return;
+        for (int n=1;n<=size+1;++n) {
+            if(prepaid&&!search.work.spend(4u+4u*search.layout.children[static_cast<std::size_t>(search.owner+1)].size()))return;
+            if (!search.free({border.x+normal.x*n,border.y+normal.y*n})) return;
+        }
+        if(prepaid&&!er_vector_room(ports,search.work))return;
         ports.push_back({border,normal,route,marker});
     };
     if (entity.shape==EntityShape::Start||entity.shape==EntityShape::Final) { for (const auto step:kSteps) add({box.x,box.y},step); }
@@ -2851,10 +3064,132 @@ std::optional<LabelPlacement> label_place(Canvas& canvas,const RouteSearch& sear
 }
 namespace {
 
-bool connect_relation(Canvas& canvas,RouteSearch& search,const RelationDiagram& diagram,const RelationLayout& layout,const Relationship& edge) {
+// ER-only semantic paint context. Geometry comes from the parsed scene and
+// successful route commits; no ownership is recovered from finished glyphs.
+struct ErPaint {
+    Canvas& canvas;
+    std::vector<std::uint16_t> plane;
+    int left=kWidthLimit,top=kHeightLimit,right=-1,bottom=-1;
+    static constexpr std::uint16_t style(int fg,int bg){return static_cast<std::uint16_t>(fg|(bg<<5));}
+    explicit ErPaint(Canvas& value):canvas(value){}
+    void include(Point p){left=std::min(left,p.x);top=std::min(top,p.y);right=std::max(right,p.x);bottom=std::max(bottom,p.y);}
+    bool put(Point p,int fg,int bg){
+        if(!canvas.inside(p)||!canvas.work.spend(sizeof(std::uint16_t)+8u))return false;
+        plane[static_cast<std::size_t>(canvas.index(p))]=style(fg,bg);return true;
+    }
+    bool box(const RelationBox& b,int fg,int fill,int parent,bool group){
+        if(b.w<3||b.h<3)return false;
+        include({b.x,b.y});include({b.right(),b.bottom()});
+        for(int y=b.y;y<=b.bottom();++y)for(int x=b.x;x<=b.right();++x){
+            const bool boundary=x==b.x||x==b.right()||y==b.y||y==b.bottom();
+            if(!put({x,y},boundary?fg:1,boundary?parent:fill))return false;
+        }
+        return group||fg>0;
+    }
+    bool prepare(const RelationDiagram& diagram,const RelationLayout& layout){
+        const auto count=canvas.cells.size();
+        if(!canvas.work.spend(count*(sizeof(std::uint16_t)+8u)+4u*sizeof(ErPaint)+128u))return false;
+        plane.assign(count,style(1,1));
+        // Paint parents before children, independent of source declaration order.
+        for(std::size_t depth=0;depth<kGroupDepthLimit;++depth)for(std::size_t n=0;n<diagram.entities.size();++n){
+            if(!canvas.work.spend(8u))return false;
+            const auto& entity=diagram.entities[n];if(entity.shape!=EntityShape::Group)continue;
+            std::size_t actual=0;int owner=entity.owner;
+            while(owner>=0){if(!canvas.work.spend(8u)||++actual>kGroupDepthLimit)return false;owner=diagram.entities[static_cast<std::size_t>(owner)].owner;}
+            if(actual==depth&&!box(layout.boxes[n],1,6,entity.owner<0?1:6,true))return false;
+        }
+        constexpr std::array<int,12> foreground{6,5,3,5,4,6,2,3,5,4,5,2};
+        constexpr std::array<int,12> background{6,5,3,5,4,5,2,3,5,4,5,2};
+        const auto& theme=diagram.er_presentation->theme;
+        const bool categorical=theme=="redux-color"||theme=="redux-dark-color";
+        std::size_t slot=0;
+        for(std::size_t n=0;n<diagram.entities.size();++n){
+            if(!canvas.work.spend(32u))return false;
+            const auto& entity=diagram.entities[n];if(entity.shape==EntityShape::Group)continue;
+            const int fg=categorical?foreground[slot%12u]:1;
+            const int bg=categorical&&theme=="redux-color"?background[slot%12u]:1;++slot;
+            const auto& b=layout.boxes[n];
+            if(!box(b,fg,bg,entity.owner<0?1:6,false))return false;
+            if(entity.er_attributes.empty())continue;
+            if(!canvas.work.spend((entity.er_attributes.size()+4u)*(8u*sizeof(int)+8u*sizeof(std::vector<int>))+128u))return false;
+            const auto table=er_table_geometry(entity,canvas.work);if(!table)return false;
+            const int header=b.y+1+static_cast<int>(label_rows(entity.label).size());
+            int row=header;
+            for(std::size_t index=0;index<entity.er_attributes.size();++index){
+                for(int x=b.x+1;x<b.right();++x)if(!put({x,row},fg,bg))return false;
+                row+=table->heights[index]+1;
+            }
+            int column=b.x;
+            for(std::size_t c=0;c+1u<table->roles.size();++c){
+                column+=table->widths[c]+1;
+                for(int y=header;y<b.bottom();++y)if(!put({column,y},fg,bg))return false;
+            }
+        }
+        return true;
+    }
+    bool path(std::span<const Point> points,const EndpointPort& a,const EndpointPort& b){
+        if(!canvas.work.spend(points.size()*(sizeof(Point)+4u*sizeof(int)+8u)+64u))return false;
+        for(const auto p:points)include(p);
+        for(const auto& port:{a,b}){include(port.border);include({port.border.x+port.normal.x*marker_size(port.marker),port.border.y+port.normal.y*marker_size(port.marker)});}
+        return true;
+    }
+    bool label(const LabelPlacement& label){
+        // The owned rectangle includes its one-cell clearance, independently
+        // of which row carries the two inline shaft contacts.
+        include({label.x-1,label.y-1});include({label.x+label.w,label.y+label.h});
+        // Only caption rows own neutral side padding. Top/bottom routing
+        // clearance keeps its containing group's surface.
+        for(int y=label.y;y<label.y+label.h;++y)for(int x=label.x-1;x<=label.x+label.w;++x){
+            const Point point{x,y};
+            // The two committed bridge contacts retain their host surface.
+            if(point==label.left||point==label.right)continue;
+            if(!put(point,1,1))return false;
+        }
+        return true;
+    }
+    std::optional<LayoutPayload> finish(const RelationDiagram& diagram){
+        auto& work=canvas.work;
+        if(right<left||bottom<top||!work.spend(canvas.cells.size()*8u+128u))return {};
+        const int width=right-left+3,height=bottom-top+3;
+        if(width>kWidthLimit||height>kHeightLimit)return {};
+        const auto notices=er_projection_notices(diagram,work);if(!notices)return {};
+        const auto rows=static_cast<std::size_t>(height)+1u+notices->size();
+        if(rows>static_cast<std::size_t>(kHeightLimit))return {};
+        // Pre-count actual UTF-8 bytes, role cells and style runs before any
+        // output allocation. The virtual apron is neutral even off Canvas.
+        const auto body_cells=static_cast<std::size_t>(width)*static_cast<std::size_t>(height);
+        if(!work.spend(body_cells*8u+notices->size()*32u))return {};
+        auto code=[&](int x,int y){return x<left||x>right||y<top||y>bottom?style(1,1):plane[static_cast<std::size_t>(canvas.index({x,y}))];};
+        auto glyph=[&](int x,int y)->std::string_view{return x<left||x>right||y<top||y>bottom?std::string_view(" "):canvas.at({x,y}).glyph;};
+        std::size_t bytes=0,cells=body_cells,runs=0;
+        for(int y=top-1;y<=bottom+1;++y){
+            std::uint16_t previous=0xffffu;
+            for(int x=left-1;x<=right+1;++x){bytes+=glyph(x,y).size();const auto next=code(x,y);if(next!=previous){++runs;previous=next;}}
+        }
+        for(const auto& line:*notices){
+            if(line.size()>32u)return {};
+            bytes+=line.size();cells+=line.size();if(!line.empty())++runs;
+        }
+        if(!work.spend(48u*bytes+4u*cells+8u*cells+
+            runs*(512u+8u*sizeof(std::string))+rows*(256u+4u*sizeof(ftxui::Element))+
+            rows*4u*sizeof(std::string)+bytes*2u+256u))return {};
+        LayoutPayload out;out.rows.reserve(rows);out.styles.reserve(cells);
+        for(int y=top-1;y<=bottom+1;++y){
+            std::size_t row_bytes=0;for(int x=left-1;x<=right+1;++x)row_bytes+=glyph(x,y).size();
+            std::string line;line.reserve(row_bytes);
+            for(int x=left-1;x<=right+1;++x){line+=glyph(x,y);out.styles.push_back(code(x,y));}
+            out.rows.push_back(std::move(line));
+        }
+        out.rows.emplace_back();
+        for(const auto& line:*notices){out.rows.push_back(line);out.styles.insert(out.styles.end(),line.size(),style(1,0));}
+        return out;
+    }
+};
+
+bool connect_relation(Canvas& canvas,RouteSearch& search,const RelationDiagram& diagram,const RelationLayout& layout,const Relationship& edge,bool retry_storage=false,ErPaint* er_paint=nullptr) {
     if(!canvas.work.spend(4u*sizeof(bool)+16u))return false;
     const bool note_leader=edge.kind==RelationshipKind::ClassNoteLeader;
-    if(note_leader){
+    if(note_leader||retry_storage){
         const auto& a=layout.boxes[static_cast<std::size_t>(edge.from)];const auto& b=layout.boxes[static_cast<std::size_t>(edge.to)];
         if(a.w<3||a.h<3||b.w<3||b.h<3||a.w>kWidthLimit||b.w>kWidthLimit||a.h>kHeightLimit||b.h>kHeightLimit)return false;
         const auto ports=static_cast<std::size_t>(2*(a.w+a.h+b.w+b.h));
@@ -2862,6 +3197,15 @@ bool connect_relation(Canvas& canvas,RouteSearch& search,const RelationDiagram& 
     }
     auto from=ports_for(diagram.entities[static_cast<std::size_t>(edge.from)],layout.boxes[static_cast<std::size_t>(edge.from)],edge.start,search);
     auto to=ports_for(diagram.entities[static_cast<std::size_t>(edge.to)],layout.boxes[static_cast<std::size_t>(edge.to)],edge.end,search);
+    if(er_paint&&canvas.work.remaining==0u)return false;
+    if(retry_storage&&edge.endpoint_texts) {
+        // Endpoint captions require horizontal normals. Removing impossible
+        // candidates preserves the order of every usable pair and bounds the
+        // retry's separately prepaid backing; the original pass is unchanged.
+        if(!canvas.work.spend((from.size()+to.size())*(sizeof(EndpointPort)+16u)+32u))return false;
+        if(class_caption(edge,true))std::erase_if(from,[](const auto& port){return port.normal.x==0;});
+        if(class_caption(edge,false))std::erase_if(to,[](const auto& port){return port.normal.x==0;});
+    }
     const bool header_self=diagram.family==RelationFamily::Er&&edge.from==edge.to&&diagram.entities[static_cast<std::size_t>(edge.from)].er_attributes.empty();
     int self_label_room=0;
     if (header_self) {
@@ -2880,12 +3224,24 @@ bool connect_relation(Canvas& canvas,RouteSearch& search,const RelationDiagram& 
     if(from.size()>std::numeric_limits<PortIndex>::max()||to.size()>std::numeric_limits<PortIndex>::max())return false;
     struct Pair { PortIndex a,b;int distance; };
     std::vector<Pair> pairs;
-    if(note_leader){
+    if(er_paint){
+        const auto count=from.size()*to.size();
+        if(!canvas.work.spend(count*sizeof(Pair)+4u*sizeof(std::vector<Pair>)+64u))return false;
+        pairs.reserve(count);
+    }
+    if(note_leader||retry_storage){
         const auto count=from.size()*to.size();
         // Backing allocation plus each temporary and retained Pair. Existing
         // per-pair generation visits remain charged below.
         if(!canvas.work.spend(count*(4u*sizeof(Pair)+16u)+4u*sizeof(std::vector<Pair>)+128u))return false;
         pairs.reserve(count);
+    }
+    int er_role_width=0;
+    if(er_paint&&!edge.label.empty()){
+        // The active profile has already validated ASCII and owns generated
+        // newlines. Measure once without allocating per-candidate row views.
+        if(!canvas.work.spend(edge.label.size()*2u+16u))return false;
+        int row=0;for(const char c:edge.label){if(c=='\n')row=0;else{++row;er_role_width=std::max(er_role_width,row);}}
     }
     const auto& a_box=layout.boxes[static_cast<std::size_t>(edge.from)];const auto& b_box=layout.boxes[static_cast<std::size_t>(edge.to)];
     const Point delta{b_box.x+b_box.right()-a_box.x-a_box.right(),b_box.y+b_box.bottom()-a_box.y-a_box.bottom()};
@@ -2924,6 +3280,20 @@ bool connect_relation(Canvas& canvas,RouteSearch& search,const RelationDiagram& 
         }
         if (regions&&(*regions)[static_cast<std::size_t>(canvas.index(p.route))]!=(*regions)[static_cast<std::size_t>(canvas.index(q.route))]) continue;
         int score=std::abs(p.route.x-q.route.x)+std::abs(p.route.y-q.route.y);
+        if(er_paint&&er_role_width){
+            if(!canvas.work.spend(4u*sizeof(int)+16u))return false;
+            // A committed caption bridges width+1 columns without route cells.
+            // Score the two actual shafts, rather than treating that gap as an
+            // ordinary Manhattan path and preferring wasteful same-face loops.
+            int across=q.route.x-p.route.x;
+            const bool flexible=edge.from!=edge.to&&p.normal.x&&
+                (p.normal==q.normal||layout.ranked_peers)&&
+                diagram.entities[static_cast<std::size_t>(edge.from)].er_attributes.empty()&&
+                diagram.entities[static_cast<std::size_t>(edge.to)].er_attributes.empty();
+            if(flexible)across=std::abs(across);
+            else if(q.border.y<p.border.y)across=-across;
+            score=std::abs(p.route.y-q.route.y)+std::abs(across-er_role_width-1);
+        }
         score+=std::abs(p.border.x*2-a_box.x-a_box.right())+std::abs(p.border.y*2-a_box.y-a_box.bottom());
         score+=std::abs(q.border.x*2-b_box.x-b_box.right())+std::abs(q.border.y*2-b_box.y-b_box.bottom());
         if (p.normal.x*delta.x+p.normal.y*delta.y<0) score+=8;
@@ -2941,9 +3311,10 @@ bool connect_relation(Canvas& canvas,RouteSearch& search,const RelationDiagram& 
             if (p.normal!=outside) score+=64;
             if (q.normal!=outside) score+=64;
         }
+        if(er_paint&&!canvas.work.spend(sizeof(Pair)+8u))return false;
         pairs.push_back({static_cast<PortIndex>(a),static_cast<PortIndex>(b),score});
     }
-    if(note_leader){
+    if(note_leader||retry_storage){
         if(pairs.size()>1u){
             if(!canvas.work.spend(pairs.size()*(8u*sizeof(int)+16u)+4u*sizeof(int)+4u*sizeof(std::size_t)+128u))return false;
             int minimum=pairs.front().distance,maximum=minimum;
@@ -2970,7 +3341,13 @@ bool connect_relation(Canvas& canvas,RouteSearch& search,const RelationDiagram& 
             for(const auto& pair:pairs)ordered[next[static_cast<std::size_t>(pair.distance-minimum)]++]=pair;
             pairs.swap(ordered);
         }
-    }else std::ranges::stable_sort(pairs,{},&Pair::distance);
+    }else {
+        if(er_paint){
+            const auto levels=std::bit_width(pairs.size());
+            if(!canvas.work.spend(pairs.size()*(sizeof(Pair)+(levels+1u)*(2u*sizeof(Pair)+4u))+128u))return false;
+        }
+        std::ranges::stable_sort(pairs,{},&Pair::distance);
+    }
     for (const auto pair:pairs) {
         if (!canvas.work.spend()) return false;
         const auto p=from[pair.a],q=to[pair.b];
@@ -2992,8 +3369,19 @@ bool connect_relation(Canvas& canvas,RouteSearch& search,const RelationDiagram& 
             ~CompoundReservationScope(){if(active)search.compound_reservations=before;}
         } compound_reservation_scope{search,search.compound_reservations,search.compound_route!=nullptr};
         if(search.compound_route)search.compound_reservations=&reservations;
-        auto unreserve=[&](Point point){canvas.at(point).blocked=search.compound_route&&search.compound_route->structural(point)!=0;};
-        auto reserve=[&](Point point) { if (point==p.route||point==q.route) return; if (search.free(point)) { canvas.at(point).blocked=true;reservations.push_back(point); } };
+        bool reservation_funded=true;
+        auto unreserve=[&](Point point){
+            if(er_paint&&!canvas.work.spend(sizeof(bool)+8u)){reservation_funded=false;return;}
+            canvas.at(point).blocked=search.compound_route&&search.compound_route->structural(point)!=0;
+        };
+        auto reserve=[&](Point point) {
+            if(er_paint&&!canvas.work.spend(8u)){reservation_funded=false;return;}
+            if (point==p.route||point==q.route) return;
+            if (search.free(point)) {
+                if(er_paint&&(!er_vector_room(reservations,canvas.work)||!canvas.work.spend(sizeof(bool)+8u))){reservation_funded=false;return;}
+                canvas.at(point).blocked=true;reservations.push_back(point);
+            }
+        };
         for (const auto& port:{p,q}) for (int n=1;n<=marker_size(port.marker);++n) reserve({port.border.x+port.normal.x*n,port.border.y+port.normal.y*n});
         if(requirement_forward) {
             // A forward arrow/marker has a straight exterior stem before the
@@ -3004,20 +3392,26 @@ bool connect_relation(Canvas& canvas,RouteSearch& search,const RelationDiagram& 
                 reserve(port.route+side);reserve(port.route-side);
             }
         }
+        if(!reservation_funded)return false;
         if (edge.label.empty()) {
             const auto path=search.path(p.route,q.route);
             for (const auto point:reservations) unreserve(point);
+            if(!reservation_funded)return false;
             if (!path) continue;
             if (!paint_path(canvas,*path,p.route-p.normal,q.route-q.normal,edge.dotted,search.compound_route)||!paint_port(canvas,p,diagram.family==RelationFamily::Er)||!paint_port(canvas,q,diagram.family==RelationFamily::Er)) return false;
+            if(er_paint&&!er_paint->path(*path,p,q))return false;
             return true;
         }
-        if (!search.path(p.route,q.route)) { for (const auto point:reservations) unreserve(point);continue; }
+        // Active ER's two committed label-side paths below prove the complete
+        // connection; avoid allocating and discarding a third route witness.
+        if (!er_paint&&!search.path(p.route,q.route)) { for (const auto point:reservations) unreserve(point);if(!reservation_funded)return false;continue; }
         LabelCursor cursor;
         while (const auto label=label_place(canvas,search,edge,p,q,regions?std::span<const int>(*regions):std::span<const int>{},regions?(*regions)[static_cast<std::size_t>(canvas.index(p.route))]:-1,cursor)) {
             const auto marker_reservations=reservations.size();
             for (int y=label->y-1;y<=label->y+label->h;++y) for (int x=label->x-1;x<=label->x+label->w;++x) {
                 const Point point{x,y};if (point==label->left||point==label->right) continue;reserve(point);
             }
+            if(!reservation_funded)return false;
             bool reverse_label=q.border.y<p.border.y;
             if(diagram.family==RelationFamily::Er&&edge.from!=edge.to&&p.normal.x&&
                (p.normal==q.normal||layout.ranked_peers)&&
@@ -3035,28 +3429,79 @@ bool connect_relation(Canvas& canvas,RouteSearch& search,const RelationDiagram& 
             const Point exit=reverse_label?label->left:label->right;
             const Point across=reverse_label?Point{-1,0}:Point{1,0};
             const bool reserve_target=q.route!=entrance;
+            if(er_paint&&reserve_target&&!canvas.work.spend(2u*sizeof(bool)+16u))return false;
             if (reserve_target) canvas.at(q.route).blocked=true;
             auto left=search.path(p.route,entrance);
             if (reserve_target) canvas.at(q.route).blocked=false;
-            if (left) for (const auto point:*left) { canvas.at(point).blocked=true;reservations.push_back(point); }
+            if (left) for (const auto point:*left) {
+                if(er_paint&&(!er_vector_room(reservations,canvas.work)||!canvas.work.spend(sizeof(bool)+8u)))return false;
+                canvas.at(point).blocked=true;reservations.push_back(point);
+            }
             auto right=left?search.path(exit,q.route):std::nullopt;
             for (std::size_t n=marker_reservations;n<reservations.size();++n) unreserve(reservations[n]);
             reservations.resize(marker_reservations);
+            if(!reservation_funded)return false;
             if (!left||!right) continue;
             for (const auto point:reservations) unreserve(point);
+            if(!reservation_funded)return false;
             if (!paint_path(canvas,*left,p.route-p.normal,entrance+across,edge.dotted,search.compound_route)||!paint_path(canvas,*right,exit-across,q.route-q.normal,edge.dotted,search.compound_route)||!canvas.multiline({label->x,label->y},edge.label,label->w)||!paint_port(canvas,p,diagram.family==RelationFamily::Er)||!paint_port(canvas,q,diagram.family==RelationFamily::Er)) return false;
+            if(er_paint&&(!er_paint->path(*left,p,q)||!er_paint->path(*right,p,q)||!er_paint->label(*label)))return false;
             // Labels own their complete compact rectangle, including padding
             // and explicit blank rows, for the rest of this layout.
+            if(er_paint&&!canvas.work.spend(static_cast<std::size_t>((label->h+2)*(label->w+2))*(sizeof(bool)+8u)))return false;
             for (int y=label->y-1;y<=label->y+label->h;++y) for (int x=label->x-1;x<=label->x+label->w;++x) canvas.at({x,y}).blocked=true;
             return true;
         }
         for (const auto point:reservations) unreserve(point);
+        if(!reservation_funded)return false;
     }
     return false;
 }
 
-bool route_scope(Canvas& canvas,const RelationDiagram& diagram,const RelationLayout& layout,int owner) {
-    for (const int child:layout.children[static_cast<std::size_t>(owner+1)]) if (diagram.entities[static_cast<std::size_t>(child)].shape==EntityShape::Group&&!route_scope(canvas,diagram,layout,child)) return false;
+// A failed greedy Class pass may have occupied another caption's clearance.
+// Preserve every successful original plan; retry once from the same measured
+// scene, reusing Canvas and A* backing instead of copying/reparsing the scene.
+// This helper never calls route_scope, so a second failure cannot recurse.
+bool retry_class_caption_scope(Canvas& canvas,RouteSearch& search,const RelationDiagram& diagram,const RelationLayout& layout,int owner,std::vector<int>& edges) {
+    if(diagram.family!=RelationFamily::Class||owner>=0||!layout.class_endpoint_active||
+       layout.class_reciprocal||layout.compound_scope||diagram.class_namespaces||
+       diagram.class_notes||!diagram.notes.empty()||canvas.work.remaining==0)return false;
+    auto& work=canvas.work;
+    if(!work.spend(256u+edges.size()*(4u*sizeof(int)+16u)))return false;
+    // Existing strings have capacity for the one-space default. assign(1,' ')
+    // reuses that backing; pay size/character/bit/flag writes and loop visits.
+    constexpr auto reset_cell=2u*sizeof(std::size_t)+2u*sizeof(unsigned)+sizeof(bool)+7u;
+    // In this flat Class profile every persistent glyph/bit/mask write owns
+    // blocked=true. Failed temporary reservations restore their original blank
+    // cells. Inspect the one flag on all cells; only occupied cells need writes.
+    if(!work.spend(canvas.cells.size()*(sizeof(bool)+sizeof(void*))))return false;
+    for(auto& cell:canvas.cells)if(cell.blocked){
+        if(!work.spend(reset_cell))return false;
+        cell.glyph.assign(1,' ');cell.bits=0;cell.blocked=false;cell.allowed=kRight|kDown|kLeft|kUp;
+    }
+    const bool expanded=diagram.class_hide_empty_members_box==false;
+    for(std::size_t n=0;n<diagram.entities.size();++n){
+        if(!work.spend(2u*sizeof(bool)+4u*sizeof(const StateTextRecord*)+16u)||
+           !draw_entity(canvas,diagram.entities[n],layout.boxes[n],expanded))return false;
+    }
+    std::size_t levels=0;for(auto n=edges.size();n>1u;n=(n+1u)/2u)++levels;
+    // Stable-sort backing, comparisons, moves and label-size reads are paid
+    // only for this failed-plan alternative; no source label is decoded again.
+    if(!work.spend(edges.size()*((levels+1u)*(4u*sizeof(std::size_t)+16u)+2u*sizeof(int))+128u))return false;
+    auto length=[&](int n){const auto& edge=diagram.edges[static_cast<std::size_t>(n)];const auto& a=layout.boxes[static_cast<std::size_t>(edge.from)];const auto& b=layout.boxes[static_cast<std::size_t>(edge.to)];return std::abs(a.x-b.x)+std::abs(a.y-b.y);};
+    std::ranges::stable_sort(edges,[&](int a,int b){
+        const auto first=diagram.edges[static_cast<std::size_t>(a)].label.size();
+        const auto second=diagram.edges[static_cast<std::size_t>(b)].label.size();
+        return first!=second?first>second:length(a)<length(b);
+    });
+    // Each path call already advances its generation. Reuse the existing
+    // distance/parent/stamp arrays with no budget or generation reset.
+    for(const int index:edges)if(!connect_relation(canvas,search,diagram,layout,diagram.edges[static_cast<std::size_t>(index)],true))return false;
+    return true;
+}
+
+bool route_scope(Canvas& canvas,const RelationDiagram& diagram,const RelationLayout& layout,int owner,ErPaint* er_paint=nullptr) {
+    for (const int child:layout.children[static_cast<std::size_t>(owner+1)]) if (diagram.entities[static_cast<std::size_t>(child)].shape==EntityShape::Group&&!route_scope(canvas,diagram,layout,child,er_paint)) return false;
     if (layout.scope_edges[static_cast<std::size_t>(owner+1)].empty()) return true;
     std::optional<ReciprocalPlan> reciprocal;
     if(!reciprocal_plan(diagram,layout,owner,canvas.work,reciprocal))return false;
@@ -3071,27 +3516,39 @@ bool route_scope(Canvas& canvas,const RelationDiagram& diagram,const RelationLay
                 count*(6u*sizeof(int)+32u)+count*levels*(16u*sizeof(int)+32u)+
                 8u*sizeof(RouteSearch)+8u*sizeof(std::vector<int>)+256u))return false;
     }
+    if(er_paint&&!layout.compound_scope&&!canvas.work.spend(
+        canvas.cells.size()*(2u*sizeof(int)+sizeof(unsigned))+4u*sizeof(RouteSearch)+128u))return false;
     RouteSearch search(canvas,layout,owner);
     if(!diagram.state_scope_directions.empty()){
         const auto selected=diagram.state_direction(owner,canvas.work);if(!selected)return false;search.state_scope_direction=*selected;
     }
+    if(er_paint){
+        const auto count=layout.scope_edges[static_cast<std::size_t>(owner+1)].size();
+        if(!canvas.work.spend(count*(3u*sizeof(int)+(std::bit_width(count)+1u)*(2u*sizeof(int)+4u))+128u))return false;
+    }
     auto edges=layout.scope_edges[static_cast<std::size_t>(owner+1)];
     auto length=[&](int n) { const auto& e=diagram.edges[static_cast<std::size_t>(n)];const auto& a=layout.boxes[static_cast<std::size_t>(e.from)];const auto& b=layout.boxes[static_cast<std::size_t>(e.to)];return std::abs(a.x-b.x)+std::abs(a.y-b.y); };
-    std::ranges::stable_sort(edges,[&](int a,int b) { return length(a)<length(b); });
+    if(er_paint&&!canvas.work.spend(4u*sizeof(bool)+8u))return false;
+    if(er_paint&&layout.ranked_peers&&diagram.er_presentation->ranked_topology)
+        std::ranges::stable_sort(edges,[&](int a,int b) { return length(a)>length(b); });
+    else std::ranges::stable_sort(edges,[&](int a,int b) { return length(a)<length(b); });
     for (const int edge:edges) {
         const auto index=static_cast<std::size_t>(edge);
         std::optional<CompoundScopeRoute> compound_route;
         if(layout.compound_scope&&diagram.entities[static_cast<std::size_t>(diagram.edges[index].from)].owner!=diagram.entities[static_cast<std::size_t>(diagram.edges[index].to)].owner){if(!canvas.work.spend(3u*(64u+kGroupLimit)+16u+sizeof(std::array<std::size_t,kGroupLimit>)+sizeof(std::size_t)))return false;if((diagram.family==RelationFamily::State||diagram.family==RelationFamily::Er)&&!canvas.work.spend(3u*sizeof(CompoundScopeRoute)+32u))return false;compound_route.emplace(layout,canvas.work);if(!compound_route->prepare(diagram.edges[index],owner))return false;}
         struct CompoundRouteScope {RouteSearch& search;const CompoundScopeRoute* before;~CompoundRouteScope(){search.compound_route=before;}} compound_route_scope{search,search.compound_route};
         if(compound_route)search.compound_route=&*compound_route;
-        const bool connected=reciprocal?connect_reciprocal_relation(canvas,search,diagram,layout,diagram.edges[index],*reciprocal,index):connect_relation(canvas,search,diagram,layout,diagram.edges[index]);
-        if(!connected)return false;
+        const bool connected=reciprocal?connect_reciprocal_relation(canvas,search,diagram,layout,diagram.edges[index],*reciprocal,index):connect_relation(canvas,search,diagram,layout,diagram.edges[index],false,er_paint);
+        if(!connected){
+            if(!diagram.edges[index].endpoint_texts)return false;
+            return retry_class_caption_scope(canvas,search,diagram,layout,owner,edges);
+        }
     }
     return true;
 }
 } // namespace
 
-std::optional<std::vector<std::string>> relations_layout(std::string_view source,Work& work,bool class_envelope,bool requirement_input) {
+std::optional<LayoutPayload> relations_layout(std::string_view source,Work& work,bool class_envelope,bool requirement_input) {
     // New bool/pointer forwarding and the bounded three-reference local closure
     // are charged even on default ER/State/Class paths, without a Work reset.
     if(!work.spend(8u*sizeof(void*)+8u*sizeof(bool)))return {};
@@ -3114,7 +3571,7 @@ std::optional<std::vector<std::string>> relations_layout(std::string_view source
     if(diagram->family==RelationFamily::Er&&diagram->entities.empty()) {
         // Titled-empty composition has no reviewed complete-scene profile yet.
         if(diagram->diagram_title)return {};
-        return std::vector<std::string>{""};
+        return LayoutPayload{{""},{}};
     }
     // New private active-hint/row-array pointer initialization and destruction.
     if(!work.spend(3u*sizeof(std::unique_ptr<std::array<int,64>>)+sizeof(bool)+alignof(std::unique_ptr<std::array<int,64>>)-1u))return {};
@@ -3144,6 +3601,11 @@ std::optional<std::vector<std::string>> relations_layout(std::string_view source
     if(diagram->diagram_title&&(diagram->diagram_title->size()>static_cast<std::size_t>(kWidthLimit)||layout.canvas_height>kHeightLimit-2))return {};
     if (!work.spend(static_cast<std::size_t>(layout.canvas_width*layout.canvas_height))) return {};
     Canvas canvas(layout.canvas_width,layout.canvas_height,work);
+    std::optional<ErPaint> er_paint;
+    if(diagram->er_presentation){
+        if(!work.spend(4u*sizeof(ErPaint)+128u))return {};
+        er_paint.emplace(canvas);if(!er_paint->prepare(*diagram,layout))return {};
+    }
     if(!work.spend(8u*sizeof(bool)))return {};
     bool expanded=false;
     if(diagram->family==RelationFamily::Class) {
@@ -3197,14 +3659,15 @@ std::optional<std::vector<std::string>> relations_layout(std::string_view source
         if (!draw_box(canvas,box,false)||!canvas.multiline({box.x+1,box.y+1},note.text,width-2)) return {};
         note_boxes.push_back(box);
     }
-    if (!route_scope(canvas,*diagram,layout,-1)) return {};
+    if (!route_scope(canvas,*diagram,layout,-1,er_paint?&*er_paint:nullptr)) return {};
+    if(er_paint)return er_paint->finish(*diagram);
     auto result=canvas.lines();if (result.empty()) return {};
-    if(!diagram->diagram_title)return result;
+    if(!diagram->diagram_title)return LayoutPayload{std::move(result),{}};
     if(result.size()>static_cast<std::size_t>(kHeightLimit-2)||!work.spend(result.size()+diagram->diagram_title->size()+2))return {};
     if(diagram->family==RelationFamily::Class&&!work.spend((result.size()+2u)*2u*sizeof(std::string)+result.size()*2u+diagram->diagram_title->size()*2u+64u))return {};
     std::vector<std::string> titled;titled.reserve(result.size()+2);
     titled.push_back(*diagram->diagram_title);titled.emplace_back();
     for(auto& line:result)titled.push_back(std::move(line));
-    return titled;
+    return LayoutPayload{std::move(titled),{}};
 }
 } // namespace loom::ui::mermaid::detail

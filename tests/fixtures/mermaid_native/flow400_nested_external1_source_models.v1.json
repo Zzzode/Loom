@@ -1,0 +1,86 @@
+{
+  "cohort": {
+    "ordinals": [
+      357
+    ],
+    "records": 1
+  },
+  "formal_credit_before_native_and_official_owned_execution": 0,
+  "qualification": "Source-pinned candidate Model for the nested external-connection original; no drawing credit until Native and Official consumers both pass.",
+  "records": [
+    {
+      "body_bytes": 158,
+      "body_offset_bytes": 371,
+      "body_sha256": "45932d09d8cd7497c7c0670e1a503429127c6ef5f01517d3a4d587e598fad82c",
+      "body_utf8": "flowchart TD\n\n  subgraph Wrapper\n  direction LR\n  subgraph Inner\n  D1 --> D2\n  D2 --> D3\n  end\n  end\n\n  %% External connection to nested subgraph\n  D3 --- E1\n",
+      "case_id": "flow400_nested_external1_357",
+      "fixture": "flowchart/visual-check/issue-4648-nested-subgraph-with-external-connection.mmd",
+      "manifest_global_ordinal": 1018,
+      "model_json": "{\"direction\":\"TD\",\"nodes\":[[\"D1\",{\"id\":\"D1\",\"label\":\"D1\",\"shape\":\"rectangle\"}],[\"D2\",{\"id\":\"D2\",\"label\":\"D2\",\"shape\":\"rectangle\"}],[\"D3\",{\"id\":\"D3\",\"label\":\"D3\",\"shape\":\"rectangle\"}],[\"E1\",{\"id\":\"E1\",\"label\":\"E1\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"D1\",\"target\":\"D2\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"D2\",\"target\":\"D3\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"D3\",\"target\":\"E1\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":false}],\"subgraphs\":[{\"id\":\"Wrapper\",\"label\":\"Wrapper\",\"direction\":\"LR\",\"nodeIds\":[],\"children\":[{\"id\":\"Inner\",\"label\":\"Inner\",\"direction\":\"\",\"nodeIds\":[\"D1\",\"D2\",\"D3\"],\"children\":[]}]}]}",
+      "model_sha256": "bccc470587698a572a1880cef51d654deeececcabfe8dc26f9e0bd91d238574a",
+      "ordinal": 357,
+      "raw_source_utf8": "---\ndescription: >-\n  Regression test for issue #4648: verifies that an edge connecting a node\n  inside a doubly-nested subgraph (Inner, which uses its own LR direction,\n  nested within Wrapper) to a node outside all subgraphs renders correctly\n  without breaking the nested layout.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart TD\n\n  subgraph Wrapper\n  direction LR\n  subgraph Inner\n  D1 --> D2\n  D2 --> D3\n  end\n  end\n\n  %% External connection to nested subgraph\n  D3 --- E1\n",
+      "selection_constraints": {
+        "base_model_is_immutable_null": true,
+        "fixture_path_dispatch": false,
+        "native_and_official_required": true,
+        "source_fallback_credit": 0
+      },
+      "source_bytes": 529,
+      "source_git_blob": "2bfa9e0e828f284b9dea4e7eac7019e139b2fae6",
+      "source_semantic_counts": {
+        "edges": 3,
+        "group_endpoint_edges": 0,
+        "groups": 2,
+        "nested_groups": 1,
+        "nodes": 4
+      },
+      "source_sha256": "403c54cf5f29cc7de0886f4ac363fd8c3229bc3d0d4539023f1a9a15a9a560a8",
+      "source_token_facts": [
+        {
+          "byte_offset": 371,
+          "column_bytes": 1,
+          "line": 13,
+          "token": "flowchart TD"
+        },
+        {
+          "byte_offset": 387,
+          "column_bytes": 3,
+          "line": 15,
+          "token": "subgraph Wrapper"
+        },
+        {
+          "byte_offset": 406,
+          "column_bytes": 3,
+          "line": 16,
+          "token": "direction LR"
+        },
+        {
+          "byte_offset": 421,
+          "column_bytes": 3,
+          "line": 17,
+          "token": "subgraph Inner"
+        },
+        {
+          "byte_offset": 438,
+          "column_bytes": 3,
+          "line": 18,
+          "token": "D1 --> D2"
+        },
+        {
+          "byte_offset": 450,
+          "column_bytes": 3,
+          "line": 19,
+          "token": "D2 --> D3"
+        },
+        {
+          "byte_offset": 519,
+          "column_bytes": 3,
+          "line": 24,
+          "token": "D3 --- E1"
+        }
+      ]
+    }
+  ],
+  "schema": "flow400_nested_external1_source_models/v1"
+}

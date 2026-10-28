@@ -8,6 +8,7 @@ module loom.ui.visual.mermaid;
 
 import std;
 import :detail;
+import loom.ui.foundation.theme_provider;
 
 namespace loom::ui::mermaid {
 namespace {
@@ -142,7 +143,7 @@ enum class Direction { Down, Up, Right, Left };
 enum class Shape {
     Rectangle, Rounded, Decision,
     Stadium, Circle, Subroutine, DoubleCircle, Hexagon, Cylinder, Asymmetric,
-    Trapezoid, TrapezoidAlt, Parallelogram, ParallelogramAlt,
+    Trapezoid, TrapezoidAlt, Parallelogram, ParallelogramAlt, Triangle, Delay, SmallCircle, ForkJoin,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -151,28 +152,32 @@ bool classic_shape(Shape shape) {
     case Shape::Stadium: case Shape::Circle: case Shape::Subroutine: case Shape::DoubleCircle:
     case Shape::Hexagon: case Shape::Cylinder: case Shape::Asymmetric: case Shape::Trapezoid:
     case Shape::TrapezoidAlt: case Shape::Parallelogram: case Shape::ParallelogramAlt:
+    case Shape::Triangle: case Shape::Delay: case Shape::SmallCircle: case Shape::ForkJoin:
         return true;
     case Shape::Rectangle: case Shape::Rounded: case Shape::Decision: return false;
     }
     return false;
 }
 int classic_height(Shape shape) {
-    if (shape == Shape::Circle) return 9;
+    if (shape == Shape::Circle || shape == Shape::SmallCircle) return 9;
     if (shape == Shape::DoubleCircle) return 13;
     if (shape == Shape::Cylinder) return 7;
+    if (shape == Shape::ForkJoin) return 5;
     return 5;
 }
 int classic_min_width(Shape shape) {
     if (shape == Shape::DoubleCircle) return 13;
     if (shape == Shape::Cylinder || shape == Shape::Parallelogram || shape == Shape::ParallelogramAlt) return 11;
+    if (shape == Shape::ForkJoin) return 17;
     return 9;
 }
 bool classic_requires_odd_width(Shape shape) {
     switch (shape) {
-    case Shape::Circle: case Shape::DoubleCircle: case Shape::Hexagon: case Shape::Cylinder:
+    case Shape::Circle: case Shape::SmallCircle: case Shape::DoubleCircle: case Shape::Hexagon: case Shape::Cylinder:
     case Shape::Trapezoid: case Shape::TrapezoidAlt: case Shape::Parallelogram: case Shape::ParallelogramAlt:
+    case Shape::Triangle:
         return true;
-    case Shape::Stadium: case Shape::Subroutine: case Shape::Asymmetric:
+    case Shape::Stadium: case Shape::Subroutine: case Shape::Asymmetric: case Shape::Delay: case Shape::ForkJoin:
     case Shape::Rectangle: case Shape::Rounded: case Shape::Decision: return false;
     }
     return false;
@@ -439,7 +444,12 @@ std::optional<GroupHeader> flow_group_header(Scanner& group) {
     return GroupHeader{std::move(id), std::move(*title)};
 }
 
-std::optional<Shape> flow_shape_data(Scanner& scanner, Work& work) {
+struct FlowShapeData {
+    Shape shape = Shape::Rectangle;
+    std::optional<std::string> label;
+};
+
+std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
     // RFC 0031 E5: this closed fixed-token production is covered by the
     // whole-body flow_parse_prepay fee.
     (void)work;
@@ -452,11 +462,43 @@ std::optional<Shape> flow_shape_data(Scanner& scanner, Work& work) {
     const auto token = scanner.id();
     if (!token) return {};
     scanner.space();
+    Shape shape;
+    if (*token == "rect" || *token == "process" || *token == "proc" ||
+        *token == "rectangle") shape = Shape::Rectangle;
+    else if (*token == "rounded" || *token == "event") shape = Shape::Rounded;
+    else if (*token == "sm-circ" || *token == "small-circle" || *token == "start") shape = Shape::SmallCircle;
+    else if (*token == "diam" || *token == "decision" || *token == "diamond") shape = Shape::Decision;
+    else if (*token == "stadium" || *token == "pill" || *token == "terminal") shape = Shape::Stadium;
+    else if (*token == "db" || *token == "database" || *token == "cylinder" || *token == "cyl") shape = Shape::Cylinder;
+    else if (*token == "fr-rect" || *token == "subproc" || *token == "subprocess" ||
+             *token == "framed-rectangle" || *token == "subroutine") shape = Shape::Subroutine;
+    else if (*token == "hex" || *token == "hexagon" || *token == "prepare") shape = Shape::Hexagon;
+    else if (*token == "lean-l" || *token == "lean-left" || *token == "out-in") shape = Shape::Parallelogram;
+    else if (*token == "lean-r" || *token == "lean-right" || *token == "in-out") shape = Shape::ParallelogramAlt;
+    else if (*token == "trap-b" || *token == "trapezoid-bottom" || *token == "priority") shape = Shape::Trapezoid;
+    else if (*token == "trap-t" || *token == "trapezoid-top" || *token == "manual") shape = Shape::TrapezoidAlt;
+    else if (*token == "dbl-circ" || *token == "double-circle") shape = Shape::DoubleCircle;
+    else if (*token == "extract" || *token == "tri" || *token == "triangle") shape = Shape::Triangle;
+    else if (*token == "delay" || *token == "half-rounded-rectangle") shape = Shape::Delay;
+    else if (*token == "fork" || *token == "join") shape = Shape::ForkJoin;
+    else return {};
+    std::optional<std::string> shape_label;
+    if (scanner.take(",")) {
+        scanner.space();
+        if (!scanner.take("label")) return {};
+        scanner.space();
+        if (!scanner.take(":")) return {};
+        scanner.space();
+        if (scanner.rest.empty() || scanner.rest.front() != '"') return {};
+        const auto end = scanner.rest.find('"', 1u);
+        if (end == std::string_view::npos) return {};
+        shape_label = label(scanner.rest.substr(0u, end + 1u));
+        if (!shape_label) return {};
+        scanner.rest.remove_prefix(end + 1u);
+        scanner.space();
+    }
     if (!scanner.take("}")) return {};
-    if (*token == "rect") return Shape::Rectangle;
-    if (*token == "rounded") return Shape::Rounded;
-    if (*token == "diam") return Shape::Decision;
-    return {};
+    return FlowShapeData{shape, std::move(shape_label)};
 }
 
 bool classic_opener(std::string_view text) {
@@ -519,9 +561,15 @@ std::optional<std::size_t> flow_node_from_id(std::string id, Scanner& scanner, D
     scanner.space();
     if (scanner.rest.empty()) return index;
     if (scanner.rest.starts_with("@{")) {
-        const auto shape = flow_shape_data(scanner, work);
-        if (!shape) return {};
-        graph.vertices[*index].shape = *shape; // Pinned FlowDB shape metadata is last-wins.
+        const auto metadata = flow_shape_data(scanner, work);
+        if (!metadata) return {};
+        auto& node = graph.vertices[*index];
+        node.shape = metadata->shape; // Pinned FlowDB shape metadata is last-wins.
+        if (metadata->label) {
+            if (node.explicit_label && node.text != *metadata->label) return {};
+            node.text = std::move(*metadata->label);
+            node.explicit_label = true;
+        }
         return index;
     }
     if (classic_opener(scanner.rest)) {
@@ -556,9 +604,9 @@ std::optional<std::size_t> flow_node_from_id(std::string id, Scanner& scanner, D
     node.explicit_label = true;
     scanner.space();
     if (scanner.rest.starts_with("@{")) {
-        const auto data_shape = flow_shape_data(scanner, work);
-        if (!data_shape) return {};
-        node.shape = *data_shape; // Metadata follows this vertex declaration and wins.
+        const auto metadata = flow_shape_data(scanner, work);
+        if (!metadata || (metadata->label && *metadata->label != node.text)) return {};
+        node.shape = metadata->shape; // Metadata follows this vertex declaration and wins.
     }
     return index;
 }
@@ -748,7 +796,7 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
         if (value < 0x20 && value != '\n' && value != '\r' && value != '\t') return {};
     }
     Diagram diagram;
-    bool have_header = false;
+    bool have_header = false, default_direction_header = false;
     bool have_statement = false;
     while (!source.empty()) {
         const auto end = source.find('\n');
@@ -783,13 +831,19 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
                 Scanner header{statement};
                 auto kind = header.id();
                 if (!kind || (*kind != "graph" && *kind != "flowchart")) return {};
-                if (header.rest.empty() || (header.rest.front() != ' ' && header.rest.front() != '\t')) return {};
-                header.space();
-                if (header.rest == "TD" || header.rest == "TB") diagram.direction = Direction::Down;
-                else if (header.rest == "BT") diagram.direction = Direction::Up;
-                else if (header.rest == "LR") diagram.direction = Direction::Right;
-                else if (header.rest == "RL") diagram.direction = Direction::Left;
-                else return {};
+                if (header.rest.empty()) {
+                    diagram.direction = Direction::Down;
+                    default_direction_header = true;
+                }
+                else {
+                    if (header.rest.front() != ' ' && header.rest.front() != '\t') return {};
+                    header.space();
+                    if (header.rest == "TD" || header.rest == "TB") diagram.direction = Direction::Down;
+                    else if (header.rest == "BT") diagram.direction = Direction::Up;
+                    else if (header.rest == "LR") diagram.direction = Direction::Right;
+                    else if (header.rest == "RL") diagram.direction = Direction::Left;
+                    else return {};
+                }
                 have_header = true;
                 if (!prepaid) {
                     if (!flow_parse_prepay(original, work, false)) return {};
@@ -802,7 +856,11 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
             }
         }
     }
+    // Mermaid defaults an omitted direction to TB. Keep that newly admitted
+    // header profile closed over group-free diagrams until the group layout
+    // can guarantee whole-scene output for its nested-container cases.
     if (!have_header || !have_statement || !diagram.group_stack.empty() ||
+        (default_direction_header && !diagram.groups.empty()) ||
         (diagram.vertices.empty() && diagram.groups.empty())) return {};
     if (saw_reopen) {
         // RFC 0031 E5: the bounded reopen validation walks are covered by the
@@ -975,7 +1033,12 @@ bool flow_envelope_parse_prepay(std::string_view body, Work& work) {
     return flow_parse_prepay(body, work, true);
 }
 
-std::optional<std::string_view> flow_envelope_body(std::string_view source, Work& work) {
+struct FlowEnvelope {
+    std::string_view body;
+    std::optional<std::string> title;
+};
+
+std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
     // The whole-envelope profile accepts CRLF, never a hidden bare CR.
     for (std::size_t n = 0; n < source.size(); ++n)
@@ -984,9 +1047,12 @@ std::optional<std::string_view> flow_envelope_body(std::string_view source, Work
     if (!envelope || !envelope->has_frontmatter) return {};
     if (envelope->raw_frontmatter.find('\t') != std::string_view::npos) return {};
     enum ConfigBit : unsigned { Layout = 1u, Font = 2u, RootHtml = 4u, Flowchart = 8u,
-                                NestedHtml = 16u, Security = 32u, Log = 64u };
-    bool description = false, description_text = false, config = false;
+                                NestedHtml = 16u, Security = 32u, Log = 64u, MaxWidth = 128u,
+                                TitleTopMargin = 256u, DiagramPadding = 512u };
+    bool description = false, description_text = false, config = false, title = false;
     bool root_html_value = false, nested_html_value = false, log_one = false;
+    bool title_top_margin_zero = false, diagram_padding_zero = false;
+    std::optional<bool> use_max_width;
     unsigned fields = 0;
     const auto mark = [&](unsigned bit) { if (fields & bit) return false; fields |= bit; return true; };
     const auto boolean = [&](std::string_view scalar, unsigned bit, bool& value) {
@@ -1033,6 +1099,15 @@ std::optional<std::string_view> flow_envelope_body(std::string_view source, Work
                 description = true;
                 continue;
             }
+            if (event.path == "title") {
+                if (title || !envelope->title ||
+                    envelope->title->form != detail::EnvelopeScalarForm::Plain ||
+                    envelope->title->text.empty() || envelope->title->text.size() > 256u ||
+                    envelope->title->text.find_first_of("\r\n") != std::string::npos ||
+                    !unicode_text(envelope->title->text)) return {};
+                title = true;
+                continue;
+            }
             if (event.path == "config") {
                 if (config || (description && !description_text)) return {};
                 config = true;
@@ -1069,15 +1144,51 @@ std::optional<std::string_view> flow_envelope_body(std::string_view source, Work
             continue;
         }
         if (event.indent == 4) {
-            if (event.path != "flowchart.htmlLabels") return {};
-            if (!(fields & Flowchart) || !boolean(trim(event.value), NestedHtml, nested_html_value)) return {};
+            if (!(fields & Flowchart)) return {};
+            if (event.path == "flowchart.htmlLabels") {
+                if (!boolean(trim(event.value), NestedHtml, nested_html_value)) return {};
+            } else if (event.path == "flowchart.useMaxWidth") {
+                // This option controls responsive SVG sizing. Terminal rows
+                // use the same intrinsic cell geometry at either value.
+                if (!mark(MaxWidth)) return {};
+                const auto value = trim(event.value);
+                if (value == "true") use_max_width = true;
+                else if (value == "false") use_max_width = false;
+                else return {};
+            } else if (event.path == "flowchart.titleTopMargin") {
+                // A zero margin has no terminal effect when there is no
+                // diagram title, but it must not block the rest of the graph.
+                // Non-zero values remain unsupported because they affect SVG
+                // title placement and have no terminal equivalent.
+                if (!mark(TitleTopMargin) || trim(event.value) != "0") return {};
+                title_top_margin_zero = true;
+            } else if (event.path == "flowchart.diagramPadding") {
+                // SVG viewport padding has no terminal equivalent. Zero is
+                // the exact inert profile and matches the terminal canvas.
+                if (!mark(DiagramPadding) || trim(event.value) != "0") return {};
+                diagram_padding_zero = true;
+            } else {
+                return {};
+            }
             continue;
         }
         return {};
     }
     if ((!description && !config) || (description && !description_text)) return {};
-    if (!config) return envelope->raw_body;
-    const bool legacy_dagre = fields == Layout;
+    if (!config) {
+        if (title) return {};
+        return FlowEnvelope{envelope->raw_body, {}};
+    }
+    const bool legacy_dagre = fields == Layout && !title;
+    const bool dagre_diagram_title = fields == Layout && title;
+    const bool terminal_max_width = fields == (Flowchart | MaxWidth) && use_max_width.has_value();
+    const bool terminal_zero_diagram_padding =
+        (fields == (Flowchart | DiagramPadding) ||
+         fields == (Layout | Flowchart | DiagramPadding)) && diagram_padding_zero;
+    const bool title_top_margin_zero_without_layout =
+        fields == (Flowchart | TitleTopMargin) && title_top_margin_zero && !title;
+    const bool dagre_title_top_margin_zero =
+        fields == (Layout | Flowchart | TitleTopMargin) && title_top_margin_zero && !title;
     const bool courier_only = fields == Font;
     const bool courier_nested_false = fields == (Font | Flowchart | NestedHtml) && !nested_html_value;
     const bool logging_false = fields == (Log | RootHtml) && log_one && !root_html_value;
@@ -1086,9 +1197,56 @@ std::optional<std::string_view> flow_envelope_body(std::string_view source, Work
     const unsigned strict_bits = RootHtml | Flowchart | NestedHtml | Security;
     const bool strict = (fields == strict_bits || fields == (strict_bits | Layout)) &&
         root_html_value && nested_html_value;
-    if (legacy_dagre || (description && (courier_only || courier_nested_false || logging_false || both_false || strict)))
-        return envelope->raw_body;
+    if (legacy_dagre || dagre_diagram_title || terminal_max_width || terminal_zero_diagram_padding ||
+        title_top_margin_zero_without_layout || dagre_title_top_margin_zero ||
+        (description && (courier_only || courier_nested_false || logging_false || both_false || strict)))
+    {
+        FlowEnvelope result{envelope->raw_body, {}};
+        if (title) {
+            const auto& value = envelope->title->text;
+            if (!work.spend(value.size() * 8u + sizeof(std::string) + 128u)) return {};
+            result.title.emplace(value);
+        }
+        return result;
+    }
     return {};
+}
+
+bool prepend_flow_title(std::vector<std::string>& lines, std::string_view title, Work& work) {
+    if (title.empty() || title.size() > 256u || title.find_first_of("\r\n") != std::string_view::npos ||
+        !unicode_text(title) || lines.empty()) return false;
+    const int title_width = ftxui::string_width(std::string(title));
+    if (title_width <= 0 || title_width > kWidthLimit) return false;
+    int graph_width = 0;
+    std::size_t bytes = title.size();
+    for (const auto& line : lines) {
+        const int width = ftxui::string_width(line);
+        if (width < 0 || width > kWidthLimit) return false;
+        graph_width = std::max(graph_width, width);
+        if (line.size() > std::numeric_limits<std::size_t>::max() - bytes) return false;
+        bytes += line.size();
+    }
+    const int width = std::max(graph_width, title_width);
+    if (width > kWidthLimit || lines.size() > static_cast<std::size_t>(kHeightLimit - 2)) return false;
+    if (bytes > (std::numeric_limits<std::size_t>::max() - 4096u) / 8u ||
+        !work.spend(bytes * 8u + (lines.size() + 2u) * (sizeof(std::string) + 64u) + 4096u)) return false;
+    std::vector<std::string> titled;
+    titled.reserve(lines.size() + 2u);
+    const int title_left = (width - title_width) / 2;
+    titled.emplace_back(static_cast<std::size_t>(title_left), ' ');
+    titled.back().append(title);
+    titled.back().append(static_cast<std::size_t>(width - title_left - title_width), ' ');
+    titled.emplace_back(static_cast<std::size_t>(width), ' ');
+    for (auto& line : lines) {
+        const int line_width = ftxui::string_width(line);
+        const int left = (width - line_width) / 2;
+        std::string centered(static_cast<std::size_t>(left), ' ');
+        centered.append(line);
+        centered.append(static_cast<std::size_t>(width - left - line_width), ' ');
+        titled.push_back(std::move(centered));
+    }
+    lines = std::move(titled);
+    return true;
 }
 
 struct Box { int x; int y; int width; int height = 5; };
@@ -1101,6 +1259,24 @@ std::optional<Box> node_size(const Vertex& node,Work& work) {
     const int rows=static_cast<int>(label_rows(node.text).size());
     if (classic_shape(node.shape)) {
         if (rows != 1) return {};
+        if (node.shape == Shape::ForkJoin) {
+            const int width = std::max(classic_min_width(node.shape), label_width(node.text) + 8);
+            if (width > kWidthLimit) return {};
+            return Box{0, 0, width, classic_height(node.shape)};
+        }
+        if (node.shape == Shape::SmallCircle) {
+            int diameter = std::max(classic_min_width(node.shape), label_width(node.text) + 4);
+            if ((diameter % 2) == 0) ++diameter;
+            if (diameter > kWidthLimit || diameter > kHeightLimit) return {};
+            return Box{0, 0, diameter, diameter};
+        }
+        if (node.shape == Shape::Triangle) {
+            int height = std::max(5, label_width(node.text) + 2);
+            if ((height % 2) == 0) ++height;
+            const int width = 2 * height - 1;
+            if (width > kWidthLimit || height > kHeightLimit) return {};
+            return Box{0, 0, width, height};
+        }
         const int padding = node.shape == Shape::Subroutine || node.shape == Shape::DoubleCircle ? 8 : 4;
         int width = std::max(classic_min_width(node.shape), label_width(node.text) + padding);
         if (classic_requires_odd_width(node.shape) && (width % 2) == 0) ++width;
@@ -1143,12 +1319,37 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
         return put(l, t, "┌") && put(r, t, "┐") && put(l, b, "└") && put(r, b, "┘");
     };
     switch (shape) {
+    case Shape::ForkJoin:
+        for (int y=t;y<=b;++y) for (int x=l;x<=r;++x)
+            if (!put(x,y,"█")) return false;
+        return put(l,t,"▛") && put(r,t,"▜") && put(l,b,"▙") && put(r,b,"▟");
+    case Shape::Triangle: {
+        if (box.height < 5 || (box.height % 2) == 0 || box.width != 2 * box.height - 1) return false;
+        const int center = box.x + box.width / 2;
+        if (!put(center, t, "△")) return false;
+        for (int y = 1; y < box.height - 1; ++y) {
+            const int inset = box.height - 1 - y;
+            if (!put(l + inset, t + y, "╱") || !put(r - inset, t + y, "╲")) return false;
+        }
+        if (!put(l, b, "╱") || !put(r, b, "╲")) return false;
+        for (int x = l + 1; x < r; ++x) if (!put(x, b, "─")) return false;
+        return true;
+    }
+    case Shape::Delay:
+        if (!put(l, t, "┌") || !put(r - 2, t, "─") ||
+            !put(l, t + 1, "│") || !put(r - 1, t + 1, "╮") ||
+            !put(l, t + 2, "│") || !put(r, t + 2, ")") ||
+            !put(l, t + 3, "│") || !put(r - 1, t + 3, "╯") ||
+            !put(l, b, "└") || !put(r - 2, b, "─")) return false;
+        for (int x = l + 1; x < r - 2; ++x)
+            if (!put(x, t, "─") || !put(x, b, "─")) return false;
+        return true;
     case Shape::Stadium:
         if (!put(l + 1, t, "╭") || !put(r - 1, t, "╮") || !put(l + 1, b, "╰") || !put(r - 1, b, "╯")) return false;
         for (int x = l + 2; x < r - 1; ++x) if (!put(x, t, "─") || !put(x, b, "─")) return false;
         for (int y = t + 1; y < b; ++y) if (!put(l, y, "(") || !put(r, y, ")")) return false;
         return true;
-    case Shape::Circle: return classic_ring(canvas, l, t, r, b);
+    case Shape::Circle: case Shape::SmallCircle: return classic_ring(canvas, l, t, r, b);
     case Shape::DoubleCircle:
         return classic_ring(canvas, l, t, r, b) && classic_ring(canvas, l + 2, t + 2, r - 2, b - 2);
     case Shape::Subroutine:
@@ -1393,12 +1594,16 @@ private:
         if (glyph == " ") return " ";
         if (glyph == "─") return "-";
         if (glyph == "│") return "|";
+        if (glyph == "╱") return "/";
+        if (glyph == "╲") return "\\";
+        if (glyph == "△") return "^";
         if (glyph == "┌" || glyph == "┐" || glyph == "└" || glyph == "┘" || glyph == "┬" ||
             glyph == "┤" || glyph == "┴" || glyph == "├" || glyph == "┼") return "+";
         if (glyph == "▶") return ">";
         if (glyph == "◀") return "<";
         if (glyph == "▼") return "v";
         if (glyph == "▲") return "^";
+        if (glyph == "█" || glyph == "▛" || glyph == "▜" || glyph == "▙" || glyph == "▟") return "#";
         return {};
     }
 
@@ -1748,7 +1953,10 @@ std::vector<Port> ports(const Box& box, Shape shape, Point target) {
     if (classic_shape(shape)) {
         const int middle_x = box.x + box.width / 2;
         const int middle_y = box.y + box.height / 2;
-        if (shape == Shape::Asymmetric) {
+        if (shape == Shape::Triangle) {
+            add({middle_x, box.y}, {0, -1});
+            add({middle_x, box.y + box.height - 1}, {0, 1});
+        } else if (shape == Shape::Asymmetric) {
             add({box.x, middle_y}, {-1, 0});
             add({box.x + box.width - 1, middle_y}, {1, 0});
         } else {
@@ -2223,6 +2431,20 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
         const auto& to = target_box.box;
         auto sources = ports(from, source_box.shape, {to.x + to.width / 2, to.y + to.height / 2});
         auto targets = ports(to, target_box.shape, {from.x + from.width / 2, from.y + from.height / 2});
+        bool group_source_targets_descendant = false;
+        if (edge.from.kind == EndpointKind::Group && edge.to.kind == EndpointKind::Vertex) {
+            if (edge.from.index >= graph.groups.size() || edge.to.index >= graph.vertices.size()) return false;
+            int owner = graph.vertices[edge.to.index].group;
+            for (std::size_t depth = 0; owner >= 0 && depth < kGroupDepthLimit; ++depth) {
+                if (!work.spend() || static_cast<std::size_t>(owner) >= graph.groups.size()) return false;
+                if (static_cast<std::size_t>(owner) == edge.from.index) {
+                    group_source_targets_descendant = true;
+                    break;
+                }
+                owner = graph.groups[static_cast<std::size_t>(owner)].parent;
+            }
+            if (owner < -1 || (owner >= 0 && !group_source_targets_descendant)) return false;
+        }
         const bool horizontal = graph.direction == Direction::Right || graph.direction == Direction::Left;
         const bool reverse = graph.direction == Direction::Left || graph.direction == Direction::Up;
         const auto advance = horizontal ? to.x - from.x : to.y - from.y;
@@ -2234,6 +2456,10 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
             };
             std::stable_sort(sources.begin(), sources.end(), outside_first);
             std::stable_sort(targets.begin(), targets.end(), outside_first);
+        }
+        if (group_source_targets_descendant) for (auto& source : sources) {
+            source.normal = {-source.normal.x, -source.normal.y};
+            source.outside = source.border + source.normal;
         }
         if (!edge.text && edge.from != edge.to && !edge.arrow_start && edge.arrow_end) {
             auto connection = router.connection(sources, targets, used_ports);
@@ -2321,14 +2547,42 @@ bool ascii_flow_header(std::string_view source) {
         if (separator != ' ' && separator != '\t') return false;
         line.remove_prefix(name.size());
         line = trim(line);
-        return line == "LR";
+        return line == "LR" || line == "TD" || line == "BT";
     };
     return valid(header, "graph") || valid(header, "flowchart");
 }
 
-bool ascii_flow_profile(const Diagram& graph) {
-    if (graph.direction != Direction::Right || !graph.groups.empty() ||
-        graph.vertices.size() != 2u || graph.edges.size() != 1u) return false;
+bool ascii_flow_profile(const Diagram& graph, Work& work) {
+    if (!graph.groups.empty()) return false;
+    // A complete three-node DAG is a chain plus one skip edge. Inspect its
+    // topology independently of vertex/edge declaration order; projection uses
+    // the same already-bounded native layout and literal ownership as LR.
+    if ((graph.direction == Direction::Down || graph.direction == Direction::Up) &&
+        graph.vertices.size() == 3u && graph.edges.size() == 3u) {
+        // Prepay the fixed three-vertex/three-edge topology check. The existing
+        // LR profile keeps its original budget accounting exactly.
+        if (!work.spend(512u)) return false;
+        std::array<bool, 9> seen{};
+        std::array<int, 3> incoming{};
+        for (const auto& vertex : graph.vertices)
+            if (vertex.shape != Shape::Rectangle || vertex.text.empty() ||
+                vertex.text.find('\n') != std::string::npos) return false;
+        for (const auto& edge : graph.edges) {
+            if (edge.from.kind != EndpointKind::Vertex || edge.to.kind != EndpointKind::Vertex ||
+                edge.from.index >= 3u || edge.to.index >= 3u || edge.from == edge.to ||
+                edge.text.has_value() || edge.stroke != Stroke::Solid ||
+                edge.arrow_start || !edge.arrow_end || edge.minimum_length != 1) return false;
+            const auto pair = edge.from.index * 3u + edge.to.index;
+            // Reject either orientation of a repeated unordered pair.
+            if (seen[pair] || seen[edge.to.index * 3u + edge.from.index]) return false;
+            seen[pair] = true;
+            ++incoming[edge.to.index];
+        }
+        std::ranges::sort(incoming);
+        return incoming == std::array<int, 3>{{0, 1, 2}};
+    }
+    if (graph.direction != Direction::Right || graph.vertices.size() != 2u ||
+        graph.edges.size() != 1u) return false;
     for (const auto& vertex : graph.vertices)
         if (vertex.shape != Shape::Rectangle || !vertex.explicit_label || vertex.text.empty()) return false;
     const auto& edge = graph.edges.front();
@@ -2340,7 +2594,7 @@ bool ascii_flow_profile(const Diagram& graph) {
 std::optional<detail::FlowAsciiRows> ascii_flow_rows(std::string_view source, Work& work) {
     if (!ascii_flow_header(source)) return {};
     const auto graph = parse(source, work);
-    if (!graph || !ascii_flow_profile(*graph)) return {};
+    if (!graph || !ascii_flow_profile(*graph, work)) return {};
     FlowTextCollector collector{work};
     auto native = flow_layout(*graph, work, &collector);
     auto ascii = collector.take_ascii_rows();
@@ -2422,11 +2676,11 @@ public:
     void Render(ftxui::Screen& screen) override { children_[diagram_ ? 0 : 1]->Render(screen); }
 };
 
-std::optional<ftxui::Element> finish_mermaid(std::optional<std::vector<std::string>> lines, ftxui::Element fallback) {
-    if (!lines || lines->empty()) return {};
+std::optional<ftxui::Element> finish_legacy_rows(std::vector<std::string> lines, ftxui::Element fallback) {
+    if (lines.empty()) return {};
     int width = 0;
     ftxui::Elements rows;
-    for (auto& line : *lines) {
+    for (auto& line : lines) {
         width = std::max(width, ftxui::string_width(line));
         rows.push_back(ftxui::text(std::move(line)));
     }
@@ -2473,6 +2727,8 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
         remaining.remove_prefix(end + 1);
     }
     bool sequence = false, er = false, gitgraph = false, state = false;
+    bool mindmap = header == "mindmap";
+    bool block_input = header == "block" || header == "block-beta";
     if (header == "---") {
         has_frontmatter_peek = true;
         auto peek = remaining;
@@ -2504,6 +2760,8 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             gitgraph = line.starts_with("gitGraph") &&
                        (line.size() == 8u || line[8] == ' ' || line[8] == '\t' || line[8] == ':');
             state = line == "stateDiagram-v2" || line == "stateDiagram";
+            mindmap = line == "mindmap";
+            block_input = line == "block" || line == "block-beta";
             if (line.starts_with("classDiagram")) {
                 class_peek = class_prefix_header(line);
             }
@@ -2557,7 +2815,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
         header.starts_with("stateDiagram") || header_requirement ||
         er || class_flag || requirement || state;
     if (!relations_owner) {
-        decision.family = MermaidProbeFamily::Charts;
+        decision.family = block_input ? MermaidProbeFamily::Block : mindmap ? MermaidProbeFamily::Mindmap : MermaidProbeFamily::Charts;
         return decision;
     }
     if (header_requirement || requirement)
@@ -2577,21 +2835,24 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
 // RFC 0031 E6b: layout-only seam. This is the exact pre-E6b dispatch body
 // of the two-argument render_mermaid, plus the explicit-ASCII routing of
 // the three-argument entry point; it owns a fresh Work budget per call and
-// returns immutable rows (nullopt = whole-source rejection).
-std::optional<std::vector<std::string>> detail::layout_mermaid_rows(
-    std::string_view source, bool use_ascii) {
+// returns immutable rows/optional roles (nullopt = whole-source rejection).
+namespace {
+std::optional<detail::LayoutPayload> layout_payload_unchecked(
+    std::string_view source, bool use_ascii, detail::Work& work) {
+    using namespace detail;
     if (source.empty() || source.size() > kSourceLimit) return {};
-    Work work;
     if (use_ascii) {
         // An explicit bare Flow header is owned by the closed ASCII Flow
         // profile. Rejected Flow never falls through to GitGraph as a
         // label-like foreign input.
         if (ascii_flow_header(source)) {
             auto rows = detail::flow_ascii_rows(source, work);
-            return rows ? std::optional<std::vector<std::string>>(std::move(rows->ascii))
+            return rows ? std::optional<LayoutPayload>(LayoutPayload{std::move(rows->ascii), {}})
                         : std::nullopt;
         }
-        return detail::gitgraph_layout(source, work, true);
+        auto rows = detail::gitgraph_layout(source, work, true);
+        if (!rows) return {};
+        return LayoutPayload{std::move(*rows), {}};
     }
     std::optional<std::vector<std::string>> lines;
     if (const auto diagram = parse(source, work)) {
@@ -2605,11 +2866,12 @@ std::optional<std::vector<std::string>> detail::layout_mermaid_rows(
         if (!decision) return {};
         switch (decision->family) {
         case detail::MermaidProbeFamily::Flow: {
-            const auto body = flow_envelope_body(source, work);
-            if (!body || !flow_envelope_parse_prepay(*body, work)) return {};
-            const auto diagram = parse(*body, work, true);
+            const auto envelope = flow_envelope_body(source, work);
+            if (!envelope || !flow_envelope_parse_prepay(envelope->body, work)) return {};
+            const auto diagram = parse(envelope->body, work, true);
             if (!diagram) return {};
             lines = flow_layout(*diagram, work);
+            if (lines && envelope->title && !prepend_flow_title(*lines, *envelope->title, work)) return {};
             break;
         }
         case detail::MermaidProbeFamily::Sequence:
@@ -2622,21 +2884,137 @@ std::optional<std::vector<std::string>> detail::layout_mermaid_rows(
         case detail::MermaidProbeFamily::Er:
         case detail::MermaidProbeFamily::State:
         case detail::MermaidProbeFamily::Requirement:
-            lines = detail::relations_layout(source, work,
+            return detail::relations_layout(source, work,
                 decision->class_envelope, decision->requirement_input);
+        case detail::MermaidProbeFamily::Block:
+            return detail::block_layout(source, work);
+        case detail::MermaidProbeFamily::Mindmap:
+            lines = detail::mindmap_layout(source, work);
             break;
         case detail::MermaidProbeFamily::Charts:
             lines = detail::charts_layout(source, work);
             break;
         }
     }
-    return lines;
+    if (!lines) return {};
+    return LayoutPayload{std::move(*lines), {}};
+}
+
+} // namespace
+
+std::optional<detail::LayoutPayload> detail::layout_mermaid_payload(
+    std::string_view source, bool use_ascii) {
+    Work work;
+    return layout_mermaid_payload(source,use_ascii,work);
+}
+
+std::optional<detail::LayoutPayload> detail::layout_mermaid_payload(
+    std::string_view source, bool use_ascii, Work& work) {
+    auto payload = layout_payload_unchecked(source,use_ascii,work);
+    if (payload && !valid_layout_payload(*payload)) return {};
+    return payload;
+}
+
+bool detail::valid_layout_payload(const LayoutPayload& payload) {
+    if (payload.styles.empty()) return true;
+    if (payload.rows.empty() || payload.rows.size() > kHeightLimit) return false;
+    std::size_t slot = 0, bytes = 0;
+    for (const auto& line : payload.rows) {
+        if (line.size() > kSourceLimit || !unicode_text(line)) return false;
+        bytes += line.size();
+        const int width = ftxui::string_width(line);
+        if (width < 0 || width > kWidthLimit) return false;
+        // Validate without allocating a byte-capacity glyph vector. FTXUI's
+        // scalar width is the same predicate its Utf8ToGlyphs uses; zero-width
+        // scalars extend the previous complete glyph, including a wide tail.
+        // unicode_text above has already checked every scalar's encoding.
+        bool base = false;
+        for (std::size_t byte = 0; byte < line.size();) {
+            const auto lead = static_cast<unsigned char>(line[byte]);
+            const std::size_t length = lead < 0x80 ? 1 : lead < 0xe0 ? 2 : lead < 0xf0 ? 3 : 4;
+            const int cells = ftxui::string_width(line.substr(byte, length));
+            byte += length;
+            if (cells == 0) { if (!base) return false; continue; }
+            if ((cells != 1 && cells != 2) || slot > payload.styles.size() ||
+                static_cast<std::size_t>(cells) > payload.styles.size() - slot) return false;
+            const auto style = payload.styles[slot];
+            if ((style & 0xf800u) != 0 || (style & 31u) > 6 || ((style >> 5) & 31u) > 6 ||
+                (cells == 2 && payload.styles[slot+1] != style)) return false;
+            slot += static_cast<std::size_t>(cells);
+            base = true;
+        }
+    }
+    return slot == payload.styles.size() && slot <= bytes;
+}
+
+std::optional<ftxui::Element> detail::finish_mermaid_payload(
+    std::optional<LayoutPayload> payload, ftxui::Element fallback) {
+    if (!fallback || !payload || payload->rows.empty()) return {};
+    if (payload->styles.empty())
+        return finish_legacy_rows(std::move(payload->rows), std::move(fallback));
+    // This private finish only receives admitted payloads from the single
+    // layout kernel or immutable exact-key cache. Do not revalidate/relayout.
+    // Resolve semantic roles exactly once per fresh Element; immutable cache
+    // entries contain neither this palette nor an Element/view into its data.
+    const auto active = loom::ui::design::theme::current_theme();
+    const auto& p = *active.palette;
+    // Role 0 inherits below; slot 0 is an unused palette-only placeholder.
+    const std::array<ftxui::Color,7> fg{p.text,p.text,p.danger,p.warning,p.success,p.info,p.accent_purple};
+    const std::array<ftxui::Color,7> bg{p.background,p.surface_tint_2,p.danger_tint_bg,p.warning_tint_bg,p.success_tint_bg,p.info_tint_bg,p.surface_tint_4};
+    int width = 0;
+    std::size_t slot = 0;
+    ftxui::Elements rows;
+    rows.reserve(payload->rows.size());
+    for (const auto& line : payload->rows) {
+        width = std::max(width, ftxui::string_width(line));
+        ftxui::Elements runs;
+        std::string run;
+        std::uint16_t code = 0;
+        const auto flush = [&] {
+            if (run.empty()) return;
+            auto node = ftxui::text(std::move(run));
+            if (const auto role = code & 31u; role != 0) node = node | ftxui::color(fg[role]);
+            if (const auto role = (code >> 5) & 31u; role != 0) node = node | ftxui::bgcolor(bg[role]);
+            if (code & 1024u) node = node | ftxui::bold;
+            runs.push_back(std::move(node));
+            run.clear();
+        };
+        std::size_t cells = 0;
+        for (std::size_t byte = 0; byte < line.size();) {
+            const auto begin = byte;
+            const auto scalar_length = [&](std::size_t at) -> std::size_t {
+                const auto lead = static_cast<unsigned char>(line[at]);
+                return lead < 0x80 ? 1 : lead < 0xe0 ? 2 : lead < 0xf0 ? 3 : 4;
+            };
+            const auto length = scalar_length(byte);
+            const int occupied = ftxui::string_width(line.substr(byte,length));
+            byte += length;
+            // Group every zero-width continuation with its base. This retains
+            // wide+combining tails as exact original bytes, with no temporary
+            // byte-capacity Utf8ToGlyphs vector during fresh-node assembly.
+            while (byte < line.size()) {
+                const auto tail = scalar_length(byte);
+                if (ftxui::string_width(line.substr(byte,tail)) != 0) break;
+                byte += tail;
+            }
+            const auto next = payload->styles[slot+cells];
+            if (!run.empty() && code != next) flush();
+            code = next;
+            run.append(line,begin,byte-begin);
+            cells += static_cast<std::size_t>(occupied);
+        }
+        flush();
+        slot += cells;
+        // An empty annotation separator still owns one physical row.
+        rows.push_back(runs.empty() ? ftxui::text("") : ftxui::hbox(std::move(runs)));
+    }
+    return std::make_shared<MermaidNode>(ftxui::vbox(std::move(rows)), std::move(fallback), width);
 }
 
 std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Element fallback) {
     if (!fallback) return {};
     // RFC 0031 E6b: layout seam + fresh-node finish.
-    return finish_mermaid(detail::layout_mermaid_rows(source, false), std::move(fallback));
+    return detail::finish_mermaid_payload(detail::layout_mermaid_payload(source, false), std::move(fallback));
 }
 
 // The existing two-argument entrypoint owns the default dispatch. Explicit
@@ -2644,17 +3022,7 @@ std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Ele
 std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Element fallback, bool use_ascii) {
     if (!fallback) return {};
     if (!use_ascii) return render_mermaid(source, std::move(fallback));
-    return finish_mermaid(detail::layout_mermaid_rows(source, true), std::move(fallback));
-}
-
-// RFC 0031 E6b: cached path. Rows come from the per-instance cache (which
-// calls the detail seam on a miss); the node is always freshly built here,
-// so a cached success never bypasses the finish path and width flips remain
-// per-node state.
-std::optional<ftxui::Element> LayoutRowsCache::render(
-    std::string_view source, bool use_ascii, ftxui::Element fallback) {
-    if (!fallback) return {};
-    return finish_mermaid(get_or_layout(source, use_ascii), std::move(fallback));
+    return detail::finish_mermaid_payload(detail::layout_mermaid_payload(source, true), std::move(fallback));
 }
 
 } // namespace loom::ui::mermaid

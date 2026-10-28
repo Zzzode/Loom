@@ -3,152 +3,12 @@
   "description": "RFC 0031 E6c reviewed ledger of mandatory-completion capability gaps still open in the native terminal Mermaid renderer. Generated from serialized report mandatory_gaps arrays, independently audited row by row, then frozen by byte size and SHA-256 in tests/support/mermaid_gap_roster.hpp. Renderer output is not expectation evidence: every change here requires ledger review.",
   "review": {
     "status": "reviewed",
-    "date": "2026-10-24",
+    "date": "2026-10-27",
     "phase": "RFC 0031 E6c",
-    "note": "Every row audited against its converted reporter, report and pinned authority source: exact error-message mapping for official_matrix, frozen ids/outcomes for the ten id/name/ordinal-keyed gates, counts reconciled with strict EXPECT pins."
+    "note": "Regenerated from current gate reports: 315 aggregate rows, including 78 Official Matrix gaps. Flow400 ordinals40/41 have source-bound Native and Official five-frame geometry and mutation checks; body-diagnostic and other gate rows remain independent."
   },
   "gates": {
     "official_matrix": [
-      {
-        "fixture": "class-diagram/nightly-check/2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality-2.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/nightly-check/dagre/dagre-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/nightly-check/dagre/dagre-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/hd-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/hd-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/pr-check/2-should-render-a-simple-class-diagrams-with-cardinality-3.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-dark-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-color-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-color-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-dark-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-color-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-color-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
       {
         "fixture": "class-diagram/visual-check/dark-theme.mmd",
         "track": "original",
@@ -298,13 +158,6 @@
       },
       {
         "fixture": "flowchart/nightly-check/dagre/4-dagre-length-of-edges.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "flowchart/nightly-check/dagre/4-dagre-length-of-edges.mmd",
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
@@ -346,6 +199,13 @@
         ]
       },
       {
+        "fixture": "flowchart/nightly-check/dagre/6088-2-should-handle-diamond-shape-intersections.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
+        ]
+      },
+      {
         "fixture": "flowchart/nightly-check/dagre/6088-6-should-handle-diamond-shape-intersections.mmd",
         "track": "body_diagnostic",
         "gaps": [
@@ -371,6 +231,13 @@
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/dagre/sub-graphs.mmd",
+        "track": "original",
+        "gaps": [
+          "flow_whole_null_unmet"
         ]
       },
       {
@@ -438,6 +305,20 @@
       },
       {
         "fixture": "flowchart/nightly-check/redux-color-subgraphs/13-should-render-subgraphs-subgraph-containers.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/shape-alias/02-all-event-rounded-should-render-same-shape.mmd",
+        "track": "body_diagnostic",
+        "gaps": [
+          "ordinary_source_fallback_expected"
+        ]
+      },
+      {
+        "fixture": "flowchart/nightly-check/shape-alias/06-all-diam-decision-diamond-should-render-same-shape.mmd",
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
@@ -595,13 +476,6 @@
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
-        ]
-      },
-      {
-        "fixture": "flowchart/visual-check/issue-4648-nested-subgraph-with-external-connection.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
         ]
       },
       {
@@ -990,10 +864,6 @@
         "outcome": "remaining_whole_source_or_native_protocol_pending"
       },
       {
-        "id": "merman/5974d9abfc8f91652b9b",
-        "outcome": "complete_source_positive_unmet"
-      },
-      {
         "id": "merman/5afda0e9e5d4408438f8",
         "outcome": "remaining_whole_source_or_native_protocol_pending"
       },
@@ -1120,10 +990,6 @@
       {
         "id": "merman/a1aa7f03fd18eb73792c",
         "outcome": "remaining_whole_source_or_native_protocol_pending"
-      },
-      {
-        "id": "merman/a254b69141639fa8b045",
-        "outcome": "complete_source_positive_unmet"
       },
       {
         "id": "merman/a49bee4b33a1079e71de",
@@ -1396,18 +1262,6 @@
         "outcome": "whole_source_semantic_profile_pending"
       },
       {
-        "fixture": "class-diagram/nightly-check/2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality-2.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
         "fixture": "class-diagram/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link-2.mmd",
         "outcome": "whole_source_semantic_profile_pending"
       },
@@ -1434,14 +1288,6 @@
       {
         "fixture": "class-diagram/nightly-check/dagre/dagre-15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd",
         "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/dagre/dagre-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/dagre/dagre-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
       },
       {
         "fixture": "class-diagram/nightly-check/dagre/dagre-9-should-render-a-simple-class-diagram-with-clickable-link.mmd",
@@ -1486,14 +1332,6 @@
       {
         "fixture": "class-diagram/nightly-check/handdrawn/hd-15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd",
         "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/hd-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/hd-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
       },
       {
         "fixture": "class-diagram/nightly-check/handdrawn/hd-9-should-render-a-simple-class-diagram-with-clickable-link.mmd",
@@ -1552,58 +1390,6 @@
         "outcome": "whole_source_semantic_profile_pending"
       },
       {
-        "fixture": "class-diagram/pr-check/2-should-render-a-simple-class-diagrams-with-cardinality-3.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-dark-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-color-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-color-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-dark-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-color-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-color-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
         "fixture": "class-diagram/visual-check/dark-theme.mmd",
         "outcome": "whole_source_semantic_profile_pending"
       },
@@ -1645,14 +1431,6 @@
       }
     ],
     "class_endpoint29": [
-      {
-        "id": "merman/5974d9abfc8f91652b9b",
-        "outcome": "source_positive_unmet"
-      },
-      {
-        "id": "merman/a254b69141639fa8b045",
-        "outcome": "source_positive_unmet"
-      },
       {
         "id": "merman/c50650cbac88ef419784",
         "outcome": "source_positive_unmet"
@@ -1719,10 +1497,6 @@
     "class_caption_starvation8": [
       {
         "name": "unequal_multiline_and_marker",
-        "outcome": "mandatory_complete_positive_source_unmet"
-      },
-      {
-        "name": "foreign_owner_keeps_caption",
         "outcome": "mandatory_complete_positive_source_unmet"
       }
     ],

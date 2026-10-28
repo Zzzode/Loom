@@ -113,9 +113,11 @@ struct Rect {
 enum class Shape : std::uint8_t {
     Rectangle, Rounded, Decision,
     Stadium, Circle, Subroutine, DoubleCircle, Hexagon, Cylinder, Asymmetric,
-    Trapezoid, TrapezoidAlt, Parallelogram, ParallelogramAlt,
+    Trapezoid, TrapezoidAlt, Parallelogram, ParallelogramAlt, Triangle, Delay, SmallCircle, ForkJoin,
 };
+inline int classic_small_circle_diameter(std::string_view label);
 struct ShapeFrame;
+struct Model;
 inline bool classic_shape(Shape shape);
 inline bool classic_boundary(const ShapeFrame& frame,Point point);
 inline bool classic_interior(const ShapeFrame& frame,Point point);
@@ -126,7 +128,7 @@ inline bool classic_decorative_frame(const ShapeFrame& child,const ShapeFrame& e
 inline bool classic_legal_port(const ShapeFrame& frame,Point point,int outward);
 inline bool classic_accepts_port(const Grid& grid,const ShapeFrame& frame,Point point,int outward);
 inline int classic_perimeter_bits(const ShapeFrame& frame,Point point);
-inline std::vector<ShapeFrame> classic_closed_frames(const Grid& grid,OracleWork& work);
+inline std::vector<ShapeFrame> classic_closed_frames(const Grid& grid,OracleWork& work,const Model* model=nullptr);
 
 struct ShapeFrame : Rect {
     Shape shape = Shape::Rectangle;
@@ -376,6 +378,10 @@ inline Shape parse_shape(std::string_view wire) {
     if (wire=="trapezoid_alt") return Shape::TrapezoidAlt;
     if (wire=="parallelogram") return Shape::Parallelogram;
     if (wire=="parallelogram_alt") return Shape::ParallelogramAlt;
+    if (wire=="triangle") return Shape::Triangle;
+    if (wire=="delay") return Shape::Delay;
+    if (wire=="small_circle") return Shape::SmallCircle;
+    if (wire=="fork_join") return Shape::ForkJoin;
     throw std::runtime_error("Flow typed Model unknown shape wire token");
 }
 struct Group { std::string id,label,direction; int parent = -1; std::vector<int> nodes; };
@@ -432,11 +438,16 @@ inline Model parse_model(JsonVal value) {
 }
 inline std::vector<int> frame_candidates(const Grid& grid,const std::vector<ShapeFrame>& frames,std::string_view label,Shape shape,OracleWork& work) {
     work.spend(4u*sizeof(int)+256u);
+    const int small_circle_diameter=shape==Shape::SmallCircle
+        ? (work.product(label.size(),2u),classic_small_circle_diameter(label)) : 0;
     const bool excludes_decorative_children=classic_shape(shape);
     if (excludes_decorative_children) work.product(frames.size(),frames.size());
     std::vector<int> result;
     for (std::size_t n = 0; n < frames.size(); ++n) {
         if (frames[n].shape!=shape) continue;
+        if (shape==Shape::SmallCircle &&
+            (frames[n].right-frames[n].left+1!=small_circle_diameter ||
+             frames[n].bottom-frames[n].top+1!=small_circle_diameter)) continue;
         if (excludes_decorative_children) {
             bool decorative_child=false;
             for (const auto& enclosing:frames) {
@@ -485,7 +496,12 @@ inline bool complete_node_content(const Grid& grid,const ShapeFrame& frame,std::
         for (int y = frame.top+1; complete && y < frame.bottom; ++y) {
             for (int x = frame.left+1; x < frame.right; ++x) {
                 work.spend(); const Point p{x,y}; if (!frame.interior(p)) continue;
-                if (grid.at(p) != " " && !grid.at(p).empty() && !claimed[static_cast<std::size_t>(grid.index(p))]) {
+                const auto cell=grid.at(p);
+                if (frame.shape==Shape::ForkJoin && !claimed[static_cast<std::size_t>(grid.index(p))]) {
+                    if (cell!="█") { complete=false; break; }
+                    continue;
+                }
+                if (cell != " " && !cell.empty() && !claimed[static_cast<std::size_t>(grid.index(p))]) {
                     complete = false; break;
                 }
             }
@@ -498,8 +514,20 @@ struct Trace {
     Point head;
     int target = -1;
     // labels are indexes into the distinct physical LabelRegion inventory.
-    struct Source { int node; std::array<int,3> straight_strokes{}; std::vector<int> labels; bool valid = true; std::vector<int> path{}; Point border{}; int outward = 0; };
+    struct Source {
+        int node;
+        std::array<int,3> straight_strokes{};
+        std::vector<int> labels;
+        bool valid = true;
+        std::vector<int> path{};
+        Point border{};
+        int outward = 0;
+        int target = -1;
+        Point target_border{};
+        int target_outward = 0;
+    };
     std::vector<Source> sources;
+    bool arrowed = true;
 };
 struct LabelRegion { Label block; std::string text; };
 
@@ -515,9 +543,26 @@ struct GroupEndpointProfile {
     std::vector<GroupEndpointEdge> tagged;
     // This is the source statement order, not a convenient ordinary-then-tagged order.
     std::vector<GroupEndpointOrder> source_order;
+    // The legacy profile keeps unique targets. Reviewed profiles may opt into a
+    // narrowly bounded number of incoming source edges per typed endpoint.
+    std::size_t max_target_incoming = 1u;
+};
+struct GroupEndpointRouteWitness {
+    std::size_t source_order = 0u;
+    GroupEndpointRef source,target;
+    std::string_view source_id,target_id;
+    Point source_port{},target_port{},arrow_head{};
+    int source_outward = 0,target_outward = 0;
+    std::vector<Point> route_cells;
+};
+struct GroupEndpointGeometryWitness {
+    std::vector<GroupEndpointRouteWitness> routes;
+    std::vector<std::pair<std::string_view,Rect>> frames;
+    std::vector<Rect> labels;
+    int following_row = -1;
 };
 
-inline std::vector<std::string> check_group_endpoint_assignment(const Grid&,const Model&,const GroupEndpointProfile&,const std::vector<ShapeFrame>&,const std::vector<int>&,const std::vector<LabelRegion>&,OracleWork&,const int*);
+inline std::vector<std::string> check_group_endpoint_assignment(const Grid&,const Model&,const GroupEndpointProfile&,const std::vector<ShapeFrame>&,const std::vector<int>&,const std::vector<LabelRegion>&,OracleWork&,const int*,GroupEndpointGeometryWitness* = nullptr);
 
 // The marker matcher is intentionally entered only for a non-null closed
 // LinkProfile.  The legacy target-arrow trace below remains its own branch.
@@ -705,7 +750,7 @@ inline std::vector<std::string> check_linkprofile3_assignment(const Grid& grid,c
 }
 
 inline std::vector<std::string> check_assignment(const Grid& grid,const Model& model,const std::vector<ShapeFrame>& frames,
-                                        const std::vector<int>& assignment,OracleWork& work,const int* following_row = nullptr,const LinkProfile* link_profile = nullptr,const GroupEndpointProfile* group_endpoint_profile = nullptr) {
+                                        const std::vector<int>& assignment,OracleWork& work,const int* following_row = nullptr,const LinkProfile* link_profile = nullptr,const GroupEndpointProfile* group_endpoint_profile = nullptr,GroupEndpointGeometryWitness* group_witness = nullptr) {
     std::vector<std::string> errors;
     const auto node_count = model.nodes.size();
     auto node = [&](int n) -> const ShapeFrame& { return frames.at(static_cast<std::size_t>(assignment.at(static_cast<std::size_t>(n)))); };
@@ -760,7 +805,7 @@ inline std::vector<std::string> check_assignment(const Grid& grid,const Model& m
         for (auto& block:matches) labels.push_back({std::move(block),text});
     }
     if (!errors.empty()) return errors;
-    if(group_endpoint_profile) return check_group_endpoint_assignment(grid,model,*group_endpoint_profile,frames,assignment,labels,work,following_row);
+    if(group_endpoint_profile) return check_group_endpoint_assignment(grid,model,*group_endpoint_profile,frames,assignment,labels,work,following_row,group_witness);
     if(link_profile) return check_linkprofile3_assignment(grid,model,*link_profile,frames,assignment,labels,work,following_row);
     auto bits = [&](Point p) {
         if (!grid.has(p)) return 0;
@@ -865,13 +910,79 @@ inline std::vector<std::string> check_assignment(const Grid& grid,const Model& m
         if (trace.sources.empty()) errors.emplace_back("Arrow has no connected authored source port");
         traces.push_back(std::move(trace));
     }
+    // A closed, arrowless route is admitted only as an unlabeled plain solid
+    // path. Its two node ports are virtual endpoints because bits() hides node
+    // frames. Run this additional pass only for a Model that declares an
+    // arrowless edge; directed-only scenes are already fully checked by the
+    // legacy arrow trace and must not reinterpret unrelated glyph components.
+    const bool has_arrowless_edge = std::ranges::any_of(model.edges, [](const Edge& edge) {
+        return !edge.start && !edge.end;
+    });
+    if (has_arrowless_edge) {
+    struct RoutePort { int node; Point border; int outward; };
+    work.product(grid.cells.size(),sizeof(unsigned char)+sizeof(int)+8u);
+    std::vector<unsigned char> undirected_seen(grid.cells.size());
+    std::vector<int> component; component.reserve(grid.cells.size());
+    std::vector<RoutePort> ports; ports.reserve(3u);
+    for (std::size_t seed=0;seed<grid.cells.size();++seed) {
+        work.spend(); const Point start=grid.point(static_cast<int>(seed));
+        if (undirected_seen[seed] || glyph(grid.at(start)).arrow>=0 || bits(start)==0) continue;
+        component.clear(); ports.clear(); component.push_back(static_cast<int>(seed)); undirected_seen[seed]=1u;
+        bool attached_to_arrow=false,valid_path=true;
+        for (std::size_t cursor=0;cursor<component.size();++cursor) {
+            work.spend(); const Point current=grid.point(component[cursor]);
+            const int actual=bits(current); int used=0,degree=0;
+            if (glyph(grid.at(current)).stroke!=0) valid_path=false;
+            for (std::size_t direction=0;direction<kSteps.size();++direction) {
+                work.spend(); const int arm=kBits[direction]; if (!(actual&arm)) continue;
+                const auto delta=kSteps[direction]; const Point next{current.x+delta.x,current.y+delta.y};
+                if (!grid.has(next)) { valid_path=false; continue; }
+                const int outward=kBits[(direction+2u)%4u]; bool is_port=false;
+                for (std::size_t n=0;n<node_count;++n) {
+                    work.spend();
+                    if (!node(static_cast<int>(n)).accepts_port(grid,next,outward)) continue;
+                    if (ports.size()<3u) ports.push_back({static_cast<int>(n),next,outward});
+                    used|=arm; ++degree; is_port=true; break;
+                }
+                if (is_port) continue;
+                const auto next_glyph=glyph(grid.at(next));
+                if (next_glyph.arrow>=0 && next_glyph.arrow==static_cast<int>(direction)) {
+                    attached_to_arrow=true; used|=arm; continue;
+                }
+                const int reverse=kBits[(direction+2u)%4u];
+                if (!(bits(next)&reverse)) { valid_path=false; continue; }
+                used|=arm; ++degree;
+                const auto next_index=static_cast<std::size_t>(grid.index(next));
+                if (!undirected_seen[next_index]) {
+                    undirected_seen[next_index]=1u; component.push_back(static_cast<int>(next_index));
+                }
+            }
+            if (actual!=used) valid_path=false;
+            if (!attached_to_arrow && degree!=2) valid_path=false;
+        }
+        if (attached_to_arrow) continue;
+        if (!valid_path || ports.size()!=2u || ports[0].node==ports[1].node) {
+            return {"Arrowless route is not one plain solid path between two distinct nodes"};
+        }
+        Trace trace; trace.arrowed=false;
+        work.spend(sizeof(Trace)+sizeof(Trace::Source)+128u);
+        Trace::Source source{ports[0].node,{}, {}};
+        source.target=ports[1].node; source.path=component;
+        source.border=ports[0].border; source.outward=ports[0].outward;
+        source.target_border=ports[1].border; source.target_outward=ports[1].outward;
+        trace.sources.push_back(std::move(source)); traces.push_back(std::move(trace));
+    }
+    }
     if (traces.size() != model.edges.size()) errors.emplace_back("Arrow/semantic edge multiplicity differs");
     if (!errors.empty()) return errors;
     auto matches_edge = [&](const Edge& edge,const Trace& trace,int* witness,int* caption) {
-        if (edge.start || !edge.end || edge.to != trace.target) return false;
+        if (trace.arrowed ? (edge.start || !edge.end || edge.to != trace.target) :
+            (edge.start || edge.end)) return false;
         for (std::size_t source_index = 0; source_index < trace.sources.size(); ++source_index) {
             const auto& source = trace.sources[source_index];
-            if (!source.valid || source.node != edge.from) continue;
+            const bool endpoint_match=trace.arrowed ? (source.node==edge.from) :
+                ((source.node==edge.from&&source.target==edge.to)||(source.node==edge.to&&source.target==edge.from));
+            if (!source.valid || !endpoint_match) continue;
             const auto& strokes = source.straight_strokes;
             if ((edge.style == "solid" && (strokes[1] || strokes[2])) ||
                 (edge.style == "dotted" && (!strokes[1] || strokes[0] || strokes[2])) ||
@@ -904,7 +1015,10 @@ inline std::vector<std::string> check_assignment(const Grid& grid,const Model& m
     };
     if (!match_all(match_all,0)) return {"Glyph connectivity/endpoint/stroke/per-edge-caption facts do not match every edge"};
     for (const auto& trace : traces) for (const auto& source : trace.sources) {
-        if (std::ranges::none_of(model.edges,[&](const Edge& e) { return e.from == source.node && e.to == trace.target; }))
+        if (std::ranges::none_of(model.edges,[&](const Edge& e) {
+            return trace.arrowed ? (e.from==source.node&&e.to==trace.target) :
+                ((e.from==source.node&&e.to==source.target)||(e.from==source.target&&e.to==source.node));
+        }))
             errors.emplace_back("A route junction introduces an un-authored source/target connection");
     }
     // Direction is a rank property, not an assumption that every cycle arrow
@@ -952,16 +1066,22 @@ inline std::vector<std::string> check_assignment(const Grid& grid,const Model& m
         const auto& trace = traces[static_cast<std::size_t>(selected_trace[edge])];
         const auto& source = trace.sources[static_cast<std::size_t>(selected_source[edge])];
         for (const int cell : source.path) { work.spend(); claimed[static_cast<std::size_t>(cell)] = true; }
-        claimed[static_cast<std::size_t>(grid.index(trace.head))] = true;
         port_normals[static_cast<std::size_t>(grid.index(source.border))] |= source.outward;
-        const auto arrow = glyph(grid.at(trace.head)); const auto delta = kSteps[static_cast<std::size_t>(arrow.arrow)];
-        const Point target{trace.head.x+delta.x,trace.head.y+delta.y};
-        port_normals[static_cast<std::size_t>(grid.index(target))] |= kBits[static_cast<std::size_t>((arrow.arrow+2)%4)];
+        if (trace.arrowed) {
+            claimed[static_cast<std::size_t>(grid.index(trace.head))] = true;
+            const auto arrow = glyph(grid.at(trace.head)); const auto delta = kSteps[static_cast<std::size_t>(arrow.arrow)];
+            const Point target{trace.head.x+delta.x,trace.head.y+delta.y};
+            port_normals[static_cast<std::size_t>(grid.index(target))] |= kBits[static_cast<std::size_t>((arrow.arrow+2)%4)];
+        } else port_normals[static_cast<std::size_t>(grid.index(source.target_border))] |= source.target_outward;
     }
     auto claim_frame = [&](const ShapeFrame& frame,bool is_group) {
         for (int y=frame.top;y<=frame.bottom;++y) for (int x=frame.left;x<=frame.right;++x) {
             work.spend(); const Point point{x,y};
-            if (!frame.boundary(point) && !classic_decoration(frame,point)) continue;
+            if (!frame.boundary(point) && !classic_decoration(frame,point)) {
+                if (frame.shape==Shape::ForkJoin && grid.at(point)=="█")
+                    claimed[static_cast<std::size_t>(grid.index(point))]=true;
+                continue;
+            }
             const int perimeter=frame.perimeter_bits(point);
             int allowed=port_normals[static_cast<std::size_t>(grid.index(point))];
             if (is_group && claimed[static_cast<std::size_t>(grid.index(point))]) allowed|=glyph(grid.at(point)).bits&~perimeter;
@@ -1010,7 +1130,7 @@ inline std::vector<std::string> check_assignment(const Grid& grid,const Model& m
     return errors;
 }
 inline std::vector<std::string> validate_impl(const Grid& grid,const Model& model,OracleWork& work,
-                                       std::vector<std::string>* assignment_diagnostics,const int* following_row = nullptr,const LinkProfile* link_profile = nullptr,const GroupEndpointProfile* group_endpoint_profile = nullptr) {
+                                       std::vector<std::string>* assignment_diagnostics,const int* following_row = nullptr,const LinkProfile* link_profile = nullptr,const GroupEndpointProfile* group_endpoint_profile = nullptr,GroupEndpointGeometryWitness* group_witness = nullptr) {
     if (grid.width <= 0 || grid.width > 240 || grid.height <= 0 || grid.height > 1040 ||
         grid.cells.size() != static_cast<std::size_t>(grid.width*grid.height) || model.nodes.size() > 64 ||
         model.edges.size() > 128 || model.groups.size() > 64) return {"Cell oracle bounds exceeded"};
@@ -1055,7 +1175,7 @@ inline std::vector<std::string> validate_impl(const Grid& grid,const Model& mode
     // without a classic token. Only the closed test-private vocabulary pays
     // the separate bounded profile search.
     if (std::ranges::any_of(model.nodes,[](const Node& node) { return classic_shape(node.shape); })) {
-        auto classic=classic_closed_frames(grid,work);
+        auto classic=classic_closed_frames(grid,work,&model);
         work.spend(4u*sizeof(ShapeFrame)+256u);
         if (frames.size()+classic.size()>128u) throw std::runtime_error("Too many typed Flow contour candidates");
         frames.insert(frames.end(),classic.begin(),classic.end());
@@ -1081,7 +1201,7 @@ inline std::vector<std::string> validate_impl(const Grid& grid,const Model& mode
     auto search = [&](auto&& self,std::size_t at) -> bool {
         if (++attempts > 10000) { last = {"Bounded identity matching exhausted"}; return false; }
         if (at == candidates.size()) {
-            auto errors = check_assignment(grid,model,frames,assignment,work,following_row,link_profile,group_endpoint_profile);
+            auto errors = check_assignment(grid,model,frames,assignment,work,following_row,link_profile,group_endpoint_profile,group_witness);
             if (assignment_diagnostics && assignment_diagnostics->size() < 32) {
                 std::string detail;
                 for (std::size_t n = 0; n < assignment.size(); ++n) {
@@ -1169,6 +1289,9 @@ inline std::vector<std::string> flow_linkprofile3_geometry(const Grid& grid,cons
 inline std::vector<std::string> flow_group_endpoint_geometry(const Grid& grid,const Model& model,const GroupEndpointProfile& profile,OracleWork& work,std::string_view token=kSentinel) {
     const int following=flow400_following(grid,work,token);return validate_impl(grid,model,work,nullptr,&following,nullptr,&profile);
 }
+inline std::vector<std::string> flow_group_endpoint_geometry_with_witness(const Grid& grid,const Model& model,const GroupEndpointProfile& profile,OracleWork& work,std::string_view token,GroupEndpointGeometryWitness& witness) {
+    witness={};const int following=flow400_following(grid,work,token);return validate_impl(grid,model,work,nullptr,&following,nullptr,&profile,&witness);
+}
 inline bool flow400_resource(std::string_view message) {
     return message.find("work exhausted")!=std::string_view::npos || message.find("resource")!=std::string_view::npos ||
         message.find("bounds exceeded")!=std::string_view::npos || message.find("Too many candidate")!=std::string_view::npos ||
@@ -1230,7 +1353,7 @@ inline int group_endpoint_direction(Point from,Point to) {
 inline std::vector<std::string> check_group_endpoint_assignment(
     const Grid& grid,const Model& model,const GroupEndpointProfile& profile,
     const std::vector<ShapeFrame>& frames,const std::vector<int>& assignment,
-    const std::vector<LabelRegion>& labels,OracleWork& work,const int* following_row) {
+    const std::vector<LabelRegion>& labels,OracleWork& work,const int* following_row,GroupEndpointGeometryWitness* witness) {
     try {
         const auto node_count=model.nodes.size(),group_count=model.groups.size(),entity_count=node_count+group_count;
         if(node_count>64u || entity_count>128u || model.edges.size()+profile.tagged.size()>128u)
@@ -1287,13 +1410,16 @@ inline std::vector<std::string> check_group_endpoint_assignment(
         }
         if(!std::ranges::all_of(ordinary_seen,[](bool value){return value;}) ||
            !std::ranges::all_of(tagged_seen,[](bool value){return value;})) return {"GroupEndpoint authored source edge order differs"};
-        work.product(total,4u*sizeof(std::size_t)+64u);
-        std::set<std::size_t> targets;
+        if(profile.max_target_incoming==0u||profile.max_target_incoming>2u)
+            return {"GroupEndpoint target multiplicity bound"};
+        work.product(entity_count,sizeof(unsigned)+16u);
+        std::vector<unsigned> targets(entity_count,0u);
         for(const auto& edge:edges) {
             work.spend();
             if(!edge.label.empty() || edge.style!="solid" || edge.start || !edge.end)
                 return {"GroupEndpoint closed edge semantics differs"};
-            if(!targets.insert(entity_index(edge.target)).second)
+            const auto target=entity_index(edge.target);
+            if(++targets[target]>profile.max_target_incoming)
                 return {"GroupEndpoint closed target multiplicity differs"};
         }
 
@@ -1327,7 +1453,8 @@ inline std::vector<std::string> check_group_endpoint_assignment(
         std::vector<int> parents(grid.cells.size(),-2),queue;queue.reserve(grid.cells.size());
         std::vector<std::vector<Route>> candidates(total);for(auto& list:candidates) list.reserve(kCandidatesPerEdge);
         std::size_t candidate_total=0u;
-        auto route_from=[&](const ShapeFrame& source,const ShapeFrame& target,Point head,std::vector<Route>& result)->std::size_t {
+        auto route_from=[&](const ShapeFrame& source,const ShapeFrame& target,Point head,std::vector<Route>& result,
+                            bool group_source_targets_own_child)->std::size_t {
             const auto arrow=glyph(grid.at(head));const int forward=kBits[static_cast<std::size_t>(arrow.arrow)];
             const int backward=kBits[static_cast<std::size_t>((arrow.arrow+2)%4)];
             const auto target_delta=kSteps[static_cast<std::size_t>(arrow.arrow)];
@@ -1345,7 +1472,16 @@ inline std::vector<std::string> check_group_endpoint_assignment(
                     work.spend();const int arm=kBits[direction];if(!(current_bits&arm)) continue;
                     const auto next_delta=kSteps[direction];const Point next{point.x+next_delta.x,point.y+next_delta.y};if(!grid.has(next)) continue;
                     const int outward=kBits[(direction+2u)%4u];
-                    if(source.accepts_port(grid,next,outward)) {
+                    bool source_port=source.accepts_port(grid,next,outward);
+                    if(!source_port&&group_source_targets_own_child&&source.boundary(next)) {
+                        int inward=0;
+                        if(next.y==source.top) inward=D;
+                        else if(next.y==source.bottom) inward=U;
+                        else if(next.x==source.left) inward=R;
+                        else if(next.x==source.right) inward=L;
+                        source_port=inward!=0&&outward==inward&&(glyph(grid.at(next)).bits&inward)!=0;
+                    }
+                    if(source_port) {
                         std::size_t path_size=0u;for(int at=current;at>=0;at=parents[static_cast<std::size_t>(at)]) {work.spend();++path_size;}
                         if(path_size+3u>kRouteCells || result.size()==kCandidatesPerEdge) continue;
                         work.product(path_size+3u,3u*sizeof(int)+32u);
@@ -1387,12 +1523,19 @@ inline std::vector<std::string> check_group_endpoint_assignment(
         };
         for(std::size_t at=0u;at<edges.size();++at) {
             const auto& source=entity(edges[at].source);const auto& target=entity(edges[at].target);
+            bool group_source_targets_own_child=false;
+            if(edges[at].source.kind==GroupEndpointKind::Group&&edges[at].target.kind==GroupEndpointKind::Vertex) {
+                for(int owner=owners[edges[at].target.index];owner>=0;owner=model.groups[static_cast<std::size_t>(owner)].parent) {
+                    work.spend();if(owner==static_cast<int>(edges[at].source.index)) {group_source_targets_own_child=true;break;}
+                }
+            }
             for(const auto head:heads) {
-                work.spend();const auto found=route_from(source,target,head,candidates[at]);
+                work.spend();const auto found=route_from(source,target,head,candidates[at],group_source_targets_own_child);
                 if(candidate_total+found>kCandidateTotal) return {"GroupEndpoint route candidate bound"};
                 candidate_total+=found;
             }
-            if(candidates[at].empty()) return {"GroupEndpoint complete route differs"};
+            if(candidates[at].empty()) return {profile.max_target_incoming>1u?
+                "GroupEndpoint complete route differs edge "+std::to_string(at):"GroupEndpoint complete route differs"};
         }
         work.product(grid.cells.size(),3u*sizeof(bool)+sizeof(int)+32u);work.product(total,sizeof(int)+16u);
         std::vector<bool> occupied(grid.cells.size()),claimed(grid.cells.size());std::vector<int> route_arms(grid.cells.size()),chosen(total,-1);
@@ -1483,6 +1626,7 @@ inline std::vector<std::string> check_group_endpoint_assignment(
                 return true;
             });
             if(direct==matches.end()) throw std::runtime_error("GroupEndpoint entity lacks direct label block");
+            if(witness) {work.spend(sizeof(Rect)+16u);witness->labels.push_back(direct->bounds);}
             claim_label(grid,text,*direct,claimed);
         };
         for(std::size_t node=0u;node<node_count;++node) claim_entity(model.nodes[node].label,entities[node]);
@@ -1497,6 +1641,31 @@ inline std::vector<std::string> check_group_endpoint_assignment(
             if(following_row && y==*following_row) continue;
             for(int x=0;x<grid.width;++x) {work.spend();const auto at=static_cast<std::size_t>(grid.index({x,y}));
                 if(!claimed[at] && grid.at({x,y})!=" " && !grid.at({x,y}).empty()) return {"Unclaimed text/route glyph reveals an extra/misowned/duplicated fact"};}
+        }
+        if(witness) {
+            witness->following_row=following_row?*following_row:-1;
+            work.product(total,sizeof(GroupEndpointRouteWitness)+64u);
+            witness->routes.reserve(total);
+            for(std::size_t edge=0u;edge<total;++edge) {
+                const auto& route=candidates[edge][static_cast<std::size_t>(chosen[edge])];
+                const auto source=edges[edge].source,target=edges[edge].target;
+                const auto endpoint_id=[&](GroupEndpointRef endpoint)->std::string_view {
+                    return endpoint.kind==GroupEndpointKind::Vertex?std::string_view(model.nodes[endpoint.index].id):std::string_view(model.groups[endpoint.index].id);
+                };
+                const auto head=grid.point(route.head),source_port=grid.point(route.source),target_port=grid.point(route.target);
+                const int arrow=glyph(grid.at(head)).arrow;
+                flow400_require(arrow>=0,"GroupEndpoint witness arrow head");
+                GroupEndpointRouteWitness item;item.source_order=edge;item.source=source;item.target=target;
+                item.source_id=endpoint_id(source);item.target_id=endpoint_id(target);item.source_port=source_port;
+                item.target_port=target_port;item.arrow_head=head;item.source_outward=route.source_outward;
+                item.target_outward=kBits[static_cast<std::size_t>((arrow+2)%4)];
+                work.product(route.cells.size(),sizeof(Point)+8u);item.route_cells.reserve(route.cells.size());
+                for(const int cell:route.cells) item.route_cells.push_back(grid.point(cell));
+                witness->routes.push_back(std::move(item));
+            }
+            work.product(entity_count,sizeof(std::pair<std::string_view,Rect>)+16u);witness->frames.reserve(entity_count);
+            for(std::size_t node=0u;node<node_count;++node) witness->frames.emplace_back(model.nodes[node].id,entities[node]);
+            for(std::size_t group=0u;group<group_count;++group) witness->frames.emplace_back(model.groups[group].id,entities[node_count+group]);
         }
         return {};
     } catch(const std::exception& error) { return {error.what()}; }

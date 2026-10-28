@@ -116,8 +116,15 @@ TEST(MermaidProbe, StateFrontmatterResolvesRelationsState) {
 TEST(MermaidProbe, ChartsIsTheFinalFallback) {
     EXPECT_EQ(classify("pie\n\"a\" : 1\n")->family, MermaidProbeFamily::Charts);
     EXPECT_EQ(classify("xychart-beta\nbar [1]\n")->family, MermaidProbeFamily::Charts);
-    EXPECT_EQ(classify("mindmap\n  a\n")->family, MermaidProbeFamily::Charts);
     EXPECT_EQ(classify("random garbage input\n")->family, MermaidProbeFamily::Charts);
+}
+
+TEST(MermaidProbe, MindmapRequiresExactHeaderAndPreservesOldEnumValues) {
+    EXPECT_EQ(classify("mindmap\n  a\n")->family, MermaidProbeFamily::Mindmap);
+    EXPECT_EQ(classify("---\ndescription: tree\n---\nmindmap\nroot\n")->family, MermaidProbeFamily::Mindmap);
+    EXPECT_EQ(classify("mindmapExtra\nroot\n")->family, MermaidProbeFamily::Charts);
+    EXPECT_EQ(static_cast<unsigned>(MermaidProbeFamily::Charts), 7u);
+    EXPECT_FALSE(classify("mindmap\nroot\n", 0).has_value());
 }
 
 TEST(MermaidProbe, MalformedEnvelopeStillClassifiesTextually) {

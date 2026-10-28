@@ -6,6 +6,8 @@ import std;
 import loom.ui.visual.markdown;
 import loom.serdes.json;
 #include "mermaid_flow_group_endpoint15_oracle.hpp"
+#include "mermaid_flow400_group_endpoint_extra7_authority.hpp"
+#include "mermaid_flow_extra7_controls.hpp"
 
 namespace {
 namespace json=loom::utils::json;
@@ -26,6 +28,31 @@ void group_endpoint15_publish_frame(json::JsonMutVal row,std::string_view key,co
     work.product(bytes,48u);work.product(static_cast<std::size_t>(3*grid.height+32),8u);
     work.product(static_cast<std::size_t>(grid.height),3u*sizeof(std::string)+4u*sizeof(json::JsonMutVal)+64u);work.spend(4u*sizeof(json::JsonDoc)+512u);
     auto lines=row.make_arr();for(int y=0;y<grid.height;++y) lines.append(row.make_str(grid.row(y)));row.add(key,lines);
+}
+Grid group_endpoint_extra7_capture(std::string_view source,std::string_view kind="mermaid") {
+    OracleWork work{kFlow400SceneLimit};
+    auto rendered=loom::ui::render_markdown(group_endpoint15_fenced(source,kind));
+    auto element=ftxui::vbox({rendered,ftxui::text(std::string(kSentinel))});element->ComputeRequirement();
+    constexpr int height=64;flow400_require(element->requirement().min_y<=height,"Extra7 control source height");
+    auto grid=capture(element,240,height,&work);static_cast<void>(flow400_following(grid,work));return grid;
+}
+std::string group_endpoint_extra7_grid_digest(const Grid& grid) {
+    std::string bytes=std::to_string(grid.width)+"x"+std::to_string(grid.height)+"\n";
+    for(int y=0;y<grid.height;++y) {bytes+=grid.row(y);bytes+='\n';}
+    return digest(bytes);
+}
+GroupEndpoint15Model group_endpoint_extra7_manual_model(
+    std::string direction,std::vector<Group> groups,std::vector<std::string> target_ids) {
+    GroupEndpoint15Model model;model.base.direction=std::move(direction);
+    for(std::size_t index=0u;index<target_ids.size();++index)
+        model.base.nodes.push_back({target_ids[index],target_ids[index]});
+    model.base.groups=std::move(groups);
+    for(std::size_t index=0u;index<target_ids.size();++index) {
+        model.tagged.push_back({{GroupEndpointKind::Group,"G"},
+            {GroupEndpointKind::Vertex,target_ids[index]},"","solid",false,true,index});
+        model.source_order.push_back({GroupEndpointOrderKind::Tagged,index});
+    }
+    return model;
 }
 TEST(MermaidFlowGroupEndpoint15, ImmutableAuthorityRejectsForgedExactTupleAndWire) {
     auto owned=group_endpoint15_documents();const auto record=owned.asset.root().get("records").at(0u);OracleWork work{kFlow400SceneLimit};group_endpoint15_record(record,work);
@@ -302,6 +329,172 @@ TEST(MermaidFlowGroupEndpoint15, HandControlsCoverTagKindsMembershipAndRouteArmO
     std::size_t good=0u,generic_rejected=0u,declared_rejected=0u;scenes.iter([&](JsonVal scene) {OracleWork work{kFlow400SceneLimit};auto hand=group_endpoint15_hand_model(hand_root,records,scene,work);auto grid=group_endpoint15_hand_grid(scene,work);const auto local=group_endpoint15_hand_controls(scene,hand.model,std::move(grid),work);EXPECT_EQ(local,expected);generic_rejected+=local;EXPECT_NE(work.remaining,0u);++good;});
     std::array<bool,kGroupEndpoint15HandControlSpecs.size()> seen{};controls.iter([&](JsonVal control) {const auto id=flow400_text(control.get("id"));const auto index=static_cast<std::size_t>(std::ranges::find_if(kGroupEndpoint15HandControlSpecs,[&](const auto& spec) {return spec.id==id;})-kGroupEndpoint15HandControlSpecs.begin());ASSERT_LT(index,seen.size());ASSERT_FALSE(seen[index]);seen[index]=true;OracleWork work{kFlow400SceneLimit};declared_rejected+=group_endpoint15_declared_hand_control(hand_root,records,control,work);EXPECT_NE(work.remaining,0u);});
     EXPECT_TRUE(std::ranges::all_of(seen,[](bool value) {return value;}));EXPECT_EQ(good,8u);EXPECT_EQ(generic_rejected,64u);EXPECT_EQ(declared_rejected,8u);
+}
+
+TEST(MermaidFlowGroupEndpointExtra7, SevenPinnedSourceModelsDecodeWithBoundedSourcePositions) {
+    auto documents=group_endpoint_extra7_documents();const auto records=documents.asset.root().get("records");
+    std::size_t visited=0u,tagged=0u,ordinary=0u;
+    records.iter([&](JsonVal record) {
+        OracleWork work{kFlow400SceneLimit};
+        ASSERT_NO_THROW(group_endpoint_extra7_record(record,work));
+        const auto model=group_endpoint_extra7_model(record.get("model"),work);
+        const auto profile=group_endpoint_extra7_profile(model,work);
+        EXPECT_LE(model.tagged.size(),3u);EXPECT_EQ(profile.max_target_incoming,2u);
+        tagged+=model.tagged.size();ordinary+=model.base.edges.size();++visited;
+        EXPECT_NE(work.remaining,0u);
+    });
+    EXPECT_EQ(visited,7u);EXPECT_EQ(tagged,15u);EXPECT_EQ(ordinary,15u);
+}
+
+TEST(MermaidFlowGroupEndpointExtra7, NativeSourcesNeedFivePublishedFramesAndCompleteGeometry) {
+    auto documents=group_endpoint_extra7_documents();auto control_documents=group_endpoint_extra7_control_documents();auto upstream=flow400_documents();
+    const auto records=documents.asset.root().get("records"),fixtures=upstream.manifest.root().get("fixtures");
+    const auto source_controls=control_documents.controls.root();
+    json::JsonMutDoc local_verdict;auto local_cases=local_verdict.array();
+    constexpr std::array<std::string_view,5> names{{"wide_frame","narrow_frame","restored_frame","ordinary_wide_frame","ordinary_narrow_frame"}};
+    std::size_t visited=0u,wide_drawn=0u,restored_drawn=0u,narrow_drawn=0u,narrow_source_fallback=0u;
+    std::size_t wide_errors=0u,restored_errors=0u,narrow_errors=0u,semantic_rejections=0u,physical_rejections=0u,decoder_successes=0u,control_resources=0u;
+    records.iter([&](JsonVal record) {
+        OracleWork work{kFlow400SceneLimit};const auto tuple=group_endpoint_extra7_tuple(record);
+        const auto fixture=group_endpoint15_fixture(fixtures,tuple.fixture);
+        const auto source_path=std::filesystem::path(LOOM_TESTS_DIR)/"fixtures/mermaid_official/cases"/std::string(tuple.fixture);
+        const auto source=flow400_read(source_path);
+        ASSERT_EQ(source,flow400_text(record.get("raw_source_utf8")));
+        ASSERT_EQ(source.size(),flow400_number(fixture.get("bytes")));
+        ASSERT_EQ(digest(source),flow400_text(fixture.get("sha256")));
+        const auto mermaid=loom::ui::render_markdown(group_endpoint15_fenced(source,"mermaid"));
+        const auto ordinary=loom::ui::render_markdown(group_endpoint15_fenced(source,"text"));
+        auto element=ftxui::vbox({mermaid,ftxui::text(std::string(kSentinel))});
+        auto plain=ftxui::vbox({ordinary,ftxui::text(std::string(kSentinel))});element->ComputeRequirement();plain->ComputeRequirement();
+        const int height=std::max({32,element->requirement().min_y+8,plain->requirement().min_y+8});ASSERT_LE(height,1040);
+        json::JsonMutDoc publication;auto published=publication.object();std::array<std::optional<Grid>,5> frames;
+        std::array<std::string,5> frame_hashes{};
+        constexpr std::array<int,5> widths{{240,40,240,240,40}};
+        for(std::size_t index=0u;index<frames.size();++index) {
+            frames[index]=capture(index<3u?element:plain,widths[index],height,&work);
+            group_endpoint15_publish_frame(published,names[index],*frames[index],work);
+            frame_hashes[index]=group_endpoint_extra7_frame_sha256(*frames[index],&work);
+        }
+        ASSERT_EQ(published.size(),5u)<<tuple.fixture;
+        for(const auto& frame:frames) static_cast<void>(flow400_following(*frame,work));
+        ASSERT_TRUE(flow400_same(*frames[0],*frames[2],work))<<tuple.fixture;
+        const bool wide_source=flow400_same(*frames[0],*frames[3],work);
+        const bool narrow_is_source=flow400_same(*frames[1],*frames[4],work);
+        ASSERT_FALSE(wide_source)<<"Source fallback is not a drawing: "<<tuple.fixture;
+
+        group_endpoint_extra7_record(record,work);
+        const auto model=group_endpoint_extra7_model(record.get("model"),work);
+        const auto profile=group_endpoint_extra7_profile(model,work);
+        GroupEndpointGeometryWitness witness;
+        const auto wide=flow_group_endpoint_geometry_with_witness(*frames[0],model.base,profile,work,kSentinel,witness);
+        if(!wide.empty()) ++wide_errors;else ++wide_drawn;
+        EXPECT_TRUE(wide.empty())<<tuple.fixture<<": "<<(wide.empty()?"":wide.front());
+        const auto restored=flow_group_endpoint_geometry(*frames[2],model.base,profile,work,kSentinel);
+        if(!restored.empty()) ++restored_errors;else ++restored_drawn;
+        EXPECT_TRUE(restored.empty())<<tuple.fixture<<": "<<(restored.empty()?"":restored.front());
+        if(!narrow_is_source) {
+            const auto narrow=flow_group_endpoint_geometry(*frames[1],model.base,profile,work,kSentinel);
+            if(!narrow.empty()) ++narrow_errors;else ++narrow_drawn;
+            EXPECT_TRUE(narrow.empty())<<tuple.fixture<<": "<<(narrow.empty()?"":narrow.front());
+        } else ++narrow_source_fallback;
+        const auto control_row=group_endpoint_extra7_control_row(source_controls,tuple);
+        const auto controls=group_endpoint_extra7_run_controls(record,control_row,*frames[0],model,profile,witness,work,"native_raw");
+        semantic_rejections+=controls.semantic_rejections;physical_rejections+=controls.physical_rejections;decoder_successes+=controls.decoder_successes;
+        group_endpoint_extra7_append_case(local_verdict,local_cases,record,frame_hashes,
+            narrow_is_source?"source_fallback":"drawn",controls);
+        EXPECT_NE(work.remaining,0u)<<tuple.fixture;
+        ++visited;
+    });
+    RecordProperty("wide_complete_drawn_sources",static_cast<int>(wide_drawn));
+    RecordProperty("restored_complete_drawn_sources",static_cast<int>(restored_drawn));
+    RecordProperty("narrow_complete_drawn_sources",static_cast<int>(narrow_drawn));
+    RecordProperty("narrow_exact_source_fallbacks",static_cast<int>(narrow_source_fallback));
+    RecordProperty("wide_geometry_errors",static_cast<int>(wide_errors));
+    RecordProperty("restored_geometry_errors",static_cast<int>(restored_errors));
+    RecordProperty("narrow_geometry_errors",static_cast<int>(narrow_errors));
+    RecordProperty("semantic_mutations_rejected",static_cast<int>(semantic_rejections));
+    RecordProperty("physical_mutations_rejected",static_cast<int>(physical_rejections));
+    RecordProperty("control_resource_failures",static_cast<int>(control_resources));
+    EXPECT_EQ(visited,7u);EXPECT_EQ(wide_drawn,7u);EXPECT_EQ(restored_drawn,7u);
+    EXPECT_EQ(narrow_drawn+narrow_source_fallback,7u);
+    EXPECT_EQ(narrow_drawn,3u);EXPECT_EQ(narrow_source_fallback,4u);
+    EXPECT_EQ(wide_errors,0u);EXPECT_EQ(restored_errors,0u);EXPECT_EQ(narrow_errors,0u);
+    EXPECT_EQ(semantic_rejections,35u);EXPECT_EQ(physical_rejections,28u);EXPECT_EQ(decoder_successes,35u);EXPECT_EQ(control_resources,0u);
+    group_endpoint_extra7_finish_verdict(local_verdict,local_cases,"flow400_extra7_native_local_verdict/v1","native_raw",
+        "test_mermaid_flow_semantics","test_mermaid_flow_semantics",visited,visited*5u,visited*5u,
+        semantic_rejections,physical_rejections,control_resources,0u);
+    group_endpoint_extra7_write_atomic(std::filesystem::path(LOOM_MERMAID_REPORT_DIR)/"mermaid-flow400-extra7-native-verdict.json",local_verdict.to_string()+"\n");
+}
+
+TEST(MermaidFlowGroupEndpointExtra7, NonDescendantRouteContractsAndStableDigests) {
+    // Captured before the group-to-descendant route change from implementation
+    // source SHA-256 3ae0b50c629954b8b6ba176cb617044eeea718ba2563d375caa268225cef4cc1
+    // using: ctest --preset debug -R MermaidFlowGroupEndpointExtra7.NonDescendantRouteContractsAndStableDigests.
+    constexpr std::array<std::pair<std::string_view,std::string_view>,3> controls{{
+        {"group_to_external","flowchart TD\nsubgraph G\nA\nend\nG --> B\n"},
+        {"vertex_to_group","flowchart TD\nA\nsubgraph G\nB\nend\nA --> G\n"},
+        {"ordinary_edge","flowchart TD\nA --> B\n"},
+    }};
+    constexpr std::array<std::string_view,3> expected{{
+        "077c3d6c18f8da7f1bf9e22ba304bf779b7900497ea008c745ab5900b2c67e1d",
+        "05ca123e3e918c18559506a46419678086743d2f621f3319da8793de41829f66",
+        "0ecb74155ea54002dd5fb189b7cbcb63a487ee35a68692d5a949356043fcf4f2",
+    }};
+    std::size_t index=0u;
+    for(const auto& [name,source]:controls) {
+        const auto grid=group_endpoint_extra7_capture(source);
+        EXPECT_EQ(group_endpoint_extra7_grid_digest(grid),expected[index])<<name;++index;
+        const auto ordinary=group_endpoint_extra7_capture(source,"text");OracleWork work{kFlow400SceneLimit};
+        EXPECT_FALSE(flow400_same(grid,ordinary,work))<<name<<" unexpectedly remained source fallback";
+    }
+
+    auto external=group_endpoint_extra7_manual_model("TD",{{"G","G","",-1,{0}}},{"B"});
+    external.base.nodes.insert(external.base.nodes.begin(),{"A","A"});
+    external.tagged.front().target.id="B";
+    const auto external_grid=group_endpoint_extra7_capture(controls[0].second);OracleWork external_work{kFlow400SceneLimit};
+    const auto external_errors=group_endpoint15_geometry(external_grid,external,external_work,kSentinel);
+    EXPECT_TRUE(external_errors.empty())<<(external_errors.empty()?"":external_errors.front());
+
+    GroupEndpoint15Model incoming;incoming.base.direction="TD";incoming.base.nodes={{"A","A"},{"B","B"}};
+    incoming.base.groups={{"G","G","",-1,{1}}};
+    incoming.tagged.push_back({{GroupEndpointKind::Vertex,"A"},{GroupEndpointKind::Group,"G"},"","solid",false,true,0u});
+    incoming.source_order.push_back({GroupEndpointOrderKind::Tagged,0u});
+    const auto incoming_grid=group_endpoint_extra7_capture(controls[1].second);OracleWork incoming_work{kFlow400SceneLimit};
+    const auto incoming_errors=group_endpoint15_geometry(incoming_grid,incoming,incoming_work,kSentinel);
+    EXPECT_TRUE(incoming_errors.empty())<<(incoming_errors.empty()?"":incoming_errors.front());
+
+    Model ordinary_model{"TD",{{"A","A"},{"B","B"}},{{0,1,"","solid",false,true}},{}};
+    const auto ordinary_grid=group_endpoint_extra7_capture(controls[2].second);OracleWork ordinary_work{kFlow400SceneLimit};
+    const auto ordinary_errors=flow400_geometry(ordinary_grid,ordinary_model,ordinary_work,kSentinel);
+    EXPECT_TRUE(ordinary_errors.empty())<<(ordinary_errors.empty()?"":ordinary_errors.front());
+}
+
+TEST(MermaidFlowGroupEndpointExtra7, GroupToDescendantRoutesEnterFramesInAllDirections) {
+    constexpr std::array<std::string_view,4> directions{{"TD","BT","LR","RL"}};
+    for(const auto direction:directions) {
+        const auto source="flowchart "+std::string(direction)+"\nsubgraph G\nA\nend\nG --> A\n";
+        auto model=group_endpoint_extra7_manual_model(std::string(direction),{{"G","G","",-1,{0}}},{"A"});
+        const auto grid=group_endpoint_extra7_capture(source);OracleWork work{kFlow400SceneLimit};
+        const auto errors=group_endpoint15_geometry(grid,model,work,kSentinel);
+        EXPECT_TRUE(errors.empty())<<direction<<": "<<(errors.empty()?"":errors.front());
+        EXPECT_NE(work.remaining,0u)<<direction;
+    }
+}
+
+TEST(MermaidFlowGroupEndpointExtra7, GroupToNestedDescendantCrossesIntermediateFrames) {
+    constexpr std::string_view source="flowchart TD\nsubgraph G\nsubgraph H\nA\nend\nend\nG --> A\n";
+    auto model=group_endpoint_extra7_manual_model("TD",{{"G","G","",-1,{}},{"H","H","",0,{0}}},{"A"});
+    const auto grid=group_endpoint_extra7_capture(source);OracleWork work{kFlow400SceneLimit};
+    const auto errors=group_endpoint15_geometry(grid,model,work,kSentinel);
+    EXPECT_TRUE(errors.empty())<<(errors.empty()?"":errors.front());EXPECT_NE(work.remaining,0u);
+}
+
+TEST(MermaidFlowGroupEndpointExtra7, CompetingGroupSourcesUseDistinctPorts) {
+    constexpr std::string_view source="flowchart TD\nsubgraph G\nA\nB\nend\nG --> A\nG --> B\n";
+    auto model=group_endpoint_extra7_manual_model("TD",{{"G","G","",-1,{0,1}}},{"A","B"});
+    const auto grid=group_endpoint_extra7_capture(source);OracleWork work{kFlow400SceneLimit};
+    const auto errors=group_endpoint15_geometry(grid,model,work,kSentinel);
+    EXPECT_TRUE(errors.empty())<<(errors.empty()?"":errors.front());EXPECT_NE(work.remaining,0u);
 }
 
 } // namespace

@@ -15,14 +15,62 @@
     "aggregate_pending_before_classic": 367
   },
   "formal_counts": {
-    "cases": 3,
-    "aggregate_complete_after_all_official_runs": 36,
-    "aggregate_pending_after_all_official_runs": 364,
+    "cases": 6,
+    "aggregate_complete_after_all_official_runs": 39,
+    "aggregate_pending_after_all_official_runs": 361,
     "ultimate_complete_required": 400,
     "ultimate_pending_required": 0,
     "official_credit_before_execution": 0
   },
   "cases": [
+    {
+      "case_id": "original_13_dagre_title_top_margin_zero",
+      "base_authority": {
+        "adaptation": null,
+        "fixture": "flowchart/nightly-check/dagre/1433-dagre-should-render-a-titled-flowchart-with-titletopmargin-set-to-0.mmd",
+        "manifest_global_ordinal": 674,
+        "model_json": null,
+        "model_sha256": null,
+        "oracle_record_sha256": "dc90dd3cf4b663c9e456fe4bcacddc08ffa4d37e7115c4e81e7cfead38f4b669",
+        "ordinal": 13,
+        "source_bytes": 261,
+        "source_git_blob": "7d4464c439a6678102805e2fd462470fc7e4ed47",
+        "source_sha256": "5e7d037d398db20d96c33b0879d9317a116a7c0417fd917fa2fda036b8be3cad"
+      },
+      "source": "---\ndescription:\n  Checks that the flowchart.titleTopMargin configuration option can be set to 0\n  without errors when rendering a minimal dagre flowchart with a single edge.\nconfig:\n  layout: dagre\n  flowchart:\n    titleTopMargin: 0\n---\nflowchart TD\n  A --> B\n",
+      "source_sha256": "5e7d037d398db20d96c33b0879d9317a116a7c0417fd917fa2fda036b8be3cad",
+      "classic_model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"B\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "classic_model_sha256": "fb6c7ecc4c588467cf4d7894a9bb43a23ddcb0d1bda533db9a5b09a8ea105df1",
+      "envelope": {
+        "profile": "description_config_dagre_title_top_margin_zero",
+        "bytes": 238,
+        "sha256": "18e0d87a96f26683f2a23a790a27db7df30f7245d42fc654d85372350c60c6c3",
+        "text": "---\ndescription:\n  Checks that the flowchart.titleTopMargin configuration option can be set to 0\n  without errors when rendering a minimal dagre flowchart with a single edge.\nconfig:\n  layout: dagre\n  flowchart:\n    titleTopMargin: 0\n---\n",
+        "description_form": "plain_multiline",
+        "root_keys": [
+          "description",
+          "config"
+        ],
+        "config": {
+          "layout": "dagre",
+          "flowchart": {
+            "titleTopMargin": 0
+          }
+        },
+        "body_header": "flowchart TD",
+        "body_sha256": "58bea5a915246eeefd532612cca0be9e9125d397aa2ecebf55f5743a5a13be61"
+      },
+      "native_requirement": {
+        "exact_rejections": 4,
+        "mutations": [
+          "A_rectangle_to_circle",
+          "A_label_to_absent",
+          "first_edge_endpoint_to_self",
+          "extra_ink"
+        ]
+      },
+      "formal_status": "unadmitted_design_only"
+    },
     {
       "case_id": "original_244_dagre_subgraphs",
       "base_authority": {
@@ -151,6 +199,103 @@
           "stadium_to_circle",
           "Start_label_to_absent",
           "first_edge_endpoint_to_self",
+          "extra_ink"
+        ]
+      },
+      "formal_status": "unadmitted_design_only"
+    },
+    {
+      "case_id": "original_40_diamond_fanout",
+      "base_authority": {
+        "adaptation": null,
+        "fixture": "flowchart/nightly-check/dagre/6088-5-should-handle-diamond-shape-intersections.mmd",
+        "manifest_global_ordinal": 701,
+        "model_json": null,
+        "model_sha256": null,
+        "oracle_record_sha256": "fa850dadfbb04d245231df13345dd67172df7e50304e7de4b3312c0559b4951e",
+        "ordinal": 40,
+        "source_bytes": 351,
+        "source_git_blob": "ead0aadab4ce526e9dcf0a9f166da96dd523d628",
+        "source_sha256": "d8853653ecbe81f190ac0631ef12dcb77d87f0369568436af1d3e0c5934e55c9"
+      },
+      "source": "---\ndescription:\n  Verifies that a rhombus/diamond-shaped node can fan out to multiple targets in\n  a single statement using the & node-list edge shorthand, with dagre computing\n  correct intersection points on the diamond boundary for both resulting edges.\nconfig:\n  layout: dagre\n  flowchart:\n    titleTopMargin: 0\n---\nflowchart LR\n  A{A} --> B & C\n",
+      "source_sha256": "d8853653ecbe81f190ac0631ef12dcb77d87f0369568436af1d3e0c5934e55c9",
+      "classic_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"diamond\"}],[\"B\",{\"id\":\"B\",\"label\":\"B\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"C\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"A\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[]}",
+      "classic_model_sha256": "8da94f7940e1c7932a123e2fd041e8057a08221930c28251c231d190a8947676",
+      "envelope": {
+        "profile": "description_config_dagre_title_top_margin_zero",
+        "bytes": 321,
+        "sha256": "ef24b3d132c07d24a7d84477a185a56c449ad0aba8244c95223d13213df20cf5",
+        "text": "---\ndescription:\n  Verifies that a rhombus/diamond-shaped node can fan out to multiple targets in\n  a single statement using the & node-list edge shorthand, with dagre computing\n  correct intersection points on the diamond boundary for both resulting edges.\nconfig:\n  layout: dagre\n  flowchart:\n    titleTopMargin: 0\n---\n",
+        "description_form": "plain_multiline",
+        "root_keys": [
+          "description",
+          "config"
+        ],
+        "config": {
+          "layout": "dagre",
+          "flowchart": {
+            "titleTopMargin": 0
+          }
+        },
+        "body_header": "flowchart LR",
+        "body_sha256": "3369b204c1740684cac50124e69a05159bea766b79f82ff1c513fc62fd371666"
+      },
+      "native_requirement": {
+        "exact_rejections": 4,
+        "mutations": [
+          "diamond_to_rectangle",
+          "A_label_to_absent",
+          "fanout_target_to_self",
+          "extra_ink"
+        ]
+      },
+      "formal_status": "unadmitted_design_only"
+    },
+    {
+      "case_id": "original_41_diamond_fanout_in_subgraph",
+      "base_authority": {
+        "adaptation": null,
+        "fixture": "flowchart/nightly-check/dagre/6088-6-should-handle-diamond-shape-intersections.mmd",
+        "manifest_global_ordinal": 702,
+        "model_json": null,
+        "model_sha256": null,
+        "oracle_record_sha256": "c3f6e9a65ea85a1b47321adea1cdc672ed6d098e4d0f46062d3572783ba0c6cb",
+        "ordinal": 41,
+        "source_bytes": 337,
+        "source_git_blob": "3ddb2cf3c5e35c506cd98d38c58af41644867ba7",
+        "source_sha256": "bcde51970fda1914d99c1b4dd679a31de4979b1c104cb5f5b58c5a71c2eae163"
+      },
+      "source": "---\ndescription:\n  Verifies that a diamond-shaped node fanning out to multiple targets via the &\n  edge shorthand still computes correct boundary intersection points when that\n  node is also a member of a subgraph.\nconfig:\n  layout: dagre\n  flowchart:\n    titleTopMargin: 0\n---\nflowchart LR\n  A{A} --> B & C\n  subgraph \"subbe\"\n  A\n  end\n",
+      "source_sha256": "bcde51970fda1914d99c1b4dd679a31de4979b1c104cb5f5b58c5a71c2eae163",
+      "classic_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"A\",\"shape\":\"diamond\"}],[\"B\",{\"id\":\"B\",\"label\":\"B\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"C\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"A\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[{\"id\":\"subbe\",\"label\":\"subbe\",\"direction\":\"\",\"nodeIds\":[\"A\"],\"children\":[]}]}",
+      "classic_model_sha256": "1fecfaf1b9428e6780f3897eeb1894e3767bcb0b302bac9eeb9917d4e0811236",
+      "envelope": {
+        "profile": "description_config_dagre_title_top_margin_zero",
+        "bytes": 278,
+        "sha256": "346f4fb2320a2a6aac7e9c5b97f34f5c3fef770a64b59897922bac89cd66b864",
+        "text": "---\ndescription:\n  Verifies that a diamond-shaped node fanning out to multiple targets via the &\n  edge shorthand still computes correct boundary intersection points when that\n  node is also a member of a subgraph.\nconfig:\n  layout: dagre\n  flowchart:\n    titleTopMargin: 0\n---\n",
+        "description_form": "plain_multiline",
+        "root_keys": [
+          "description",
+          "config"
+        ],
+        "config": {
+          "layout": "dagre",
+          "flowchart": {
+            "titleTopMargin": 0
+          }
+        },
+        "body_header": "flowchart LR",
+        "body_sha256": "6ffab859f76af2ace32b47b110baf225bf7b6aeabcbbbd922ab7e06d90e6263b"
+      },
+      "native_requirement": {
+        "exact_rejections": 5,
+        "mutations": [
+          "diamond_to_rectangle",
+          "A_label_to_absent",
+          "fanout_target_to_self",
+          "subbe_remove_A",
           "extra_ink"
         ]
       },

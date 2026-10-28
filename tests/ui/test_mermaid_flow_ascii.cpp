@@ -405,7 +405,9 @@ void require_projection_mutants(const Grid& unicode, const Grid& ascii, const Mo
                       "ASCII Flow geometry mutation admitted");
     mutate_and_reject([](std::string_view cell) { return cell == "-" || cell == "|"; }, " ",
                       "ASCII Flow path mutation admitted");
-    mutate_and_reject([](std::string_view cell) { return cell == ">"; }, " ",
+    mutate_and_reject([](std::string_view cell) {
+        return cell == ">" || cell == "<" || cell == "v" || cell == "^";
+    }, " ",
                       "ASCII Flow head mutation admitted");
 }
 
@@ -609,4 +611,281 @@ TEST(MermaidFlowAsciiGrid18, DottedAndThickRemainWholeSourceFallbackUntilImpleme
     });
     EXPECT_EQ(styles, (std::set<std::string>{"dotted", "thick"}));
 }
+
+// Complete source functions from Grid18: preserve ASCII options and every
+// declaration-order application rather than replacing them with Unicode cases.
+constexpr std::array<std::string_view, 3> kSkipFunctions{{
+    "graph_routing::flowchart_parser_bt_skip_edge_preserves_dagre_chain_after_vertical_flip",
+    "graph_routing::flowchart_parser_top_down_skip_edge_preserves_dagre_chain_ranks",
+    "graph_routing::flowchart_parser_top_down_skip_edge_routes_for_every_declaration_order"}};
+
+JsonVal bind_skip_function(JsonVal parent, std::size_t index, OracleWork& work) {
+    const auto function = unique_function(parent, kSkipFunctions.at(index), work);
+    const auto record = function.get("source");
+    const auto original = read_exact(upstream_path(LOOM_TESTS_DIR,
+        flow::flow400_text(record.get("upstream_path"))), work);
+    require(digest(original) == flow::flow400_text(record.get("original_file_sha256")),
+            "Skip-edge original file identity");
+    const auto begin = flow::flow400_number(record.get("original_byte_start"));
+    const auto end = flow::flow400_number(record.get("original_byte_end"));
+    require(begin < end && end <= original.size(), "Skip-edge original function range");
+    const auto text = original.substr(begin, end - begin);
+    require(text == flow::flow400_text(record.get("captured_text")) &&
+            text.size() == flow::flow400_number(record.get("captured_bytes")) &&
+            digest(text) == flow::flow400_text(record.get("captured_sha256")),
+            "Skip-edge complete original function identity");
+    require(function.get("options").size() == 1u &&
+            function.get("options").at(0).as_str() == "encoding:ascii" &&
+            text.find("AsciiRenderOptions::ascii()") != std::string::npos,
+            "Skip-edge original ASCII option");
+    const auto helper = unique_helper(parent, "assert_rectangular_char_grid", work);
+    const auto helpers = read_exact(helper_path(LOOM_TESTS_DIR,
+        flow::flow400_text(helper.get("upstream_path"))), work);
+    require(digest(helpers) == flow::flow400_text(helper.get("file_sha256")) &&
+            helpers.find(flow::flow400_text(helper.get("function_text"))) != std::string::npos &&
+            helpers.find(".position(|line| line.contains(needle))") != std::string::npos &&
+            helpers.find(".unwrap_or_else(|| panic!(\"missing {needle:?}") != std::string::npos,
+            "Skip-edge original rectangle and first-line helper semantics");
+    const auto assertions = function.get("direct_assertions");
+    require(assertions.size() == (index == 2u ? 2u : 3u), "Skip-edge complete direct assertion count");
+    std::string sites;
+    assertions.iter([&](JsonVal assertion) {
+        const auto expression = flow::flow400_text(assertion.get("source_text"));
+        const auto offset = text.find(expression);
+        require(digest(expression) == flow::flow400_text(assertion.get("source_sha256")) &&
+                offset != std::string::npos && text.find(expression, offset + 1u) == std::string::npos,
+                "Skip-edge original assertion unique source binding");
+        if (!sites.empty()) sites += ';';
+        sites += std::string(flow::flow400_text(record.get("upstream_path"))) + ":" +
+                 std::to_string(begin + offset) + ":" + std::to_string(begin + offset + expression.size()) +
+                 ":" + std::string(flow::flow400_text(assertion.get("source_sha256")));
+    });
+    ::testing::Test::RecordProperty("upstream_function", std::string(kSkipFunctions.at(index)));
+    ::testing::Test::RecordProperty("upstream_function_sha256", std::string(flow::flow400_text(record.get("captured_sha256"))));
+    ::testing::Test::RecordProperty("original_direct_assertion_sites", index == 2u ? 2 : 3);
+    ::testing::Test::RecordProperty("upstream_assertion_source_sites", sites);
+    return function;
+}
+
+Model skip_model(std::string_view source) {
+    // Source-only closed grammar, independently reconstructed from the three
+    // originals. Neither a production parse result nor rendered rows define it.
+    if (source.ends_with('\n')) source.remove_suffix(1u);
+    const auto lines = flow::split_lines(source);
+    require(lines.size() == 4u && (lines[0] == "flowchart TD" || lines[0] == "flowchart BT"),
+            "Skip-edge exact source header/line count");
+    Model model{lines[0] == "flowchart BT" ? "BT" : "TD",
+                {{"A", "A"}, {"B", "B"}, {"C", "C"}}, {}, {}};
+    std::set<std::pair<int, int>> pairs;
+    for (std::size_t n = 1u; n < lines.size(); ++n) {
+        const auto& line = lines[n];
+        require(line.size() == 9u && line.substr(0u, 2u) == "  " && line.substr(3u, 5u) == " --> ",
+                "Skip-edge exact source edge grammar");
+        const int from = line[2] - 'A', to = line[8] - 'A';
+        require(from >= 0 && from < 3 && to >= 0 && to < 3 && pairs.emplace(from, to).second,
+                "Skip-edge unique source pair");
+        model.edges.push_back({from, to, "", "solid", false, true});
+    }
+    require(pairs == std::set<std::pair<int, int>>{{0, 1}, {0, 2}, {1, 2}},
+            "Skip-edge complete source topology");
+    return model;
+}
+
+std::size_t skip_first_line(const std::vector<std::string>& rows, std::string_view needle) {
+    const auto at = std::ranges::find_if(rows, [&](const std::string& row) {
+        if (needle.size() != 5u || needle.front() != '|' || needle.back() != '|')
+            return row.find(needle) != std::string::npos;
+        // The upstream five-cell box spelling identifies a node's label row.
+        // Loom uses wider rectangles: preserve both physical borders, the
+        // complete literal and its row, allowing only interior space padding.
+        for (auto left = row.find('|'); left != std::string::npos; left = row.find('|', left + 1u)) {
+            const auto right = row.find('|', left + 1u);
+            if (right == std::string::npos) break;
+            const auto begin = row.find_first_not_of(' ', left + 1u);
+            if (begin < right && row[begin] == needle[2] &&
+                row.find_first_not_of(' ', begin + 1u) == right) return true;
+        }
+        return false;
+    });
+    require(at != rows.end(), "Skip-edge original helper requires a visible label");
+    return static_cast<std::size_t>(at - rows.begin());
+}
+
+bool skip_predicate(const std::vector<std::string>& rows, JsonVal assertion) {
+    const auto kind = assertion.get_string("predicate_kind");
+    const auto predicate = assertion.get("predicate");
+    if (kind == "row_before")
+        return skip_first_line(rows, predicate.get_string("left")) <
+               skip_first_line(rows, predicate.get_string("right"));
+    if (kind == "marker_count") {
+        std::size_t count = 0u;
+        for (const auto& row : rows) count += static_cast<std::size_t>(
+            std::count_if(row.begin(), row.end(), [](char ch) { return ch == '>' || ch == '<' || ch == 'v' || ch == '^'; }));
+        return count == flow::flow400_number(predicate.get("count"));
+    }
+    if (kind == "contains_all") {
+        bool found = true;
+        predicate.get("labels").iter([&](JsonVal label) {
+            found = found && std::ranges::any_of(rows, [&](const std::string& row) {
+                return row.find(label.as_str()) != std::string::npos;
+            });
+        });
+        return found;
+    }
+    require(kind == "row_chain", "Skip-edge closed original predicate kind");
+    const auto labels = predicate.get("labels");
+    return skip_first_line(rows, labels.at(0).as_str()) < skip_first_line(rows, labels.at(1).as_str()) &&
+           skip_first_line(rows, labels.at(1).as_str()) < skip_first_line(rows, labels.at(2).as_str());
+}
+
+void skip_original_negatives(const std::vector<std::string>& rows, JsonVal assertions) {
+    assertions.iter([&](JsonVal assertion) {
+        ASSERT_TRUE(skip_predicate(rows, assertion));
+        auto bad = rows;
+        const auto kind = assertion.get_string("predicate_kind");
+        const auto predicate = assertion.get("predicate");
+        if (kind == "row_before" || kind == "row_chain") {
+            const std::string left = kind == "row_before" ? predicate.get_string("left") : std::string(predicate.get("labels").at(0).as_str());
+            const std::string right = kind == "row_before" ? predicate.get_string("right") : std::string(predicate.get("labels").at(1).as_str());
+            std::swap(bad.at(skip_first_line(rows, left)), bad.at(skip_first_line(rows, right)));
+        } else {
+            bool changed = false;
+            for (auto& row : bad) for (auto& ch : row) {
+                if (!changed && (kind == "marker_count" ? (ch == '^' || ch == 'v' || ch == '<' || ch == '>') : ch == 'A')) {
+                    ch = ' '; changed = true;
+                }
+            }
+            require(changed, "Skip-edge original negative must alter its witness");
+        }
+        EXPECT_FALSE(skip_predicate(bad, assertion)) << kind;
+    });
+    require_original_rectangle(rows, "assert_rectangular_char_grid");
+    auto ragged = rows;
+    require(!ragged.front().empty(), "Skip-edge nonempty canonical row");
+    ragged.front().pop_back();
+    EXPECT_FALSE(original_rectangle_accepts(ragged, "assert_rectangular_char_grid"));
+}
+
+void publish_skip_frames(std::size_t function, std::string_view id, std::string_view source,
+                         const Frames& frames, OracleWork& work) {
+    json::JsonMutDoc report;
+    auto root = report.object();
+    root.set("schema", "loom.flow_ascii_skip_original_frames/v1");
+    root.set("upstream_function", kSkipFunctions.at(function));
+    root.set("case_id", id); root.set("source_sha256", digest(source));
+    root.set("qualification", "Actual public frames, not a semantic pass or official drawing credit.");
+    const std::array<const Grid*, 7> grids{{&frames.ascii_wide, &frames.ascii_narrow, &frames.ascii_restored,
+        &frames.unicode_wide, &frames.unicode_narrow, &frames.text_wide, &frames.text_narrow}};
+    constexpr std::array<std::string_view, 7> names{{"ascii_wide", "ascii_narrow", "ascii_restored",
+        "unicode_wide", "unicode_narrow", "source_wide", "source_narrow"}};
+    auto captured = root.make_arr();
+    for (std::size_t n = 0; n < grids.size(); ++n) {
+        const auto& grid = *grids[n];
+        work.product(grid.cells.size(), 64u);
+        auto item = root.make_obj(); item.set("name", names[n]);
+        item.set("width", grid.width); item.set("height", grid.height);
+        auto rows = root.make_arr();
+        for (int y = 0; y < grid.height; ++y) rows.append(root.make_str(grid.row(y)));
+        item.add("rows", rows); captured.append(item);
+    }
+    root.add("frames", captured); report.set_root(root);
+    const auto slash = id.find('/');
+    require(slash != std::string_view::npos, "Skip-edge report identity");
+    const auto path = fs::path(LOOM_MERMAID_REPORT_DIR) /
+        ("mermaid-ascii-skip-" + std::to_string(function) + "-" + std::string(id.substr(slash + 1u)) + ".json");
+    std::ofstream output(path, std::ios::binary);
+    require(static_cast<bool>(output) && static_cast<bool>(output << report.to_pretty_string() << '\n'),
+            "Skip-edge actual frame publication");
+}
+
+void run_skip_function(std::size_t index) {
+    OracleWork setup{flow::kFlow400SceneLimit};
+    const auto bytes = read_exact(fs::path(LOOM_TESTS_DIR) / kParentAsset, setup);
+    require(digest(bytes) == kParentSha, "Skip-edge immutable Grid18 parent");
+    const auto parent = json::parse(bytes);
+    require(parent.has_value(), "Skip-edge parent JSON");
+    const auto function = bind_skip_function(parent->root(), index, setup);
+    const auto ids = function.get("case_ids");
+    require(ids.size() == (index == 2u ? 6u : 1u), "Skip-edge all original input applications");
+    std::set<std::string> seen;
+    ids.iter([&](JsonVal id) {
+        OracleWork work{flow::kFlow400SceneLimit};
+        const auto item = unique_case(parent->root(), id.as_str(), work);
+        const auto source = flow::flow400_text(item.get("input"));
+        SCOPED_TRACE(id.as_str());
+        const auto frames = capture_seven(source, work);
+        publish_skip_frames(index, id.as_str(), source, frames, work);
+        require(digest(source) == flow::flow400_text(item.get("input_sha256")) &&
+                source.size() == flow::flow400_number(item.get("input_utf8_bytes")) &&
+                seen.emplace(id.as_str()).second, "Skip-edge source identity and unique application");
+        const auto model = skip_model(source);
+        ASSERT_NE(frames.unicode_wide, frames.text_wide);
+        const auto geometry = flow::flow400_geometry(frames.unicode_wide, model, work, kFollowing);
+        ASSERT_TRUE(geometry.empty()) << (geometry.empty() ? "" : geometry.front());
+        EXPECT_EQ(flow::flow400_mutations(frames.unicode_wide, model, work, kFollowing), 3u);
+        EXPECT_EQ(frames.ascii_wide, frames.ascii_restored);
+        ASSERT_NE(frames.ascii_wide, frames.text_wide) << "ASCII skip-edge source fallback earns no credit";
+        ASSERT_NE(frames.ascii_narrow, frames.text_narrow) << "All original small diagrams must fit 40 columns";
+        private_flow::Work producer_work;
+        const auto rows = private_flow::flow_ascii_rows(source, producer_work);
+        ASSERT_TRUE(rows.has_value());
+        require_projection_join(frames.unicode_wide, frames.unicode_narrow,
+                                frames.ascii_wide, frames.ascii_narrow, *rows, work);
+        require_valid_projection(frames.unicode_wide, frames.ascii_wide, model, work);
+        require_valid_projection(frames.unicode_narrow, frames.ascii_narrow, model, work);
+        require_projection_mutants(frames.unicode_wide, frames.ascii_wide, model, work);
+        skip_original_negatives(rows->ascii, function.get("direct_assertions"));
+    });
+    EXPECT_EQ(seen.size(), ids.size());
+    ::testing::Test::RecordProperty("original_input_applications", static_cast<int>(seen.size()));
+    ::testing::Test::RecordProperty("original_predicate_applications", static_cast<int>(seen.size() * function.get("direct_assertions").size()));
+    ::testing::Test::RecordProperty("semantic_and_projection_negative_checks", static_cast<int>(seen.size() * 6u));
+}
+
+TEST(MermaidFlowAsciiGrid18, SkipEdgeProfileBoundariesAndIndependentLabels) {
+    constexpr std::array<std::string_view, 12> rejected{{
+        "flowchart TD\nA --> B\nB --> C\nC --> A\n", // cycle
+        "flowchart TD\nA --> B\nA --> B\nB --> C\n", // duplicate
+        "flowchart TD\nA --> A\nA --> B\nB --> C\n", // self edge
+        "flowchart TD\nA --> B\nB --> A\nB --> C\n", // opposite pair
+        "flowchart TD\nA --> B\nB --> C\nA -->|skip| C\n",
+        "flowchart TD\nA --> B\nB --> C\nA -.-> C\n",
+        "flowchart TD\nA --> B\nB --> C\nA ==> C\n",
+        "flowchart TD\nA --> B\nB --> C\nA <--> C\n",
+        "flowchart TD\nA --> B\nB --> C\nA ---> C\n",
+        "flowchart TD\nA(rounded) --> B\nB --> C\nA --> C\n",
+        "flowchart LR\nA --> B\nB --> C\nA --> C\n",
+        "flowchart TD\nsubgraph G\nA --> B\nB --> C\nA --> C\nend\n"}};
+    for (const auto source : rejected) {
+        SCOPED_TRACE(source);
+        OracleWork work{flow::kFlow400SceneLimit};
+        const auto frames = capture_seven(source, work);
+        EXPECT_EQ(frames.ascii_wide, frames.text_wide);
+        EXPECT_EQ(frames.ascii_narrow, frames.text_narrow);
+        EXPECT_EQ(frames.ascii_restored, frames.text_wide);
+        private_flow::Work producer;
+        EXPECT_FALSE(private_flow::flow_ascii_rows(source, producer));
+    }
+    constexpr std::string_view source = "graph BT\nfoo[源] --> bar[中]\nfoo --> baz[终]\nbar --> baz\n";
+    const Model model{"BT", {{"foo", "源"}, {"bar", "中"}, {"baz", "终"}},
+        {{0, 1, "", "solid"}, {0, 2, "", "solid"}, {1, 2, "", "solid"}}, {}};
+    OracleWork work{flow::kFlow400SceneLimit};
+    const auto frames = capture_seven(source, work);
+    ASSERT_NE(frames.ascii_wide, frames.text_wide);
+    require_valid_projection(frames.unicode_wide, frames.ascii_wide, model, work);
+    require_valid_projection(frames.unicode_narrow, frames.ascii_narrow, model, work);
+    for (const auto budget : {0u, 511u}) {
+        private_flow::Work limited; limited.remaining = budget;
+        EXPECT_FALSE(private_flow::flow_ascii_rows(source, limited));
+    }
+    EXPECT_EQ(skip_first_line({"|   A   |"}, "| A |"), 0u);
+    EXPECT_THROW(skip_first_line({"    A   |"}, "| A |"), std::runtime_error);
+    EXPECT_THROW(skip_first_line({"|   AA  |"}, "| A |"), std::runtime_error);
+    EXPECT_THROW(skip_first_line({"|   A - |"}, "| A |"), std::runtime_error);
+}
+
+TEST(MermaidFlowAsciiGrid18, OriginalBottomUpSkipEdgeFunction) { run_skip_function(0u); }
+TEST(MermaidFlowAsciiGrid18, OriginalTopDownSkipEdgeFunction) { run_skip_function(1u); }
+TEST(MermaidFlowAsciiGrid18, OriginalSkipEdgeAllSixDeclarationOrders) { run_skip_function(2u); }
+
 }  // namespace

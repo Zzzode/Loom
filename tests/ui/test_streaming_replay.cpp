@@ -19,6 +19,7 @@
 
 #include "streaming_replay.hpp"
 #include "invariant_checker.hpp"
+#include "test_ui_helpers.h"
 
 import std;
 import loom.commands.registry;
@@ -32,6 +33,9 @@ namespace fs = std::filesystem;
 /// checkpoint snapshots. All objects are local and destroyed before return.
 [[nodiscard]] std::map<std::string, std::string> play_fixture(
     std::string_view fixture_name) {
+    // Golden frames own their model identity, independent of user settings.
+    ScopedEnvVar fixture_model("LOOM_MODEL");
+    fixture_model.set("model_api/experimental_0812_256k");
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
@@ -446,6 +450,8 @@ constexpr std::string_view kCollapsedThinkingHint = "[Show thinking]";
 }  // namespace
 
 TEST(StreamingReplay, ThinkingGraceExpiry) {
+    ScopedEnvVar fixture_model("LOOM_MODEL");
+    fixture_model.set("model_api/experimental_0812_256k");
     // Pin the clock to a fixed instant so every replay event (including
     // the ContentBlockStop that writes streaming_ended_at) is timestamped
     // at t0. Advancing to t0 + 4s then simulates collapse-grace expiry
@@ -540,6 +546,8 @@ TEST(StreamingReplay, ThinkingGraceExpiry) {
 // clock seam, a post-play clear, and re-renders after advancing the clock.
 
 TEST(StreamingReplay, ThinkingCollapseGrace) {
+    ScopedEnvVar fixture_model("LOOM_MODEL");
+    fixture_model.set("model_api/experimental_0812_256k");
     // Pin the clock so every mark_streaming() call during replay records
     // t0, and the post-play was_recently_streaming() checks measure elapsed
     // time against t0.

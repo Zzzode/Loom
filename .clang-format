@@ -1,8 +1,8 @@
-# .clang-format — pinned to clang-format 21.x for cross-platform consistency.
+# .clang-format — version pinned in .clang-format-version for consistency.
 #
 # Toolchain alignment:
-#   • macOS  : /opt/homebrew/bin/clang-format            (Homebrew clang-format 21.1.x)
-#   • Linux  : clang-format-21                            (LLVM 21 apt/tar package)
+#   • macOS  : /opt/homebrew/opt/llvm@21/bin/clang-format
+#   • Linux  : clang-format-21, or the pinned Python package used by CI
 #
 # Use scripts/format-cpp.sh to run with the version guard.
 #

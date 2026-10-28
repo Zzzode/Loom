@@ -96,6 +96,28 @@ cmake --workflow --preset ci      # configure + build + test release
 cmake --workflow --preset check   # configure + build + test asan
 ```
 
+### C++ formatting
+
+The formatter version is pinned in `.clang-format-version`, independently of
+the compiler version. CI installs that exact version and checks all C++ sources
+under `src/` and `tests/` with the same script used locally:
+
+```bash
+scripts/format-cpp.sh --check  # check without modifying files
+scripts/format-cpp.sh          # apply formatting
+```
+
+On macOS, `brew install llvm@21` provides the pinned formatter. Alternatively,
+activate a Python virtual environment and use the same package pin as CI:
+
+```bash
+python -m pip install "clang-format==$(cat .clang-format-version)"
+CLANG_FORMAT=clang-format scripts/format-cpp.sh --check
+```
+
+Use `CLANG_FORMAT=/path/to/clang-format` to select an explicit binary; the script
+rejects versions that do not match `.clang-format-version`.
+
 ## Running
 
 ```bash
